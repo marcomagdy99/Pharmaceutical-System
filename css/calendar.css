@@ -1,0 +1,1191 @@
+/* ==========================================================================
+   PharmaCare - Calendar Page Stylesheet
+   Includes: Monthly grid, day cells, event dots/blocks, detail drawer,
+   and complete Dark Mode contrast overrides (fixing weekend & text contrast).
+   ========================================================================== */
+
+/* --- START: Calendar Container & Header --- */
+.calendar-container {
+    background-color: var(--white);
+    border-radius: var(--radius-lg, 14px);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.calendar-nav button {
+    background: none;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: var(--gray-700);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.calendar-nav button:hover {
+    background-color: var(--gray-100);
+}
+
+.calendar-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900, var(--gray-800));
+    margin: 0;
+    min-width: 200px;
+    text-align: center;
+}
+
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-block {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.dot-completed { background-color: var(--success); }
+.dot-planned { background-color: var(--primary); }
+.block-approved-leave { background-color: var(--danger); }
+.block-pending-leave { background-color: var(--warning); }
+.dot-activity { background-color: #fd7e14; }
+.dot-office { background-color: var(--gray-500); }
+
+/* --- START: Calendar Grid & Day Cells --- */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1px;
+    background-color: var(--gray-300);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md, 8px);
+    overflow: hidden;
+}
+
+.calendar-day-header {
+    background-color: var(--gray-100);
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.calendar-day {
+    background-color: var(--white);
+    min-height: 100px;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background-color: var(--gray-50);
+}
+
+.calendar-day.different-month {
+    background-color: var(--gray-50);
+    color: var(--gray-400);
+}
+
+.calendar-day.weekend {
+    background-color: #fafafa;
+}
+
+.calendar-day.today {
+    box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.day-number {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: var(--gray-800);
+}
+
+.calendar-day.today .day-number {
+    background-color: var(--primary);
+    color: var(--white);
+}
+
+/* --- START: Event Indicators --- */
+.event-indicators {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.event-indicator {
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--gray-800);
+}
+
+.event-indicator.leave-block {
+    color: white;
+    font-weight: 500;
+}
+
+.event-indicator.dot {
+    padding: 0 4px;
+    background: none !important;
+}
+
+.event-indicator.dot::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.event-indicator.dot.completed::before { background-color: var(--success); }
+.event-indicator.dot.planned::before { background-color: var(--primary); }
+.event-indicator.dot.activity::before { background-color: #fd7e14; }
+.event-indicator.dot.office::before { background-color: var(--gray-500); }
+
+.more-events {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: auto;
+    text-align: center;
+}
+
+/* --- START: Day Detail Panel & Overlay --- */
+.day-detail-panel {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    max-width: 100vw;
+    height: 100vh;
+    background-color: var(--white);
+    box-shadow: var(--shadow-lg);
+    z-index: 2500 !important;
+    padding: 1.5rem;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+[dir="rtl"] .day-detail-panel {
+    right: auto;
+    left: 0;
+}
+
+.day-detail-panel.active {
+    display: flex;
+}
+
+.detail-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 2490 !important;
+}
+
+.detail-overlay.active {
+    display: block;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.detail-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900, var(--gray-800));
+    margin: 0;
+}
+
+.close-detail {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--gray-500);
+    cursor: pointer;
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+
+.detail-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md, 8px);
+    background-color: var(--white);
+}
+
+.detail-item-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.detail-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md, 8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.icon-visit-completed { background-color: var(--success); }
+.icon-visit-planned { background-color: var(--primary); }
+.icon-leave-approved { background-color: var(--danger); }
+.icon-leave-pending { background-color: var(--warning); }
+.icon-activity { background-color: #fd7e14; }
+.icon-office { background-color: var(--gray-500); }
+
+.detail-item-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-item-title {
+    font-weight: 600;
+    color: var(--gray-900, var(--gray-800));
+    font-size: 0.875rem;
+}
+
+.detail-item-time {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-completed { background-color: rgba(25, 135, 84, 0.1); color: var(--success); }
+.badge-planned { background-color: rgba(13, 110, 253, 0.1); color: var(--primary); }
+.badge-approved { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
+.badge-pending { background-color: rgba(253, 126, 20, 0.1); color: var(--warning); }
+.badge-activity { background-color: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+.badge-office { background-color: rgba(108, 117, 125, 0.1); color: var(--gray-600); }
+
+.manager-filter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    display: none;
+}
+
+.manager-filter.active {
+    display: flex;
+}
+
+/* ==========================================================================
+   Dark Mode Specific Overrides for Calendar
+   Fixes: Friday weekend white background, unreadable text, and drawer contrast
+   ========================================================================== */
+[data-theme="dark"] .calendar-container {
+    background-color: #1e2229 !important;
+    border: 1px solid #2d3340;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .calendar-title {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .calendar-nav button {
+    border-color: #3d4554;
+    color: #dee2e6;
+    background-color: #232731;
+}
+
+[data-theme="dark"] .calendar-nav button:hover {
+    background-color: #2d3340;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .calendar-legend {
+    border-bottom-color: #2d3340;
+}
+
+[data-theme="dark"] .legend-item {
+    color: #c2c7d0 !important;
+}
+
+[data-theme="dark"] .calendar-grid {
+    background-color: #2d3340 !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .calendar-day-header {
+    background-color: #232731 !important;
+    color: #f1f3f5 !important;
+    border-bottom: 1px solid #2d3340;
+}
+
+[data-theme="dark"] .calendar-day {
+    background-color: #1e2229 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .calendar-day:hover {
+    background-color: #282d38 !important;
+}
+
+/* Critical Fix: Friday weekend background in Dark Mode */
+[data-theme="dark"] .calendar-day.weekend {
+    background-color: #16191f !important;
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .calendar-day.different-month {
+    background-color: #121418 !important;
+    color: #555d6b !important;
+}
+
+[data-theme="dark"] .calendar-day.today {
+    box-shadow: inset 0 0 0 2px #0d6efd !important;
+}
+
+[data-theme="dark"] .day-number {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .event-indicator {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .event-indicator.dot.completed {
+    background-color: rgba(34, 197, 94, 0.16) !important;
+    color: #86efac !important;
+}
+
+[data-theme="dark"] .event-indicator.dot.planned {
+    background-color: rgba(59, 130, 246, 0.16) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .event-indicator.dot.activity {
+    background-color: rgba(245, 158, 11, 0.16) !important;
+    color: #fcd34d !important;
+}
+
+[data-theme="dark"] .event-indicator.dot.office {
+    background-color: rgba(148, 163, 184, 0.16) !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .day-detail-panel {
+    background-color: #1e2229 !important;
+    color: #f1f3f5 !important;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .detail-header {
+    border-bottom-color: #2d3340;
+}
+
+[data-theme="dark"] .detail-title {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .detail-section-title {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .detail-item {
+    background-color: #232731 !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .detail-item-title {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .detail-item-time {
+    color: #9da5b1 !important;
+}
+
+/* Hierarchy Rep Select Theming */
+.manager-filter {
+    background: var(--white);
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    display: none;
+}
+
+.manager-filter.active {
+    display: block;
+}
+
+.manager-filter-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.manager-filter label {
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.manager-filter select {
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.manager-filter optgroup {
+    font-weight: 800;
+    color: var(--primary);
+    background: var(--gray-50);
+}
+
+/* Current Target Indicator Pill */
+.current-target-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gray-100, #f1f3f5);
+    border: 1px solid var(--gray-300, #dee2e6);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.target-role-badge {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+.target-name {
+    color: var(--gray-800, #212529);
+}
+
+[data-theme="dark"] .manager-filter {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .manager-filter label {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .current-target-pill {
+    background: #232731 !important;
+    border-color: #363d4e !important;
+}
+
+[data-theme="dark"] .target-name {
+    color: #f1f3f5 !important;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2490 !important;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Org Tree Modal Dialog */
+.org-tree-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 92%;
+    max-width: 680px;
+    max-height: 85vh;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    z-index: 2500 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.org-tree-modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-200, #e9ecef);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white, #ffffff);
+    flex-shrink: 0;
+}
+
+.org-tree-modal-header h4 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--gray-900, #1e293b);
+}
+
+.btn-close-tree {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--gray-500, #64748b);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.btn-close-tree:hover {
+    background: var(--gray-100, #f1f5f9);
+    color: var(--gray-900, #0f172a);
+}
+
+.org-tree-search-box {
+    padding: 12px 20px;
+    background: var(--gray-50, #f8fafc);
+    border-bottom: 1px solid var(--gray-200, #e9ecef);
+    flex-shrink: 0;
+}
+
+.org-tree-search-box input {
+    border-radius: 10px;
+    border: 1px solid var(--gray-300, #cbd5e1);
+    padding: 9px 14px;
+    font-size: 0.9rem;
+    width: 100%;
+    outline: none;
+    transition: all 0.2s;
+    background: #ffffff;
+    color: var(--gray-800, #1e293b);
+}
+
+.org-tree-search-box input:focus {
+    border-color: var(--primary, #0d6efd);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+.org-tree-modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 300px;
+    max-height: calc(85vh - 180px);
+}
+
+.org-tree-modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--gray-200, #e9ecef);
+    background: var(--gray-50, #f8fafc);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Tree Node Cards & Structure */
+.org-tree-root {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.org-node-card {
+    border: 1px solid var(--gray-200, #e2e8f0);
+    border-radius: 10px;
+    background: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.org-node-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.org-node-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    gap: 10px;
+}
+
+.org-node-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.org-node-toggle {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--gray-100, #f1f5f9);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--gray-600, #475569);
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.org-node-toggle:hover {
+    background: var(--gray-200, #e2e8f0);
+    color: var(--gray-900, #0f172a);
+}
+
+.org-node-toggle.no-children {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.org-node-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.org-node-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.org-node-header-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.org-node-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--gray-800, #1e293b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.org-node-subtext {
+    font-size: 0.75rem;
+    color: var(--gray-500, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Distinct badges by role */
+.role-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.role-admin { background: #fee2e2; color: #991b1b; }
+.role-business_unit { background: #e0e7ff; color: #3730a3; }
+.role-line_manager { background: #e0f2fe; color: #0369a1; }
+.role-district_manager { background: #fef3c7; color: #92400e; }
+.role-medical_rep { background: #dcfce7; color: #166534; }
+.role-hr { background: #f3e8ff; color: #6b21a8; }
+
+.btn-select-node {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid var(--primary, #0d6efd);
+    background: #ffffff;
+    color: var(--primary, #0d6efd);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-select-node:hover {
+    background: var(--primary, #0d6efd);
+    color: #ffffff;
+}
+
+.btn-select-node.active-target {
+    background: var(--success, #198754);
+    border-color: var(--success, #198754);
+    color: #ffffff;
+}
+
+/* Nested Branch Structure */
+.org-node-children {
+    margin-left: 24px;
+    padding-left: 12px;
+    border-left: 2px dashed var(--gray-300, #cbd5e1);
+    margin-top: 6px;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+[dir="rtl"] .org-node-children {
+    margin-left: 0;
+    margin-right: 24px;
+    padding-left: 0;
+    padding-right: 12px;
+    border-left: none;
+    border-right: 2px dashed var(--gray-300, #cbd5e1);
+}
+
+/* Search results cards */
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.search-result-card {
+    border: 1px solid var(--gray-200, #e2e8f0);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.15s;
+}
+
+.search-result-card:hover {
+    border-color: var(--primary, #0d6efd);
+    background: #f8fafc;
+}
+
+.search-result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.search-breadcrumb {
+    font-size: 0.75rem;
+    color: var(--gray-500, #64748b);
+}
+
+.search-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray-500, #64748b);
+}
+
+/* DARK MODE OVERRIDES for Modal and Tree */
+[data-theme="dark"] .org-tree-modal {
+    background: #1a1e26 !important;
+    border: 1px solid #2d3340 !important;
+    color: #f1f3f5 !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="dark"] .org-tree-modal-header {
+    background: #1a1e26 !important;
+    border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .org-tree-modal-header h4 {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .btn-close-tree {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .btn-close-tree:hover {
+    background: #232731 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .org-tree-search-box {
+    background: #14171d !important;
+    border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .org-tree-search-box input {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .org-tree-search-box input:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .org-tree-modal-body {
+    background: #1a1e26 !important;
+}
+
+[data-theme="dark"] .org-tree-modal-footer {
+    background: #14171d !important;
+    border-top-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .org-node-card {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .org-node-card:hover {
+    border-color: #3e4758 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .org-node-name {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .org-node-subtext {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .org-node-toggle {
+    background: #282e3a !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .org-node-toggle:hover {
+    background: #363e4f !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .org-node-children {
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .btn-select-node {
+    background: #232731 !important;
+    border-color: #3b82f6 !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .btn-select-node:hover {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-select-node.active-target {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .role-admin { background: rgba(239, 68, 68, 0.2) !important; color: #fca5a5 !important; }
+[data-theme="dark"] .role-business_unit { background: rgba(99, 102, 241, 0.2) !important; color: #a5b4fc !important; }
+[data-theme="dark"] .role-line_manager { background: rgba(14, 165, 233, 0.2) !important; color: #7dd3fc !important; }
+[data-theme="dark"] .role-district_manager { background: rgba(245, 158, 11, 0.2) !important; color: #fcd34d !important; }
+[data-theme="dark"] .role-medical_rep { background: rgba(34, 197, 94, 0.2) !important; color: #86efac !important; }
+[data-theme="dark"] .role-hr { background: rgba(168, 85, 247, 0.2) !important; color: #d8b4fe !important; }
+
+[data-theme="dark"] .search-result-card {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .search-result-card:hover {
+    background: #242a35 !important;
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .search-breadcrumb {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .search-empty-state {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .org-node-card[style*="dashed"] {
+    background: #252219 !important;
+    border-color: #785a10 !important;
+}
+
+/* ==========================================================================
+   Responsive Calendar Mobile & Tablet Styles
+   ========================================================================== */
+@media (max-width: 768px) {
+    .manager-filter {
+        padding: 10px 12px;
+        margin-bottom: 1rem;
+    }
+    .manager-filter-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .current-target-pill {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 12px;
+    }
+    #btnOpenTreePicker,
+    #btnResetCalendar {
+        width: 100%;
+        padding: 8px 14px;
+        font-size: 0.88rem;
+    }
+    .calendar-container {
+        padding: 0.6rem;
+    }
+    .calendar-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .calendar-header .calendar-nav {
+        gap: 0.4rem;
+    }
+    .calendar-title {
+        min-width: auto;
+        font-size: 1.05rem;
+    }
+    .calendar-nav button {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.82rem;
+    }
+    .calendar-legend {
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.6rem;
+    }
+    .legend-item {
+        font-size: 0.75rem;
+        gap: 0.35rem;
+    }
+    .calendar-grid {
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+        width: 100% !important;
+    }
+    .calendar-day-header {
+        padding: 0.35rem 0.1rem !important;
+        font-size: 0.72rem !important;
+        text-align: center !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+    .calendar-day {
+        min-height: 82px !important;
+        padding: 4px 3px !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .day-number {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 3px 0 !important;
+    }
+    .event-indicators {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+    .event-indicator {
+        font-size: 0.65rem !important;
+        line-height: 1.25 !important;
+        color: var(--gray-800) !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .event-indicator.leave-block {
+        color: #ffffff !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        font-weight: 600 !important;
+        font-size: 0.65rem !important;
+    }
+    .event-indicator.dot::before {
+        content: '' !important;
+        display: inline-block !important;
+        width: 6px !important;
+        height: 6px !important;
+        min-width: 6px !important;
+        min-height: 6px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+    }
+    .event-indicator.dot.completed::before { background-color: var(--success) !important; }
+    .event-indicator.dot.planned::before { background-color: var(--primary) !important; }
+    .event-indicator.dot.activity::before { background-color: #fd7e14 !important; }
+    .event-indicator.dot.office::before { background-color: var(--gray-500) !important; }
+
+    .event-indicator.dot.completed { background-color: rgba(25, 135, 84, 0.08) !important; }
+    .event-indicator.dot.planned { background-color: rgba(13, 110, 253, 0.08) !important; }
+    .event-indicator.dot.activity { background-color: rgba(253, 126, 20, 0.09) !important; }
+    .event-indicator.dot.office { background-color: rgba(108, 117, 125, 0.08) !important; }
+
+    .more-events {
+        display: block !important;
+        width: 100% !important;
+        font-size: 0.62rem !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        margin-top: 2px !important;
+        text-align: center !important;
+        color: var(--primary) !important;
+    }
+    .day-detail-panel {
+        width: 100% !important;
+        max-width: 100vw !important;
+        padding: 1rem;
+    }
+}

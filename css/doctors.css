@@ -1,0 +1,301 @@
+/* --- START: Header Styles --- */
+.doctors-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.doctors-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.doctors-title h2 {
+    margin: 0;
+}
+.badge-count {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+/* --- END: Header Styles --- */
+
+/* --- START: Filter Bar Styles --- */
+.filter-bar {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: var(--border-radius-card, 14px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.filter-bar .form-control, .filter-bar .form-select {
+    flex: 1;
+    min-width: 200px;
+}
+/* Toggle Button Group */
+.toggle-group {
+    display: flex;
+    background-color: var(--gray-100, #f8f9fa);
+    border-radius: 8px;
+    padding: 4px;
+}
+.toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--gray-600, #6c757d);
+    font-weight: 500;
+}
+.toggle-btn.active {
+    background-color: #fff;
+    color: var(--primary, #0d6efd);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.view-controls {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+.view-btn {
+    background: #fff;
+    border: 1px solid var(--gray-200, #dee2e6);
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--gray-600, #6c757d);
+}
+.view-btn.active {
+    color: var(--primary, #0d6efd);
+    border-color: var(--primary, #0d6efd);
+    background-color: var(--primary-light, #e7f1ff);
+}
+/* --- END: Filter Bar Styles --- */
+
+/* --- START: Grid View Styles --- */
+.doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+/* Doctor Card Styling */
+.doctor-card {
+    background: #fff;
+    border-radius: var(--border-radius-card, 14px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.doctor-card-header {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.doctor-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.doctor-info {
+    flex: 1;
+    min-width: 0;
+}
+.doctor-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.doctor-specialty {
+    color: var(--gray-600, #6c757d);
+    font-size: 0.9rem;
+    margin: 2px 0 0;
+}
+.doctor-badges {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.badge-class-a { background-color: #e7f1ff; color: #0d6efd; }
+.badge-class-b { background-color: #d1e7dd; color: #198754; }
+.badge-type-doctor { background-color: #e2d9f3; color: #6f42c1; }
+.badge-type-hospital { background-color: #ffe5d0; color: #fd7e14; }
+
+.doctor-details {
+    font-size: 0.9rem;
+    color: var(--gray-700, #495057);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.detail-item svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--gray-500, #adb5bd);
+}
+
+.coverage-progress {
+    margin-top: 5px;
+}
+.coverage-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    color: var(--gray-600, #6c757d);
+}
+.progress-bar-container {
+    height: 6px;
+    background-color: var(--gray-200, #dee2e6);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--success, #198754);
+    border-radius: 3px;
+}
+
+.doctor-card-footer {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid var(--gray-200, #dee2e6);
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+/* --- END: Grid View Styles --- */
+
+/* --- START: Table View Styles --- */
+.doctors-table-container {
+    display: none;
+    background: #fff;
+    border-radius: var(--border-radius-card, 14px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+    overflow-x: auto;
+}
+.doctors-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.doctors-table th, .doctors-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200, #dee2e6);
+}
+[dir="rtl"] .doctors-table th, [dir="rtl"] .doctors-table td {
+    text-align: right;
+}
+.doctors-table th {
+    font-weight: 600;
+    color: var(--gray-600, #6c757d);
+    background-color: #f8f9fa;
+}
+.doctors-table th.sortable {
+    cursor: pointer;
+}
+.doctors-table th.sortable:hover {
+    background-color: #e9ecef;
+}
+/* --- END: Table View Styles --- */
+
+/* --- START: Modal Styles --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.modal-header h3 { margin: 0; }
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-500);
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+/* Empty State Container */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+}
+.empty-state svg {
+    color: var(--gray-400);
+    margin-bottom: 15px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 15px;
+}
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+.invalid {
+    border-color: var(--danger, #dc3545) !important;
+}
+/* --- END: Modal Styles --- */

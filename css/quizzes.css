@@ -1,0 +1,278 @@
+/* ==========================================================================
+   Quizzes Module Stylesheet
+   Includes: Grade badges, role view containers, and full Dark Mode support
+   ========================================================================== */
+
+/* --- START: Grade Badges --- */
+.grade-badge {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.grade-a { background-color: var(--success, #198754); color: #ffffff; }
+.grade-b { background-color: var(--primary, #0d6efd); color: #ffffff; }
+.grade-c { background-color: var(--warning, #fd7e14); color: #ffffff; }
+.grade-f { background-color: var(--danger, #dc3545); color: #ffffff; }
+/* --- END: Grade Badges --- */
+
+/* --- START: Role Views --- */
+.admin-view { display: none; }
+.rep-view { display: none; }
+/* --- END: Role Views --- */
+
+/* --- START: Base Semantic Classes --- */
+.page-main-title {
+  color: var(--gray-800);
+}
+
+.stat-value {
+  color: var(--gray-800);
+}
+
+.quiz-table-head th {
+  background-color: var(--gray-50);
+  color: var(--gray-700);
+  border-bottom: 2px solid var(--gray-200);
+  font-weight: 600;
+}
+
+.quiz-perc-badge {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  border-color: var(--gray-300) !important;
+  font-weight: 600;
+}
+
+.quiz-input-addon {
+  background-color: var(--gray-100);
+  border-color: var(--gray-300);
+  color: var(--gray-600);
+}
+
+.quiz-meta-sub {
+  color: var(--gray-500);
+  font-size: 0.8rem;
+}
+/* --- END: Base Semantic Classes --- */
+
+/* ==========================================================================
+   Dark Mode Support for Quizzes Module
+   ========================================================================== */
+
+[data-theme="dark"] .page-main-title {
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #ffffff !important;
+}
+
+/* Cards & Containers */
+[data-theme="dark"] .card {
+  background-color: var(--white) !important;
+  border: 1px solid var(--gray-200) !important;
+  color: var(--gray-800) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .card-header {
+  background-color: var(--surface-alt) !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .card-body {
+  background-color: var(--white) !important;
+  color: var(--gray-800) !important;
+}
+
+/* Stat card icon contrast in dark mode */
+[data-theme="dark"] .card .opacity-25 {
+  opacity: 0.45 !important;
+  color: #9da5b1 !important;
+}
+
+/* Form Controls and Filters */
+[data-theme="dark"] .form-label {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] #quiz-filter-subtitle {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: var(--surface-alt) !important;
+  border-color: var(--gray-300) !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .form-select option {
+  background-color: #232731 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: var(--surface-alt) !important;
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.3) !important;
+}
+
+[data-theme="dark"] .quiz-input-addon {
+  background-color: var(--surface-alt) !important;
+  border-color: var(--gray-300) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Table Dark Mode */
+[data-theme="dark"] .table {
+  --bs-table-bg: var(--white) !important;
+  --bs-table-color: var(--gray-800) !important;
+  --bs-table-hover-bg: var(--surface-hover) !important;
+  --bs-table-hover-color: #ffffff !important;
+  --bs-table-border-color: var(--gray-200) !important;
+  background-color: var(--white) !important;
+  color: var(--gray-800) !important;
+}
+
+[data-theme="dark"] .table thead th,
+[data-theme="dark"] .table-light th,
+[data-theme="dark"] .quiz-table-head th {
+  background-color: var(--surface-alt) !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .table tbody tr,
+[data-theme="dark"] .table tbody td {
+  background-color: var(--white) !important;
+  color: #f1f3f5 !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover td {
+  background-color: var(--surface-hover) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .table .text-secondary {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .table .text-muted {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .quiz-meta-sub {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .quiz-perc-badge {
+  background-color: var(--surface-alt) !important;
+  color: #f1f3f5 !important;
+  border-color: var(--gray-300) !important;
+}
+
+/* Modal Dark Mode */
+[data-theme="dark"] .modal-content {
+  background-color: var(--white) !important;
+  border: 1px solid var(--gray-300) !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: var(--gray-200) !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Empty State Message */
+[data-theme="dark"] #no-reps-message {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] #no-reps-message .opacity-50 {
+  opacity: 0.7 !important;
+  color: #9da5b1 !important;
+}
+
+/* ==========================================================================
+   Mobile Responsive Adjustments for Quizzes Module (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  #quiz-filters-container {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  #quiz-filters-container > div {
+    flex: 1 1 120px;
+  }
+  #quiz-filters-container .form-select {
+    min-width: 100px !important;
+    width: 100%;
+  }
+
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #team-comparison-table th,
+  #team-comparison-table td {
+    padding: 8px 8px !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Sticky first column (Quiz Name) */
+  #team-comparison-table th:first-child,
+  #team-comparison-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background-color: var(--white);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.08);
+    min-width: 140px;
+    max-width: 170px;
+  }
+  html[dir="rtl"] #team-comparison-table th:first-child,
+  html[dir="rtl"] #team-comparison-table td:first-child {
+    left: auto;
+    right: 0;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.08);
+  }
+
+  .grade-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Dark Mode Sticky Column Support for Comparison Table */
+[data-theme="dark"] #team-comparison-table th:first-child {
+  background-color: var(--surface-alt) !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] #team-comparison-table td:first-child {
+  background-color: var(--white) !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] html[dir="rtl"] #team-comparison-table th:first-child,
+[data-theme="dark"] html[dir="rtl"] #team-comparison-table td:first-child {
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] #team-comparison-table tbody tr:hover td:first-child {
+  background-color: var(--surface-hover) !important;
+}

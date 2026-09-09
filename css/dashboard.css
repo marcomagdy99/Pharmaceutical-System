@@ -1,0 +1,1103 @@
+/* --- START: Dashboard Layout --- */
+.dashboard-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+}
+.main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.side-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+@media (max-width: 1024px) {
+    .dashboard-layout {
+        grid-template-columns: 1fr !important;
+    }
+    .grid-2-col {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+    .stat-card {
+        padding: 12px !important;
+    }
+    .stat-value {
+        font-size: 1.25rem !important;
+    }
+}
+/* --- END: Dashboard Layout --- */
+
+/* --- START: Components --- */
+.welcome-banner {
+    color: white;
+    border-radius: 14px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+.welcome-banner.rep {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+.welcome-banner.dm {
+    background: linear-gradient(135deg, var(--success), #0f5132);
+}
+.welcome-banner.lm {
+    background: linear-gradient(135deg, var(--warning), #995c00);
+}
+.welcome-banner.bu {
+    background: linear-gradient(135deg, #6f42c1, #4b2a85);
+}
+.welcome-banner.admin {
+    background: linear-gradient(135deg, var(--gray-800), #000);
+}
+
+.welcome-title {
+    margin: 0;
+    font-size: 24px;
+}
+.welcome-subtitle {
+    margin-top: 8px;
+    opacity: 0.9;
+}
+.target-progress {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.progress-bar-bg {
+    flex: 1;
+    background: rgba(255,255,255,0.2);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    background: #fff;
+    height: 100%;
+    border-radius: 4px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+.stat-card {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s;
+    background: #fff;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+.stat-label {
+    color: var(--gray-500);
+    font-size: 14px;
+}
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+}
+.stat-value.primary { color: var(--primary); }
+.stat-value.success { color: var(--success); }
+.stat-value.warning { color: var(--warning); }
+.stat-value.danger { color: var(--danger); }
+.stat-value.purple { color: #6f42c1; }
+
+.dashboard-card {
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    background: #fff;
+}
+.card-title {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.plan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.plan-item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--gray-50);
+}
+.plan-item.am {
+    border-left: 4px solid var(--info);
+}
+.plan-item.pm {
+    border-left: 4px solid var(--primary);
+}
+html[dir="rtl"] .plan-item.am {
+    border-left: none;
+    border-right: 4px solid var(--info);
+}
+html[dir="rtl"] .plan-item.pm {
+    border-left: none;
+    border-right: 4px solid var(--primary);
+}
+.plan-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.plan-header-title.am {
+    color: #055160;
+    font-weight: 700;
+}
+.plan-header-title.pm {
+    color: var(--primary);
+    font-weight: 700;
+}
+.badge-plan-count {
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.badge-plan-count.am {
+    background: var(--info);
+}
+.badge-plan-count.pm {
+    background: var(--primary);
+}
+
+.planned-target-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-200);
+    gap: 10px;
+}
+.planned-target-row:last-child {
+    border-bottom: none;
+}
+.planned-target-info {
+    min-width: 0;
+    flex: 1;
+}
+.planned-target-name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--gray-800);
+    line-height: 1.3;
+    word-break: break-word;
+}
+.planned-target-date {
+    font-size: 0.78rem;
+    color: var(--gray-500);
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+.planned-target-date .date-icon {
+    font-size: 0.75rem;
+}
+
+.plan-item-desc {
+    font-size: 13px;
+    color: var(--gray-600);
+    margin-top: 4px;
+}
+.plan-item-title {
+    font-weight: bold;
+}
+
+.table-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.table-header-row h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+html[dir="rtl"] .data-table {
+    text-align: right;
+}
+.data-table th {
+    padding: 12px;
+    border-bottom: 1px solid var(--gray-200);
+    white-space: nowrap;
+}
+.data-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+/* Entry Type Badges & Companion Tag */
+.entry-type-badge {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.entry-type-badge.plan {
+    background: #e7f1ff;
+    color: #0d6efd;
+}
+.entry-type-badge.actual {
+    background: #fff3cd;
+    color: #664d03;
+}
+.double-companion-tag {
+    color: var(--purple, #6f42c1);
+    font-weight: 600;
+    font-size: 0.72rem;
+    margin-top: 3px;
+    white-space: nowrap;
+}
+
+.avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
+}
+.status-badge.completed {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+.status-badge.pending {
+    background: #fff3cd;
+    color: #664d03;
+}
+.status-badge.danger {
+    background: var(--danger);
+    color: white;
+}
+.status-badge.warning {
+    background: var(--warning);
+    color: white;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.action-btn {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    cursor: pointer;
+}
+.action-btn.primary { background: var(--primary); color: white; border: none; }
+.action-btn.success { background: var(--success); color: white; border: none; }
+.action-btn.warning { background: var(--warning); color: white; border: none; }
+.action-btn.danger { background: var(--danger); color: white; border: none; }
+
+.upcoming-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.upcoming-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.upcoming-time {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 14px;
+    width: 60px;
+}
+.upcoming-details {
+    flex: 1;
+}
+.upcoming-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+.upcoming-desc {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+.coverage-widget {
+    text-align: center;
+}
+.coverage-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 8px solid var(--primary-light);
+    border-top-color: var(--primary);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.grid-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 14px;
+}
+.activity-item {
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: 4px;
+}
+.activity-item.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px;
+}
+.activity-item.primary { border-left: 3px solid var(--primary); }
+.activity-item.success { border-left: 3px solid var(--success); }
+.activity-item.warning { border-left: 3px solid var(--warning); }
+/* --- END: Components --- */
+
+/* --- START: Demo Switcher --- */
+.demo-switcher {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--gray-800, #343a40);
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 1050;
+    font-size: 12px;
+    align-items: center;
+}
+.demo-switcher .btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.demo-switcher .btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+/* --- END: Demo Switcher --- */
+
+/* --- START: DM Accompaniment Dashboard Component Styles --- */
+.stat-card-link {
+    color: var(--gray-500);
+    transition: var(--transition);
+}
+.stat-card:hover .stat-card-link {
+    color: var(--primary);
+}
+
+.dm-schedule-controls {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+}
+.dm-control-label {
+    color: var(--gray-700);
+}
+.btn-confirm-accompaniment {
+    background: var(--primary);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 6px;
+    height: 34px;
+    padding: 0 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.btn-confirm-accompaniment:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
+}
+.badge-locked-status {
+    background: rgba(220, 53, 69, 0.12);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+.dm-lock-notice {
+    color: #dc3545;
+}
+.dm-accompanied-banner {
+    background: #e7f1ff;
+    border: 1px solid #b6d4fe;
+}
+.dm-accompanied-title {
+    color: #084298;
+}
+.dm-accompanied-sub {
+    color: #084298;
+    opacity: 0.85;
+}
+.dm-office-banner {
+    background: #f8f9fa;
+    border: 1px dashed var(--gray-300);
+}
+.dm-office-title {
+    color: var(--gray-700);
+}
+.dm-office-desc {
+    color: var(--gray-500);
+}
+.visit-doc-name {
+    color: var(--gray-800);
+}
+.visit-time-badge {
+    color: var(--primary);
+}
+.target-type-badge {
+    color: var(--gray-500);
+}
+.badge-hospital {
+    background: #fff3cd;
+    color: #664d03;
+}
+.badge-clinic {
+    background: #cff4fc;
+    color: #055160;
+}
+.badge-pharmacy {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+.badge-product {
+    background: var(--gray-100);
+    color: var(--gray-800);
+    border: 1px solid var(--gray-200);
+}
+.badge-vacant {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+.dm-rep-name {
+    color: var(--gray-800);
+}
+.dm-ach-pct {
+    color: var(--gray-800);
+}
+.dm-vacant-row {
+    color: var(--gray-600);
+}
+.dm-vacant-text {
+    color: var(--gray-500);
+}
+.empty-table-msg {
+    color: var(--gray-500);
+}
+.team-perf-subtitle {
+    color: var(--gray-500);
+}
+/* --- END: DM Accompaniment Dashboard Component Styles --- */
+
+/* --- START: Dark Mode Support --- */
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .dashboard-card {
+    background-color: #1e2229 !important;
+    color: #f1f3f5 !important;
+    border: 1px solid #2d3340 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .card-title {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .stat-label {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .stat-card-link {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .stat-card:hover .stat-card-link {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .stat-card .stat-value.primary { color: #60a5fa !important; }
+[data-theme="dark"] .stat-card .stat-value.success { color: #4ade80 !important; }
+[data-theme="dark"] .stat-card .stat-value.warning { color: #fbbf24 !important; }
+[data-theme="dark"] .stat-card .stat-value.danger  { color: #f87171 !important; }
+[data-theme="dark"] .stat-card .stat-value.purple  { color: #c084fc !important; }
+
+[data-theme="dark"] .activity-item {
+    background: #232731 !important;
+    color: #dee2e6 !important;
+    border: 1px solid #2d3340;
+}
+
+[data-theme="dark"] .action-btn {
+    border-color: #3d4554 !important;
+    background: #232731 !important;
+    color: #f1f3f5 !important;
+}
+[data-theme="dark"] .action-btn:hover {
+    background: #2c323f !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .data-table th {
+    background-color: #232731 !important;
+    border-bottom: 2px solid #2d3340 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .data-table td {
+    border-bottom: 1px solid #2d3340 !important;
+    color: #dee2e6 !important;
+}
+
+/* DM Specific Dark Mode Styles */
+[data-theme="dark"] .dm-schedule-controls {
+    background: #161922 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] .dm-control-label {
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .dm-schedule-controls input[type="date"],
+[data-theme="dark"] .dm-schedule-controls select {
+    background-color: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .dm-schedule-controls select option {
+    background-color: #232731 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .btn-confirm-accompaniment {
+    background: #2563eb;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+}
+[data-theme="dark"] .btn-confirm-accompaniment:hover {
+    background: #1d4ed8;
+}
+
+[data-theme="dark"] .badge-locked-status {
+    background: rgba(220, 53, 69, 0.22) !important;
+    color: #f87171 !important;
+    border-color: rgba(220, 53, 69, 0.4) !important;
+}
+[data-theme="dark"] .dm-lock-notice {
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .dm-accompanied-banner {
+    background: rgba(13, 110, 253, 0.15) !important;
+    border: 1px solid rgba(13, 110, 253, 0.4) !important;
+}
+[data-theme="dark"] .dm-accompanied-title {
+    color: #93c5fd !important;
+}
+[data-theme="dark"] .dm-accompanied-sub {
+    color: #bfdbfe !important;
+}
+
+[data-theme="dark"] .dm-office-banner {
+    background: #161922 !important;
+    border: 1px dashed #3d4554 !important;
+}
+[data-theme="dark"] .dm-office-title {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .dm-office-desc {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .visit-doc-name {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .visit-time-badge {
+    color: #60a5fa !important;
+}
+[data-theme="dark"] .target-type-badge {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .empty-table-msg {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .team-perf-subtitle {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .badge-hospital {
+    background: rgba(255, 193, 7, 0.18) !important;
+    color: #fde047 !important;
+    border: 1px solid rgba(255, 193, 7, 0.3) !important;
+}
+[data-theme="dark"] .badge-clinic {
+    background: rgba(13, 202, 240, 0.18) !important;
+    color: #67e8f9 !important;
+    border: 1px solid rgba(13, 202, 240, 0.3) !important;
+}
+[data-theme="dark"] .badge-pharmacy {
+    background: rgba(25, 135, 84, 0.2) !important;
+    color: #86efac !important;
+    border: 1px solid rgba(25, 135, 84, 0.35) !important;
+}
+[data-theme="dark"] .badge-product {
+    background: #232731 !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #3d4554 !important;
+}
+[data-theme="dark"] .badge-vacant {
+    background: #232731 !important;
+    color: #94a3b8 !important;
+    border: 1px solid #3d4554 !important;
+}
+
+[data-theme="dark"] .dm-rep-name {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .dm-ach-pct {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .dm-vacant-row {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .dm-vacant-text {
+    color: #64748b !important;
+}
+
+[data-theme="dark"] .plan-item.am {
+    background: rgba(13, 110, 253, 0.15) !important;
+    border-left: 4px solid #3b82f6 !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .plan-item.pm {
+    background: rgba(253, 126, 20, 0.15) !important;
+    border-left: 4px solid #f97316 !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .plan-item-desc {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .coverage-circle {
+    border-color: #232731 !important;
+    border-top-color: var(--primary) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .status-badge.completed {
+    background: rgba(25, 135, 84, 0.2) !important;
+    color: #86efac !important;
+    border: 1px solid rgba(25, 135, 84, 0.35) !important;
+}
+[data-theme="dark"] .status-badge.pending {
+    background: rgba(255, 193, 7, 0.2) !important;
+    color: #fde047 !important;
+    border: 1px solid rgba(255, 193, 7, 0.35) !important;
+}
+/* Multi-Day Accompaniment Schedule Styles */
+.dm-schedule-tab-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--gray-300);
+    background: var(--bg-card, #fff);
+    color: var(--gray-700);
+    transition: all 0.2s ease;
+}
+.dm-schedule-tab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.dm-schedule-day-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    background: rgba(13, 110, 253, 0.1);
+    color: var(--primary);
+}
+.dm-schedule-rep-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    background: rgba(25, 135, 84, 0.1);
+    color: var(--success);
+}
+.dm-schedule-office-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    background: rgba(108, 117, 125, 0.12);
+    color: var(--gray-700);
+}
+[data-theme="dark"] .dm-schedule-tab-btn {
+    background: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .dm-schedule-tab-btn.active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+}
+[data-theme="dark"] .dm-schedule-day-badge {
+    background: rgba(13, 110, 253, 0.2) !important;
+    color: #93c5fd !important;
+}
+[data-theme="dark"] .dm-schedule-rep-badge {
+    background: rgba(25, 135, 84, 0.2) !important;
+    color: #86efac !important;
+}
+[data-theme="dark"] .dm-schedule-office-badge {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .plan-item {
+    background: var(--surface-alt) !important;
+}
+[data-theme="dark"] .plan-header-title.am {
+    color: #67e8f9 !important;
+}
+[data-theme="dark"] .plan-header-title.pm {
+    color: #60a5fa !important;
+}
+[data-theme="dark"] .planned-target-row {
+    border-bottom-color: var(--gray-200) !important;
+}
+[data-theme="dark"] .planned-target-name {
+    color: #f1f3f5 !important;
+}
+[data-theme="dark"] .planned-target-date {
+    color: #9da5b1 !important;
+}
+[data-theme="dark"] .entry-type-badge.plan {
+    background: rgba(13, 110, 253, 0.25) !important;
+    color: #6ea8fe !important;
+}
+[data-theme="dark"] .entry-type-badge.actual {
+    background: rgba(255, 193, 7, 0.25) !important;
+    color: #ffda6a !important;
+}
+[data-theme="dark"] .double-companion-tag {
+    color: #c084fc !important;
+}
+[data-theme="dark"] .status-badge.completed {
+    background: rgba(25, 135, 84, 0.25) !important;
+    color: #75b798 !important;
+}
+/* --- END: Dark Mode Support --- */
+
+/* --- Responsive Adjustments for Dashboard Tables & Planned Targets --- */
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 16px 12px !important;
+    }
+    .data-table th,
+    .data-table td {
+        padding: 8px 6px !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .planned-target-row {
+        gap: 6px;
+        padding: 7px 0;
+    }
+    .planned-target-name {
+        font-size: 0.84rem !important;
+    }
+    .planned-target-date {
+        font-size: 0.74rem !important;
+    }
+}
+
+/* Field Accompaniment Schedule (Co-Visiting) Styles */
+.dm-schedule-pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: var(--gray-50);
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+}
+
+.dm-schedule-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #ffffff;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    color: var(--gray-800);
+    transition: all 0.2s ease;
+}
+
+.dm-schedule-pill .pill-date {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.dm-schedule-pill .pill-divider {
+    color: var(--gray-400);
+}
+
+.dm-schedule-pill .pill-rep {
+    font-weight: 700;
+    color: var(--success);
+}
+
+.dm-schedule-pill .pill-office {
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+[data-theme="dark"] .dm-schedule-pills-container {
+    background: #161a22 !important;
+    border-color: #2b3240 !important;
+}
+
+[data-theme="dark"] .dm-schedule-pill {
+    background: #1f242e !important;
+    border-color: #364050 !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .dm-schedule-pill .pill-date {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .dm-schedule-pill .pill-divider {
+    color: #4b5563 !important;
+}
+
+[data-theme="dark"] .dm-schedule-pill .pill-rep {
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .dm-schedule-pill .pill-office {
+    color: #cbd5e1 !important;
+}
+
+/* Co-Visiting Table and Sticky Column */
+.dm-covisit-table {
+    min-width: 530px;
+    border-collapse: collapse;
+}
+
+.dm-covisit-sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--bg-card, #ffffff);
+}
+
+html[dir="rtl"] .dm-covisit-sticky-col {
+    left: auto;
+    right: 0;
+}
+
+[data-theme="dark"] .dm-covisit-sticky-col {
+    background: #1c2229 !important;
+}
+
+[data-theme="dark"] tr:hover .dm-covisit-sticky-col {
+    background: #252b35 !important;
+}
+
+.covisit-action-cell {
+    white-space: nowrap !important;
+}
+
+/* Prompt and Accompaniment Banners */
+.dm-prompt-banner {
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    background: var(--gray-50);
+    border: 2px dashed var(--gray-300);
+    margin-bottom: 16px;
+}
+
+[data-theme="dark"] .dm-prompt-banner {
+    background: #181b22 !important;
+    border-color: #384252 !important;
+}
+
+[data-theme="dark"] .dm-prompt-banner strong {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .dm-prompt-banner p,
+[data-theme="dark"] .dm-prompt-banner span {
+    color: #94a3b8 !important;
+}
+
+.dm-office-banner {
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .dm-office-banner {
+    background: #181b22 !important;
+    border-color: #2b3240 !important;
+}
+
+.dm-accompanied-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .dm-accompanied-banner {
+    background: #181b22 !important;
+    border-color: #2b3240 !important;
+}
+
+@media (max-width: 768px) {
+    .dm-schedule-header {
+        flex-direction: column;
+        gap: 10px !important;
+    }
+    .dm-schedule-nav-btn {
+        width: 100%;
+    }
+    .dm-schedule-nav-btn a {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.82rem !important;
+        padding: 7px 12px !important;
+    }
+    .dm-schedule-pill {
+        width: 100%;
+        justify-content: space-between;
+        font-size: 0.8rem;
+    }
+    .covisit-action-cell .btn-convert-action {
+        padding: 5px 9px !important;
+        font-size: 0.75rem !important;
+        white-space: nowrap !important;
+    }
+}
+
+

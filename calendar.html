@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Calendar</title>
+
+    <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme (FOUC) -->
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/calendar.css">
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar Navigation (Drawer on mobile) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+                  <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+
+            <div class="content" id="pageContent">
+                
+                <div class="manager-filter" id="managerFilter">
+                    <div class="manager-filter-inner">
+                        <label class="fw-bold mb-0" data-i18n="selectRep">Viewing Schedule For:</label>
+                        <div class="current-target-pill" id="currentTargetPill">
+                            <span class="target-role-badge badge bg-primary" id="targetRoleBadge">Team</span>
+                            <span class="target-name fw-bold" id="targetNameDisplay">All Subordinates (Team View)</span>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="openOrgTreeModal()" id="btnOpenTreePicker">
+                            🌳 <span data-i18n="browseOrgTree">Browse Org Hierarchy</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="resetCalendarToAll()" id="btnResetCalendar" style="display: none;">
+                            👥 <span data-i18n="viewAllTeam">View All Team</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-nav">
+                            <button id="prevMonth">&lt;</button>
+                            <h2 class="calendar-title" id="monthYearDisplay">September 2026</h2>
+                            <button id="nextMonth">&gt;</button>
+                        </div>
+                        <div class="calendar-nav">
+                            <button id="btnToday" data-i18n="today">Today</button>
+                        </div>
+                    </div>
+
+                    <div class="calendar-legend">
+                        <div class="legend-item"><div class="legend-dot dot-completed"></div><span data-i18n="completedVisit">Completed Visit</span></div>
+                        <div class="legend-item"><div class="legend-dot dot-planned"></div><span data-i18n="plannedVisit">Planned Visit</span></div>
+                        <div class="legend-item"><div class="legend-block block-approved-leave"></div><span data-i18n="approvedLeave">Approved Leave</span></div>
+                        <div class="legend-item"><div class="legend-block block-pending-leave"></div><span data-i18n="pendingLeave">Pending Leave</span></div>
+                        <div class="legend-item"><div class="legend-dot dot-activity"></div><span data-i18n="trainingMeeting">Training/Meeting</span></div>
+                        <div class="legend-item"><div class="legend-dot dot-office"></div><span data-i18n="officeWork">Office Work</span></div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Populated by calendar.js -->
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Day Detail Overlay and Panel -->
+    <div class="detail-overlay" id="detailOverlay"></div>
+    <div class="day-detail-panel" id="dayDetailPanel">
+        <div class="detail-header">
+            <h3 class="detail-title" id="detailDateTitle">September 1, 2026</h3>
+            <button class="close-detail" id="closeDetail">&times;</button>
+        </div>
+        
+        <div id="detailContent">
+            <!-- Populated by calendar.js -->
+        </div>
+    </div>
+
+    <!-- Interactive Org Tree Picker Modal -->
+    <div class="modal-overlay" id="orgTreeOverlay" style="display: none;"></div>
+    <div class="org-tree-modal" id="orgTreeModal" style="display: none;">
+        <div class="org-tree-modal-header">
+            <div>
+                <h4 class="mb-1 fw-bold" data-i18n="orgTreeTitle">🏢 Select Team Member / Branch</h4>
+                <p class="text-muted small mb-0" data-i18n="orgTreeSubtitle">Pick any Level (BU, LM, DM, or Rep) or search directly</p>
+            </div>
+            <button class="btn-close-tree" onclick="closeOrgTreeModal()">&times;</button>
+        </div>
+        <div class="org-tree-search-box">
+            <input type="text" class="form-control" id="orgTreeSearchInput" placeholder="Search by name, role, or employee code..." oninput="filterOrgTree(this.value)">
+        </div>
+        <div class="org-tree-modal-body" id="orgTreeContainer">
+            <!-- Dynamically populated collapsible tree and search results -->
+        </div>
+        <div class="org-tree-modal-footer">
+            <button class="btn btn-outline-secondary btn-sm" onclick="resetCalendarToAll()">
+                👥 <span data-i18n="selectAllTeam">Select Entire Team</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="closeOrgTreeModal()" data-i18n="close">Close</button>
+        </div>
+    </div>
+    <script src="js/calendar.js"></script>
+</body>
+</html>

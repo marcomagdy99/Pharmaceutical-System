@@ -1,0 +1,226 @@
+/* ==========================================================================
+   PharmaCare - Leaves Page Stylesheet
+   Includes: Balance Cards, Status Badges, Manager Inbox, Multi-level Approval Tracker,
+   and complete Dark Mode Bootstrap compatibility overrides.
+   ========================================================================== */
+
+/* --- Leave Balance Card --- */
+.leave-balance-card {
+  border-radius: 14px;
+  border: none;
+  background-color: var(--white);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.leave-balance-card:hover {
+  transform: translateY(-2px);
+}
+
+.progress-bar {
+  border-radius: 10px;
+}
+
+.status-badge {
+  border-radius: 20px;
+  padding: 0.25em 0.75em;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.manager-section {
+  display: none;
+}
+
+/* Multi-level Approval Step Tags */
+.approval-step-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.approval-step-tag.approved {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #a3cfbb;
+}
+
+.approval-step-tag.pending {
+  background: #fff3cd;
+  color: #664d03;
+  border: 1px solid #ffe69c;
+}
+
+.approval-step-tag.rejected {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+/* Leave Item Title */
+.leave-item-title {
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+/* ==========================================================================
+   Dark Mode Overrides for Leaves Management
+   ========================================================================== */
+[data-theme="dark"] body {
+  background-color: var(--bg-color) !important;
+  color: var(--gray-800) !important;
+}
+
+[data-theme="dark"] .leave-balance-card {
+  background-color: var(--white) !important;
+  border-color: var(--gray-200) !important;
+  color: var(--gray-800) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .leave-balance-card h6,
+[data-theme="dark"] .leave-balance-card h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .leave-balance-card .text-muted,
+[data-theme="dark"] .leave-balance-card small {
+  color: #cbd5e1 !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .card {
+  background-color: var(--white) !important;
+  color: var(--gray-800) !important;
+  border: 1px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .card-header {
+  background-color: var(--surface-alt) !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: var(--surface-alt) !important;
+  border-color: var(--gray-300) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: var(--gray-500) !important;
+}
+
+[data-theme="dark"] .form-control[readonly] {
+  background-color: var(--surface-dim) !important;
+  color: #cbd5e1 !important;
+  border-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .table {
+  --bs-table-bg: var(--white) !important;
+  --bs-table-color: var(--gray-800) !important;
+  --bs-table-hover-bg: var(--surface-hover) !important;
+  --bs-table-hover-color: #ffffff !important;
+  --bs-table-border-color: var(--gray-200) !important;
+  background-color: var(--white) !important;
+  color: var(--gray-800) !important;
+  border-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .table thead th,
+[data-theme="dark"] .table-light th {
+  background-color: var(--surface-alt) !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .table tbody tr,
+[data-theme="dark"] .table tbody td {
+  background-color: var(--white) !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover td {
+  background-color: var(--surface-hover) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .leave-item-title {
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .approval-step-tag.approved {
+  background: rgba(25, 135, 84, 0.25) !important;
+  color: #75b798 !important;
+  border-color: rgba(25, 135, 84, 0.4) !important;
+}
+
+[data-theme="dark"] .approval-step-tag.pending {
+  background: rgba(255, 193, 7, 0.25) !important;
+  color: #ffda6a !important;
+  border-color: rgba(255, 193, 7, 0.4) !important;
+}
+
+[data-theme="dark"] .approval-step-tag.rejected {
+  background: rgba(220, 53, 69, 0.25) !important;
+  color: #ea868f !important;
+  border-color: rgba(220, 53, 69, 0.4) !important;
+}
+
+/* Ensure HR governance panels align with equal height cards */
+#hrHolidaySection {
+  align-items: stretch;
+}
+
+/* ==========================================================================
+   Mobile Responsive Adjustments for Leave Tables & Records
+   ========================================================================== */
+@media (max-width: 768px) {
+  .hr-stats-badges {
+    width: 100% !important;
+    display: flex !important;
+    gap: 6px !important;
+    margin-top: 4px;
+  }
+
+  .hr-stats-badges .badge {
+    flex: 1 1 0 !important;
+    text-align: center !important;
+    font-size: 0.72rem !important;
+    padding: 6px 4px !important;
+    white-space: nowrap !important;
+  }
+
+  #historyFilter {
+    width: 100% !important;
+    margin-top: 6px;
+  }
+
+  .leaves-table th,
+  .leaves-table td {
+    padding: 8px 6px !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
+  }
+
+  .approval-step-tag {
+    font-size: 0.68rem !important;
+    padding: 2px 6px !important;
+    margin-bottom: 2px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap;
+  }
+
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0 0 14px 14px;
+  }
+}

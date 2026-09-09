@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Profile</title>
+        <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/profile.css">
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+                                    <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+            <div class="content" id="pageContent">
+                <div class="card profile-header-card">
+                    <div class="profile-header">
+                        <div class="profile-photo" id="profilePhotoDiv" onclick="document.getElementById('photoInput').click()">
+                            <span id="profileInitials">JD</span>
+                            <img id="profileImagePreview" src="" alt="Profile Photo">
+                            <div class="profile-photo-overlay" data-i18n="upload_photo">Upload Photo</div>
+                            <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                        </div>
+                        <div class="profile-info">
+                            <h2 id="profileNameDisplay">John Doe</h2>
+                            <div class="profile-badges">
+                                <span class="badge badge-role" id="profileRoleBadge" data-i18n="role_rep">Medical Rep</span>
+                                <span class="badge badge-emp" id="profileEmpBadge">EMP-001</span>
+                                <span class="badge badge-area" id="profileAreaBadge">Cairo Territory</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header" data-i18n="personal_info">Personal Information</div>
+                        <form id="personalInfoForm">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="full_name">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" value="" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="email">Email</label>
+                                <input type="email" class="form-control" id="email" value="" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="phone">Phone</label>
+                                <input type="tel" class="form-control" id="phone" value="" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="employee_code">Employee Code</label>
+                                <input type="text" class="form-control" id="empCodeInput" value="" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="product_line">Product Line</label>
+                                <input type="text" class="form-control" id="productLineInput" value="" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="manager">Manager</label>
+                                <input type="text" class="form-control" id="managerInput" value="" readonly>
+                            </div>
+                            <button type="submit" class="btn-primary" data-i18n="save_changes">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <div class="grid-1">
+                        <div class="card">
+                            <div class="card-header" data-i18n="leave_balance">Leave Balance</div>
+                            <div class="leave-item">
+                                <div class="leave-header">
+                                    <span data-i18n="annual_leave">Annual Leave</span>
+                                    <span id="annualLeaveText">0 / 21 <span data-i18n="days">Days</span></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-annual" id="annualLeaveProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="leave-item">
+                                <div class="leave-header">
+                                    <span data-i18n="sick_leave">Sick Leave</span>
+                                    <span id="sickLeaveText">0 / 7 <span data-i18n="days">Days</span></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-sick" id="sickLeaveProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="leave-item">
+                                <div class="leave-header">
+                                    <span data-i18n="emergency_leave">Emergency Leave</span>
+                                    <span id="emergencyLeaveText">0 / 3 <span data-i18n="days">Days</span></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-emergency" id="emergencyLeaveProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="leave-item">
+                                <div class="leave-header">
+                                    <span data-i18n="unpaid_leave">Unpaid Leave</span>
+                                    <span id="unpaidLeaveText">0 <span data-i18n="days">Days</span></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-unpaid" id="unpaidLeaveProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header" data-i18n="preferences">Preferences</div>
+                            <form id="preferencesForm">
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="language">Language</label>
+                                    <select class="form-control" id="languageSelect">
+                                        <option value="en">English</option>
+                                        <option value="ar">العربية (Arabic)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span data-i18n="email_notifications">Email Notifications</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span data-i18n="push_notifications">Push Notifications</span>
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn-primary" data-i18n="save_preferences">Save Preferences</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header" data-i18n="change_password">Change Password</div>
+                    <form id="passwordForm">
+                        <div class="grid-2">
+                            <div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="current_password">Current Password</label>
+                                    <input type="password" class="form-control" id="currentPassword" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="new_password">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword" required>
+                                    <div class="password-strength">
+                                        <div class="strength-fill" id="strengthIndicator"></div>
+                                    </div>
+                                    <ul class="req-list">
+                                        <li id="req-length" data-i18n="req_length">At least 8 characters</li>
+                                        <li id="req-upper" data-i18n="req_upper">At least one uppercase letter</li>
+                                        <li id="req-number" data-i18n="req_number">At least one number</li>
+                                    </ul>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="confirm_password">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required>
+                                </div>
+                                <button type="submit" class="btn-primary" data-i18n="update_password">Update Password</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="js/profile.js"></script>
+</body>
+</html>

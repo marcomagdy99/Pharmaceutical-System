@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Announcements</title>
+        <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- START CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/announcements.css">
+    <!-- END CSS -->
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- START SIDEBAR -->
+        <aside class="sidebar" id="sidebar"></aside>
+        <!-- END SIDEBAR -->
+        
+        <main class="main-content">
+                  <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+            <!-- END TOPBAR -->
+            
+            <!-- START PAGE CONTENT -->
+            <div class="content" id="pageContent">
+                <!-- Content will be injected by announcements.js -->
+            </div>
+            <!-- END PAGE CONTENT -->
+        </main>
+    </div>
+    
+    <!-- Modal Container for Full Overlay Portals -->
+    <div id="modalContainer"></div>
+
+    <!-- START SCRIPTS -->
+    <script src="js/announcements.js"></script>
+    <!-- END SCRIPTS -->
+</body>
+</html>

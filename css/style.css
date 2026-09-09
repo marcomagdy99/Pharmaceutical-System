@@ -1,0 +1,846 @@
+/* ==========================================================================
+   PharmaCare - Shared Master Stylesheet
+   Includes: Global variables, base reset, layout, fully responsive topbar
+   with mobile-optimized 2-tier header, mobile drawer, and Dark Mode engine.
+   ========================================================================== */
+
+/* --- START: CSS Variables --- */
+:root {
+  --primary: #0d6efd; 
+  --primary-dark: #0a58ca; 
+  --primary-light: #e7f1ff;
+  --success: #198754; 
+  --success-light: #d1e7dd;
+  --warning: #fd7e14; 
+  --warning-light: #fff3cd;
+  --danger: #dc3545; 
+  --danger-light: #f8d7da;
+  --info: #0dcaf0; 
+  --info-light: #cff4fc;
+  --gray-50: #f8f9fa; 
+  --gray-100: #f1f3f5; 
+  --gray-200: #e9ecef; 
+  --gray-300: #dee2e6;
+  --gray-400: #adb5bd; 
+  --gray-500: #6c757d; 
+  --gray-600: #495057; 
+  --gray-700: #343a40; 
+  --gray-800: #212529;
+  --white: #fff;
+  --surface-alt: var(--gray-50);
+  --surface-dim: var(--gray-100);
+  --surface-hover: var(--gray-100);
+  
+  --sidebar-width: 280px; 
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-main: 'Inter', sans-serif;
+  --bg-color: #f4f6f9;
+}
+
+html[dir='rtl'] { 
+  --font-main: 'Cairo', sans-serif; 
+}
+/* --- END: CSS Variables --- */
+
+/* --- START: Reset & Base Styles --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-main);
+  background-color: var(--bg-color);
+  color: var(--gray-800);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100%;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary);
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--primary-dark);
+}
+
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font-family: var(--font-main);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: var(--font-main);
+}
+/* --- END: Reset & Base Styles --- */
+
+/* --- START: App Layout --- */
+.app {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100%;
+  max-width: 100%;
+}
+
+.content-scroll,
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+  max-width: 100%;
+}
+/* --- END: App Layout --- */
+
+/* ==========================================================================
+   Topbar & Responsive Navigation Header
+   ========================================================================== */
+.topbar {
+  background: var(--white) !important;
+  padding: 10px 20px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.pharma-topbar-top-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  flex-wrap: nowrap !important;
+  gap: 12px;
+}
+
+.pharma-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.pharma-mobile-btn {
+  display: none;
+  font-size: 1.25rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-700);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.pharma-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-wrap: nowrap;
+}
+
+.pharma-brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), #0a58ca);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.35);
+  flex-shrink: 0;
+}
+
+.pharma-brand-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--gray-800);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+/* User Profile Badge Above Navbar */
+.pharma-user-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gray-100);
+  padding: 4px 14px 4px 6px;
+  border-radius: 24px;
+  border: 1px solid var(--gray-300);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  max-width: 100%;
+}
+
+.user-avatar-mini {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #0a58ca);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.user-info-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.user-display-name {
+  font-weight: 700;
+  color: var(--gray-800);
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-display-code {
+  color: var(--gray-500);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.user-role-tag {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Actions Group */
+.pharma-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.pharma-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pharma-action-btn:hover {
+  background: var(--gray-100);
+  color: var(--gray-900);
+  border-color: var(--gray-400);
+}
+
+.pharma-logout-btn {
+  border-color: rgba(220, 53, 69, 0.3);
+  color: var(--danger);
+}
+.pharma-logout-btn:hover {
+  background: var(--danger);
+  color: white !important;
+  border-color: var(--danger);
+}
+
+/* Center Horizontal Navbar Strip */
+.pharma-nav-center {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.pharma-navbar-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #23272d;
+  padding: 4px 8px;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.15);
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: none;
+}
+.pharma-navbar-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.pharma-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.18s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.pharma-nav-item:hover {
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+}
+
+.pharma-nav-item.active {
+  background: rgba(0, 0, 0, 0.4);
+  color: #ff9f1c !important;
+  font-weight: 700;
+  border: 1px solid rgba(255, 159, 28, 0.35);
+  box-shadow: 0 0 8px rgba(255, 159, 28, 0.25);
+}
+
+/* ==========================================================================
+   Responsive Breakpoints: Desktop Full Width vs Mobile
+   ========================================================================== */
+@media (min-width: 1025px) {
+  .sidebar {
+    display: none !important;
+  }
+  .main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  .pharma-mobile-btn {
+    display: none !important;
+  }
+  .pharma-user-mobile-row {
+    display: none !important;
+  }
+}
+
+/* Mobile Screens (<= 1024px) */
+@media (max-width: 1024px) {
+  .pharma-nav-center {
+    display: none !important;
+  }
+
+  .pharma-mobile-btn {
+    display: inline-flex !important;
+  }
+
+  .topbar {
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+
+  .pharma-topbar-top-row {
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .pharma-topbar-top-row .pharma-user-status-pill {
+    display: none !important;
+  }
+
+  .pharma-user-mobile-row {
+    display: flex !important;
+    justify-content: center;
+    width: 100%;
+    padding: 2px 0;
+  }
+
+  .pharma-user-mobile-row .pharma-user-status-pill {
+    display: inline-flex !important;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .content,
+  .content-scroll {
+    padding: 12px !important;
+  }
+
+  .grid-2-col {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .sidebar {
+    display: flex !important;
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 280px !important;
+    max-width: 80vw !important;
+    height: 100vh !important;
+    background: var(--white);
+    z-index: 2000 !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25) !important;
+    flex-direction: column;
+  }
+
+  html[dir="rtl"] .sidebar {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+    box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .sidebar-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar-nav {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+html[dir="rtl"] .pharma-user-status-pill {
+  padding: 4px 6px 4px 14px;
+}
+
+@media (max-width: 768px) {
+  #pageContent {
+    padding-bottom: 70px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  #langLabel,
+  .logout-text,
+  #themeText {
+    display: none !important;
+  }
+  .pharma-action-btn {
+    padding: 5px 8px !important;
+  }
+  .pharma-brand-title {
+    font-size: 1.05rem;
+  }
+  .user-role-tag {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Demo Switcher Bar
+   ========================================================================== */
+.demo-switcher {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #1a1d24;
+  color: white;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  z-index: 1050;
+  font-size: 11px;
+  border-top: 1px solid #2d3340;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.demo-switcher .btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid #4a5468;
+  color: #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.demo-switcher .btn:hover {
+  background: #282d38;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Dark Mode Styles
+   ========================================================================== */
+:root[data-theme="dark"],
+html[data-theme="dark"],
+body[data-theme="dark"],
+[data-theme="dark"] {
+  --bg-color: #121418;
+  --white: #1e2229;
+  --gray-50: #1a1d24;
+  --gray-100: #222731;
+  --gray-200: #2d3340;
+  --gray-300: #3d4554;
+  --gray-400: #6c757d;
+  --gray-500: #9da5b1;
+  --gray-600: #c2c7d0;
+  --gray-700: #dee2e6;
+  --gray-800: #f1f3f5;
+  --primary-light: #162a4a;
+  --surface-alt: #232731;
+  --surface-dim: #16191f;
+  --surface-hover: #282d38;
+}
+
+html[data-theme="dark"],
+body[data-theme="dark"],
+[data-theme="dark"] body {
+  background-color: #121418 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .topbar {
+  background: #181b21 !important;
+  border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .pharma-brand-title {
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .pharma-user-status-pill {
+  background: #232731 !important;
+  border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .user-display-name {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .user-display-code {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .user-role-tag {
+  background: #162a4a !important;
+  color: #58a6ff !important;
+}
+
+[data-theme="dark"] .pharma-action-btn {
+  background: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .pharma-action-btn:hover {
+  background: #2d3340 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .sidebar {
+  background: #181b21 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-body,
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-light,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .accordion-item {
+  background-color: #1e2229 !important;
+  color: #f1f3f5 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+  background-color: #232731 !important;
+  border-color: #2d3340 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .table {
+  --bs-table-bg: transparent !important;
+  --bs-table-color: #dee2e6 !important;
+  color: #dee2e6 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .table thead,
+[data-theme="dark"] .table thead th,
+[data-theme="dark"] .table thead.bg-light,
+[data-theme="dark"] .table thead.table-light,
+[data-theme="dark"] .table-light,
+[data-theme="dark"] .table-light th,
+[data-theme="dark"] .table-light td {
+  background-color: #232731 !important;
+  color: #f1f3f5 !important;
+  border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .table tbody tr {
+  border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+  background-color: #282d38 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control.bg-light,
+[data-theme="dark"] .form-select.bg-light {
+  background-color: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: #232731 !important;
+  border-color: #388bfd !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: #6c757d !important;
+}
+
+[data-theme="dark"] .input-group-text,
+[data-theme="dark"] .input-group-text.bg-white,
+[data-theme="dark"] .input-group-text.bg-light {
+  background-color: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .accordion-button {
+  background-color: #1e2229 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+  background-color: #162a4a !important;
+  color: #58a6ff !important;
+  border-bottom: 1px solid #2d3340 !important;
+}
+
+[data-theme="dark"] .accordion-button::after {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .accordion-body,
+[data-theme="dark"] .accordion-body.bg-white {
+  background-color: #1a1d24 !important;
+  color: #f1f3f5 !important;
+  border-top: 1px solid #2d3340 !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+  background-color: #232731 !important;
+  border: 1px solid #3d4554 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: #2d3340 !important;
+  color: #ffffff !important;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  gap: 8px;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: var(--gray-200); color: var(--gray-800); }
+.btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); }
+.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+
+/* Convert to Actual & Action Buttons */
+.btn-convert-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #0d6efd;
+  color: #ffffff !important;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.btn-convert-action:hover {
+  background: #0b5ed7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.45);
+  color: #ffffff !important;
+}
+@media (max-width: 576px) {
+  .btn-convert-action {
+    padding: 5px 9px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+}
+[data-theme="dark"] .btn-convert-action {
+  background: #2563eb;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+}
+[data-theme="dark"] .btn-convert-action:hover {
+  background: #1d4ed8;
+  color: #ffffff !important;
+}
+
+/* Modal Box with high contrast Dark Mode support */
+.modal-box {
+  background: #ffffff;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .modal-box {
+  background: #1e2229 !important;
+  color: #f1f3f5 !important;
+  border-color: #2d3340 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+}
+[data-theme="dark"] .modal-box label {
+  color: #f1f3f5 !important;
+}
+[data-theme="dark"] .modal-box h4 {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .modal-box .form-control,
+[data-theme="dark"] .modal-box textarea {
+  background-color: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #f1f3f5 !important;
+}
+[data-theme="dark"] .modal-box .pill-item {
+  background: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #dee2e6 !important;
+}
+
+/* ==========================================================================
+   Global Modal Layering & Clipping Protection
+   Ensures ALL modals across all modules stay on top of the sticky topbar (1100)
+   and mobile sidebar (2000).
+   ========================================================================== */
+.modal,
+.custom-modal,
+.org-tree-modal,
+.day-detail-panel {
+  z-index: 2500 !important;
+}
+
+.modal-backdrop,
+.modal-overlay,
+.detail-overlay,
+.custom-modal-overlay {
+  z-index: 2490 !important;
+}
+
+.modal-dialog {
+  z-index: 2501 !important;
+}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Login</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
+    
+    <!-- Feather icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+
+    <!-- START: Login Container -->
+    <div class="login-container">
+        
+        <!-- START: Left Side (Form Area) -->
+        <div class="login-left">
+            <!-- START: Language Toggle -->
+            <button class="language-toggle" id="langToggle">
+                <i data-feather="globe" style="width: 16px; height: 16px;"></i>
+                <span id="langText">عربي</span>
+            </button>
+            <!-- END: Language Toggle -->
+
+            <!-- START: Department Selection View -->
+            <div class="department-view" id="departmentView">
+                <div class="logo-container">
+                    <i data-feather="activity" class="logo-icon"></i>
+                    <h1 class="logo-title">PharmaCare</h1>
+                    <p class="logo-subtitle" data-i18n="login_subtitle">Pharmaceutical CRM System</p>
+                </div>
+                
+                <h2 class="department-title" data-i18n="select_department">Select Your Department</h2>
+                
+                <div class="dept-cards">
+                    <div class="dept-card" data-dept="admin" id="cardAdmin">
+                        <i data-feather="settings"></i>
+                        <h3 data-i18n="dept_admin">Admin</h3>
+                        <p data-i18n="dept_admin_desc">System Administrators</p>
+                    </div>
+                    <div class="dept-card" data-dept="sales" id="cardSales">
+                        <i data-feather="users"></i>
+                        <h3 data-i18n="dept_sales">Sales & Marketing</h3>
+                        <p data-i18n="dept_sales_desc">BU, LM, DM, Medical Rep</p>
+                    </div>
+                    <div class="dept-card" data-dept="hr" id="cardHR">
+                        <i data-feather="user"></i>
+                        <h3 data-i18n="dept_hr">Human Resources</h3>
+                        <p data-i18n="dept_hr_desc">HR & Personnel</p>
+                    </div>
+                </div>
+                
+                <div class="login-footer">
+                    <span data-i18n="footer_text">© 2026 PharmaCare. All rights reserved.</span>
+                </div>
+            </div>
+            <!-- END: Department Selection View -->
+
+            <!-- START: Login Form View -->
+            <div class="login-box" id="loginBox" style="display: none;">
+                <button class="back-btn" id="backToDept">
+                    <i data-feather="arrow-left"></i> 
+                    <span data-i18n="back">Back to Selection</span>
+                </button>
+                
+                <div class="logo-container">
+                    <i data-feather="activity" class="logo-icon"></i>
+                    <h1 class="logo-title">PharmaCare</h1>
+                    <p class="logo-subtitle" id="selectedDeptTitle">Department Login</p>
+                </div>
+
+                <div class="error-message" id="errorMessage" data-i18n="error_invalid">Invalid email or password.</div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="email_label">Email Address</label>
+                    <div class="input-group">
+                        <i data-feather="mail" class="input-icon"></i>
+                        <input type="email" id="email" class="form-control" data-i18n-placeholder="email_placeholder" placeholder="Enter your email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="password_label">Password</label>
+                    <div class="input-group">
+                        <i data-feather="lock" class="input-icon"></i>
+                        <input type="password" id="password" class="form-control" data-i18n-placeholder="password_placeholder" placeholder="Enter your password">
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i data-feather="eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <span data-i18n="remember_me">Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password" data-i18n="forgot_password">Forgot password?</a>
+                </div>
+
+                <button type="button" class="btn-login" id="loginBtn">
+                    <span class="btn-text" data-i18n="login_btn">Login</span>
+                    <div class="spinner"></div>
+                </button>
+
+                <div class="login-footer">
+                    <span data-i18n="footer_text">© 2026 PharmaCare. All rights reserved.</span>
+                </div>
+            </div>
+            <!-- END: Login Form View -->
+            
+        </div>
+        <!-- END: Left Side (Form Area) -->
+
+        <!-- START: Right Side (Brand Panel) -->
+        <div class="login-right">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            
+            <div class="brand-content">
+                <i data-feather="hexagon" class="brand-icon"></i>
+                <h2 class="brand-tagline" data-i18n="brand_tagline">Empowering Medical Representatives</h2>
+                <p class="brand-desc" data-i18n="brand_desc">Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.</p>
+            </div>
+        </div>
+        <!-- END: Right Side (Brand Panel) -->
+        
+    </div>
+    <!-- END: Login Container -->
+
+    <!-- External JavaScript without any inline scripts -->
+    <script src="js/login.js"></script>
+</body>
+</html>

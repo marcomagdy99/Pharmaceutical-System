@@ -1,0 +1,352 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pageTitle">Plans to Review - PharmaCare</title>
+
+  <!-- Synchronous theme execution -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('pharmaTheme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/visits.css">
+  <style>
+    .plans-stat-card {
+      background: var(--card-bg, #ffffff);
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .plans-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .plans-rep-card {
+      background: var(--card-bg, #ffffff);
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+    }
+    .plans-rep-header {
+      padding: 16px 20px;
+      background: var(--gray-50, #f8fafc);
+      border-bottom: 1px solid var(--border-color, #e2e8f0);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .badge-count {
+      background: var(--warning, #ffc107);
+      color: #744210;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .visit-row:hover {
+      background: rgba(0,0,0,0.015);
+    }
+
+    /* Dark Mode Enhanced Legibility & Contrast */
+    [data-theme="dark"] .plans-stat-card,
+    [data-theme="dark"] .plans-rep-card {
+      background: #1e2229 !important;
+      border-color: #2d3340 !important;
+      color: #f1f3f5 !important;
+    }
+    [data-theme="dark"] .plans-rep-header {
+      background: #232731 !important;
+      border-bottom-color: #2d3340 !important;
+      color: #f1f3f5 !important;
+    }
+    [data-theme="dark"] .page-main-title,
+    [data-theme="dark"] .rep-title,
+    [data-theme="dark"] .visit-doctor-title {
+      color: #ffffff !important;
+    }
+    [data-theme="dark"] .text-muted,
+    [data-theme="dark"] .rep-meta-text {
+      color: #9da5b1 !important;
+    }
+    [data-theme="dark"] .badge-count {
+      background: #995c00 !important;
+      color: #ffda6a !important;
+    }
+    [data-theme="dark"] .visit-row:hover {
+      background: #282d38 !important;
+    }
+    [data-theme="dark"] .plans-table-head {
+      background-color: #232731 !important;
+      color: #9da5b1 !important;
+      border-bottom: 1px solid #2d3340 !important;
+    }
+    [data-theme="dark"] .table td {
+      border-bottom-color: #2d3340 !important;
+      color: #dee2e6 !important;
+    }
+    [data-theme="dark"] .modal-box {
+      background: #1e2229 !important;
+      color: #f1f3f5 !important;
+      border: 1px solid #2d3340 !important;
+    }
+
+    /* Sticky Doctor/Hospital Column */
+    .plans-col-doctor {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--card-bg, #ffffff);
+      white-space: nowrap;
+      min-width: 140px;
+    }
+    html[dir="rtl"] .plans-col-doctor {
+      left: auto;
+      right: 0;
+    }
+    [data-theme="dark"] .plans-col-doctor {
+      background: #1e2229 !important;
+    }
+    [data-theme="dark"] tr:hover .plans-col-doctor {
+      background: #282d38 !important;
+    }
+    [data-theme="dark"] thead .plans-col-doctor {
+      background: #232731 !important;
+    }
+
+    /* Day Plan Block & Table Styling */
+    .day-plan-block {
+      background: var(--card-bg, #ffffff);
+      border: 1px solid var(--border-color, #e2e8f0);
+    }
+    .day-plan-header {
+      background: var(--gray-100, #f8fafc);
+      border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+    [data-theme="dark"] .day-plan-block {
+      background: #1e2229 !important;
+      border-color: #2d3340 !important;
+    }
+    [data-theme="dark"] .day-plan-header {
+      background: #232731 !important;
+      border-bottom-color: #2d3340 !important;
+      color: #f1f3f5 !important;
+    }
+
+    .plans-day-table th,
+    .plans-day-table td {
+      padding: 10px 12px !important;
+    }
+    .plans-col-period {
+      white-space: nowrap;
+      width: 70px;
+    }
+    .plans-col-products {
+      white-space: nowrap;
+    }
+    .plans-col-actions {
+      white-space: nowrap !important;
+      min-width: 130px;
+    }
+
+    @media (max-width: 768px) {
+      .plans-day-table th,
+      .plans-day-table td {
+        padding: 8px 6px !important;
+        font-size: 0.82rem !important;
+      }
+      .plans-col-doctor {
+        min-width: 120px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+      }
+      .visit-doctor-title {
+        font-size: 0.84rem !important;
+        display: inline-block;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      .target-badge {
+        font-size: 0.65rem !important;
+        padding: 2px 5px !important;
+      }
+      .btn-action-approve {
+        padding: 4px 8px !important;
+        font-size: 0.75rem !important;
+        white-space: nowrap !important;
+      }
+      .btn-action-reject {
+        padding: 4px 8px !important;
+        font-size: 0.75rem !important;
+      }
+      .plans-col-actions {
+        min-width: 105px !important;
+      }
+      .plans-rep-header {
+        padding: 12px 14px !important;
+      }
+      .day-plan-header {
+        padding: 10px 12px !important;
+      }
+    }
+  </style>
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+            <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+
+      <!-- Main Content -->
+      <div class="content" id="pageContent">
+        <div class="container-fluid py-4">
+
+          <!-- Page Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+              <h2 class="fw-bold mb-1 page-main-title" data-i18n="plansReviewTitle">
+                📋 Plans to Review & Approvals
+              </h2>
+              <p class="text-muted mb-0" data-i18n="plansReviewSubtitle">
+                Review and approve planned visit schedules submitted by your medical representatives
+              </p>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline" onclick="window.location.href='visits.html'">
+                📍 <span data-i18n="btnGoToVisits">Go to Visits</span>
+              </button>
+              <button class="btn btn-primary" onclick="approveAllPendingAcrossTeam()" id="btnApproveAllGlobal">
+                ✅ <span data-i18n="btnApproveAll">Approve All Plans</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Stat Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="plans-stat-card">
+                <div class="plans-stat-icon" style="background: rgba(255, 193, 7, 0.15); color: #b45309;">
+                  ⏳
+                </div>
+                <div>
+                  <div class="text-muted small" data-i18n="statPendingVisits">Pending Visits to Review</div>
+                  <h3 class="fw-bold mb-0" id="statPendingCount">0</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="plans-stat-card">
+                <div class="plans-stat-icon" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd;">
+                  👥
+                </div>
+                <div>
+                  <div class="text-muted small" data-i18n="statPendingReps">Representatives Awaiting Approval</div>
+                  <h3 class="fw-bold mb-0" id="statPendingRepsCount">0</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="plans-stat-card">
+                <div class="plans-stat-icon" style="background: rgba(25, 135, 84, 0.15); color: #198754;">
+                  ✅
+                </div>
+                <div>
+                  <div class="text-muted small" data-i18n="statApprovedToday">Approved Plans Active</div>
+                  <h3 class="fw-bold mb-0" id="statApprovedCount">0</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--card-bg, #ffffff);">
+            <div class="card-body p-3">
+              <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">🔍</span>
+                    <input type="text" id="plansSearchInput" class="form-control border-start-0" placeholder="Search doctor, hospital, or rep..." oninput="filterPlansView()">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <select id="plansRepFilter" class="form-select" onchange="filterPlansView()">
+                    <option value="all" data-i18n="allTeamReps">All Team Representatives</option>
+                  </select>
+                </div>
+                <div class="col-md-4 text-end">
+                  <span class="text-muted small" id="plansActiveScopeLabel">Scoping your direct team</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rep Groups Container -->
+          <div id="plansContainer">
+            <!-- Dynamically populated -->
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Rejection Modal -->
+  <div class="modal-backdrop" id="rejectPlanModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
+    <div class="modal-box" style="background: var(--card-bg, #fff); border-radius: 12px; width: 95%; max-width: 480px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <h5 class="fw-bold mb-2" style="color: var(--danger, #dc3545);" data-i18n="modalRejectTitle">Reject / Request Plan Edit</h5>
+      <p class="text-muted small mb-3" data-i18n="modalRejectSubtitle">Please provide a reason or modification guidance for the representative.</p>
+      <div class="mb-3">
+        <label class="form-label small fw-bold" data-i18n="modalRejectReasonLabel">Rejection Reason / Guidance:</label>
+        <textarea id="rejectReasonText" class="form-control" rows="3" placeholder="e.g. Please reschedule Dr. Khaled Omar to next Tuesday or add AM hospital visits..."></textarea>
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <button class="btn btn-outline" onclick="closeRejectModal()" data-i18n="btnCancel">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmRejectPlan()" data-i18n="btnConfirmReject">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/plans-review.js"></script>
+</body>
+</html>

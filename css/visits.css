@@ -1,0 +1,929 @@
+/* ==========================================================================
+   PharmaCare - Visits Page Stylesheet
+   Includes: Header, Stats bar, Tabs, Visit cards, Filters,
+   Bulk Planning Modal (Checklist, Search, Badges), and Dark Mode overrides.
+   ========================================================================== */
+
+/* --- START: Visits Header --- */
+.visits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.visits-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.visits-icon {
+    color: var(--primary);
+}
+
+.stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    background: var(--white);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-label { color: var(--gray-600); }
+.stat-val { font-weight: 700; }
+
+/* --- START: Tabs --- */
+.tabs {
+    display: flex;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--gray-500);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* --- START: Visit Cards --- */
+.am-pm-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.section-header {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.visit-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--primary);
+}
+
+[dir="rtl"] .visit-card {
+    border-left: none;
+    border-right: 4px solid var(--primary);
+}
+
+.visit-card.completed { border-left-color: var(--success); }
+.visit-card.cancelled { border-left-color: var(--danger); }
+
+[dir="rtl"] .visit-card.completed { border-right-color: var(--success); }
+[dir="rtl"] .visit-card.cancelled { border-right-color: var(--danger); }
+
+.visit-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.visit-name { font-weight: 600; }
+.visit-time { color: var(--gray-500); font-size: 0.85rem; }
+
+.visit-status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--gray-100);
+}
+
+.visit-status-badge.planned { background: var(--primary-light); color: var(--primary-dark); }
+.visit-status-badge.pending_approval { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.visit-status-badge.completed { background: #d1e7dd; color: #0f5132; }
+.visit-status-badge.cancelled { background: #f8d7da; color: #842029; }
+.visit-status-badge.rejected { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+.visit-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* --- START: Filters & Table --- */
+.filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-input {
+    padding: 0.5rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--gray-800);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+}
+
+.visits-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.visits-table th, .visits-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+[dir="rtl"] .visits-table th, [dir="rtl"] .visits-table td { text-align: right; }
+.visits-table th { background: var(--gray-50); font-weight: 600; }
+
+.period-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.period-badge.am { background: #fff3cd; color: #664d03; }
+.period-badge.pm { background: #cff4fc; color: #055160; }
+
+/* Outline Danger Button (Delete Visit) */
+.btn-outline-danger {
+    background: transparent;
+    border: 1px solid var(--danger, #dc3545);
+    color: var(--danger, #dc3545);
+    cursor: pointer;
+    border-radius: var(--radius-sm, 6px);
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-outline-danger:hover {
+    background: var(--danger, #dc3545);
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.35);
+}
+
+[data-theme="dark"] .btn-outline-danger {
+    border-color: #f87171;
+    color: #f87171;
+}
+
+[data-theme="dark"] .btn-outline-danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Bulk Multi-Doctor Planning Modal Styles
+   ========================================================================== */
+.bulk-targets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--gray-50);
+}
+
+.bulk-target-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.bulk-target-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.bulk-target-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* --- Modal Base Styles --- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2500;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: var(--white);
+    padding: 1.75rem;
+    border-radius: 14px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.modal-title { font-size: 1.25rem; font-weight: 700; }
+.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500); }
+
+.form-group { margin-bottom: 1rem; }
+.form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--gray-800);
+}
+
+.radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
+.radio-label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; }
+.checkbox-group { margin-top: 0.5rem; }
+.checkbox-label { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; }
+
+@media (max-width: 768px) {
+    .am-pm-sections { grid-template-columns: 1fr; }
+    .stats-bar { flex-wrap: wrap; }
+}
+
+/* ==========================================================================
+    Dark Mode Overrides for Visits Page
+   ========================================================================== */
+[data-theme="dark"] .stats-bar {
+    background-color: #1e2229 !important;
+    border: 1px solid #2d3340;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .stat-label { color: #9da5b1 !important; }
+[data-theme="dark"] .stat-val { color: #f1f3f5 !important; }
+[data-theme="dark"] .tabs { border-bottom-color: #2d3340; }
+[data-theme="dark"] .tab { color: #9da5b1; }
+[data-theme="dark"] .tab.active { color: #58a6ff; border-bottom-color: #388bfd; }
+
+[data-theme="dark"] .visit-card {
+    background-color: #1e2229 !important;
+    border: 1px solid #2d3340;
+    border-left: 4px solid #0d6efd !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"][dir="rtl"] .visit-card {
+    border-left: 1px solid #2d3340 !important;
+    border-right: 4px solid #0d6efd !important;
+}
+
+[data-theme="dark"] .visit-card.completed { border-left-color: #198754 !important; }
+[data-theme="dark"][dir="rtl"] .visit-card.completed { border-right-color: #198754 !important; }
+[data-theme="dark"] .visit-card.cancelled { border-left-color: #dc3545 !important; }
+[data-theme="dark"][dir="rtl"] .visit-card.cancelled { border-right-color: #dc3545 !important; }
+
+[data-theme="dark"] .filter-input {
+    background-color: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .table-responsive {
+    background-color: #1e2229 !important;
+    border: 1px solid #2d3340;
+}
+
+[data-theme="dark"] .visits-table th {
+    background-color: #232731 !important;
+    color: #f1f3f5 !important;
+    border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .visits-table td {
+    border-bottom-color: #2d3340 !important;
+    color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #1e2229 !important;
+    border: 1px solid #3d4554 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: #2d3340;
+}
+
+/* Bulk Modal Dark Mode Overrides */
+[data-theme="dark"] .bulk-targets-list {
+    background-color: #16191f !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .bulk-target-item {
+    background-color: #232731 !important;
+    border-color: #2d3340 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .bulk-target-item:hover {
+    border-color: #388bfd !important;
+    background-color: #282d38 !important;
+}
+
+/* ==========================================================================
+   Timeline Components for Daily Visits Timeline
+   ========================================================================== */
+.manager-rep-filter-container {
+    display: none;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+    background-color: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 12px 18px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+}
+
+.manager-rep-filter-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--gray-800);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.timeline-filter-card {
+    background-color: var(--white);
+    padding: 14px 16px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+/* Distinct color accents for Team Filter dropdown items */
+.filter-opt-lm {
+    color: #b45309 !important;
+    font-weight: 700;
+}
+
+.filter-opt-dm {
+    color: #6f42c1 !important;
+    font-weight: 700;
+}
+
+.filter-opt-rep {
+    color: #0369a1 !important;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .filter-opt-lm {
+    color: #fbbf24 !important;
+    background-color: #1e2229;
+}
+
+[data-theme="dark"] .filter-opt-dm {
+    color: #c4b5fd !important;
+    background-color: #1e2229;
+}
+
+[data-theme="dark"] .filter-opt-rep {
+    color: #7dd3fc !important;
+    background-color: #1e2229;
+}
+
+.timeline-date-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--gray-800);
+}
+
+.timeline-date-badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 6px 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.legend-item {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.legend-dot.actual { background-color: #f59e0b; }
+.legend-dot.planned { background-color: #0d6efd; }
+.legend-dot.joint { background-color: #8b5cf6; }
+
+.timeline-summary-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.timeline-stat-chip {
+    background-color: var(--white);
+    padding: 8px 14px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.timeline-container {
+    position: relative;
+    padding: 10px 0 20px 20px;
+    width: 100%;
+}
+
+[dir="rtl"] .timeline-container {
+    padding: 10px 20px 20px 0;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 45px;
+    width: 3px;
+    background-color: var(--gray-200);
+}
+
+[dir="rtl"] .timeline-container::before {
+    left: auto;
+    right: 45px;
+}
+
+.timeline-event-card {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    position: relative;
+    width: 100%;
+}
+
+.timeline-time-col {
+    width: 60px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--gray-800);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.timeline-icon-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    font-size: 0.9rem;
+    color: white;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-icon-dot.actual { background-color: #f59e0b; }
+.timeline-icon-dot.planned { background-color: #0d6efd; }
+.timeline-icon-dot.joint { background-color: #8b5cf6; }
+
+.timeline-content-box {
+    flex: 1;
+    background-color: var(--white);
+    padding: 14px 16px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    min-width: 0;
+}
+
+.timeline-content-box.actual-border { border-left: 4px solid #f59e0b; }
+.timeline-content-box.planned-border { border-left: 4px solid #0d6efd; }
+.timeline-content-box.joint-border { border-left: 4px solid #8b5cf6; }
+
+[dir="rtl"] .timeline-content-box.actual-border { border-left: 1px solid var(--gray-200); border-right: 4px solid #f59e0b; }
+[dir="rtl"] .timeline-content-box.planned-border { border-left: 1px solid var(--gray-200); border-right: 4px solid #0d6efd; }
+[dir="rtl"] .timeline-content-box.joint-border { border-left: 1px solid var(--gray-200); border-right: 4px solid #8b5cf6; }
+
+.timeline-target-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.timeline-meta-row {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    margin-bottom: 6px;
+}
+
+.timeline-timestamp-chip {
+    font-size: 0.78rem;
+    color: var(--gray-600);
+    background-color: var(--surface-alt);
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid var(--gray-200);
+}
+
+.timeline-empty-card {
+    background-color: var(--white);
+    border: 1px solid var(--gray-200);
+    color: var(--gray-800);
+}
+
+.visit-badge-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.visit-badge-pill.actual { background-color: #fef3c7; color: #92400e; }
+.visit-badge-pill.planned { background-color: #e0f2fe; color: #0369a1; }
+.visit-badge-pill.joint { background-color: #ede9fe; color: #5b21b6; }
+
+/* ==========================================================================
+   Dark Mode Overrides for Timeline & Manager Filters
+   ========================================================================== */
+[data-theme="dark"] .manager-rep-filter-container,
+[data-theme="dark"] .timeline-filter-card,
+[data-theme="dark"] .timeline-stat-chip,
+[data-theme="dark"] .timeline-content-box,
+[data-theme="dark"] .timeline-empty-card {
+    background-color: #1e2229 !important;
+    border-color: #2d3340 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .manager-rep-filter-label,
+[data-theme="dark"] .timeline-date-label,
+[data-theme="dark"] .timeline-target-title {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .timeline-date-badge {
+    background-color: #162a4a !important;
+    color: #58a6ff !important;
+    border: 1px solid #2d3340 !important;
+}
+
+[data-theme="dark"] .timeline-meta-row,
+[data-theme="dark"] .legend-item {
+    color: #c2c7d0 !important;
+}
+
+[data-theme="dark"] .timeline-meta-row strong {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .timeline-container::before {
+    background-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .timeline-time-col {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .timeline-icon-dot {
+    border-color: #1e2229 !important;
+}
+
+[data-theme="dark"] .timeline-timestamp-chip {
+    background-color: #16191f !important;
+    border-color: #2d3340 !important;
+    color: #c2c7d0 !important;
+}
+
+[data-theme="dark"] .timeline-timestamp-chip strong {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .timeline-comment-text {
+    color: #9da5b1 !important;
+}
+
+/* Date picker & selects inside timeline in dark mode */
+[data-theme="dark"] #timelineDatePicker,
+[data-theme="dark"] #filterRep {
+    background-color: #16191f !important;
+    border-color: #3d4554 !important;
+    color: #f1f3f5 !important;
+    color-scheme: dark;
+}
+
+/* Badge pills in dark mode */
+[data-theme="dark"] .visit-badge-pill.actual {
+    background-color: #3a2503 !important;
+    color: #fcd34d !important;
+    border: 1px solid #78350f !important;
+}
+[data-theme="dark"] .visit-badge-pill.planned {
+    background-color: #0c2d48 !important;
+    color: #7dd3fc !important;
+    border: 1px solid #0369a1 !important;
+}
+[data-theme="dark"] .visit-badge-pill.joint {
+    background-color: #2e1065 !important;
+    color: #c4b5fd !important;
+    border: 1px solid #6d28d9 !important;
+}
+
+/* RTL border colors in dark mode */
+[data-theme="dark"] .timeline-content-box.actual-border { border-left-color: #f59e0b !important; }
+[data-theme="dark"] .timeline-content-box.planned-border { border-left-color: #388bfd !important; }
+[data-theme="dark"] .timeline-content-box.joint-border { border-left-color: #8b5cf6 !important; }
+
+[data-theme="dark"][dir="rtl"] .timeline-content-box.actual-border {
+    border-left: 1px solid #2d3340 !important;
+    border-right: 4px solid #f59e0b !important;
+}
+[data-theme="dark"][dir="rtl"] .timeline-content-box.planned-border {
+    border-left: 1px solid #2d3340 !important;
+    border-right: 4px solid #388bfd !important;
+}
+[data-theme="dark"][dir="rtl"] .timeline-content-box.joint-border {
+    border-left: 1px solid #2d3340 !important;
+    border-right: 4px solid #8b5cf6 !important;
+}
+
+/* ==========================================================================
+   Print Stylesheet: Clean, Isolated Visits List Printing
+   ========================================================================== */
+@media print {
+    /* Hide topbar, navigation, sidebar, page header, action buttons, stats, tabs, and filters */
+    .sidebar,
+    .topbar,
+    .pharma-topbar-top-row,
+    .pharma-topbar-nav-scroll,
+    .pharma-navbar-strip,
+    .pharma-user-mobile-row,
+    .visits-header,
+    .stats-bar,
+    .tabs,
+    .filter-bar,
+    .btn,
+    button,
+    .visit-actions,
+    .modal,
+    .modal-overlay,
+    td:last-child,
+    th:last-child {
+        display: none !important;
+    }
+
+    /* Page container reset */
+    html, body, .app, .main-content, .content {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }
+
+    /* Only show the active tab content (Today's plan cards or All Visits table) */
+    .tab-content {
+        display: none !important;
+    }
+
+    .tab-content.active {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Clean printing for All Visits table */
+    .table-responsive {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+        overflow: visible !important;
+        border-radius: 0 !important;
+    }
+
+    .visits-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .visits-table th, 
+    .visits-table td {
+        border: 1px solid #dee2e6 !important;
+        padding: 8px 10px !important;
+        color: #111111 !important;
+        background: transparent !important;
+    }
+
+    .visits-table th {
+        background-color: #f8f9fa !important;
+        font-weight: bold !important;
+    }
+
+    /* Clean printing for Today's plan cards */
+    .am-pm-sections {
+        display: block !important;
+    }
+
+    .section-am, .section-pm {
+        margin-bottom: 20px !important;
+        page-break-inside: avoid;
+    }
+
+    .section-header {
+        font-size: 1.1rem !important;
+        font-weight: bold !important;
+        margin-bottom: 10px !important;
+        border-bottom: 2px solid #333 !important;
+        padding-bottom: 4px !important;
+    }
+
+    .visit-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        margin-bottom: 10px !important;
+        padding: 10px !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        page-break-inside: avoid;
+    }
+
+    .visit-time, .visit-info {
+        color: #333333 !important;
+    }
+}
+
+/* --- START: Timeline Prompt Card --- */
+.timeline-prompt-card {
+    text-align: center;
+    padding: 48px 24px;
+    border: 2px dashed var(--gray-300, #dee2e6);
+    border-radius: 12px;
+    margin: 20px 0;
+    background: var(--surface-alt, #f8f9fa);
+    transition: all 0.3s ease;
+}
+
+.timeline-prompt-title {
+    font-weight: 700;
+    color: var(--gray-800, #212529);
+    margin-bottom: 8px;
+}
+
+.timeline-prompt-sub {
+    color: var(--gray-600, #6c757d);
+    font-size: 0.92rem;
+    max-width: 500px;
+    margin: 0 auto 18px;
+    line-height: 1.5;
+}
+
+[data-theme="dark"] .timeline-prompt-card {
+    background: #1e2229 !important;
+    border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .timeline-prompt-title {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .timeline-prompt-sub {
+    color: #9da5b1 !important;
+}
+/* --- END: Timeline Prompt Card --- */
+
+/* ==========================================================================
+   Responsive Visits Mobile & Tablet Styles
+   ========================================================================== */
+@media (max-width: 768px) {
+    .visits-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .visits-header > div {
+        width: 100%;
+        justify-content: stretch;
+    }
+    .visits-header button {
+        flex: 1 1 auto;
+    }
+    .am-pm-sections {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .stats-bar {
+        padding: 0.75rem 1rem;
+        gap: 0.75rem;
+    }
+    .stat-item {
+        flex: 1 1 calc(50% - 0.75rem);
+    }
+    #filterRep {
+        min-width: 100% !important;
+        width: 100% !important;
+    }
+    .manager-rep-filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 520px) {
+    .bulk-plan-grid,
+    .visit-modal-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

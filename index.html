@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Dashboard</title>
+
+    <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme (FOUC) -->
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="manifest" href="manifest.json">
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar Navigation (Drawer on mobile) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+                  <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+            
+            <!-- Main Content Area -->
+            <div class="content" id="pageContent" style="padding-bottom: 60px;">
+                <!-- Dynamically populated by dashboard.js based on authenticated role -->
+            </div>
+            
+            <!-- Role Testing Switcher -->
+            <div class="demo-switcher">
+                <span data-i18n="demo_roles">Demo Roles:</span>
+                <button onclick="if(window.switchDemoUser) window.switchDemoUser('admin')" class="btn">Admin</button>
+                <button onclick="if(window.switchDemoUser) window.switchDemoUser('bu')" class="btn">BU</button>
+                <button onclick="if(window.switchDemoUser) window.switchDemoUser('lm')" class="btn">LM</button>
+                <button onclick="if(window.switchDemoUser) window.switchDemoUser('dm')" class="btn">DM</button>
+                <button onclick="if(window.switchDemoUser) window.switchDemoUser('rep')" class="btn">Rep</button>
+                <button onclick="if(window.switchDemoUser) window.switchDemoUser('hr')" class="btn" style="background: linear-gradient(135deg, #6f42c1, #593196); color: white;">HR</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

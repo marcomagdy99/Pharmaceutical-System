@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Visits</title>
+
+    <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme -->
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/visits.css">
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar Navigation (Drawer on mobile) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+                  <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+
+            <div class="content" id="pageContent">
+                
+                <div class="visits-header">
+                    <div class="visits-title">
+                        <svg class="visits-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span id="visitsPageTitle" data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="exportVisitsToCSV()" id="exportVisitsBtn" title="Export to CSV/Excel">
+                            📥 <span data-i18n="btnExportCSV">Export CSV</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="printVisitsReport()" id="printVisitsBtn" title="Print Visits">
+                            🖨️ <span data-i18n="btnPrint">Print</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="openBulkPlanModal()" id="planVisitBtn">
+                            🗓️ <span data-i18n="planVisit">Plan Visits (Bulk)</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="openVisitModal(true)" id="addActualVisitBtn" data-i18n="logActualVisit">
+                            📍 Log Actual Visit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manager Team Filter Bar (Visible for managers) -->
+                <div id="managerRepFilterContainer" class="manager-rep-filter-container">
+                    <label for="filterRep" class="manager-rep-filter-label">
+                        <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
+                    </label>
+                    <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;">
+                        <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
+                    </select>
+                </div>
+                
+                <!-- Daily Visits Timeline Main View -->
+                <div class="timeline-main-panel active" id="tab-timeline">
+                    <div class="timeline-filter-card">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label class="timeline-date-label" data-i18n="timelineSelectDate">Select Date:</label>
+                                <input type="date" id="timelineDatePicker" class="form-control filter-input" style="width: auto;">
+                            </div>
+                            <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)" style="padding: 6px 18px; border-radius: 6px; font-weight: 600;">
+                                🔍 <span data-i18n="btnShow">Show</span>
+                            </button>
+                        </div>
+                        <div class="legend-box" style="margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
+                            <span class="legend-item">
+                                <span class="legend-dot actual"></span> 
+                                <span data-i18n="directActual">Direct Actual Visit</span>
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot planned"></span> 
+                                <span data-i18n="plannedExecuted">Planned & Executed</span>
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot joint"></span> 
+                                <span data-i18n="jointVisitBadge">Joint Visit (Co-Visiting)</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
+                    <div class="timeline-container" id="timelineEventsContainer"></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    
+    <!-- Fast Bulk Plan Visits Modal -->
+    <div class="modal" id="bulkPlanModal">
+        <div class="modal-content" style="max-width: 580px;">
+            <div class="modal-header">
+                <div class="modal-title" style="font-weight: 700; font-size: 1.25rem;">🗓️ Plan Visits (Multi-Select)</div>
+                <button class="close-btn" onclick="closeBulkPlanModal()">&times;</button>
+            </div>
+            
+            <div class="bulk-plan-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" data-i18n="modalDate">Planning Date</label>
+                    <input type="date" id="bulkPlanDate" class="form-control">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" data-i18n="modalPeriod">Period</label>
+                    <div class="radio-group" style="margin-top: 6px;">
+                        <label class="radio-label">
+                            <input type="radio" name="bulkPeriod" value="am" onchange="renderBulkTargetsList()"> 
+                            <span data-i18n="modalAM">AM (Hospitals)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="bulkPeriod" value="pm" checked onchange="renderBulkTargetsList()"> 
+                            <span data-i18n="modalPM">PM (Doctors)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bulk-search-bar" style="margin-bottom: 12px; display: flex; gap: 8px;">
+                <input type="text" id="bulkSearchInput" class="form-control" placeholder="Search doctor by name or specialty..." oninput="filterBulkTargetsList()">
+                <select id="bulkClassFilter" class="form-control" style="max-width: 140px;" onchange="filterBulkTargetsList()">
+                    <option value="all">All Classes</option>
+                    <option value="A">Class A Only</option>
+                    <option value="B">Class B Only</option>
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" id="bulkSelectAllToggle" onchange="toggleBulkSelectAll(this.checked)">
+                    <span data-i18n="selectAll">Select All</span>
+                </label>
+                <span id="bulkSelectionCounter" class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 4px 10px; border-radius: 12px;">
+                    Selected: 0 Targets
+                </span>
+            </div>
+
+            <div class="bulk-targets-list" id="bulkTargetsContainer"></div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+                <button class="btn btn-secondary" onclick="closeBulkPlanModal()" data-i18n="btnCancel">Cancel</button>
+                <button class="btn btn-primary" id="btnSaveBulkPlan" onclick="saveBulkPlanVisits()">
+                    Save Planned Visits
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Complete Single Visit Modal -->
+    <div class="modal" id="visitModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="visitModalTitle" data-i18n="modalAddVisit">Add New Visit</div>
+                <button class="close-btn" onclick="closeVisitModal()">&times;</button>
+            </div>
+            <div class="visit-modal-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="modalDate">Date</label>
+                    <input type="date" id="visitDate" class="form-control" onchange="updateVisitModalDayDisplay()">
+                    <div id="visitModalDayName" style="margin-top: 4px; font-size: 0.82rem; font-weight: 700; color: var(--primary);"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Visit Time (HH:MM)</label>
+                    <input type="time" id="visitTime" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" id="visitTargetTypeLabel" data-i18n="modalPeriod">Target Type / Period</label>
+                <div class="radio-group" id="visitPeriodRadioGroup">
+                    <label class="radio-label"><input type="radio" name="visitPeriod" value="am" onchange="updateTargetOptions()"> <span data-i18n="modalAM">AM (Hospital)</span></label>
+                    <label class="radio-label"><input type="radio" name="visitPeriod" value="pm" checked onchange="updateTargetOptions()"> <span data-i18n="modalPM">PM (Doctor)</span></label>
+                    <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy">💊 Pharmacy</span></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" id="visitTargetLabel" data-i18n="modalTarget">Doctor/Hospital</label>
+                <select id="visitTarget" class="form-control"></select>
+            </div>
+            <div class="form-group" id="visitTypeSection">
+                <label class="form-label" data-i18n="modalType">Visit Type</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="visitType" value="single" checked onchange="toggleDoubleVisit()"> <span data-i18n="modalSingle">Single</span></label>
+                    <label class="radio-label"><input type="radio" name="visitType" value="double" onchange="toggleDoubleVisit()"> <span data-i18n="modalDouble">Double</span></label>
+                </div>
+            </div>
+            <div class="form-group" id="doubleManagerSection" style="display: none;">
+                <label class="form-label" data-i18n="modalSelectManager">Accompanied By (Select Companion(s))</label>
+                <div class="checkbox-group" id="visitManagersGroup" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px;">
+                </div>
+            </div>
+            
+<div class="form-group" id="productsSection">
+    <label class="form-label" data-i18n="modalProducts">Products Discussed</label>
+    <div class="checkbox-group" id="visitProducts">
+    </div>
+</div>
+<div class="form-group">
+                <label class="form-label" data-i18n="modalComment">Comment</label>
+                <textarea id="visitComment" class="form-control" rows="3"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeVisitModal()" data-i18n="btnCancel">Cancel</button>
+                <button class="btn btn-primary" onclick="saveVisit()" data-i18n="btnSaveVisit">Save Visit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/visits.js"></script>
+</body>
+</html>

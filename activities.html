@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="activitiesTitle">PharmaCare - Activities</title>
+
+    <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme (FOUC) -->
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/activities.css">
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar Navigation (Drawer on mobile) -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+                  <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+
+            <div class="content" id="pageContent">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 12px;">
+                    <h1 data-i18n="dailyActivities" style="margin: 0;">Daily Activities</h1>
+                    <div class="date-navigation" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <button class="btn btn-outline" id="prevDayBtn">&lt;</button>
+                        <span id="currentDateDisplay" style="margin: 0 0.5rem; font-weight: 700;"></span>
+                        <button class="btn btn-outline" id="nextDayBtn">&gt;</button>
+                        <button class="btn btn-primary" id="todayBtn" data-i18n="today">Today</button>
+                    </div>
+                </div>
+
+                <div class="current-day-view" id="currentDayView" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <!-- AM Section -->
+                    <div class="card" style="background: var(--white); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200);">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--gray-200);">
+                            <h2 data-i18n="amPeriod" style="margin: 0; font-size: 1.2rem; font-weight: 700;">AM Period</h2>
+                            <span id="amStatusBadge" class="badge"></span>
+                        </div>
+                        <div class="card-body" id="amContent" style="min-height: 100px; margin-top: 1rem;">
+                            <!-- Populated by activities.js -->
+                        </div>
+                        <div class="card-footer" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+                            <button type="button" class="btn btn-primary log-btn" data-period="AM" onclick="openActivityModal('AM')">
+                                📝 <span data-i18n="logActivity">Log Activity</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PM Section -->
+                    <div class="card" style="background: var(--white); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200);">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--gray-200);">
+                            <h2 data-i18n="pmPeriod" style="margin: 0; font-size: 1.2rem; font-weight: 700;">PM Period</h2>
+                            <span id="pmStatusBadge" class="badge"></span>
+                        </div>
+                        <div class="card-body" id="pmContent" style="min-height: 100px; margin-top: 1rem;">
+                            <!-- Populated by activities.js -->
+                        </div>
+                        <div class="card-footer" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+                            <button type="button" class="btn btn-primary log-btn" data-period="PM" onclick="openActivityModal('PM')">
+                                📝 <span data-i18n="logActivity">Log Activity</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="weekly-overview card" style="background: var(--white); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--gray-200);">
+                    <h2 data-i18n="weeklyOverview" style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700;">Weekly Overview (Sat - Thu)</h2>
+                    <div class="grid" id="weeklyGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
+                        <!-- Populated by activities.js -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Activity Log Modal (Interactive & Clickable) -->
+    <div class="modal-overlay" id="activityModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; align-items: center; justify-content: center;">
+        <div class="modal-card" style="background: var(--white); border-radius: 12px; width: 90%; max-width: 480px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); pointer-events: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 10px;">
+                <h3 data-i18n="logActivityTitle" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Log Activity</h3>
+                <button type="button" onclick="closeActivityModal()" style="background: none; border: none; font-size: 1.6rem; color: var(--gray-500); cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="activityForm" onsubmit="handleActivitySubmit(event)">
+                    <input type="hidden" id="activityDate">
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label data-i18n="period" style="display: block; font-weight: 600; margin-bottom: 6px;">Period</label>
+                        <select id="activityPeriod" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" disabled>
+                            <option value="AM" data-i18n="amPeriod">AM Period</option>
+                            <option value="PM" data-i18n="pmPeriod">PM Period</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label data-i18n="activityType" style="display: block; font-weight: 600; margin-bottom: 6px;">Activity Type *</label>
+                        <select id="activityType" class="form-control" required style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-300); font-weight: 600;">
+                            <option value="" disabled selected data-i18n="selectActivity">Select Activity</option>
+                            <option value="Visit" data-i18n="typeVisit">Visit</option>
+                            <option value="Office Work" data-i18n="typeOfficeWork">Office Work</option>
+                            <option value="Training" data-i18n="typeTraining">Training</option>
+                            <option value="Meeting" data-i18n="typeMeeting">Meeting</option>
+                            <option value="Conference" data-i18n="typeConference">Conference</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label data-i18n="notes" style="display: block; font-weight: 600; margin-bottom: 6px;">Notes</label>
+                        <textarea id="activityNotes" class="form-control" rows="3" placeholder="Enter activity details..." style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-300);"></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--gray-200); padding-top: 12px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeActivityModal()" data-i18n="cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveActivityBtn" data-i18n="save">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/activities.js"></script>
+</body>
+</html>

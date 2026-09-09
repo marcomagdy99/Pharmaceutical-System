@@ -1,0 +1,464 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pageTitle">Leaves Management - PharmaCare</title>
+
+  <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme -->
+  <script>
+      (function() {
+          try {
+              var theme = localStorage.getItem('pharmaTheme') || 'light';
+              document.documentElement.setAttribute('data-theme', theme);
+          } catch(e) {}
+      })();
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/leaves.css">
+  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+<body>
+
+  <!-- Unified App Container -->
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+            <!-- Unified Topbar Strip -->
+      <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+
+      <!-- Main Content -->
+      <div class="content" id="pageContent">
+        <div class="container-fluid p-0">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+              <h2 class="m-0 fw-bold" data-i18n="pageTitle">Leaves Management</h2>
+              <span class="text-muted small">Submit, track multi-level approvals, and manage balances</span>
+            </div>
+            <!-- Role Indicator Display -->
+            <div class="d-flex align-items-center gap-2">
+              <span id="currentUserRoleBadge" class="badge bg-primary p-2">Role</span>
+              <span id="currentUserNameDisplay" class="fw-bold">User Name</span>
+            </div>
+            <script>
+              (function() {
+                try {
+                  var u = JSON.parse(sessionStorage.getItem('pharmaUser') || localStorage.getItem('pharmaUser') || '{}');
+                  if (u && u.name) {
+                    var rb = document.getElementById('currentUserRoleBadge');
+                    var nd = document.getElementById('currentUserNameDisplay');
+                    if (rb) rb.textContent = u.role ? u.role.toUpperCase() : '';
+                    if (nd) nd.textContent = u.name;
+                  }
+                } catch(e) {}
+              })();
+            </script>
+          </div>
+
+          <!-- Leave Balances Cards -->
+          <div class="row g-3 mb-4" id="balancesContainer">
+            <!-- Annual -->
+            <div class="col-md-4">
+              <div class="card leave-balance-card p-3 border-start border-4 border-primary">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="m-0 fw-bold" data-i18n="annualLeave">Annual Leave</h6>
+                  <i class="bi bi-airplane text-primary fs-5"></i>
+                </div>
+                <h3 class="mb-2"><span id="annualRemaining">21</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="annualProgress"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2 small text-muted">
+                  <span><span data-i18n="used">Used</span>: <span id="annualUsed">0</span></span>
+                  <span><span data-i18n="totalDays">Total</span>: <span id="annualTotal">21</span></span>
+                </div>
+              </div>
+            </div>
+            <!-- Sick -->
+            <div class="col-md-4">
+              <div class="card leave-balance-card p-3 border-start border-4 border-warning">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="m-0 fw-bold" data-i18n="sickLeave">Sick Leave</h6>
+                  <i class="bi bi-thermometer-half text-warning fs-5"></i>
+                </div>
+                <h3 class="mb-2"><span id="sickRemaining">7</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="sickProgress"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2 small text-muted">
+                  <span><span data-i18n="used">Used</span>: <span id="sickUsed">0</span></span>
+                  <span><span data-i18n="totalDays">Total</span>: <span id="sickTotal">7</span></span>
+                </div>
+              </div>
+            </div>
+            <!-- Emergency / Casual -->
+            <div class="col-md-4">
+              <div class="card leave-balance-card p-3 border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="m-0 fw-bold" data-i18n="emergencyLeave">Emergency & Casual Leave</h6>
+                  <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
+                </div>
+                <h3 class="mb-2"><span id="emergencyRemaining">6</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="emergencyProgress"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2 small text-muted">
+                  <span><span data-i18n="used">Used</span>: <span id="emergencyUsed">0</span></span>
+                  <span><span data-i18n="totalDays">Total</span>: <span id="emergencyTotal">6</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Request Form (New Leave Types, Full/Half Day, and Attachment) -->
+            <div class="col-lg-5 mb-4">
+              <div class="card shadow-sm rounded-4 border-0">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                  <h5 class="fw-bold" data-i18n="submitRequest">Submit Leave Request</h5>
+                </div>
+                <div class="card-body">
+                  <form id="leaveForm">
+                    <!-- Leave Type with all Egyptian Labor & Pharma standard types -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold" data-i18n="leaveType">Leave Type</label>
+                      <select class="form-select" id="leaveType" required>
+                        <option value="" disabled selected data-i18n="selectType">Select Leave Type</option>
+                        <option value="annual" data-i18n="annualLeave">Annual Leave</option>
+                        <option value="casual" data-i18n="casualLeave">Casual Vacation</option>
+                        <option value="sick" data-i18n="sickLeave">Sick Leave</option>
+                        <option value="compensatory" data-i18n="compensatoryLeave">Compensatory Leave</option>
+                        <option value="funeral" data-i18n="funeralLeave">Funeral Vacation</option>
+                        <option value="military" data-i18n="militaryLeave">Calling for Army</option>
+                        <option value="unpaid" data-i18n="unpaidLeave">Unpaid Leave</option>
+                        <option value="maternityPaternity" data-i18n="maternityPaternity">Maternity/Paternity</option>
+                      </select>
+                    </div>
+
+                    <!-- Full Day vs Half Day Option -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold" data-i18n="leaveDuration">Leave Duration</label>
+                      <div class="d-flex gap-4">
+                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                          <input type="radio" name="leaveDurationType" value="full" checked onchange="onDurationTypeChange()">
+                          <span data-i18n="fullDay">Full Day</span>
+                        </label>
+                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                          <input type="radio" name="leaveDurationType" value="half" onchange="onDurationTypeChange()">
+                          <span data-i18n="halfDay">Half Day</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold" data-i18n="startDate">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold" data-i18n="endDate">End Date</label>
+                        <input type="date" class="form-control" id="endDate" required>
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold"><span data-i18n="daysCount">Days Count</span></label>
+                      <input type="text" class="form-control bg-light" id="daysCount" readonly value="1 Day">
+                      <div id="leaveHolidayNotice" class="alert alert-success py-2 px-3 small mt-2" style="display: none; border-radius: 8px;"></div>
+                    </div>
+
+                    <!-- File Attachment Input -->
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Attach Document / Certificate (Optional)</label>
+                      <input type="file" class="form-control" id="leaveAttachment" accept=".pdf, .png, .jpg, .jpeg">
+                      <small class="text-muted" style="font-size: 0.75rem;">Support for medical report, military summons, death certificate, etc.</small>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold" data-i18n="leaveComment">Comment</label>
+                      <textarea class="form-control" id="reason" rows="2" placeholder="Comment" data-i18n-placeholder="leaveCommentPlaceholder"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" data-i18n="submit">
+                      Submit
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- History Table with Exact 3-Tier Approval Tracking -->
+            <div class="col-lg-7 mb-4">
+              <div class="card shadow-sm rounded-4 border-0 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <h5 class="fw-bold m-0" data-i18n="myHistory">My Leave History</h5>
+                    <small class="text-muted">Real-time status of DM, LM, and HR approvals</small>
+                  </div>
+                  <select class="form-select form-select-sm w-auto" id="historyFilter">
+                    <option value="all">All Statuses</option>
+                    <option value="pending" data-i18n="pending">Pending</option>
+                    <option value="approved" data-i18n="approved">Approved</option>
+                    <option value="rejected" data-i18n="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 leaves-table">
+                      <thead class="table-light">
+                        <tr>
+                          <th data-i18n="leaveType">Type</th>
+                          <th>Dates & Duration</th>
+                          <th>Attachment</th>
+                          <th>Multi-Level Approvals</th>
+                          <th data-i18n="status">Final Status</th>
+                        </tr>
+                      </thead>
+                      <tbody id="historyTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HR Exclusive Section: Declare Official Public Holidays & Balance Control -->
+          <div class="row mt-2" id="hrHolidaySection" style="display: none;">
+            <div class="col-12 mb-3">
+              <h4 class="fw-bold border-bottom pb-2 text-primary" data-i18n="hrGovernanceTitle">🏛️ HR Governance: Leave Balances & Public Holidays</h4>
+            </div>
+
+            <!-- Employee Leave Balance Allocation Panel -->
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card shadow-sm rounded-4 border-0 h-100">
+                <div class="card-body p-4">
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-subtle text-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                      <i class="fas fa-user-clock fs-5"></i>
+                    </div>
+                    <div>
+                      <h6 class="fw-bold mb-0" data-i18n="employeeBalanceControl">Employee Leave Balance Allocation</h6>
+                      <small class="text-muted" data-i18n="employeeBalanceControlSub">Customize annual, casual, and sick days per employee</small>
+                    </div>
+                  </div>
+
+                  <form id="hrBalanceForm" onsubmit="handleSaveEmployeeBalance(event)">
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold" data-i18n="selectEmployee">Select Employee</label>
+                      <select id="hrEmployeeSelect" class="form-select" onchange="onHrEmployeeSelected()">
+                        <option value="" data-i18n="chooseEmployee">Choose an employee...</option>
+                      </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                      <div class="col-4">
+                        <label class="form-label fw-semibold small text-muted" data-i18n="annualDaysLabel">Annual (Days)</label>
+                        <input type="number" id="hrAnnualDays" class="form-control" min="0" max="60" value="21" required>
+                      </div>
+                      <div class="col-4">
+                        <label class="form-label fw-semibold small text-muted" data-i18n="casualDaysLabel">Casual (Days)</label>
+                        <input type="number" id="hrCasualDays" class="form-control" min="0" max="30" value="6" required>
+                      </div>
+                      <div class="col-4">
+                        <label class="form-label fw-semibold small text-muted" data-i18n="sickDaysLabel">Sick (Days)</label>
+                        <input type="number" id="hrSickDays" class="form-control" min="0" max="60" value="7" required>
+                      </div>
+                    </div>
+
+                    <!-- Usage snapshot badge -->
+                    <div id="hrEmployeeUsageSummary" class="alert alert-light border py-2 px-3 mb-3 small" style="display:none;"></div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="hrSaveBalanceBtn">
+                      <i class="fas fa-save me-1"></i> <span data-i18n="saveEmployeeBalance">Save Employee Balance</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Declare Official Public Holiday Panel -->
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card shadow-sm rounded-4 border-0 h-100">
+                <div class="card-body p-4">
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success-subtle text-success rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                      <i class="fas fa-umbrella-beach fs-5"></i>
+                    </div>
+                    <div>
+                      <h6 class="fw-bold mb-0" data-i18n="declarePublicHoliday">Declare Official Public Holiday</h6>
+                      <small class="text-muted" data-i18n="declarePublicHolidaySub">Company-wide calendar, zero balance deduction</small>
+                    </div>
+                  </div>
+
+                  <form id="hrHolidayForm" onsubmit="handleDeclareHoliday(event)" class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                      <label class="form-label fw-semibold small" data-i18n="holidayDateLabel">Holiday Date</label>
+                      <input type="date" id="holidayDate" class="form-control" required>
+                    </div>
+                    <div class="col-md-7">
+                      <label class="form-label fw-semibold small" data-i18n="holidayTitleLabel">Holiday Title</label>
+                      <input type="text" id="holidayName" class="form-control" required placeholder="e.g. Armed Forces Day, Eid">
+                    </div>
+                    <div class="col-12 mt-1">
+                      <label class="form-label fw-semibold small d-block mb-1" data-i18n="holidayDurationLabel">Holiday Duration</label>
+                      <div class="d-flex gap-4">
+                        <label class="d-flex align-items-center gap-2 cursor-pointer small">
+                          <input type="radio" name="hrHolidayDuration" value="full" checked>
+                          <span data-i18n="fullDay">Full Day</span>
+                        </label>
+                        <label class="d-flex align-items-center gap-2 cursor-pointer small">
+                          <input type="radio" name="hrHolidayDuration" value="half">
+                          <span data-i18n="halfDay">Half Day</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-12 mt-2">
+                      <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                        🌴 <span data-i18n="addHolidayBtn">Add Official Public Holiday</span>
+                      </button>
+                    </div>
+                  </form>
+
+                  <div class="mt-3 pt-3 border-top" id="declaredHolidaysContainer">
+                    <h6 class="fw-bold mb-2 small text-muted" data-i18n="currentHolidays">Currently Declared Public Holidays:</h6>
+                    <div class="d-flex flex-wrap gap-2" id="declaredHolidaysBadges"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HR Exclusive Section: All Employees Leave Records -->
+          <div class="row mt-2" id="hrAllLeavesSection" style="display: none;">
+            <div class="col-12 mb-3">
+              <h4 class="fw-bold border-bottom pb-2 text-primary" data-i18n="allEmployeesLeavesTitle">📋 All Employees Leave Records</h4>
+            </div>
+
+            <div class="col-12 mb-4">
+              <div class="card shadow-sm rounded-4 border-0">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div>
+                      <h5 class="fw-bold m-0" data-i18n="companyLeaveArchive">Company Leave Archive</h5>
+                      <small class="text-muted" data-i18n="allEmployeesLeavesSub">Audit and track leave requests across all company staff</small>
+                    </div>
+                    <div class="d-flex gap-2 hr-stats-badges">
+                      <span class="badge bg-primary-subtle text-primary border p-2" id="hrStatTotalRequests">Total: 0</span>
+                      <span class="badge bg-success-subtle text-success border p-2" id="hrStatApprovedRequests">Approved: 0</span>
+                      <span class="badge bg-warning-subtle text-warning border p-2" id="hrStatPendingRequests">Pending: 0</span>
+                    </div>
+                  </div>
+
+                  <!-- Filter Bar -->
+                  <div class="row g-2">
+                    <div class="col-6 col-md-3">
+                      <label class="form-label fw-semibold small text-muted mb-1" data-i18n="filterByEmployee">Employee</label>
+                      <select class="form-select form-select-sm" id="hrAllLeavesEmployeeFilter">
+                        <option value="all" data-i18n="allEmployees">All Employees</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <label class="form-label fw-semibold small text-muted mb-1" data-i18n="filterByType">Leave Type</label>
+                      <select class="form-select form-select-sm" id="hrAllLeavesTypeFilter">
+                        <option value="all" data-i18n="allTypes">All Types</option>
+                        <option value="annual" data-i18n="annualLeave">Annual Leave</option>
+                        <option value="casual" data-i18n="casualLeave">Casual Vacation</option>
+                        <option value="sick" data-i18n="sickLeave">Sick Leave</option>
+                        <option value="compensatory" data-i18n="compensatoryLeave">Compensatory Leave</option>
+                        <option value="funeral" data-i18n="funeralLeave">Funeral Vacation</option>
+                        <option value="military" data-i18n="militaryLeave">Calling for Army</option>
+                        <option value="unpaid" data-i18n="unpaidLeave">Unpaid Leave</option>
+                        <option value="maternityPaternity" data-i18n="maternityPaternity">Maternity/Paternity</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-2">
+                      <label class="form-label fw-semibold small text-muted mb-1" data-i18n="filterByStatus">Status</label>
+                      <select class="form-select form-select-sm" id="hrAllLeavesStatusFilter">
+                        <option value="all" data-i18n="allStatuses">All Statuses</option>
+                        <option value="pending" data-i18n="pending">Pending</option>
+                        <option value="approved" data-i18n="approved">Approved</option>
+                        <option value="rejected" data-i18n="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-4">
+                      <label class="form-label fw-semibold small text-muted mb-1" data-i18n="search">Search</label>
+                      <input type="text" class="form-control form-control-sm" id="hrAllLeavesSearchInput" placeholder="Search by name, role, reason..." data-i18n-placeholder="searchLeavesPlaceholder">
+                    </div>
+                  </div>
+                </div>
+          <script>
+            (function() {
+              try {
+                var u = JSON.parse(sessionStorage.getItem('pharmaUser') || localStorage.getItem('pharmaUser') || '{}');
+                var r = (u.role || '').toLowerCase();
+                if (r === 'hr' || r === 'admin') {
+                  var s1 = document.getElementById('hrHolidaySection');
+                  var s2 = document.getElementById('hrAllLeavesSection');
+                  if (s1) s1.style.display = 'flex';
+                  if (s2) s2.style.display = 'flex';
+                }
+              } catch(e) {}
+            })();
+          </script>
+
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 leaves-table">
+                      <thead class="table-light">
+                        <tr>
+                          <th data-i18n="employee">Employee</th>
+                          <th data-i18n="leaveType">Type</th>
+                          <th>Dates & Duration</th>
+                          <th>Attachment</th>
+                          <th>Multi-Level Approvals</th>
+                          <th data-i18n="status">Final Status</th>
+                        </tr>
+                      </thead>
+                      <tbody id="hrAllLeavesTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manager Approvals Section (DM, LM, and HR Inboxes) -->
+          <div class="row manager-section mt-2" id="managerSection">
+            <div class="col-12 mb-3">
+              <h4 class="fw-bold border-bottom pb-2" data-i18n="managerSection">Manager Approvals Inbox</h4>
+            </div>
+            
+            <div class="col-lg-12 mb-4">
+              <div class="card shadow-sm rounded-4 border-0">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                  <h5 class="fw-bold" data-i18n="pendingApprovals">Pending Approvals Requiring Your Decision</h5>
+                </div>
+                <div class="card-body" id="pendingApprovalsContainer"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/leaves.js"></script>
+</body>
+</html>

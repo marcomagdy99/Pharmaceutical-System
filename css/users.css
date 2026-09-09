@@ -1,0 +1,385 @@
+/* --- START: Tree View --- */
+.tree-view { display: none; }
+.tree-node { margin-left: 20px; border-left: 2px solid var(--gray-300, #dee2e6); padding-left: 10px; margin-top: 10px; }
+.tree-node .node-content { display: flex; align-items: center; gap: 10px; background: var(--gray-50, #f8f9fa); padding: 10px; border-radius: 8px; border: 1px solid var(--gray-200, #e9ecef); margin-bottom: 5px; }
+/* --- END: Tree View --- */
+
+/* --- START: Role Badges --- */
+.role-badge { font-size: 0.8em; padding: 0.3em 0.6em; }
+.bg-admin { background-color: var(--danger, #dc3545); color: white; }
+.bg-bu { background-color: #6f42c1; color: white; }
+.bg-lm { background-color: var(--primary, #0d6efd); color: white; }
+.bg-dm { background-color: var(--success, #198754); color: white; }
+.bg-rep { background-color: var(--gray-600, #6c757d); color: white; }
+.bg-hr { background-color: #6f42c1; color: white; }
+/* --- END: Role Badges --- */
+
+.badge-multi-line {
+  background: #f3e8ff;
+  color: #6b21a8;
+  white-space: nowrap;
+}
+
+.user-actions-cell {
+  white-space: nowrap !important;
+}
+
+.modal {
+  z-index: 2500 !important;
+}
+
+.modal-backdrop {
+  z-index: 2490 !important;
+}
+
+.modal-content {
+  background-color: var(--white, #ffffff);
+  color: var(--gray-800, #333333);
+}
+
+[data-theme="dark"] .form-label {
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .modal-content {
+  background-color: #1e2229 !important;
+  color: #f1f3f5 !important;
+  border: 1px solid #3d4554 !important;
+}
+
+/* RTL Tree Node Alignment */
+html[dir="rtl"] .tree-node {
+  margin-left: 0;
+  margin-right: 20px;
+  border-left: none;
+  border-right: 2px solid var(--gray-300, #dee2e6);
+  padding-left: 0;
+  padding-right: 10px;
+}
+
+/* --- START: Responsive Fixes for Users Page --- */
+@media (max-width: 768px) {
+  .tree-node {
+    margin-left: 8px;
+    padding-left: 6px;
+  }
+  html[dir="rtl"] .tree-node {
+    margin-right: 8px;
+    padding-right: 6px;
+  }
+  .tree-node .node-content {
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.85rem;
+    padding: 8px;
+  }
+  #searchUser, #filterRole {
+    font-size: 0.85rem;
+  }
+
+  /* Table responsiveness & sticky user column */
+  #tableView {
+    -webkit-overflow-scrolling: touch;
+  }
+  #tableView .table th,
+  #tableView .table td {
+    padding: 8px 6px !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
+  }
+  #tableView .table th.ps-4,
+  #tableView .table td.ps-4 {
+    padding-left: 10px !important;
+  }
+  #tableView .table th.pe-4,
+  #tableView .table td.pe-4 {
+    padding-right: 10px !important;
+  }
+  #tableView .table th:first-child,
+  #tableView .table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background-color: var(--white);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.08);
+  }
+  html[dir="rtl"] #tableView .table th:first-child,
+  html[dir="rtl"] #tableView .table td:first-child {
+    left: auto;
+    right: 0;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.08);
+  }
+  .user-avatar-circle {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+    margin-right: 8px !important;
+  }
+  html[dir="rtl"] .user-avatar-circle {
+    margin-right: 0 !important;
+    margin-left: 8px !important;
+  }
+  .user-actions-cell {
+    white-space: nowrap !important;
+    min-width: 105px !important;
+  }
+  .user-actions-cell .btn {
+    padding: 4px 6px !important;
+    font-size: 0.75rem !important;
+    margin-right: 2px !important;
+  }
+}
+/* --- END: Responsive Fixes for Users Page --- */
+
+/* ==========================================================================
+   Dark Mode Styles for Users Page
+   ========================================================================== */
+[data-theme="dark"] .card {
+  background-color: #1e2229 !important;
+  border-color: #2d3340 !important;
+  color: #f1f3f5 !important;
+}
+
+/* --- START: User Typography --- */
+.user-name-text {
+  color: #1a1d20;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+.bg-primary-light {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: var(--primary, #0d6efd);
+}
+/* --- END: User Typography --- */
+
+[data-theme="dark"] .card-body {
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .user-name-text,
+[data-theme="dark"] .text-dark {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-light.text-dark {
+  background-color: #282d38 !important;
+  color: #f1f3f5 !important;
+  border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .bg-primary-light {
+  background-color: rgba(13, 110, 253, 0.25) !important;
+  color: #79c0ff !important;
+}
+
+[data-theme="dark"] .tree-node {
+  border-left-color: #3d4554 !important;
+}
+
+[data-theme="dark"] html[dir="rtl"] .tree-node {
+  border-right-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .tree-node .node-content {
+  background: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .tree-node .node-content:hover {
+  background: #282d38 !important;
+}
+
+[data-theme="dark"] .table {
+  color: #dee2e6 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .table thead,
+[data-theme="dark"] .table thead th,
+[data-theme="dark"] .table thead.table-light {
+  background-color: #232731 !important;
+  color: #f1f3f5 !important;
+  border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .table tbody tr {
+  border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+  background-color: #282d38 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge-multi-line {
+  background: rgba(168, 85, 247, 0.2) !important;
+  color: #d8b4fe !important;
+}
+
+[data-theme="dark"] #tableView .table th:first-child {
+  background-color: #232731 !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] #tableView .table td:first-child {
+  background-color: #1e2229 !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] html[dir="rtl"] #tableView .table th:first-child,
+[data-theme="dark"] html[dir="rtl"] #tableView .table td:first-child {
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] #tableView .table-hover tbody tr:hover td:first-child {
+  background-color: #282d38 !important;
+}
+
+[data-theme="dark"] .input-group-text,
+[data-theme="dark"] .input-group-text.bg-light {
+  background-color: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control.bg-light,
+[data-theme="dark"] .form-select.bg-light {
+  background-color: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: #232731 !important;
+  border-color: #388bfd !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 0.25rem rgba(56, 139, 253, 0.25) !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: #6c757d !important;
+}
+
+[data-theme="dark"] #uProductLinesContainer,
+[data-theme="dark"] #uProductLinesContainer.bg-light {
+  background-color: #121418 !important;
+  border-color: #3d4554 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .card.bg-light {
+  background-color: #232731 !important;
+  border-color: #3d4554 !important;
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .modal-content {
+  background-color: #1e2229 !important;
+  color: #f1f3f5 !important;
+  border: 1px solid #3d4554 !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .modal-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .btn-light {
+  background-color: #2d3340 !important;
+  border-color: #3d4554 !important;
+  color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .btn-light:hover {
+  background-color: #3d4554 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-outline-primary {
+  border-color: #388bfd !important;
+  color: #58a6ff !important;
+}
+
+[data-theme="dark"] .btn-outline-primary:hover,
+[data-theme="dark"] .btn-check:checked + .btn-outline-primary {
+  background-color: #388bfd !important;
+  border-color: #388bfd !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+  border-color: #3d4554 !important;
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: #3d4554 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .bg-primary-subtle {
+  background-color: rgba(13, 110, 253, 0.2) !important;
+  color: #6ea8fe !important;
+}
+
+[data-theme="dark"] .bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.2) !important;
+  color: #ea868f !important;
+}
+
+[data-theme="dark"] .bg-success-subtle {
+  background-color: rgba(25, 135, 84, 0.2) !important;
+  color: #75b798 !important;
+}
+
+[data-theme="dark"] .bg-secondary-subtle {
+  background-color: rgba(108, 117, 125, 0.2) !important;
+  color: #ced4da !important;
+}
+
+[data-theme="dark"] .badge.bg-success-subtle {
+  background-color: rgba(25, 135, 84, 0.25) !important;
+  color: #75b798 !important;
+}
+
+[data-theme="dark"] .badge.bg-secondary-subtle {
+  background-color: rgba(108, 117, 125, 0.25) !important;
+  color: #ced4da !important;
+}
+
+[data-theme="dark"] .form-check-input {
+  background-color: var(--surface-alt);
+  border-color: var(--gray-300);
+}
+
+[data-theme="dark"] .form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .tree-node .node-content {
+  background: #1e2229 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .tree-node .node-content[style*="background:#fffbeb"] {
+  background: #252219 !important;
+  border-color: #785a10 !important;
+}
+
+

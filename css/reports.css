@@ -1,0 +1,1707 @@
+/* ==========================================================================
+   PharmaCare Reports & Analytics Stylesheet
+   Fully responsive on mobile devices with cascading hierarchy filters,
+   multi-select product dropdown, zero overflow, and high-contrast Dark Mode.
+   ========================================================================== */
+
+/* --- Header Section --- */
+.reports-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.page-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.88rem;
+    color: var(--gray-500);
+    margin: 4px 0 0;
+}
+
+.admin-notice-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+.admin-notice-pill.admin-mode {
+    background: #e6f8f0;
+    color: #0f5132;
+    border-color: #a3cfbb;
+}
+
+/* --- Tab Navigation (Smooth Touch Scroll, No Ugly Scrollbars) --- */
+.report-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 20px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 4px;
+}
+
+.report-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.report-tab-btn {
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.report-tab-btn:hover {
+    color: var(--primary);
+}
+
+.report-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 700;
+}
+
+.report-content-panel {
+    display: none;
+    width: 100%;
+}
+
+.report-content-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Filter Card & Form Grid --- */
+.sales-filter-card {
+    background: var(--white);
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+}
+
+.sales-filter-form-grid {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.sales-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sales-filter-field label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+}
+
+.sales-filter-field select,
+.sales-filter-field input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.sales-filter-field.col-month {
+    min-width: 130px;
+}
+
+.sales-filter-field.col-year {
+    min-width: 90px;
+}
+
+.sales-filter-field.col-product {
+    min-width: 220px;
+    flex: 1.2;
+}
+
+.sales-filter-field.col-line,
+.sales-filter-field.col-dm,
+.sales-filter-field.col-rep {
+    min-width: 180px;
+    flex: 1;
+}
+
+.sales-filter-field.col-btn button {
+    height: 40px;
+    padding: 8px 20px;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+.sales-period-pill {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    font-weight: 700;
+    background: var(--gray-100);
+    padding: 6px 14px;
+    border-radius: 8px;
+    align-self: flex-start;
+}
+
+/* ==========================================================================
+   Multi-Select Product Dropdown Styles
+   ========================================================================== */
+.multi-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.multi-select-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--gray-800);
+    text-align: left;
+}
+
+[dir="rtl"] .multi-select-btn {
+    text-align: right;
+}
+
+.multi-select-btn .dropdown-caret {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-left: 8px;
+}
+
+[dir="rtl"] .multi-select-btn .dropdown-caret {
+    margin-left: 0;
+    margin-right: 8px;
+}
+
+.multi-select-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 10px;
+    z-index: 1500;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.multi-select-menu.show {
+    display: block;
+}
+
+.multi-select-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    user-select: none;
+}
+
+.multi-select-item:hover {
+    background: var(--gray-100);
+}
+
+.multi-select-item.select-all-item {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.multi-select-divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 6px 0;
+}
+
+.product-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* --- KPI Grid --- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.kpi-card {
+    background: var(--white);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    border-left: 4px solid var(--primary);
+    transition: transform 0.2s;
+}
+
+[dir="rtl"] .kpi-card {
+    border-left: none;
+    border-right: 4px solid var(--primary);
+}
+
+.kpi-card.info { border-left-color: var(--info); }
+.kpi-card.success { border-left-color: var(--success); }
+.kpi-card.warning { border-left-color: var(--warning); }
+
+[dir="rtl"] .kpi-card.info { border-right-color: var(--info); }
+[dir="rtl"] .kpi-card.success { border-right-color: var(--success); }
+[dir="rtl"] .kpi-card.warning { border-right-color: var(--warning); }
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.kpi-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--gray-800);
+    margin: 6px 0 2px;
+}
+
+.kpi-subtext {
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    font-weight: 500;
+}
+
+/* --- Sales Actions Bar --- */
+.sales-actions-card {
+    background: var(--white);
+    padding: 14px 16px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+}
+
+.sales-actions-right {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* --- Table Container --- */
+.table-container {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
+    min-width: 650px;
+}
+
+[dir="rtl"] .report-table {
+    text-align: right;
+}
+
+.report-table th {
+    background: var(--gray-50);
+    padding: 12px 14px;
+    font-weight: 700;
+    color: var(--gray-700);
+    border-bottom: 2px solid var(--gray-200);
+    white-space: nowrap;
+}
+
+.report-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-800);
+    vertical-align: middle;
+}
+
+/* --- Sales Report Status & Product Badges --- */
+.sales-status-badge {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+.sales-status-badge.achieved {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+.sales-status-badge.in-progress {
+    background: #fff3cd;
+    color: #664d03;
+}
+
+.sales-product-badge {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+/* --- Timeline & Coverage Cards --- */
+.timeline-filter-card,
+.coverage-filter-card {
+    background: var(--white);
+    padding: 14px 16px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.timeline-summary-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.timeline-stat-chip {
+    background: var(--white);
+    padding: 8px 14px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.timeline-container {
+    position: relative;
+    padding: 10px 0 20px 20px;
+    width: 100%;
+}
+
+[dir="rtl"] .timeline-container {
+    padding: 10px 20px 20px 0;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 45px;
+    width: 3px;
+    background: var(--gray-200);
+}
+
+[dir="rtl"] .timeline-container::before {
+    left: auto;
+    right: 45px;
+}
+
+.timeline-event-card {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    position: relative;
+    width: 100%;
+}
+
+.timeline-time-col {
+    width: 60px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.timeline-icon-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: white;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.timeline-icon-dot.actual { background: #f59e0b; }
+.timeline-icon-dot.planned { background: #0d6efd; }
+
+.timeline-content-box {
+    flex: 1;
+    background: var(--white);
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+    min-width: 0;
+}
+
+.timeline-content-box.actual-border { border-left: 4px solid #f59e0b; }
+.timeline-content-box.planned-border { border-left: 4px solid #0d6efd; }
+
+[dir="rtl"] .timeline-content-box.actual-border { border-left: 1px solid var(--gray-100); border-right: 4px solid #f59e0b; }
+[dir="rtl"] .timeline-content-box.planned-border { border-left: 1px solid var(--gray-100); border-right: 4px solid #0d6efd; }
+
+.visit-badge-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.visit-badge-pill.actual { background: #fef3c7; color: #92400e; }
+.visit-badge-pill.planned { background: #e0f2fe; color: #0369a1; }
+
+/* Exact Visit Dates & Times formatted tag/card */
+.visit-timestamp-card {
+    display: inline-flex;
+    flex-direction: column;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--surface-alt, #f8fafc);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    min-width: 105px;
+    line-height: 1.25;
+    transition: all 0.2s ease;
+}
+.visit-timestamp-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+.visit-timestamp-card .visit-date-row {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--gray-800, #1e293b);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.visit-timestamp-card .visit-time-row {
+    font-size: 0.72rem;
+    color: var(--gray-500, #64748b);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+.visit-timestamp-card.actual-type {
+    border-inline-start: 3px solid #f59e0b;
+}
+.visit-timestamp-card.planned-type {
+    border-inline-start: 3px solid #0d6efd;
+}
+
+[data-theme="dark"] .visit-timestamp-card {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] .visit-timestamp-card .visit-date-row {
+    color: #f1f3f5 !important;
+}
+[data-theme="dark"] .visit-timestamp-card .visit-time-row {
+    color: #9da5b1 !important;
+}
+
+.date-range-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* ==========================================================================
+   Mobile Responsive Adjustments for Reports (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .reports-header-section {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .sales-filter-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .sales-filter-field.col-month {
+        grid-column: 1 / 2;
+        min-width: 0;
+    }
+    .sales-filter-field.col-year {
+        grid-column: 2 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-product {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-line {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-dm {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-rep {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-btn {
+        grid-column: 1 / 3;
+    }
+    .sales-filter-field.col-btn button {
+        width: 100%;
+        justify-content: center;
+    }
+    .sales-period-pill {
+        width: 100%;
+        text-align: center;
+    }
+    .sales-actions-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+    .sales-actions-right {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .sales-actions-right .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+    .table-container {
+        padding: 0 !important;
+        border-radius: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .report-table {
+        min-width: 560px;
+    }
+    .report-table th,
+    .report-table td {
+        padding: 8px 6px !important;
+        font-size: 0.8rem !important;
+    }
+    .report-table th {
+        white-space: nowrap;
+    }
+    .sales-status-badge {
+        font-size: 0.72rem !important;
+        padding: 3px 6px !important;
+    }
+    .sales-product-badge {
+        font-size: 0.72rem !important;
+        padding: 3px 6px !important;
+    }
+    .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .date-range-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Dark Mode Overrides
+   ========================================================================== */
+[data-theme="dark"] .page-title { color: var(--gray-800) !important; }
+[data-theme="dark"] .page-subtitle { color: var(--gray-500) !important; }
+[data-theme="dark"] .report-tabs { border-bottom-color: var(--gray-200) !important; }
+[data-theme="dark"] .report-tab-btn { color: var(--gray-500) !important; }
+[data-theme="dark"] .report-tab-btn.active { color: #0d6efd !important; }
+
+[data-theme="dark"] .kpi-card {
+    background-color: var(--white) !important;
+    border-color: var(--gray-200) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .kpi-label { color: var(--gray-500) !important; }
+[data-theme="dark"] .kpi-value { color: #ffffff !important; }
+[data-theme="dark"] .kpi-subtext { color: #727b88 !important; }
+
+[data-theme="dark"] .sales-filter-card,
+[data-theme="dark"] .sales-actions-card,
+[data-theme="dark"] .timeline-filter-card,
+[data-theme="dark"] .coverage-filter-card {
+    background-color: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    color: var(--gray-800) !important;
+}
+
+[data-theme="dark"] .sales-filter-field label { color: var(--gray-700) !important; }
+
+[data-theme="dark"] .multi-select-btn {
+    background-color: var(--surface-alt) !important;
+    border-color: var(--gray-300) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .multi-select-menu {
+    background-color: var(--white) !important;
+    border-color: var(--gray-300) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .multi-select-item {
+    color: var(--gray-800) !important;
+}
+
+[data-theme="dark"] .multi-select-item:hover {
+    background-color: var(--surface-hover) !important;
+}
+
+[data-theme="dark"] .multi-select-divider {
+    background-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .sales-actions-left h3 { color: #ffffff !important; }
+[data-theme="dark"] .sales-actions-left p { color: var(--gray-500) !important; }
+
+[data-theme="dark"] #salesFilterPeriodLabel {
+    background-color: var(--surface-alt) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--gray-300) !important;
+}
+
+[data-theme="dark"] .table-container {
+    background-color: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .report-table th {
+    background-color: var(--surface-alt) !important;
+    color: #ffffff !important;
+    border-bottom-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .report-table td {
+    background-color: transparent !important;
+    color: var(--gray-700) !important;
+    border-bottom-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .sales-status-badge.achieved {
+    background: rgba(25, 135, 84, 0.25) !important;
+    color: #75b798 !important;
+}
+
+[data-theme="dark"] .sales-status-badge.in-progress {
+    background: rgba(255, 193, 7, 0.25) !important;
+    color: #ffda6a !important;
+}
+
+[data-theme="dark"] .sales-product-badge {
+    background: rgba(13, 110, 253, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .timeline-container::before { background-color: var(--gray-200) !important; }
+[data-theme="dark"] .timeline-time-col { color: var(--gray-800) !important; }
+[data-theme="dark"] .timeline-stat-chip {
+    background-color: var(--white) !important;
+    color: var(--gray-800) !important;
+    border: 1px solid var(--gray-200) !important;
+}
+
+[data-theme="dark"] .timeline-content-box {
+    background-color: var(--white) !important;
+    border-color: var(--gray-200) !important;
+    color: var(--gray-800) !important;
+}
+[data-theme="dark"] .timeline-content-box strong { color: #ffffff !important; }
+
+/* ==========================================================================
+   Directory Cards Grid & Modals for Doctors and Pharmacies Lists
+   ========================================================================== */
+
+.directory-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+
+.directory-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.directory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.directory-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+
+.directory-avatar-icon.pharmacy { background: #dcfce7; color: #16a34a; }
+
+.directory-header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.directory-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.directory-badges-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.directory-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.directory-badge.class-a { background: #dcfce7; color: #15803d; }
+.directory-badge.class-b { background: #e0f2fe; color: #0369a1; }
+.directory-badge.specialty { background: #fef3c7; color: #b45309; }
+.directory-badge.area { background: var(--gray-100); color: var(--gray-600); }
+
+.directory-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+    flex-grow: 1;
+}
+
+.directory-detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--gray-600);
+}
+
+.directory-detail-icon {
+    font-size: 0.95rem;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.directory-detail-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+.directory-actions-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--gray-100);
+    margin-top: auto;
+}
+
+.directory-empty-state {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    background: var(--white);
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--radius);
+    margin-top: 1.5rem;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+/* ==========================================================================
+   Custom Modal Styles (Add/Edit Doctor & Pharmacy, Confirmation)
+   ========================================================================== */
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 2500 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+@keyframes modalPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.custom-modal-dialog {
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-modal-dialog.modal-dialog-lg {
+    max-width: 620px;
+}
+
+.custom-modal-content {
+    background: var(--white);
+    border-radius: 18px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2rem);
+    animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-modal-header {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-200);
+    flex-shrink: 0;
+}
+
+.modern-modal-header {
+    background: linear-gradient(to bottom, var(--white), var(--gray-50));
+}
+
+.modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.modal-header-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.modal-header-avatar.doctor {
+    background: rgba(13, 110, 253, 0.12);
+    color: var(--primary);
+    border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+.modal-header-avatar.pharmacy {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.modal-header-left h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--gray-800);
+}
+
+.modal-subtitle {
+    margin: 3px 0 0 0;
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    line-height: 1.3;
+}
+
+.custom-modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    border: none;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-500);
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.custom-modal-close:hover {
+    background: var(--gray-200);
+    color: var(--gray-800);
+    transform: rotate(90deg);
+}
+
+.custom-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.1rem;
+}
+
+.modal-form-grid .col-span-2 {
+    grid-column: 1 / -1;
+}
+
+.modal-form-grid .col-span-1 {
+    grid-column: span 1;
+}
+
+.modal-section-divider {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0 0.1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--gray-300);
+}
+
+.modal-section-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+}
+
+.label-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.required-star {
+    color: var(--danger);
+    font-weight: bold;
+}
+
+.modern-input,
+.modern-select {
+    width: 100%;
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid var(--gray-300);
+    background: var(--white);
+    color: var(--gray-800);
+    padding: 0 14px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.modern-input:focus,
+.modern-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.14);
+}
+
+.custom-modal-footer {
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    flex-shrink: 0;
+}
+
+.btn-save-modal {
+    padding: 0 20px;
+    height: 42px;
+    font-weight: 700;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    transition: all 0.2s ease;
+}
+
+.btn-save-modal:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.35);
+}
+
+@media (max-width: 600px) {
+    .modal-form-grid {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+    }
+    .modal-form-grid .col-span-1 {
+        grid-column: 1 / -1;
+    }
+    .custom-modal-dialog.modal-dialog-lg {
+        max-width: 100%;
+    }
+    .modal-header-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    .modal-header-left h3 {
+        font-size: 1.05rem;
+    }
+}
+
+/* ==========================================================================
+   Dark Mode Overrides for Directory Cards & Modals
+   ========================================================================== */
+
+[data-theme="dark"] .directory-card {
+    background-color: var(--white) !important;
+    border-color: var(--gray-200) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .directory-name {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .directory-detail-row {
+    color: var(--gray-600) !important;
+}
+
+[data-theme="dark"] .directory-actions-footer {
+    border-top-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .directory-empty-state {
+    background-color: var(--white) !important;
+    border-color: var(--gray-300) !important;
+    color: var(--gray-500) !important;
+}
+
+[data-theme="dark"] .custom-modal-content {
+    background-color: var(--white) !important;
+    border-color: var(--gray-300) !important;
+    color: #ffffff !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .custom-modal-header {
+    border-bottom-color: var(--gray-200) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modern-modal-header {
+    background: linear-gradient(to bottom, #232731, #1e2229) !important;
+}
+
+[data-theme="dark"] .modal-header-left h3 {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-subtitle {
+    color: var(--gray-500) !important;
+}
+
+[data-theme="dark"] .custom-modal-close {
+    background: var(--surface-alt) !important;
+    color: var(--gray-400) !important;
+}
+
+[data-theme="dark"] .custom-modal-close:hover {
+    background: var(--surface-hover) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .form-label {
+    color: var(--gray-600) !important;
+}
+
+[data-theme="dark"] .modern-input,
+[data-theme="dark"] .modern-select {
+    background: var(--surface-alt) !important;
+    border-color: var(--gray-300) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modern-input:focus,
+[data-theme="dark"] .modern-select:focus {
+    border-color: #388bfd !important;
+    box-shadow: 0 0 0 4px rgba(56, 139, 253, 0.25) !important;
+}
+
+[data-theme="dark"] .custom-modal-footer {
+    background-color: var(--surface-alt) !important;
+    border-top-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .directory-badge.area {
+    background-color: var(--surface-alt) !important;
+    color: var(--gray-600) !important;
+}
+
+[data-theme="dark"] .modal-section-divider {
+    border-top-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .modal-section-title {
+    color: #58a6ff !important;
+}
+
+/* ==========================================================================
+   Bulk Import Modals, File Drop Zones & Live Validation Preview
+   ========================================================================== */
+
+.import-step-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.import-step-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.step-badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.step-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.import-step-desc {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+}
+
+.btn-download-template {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 6px 14px;
+    background: var(--white);
+    color: var(--primary);
+    border-color: var(--primary);
+    transition: all 0.2s ease;
+}
+
+.btn-download-template:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.file-drop-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--white);
+}
+
+.file-drop-zone:hover,
+.file-drop-zone.dragover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.drop-zone-icon {
+    font-size: 2rem;
+    margin-bottom: 6px;
+}
+
+.drop-zone-text {
+    font-weight: 700;
+    color: var(--gray-700);
+    font-size: 0.9rem;
+}
+
+.drop-zone-subtext {
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    margin-top: 4px;
+}
+
+.selected-file-name {
+    margin-top: 8px;
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    background: var(--primary-light);
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.import-preview-section {
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--gray-200);
+    padding-top: 1rem;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.preview-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--gray-800);
+}
+
+.preview-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.import-preview-table-wrapper {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+}
+
+.import-preview-table th {
+    position: sticky;
+    top: 0;
+    background: var(--gray-100);
+    z-index: 2;
+    font-size: 0.74rem;
+    padding: 8px 10px;
+    white-space: nowrap;
+}
+
+.import-preview-table td {
+    font-size: 0.78rem;
+    padding: 6px 10px;
+}
+
+.import-status-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.import-status-pill.valid {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.import-status-pill.invalid {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Dark Mode Overrides for Import Modals */
+[data-theme="dark"] .import-step-card {
+    background: var(--surface-alt) !important;
+    border-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .step-title {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .import-step-desc {
+    color: var(--gray-500) !important;
+}
+
+[data-theme="dark"] .btn-download-template {
+    background: var(--surface-hover) !important;
+    color: #58a6ff !important;
+    border-color: #388bfd !important;
+}
+
+[data-theme="dark"] .btn-download-template:hover {
+    background: #162a4a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .file-drop-zone {
+    background: var(--white) !important;
+    border-color: var(--gray-300) !important;
+}
+
+[data-theme="dark"] .file-drop-zone:hover,
+[data-theme="dark"] .file-drop-zone.dragover {
+    border-color: #388bfd !important;
+    background: #162a4a !important;
+}
+
+[data-theme="dark"] .drop-zone-text {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .drop-zone-subtext {
+    color: var(--gray-500) !important;
+}
+
+[data-theme="dark"] .selected-file-name {
+    background: #162a4a !important;
+    color: #58a6ff !important;
+}
+
+[data-theme="dark"] .import-preview-section {
+    border-top-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .preview-title {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .import-preview-table-wrapper {
+    border-color: var(--gray-200) !important;
+}
+
+[data-theme="dark"] .import-preview-table th {
+    background: var(--surface-alt) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .import-preview-table td {
+    color: var(--gray-600) !important;
+}
+
+/* ==========================================================================
+   Print Stylesheet: Clean, Isolated Report Printing
+   ========================================================================== */
+@media print {
+    /* Hide layout navigation, headers, drawers, sidebars, interactive tools, AND filter cards */
+    .sidebar,
+    .topbar,
+    .pharma-topbar-top-row,
+    .pharma-topbar-nav-scroll,
+    .reports-header-section,
+    .report-tabs,
+    .custom-modal,
+    .admin-only-action,
+    .sales-actions-card,
+    .sales-filter-card,
+    .timeline-filter-card,
+    .timeline-summary-bar,
+    .coverage-filter-card,
+    .kpi-grid,
+    .print-report-header,
+    .directory-card-actions,
+    .btn,
+    button,
+    #adminBadgeNotice {
+        display: none !important;
+    }
+
+    /* Reset background and container overflow */
+    html,
+    body,
+    .app,
+    .main-content,
+    .content {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }
+
+    /* Only show the currently active report panel */
+    .report-content-panel {
+        display: none !important;
+    }
+
+    .report-content-panel.active {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Clean Card Layout for Printed Directory (Doctors / Pharmacies) */
+    .directory-cards-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        margin-top: 10px !important;
+        page-break-inside: auto !important;
+    }
+
+    .directory-card {
+        border: 1px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        background: #ffffff !important;
+        color: #212529 !important;
+    }
+
+    .directory-avatar-icon {
+        background: #e7f1ff !important;
+        color: #0a58ca !important;
+        border: 1px solid #b6d4fe !important;
+    }
+
+    .directory-title {
+        color: #111827 !important;
+    }
+
+    .badge {
+        border: 1px solid #ccc !important;
+        background: #f8f9fa !important;
+        color: #333333 !important;
+    }
+
+    .badge-primary {
+        background: #cfe2ff !important;
+        color: #084298 !important;
+        border-color: #b6d4fe !important;
+    }
+
+    .badge-success {
+        background: #d1e7dd !important;
+        color: #0f5132 !important;
+        border-color: #badbcc !important;
+    }
+
+    /* Table styling for Sales & Coverage Reports */
+    .table-container {
+        overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .report-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+    }
+
+    .report-table th,
+    .report-table td {
+        border: 1px solid #dee2e6 !important;
+        padding: 8px 10px !important;
+        color: #212529 !important;
+        background: #ffffff !important;
+    }
+
+    .report-table th {
+        background-color: #f1f3f5 !important;
+        font-weight: 700 !important;
+    }
+
+    .report-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* KPI Cards row in Sales */
+    .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 15px !important;
+        page-break-inside: avoid !important;
+    }
+
+    .kpi-card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        padding: 10px !important;
+        background: #ffffff !important;
+    }
+
+    .kpi-value {
+        font-size: 1.25rem !important;
+        color: #111827 !important;
+    }
+
+    /* Timeline in Daily Visits */
+    .timeline-container {
+        overflow: visible !important;
+    }
+
+    .timeline-event-card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 8px !important;
+    }
+}

@@ -1,0 +1,419 @@
+﻿<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="quizzes_title">PharmaCare - Quizzes</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("pharmaTheme") || "light";
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {}
+      })();
+    </script>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/quizzes.css" />
+    <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+    <script src="js/store.js"></script>
+</head>
+  <body>
+    <div class="app">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar" id="sidebar"></aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Top Navigation Bar & Brand Header -->
+        <!-- Unified Topbar Strip -->
+        <!-- Unified Topbar Strip -->
+        <!-- Unified Topbar Strip -->
+        <header class="topbar" id="topbar">
+        <script>renderTopbar();</script>
+      </header>
+
+        <div class="content" id="pageContent" style="padding: 1.5rem">
+          <div class="container-fluid p-0">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h2 class="h3 mb-0 fw-bold page-main-title" data-i18n="quizzes_title">
+                Quizzes
+              </h2>
+              <button
+                class="btn btn-primary"
+                id="create-quiz-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#createQuizModal"
+                style="display: none;"
+              >
+                <i class="fas fa-plus me-2"></i
+                ><span data-i18n="create_quiz">Create Quiz</span>
+              </button>
+            </div>
+
+            <!-- Rep View Sections -->
+            <div class="rep-view">
+              <!-- Score Summary Cards -->
+              <div class="row mb-4">
+                <div class="col-xl-4 col-md-6 mb-4">
+                  <div
+                    class="card border-0 shadow-sm h-100 py-2 border-start border-primary border-4"
+                    style="border-radius: 14px"
+                  >
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col me-2">
+                          <div
+                            class="text-xs fw-bold text-primary text-uppercase mb-1"
+                            data-i18n="average_score"
+                          >
+                            Average Score
+                          </div>
+                          <div class="h4 mb-0 fw-bold stat-value" id="avg-score">
+                            --%
+                          </div>
+                        </div>
+                        <div class="col-auto">
+                          <i
+                            class="fas fa-percentage fa-2x text-secondary opacity-25"
+                          ></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-xl-4 col-md-6 mb-4">
+                  <div
+                    class="card border-0 shadow-sm h-100 py-2 border-start border-success border-4"
+                    style="border-radius: 14px"
+                  >
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col me-2">
+                          <div
+                            class="text-xs fw-bold text-success text-uppercase mb-1"
+                            data-i18n="total_quizzes"
+                          >
+                            Total Quizzes Taken
+                          </div>
+                          <div
+                            class="h4 mb-0 fw-bold stat-value"
+                            id="total-quizzes"
+                          >
+                            --
+                          </div>
+                        </div>
+                        <div class="col-auto">
+                          <i
+                            class="fas fa-clipboard-list fa-2x text-secondary opacity-25"
+                          ></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-xl-4 col-md-6 mb-4">
+                  <div
+                    class="card border-0 shadow-sm h-100 py-2 border-start border-info border-4"
+                    style="border-radius: 14px"
+                  >
+                    <div class="card-body">
+                      <div class="row align-items-center">
+                        <div class="col me-2">
+                          <div
+                            class="text-xs fw-bold text-info text-uppercase mb-1"
+                            data-i18n="best_score"
+                          >
+                            Best Score
+                          </div>
+                          <div
+                            class="h4 mb-0 fw-bold stat-value"
+                            id="best-score"
+                          >
+                            --%
+                          </div>
+                        </div>
+                        <div class="col-auto">
+                          <i
+                            class="fas fa-trophy fa-2x text-secondary opacity-25"
+                          ></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quiz History Table -->
+              <div
+                class="card border-0 shadow-sm mb-4"
+                style="border-radius: 14px"
+              >
+                <div class="card-header py-3 border-0">
+                  <h6 class="m-0 fw-bold text-primary" data-i18n="quiz_history">
+                    Quiz History
+                  </h6>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                      <thead class="quiz-table-head">
+                        <tr>
+                          <th class="ps-4" data-i18n="quiz_name">Quiz Name</th>
+                          <th data-i18n="date">Date</th>
+                          <th data-i18n="score">Score</th>
+                          <th data-i18n="total_marks">Total Marks</th>
+                          <th data-i18n="percentage">Percentage</th>
+                          <th class="pe-4" data-i18n="grade">Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody id="quiz-history-body">
+                        <!-- Populated via JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin/Manager View Sections -->
+            <div class="admin-view">
+              <!-- Enter Scores Section (Admin Only) -->
+              <div
+                class="card border-0 shadow-sm mb-4"
+                id="enter-scores-card"
+                style="border-radius: 14px; display: none;"
+              >
+                <div
+                  class="card-header py-3 d-flex justify-content-between align-items-center border-0"
+                >
+                  <h6 class="m-0 fw-bold text-primary" data-i18n="enter_scores">
+                    Enter Scores
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="row mb-3">
+                    <div class="col-md-5">
+                      <label
+                        class="form-label fw-medium text-secondary"
+                        data-i18n="select_quiz"
+                        >Select Quiz</label
+                      >
+                      <select
+                        class="form-select"
+                        id="score-quiz-select"
+                        style="border-radius: 10px"
+                      >
+                        <option value="" data-i18n="choose_quiz">
+                          Choose a quiz...
+                        </option>
+                        <!-- Populated via JS -->
+                      </select>
+                    </div>
+                  </div>
+                  <div
+                    class="table-responsive d-none"
+                    id="enter-scores-table-container"
+                  >
+                    <table class="table table-hover align-middle">
+                      <thead class="quiz-table-head">
+                        <tr>
+                          <th data-i18n="rep_name" class="ps-3">Rep Name</th>
+                          <th data-i18n="score" class="pe-3">Score</th>
+                        </tr>
+                      </thead>
+                      <tbody id="enter-scores-body">
+                        <!-- Populated via JS -->
+                      </tbody>
+                    </table>
+                    <div class="d-flex justify-content-end mt-3">
+                      <button
+                        class="btn btn-success"
+                        id="save-scores-btn"
+                        style="border-radius: 10px"
+                        data-i18n="save_scores"
+                      >
+                        Save Scores
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Team Scores Comparison -->
+              <div
+                class="card border-0 shadow-sm mb-4"
+                style="border-radius: 14px"
+              >
+                <div class="card-header py-3 border-0">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                      <h6
+                        class="m-0 fw-bold text-primary"
+                        data-i18n="team_comparison"
+                      >
+                        Team Scores Comparison
+                      </h6>
+                      <small class="text-muted" id="quiz-filter-subtitle">Displaying scores based on organizational hierarchy</small>
+                    </div>
+
+                    <!-- Cascading Hierarchy Filters -->
+                    <div class="d-flex flex-wrap align-items-center gap-2" id="quiz-filters-container">
+                      <!-- BU Filter (Visible to Admin) -->
+                      <div class="d-flex align-items-center gap-1" id="filter-bu-wrapper" style="display: none;">
+                        <label class="form-label mb-0 small text-secondary fw-semibold text-nowrap" data-i18n="filter_bu">BU:</label>
+                        <select class="form-select form-select-sm" id="quiz-filter-bu" style="border-radius: 8px; min-width: 140px;">
+                          <option value="all" data-i18n="all_bus">All BUs</option>
+                        </select>
+                      </div>
+
+                      <!-- LM Filter (Visible to Admin, BU) -->
+                      <div class="d-flex align-items-center gap-1" id="filter-lm-wrapper" style="display: none;">
+                        <label class="form-label mb-0 small text-secondary fw-semibold text-nowrap" data-i18n="filter_lm">LM:</label>
+                        <select class="form-select form-select-sm" id="quiz-filter-lm" style="border-radius: 8px; min-width: 140px;">
+                          <option value="all" data-i18n="all_lms">All LMs</option>
+                        </select>
+                      </div>
+
+                      <!-- DM Filter (Visible to Admin, BU, LM) -->
+                      <div class="d-flex align-items-center gap-1" id="filter-dm-wrapper" style="display: none;">
+                        <label class="form-label mb-0 small text-secondary fw-semibold text-nowrap" data-i18n="filter_dm">DM:</label>
+                        <select class="form-select form-select-sm" id="quiz-filter-dm" style="border-radius: 8px; min-width: 140px;">
+                          <option value="all" data-i18n="all_dms">All DMs</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table
+                      class="table table-hover align-middle mb-0"
+                      id="team-comparison-table"
+                    >
+                      <thead class="quiz-table-head">
+                        <tr id="team-comparison-header">
+                          <th class="ps-4" data-i18n="quiz_name">Quiz Name</th>
+                          <!-- Rep names populated via JS -->
+                        </tr>
+                      </thead>
+                      <tbody id="team-comparison-body">
+                        <!-- Populated via JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                  <div id="no-reps-message" class="text-center py-4 text-muted d-none">
+                    <i class="fas fa-users-slash fa-2x mb-2 text-secondary opacity-50"></i>
+                    <p class="mb-0" data-i18n="no_reps_found">No medical representatives found for the selected team.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Create Quiz Modal -->
+    <div class="modal fade" id="createQuizModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 14px">
+          <div class="modal-header border-bottom-0 pb-0">
+            <h5 class="modal-title fw-bold" data-i18n="create_quiz">
+              Create Quiz
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="create-quiz-form">
+              <div class="mb-3">
+                <label
+                  class="form-label text-secondary fw-medium"
+                  data-i18n="quiz_title"
+                  >Title</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="new-quiz-title"
+                  required
+                  data-i18n-placeholder="quiz_title_placeholder"
+                  placeholder="Enter quiz title"
+                  style="border-radius: 10px"
+                />
+              </div>
+              <div class="mb-3">
+                <label
+                  class="form-label text-secondary fw-medium"
+                  data-i18n="date"
+                  >Date</label
+                >
+                <input
+                  type="date"
+                  class="form-control"
+                  id="new-quiz-date"
+                  required
+                  style="border-radius: 10px"
+                />
+              </div>
+              <div class="mb-4">
+                <label
+                  class="form-label text-secondary fw-medium"
+                  data-i18n="total_marks"
+                  >Total Marks</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="new-quiz-marks"
+                  required
+                  min="1"
+                  data-i18n-placeholder="total_marks_placeholder"
+                  placeholder="e.g. 50"
+                  style="border-radius: 10px"
+                />
+              </div>
+              <div class="d-grid">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  data-i18n="save"
+                  style="border-radius: 10px"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/quizzes.js"></script>
+  </body>
+</html>

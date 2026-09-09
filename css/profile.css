@@ -1,0 +1,66 @@
+/* --- START: Profile Header --- */
+.profile-header { display: flex; align-items: center; gap: 20px; padding: 20px; }
+.profile-photo { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; position: relative; overflow: hidden; cursor: pointer; }
+.profile-photo img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; }
+.profile-photo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; font-size: 14px; }
+.profile-photo:hover .profile-photo-overlay { opacity: 1; }
+.profile-info h2 { margin: 0; font-size: 24px; }
+/* --- END: Profile Header --- */
+
+/* --- START: Badges --- */
+.profile-badges { display: flex; gap: 10px; margin-top: 10px; }
+.badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; color: white; }
+.badge-role { background-color: var(--primary); }
+.badge-emp { background-color: var(--gray-600); }
+.badge-area { background-color: var(--success); }
+/* --- END: Badges --- */
+
+/* --- START: Layout & Cards --- */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card { background: white; border-radius: 14px; padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+.card-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--gray-200); }
+/* --- END: Layout & Cards --- */
+
+/* --- START: Forms --- */
+.form-group { margin-bottom: 15px; }
+.form-label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: var(--gray-700); }
+.form-control { width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 10px; font-family: inherit; }
+.form-control[readonly] { background-color: var(--gray-100); }
+.btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+.btn-primary:hover { background: var(--primary-dark); }
+/* --- END: Forms --- */
+
+/* --- START: Leave Progress --- */
+.leave-item { margin-bottom: 15px; }
+.leave-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+.progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; }
+.bg-annual { background: var(--primary); }
+.bg-sick { background: var(--warning); }
+.bg-emergency { background: var(--danger); }
+.bg-unpaid { background: var(--gray-500); }
+/* --- END: Leave Progress --- */
+
+/* --- START: Password Strength --- */
+.password-strength { height: 4px; background: var(--gray-200); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+.strength-fill { height: 100%; width: 0; transition: width 0.3s; }
+.req-list { list-style: none; padding: 0; margin-top: 10px; font-size: 12px; color: var(--gray-600); }
+.req-list li::before { content: '○'; margin-right: 5px; }
+.req-list li.valid::before { content: '●'; color: var(--success); }
+/* --- END: Password Strength --- */
+
+/* --- START: Toggle Switch --- */
+.toggle-switch { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+.toggle-input { display: none; }
+.toggle-slider { width: 40px; height: 20px; background: var(--gray-300); border-radius: 10px; position: relative; transition: 0.3s; }
+.toggle-slider::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
+.toggle-input:checked + .toggle-slider { background: var(--success); }
+.toggle-input:checked + .toggle-slider::after { transform: translateX(20px); }
+/* --- END: Toggle Switch --- */
+
+/* --- START: Media Queries --- */
+@media (max-width: 768px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .profile-header { flex-direction: column; text-align: center; }
+}
+/* --- END: Media Queries --- */
