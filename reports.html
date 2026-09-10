@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PharmaCare - Reports & Analytics</title>
-
     <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme (FOUC) -->
     <script>
         (function() {
@@ -14,12 +13,10 @@
             } catch(e) {}
         })();
     </script>
-
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/reports.css">
@@ -28,22 +25,18 @@
   <script src="js/app.js"></script>
     <script src="js/store.js"></script>
 </head>
-
 <body>
     <div class="app">
         <!-- Sidebar Navigation (Drawer on mobile) -->
         <aside class="sidebar" id="sidebar"></aside>
-
         <!-- Main Content Area -->
         <main class="main-content">
                   <!-- Unified Topbar Strip -->
       <header class="topbar" id="topbar">
         <script>renderTopbar();</script>
       </header>
-
             <!-- Page Container -->
             <div class="content" id="pageContent">
-                
                 <!-- Reports Header -->
                 <div class="reports-header-section">
                     <div>
@@ -57,41 +50,53 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Navigation Tabs -->
                 <div class="report-tabs">
                     <button class="report-tab-btn active" data-tab="sales" onclick="switchReportTab('sales')">
-                        📈 <span data-i18n="tabSales">Monthly Sales & Targets</span>
+📈 <span data-i18n="tabSales">Monthly Sales & Targets</span>
                     </button>
                     <button class="report-tab-btn" data-tab="timeline" onclick="switchReportTab('timeline')">
-                        ⏰ <span data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
+⏰ <span data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
                     </button>
                     <button class="report-tab-btn" data-tab="coverage" onclick="switchReportTab('coverage')">
-                        🎯 <span data-i18n="tabCoverageFreq">Coverage & Frequency</span>
+🎯 <span data-i18n="tabCoverageFreq">Coverage & Frequency</span>
                     </button>
                     <button class="report-tab-btn" data-tab="doctors" onclick="switchReportTab('doctors')">
-                        👨‍⚕️ <span data-i18n="tabDoctorsList">Doctors List</span>
+👨‍⚕️ <span data-i18n="tabDoctorsList">Doctors List</span>
                     </button>
                     <button class="report-tab-btn" data-tab="pharmacies" onclick="switchReportTab('pharmacies')">
-                        💊 <span data-i18n="tabPharmaciesList">Pharmacies List</span>
+💊 <span data-i18n="tabPharmaciesList">Pharmacies List</span>
                     </button>
                 </div>
-
                 <!-- TAB 1: Monthly Sales & Targets -->
                 <div class="report-content-panel active" id="tabPanel-sales">
-                    
                     <div class="sales-filter-card">
                         <div class="sales-filter-form-grid">
-                            <div class="sales-filter-field col-month">
+                            <!-- Multi-Select Month Dropdown (previously a single-choice select box;
+                                 now allows picking several months within the selected Year, same
+                                 pattern as the Products dropdown below). JS handlers live in
+                                 js/sales-report.js. -->
+                            <div class="sales-filter-field col-month" id="monthMultiSelectContainer">
                                 <label data-i18n="labelMonth">Month:</label>
-                                <select id="salesMonthSelect" class="form-control"></select>
+                                <div class="multi-select-container">
+                                    <button type="button" class="form-control multi-select-btn" id="monthDropdownBtn" onclick="toggleMonthDropdown(event)">
+                                        <span id="monthDropdownLabel">September</span>
+                                        <span class="dropdown-caret">▾</span>
+                                    </button>
+                                    <div class="multi-select-menu" id="monthDropdownMenu">
+                                        <label class="multi-select-item select-all-item">
+                                            <input type="checkbox" id="selectAllMonths" onchange="toggleSelectAllMonths(this.checked)">
+                                            <span data-i18n="selectAll">Select All</span>
+                                        </label>
+                                        <div class="multi-select-divider"></div>
+                                        <div id="monthCheckboxList" class="product-checkbox-list"></div>
+                                    </div>
+                                </div>
                             </div>
-
                             <div class="sales-filter-field col-year">
                                 <label data-i18n="labelYear">Year:</label>
                                 <select id="salesYearSelect" class="form-control"></select>
                             </div>
-
                             <!-- Multi-Select Product Dropdown -->
                             <div class="sales-filter-field col-product" id="productMultiSelectContainer">
                                 <label data-i18n="labelProduct">Products / Medicines:</label>
@@ -110,19 +115,16 @@
                                     </div>
                                 </div>
                             </div>
-
                             <!-- Cascading Level 1: Line / Line Manager -->
                             <div class="sales-filter-field col-line" id="salesLineFilterGroup" style="display: none;">
                                 <label data-i18n="labelLine">Line / LM:</label>
                                 <select id="salesLineSelect" class="form-control" onchange="onSalesLineChange()"></select>
                             </div>
-
                             <!-- Cascading Level 2: District / District Manager -->
                             <div class="sales-filter-field col-dm" id="salesDmFilterGroup" style="display: none;">
                                 <label data-i18n="labelDm">District / DM:</label>
                                 <select id="salesDmSelect" class="form-control" onchange="onSalesDmChange()"></select>
                             </div>
-
                             <!-- Cascading Level 3: Medical Rep -->
                             <div class="sales-filter-field col-rep" id="salesRepFilterGroup" style="display: none;">
                                 <label data-i18n="labelRep">Medical Rep:</label>
@@ -130,20 +132,17 @@
                                     <option value="all" data-i18n="allReps">All Representatives</option>
                                 </select>
                             </div>
-
                             <div class="sales-filter-field col-btn">
                                 <button type="button" class="btn btn-primary" id="btnShowSalesReport" onclick="renderSalesReport()">
                                     <span>🔍</span> <span data-i18n="btnShow">Show</span>
                                 </button>
                             </div>
                         </div>
-
                         <div id="salesFilterPeriodLabel" class="sales-period-pill">
-                            Period: September 2026 | All Products
+Period: September 2026 | All Products
                         </div>
                     </div>
-
-                    <!-- Dynamic KPI Cards Row  -->
+                    <!-- Dynamic KPI Cards Row -->
                     <div class="kpi-grid">
                         <div class="kpi-card primary">
                             <span class="kpi-label" data-i18n="kpiActualSales">Actual Sales</span>
@@ -166,7 +165,6 @@
                             <span class="kpi-subtext" id="kpiProductsSubtext">Product breakdown</span>
                         </div>
                     </div>
-
                     <!-- Sales Actions & Excel Upload Bar -->
                     <div class="sales-actions-card">
                         <div class="sales-actions-left">
@@ -177,11 +175,10 @@
                             <input type="file" id="salesExcelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelUpload(event)">
                             <button class="btn btn-outline" id="exportSalesBtn" onclick="exportSalesReport()">📥 Export CSV</button>
                             <button class="btn btn-primary" id="uploadSalesBtn" onclick="triggerExcelUpload()">
-                                📤 Upload Excel Sheet
+📤 Upload Excel Sheet
                             </button>
                         </div>
                     </div>
-
                     <!-- Sales Table with Product Breakdown -->
                     <div class="table-container">
                         <table class="report-table">
@@ -200,10 +197,8 @@
                         </table>
                     </div>
                 </div>
-
                 <!-- TAB 2: Daily Visits & Activities Timeline -->
                 <div class="report-content-panel" id="tabPanel-timeline">
-
                     <!-- Employee filter bar (visits-page style) -->
                     <div id="timelineRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
                         <label class="manager-rep-filter-label">
@@ -213,7 +208,6 @@
                             <option value="all">All Employees</option>
                         </select>
                     </div>
-
                     <div class="timeline-filter-card" style="margin-top: 8px;">
                         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -225,7 +219,7 @@
                                 <input type="date" id="timelineDateTo" class="form-control" style="width: auto;">
                             </div>
                             <button type="button" class="btn btn-primary" onclick="renderDailyTimeline()" style="padding: 6px 18px; border-radius: 6px; font-weight: 600;">
-                                🔍 <span data-i18n="btnShow">Show</span>
+🔍 <span data-i18n="btnShow">Show</span>
                             </button>
                             <span class="badge" style="background: var(--primary-light); color: var(--primary); padding: 6px 12px; font-weight: 700; border-radius: 8px;" id="timelineDateBadge">Today</span>
                         </div>
@@ -234,14 +228,11 @@
                             <span class="legend-item"><span class="legend-dot planned"></span> Planned &amp; Executed</span>
                         </div>
                     </div>
-
                     <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
                     <div class="timeline-container" id="timelineEventsContainer"></div>
                 </div>
-
                 <!-- TAB 3: Coverage & Frequency -->
                 <div class="report-content-panel" id="tabPanel-coverage">
-
                     <!-- Employee filter bar (visits-page style) -->
                     <div id="coverageRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
                         <label class="manager-rep-filter-label">
@@ -251,7 +242,6 @@
                             <option value="all">All Employees</option>
                         </select>
                     </div>
-
                     <div class="coverage-filter-card" style="margin-top: 8px;">
                         <div class="date-range-row" style="align-items: flex-end;">
                             <div class="date-input-group">
@@ -273,17 +263,16 @@
                                 </select>
                             </div>
                             <button type="button" class="btn btn-primary" onclick="renderCoverageReport()" style="padding: 10px 20px; border-radius: 8px; font-weight: 700; height: 42px;">
-                                🔍 <span data-i18n="btnShow">Show</span>
+🔍 <span data-i18n="btnShow">Show</span>
                             </button>
                             <button type="button" class="btn btn-outline" onclick="exportCoverageReport()" style="padding: 10px 16px; border-radius: 8px; font-weight: 700; height: 42px;">
-                                📥 <span data-i18n="btnExportCSV">Export CSV</span>
+📥 <span data-i18n="btnExportCSV">Export CSV</span>
                             </button>
                         </div>
                         <div style="margin-top: 10px; font-size: 0.85rem; color: var(--gray-600);">
-                            💡 <strong>Coverage Rules:</strong> Class A Doctors = 4 visits/Quarter | Class B Doctors = 3 visits/Quarter | AM Hospitals = 2 visits/Month
+💡 <strong>Coverage Rules:</strong> Class A Doctors = 4 visits/Quarter | Class B Doctors = 3 visits/Quarter | AM Hospitals = 2 visits/Month
                         </div>
                     </div>
-
                     <!-- Overall Coverage Summary KPI Cards for Selected Period -->
                     <div class="kpi-grid mb-3" style="margin-bottom: 16px;">
                         <div class="kpi-card primary">
@@ -307,7 +296,6 @@
                             <span class="kpi-subtext" id="kpiCoverageTargetsSubtext">Doctors & Hospitals</span>
                         </div>
                     </div>
-
                     <div class="table-container">
                         <table class="report-table">
                             <thead>
@@ -324,7 +312,6 @@
                         </table>
                     </div>
                 </div>
-
                 <!-- TAB 4: Doctors List -->
                 <div class="report-content-panel" id="tabPanel-doctors">
                     <!-- Employee filter bar (visits-page style) -->
@@ -336,7 +323,6 @@
                             <option value="all" data-i18n="allReps">All Employees</option>
                         </select>
                     </div>
-
                     <div class="sales-filter-card" style="margin-top: 8px;">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
                             <div>
@@ -353,7 +339,6 @@
                                 </button>
                             </div>
                         </div>
-
                         <!-- Filters Grid -->
                         <div class="sales-filter-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                             <!-- Search -->
@@ -361,7 +346,6 @@
                                 <label data-i18n="searchDoctors">Search:</label>
                                 <input type="text" id="doctorSearchInput" class="form-control" data-i18n-placeholder="searchDoctorsPlaceholder" placeholder="Search by name, clinic, phone..." oninput="onDoctorFilterChange()">
                             </div>
-
                             <!-- Specialty Filter -->
                             <div class="sales-filter-field">
                                 <label data-i18n="specialty">Specialty:</label>
@@ -380,7 +364,6 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-
                             <!-- Class Filter -->
                             <div class="sales-filter-field">
                                 <label data-i18n="doctorClass">Class:</label>
@@ -390,17 +373,14 @@
                                     <option value="B">Class B</option>
                                 </select>
                             </div>
-
                             <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
                             <div style="display:none;" id="doctorLmFilterGroup"><select id="doctorLmSelect" onchange="onDoctorLmChange()"></select></div>
                             <div style="display:none;" id="doctorDmFilterGroup"><select id="doctorDmSelect" onchange="onDoctorDmChange()"></select></div>
                             <div style="display:none;" id="doctorRepFilterGroup"><select id="doctorRepSelectLegacy" onchange="onDoctorFilterChange()"></select></div>
                         </div>
                     </div>
-
                     <!-- Doctors Cards Grid -->
                     <div id="doctorsDirectoryGrid" class="directory-cards-grid"></div>
-
                     <!-- Doctors Empty State -->
                     <div id="doctorsEmptyState" class="directory-empty-state" style="display: none;">
                         <div class="empty-state-icon">👨‍⚕️</div>
@@ -408,10 +388,8 @@
                         <p class="text-muted" data-i18n="noDoctorsDesc">Try adjusting search query or filters.</p>
                     </div>
                 </div>
-
                 <!-- TAB 5: Pharmacies List -->
                 <div class="report-content-panel" id="tabPanel-pharmacies">
-
                     <!-- Employee filter bar (visits-page style) -->
                     <div id="pharmacyRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
                         <label class="manager-rep-filter-label">
@@ -421,7 +399,6 @@
                             <option value="all" data-i18n="allReps">All Employees</option>
                         </select>
                     </div>
-
                     <div class="sales-filter-card" style="margin-top: 8px;">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
                             <div>
@@ -438,7 +415,6 @@
                                 </button>
                             </div>
                         </div>
-
                         <!-- Filters Grid -->
                         <div class="sales-filter-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                             <!-- Search -->
@@ -446,17 +422,14 @@
                                 <label data-i18n="searchPharmacies">Search:</label>
                                 <input type="text" id="pharmacySearchInput" class="form-control" data-i18n-placeholder="searchPharmaciesPlaceholder" placeholder="Search by pharmacy name, address, contact..." oninput="onPharmacyFilterChange()">
                             </div>
-
                             <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
                             <div style="display:none;" id="pharmacyLmFilterGroup"><select id="pharmacyLmSelect" onchange="onPharmacyLmChange()"></select></div>
                             <div style="display:none;" id="pharmacyDmFilterGroup"><select id="pharmacyDmSelect" onchange="onPharmacyDmChange()"></select></div>
                             <div style="display:none;" id="pharmacyRepFilterGroup"><select id="pharmacyRepSelectLegacy" onchange="onPharmacyFilterChange()"></select></div>
                         </div>
                     </div>
-
                     <!-- Pharmacies Cards Grid -->
                     <div id="pharmaciesDirectoryGrid" class="directory-cards-grid"></div>
-
                     <!-- Pharmacies Empty State -->
                     <div id="pharmaciesEmptyState" class="directory-empty-state" style="display: none;">
                         <div class="empty-state-icon">💊</div>
@@ -464,11 +437,9 @@
                         <p class="text-muted" data-i18n="noPharmaciesDesc">Try adjusting search query or filters.</p>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
-
     <!-- Modals for Doctors & Pharmacies Management (Admin Only) -->
     <!-- Modals for Doctors & Pharmacies Management (Admin Only) -->
     <!-- Doctor Modal -->
@@ -496,7 +467,6 @@
                                 </label>
                                 <input type="text" id="doctorNameInput" class="form-control modern-input" required placeholder="e.g. Dr. Ahmed Mostafa">
                             </div>
-
                             <!-- Specialty -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="doctorSpecialtyInput">
@@ -516,7 +486,6 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-
                             <!-- Class -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="doctorClassInput">
@@ -527,7 +496,6 @@
                                     <option value="B">Class B (Standard Target)</option>
                                 </select>
                             </div>
-
                             <!-- Clinic Address -->
                             <div class="form-group col-span-2">
                                 <label class="form-label" for="doctorAddressInput">
@@ -535,7 +503,6 @@
                                 </label>
                                 <input type="text" id="doctorAddressInput" class="form-control modern-input" required placeholder="e.g. 15 Makram Ebeid, Nasr City, Cairo">
                             </div>
-
                             <!-- Phone Number -->
                             <div class="form-group col-span-2">
                                 <label class="form-label" for="doctorPhoneInput">
@@ -543,14 +510,12 @@
                                 </label>
                                 <input type="tel" id="doctorPhoneInput" class="form-control modern-input" placeholder="e.g. 01001234567">
                             </div>
-
                             <!-- Section Divider: Territory & Representative Assignment -->
                             <div class="col-span-2 modal-section-divider">
                                 <span class="modal-section-title">
                                     <span class="label-icon">🏢</span> <span data-i18n="territoryAssignment">Territory & Rep Assignment</span>
                                 </span>
                             </div>
-
                             <!-- Hierarchy Filter 1: Line / LM -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="doctorModalLmSelect">
@@ -558,7 +523,6 @@
                                 </label>
                                 <select id="doctorModalLmSelect" class="form-control modern-select" onchange="onDoctorModalLmChange()"></select>
                             </div>
-
                             <!-- Hierarchy Filter 2: District / DM -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="doctorModalDmSelect">
@@ -566,7 +530,6 @@
                                 </label>
                                 <select id="doctorModalDmSelect" class="form-control modern-select" onchange="onDoctorModalDmChange()"></select>
                             </div>
-
                             <!-- Assigned Medical Rep -->
                             <div class="form-group col-span-2">
                                 <label class="form-label" for="doctorRepInput">
@@ -588,7 +551,6 @@
             </div>
         </div>
     </div>
-
     <!-- Delete Doctor Modal -->
     <div id="deleteDoctorModal" class="custom-modal" style="display:none;">
         <div class="custom-modal-dialog" style="max-width: 440px;">
@@ -612,7 +574,6 @@
             </div>
         </div>
     </div>
-
     <!-- Pharmacy Modal -->
     <div id="pharmacyModal" class="custom-modal" style="display:none;">
         <div class="custom-modal-dialog modal-dialog-lg">
@@ -638,7 +599,6 @@
                                 </label>
                                 <input type="text" id="pharmacyNameInput" class="form-control modern-input" required placeholder="e.g. Al-Ezaby Pharmacy">
                             </div>
-
                             <!-- Address -->
                             <div class="form-group col-span-2">
                                 <label class="form-label" for="pharmacyAddressInput">
@@ -646,7 +606,6 @@
                                 </label>
                                 <input type="text" id="pharmacyAddressInput" class="form-control modern-input" required placeholder="e.g. 15 Abbas Al-Akkad, Nasr City, Cairo">
                             </div>
-
                             <!-- Contact Person -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="pharmacyContactInput">
@@ -654,7 +613,6 @@
                                 </label>
                                 <input type="text" id="pharmacyContactInput" class="form-control modern-input" placeholder="e.g. Dr. Mohamed Ibrahim">
                             </div>
-
                             <!-- Phone Number -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="pharmacyPhoneInput">
@@ -662,14 +620,12 @@
                                 </label>
                                 <input type="tel" id="pharmacyPhoneInput" class="form-control modern-input" placeholder="e.g. 01001112233">
                             </div>
-
                             <!-- Section Divider: Territory & Representative Assignment -->
                             <div class="col-span-2 modal-section-divider">
                                 <span class="modal-section-title">
                                     <span class="label-icon">🏢</span> <span data-i18n="territoryAssignment">Territory & Rep Assignment</span>
                                 </span>
                             </div>
-
                             <!-- Hierarchy Filter 1: Line / LM -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="pharmacyModalLmSelect">
@@ -677,7 +633,6 @@
                                 </label>
                                 <select id="pharmacyModalLmSelect" class="form-control modern-select" onchange="onPharmacyModalLmChange()"></select>
                             </div>
-
                             <!-- Hierarchy Filter 2: District / DM -->
                             <div class="form-group col-span-1">
                                 <label class="form-label" for="pharmacyModalDmSelect">
@@ -685,7 +640,6 @@
                                 </label>
                                 <select id="pharmacyModalDmSelect" class="form-control modern-select" onchange="onPharmacyModalDmChange()"></select>
                             </div>
-
                             <!-- Assigned Medical Rep -->
                             <div class="form-group col-span-2">
                                 <label class="form-label" for="pharmacyRepInput">
@@ -707,7 +661,6 @@
             </div>
         </div>
     </div>
-
     <!-- Delete Pharmacy Modal -->
     <div id="deletePharmacyModal" class="custom-modal" style="display:none;">
         <div class="custom-modal-dialog" style="max-width: 440px;">
@@ -731,7 +684,6 @@
             </div>
         </div>
     </div>
-
     <!-- Import Doctors Sheet Modal (Admin Only) -->
     <div id="importDoctorsModal" class="custom-modal" style="display:none;">
         <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px;">
@@ -758,7 +710,6 @@
                             <span>📊</span> <span data-i18n="btnDownloadTemplate">Download Template (.xlsx)</span>
                         </button>
                     </div>
-
                     <!-- Step 2: Territory & Representative Assignment -->
                     <div class="import-step-card mb-3">
                         <div class="import-step-header">
@@ -787,7 +738,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Step 3: Upload File Zone -->
                     <div class="import-step-card mb-3">
                         <div class="import-step-header">
@@ -802,7 +752,6 @@
                             <div class="selected-file-name" id="doctorsSelectedFileName" style="display:none;"></div>
                         </div>
                     </div>
-
                     <!-- Live Validation & Preview Container -->
                     <div id="doctorsPreviewContainer" style="display:none;" class="import-preview-section">
                         <div class="preview-header">
@@ -839,7 +788,6 @@
             </div>
         </div>
     </div>
-
     <!-- Import Pharmacies Sheet Modal (Admin Only) -->
     <div id="importPharmaciesModal" class="custom-modal" style="display:none;">
         <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px;">
@@ -866,7 +814,6 @@
                             <span>📊</span> <span data-i18n="btnDownloadTemplate">Download Template (.xlsx)</span>
                         </button>
                     </div>
-
                     <!-- Step 2: Territory & Representative Assignment -->
                     <div class="import-step-card mb-3">
                         <div class="import-step-header">
@@ -895,7 +842,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Step 3: Upload File Zone -->
                     <div class="import-step-card mb-3">
                         <div class="import-step-header">
@@ -910,7 +856,6 @@
                             <div class="selected-file-name" id="pharmaciesSelectedFileName" style="display:none;"></div>
                         </div>
                     </div>
-
                     <!-- Live Validation & Preview Container -->
                     <div id="pharmaciesPreviewContainer" style="display:none;" class="import-preview-section">
                         <div class="preview-header">
@@ -946,7 +891,6 @@
             </div>
         </div>
     </div>
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/excel-templates-data.js"></script>
@@ -956,6 +900,5 @@
     <script src="js/coverage-report.js"></script>
     <script src="js/doctors-report.js"></script>
     <script src="js/pharmacies-report.js"></script>
-
 </body>
 </html>
