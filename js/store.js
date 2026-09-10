@@ -2,6 +2,23 @@
  * @file store.js
  * @description Centralized State Store with automatic persistence and zero-break compatibility.
  * Wraps window.DEMO_DATA to guarantee a Single Source of Truth and eliminate manual save calls.
+ *
+ * Change in this revision:
+ *  - areas.save() no longer auto-unassigns a rep from every OTHER area
+ *    when assigning them to a new one. A rep can now legitimately cover
+ *    several areas at once. An area itself is still one-rep-at-a-time:
+ *    assigning a rep to THIS area still displaces whoever held THIS
+ *    specific area before. To remove a rep from one area without
+ *    touching their other areas, use areas.unassignRep(areaId) or save
+ *    the area again with an empty repId (the existing areas.html modal's
+ *    "-- Unassigned --" option already does this).
+ *  - A user's areas are now derived from the areas list itself
+ *    (store.users.syncAreasFromStore()), which is the single source of
+ *    truth, instead of being written independently on the user record
+ *    and risking drift. user.areaIds (array) is the new field to read;
+ *    user.area / user.areaId are kept in sync too (area = comma-joined
+ *    names, areaId = first assigned area's id) purely so any older code
+ *    that still reads those singular fields keeps working.
  */
 
 (function () {
@@ -53,26 +70,48 @@
         autoSave("users", idx >= 0 ? "update" : "create", userObj);
         return userObj;
       },
+      /**
+       * Legacy singular-area setter. Kept only for backward compatibility
+       * with any older call sites; new code should assign a rep on the
+       * Area record via store.areas.save() instead, which now supports a
+       * rep holding several areas and is the single source of truth.
+       */
       updateArea(userId, areaName, areaId) {
         const u = this.getById(userId);
         if (u) {
           u.area = areaName || null;
           u.areaId = areaId || null;
-          autoSave("users", "updateArea", { userId, areaName, areaId });
         }
       },
-      clearAreaFromAllExcept(areaId, areaName, keepUserId = null) {
-        const users = window.DEMO_DATA.users || [];
-        users.forEach((u) => {
-          if (
-            (u.areaId === areaId || u.area === areaName) &&
-            u.id !== keepUserId
-          ) {
-            u.area = null;
-            u.areaId = null;
-          }
+      /**
+       * Returns every Area record currently assigned to this rep
+       * (a rep may now hold zero, one, or several areas).
+       */
+      getAreas(userId) {
+        return (window.DEMO_DATA.areas || []).filter(
+          (a) => a.repId === userId,
+        );
+      },
+      /**
+       * Recomputes each user's area fields from the Areas list (the
+       * single source of truth for who covers what). Called automatically
+       * whenever an area is saved, unassigned, or deleted.
+       *   - user.areaIds: array of every assigned area's id (new field)
+       *   - user.area: comma-joined area names (kept for older UI/display
+       *     code that expects one string)
+       *   - user.areaId: first assigned area's id (kept for older code
+       *     that expects a single id; prefer areaIds for new code)
+       */
+      syncAreasFromStore() {
+        const areas = window.DEMO_DATA.areas || [];
+        (window.DEMO_DATA.users || []).forEach((u) => {
+          const repAreas = areas.filter((a) => a.repId === u.id);
+          u.areaIds = repAreas.map((a) => a.id);
+          u.area = repAreas.length
+            ? repAreas.map((a) => a.name).join(", ")
+            : null;
+          u.areaId = repAreas.length ? repAreas[0].id : null;
         });
-        autoSave("users", "clearArea", { areaId, areaName, keepUserId });
       },
     },
 
@@ -86,83 +125,56 @@
       getById(id) {
         return (window.DEMO_DATA.areas || []).find((a) => a.id === id);
       },
+      /**
+       * Every area currently assigned to the given rep. A rep can hold
+       * more than one.
+       */
+      getByRep(repId) {
+        return (window.DEMO_DATA.areas || []).filter(
+          (a) => a.repId === repId,
+        );
+      },
       save(areaObj) {
         if (!window.DEMO_DATA.areas) window.DEMO_DATA.areas = [];
         const areas = window.DEMO_DATA.areas;
         const idx = areas.findIndex((a) => a.id === areaObj.id);
 
         if (idx >= 0) {
-          const oldArea = areas[idx];
-          const oldName = oldArea.name;
-          const oldRepId = oldArea.repId;
-          const areaId = areaObj.id || oldArea.id;
-
-          if (oldRepId && oldRepId !== areaObj.repId) {
-            store.users.updateArea(oldRepId, null, null);
-          }
-
-          if (areaObj.repId) {
-            areas.forEach((a) => {
-              if (a.id !== areaId && a.repId === areaObj.repId) {
-                a.repId = null;
-                a.repName = null;
-              }
-            });
-          }
-
-          if (oldName && oldName !== areaObj.name) {
-            store.users.clearAreaFromAllExcept(areaId, oldName, areaObj.repId);
-          }
-          store.users.clearAreaFromAllExcept(
-            areaId,
-            areaObj.name,
-            areaObj.repId,
-          );
-
-          areas[idx] = { ...oldArea, ...areaObj, id: areaId };
-
-          if (areaObj.repId) {
-            store.users.updateArea(areaObj.repId, areaObj.name, areaId);
-          }
+          const areaId = areaObj.id || areas[idx].id;
+          // An area still belongs to at most one rep at a time: if THIS
+          // area is being (re)assigned to a rep, that rep displaces
+          // whoever held THIS area before. It no longer touches any of
+          // that rep's OTHER area assignments -- a rep can cover several
+          // areas simultaneously.
+          areas[idx] = { ...areas[idx], ...areaObj, id: areaId };
         } else {
           const newId = areaObj.id || "area_" + Date.now();
-          const newArea = { ...areaObj, id: newId };
-          areas.push(newArea);
-
-          if (newArea.repId) {
-            areas.forEach((a) => {
-              if (a.id !== newId && a.repId === newArea.repId) {
-                a.repId = null;
-                a.repName = null;
-              }
-            });
-
-            store.users.clearAreaFromAllExcept(
-              newId,
-              newArea.name,
-              newArea.repId,
-            );
-            store.users.updateArea(newArea.repId, newArea.name, newId);
-          }
+          areas.push({ ...areaObj, id: newId });
         }
+
+        store.users.syncAreasFromStore();
         autoSave("areas", idx >= 0 ? "update" : "create", areaObj);
         return areaObj;
       },
-      delete(areaId) {
+      /**
+       * Explicitly clears the rep from one area, leaving that rep's other
+       * area assignments untouched. This is what the areas.html modal's
+       * "-- Unassigned --" option now maps to (saving with an empty
+       * repId has the same effect).
+       */
+      unassignRep(areaId) {
         const area = this.getById(areaId);
         if (!area) return;
-
-        const users = window.DEMO_DATA.users || [];
-        users.forEach((u) => {
-          if (u.area === area.name || u.areaId === area.id) {
-            u.area = null;
-            u.areaId = null;
-          }
-        });
-
+        area.repId = null;
+        area.repName = null;
+        store.users.syncAreasFromStore();
+        autoSave("areas", "unassignRep", { areaId });
+      },
+      delete(areaId) {
         window.DEMO_DATA.areas = (window.DEMO_DATA.areas || []).filter(
           (a) => a.id !== areaId,
         );
+        store.users.syncAreasFromStore();
         autoSave("areas", "delete", { id: areaId });
       },
     },
