@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file app.js
  * @description Core shared logic, synchronous theme execution, authentication, and universal topbar rendering across all pages.
  */
@@ -1137,6 +1137,7 @@ const translations = {
     navQuizzes: "Quizzes",
     navProducts: "Products",
     navAreas: "Areas",
+    navDistributors: "Distributors",
     navUsers: "Users",
     navProfile: "Profile",
     navHelp: "Help",
@@ -1229,6 +1230,7 @@ const translations = {
     navQuizzes: "الاختبارات",
     navProducts: "المنتجات",
     navAreas: "المناطق",
+    navDistributors: "الموزعين",
     navUsers: "المستخدمين",
     navProfile: "الملف الشخصي",
     navHelp: "مساعدة",
@@ -1395,6 +1397,7 @@ function resolveActivePage() {
     "products.html": "products",
     "quizzes.html": "quizzes",
     "areas.html": "areas",
+    "distributors.html": "distributors",
     "plans-review.html": "plans-review",
   };
   return pageMap[path] || "home";
@@ -1417,6 +1420,7 @@ function getIconSymbol(id) {
     doctors: "👨‍⚕️",
     pharmacies: "💊",
     areas: "🗺️",
+    distributors: "🚚",
     products: "📦",
     sales: "📈",
     plan: "🗓️",
@@ -1482,6 +1486,11 @@ function getNavItemsForRole(role) {
   } else if (role === "admin") {
     managementNavItems.push(
       { id: "users", i18n: "navUsers", link: "users.html" },
+      {
+        id: "distributors",
+        i18n: "navDistributors",
+        link: "distributors.html",
+      },
       { id: "areas", i18n: "navAreas", link: "areas.html" },
       { id: "products", i18n: "navProducts", link: "products.html" },
       { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
