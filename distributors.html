@@ -37,6 +37,9 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/app.js"></script>
     <script src="js/store.js"></script>
+    <!-- SheetJS: used only to read the header row of a sample sheet when
+         configuring a distributor's column mapping below. -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   </head>
   <body>
     <div class="app">
@@ -142,6 +145,12 @@
                       >
                         Distributor Name
                       </th>
+                      <th class="border-0 px-4 py-3" data-i18n="supply_type">
+                        Supply Type
+                      </th>
+                      <th class="border-0 px-4 py-3" data-i18n="mapping_status">
+                        Sheet Mapping
+                      </th>
                       <th
                         class="border-0 px-4 py-3 text-end"
                         data-i18n="actions"
@@ -214,6 +223,25 @@
                   required
                 />
               </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="supply_type"
+                  >Supply Type <span class="text-danger">*</span></label
+                >
+                <select class="form-select" id="distributorType">
+                  <option value="commercial" data-i18n="type_commercial">
+                    Commercial / Trade
+                  </option>
+                  <option value="tender" data-i18n="type_tender">
+                    Tender / Institutional
+                  </option>
+                </select>
+                <div class="form-text" data-i18n="supply_type_hint">
+                  Commercial and Tender business from the same wholesaler
+                  (e.g. "Ibn Sina" vs "Tender Ibn Sina") are separate
+                  distributor entries.
+                </div>
+              </div>
             </form>
           </div>
           <div class="modal-footer border-top py-3">
@@ -269,6 +297,101 @@
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column Mapping Modal: teaches the system which column in THIS
+         distributor's sheet holds the product, the sales value, and
+         (optionally) the area/territory text and pharmacy name. Saved
+         once per distributor and reused automatically on every future
+         upload from them. -->
+    <div class="modal fade" id="mappingModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header border-bottom py-3">
+            <h5 class="modal-title" data-i18n="configure_mapping">
+              Configure Sheet Mapping
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3" id="mappingModalDistName"></p>
+
+            <!-- Step 1: sample file upload -->
+            <div id="mappingUploadStep">
+              <label class="form-label fw-semibold" data-i18n="upload_sample_sheet">
+                Upload a Sample Sheet
+              </label>
+              <p class="text-muted small" data-i18n="upload_sample_sheet_desc">
+                Upload one real sheet from this distributor. We'll only read
+                its column headers -- no sales data is imported at this
+                step.
+              </p>
+              <input
+                type="file"
+                id="mappingFileInput"
+                accept=".xlsx,.xls,.csv"
+                class="form-control"
+                onchange="handleMappingFileSelected(event)"
+              />
+            </div>
+
+            <!-- Step 2: role assignment (built dynamically once headers are read) -->
+            <div id="mappingRolesStep" style="display: none">
+              <label class="form-label fw-semibold mt-2" data-i18n="assign_columns">
+                Assign Each Column
+              </label>
+              <p class="text-muted small" data-i18n="assign_columns_desc">
+                For every column detected in the sheet, choose what it
+                represents. Product and Sales Value are required; the rest
+                are optional.
+              </p>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th data-i18n="detected_column">Detected Column</th>
+                      <th data-i18n="represents">Represents</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mappingRolesTableBody"></tbody>
+                </table>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-link px-0"
+                onclick="resetMappingUpload()"
+                data-i18n="upload_different_sheet"
+              >
+                Upload a different sample instead
+              </button>
+            </div>
+          </div>
+          <div class="modal-footer border-top py-3">
+            <button
+              type="button"
+              class="btn btn-light"
+              data-bs-dismiss="modal"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="saveMappingBtn"
+              onclick="saveMapping()"
+              style="display: none"
+              data-i18n="save_mapping"
+            >
+              Save Mapping
+            </button>
           </div>
         </div>
       </div>
