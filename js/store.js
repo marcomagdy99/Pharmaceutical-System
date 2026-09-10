@@ -306,6 +306,41 @@
     },
 
     // ==========================================
+    // Section: Distributors Module
+    // (e.g. "Ibn Sina", "Overseas" -- the wholesalers whose raw sales
+    // sheets get imported. Column-mapping per distributor and the
+    // area-alias matching come later; this module is just the list.)
+    // ==========================================
+    distributors: {
+      getAll() {
+        return window.DEMO_DATA.distributors || [];
+      },
+      getById(id) {
+        return (window.DEMO_DATA.distributors || []).find(
+          (d) => d.id === id,
+        );
+      },
+      save(distObj) {
+        if (!window.DEMO_DATA.distributors) window.DEMO_DATA.distributors = [];
+        const dists = window.DEMO_DATA.distributors;
+        const idx = dists.findIndex((d) => d.id === distObj.id);
+        if (idx >= 0) {
+          dists[idx] = { ...dists[idx], ...distObj };
+        } else {
+          dists.push(distObj);
+        }
+        autoSave("distributors", idx >= 0 ? "update" : "create", distObj);
+        return distObj;
+      },
+      delete(distId) {
+        window.DEMO_DATA.distributors = (
+          window.DEMO_DATA.distributors || []
+        ).filter((d) => d.id !== distId);
+        autoSave("distributors", "delete", { id: distId });
+      },
+    },
+
+    // ==========================================
     // Section: Leaves Module
     // ==========================================
     leaves: {
