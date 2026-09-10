@@ -100,6 +100,32 @@ function populateProductCheckboxes(lineId = 'all') {
 }
 
 // ============================================================================
+// Section 5.7: Distributor & Supply Type Filters
+// The Supply Type (Commercial/Tender) is NOT a flag stored on each sale
+// row -- it's read from the distributor record itself, since Commercial
+// and Tender business from the same wholesaler are separate distributor
+// entries (e.g. "Ibn Sina" vs "Tender Ibn Sina"), matching the real CRM.
+// ============================================================================
+function populateDistributorsFilter() {
+  const select = document.getElementById('salesDistributorSelect');
+  if (!select) return;
+  const lang = getCurrentLang();
+  const allLabel = lang === 'ar' ? 'جميع الموزعين' : 'All Distributors';
+  const currentVal = select.value;
+  const distributors = (window.store && window.store.distributors.getAll()) || [];
+  select.innerHTML = `<option value="all">${allLabel}</option>`;
+  distributors.forEach((d) => {
+    const opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = d.name;
+    select.appendChild(opt);
+  });
+  if (currentVal && distributors.some((d) => d.id === currentVal)) {
+    select.value = currentVal;
+  }
+}
+
+// ============================================================================
 // Section 5.5: Multi-Select Month Dropdown Logic
 // (Same interaction pattern as the Product dropdown above. Months are a
 // fixed, non-user-supplied list, so building labels via textContent isn't
@@ -220,6 +246,8 @@ function renderSalesReport() {
   const lineSelect = document.getElementById('salesLineSelect');
   const dmSelect = document.getElementById('salesDmSelect');
   const repSelect = document.getElementById('salesRepSelect');
+  const distributorSelect = document.getElementById('salesDistributorSelect');
+  const tenderSelect = document.getElementById('salesTenderSelect');
   const periodLabel = document.getElementById('salesFilterPeriodLabel');
   const lang = getCurrentLang();
   const _n = new Date();
@@ -301,6 +329,26 @@ function renderSalesReport() {
     }
   }
 
+  const selectedDistributor = distributorSelect ? distributorSelect.value : 'all';
+  const selectedSupplyType = tenderSelect ? tenderSelect.value : 'all';
+
+  if (selectedDistributor && selectedDistributor !== 'all') {
+    filtered = filtered.filter((row) => row.distributorId === selectedDistributor);
+  }
+  if (selectedSupplyType && selectedSupplyType !== 'all') {
+    filtered = filtered.filter((row) => {
+      // Rows with no distributorId at all (legacy/manually-entered sales
+      // that predate this feature) have no determinable supply type, so
+      // they're excluded from a Commercial-only or Tenders-only view
+      // rather than being guessed into either bucket.
+      if (!row.distributorId) return false;
+      const type = window.store && window.store.distributors
+        ? window.store.distributors.getType(row.distributorId)
+        : 'commercial';
+      return type === selectedSupplyType;
+    });
+  }
+
   filtered = filtered.filter((row) => selectedProducts.includes(row.product));
 
   let totalActual = 0;
@@ -310,7 +358,7 @@ function renderSalesReport() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
+        <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
           ${lang === 'ar' ? 'لا توجد بيانات مبيعات مسجلة لهذا الاختيار.' : 'No sales records found for this selection.'}
         </td>
       </tr>
@@ -327,6 +375,17 @@ function renderSalesReport() {
       const statusBadge = isAchieved
         ? `<span class="sales-status-badge achieved">${lang === 'ar' ? 'مكتمل' : 'Achieved'}</span>`
         : `<span class="sales-status-badge in-progress">${lang === 'ar' ? 'قيد التنفيذ' : 'In Progress'}</span>`;
+      const dist = row.distributorId && window.store && window.store.distributors
+        ? window.store.distributors.getById(row.distributorId)
+        : null;
+      const distName = dist ? dist.name : (row.distributorName || (lang === 'ar' ? 'غير محدد' : 'Unspecified'));
+      const distIsTender = dist ? window.store.distributors.getType(dist.id) === 'tender' : false;
+      const distBadge = row.distributorId
+        ? (distIsTender
+            ? `<span class="sales-status-badge" style="background: var(--danger-light, #fde8e8); color: var(--danger, #c0392b);">${lang === 'ar' ? 'مناقصات' : 'Tender'}</span>`
+            : `<span class="sales-status-badge" style="background: var(--primary-light); color: var(--primary);">${lang === 'ar' ? 'تجاري' : 'Commercial'}</span>`)
+        : `<span class="sales-status-badge" style="background: var(--gray-100, #f1f1f1); color: var(--gray-500);">—</span>`;
+      const esc = window.escapeHtml || ((s) => s || '');
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="white-space: nowrap;"><strong>${row.month}</strong></td>
@@ -339,6 +398,8 @@ function renderSalesReport() {
             💊 ${row.product || 'General Product'}
           </span>
         </td>
+        <td style="white-space: nowrap;">${esc(distName)}</td>
+        <td style="white-space: nowrap;">${distBadge}</td>
         <td style="font-weight: 600; white-space: nowrap;">${targetVal.toLocaleString()}</td>
         <td style="font-weight: 700; color: var(--primary); white-space: nowrap;">${actualVal.toLocaleString()}</td>
         <td style="white-space: nowrap;">
@@ -384,6 +445,12 @@ function handleExcelUpload(e) {
   const lang = getCurrentLang();
   showToast(lang === 'ar' ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, 'info');
   setTimeout(() => {
+    // NOTE: this still doesn't read the uploaded file's real rows (see
+    // shared-report.js's parseExcelFile for the parser this will use) and
+    // doesn't yet set distributorId/distributorName -- that's wired up
+    // together with the per-distributor column-mapping feature (see
+    // distributors.html), not here, so an upload doesn't silently tag
+    // sales with the wrong distributor before that mapping exists.
     const newRecord = {
       id: 's_' + Date.now(),
       month: '2026-09',
@@ -419,16 +486,39 @@ function exportSalesReport() {
   const targetPeriods = selectedMonths.map((m) => `${selectedYear}-${m}`);
   const checkedBoxes = Array.from(document.querySelectorAll('.prod-checkbox:checked'));
   const selectedProducts = checkedBoxes.map((cb) => cb.value);
+  const distributorSelect = document.getElementById('salesDistributorSelect');
+  const tenderSelect = document.getElementById('salesTenderSelect');
+  const selectedDistributor = distributorSelect ? distributorSelect.value : 'all';
+  const selectedSupplyType = tenderSelect ? tenderSelect.value : 'all';
   const activeSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
     ? window.DEMO_DATA.sales
     : REPORTS_DATA.sales;
-  let csv = 'Month,Rep Name,Area,Product,Target,Actual,Achievement\n';
+  let csv = 'Month,Rep Name,Area,Product,Distributor,Type,Target,Actual,Achievement\n';
   let filtered = activeSales.filter((r) => targetPeriods.includes(r.month) && selectedProducts.includes(r.product));
+  if (selectedDistributor !== 'all') {
+    filtered = filtered.filter((r) => r.distributorId === selectedDistributor);
+  }
+  if (selectedSupplyType !== 'all') {
+    filtered = filtered.filter((r) => {
+      if (!r.distributorId) return false;
+      const type = window.store && window.store.distributors
+        ? window.store.distributors.getType(r.distributorId)
+        : 'commercial';
+      return type === selectedSupplyType;
+    });
+  }
   filtered.forEach((s) => {
     const actualVal = parseFloat(s.actual) || parseFloat(s.amount) || 0;
     const targetVal = parseFloat(s.target) || 0;
     const ach = targetVal > 0 ? ((actualVal / targetVal) * 100).toFixed(1) : 0;
-    csv += `"${s.month}","${s.repName}","${s.area}","${s.product || ''}",${targetVal},${actualVal},"${ach}%"\n`;
+    const dist = s.distributorId && window.store && window.store.distributors
+      ? window.store.distributors.getById(s.distributorId)
+      : null;
+    const distName = dist ? dist.name : (s.distributorName || '');
+    const distType = s.distributorId
+      ? (window.store && window.store.distributors ? window.store.distributors.getType(s.distributorId) : 'commercial')
+      : '';
+    csv += `"${s.month}","${s.repName}","${s.area}","${s.product || ''}","${distName}","${distType}",${targetVal},${actualVal},"${ach}%"\n`;
   });
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
