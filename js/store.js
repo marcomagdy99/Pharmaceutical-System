@@ -1,24 +1,7 @@
 /**
  * @file store.js
- * @description Centralized State Store with automatic persistence and zero-break compatibility.
- * Wraps window.DEMO_DATA to guarantee a Single Source of Truth and eliminate manual save calls.
- *
- * Change in this revision:
- *  - areas.save() no longer auto-unassigns a rep from every OTHER area
- *    when assigning them to a new one. A rep can now legitimately cover
- *    several areas at once. An area itself is still one-rep-at-a-time:
- *    assigning a rep to THIS area still displaces whoever held THIS
- *    specific area before. To remove a rep from one area without
- *    touching their other areas, use areas.unassignRep(areaId) or save
- *    the area again with an empty repId (the existing areas.html modal's
- *    "-- Unassigned --" option already does this).
- *  - A user's areas are now derived from the areas list itself
- *    (store.users.syncAreasFromStore()), which is the single source of
- *    truth, instead of being written independently on the user record
- *    and risking drift. user.areaIds (array) is the new field to read;
- *    user.area / user.areaId are kept in sync too (area = comma-joined
- *    names, areaId = first assigned area's id) purely so any older code
- *    that still reads those singular fields keeps working.
+ * @description Centralized State Store with automatic persistence, single source of truth,
+ * and historical territory tracking (Relational Assignment History Architecture).
  */
 
 (function () {
@@ -27,6 +10,11 @@
       "store.js: window.DEMO_DATA not yet loaded, initializing empty container.",
     );
     window.DEMO_DATA = {};
+  }
+
+  // Ensure territory history table exists
+  if (!Array.isArray(window.DEMO_DATA.territoryHistory)) {
+    window.DEMO_DATA.territoryHistory = [];
   }
 
   function autoSave(entity, action, payload) {
@@ -38,6 +26,38 @@
         detail: { entity, action, payload },
       }),
     );
+  }
+
+  // Helper for Territory Assignment History Logging (Pulpo CRM Architecture)
+  function logTerritoryHistoryChange(areaId, oldRepId, newRepId) {
+    if (!window.DEMO_DATA.territoryHistory) {
+      window.DEMO_DATA.territoryHistory = [];
+    }
+    const history = window.DEMO_DATA.territoryHistory;
+    const now = new Date().toISOString();
+
+    // 1. Close previous active log if assigned to someone else
+    if (oldRepId && oldRepId !== newRepId) {
+      const activeLog = history.find(
+        (h) => h.areaId === areaId && h.repId === oldRepId && !h.endDate
+      );
+      if (activeLog) {
+        activeLog.endDate = now;
+      }
+    }
+
+    // 2. Open new assignment log if a rep is assigned
+    if (newRepId && oldRepId !== newRepId) {
+      history.push({
+        id: "th_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        areaId: areaId,
+        repId: newRepId,
+        startDate: now,
+        endDate: null
+      });
+    }
+
+    autoSave("territoryHistory", "change", { areaId, oldRepId, newRepId, timestamp: now });
   }
 
   const store = {
@@ -71,21 +91,19 @@
         return userObj;
       },
       /**
-       * Legacy singular-area setter. Kept only for backward compatibility
-       * with any older call sites; new code should assign a rep on the
-       * Area record via store.areas.save() instead, which now supports a
-       * rep holding several areas and is the single source of truth.
+       * Singular-area setter. Synchronizes both area name and areaId,
+       * explicitly setting null if unassigned to prevent data corruption.
        */
       updateArea(userId, areaName, areaId) {
         const u = this.getById(userId);
         if (u) {
           u.area = areaName || null;
           u.areaId = areaId || null;
+          autoSave("users", "updateArea", { userId, areaName, areaId });
         }
       },
       /**
-       * Returns every Area record currently assigned to this rep
-       * (a rep may now hold zero, one, or several areas).
+       * Returns every Area record currently assigned to this rep.
        */
       getAreas(userId) {
         return (window.DEMO_DATA.areas || []).filter(
@@ -93,14 +111,7 @@
         );
       },
       /**
-       * Recomputes each user's area fields from the Areas list (the
-       * single source of truth for who covers what). Called automatically
-       * whenever an area is saved, unassigned, or deleted.
-       *   - user.areaIds: array of every assigned area's id (new field)
-       *   - user.area: comma-joined area names (kept for older UI/display
-       *     code that expects one string)
-       *   - user.areaId: first assigned area's id (kept for older code
-       *     that expects a single id; prefer areaIds for new code)
+       * Recomputes each user's area fields from the Areas list.
        */
       syncAreasFromStore() {
         const areas = window.DEMO_DATA.areas || [];
@@ -125,10 +136,10 @@
       getById(id) {
         return (window.DEMO_DATA.areas || []).find((a) => a.id === id);
       },
-      /**
-       * Every area currently assigned to the given rep. A rep can hold
-       * more than one.
-       */
+      getNameById(id) {
+        const a = this.getById(id);
+        return a ? a.name : null;
+      },
       getByRep(repId) {
         return (window.DEMO_DATA.areas || []).filter(
           (a) => a.repId === repId,
@@ -139,44 +150,76 @@
         const areas = window.DEMO_DATA.areas;
         const idx = areas.findIndex((a) => a.id === areaObj.id);
 
+        let oldRepId = null;
+        let newRepId = areaObj.repId || null;
+
         if (idx >= 0) {
           const areaId = areaObj.id || areas[idx].id;
-          // An area still belongs to at most one rep at a time: if THIS
-          // area is being (re)assigned to a rep, that rep displaces
-          // whoever held THIS area before. It no longer touches any of
-          // that rep's OTHER area assignments -- a rep can cover several
-          // areas simultaneously.
-          areas[idx] = { ...areas[idx], ...areaObj, id: areaId };
+          oldRepId = areas[idx].repId || null;
+          areas[idx] = { 
+            ...areas[idx], 
+            ...areaObj, 
+            id: areaId,
+            repId: newRepId,
+            repName: newRepId ? (areaObj.repName || null) : null
+          };
         } else {
           const newId = areaObj.id || "area_" + Date.now();
-          areas.push({ ...areaObj, id: newId });
+          areas.push({ 
+            ...areaObj, 
+            id: newId,
+            repId: newRepId,
+            repName: newRepId ? (areaObj.repName || null) : null
+          });
         }
+
+        const currentAreaId = areaObj.id || (idx >= 0 ? areas[idx].id : areas[areas.length - 1].id);
+        logTerritoryHistoryChange(currentAreaId, oldRepId, newRepId);
 
         store.users.syncAreasFromStore();
         autoSave("areas", idx >= 0 ? "update" : "create", areaObj);
         return areaObj;
       },
-      /**
-       * Explicitly clears the rep from one area, leaving that rep's other
-       * area assignments untouched. This is what the areas.html modal's
-       * "-- Unassigned --" option now maps to (saving with an empty
-       * repId has the same effect).
-       */
       unassignRep(areaId) {
         const area = this.getById(areaId);
         if (!area) return;
+        const oldRepId = area.repId;
         area.repId = null;
         area.repName = null;
+
+        logTerritoryHistoryChange(areaId, oldRepId, null);
         store.users.syncAreasFromStore();
         autoSave("areas", "unassignRep", { areaId });
       },
       delete(areaId) {
+        const area = this.getById(areaId);
+        if (area && area.repId) {
+          logTerritoryHistoryChange(areaId, area.repId, null);
+        }
         window.DEMO_DATA.areas = (window.DEMO_DATA.areas || []).filter(
           (a) => a.id !== areaId,
         );
         store.users.syncAreasFromStore();
         autoSave("areas", "delete", { id: areaId });
       },
+    },
+
+    // ==========================================
+    // Section: Territory History Module (Pulpo Architecture)
+    // ==========================================
+    territoryHistory: {
+      getAll() {
+        return window.DEMO_DATA.territoryHistory || [];
+      },
+      getByUser(userId) {
+        return (window.DEMO_DATA.territoryHistory || []).filter((h) => h.repId === userId);
+      },
+      getByArea(areaId) {
+        return (window.DEMO_DATA.territoryHistory || []).filter((h) => h.areaId === areaId);
+      },
+      getActiveAssignment(areaId) {
+        return (window.DEMO_DATA.territoryHistory || []).find((h) => h.areaId === areaId && !h.endDate);
+      }
     },
 
     // ==========================================
@@ -300,16 +343,12 @@
       },
     },
 
-    // Safety alias ensuring backwards compatibility with any legacy calls
     get lines() {
       return this.productLines;
     },
 
     // ==========================================
     // Section: Distributors Module
-    // (e.g. "Ibn Sina", "Overseas" -- the wholesalers whose raw sales
-    // sheets get imported. Column-mapping per distributor and the
-    // area-alias matching come later; this module is just the list.)
     // ==========================================
     distributors: {
       getAll() {
