@@ -349,6 +349,9 @@
 
     // ==========================================
     // Section: Distributors Module
+    // (e.g. "Ibn Sina", "Tender Ibn Sina", "Overseas" -- Commercial and
+    // Tender channels are separate distributor records, matching how the
+    // real CRM lists them, distinguished by the `type` field below.)
     // ==========================================
     distributors: {
       getAll() {
@@ -358,6 +361,14 @@
         return (window.DEMO_DATA.distributors || []).find(
           (d) => d.id === id,
         );
+      },
+      /**
+       * "commercial" or "tender". Defaults to "commercial" for older
+       * records saved before this field existed.
+       */
+      getType(id) {
+        const d = this.getById(id);
+        return d && d.type === "tender" ? "tender" : "commercial";
       },
       save(distObj) {
         if (!window.DEMO_DATA.distributors) window.DEMO_DATA.distributors = [];
