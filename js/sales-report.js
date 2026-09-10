@@ -265,7 +265,7 @@ function renderSalesReport() {
   let filtered = activeSales.filter((row) => targetPeriods.includes(row.month));
 
   if (isRep) {
-    filtered = filtered.filter((row) => row.repId === user.id || row.repId === 'rep1');
+    filtered = filtered.filter((row) => row.repId === user.id);
   } else if (user && (user.role === 'district_manager' || user.role === 'dm')) {
     filtered = filtered.filter((row) => row.dmId === user.id);
     if (selectedLine && selectedLine !== 'all') {
