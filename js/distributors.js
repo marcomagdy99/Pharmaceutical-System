@@ -10,6 +10,9 @@ const esc = window.escapeHtml || ((s) => s || "");
 
 let distributorModal = null;
 let deleteModal = null;
+let mappingModal = null;
+let mappingTargetDistId = null;
+let mappingDetectedHeaders = [];
 
 const distributorTranslations = {
   en: {
@@ -29,6 +32,32 @@ const distributorTranslations = {
     confirm_delete: "Confirm Delete",
     delete_distributor_msg:
       "Are you sure you want to delete this distributor?",
+    mapping_status: "Sheet Mapping",
+    mapped: "Mapped",
+    not_configured: "Not Configured",
+    configure_mapping: "Configure Sheet Mapping",
+    edit_mapping: "Edit Mapping",
+    configure: "Configure",
+    upload_sample_sheet: "Upload a Sample Sheet",
+    upload_sample_sheet_desc:
+      "Upload one real sheet from this distributor. We'll only read its column headers -- no sales data is imported at this step.",
+    assign_columns: "Assign Each Column",
+    assign_columns_desc:
+      "For every column detected in the sheet, choose what it represents. Product and Sales Value are required; the rest are optional.",
+    detected_column: "Detected Column",
+    represents: "Represents",
+    upload_different_sheet: "Upload a different sample instead",
+    save_mapping: "Save Mapping",
+    role_ignore: "-- Ignore this column --",
+    role_product: "Product / Medicine Name",
+    role_value: "Sales Value (Amount)",
+    role_area: "Area / Territory (raw text)",
+    role_pharmacy: "Pharmacy / Client Name",
+    supply_type: "Supply Type",
+    supply_type_hint:
+      'Commercial and Tender business from the same wholesaler (e.g. "Ibn Sina" vs "Tender Ibn Sina") are separate distributor entries.',
+    type_commercial: "Commercial / Trade",
+    type_tender: "Tender / Institutional",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -45,6 +74,32 @@ const distributorTranslations = {
     delete: "حذف",
     confirm_delete: "تأكيد الحذف",
     delete_distributor_msg: "هل أنت متأكد أنك تريد حذف هذا الموزّع؟",
+    mapping_status: "ربط الشيت",
+    mapped: "متربط",
+    not_configured: "غير مضبوط",
+    configure_mapping: "ضبط ربط الشيت",
+    edit_mapping: "تعديل الربط",
+    configure: "ضبط",
+    upload_sample_sheet: "ارفع نموذج شيت",
+    upload_sample_sheet_desc:
+      "ارفع شيت حقيقي واحد من الموزّع ده. هنقرأ بس أسماء الأعمدة -- مفيش أي بيانات مبيعات هتتسجل في الخطوة دي.",
+    assign_columns: "حدد كل عمود",
+    assign_columns_desc:
+      "لكل عمود ظاهر في الشيت، حدد بيمثل إيه. عمود المنتج والقيمة إلزاميين، الباقي اختياري.",
+    detected_column: "العمود المكتشف",
+    represents: "بيمثل",
+    upload_different_sheet: "ارفع نموذج تاني بدل ده",
+    save_mapping: "حفظ الربط",
+    role_ignore: "-- تجاهل العمود ده --",
+    role_product: "اسم المنتج / الدواء",
+    role_value: "قيمة المبيعات",
+    role_area: "المنطقة / الإقليم (نص خام)",
+    role_pharmacy: "اسم الصيدلية / العميل",
+    supply_type: "نوع التوريد",
+    supply_type_hint:
+      'التجاري والمناقصات من نفس الموزّع (زي "ابن سينا" و"Tender ابن سينا") بيتسجلوا كموزّعين منفصلين.',
+    type_commercial: "تجاري",
+    type_tender: "مناقصات",
   },
 };
 
@@ -68,6 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("distributorModal"),
   );
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+  mappingModal = new bootstrap.Modal(document.getElementById("mappingModal"));
 
   if (window.translations) {
     window.translations.en = {
@@ -106,12 +162,41 @@ function renderDistributors(filterText = "") {
   }
 
   filtered.forEach((dist) => {
+    const isTender = dist.type === "tender";
+    const typeBadge = isTender
+      ? `<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.type_tender : distributorTranslations.en.type_tender}</span>`
+      : `<span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.type_commercial : distributorTranslations.en.type_commercial}</span>`;
+    const hasMapping = !!(
+      dist.columnMap &&
+      dist.columnMap.product &&
+      dist.columnMap.value
+    );
+    const mappingBadge = hasMapping
+      ? `<span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.mapped : distributorTranslations.en.mapped}</span>`
+      : `<span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.not_configured : distributorTranslations.en.not_configured}</span>`;
+    const configureLabel = hasMapping
+      ? isAr
+        ? distributorTranslations.ar.edit_mapping
+        : distributorTranslations.en.edit_mapping
+      : isAr
+        ? distributorTranslations.ar.configure
+        : distributorTranslations.en.configure;
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="px-4 py-3 fw-medium">
         <div class="d-flex align-items-center">
           <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${esc((dist.name || "D").charAt(0))}</div>
           <span>${esc(dist.name)}</span>
+        </div>
+      </td>
+      <td class="px-4 py-3">${typeBadge}</td>
+      <td class="px-4 py-3">
+        <div class="d-flex align-items-center gap-2">
+          ${mappingBadge}
+          <button class="btn btn-sm btn-outline-primary" onclick="openMappingModal('${esc(dist.id)}')">
+            <i class="fas fa-table-columns me-1"></i>${esc(configureLabel)}
+          </button>
         </div>
       </td>
       <td class="px-4 py-3 text-end area-actions-cell">
@@ -145,6 +230,7 @@ function filterDistributors() {
 function openAddModal() {
   document.getElementById("distributorForm").reset();
   document.getElementById("distributorId").value = "";
+  document.getElementById("distributorType").value = "commercial";
   document.getElementById("distributorModalTitle").textContent =
     document.documentElement.dir === "rtl"
       ? distributorTranslations.ar.add_distributor
@@ -157,6 +243,8 @@ function openEditModal(id) {
   if (dist) {
     document.getElementById("distributorId").value = dist.id;
     document.getElementById("distributorName").value = dist.name;
+    document.getElementById("distributorType").value =
+      dist.type === "tender" ? "tender" : "commercial";
     document.getElementById("distributorModalTitle").textContent =
       document.documentElement.dir === "rtl"
         ? distributorTranslations.ar.edit
@@ -168,6 +256,9 @@ function openEditModal(id) {
 function saveDistributor() {
   const id = document.getElementById("distributorId").value;
   const name = document.getElementById("distributorName").value.trim();
+  const type = document.getElementById("distributorType").value === "tender"
+    ? "tender"
+    : "commercial";
 
   if (!name) {
     if (typeof showToast === "function")
@@ -189,7 +280,7 @@ function saveDistributor() {
       Date.now().toString(36);
 
   if (window.store && window.store.distributors) {
-    window.store.distributors.save({ id: targetId, name });
+    window.store.distributors.save({ id: targetId, name, type });
   }
 
   distributorModal.hide();
