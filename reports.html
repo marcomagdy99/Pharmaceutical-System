@@ -1,895 +1,1873 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PharmaCare - Reports & Analytics</title>
     <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme (FOUC) -->
     <script>
-        (function() {
-            try {
-                var theme = localStorage.getItem('pharmaTheme') || 'light';
-                document.documentElement.setAttribute('data-theme', theme);
-            } catch(e) {}
-        })();
+      (function () {
+        try {
+          var theme = localStorage.getItem("pharmaTheme") || "light";
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {}
+      })();
     </script>
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/reports.css">
-  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
-  <script src="js/firebase-config.js"></script>
-  <script src="js/app.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/reports.css" />
+    <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
     <script src="js/store.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div class="app">
-        <!-- Sidebar Navigation (Drawer on mobile) -->
-        <aside class="sidebar" id="sidebar"></aside>
-        <!-- Main Content Area -->
-        <main class="main-content">
-                  <!-- Unified Topbar Strip -->
-      <header class="topbar" id="topbar">
-        <script>renderTopbar();</script>
-      </header>
-            <!-- Page Container -->
-            <div class="content" id="pageContent">
-                <!-- Reports Header -->
-                <div class="reports-header-section">
-                    <div>
-                        <h1 class="page-title" data-i18n="reportsTitle">📊 Reports & Performance Analytics</h1>
-                        <p class="page-subtitle" data-i18n="reportsSubtitle">Track monthly sales revenue, daily visit execution timelines, and doctor coverage frequency.</p>
-                    </div>
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="printCurrentReport()" style="height: 38px; border-radius: 8px; font-weight: 600;">🖨️ <span data-i18n="btnPrint">Print Report</span></button>
-                        <div id="adminBadgeNotice" class="admin-notice-pill">
-                            <span id="roleNoticeText">Role View: Medical Representative</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Navigation Tabs -->
-                <div class="report-tabs">
-                    <button class="report-tab-btn active" data-tab="sales" onclick="switchReportTab('sales')">
-📈 <span data-i18n="tabSales">Monthly Sales & Targets</span>
-                    </button>
-                    <button class="report-tab-btn" data-tab="timeline" onclick="switchReportTab('timeline')">
-⏰ <span data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
-                    </button>
-                    <button class="report-tab-btn" data-tab="coverage" onclick="switchReportTab('coverage')">
-🎯 <span data-i18n="tabCoverageFreq">Coverage & Frequency</span>
-                    </button>
-                    <button class="report-tab-btn" data-tab="doctors" onclick="switchReportTab('doctors')">
-👨‍⚕️ <span data-i18n="tabDoctorsList">Doctors List</span>
-                    </button>
-                    <button class="report-tab-btn" data-tab="pharmacies" onclick="switchReportTab('pharmacies')">
-💊 <span data-i18n="tabPharmaciesList">Pharmacies List</span>
-                    </button>
-                </div>
-                <!-- TAB 1: Monthly Sales & Targets -->
-                <div class="report-content-panel active" id="tabPanel-sales">
-                    <div class="sales-filter-card">
-                        <div class="sales-filter-form-grid">
-                            <!-- Multi-Select Month Dropdown (previously a single-choice select box;
+      <!-- Sidebar Navigation (Drawer on mobile) -->
+      <aside class="sidebar" id="sidebar"></aside>
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Unified Topbar Strip -->
+        <header class="topbar" id="topbar">
+          <script>
+            renderTopbar();
+          </script>
+        </header>
+        <!-- Page Container -->
+        <div class="content" id="pageContent">
+          <!-- Reports Header -->
+          <div class="reports-header-section">
+            <div>
+              <h1 class="page-title" data-i18n="reportsTitle">
+                📊 Reports & Performance Analytics
+              </h1>
+              <p class="page-subtitle" data-i18n="reportsSubtitle">
+                Track monthly sales revenue, daily visit execution timelines,
+                and doctor coverage frequency.
+              </p>
+            </div>
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <button
+                class="btn btn-outline"
+                onclick="printCurrentReport()"
+                style="height: 38px; border-radius: 8px; font-weight: 600"
+              >
+                🖨️ <span data-i18n="btnPrint">Print Report</span>
+              </button>
+              <div id="adminBadgeNotice" class="admin-notice-pill">
+                <span id="roleNoticeText"
+                  >Role View: Medical Representative</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- Navigation Tabs -->
+          <div class="report-tabs">
+            <button
+              class="report-tab-btn active"
+              data-tab="sales"
+              onclick="switchReportTab('sales')"
+            >
+              📈 <span data-i18n="tabSales">Monthly Sales & Targets</span>
+            </button>
+            <button
+              class="report-tab-btn"
+              data-tab="timeline"
+              onclick="switchReportTab('timeline')"
+            >
+              ⏰ <span data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
+            </button>
+            <button
+              class="report-tab-btn"
+              data-tab="coverage"
+              onclick="switchReportTab('coverage')"
+            >
+              🎯 <span data-i18n="tabCoverageFreq">Coverage & Frequency</span>
+            </button>
+            <button
+              class="report-tab-btn"
+              data-tab="doctors"
+              onclick="switchReportTab('doctors')"
+            >
+              👨‍⚕️ <span data-i18n="tabDoctorsList">Doctors List</span>
+            </button>
+            <button
+              class="report-tab-btn"
+              data-tab="pharmacies"
+              onclick="switchReportTab('pharmacies')"
+            >
+              💊 <span data-i18n="tabPharmaciesList">Pharmacies List</span>
+            </button>
+          </div>
+          <!-- TAB 1: Monthly Sales & Targets -->
+          <div class="report-content-panel active" id="tabPanel-sales">
+            <div class="sales-filter-card">
+              <div class="sales-filter-form-grid">
+                <!-- Multi-Select Month Dropdown (previously a single-choice select box;
                                  now allows picking several months within the selected Year, same
                                  pattern as the Products dropdown below). JS handlers live in
                                  js/sales-report.js. -->
-                            <div class="sales-filter-field col-month" id="monthMultiSelectContainer">
-                                <label data-i18n="labelMonth">Month:</label>
-                                <div class="multi-select-container">
-                                    <button type="button" class="form-control multi-select-btn" id="monthDropdownBtn" onclick="toggleMonthDropdown(event)">
-                                        <span id="monthDropdownLabel">September</span>
-                                        <span class="dropdown-caret">▾</span>
-                                    </button>
-                                    <div class="multi-select-menu" id="monthDropdownMenu">
-                                        <label class="multi-select-item select-all-item">
-                                            <input type="checkbox" id="selectAllMonths" onchange="toggleSelectAllMonths(this.checked)">
-                                            <span data-i18n="selectAll">Select All</span>
-                                        </label>
-                                        <div class="multi-select-divider"></div>
-                                        <div id="monthCheckboxList" class="product-checkbox-list"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="sales-filter-field col-year">
-                                <label data-i18n="labelYear">Year:</label>
-                                <select id="salesYearSelect" class="form-control"></select>
-                            </div>
-                            <!-- Multi-Select Product Dropdown -->
-                            <div class="sales-filter-field col-product" id="productMultiSelectContainer">
-                                <label data-i18n="labelProduct">Products / Medicines:</label>
-                                <div class="multi-select-container">
-                                    <button type="button" class="form-control multi-select-btn" id="prodDropdownBtn" onclick="toggleProductDropdown(event)">
-                                        <span id="prodDropdownLabel">All Products (Select All)</span>
-                                        <span class="dropdown-caret">▾</span>
-                                    </button>
-                                    <div class="multi-select-menu" id="prodDropdownMenu">
-                                        <label class="multi-select-item select-all-item">
-                                            <input type="checkbox" id="selectAllProds" checked onchange="toggleSelectAllProducts(this.checked)">
-                                            <span data-i18n="selectAll">Select All</span>
-                                        </label>
-                                        <div class="multi-select-divider"></div>
-                                        <div id="productCheckboxList" class="product-checkbox-list"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Cascading Level 1: Line / Line Manager -->
-                            <div class="sales-filter-field col-line" id="salesLineFilterGroup" style="display: none;">
-                                <label data-i18n="labelLine">Line / LM:</label>
-                                <select id="salesLineSelect" class="form-control" onchange="onSalesLineChange()"></select>
-                            </div>
-                            <!-- Cascading Level 2: District / District Manager -->
-                            <div class="sales-filter-field col-dm" id="salesDmFilterGroup" style="display: none;">
-                                <label data-i18n="labelDm">District / DM:</label>
-                                <select id="salesDmSelect" class="form-control" onchange="onSalesDmChange()"></select>
-                            </div>
-                            <!-- Cascading Level 3: Medical Rep -->
-                            <div class="sales-filter-field col-rep" id="salesRepFilterGroup" style="display: none;">
-                                <label data-i18n="labelRep">Medical Rep:</label>
-                                <select id="salesRepSelect" class="form-control">
-                                    <option value="all" data-i18n="allReps">All Representatives</option>
-                                </select>
-                            </div>
-                            <div class="sales-filter-field col-btn">
-                                <button type="button" class="btn btn-primary" id="btnShowSalesReport" onclick="renderSalesReport()">
-                                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="salesFilterPeriodLabel" class="sales-period-pill">
-Period: September 2026 | All Products
-                        </div>
+                <div
+                  class="sales-filter-field col-month"
+                  id="monthMultiSelectContainer"
+                >
+                  <label data-i18n="labelMonth">Month:</label>
+                  <div class="multi-select-container">
+                    <button
+                      type="button"
+                      class="form-control multi-select-btn"
+                      id="monthDropdownBtn"
+                      onclick="toggleMonthDropdown(event)"
+                    >
+                      <span id="monthDropdownLabel">September</span>
+                      <span class="dropdown-caret">▾</span>
+                    </button>
+                    <div class="multi-select-menu" id="monthDropdownMenu">
+                      <label class="multi-select-item select-all-item">
+                        <input
+                          type="checkbox"
+                          id="selectAllMonths"
+                          onchange="toggleSelectAllMonths(this.checked)"
+                        />
+                        <span data-i18n="selectAll">Select All</span>
+                      </label>
+                      <div class="multi-select-divider"></div>
+                      <div
+                        id="monthCheckboxList"
+                        class="product-checkbox-list"
+                      ></div>
                     </div>
-                    <!-- Dynamic KPI Cards Row -->
-                    <div class="kpi-grid">
-                        <div class="kpi-card primary">
-                            <span class="kpi-label" data-i18n="kpiActualSales">Actual Sales</span>
-                            <span class="kpi-value" id="kpiTotalActual">0</span>
-                            <span class="kpi-subtext" id="kpiActualSubtext">Selected Scope</span>
-                        </div>
-                        <div class="kpi-card info">
-                            <span class="kpi-label" data-i18n="kpiAssignedTarget">Assigned Target</span>
-                            <span class="kpi-value" id="kpiTotalTarget">0</span>
-                            <span class="kpi-subtext" id="kpiTargetSubtext">Monthly Target</span>
-                        </div>
-                        <div class="kpi-card success">
-                            <span class="kpi-label" data-i18n="kpiAchievement">Achievement</span>
-                            <span class="kpi-value" id="kpiAchievement">0%</span>
-                            <span class="kpi-subtext" id="kpiAchievementSubtext">Target vs Actual</span>
-                        </div>
-                        <div class="kpi-card warning">
-                            <span class="kpi-label" data-i18n="kpiActiveProducts">Products Filtered</span>
-                            <span class="kpi-value" id="kpiActiveReps">All</span>
-                            <span class="kpi-subtext" id="kpiProductsSubtext">Product breakdown</span>
-                        </div>
-                    </div>
-                    <!-- Sales Actions & Excel Upload Bar -->
-                    <div class="sales-actions-card">
-                        <div class="sales-actions-left">
-                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--gray-800);">Sales Performance by Product & Team</h3>
-                            <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--gray-500);">Monthly records synchronized via Excel spreadsheet updates.</p>
-                        </div>
-                        <div class="sales-actions-right">
-                            <input type="file" id="salesExcelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelUpload(event)">
-                            <button class="btn btn-outline" id="exportSalesBtn" onclick="exportSalesReport()">📥 Export CSV</button>
-                            <button class="btn btn-primary" id="uploadSalesBtn" onclick="triggerExcelUpload()">
-📤 Upload Excel Sheet
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Sales Table with Product Breakdown -->
-                    <div class="table-container">
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Month</th>
-                                    <th>Rep Name / Area</th>
-                                    <th>Product / Medicine</th>
-                                    <th>Target</th>
-                                    <th>Actual Sales</th>
-                                    <th>Achievement</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="salesReportTbody"></tbody>
-                        </table>
-                    </div>
+                  </div>
                 </div>
-                <!-- TAB 2: Daily Visits & Activities Timeline -->
-                <div class="report-content-panel" id="tabPanel-timeline">
-                    <!-- Employee filter bar (visits-page style) -->
-                    <div id="timelineRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
-                        <label class="manager-rep-filter-label">
-                            <span>👥</span> <span data-i18n="teamFilterLabel">Employee Filter:</span>
-                        </label>
-                        <select id="timelineRepSelect" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;">
-                            <option value="all">All Employees</option>
-                        </select>
-                    </div>
-                    <div class="timeline-filter-card" style="margin-top: 8px;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);" data-i18n="timelineFrom">From:</label>
-                                <input type="date" id="timelineDateFrom" class="form-control" style="width: auto;">
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);" data-i18n="timelineTo">To:</label>
-                                <input type="date" id="timelineDateTo" class="form-control" style="width: auto;">
-                            </div>
-                            <button type="button" class="btn btn-primary" onclick="renderDailyTimeline()" style="padding: 6px 18px; border-radius: 6px; font-weight: 600;">
-🔍 <span data-i18n="btnShow">Show</span>
-                            </button>
-                            <span class="badge" style="background: var(--primary-light); color: var(--primary); padding: 6px 12px; font-weight: 700; border-radius: 8px;" id="timelineDateBadge">Today</span>
-                        </div>
-                        <div class="legend-box" style="margin-top: 10px;">
-                            <span class="legend-item"><span class="legend-dot actual"></span> Direct Actual Visit</span>
-                            <span class="legend-item"><span class="legend-dot planned"></span> Planned &amp; Executed</span>
-                        </div>
-                    </div>
-                    <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
-                    <div class="timeline-container" id="timelineEventsContainer"></div>
+                <div class="sales-filter-field col-year">
+                  <label data-i18n="labelYear">Year:</label>
+                  <select id="salesYearSelect" class="form-control"></select>
                 </div>
-                <!-- TAB 3: Coverage & Frequency -->
-                <div class="report-content-panel" id="tabPanel-coverage">
-                    <!-- Employee filter bar (visits-page style) -->
-                    <div id="coverageRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
-                        <label class="manager-rep-filter-label">
-                            <span>👥</span> <span data-i18n="teamFilterLabel">Employee Filter:</span>
-                        </label>
-                        <select id="coverageRepSelect" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;">
-                            <option value="all">All Employees</option>
-                        </select>
+                <!-- Multi-Select Product Dropdown -->
+                <div
+                  class="sales-filter-field col-product"
+                  id="productMultiSelectContainer"
+                >
+                  <label data-i18n="labelProduct">Products / Medicines:</label>
+                  <div class="multi-select-container">
+                    <button
+                      type="button"
+                      class="form-control multi-select-btn"
+                      id="prodDropdownBtn"
+                      onclick="toggleProductDropdown(event)"
+                    >
+                      <span id="prodDropdownLabel"
+                        >All Products (Select All)</span
+                      >
+                      <span class="dropdown-caret">▾</span>
+                    </button>
+                    <div class="multi-select-menu" id="prodDropdownMenu">
+                      <label class="multi-select-item select-all-item">
+                        <input
+                          type="checkbox"
+                          id="selectAllProds"
+                          checked
+                          onchange="toggleSelectAllProducts(this.checked)"
+                        />
+                        <span data-i18n="selectAll">Select All</span>
+                      </label>
+                      <div class="multi-select-divider"></div>
+                      <div
+                        id="productCheckboxList"
+                        class="product-checkbox-list"
+                      ></div>
                     </div>
-                    <div class="coverage-filter-card" style="margin-top: 8px;">
-                        <div class="date-range-row" style="align-items: flex-end;">
-                            <div class="date-input-group">
-                                <label style="font-weight: 600; font-size: 0.85rem; color: var(--gray-700);">From (Start Date):</label>
-                                <input type="date" id="coverageStartDate" class="form-control">
-                            </div>
-                            <div class="date-input-group">
-                                <label style="font-weight: 600; font-size: 0.85rem; color: var(--gray-700);">To (End Date):</label>
-                                <input type="date" id="coverageEndDate" class="form-control">
-                            </div>
-                            <div class="date-input-group">
-                                <label style="font-weight: 600; font-size: 0.85rem; color: var(--gray-700);">Doctor Class Filter:</label>
-                                <select id="coverageClassFilter" class="form-control">
-                                    <option value="all">All Targets (A, B & Hospitals)</option>
-                                    <option value="all_doctors">All Doctors (Class A & B)</option>
-                                    <option value="A">Class A Only (Target: 4/Quarter)</option>
-                                    <option value="B">Class B Only (Target: 3/Quarter)</option>
-                                    <option value="hospital">Hospitals Only (Target: 2/Month)</option>
-                                </select>
-                            </div>
-                            <button type="button" class="btn btn-primary" onclick="renderCoverageReport()" style="padding: 10px 20px; border-radius: 8px; font-weight: 700; height: 42px;">
-🔍 <span data-i18n="btnShow">Show</span>
-                            </button>
-                            <button type="button" class="btn btn-outline" onclick="exportCoverageReport()" style="padding: 10px 16px; border-radius: 8px; font-weight: 700; height: 42px;">
-📥 <span data-i18n="btnExportCSV">Export CSV</span>
-                            </button>
-                        </div>
-                        <div style="margin-top: 10px; font-size: 0.85rem; color: var(--gray-600);">
-💡 <strong>Coverage Rules:</strong> Class A Doctors = 4 visits/Quarter | Class B Doctors = 3 visits/Quarter | AM Hospitals = 2 visits/Month
-                        </div>
-                    </div>
-                    <!-- Overall Coverage Summary KPI Cards for Selected Period -->
-                    <div class="kpi-grid mb-3" style="margin-bottom: 16px;">
-                        <div class="kpi-card primary">
-                            <span class="kpi-label">Total Coverage</span>
-                            <span class="kpi-value" id="kpiCoverageOverall">0%</span>
-                            <span class="kpi-subtext" id="kpiCoveragePeriodSubtext">Selected Period</span>
-                        </div>
-                        <div class="kpi-card success">
-                            <span class="kpi-label">Executed Visits</span>
-                            <span class="kpi-value" id="kpiCoverageExecutedVisits">0</span>
-                            <span class="kpi-subtext">Completed in Period</span>
-                        </div>
-                        <div class="kpi-card info">
-                            <span class="kpi-label">Target Visits</span>
-                            <span class="kpi-value" id="kpiCoverageTargetVisits">0</span>
-                            <span class="kpi-subtext">Required Frequency</span>
-                        </div>
-                        <div class="kpi-card warning">
-                            <span class="kpi-label">Targets Covered</span>
-                            <span class="kpi-value" id="kpiCoverageTargetsCount">0</span>
-                            <span class="kpi-subtext" id="kpiCoverageTargetsSubtext">Doctors & Hospitals</span>
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Target Name</th>
-                                    <th>Class / Type</th>
-                                    <th>Specialty / Area</th>
-                                    <th>Target Frequency</th>
-                                    <th>Visits Executed</th>
-                                    <th>Exact Visit Dates & Times</th>
-                                </tr>
-                            </thead>
-                            <tbody id="coverageReportTbody"></tbody>
-                        </table>
-                    </div>
+                  </div>
                 </div>
-                <!-- TAB 4: Doctors List -->
-                <div class="report-content-panel" id="tabPanel-doctors">
-                    <!-- Employee filter bar (visits-page style) -->
-                    <div id="doctorRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
-                        <label class="manager-rep-filter-label">
-                            <span>👥</span> <span data-i18n="teamFilterLabel">Employee Filter:</span>
-                        </label>
-                        <select id="doctorRepSelect" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="onDoctorFilterChange()">
-                            <option value="all" data-i18n="allReps">All Employees</option>
-                        </select>
-                    </div>
-                    <div class="sales-filter-card" style="margin-top: 8px;">
-                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--gray-800);" data-i18n="doctorsDirectoryTitle">👨‍⚕️ Doctors Directory</h3>
-                                <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--gray-500);" data-i18n="doctorsDirectorySubtitle">Comprehensive list of healthcare professionals, clinic locations, and specialties.</p>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <span class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 6px 12px; border-radius: 8px;" id="totalDoctorsCountBadge">0 Doctors</span>
-                                <button type="button" class="btn btn-outline admin-only-action" id="btnImportDoctors" onclick="openImportDoctorsModal()" style="display: none;">
-                                    <span>📥</span> <span data-i18n="importDoctors">Import Sheet</span>
-                                </button>
-                                <button type="button" class="btn btn-primary admin-only-action" id="btnAddDoctor" onclick="openDoctorModal()" style="display: none;">
-                                    <span>➕</span> <span data-i18n="addDoctor">Add Doctor</span>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Filters Grid -->
-                        <div class="sales-filter-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                            <!-- Search -->
-                            <div class="sales-filter-field">
-                                <label data-i18n="searchDoctors">Search:</label>
-                                <input type="text" id="doctorSearchInput" class="form-control" data-i18n-placeholder="searchDoctorsPlaceholder" placeholder="Search by name, clinic, phone..." oninput="onDoctorFilterChange()">
-                            </div>
-                            <!-- Specialty Filter -->
-                            <div class="sales-filter-field">
-                                <label data-i18n="specialty">Specialty:</label>
-                                <select id="doctorSpecialtyFilter" class="form-control" onchange="onDoctorFilterChange()">
-                                    <option value="all" data-i18n="allSpecialties">All Specialties</option>
-                                    <option value="Internal Medicine">Internal Medicine</option>
-                                    <option value="Pediatrics">Pediatrics</option>
-                                    <option value="Cardiology">Cardiology</option>
-                                    <option value="Dermatology">Dermatology</option>
-                                    <option value="Ophthalmology">Ophthalmology</option>
-                                    <option value="ENT">ENT</option>
-                                    <option value="Orthopedics">Orthopedics</option>
-                                    <option value="Neurology">Neurology</option>
-                                    <option value="Urology">Urology</option>
-                                    <option value="Gynecology">Gynecology</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <!-- Class Filter -->
-                            <div class="sales-filter-field">
-                                <label data-i18n="doctorClass">Class:</label>
-                                <select id="doctorClassFilter" class="form-control" onchange="onDoctorFilterChange()">
-                                    <option value="all" data-i18n="allClasses">All Classes (A &amp; B)</option>
-                                    <option value="A">Class A</option>
-                                    <option value="B">Class B</option>
-                                </select>
-                            </div>
-                            <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
-                            <div style="display:none;" id="doctorLmFilterGroup"><select id="doctorLmSelect" onchange="onDoctorLmChange()"></select></div>
-                            <div style="display:none;" id="doctorDmFilterGroup"><select id="doctorDmSelect" onchange="onDoctorDmChange()"></select></div>
-                            <div style="display:none;" id="doctorRepFilterGroup"><select id="doctorRepSelectLegacy" onchange="onDoctorFilterChange()"></select></div>
-                        </div>
-                    </div>
-                    <!-- Doctors Cards Grid -->
-                    <div id="doctorsDirectoryGrid" class="directory-cards-grid"></div>
-                    <!-- Doctors Empty State -->
-                    <div id="doctorsEmptyState" class="directory-empty-state" style="display: none;">
-                        <div class="empty-state-icon">👨‍⚕️</div>
-                        <h4 data-i18n="noDoctorsFound">No Doctors Found</h4>
-                        <p class="text-muted" data-i18n="noDoctorsDesc">Try adjusting search query or filters.</p>
-                    </div>
+                <!-- Cascading Level 1: Line / Line Manager -->
+                <div
+                  class="sales-filter-field col-line"
+                  id="salesLineFilterGroup"
+                  style="display: none"
+                >
+                  <label data-i18n="labelLine">Line / LM:</label>
+                  <select
+                    id="salesLineSelect"
+                    class="form-control"
+                    onchange="onSalesLineChange()"
+                  ></select>
                 </div>
-                <!-- TAB 5: Pharmacies List -->
-                <div class="report-content-panel" id="tabPanel-pharmacies">
-                    <!-- Employee filter bar (visits-page style) -->
-                    <div id="pharmacyRepFilterContainer" class="manager-rep-filter-container" style="margin-bottom: 0;">
-                        <label class="manager-rep-filter-label">
-                            <span>👥</span> <span data-i18n="teamFilterLabel">Employee Filter:</span>
-                        </label>
-                        <select id="pharmacyRepSelect" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="onPharmacyFilterChange()">
-                            <option value="all" data-i18n="allReps">All Employees</option>
-                        </select>
-                    </div>
-                    <div class="sales-filter-card" style="margin-top: 8px;">
-                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
-                            <div>
-                                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--gray-800);" data-i18n="pharmaciesDirectoryTitle">💊 Pharmacies Directory</h3>
-                                <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--gray-500);" data-i18n="pharmaciesDirectorySubtitle">Directory of authorized partner pharmacies, contact personnel, and assigned territories.</p>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <span class="badge" style="background: var(--success-light); color: var(--success); font-weight: 700; padding: 6px 12px; border-radius: 8px;" id="totalPharmaciesCountBadge">0 Pharmacies</span>
-                                <button type="button" class="btn btn-outline admin-only-action" id="btnImportPharmacies" onclick="openImportPharmaciesModal()" style="display: none;">
-                                    <span>📥</span> <span data-i18n="importPharmacies">Import Sheet</span>
-                                </button>
-                                <button type="button" class="btn btn-primary admin-only-action" id="btnAddPharmacy" onclick="openPharmacyModal()" style="display: none;">
-                                    <span>➕</span> <span data-i18n="addPharmacy">Add Pharmacy</span>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Filters Grid -->
-                        <div class="sales-filter-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                            <!-- Search -->
-                            <div class="sales-filter-field">
-                                <label data-i18n="searchPharmacies">Search:</label>
-                                <input type="text" id="pharmacySearchInput" class="form-control" data-i18n-placeholder="searchPharmaciesPlaceholder" placeholder="Search by pharmacy name, address, contact..." oninput="onPharmacyFilterChange()">
-                            </div>
-                            <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
-                            <div style="display:none;" id="pharmacyLmFilterGroup"><select id="pharmacyLmSelect" onchange="onPharmacyLmChange()"></select></div>
-                            <div style="display:none;" id="pharmacyDmFilterGroup"><select id="pharmacyDmSelect" onchange="onPharmacyDmChange()"></select></div>
-                            <div style="display:none;" id="pharmacyRepFilterGroup"><select id="pharmacyRepSelectLegacy" onchange="onPharmacyFilterChange()"></select></div>
-                        </div>
-                    </div>
-                    <!-- Pharmacies Cards Grid -->
-                    <div id="pharmaciesDirectoryGrid" class="directory-cards-grid"></div>
-                    <!-- Pharmacies Empty State -->
-                    <div id="pharmaciesEmptyState" class="directory-empty-state" style="display: none;">
-                        <div class="empty-state-icon">💊</div>
-                        <h4 data-i18n="noPharmaciesFound">No Pharmacies Found</h4>
-                        <p class="text-muted" data-i18n="noPharmaciesDesc">Try adjusting search query or filters.</p>
-                    </div>
+                <!-- Cascading Level 2: District / District Manager -->
+                <div
+                  class="sales-filter-field col-dm"
+                  id="salesDmFilterGroup"
+                  style="display: none"
+                >
+                  <label data-i18n="labelDm">District / DM:</label>
+                  <select
+                    id="salesDmSelect"
+                    class="form-control"
+                    onchange="onSalesDmChange()"
+                  ></select>
                 </div>
+                <!-- Cascading Level 3: Medical Rep -->
+                <div
+                  class="sales-filter-field col-rep"
+                  id="salesRepFilterGroup"
+                  style="display: none"
+                >
+                  <label data-i18n="labelRep">Medical Rep:</label>
+                  <select id="salesRepSelect" class="form-control">
+                    <option value="all" data-i18n="allReps">
+                      All Representatives
+                    </option>
+                  </select>
+                </div>
+                <!-- Distributor filter: populated from store.distributors.getAll() -->
+                <div class="sales-filter-field col-distributor">
+                  <label data-i18n="labelDistributor">Distributor:</label>
+                  <select id="salesDistributorSelect" class="form-control">
+                    <option value="all" data-i18n="allDistributors">All Distributors</option>
+                  </select>
+                </div>
+                <!-- Supply Type filter: Commercial vs Tender, derived from the
+                     selected distributor's own type, not a separate flag on each sale row -->
+                <div class="sales-filter-field col-tender">
+                  <label data-i18n="labelSupplyType">Supply Type:</label>
+                  <select id="salesTenderSelect" class="form-control">
+                    <option value="all" data-i18n="allSupplyTypes">All (Commercial &amp; Tenders)</option>
+                    <option value="commercial" data-i18n="commercialOnly">Commercial Only</option>
+                    <option value="tender" data-i18n="tendersOnly">Tenders Only</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-btn">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnShowSalesReport"
+                    onclick="renderSalesReport()"
+                  >
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
+                </div>
+              </div>
+              <div id="salesFilterPeriodLabel" class="sales-period-pill">
+                Period: September 2026 | All Products
+              </div>
             </div>
-        </main>
+            <!-- Dynamic KPI Cards Row -->
+            <div class="kpi-grid">
+              <div class="kpi-card primary">
+                <span class="kpi-label" data-i18n="kpiActualSales"
+                  >Actual Sales</span
+                >
+                <span class="kpi-value" id="kpiTotalActual">0</span>
+                <span class="kpi-subtext" id="kpiActualSubtext"
+                  >Selected Scope</span
+                >
+              </div>
+              <div class="kpi-card info">
+                <span class="kpi-label" data-i18n="kpiAssignedTarget"
+                  >Assigned Target</span
+                >
+                <span class="kpi-value" id="kpiTotalTarget">0</span>
+                <span class="kpi-subtext" id="kpiTargetSubtext"
+                  >Monthly Target</span
+                >
+              </div>
+              <div class="kpi-card success">
+                <span class="kpi-label" data-i18n="kpiAchievement"
+                  >Achievement</span
+                >
+                <span class="kpi-value" id="kpiAchievement">0%</span>
+                <span class="kpi-subtext" id="kpiAchievementSubtext"
+                  >Target vs Actual</span
+                >
+              </div>
+              <div class="kpi-card warning">
+                <span class="kpi-label" data-i18n="kpiActiveProducts"
+                  >Products Filtered</span
+                >
+                <span class="kpi-value" id="kpiActiveReps">All</span>
+                <span class="kpi-subtext" id="kpiProductsSubtext"
+                  >Product breakdown</span
+                >
+              </div>
+            </div>
+            <!-- Sales Actions & Excel Upload Bar -->
+            <div class="sales-actions-card">
+              <div class="sales-actions-left">
+                <h3
+                  style="margin: 0; font-size: 1.1rem; color: var(--gray-800)"
+                >
+                  Sales Performance by Product & Team
+                </h3>
+                <p
+                  style="
+                    margin: 4px 0 0;
+                    font-size: 0.82rem;
+                    color: var(--gray-500);
+                  "
+                >
+                  Monthly records synchronized via Excel spreadsheet updates.
+                </p>
+              </div>
+              <div class="sales-actions-right">
+                <input
+                  type="file"
+                  id="salesExcelFileInput"
+                  accept=".xlsx, .xls, .csv"
+                  style="display: none"
+                  onchange="handleExcelUpload(event)"
+                />
+                <button
+                  class="btn btn-outline"
+                  id="exportSalesBtn"
+                  onclick="exportSalesReport()"
+                >
+                  📥 Export CSV
+                </button>
+                <button
+                  class="btn btn-primary"
+                  id="uploadSalesBtn"
+                  onclick="triggerExcelUpload()"
+                >
+                  📤 Upload Excel Sheet
+                </button>
+              </div>
+            </div>
+            <!-- Sales Table with Product Breakdown -->
+            <div class="table-container">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Rep Name / Area</th>
+                    <th>Product / Medicine</th>
+                    <th data-i18n="colDistributor">Distributor</th>
+                    <th data-i18n="colSupplyType">Type</th>
+                    <th>Target</th>
+                    <th>Actual Sales</th>
+                    <th>Achievement</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="salesReportTbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- TAB 2: Daily Visits & Activities Timeline -->
+          <div class="report-content-panel" id="tabPanel-timeline">
+            <!-- Employee filter bar (visits-page style) -->
+            <div
+              id="timelineRepFilterContainer"
+              class="manager-rep-filter-container"
+              style="margin-bottom: 0"
+            >
+              <label class="manager-rep-filter-label">
+                <span>👥</span>
+                <span data-i18n="teamFilterLabel">Employee Filter:</span>
+              </label>
+              <select
+                id="timelineRepSelect"
+                class="filter-input"
+                style="
+                  min-width: min(300px, 100%);
+                  max-width: 100%;
+                  height: 38px;
+                  font-weight: 500;
+                "
+              >
+                <option value="all">All Employees</option>
+              </select>
+            </div>
+            <div class="timeline-filter-card" style="margin-top: 8px">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  flex-wrap: wrap;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <label
+                    style="
+                      font-weight: 700;
+                      font-size: 0.95rem;
+                      color: var(--gray-800);
+                    "
+                    data-i18n="timelineFrom"
+                    >From:</label
+                  >
+                  <input
+                    type="date"
+                    id="timelineDateFrom"
+                    class="form-control"
+                    style="width: auto"
+                  />
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <label
+                    style="
+                      font-weight: 700;
+                      font-size: 0.95rem;
+                      color: var(--gray-800);
+                    "
+                    data-i18n="timelineTo"
+                    >To:</label
+                  >
+                  <input
+                    type="date"
+                    id="timelineDateTo"
+                    class="form-control"
+                    style="width: auto"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick="renderDailyTimeline()"
+                  style="
+                    padding: 6px 18px;
+                    border-radius: 6px;
+                    font-weight: 600;
+                  "
+                >
+                  🔍 <span data-i18n="btnShow">Show</span>
+                </button>
+                <span
+                  class="badge"
+                  style="
+                    background: var(--primary-light);
+                    color: var(--primary);
+                    padding: 6px 12px;
+                    font-weight: 700;
+                    border-radius: 8px;
+                  "
+                  id="timelineDateBadge"
+                  >Today</span
+                >
+              </div>
+              <div class="legend-box" style="margin-top: 10px">
+                <span class="legend-item"
+                  ><span class="legend-dot actual"></span> Direct Actual
+                  Visit</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot planned"></span> Planned &amp;
+                  Executed</span
+                >
+              </div>
+            </div>
+            <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
+            <div class="timeline-container" id="timelineEventsContainer"></div>
+          </div>
+          <!-- TAB 3: Coverage & Frequency -->
+          <div class="report-content-panel" id="tabPanel-coverage">
+            <!-- Employee filter bar (visits-page style) -->
+            <div
+              id="coverageRepFilterContainer"
+              class="manager-rep-filter-container"
+              style="margin-bottom: 0"
+            >
+              <label class="manager-rep-filter-label">
+                <span>👥</span>
+                <span data-i18n="teamFilterLabel">Employee Filter:</span>
+              </label>
+              <select
+                id="coverageRepSelect"
+                class="filter-input"
+                style="
+                  min-width: min(300px, 100%);
+                  max-width: 100%;
+                  height: 38px;
+                  font-weight: 500;
+                "
+              >
+                <option value="all">All Employees</option>
+              </select>
+            </div>
+            <div class="coverage-filter-card" style="margin-top: 8px">
+              <div class="date-range-row" style="align-items: flex-end">
+                <div class="date-input-group">
+                  <label
+                    style="
+                      font-weight: 600;
+                      font-size: 0.85rem;
+                      color: var(--gray-700);
+                    "
+                    >From (Start Date):</label
+                  >
+                  <input
+                    type="date"
+                    id="coverageStartDate"
+                    class="form-control"
+                  />
+                </div>
+                <div class="date-input-group">
+                  <label
+                    style="
+                      font-weight: 600;
+                      font-size: 0.85rem;
+                      color: var(--gray-700);
+                    "
+                    >To (End Date):</label
+                  >
+                  <input
+                    type="date"
+                    id="coverageEndDate"
+                    class="form-control"
+                  />
+                </div>
+                <div class="date-input-group">
+                  <label
+                    style="
+                      font-weight: 600;
+                      font-size: 0.85rem;
+                      color: var(--gray-700);
+                    "
+                    >Doctor Class Filter:</label
+                  >
+                  <select id="coverageClassFilter" class="form-control">
+                    <option value="all">All Targets (A, B & Hospitals)</option>
+                    <option value="all_doctors">
+                      All Doctors (Class A & B)
+                    </option>
+                    <option value="A">Class A Only (Target: 4/Quarter)</option>
+                    <option value="B">Class B Only (Target: 3/Quarter)</option>
+                    <option value="hospital">
+                      Hospitals Only (Target: 2/Month)
+                    </option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onclick="renderCoverageReport()"
+                  style="
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    height: 42px;
+                  "
+                >
+                  🔍 <span data-i18n="btnShow">Show</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  onclick="exportCoverageReport()"
+                  style="
+                    padding: 10px 16px;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    height: 42px;
+                  "
+                >
+                  📥 <span data-i18n="btnExportCSV">Export CSV</span>
+                </button>
+              </div>
+              <div
+                style="
+                  margin-top: 10px;
+                  font-size: 0.85rem;
+                  color: var(--gray-600);
+                "
+              >
+                💡 <strong>Coverage Rules:</strong> Class A Doctors = 4
+                visits/Quarter | Class B Doctors = 3 visits/Quarter | AM
+                Hospitals = 2 visits/Month
+              </div>
+            </div>
+            <!-- Overall Coverage Summary KPI Cards for Selected Period -->
+            <div class="kpi-grid mb-3" style="margin-bottom: 16px">
+              <div class="kpi-card primary">
+                <span class="kpi-label">Total Coverage</span>
+                <span class="kpi-value" id="kpiCoverageOverall">0%</span>
+                <span class="kpi-subtext" id="kpiCoveragePeriodSubtext"
+                  >Selected Period</span
+                >
+              </div>
+              <div class="kpi-card success">
+                <span class="kpi-label">Executed Visits</span>
+                <span class="kpi-value" id="kpiCoverageExecutedVisits">0</span>
+                <span class="kpi-subtext">Completed in Period</span>
+              </div>
+              <div class="kpi-card info">
+                <span class="kpi-label">Target Visits</span>
+                <span class="kpi-value" id="kpiCoverageTargetVisits">0</span>
+                <span class="kpi-subtext">Required Frequency</span>
+              </div>
+              <div class="kpi-card warning">
+                <span class="kpi-label">Targets Covered</span>
+                <span class="kpi-value" id="kpiCoverageTargetsCount">0</span>
+                <span class="kpi-subtext" id="kpiCoverageTargetsSubtext"
+                  >Doctors & Hospitals</span
+                >
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Target Name</th>
+                    <th>Class / Type</th>
+                    <th>Specialty / Area</th>
+                    <th>Target Frequency</th>
+                    <th>Visits Executed</th>
+                    <th>Exact Visit Dates & Times</th>
+                  </tr>
+                </thead>
+                <tbody id="coverageReportTbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- TAB 4: Doctors List -->
+          <div class="report-content-panel" id="tabPanel-doctors">
+            <!-- Employee filter bar (visits-page style) -->
+            <div
+              id="doctorRepFilterContainer"
+              class="manager-rep-filter-container"
+              style="margin-bottom: 0"
+            >
+              <label class="manager-rep-filter-label">
+                <span>👥</span>
+                <span data-i18n="teamFilterLabel">Employee Filter:</span>
+              </label>
+              <select
+                id="doctorRepSelect"
+                class="filter-input"
+                style="
+                  min-width: min(300px, 100%);
+                  max-width: 100%;
+                  height: 38px;
+                  font-weight: 500;
+                "
+                onchange="onDoctorFilterChange()"
+              >
+                <option value="all" data-i18n="allReps">All Employees</option>
+              </select>
+            </div>
+            <div class="sales-filter-card" style="margin-top: 8px">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 1rem;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                "
+              >
+                <div>
+                  <h3
+                    style="
+                      margin: 0;
+                      font-size: 1.15rem;
+                      font-weight: 700;
+                      color: var(--gray-800);
+                    "
+                    data-i18n="doctorsDirectoryTitle"
+                  >
+                    👨‍⚕️ Doctors Directory
+                  </h3>
+                  <p
+                    style="
+                      margin: 4px 0 0;
+                      font-size: 0.82rem;
+                      color: var(--gray-500);
+                    "
+                    data-i18n="doctorsDirectorySubtitle"
+                  >
+                    Comprehensive list of healthcare professionals, clinic
+                    locations, and specialties.
+                  </p>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <span
+                    class="badge"
+                    style="
+                      background: var(--primary-light);
+                      color: var(--primary);
+                      font-weight: 700;
+                      padding: 6px 12px;
+                      border-radius: 8px;
+                    "
+                    id="totalDoctorsCountBadge"
+                    >0 Doctors</span
+                  >
+                  <button
+                    type="button"
+                    class="btn btn-outline admin-only-action"
+                    id="btnImportDoctors"
+                    onclick="openImportDoctorsModal()"
+                    style="display: none"
+                  >
+                    <span>📥</span>
+                    <span data-i18n="importDoctors">Import Sheet</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary admin-only-action"
+                    id="btnAddDoctor"
+                    onclick="openDoctorModal()"
+                    style="display: none"
+                  >
+                    <span>➕</span>
+                    <span data-i18n="addDoctor">Add Doctor</span>
+                  </button>
+                </div>
+              </div>
+              <!-- Filters Grid -->
+              <div
+                class="sales-filter-form-grid"
+                style="
+                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                "
+              >
+                <!-- Search -->
+                <div class="sales-filter-field">
+                  <label data-i18n="searchDoctors">Search:</label>
+                  <input
+                    type="text"
+                    id="doctorSearchInput"
+                    class="form-control"
+                    data-i18n-placeholder="searchDoctorsPlaceholder"
+                    placeholder="Search by name, clinic, phone..."
+                    oninput="onDoctorFilterChange()"
+                  />
+                </div>
+                <!-- Specialty Filter -->
+                <div class="sales-filter-field">
+                  <label data-i18n="specialty">Specialty:</label>
+                  <select
+                    id="doctorSpecialtyFilter"
+                    class="form-control"
+                    onchange="onDoctorFilterChange()"
+                  >
+                    <option value="all" data-i18n="allSpecialties">
+                      All Specialties
+                    </option>
+                    <option value="Internal Medicine">Internal Medicine</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="Dermatology">Dermatology</option>
+                    <option value="Ophthalmology">Ophthalmology</option>
+                    <option value="ENT">ENT</option>
+                    <option value="Orthopedics">Orthopedics</option>
+                    <option value="Neurology">Neurology</option>
+                    <option value="Urology">Urology</option>
+                    <option value="Gynecology">Gynecology</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <!-- Class Filter -->
+                <div class="sales-filter-field">
+                  <label data-i18n="doctorClass">Class:</label>
+                  <select
+                    id="doctorClassFilter"
+                    class="form-control"
+                    onchange="onDoctorFilterChange()"
+                  >
+                    <option value="all" data-i18n="allClasses">
+                      All Classes (A &amp; B)
+                    </option>
+                    <option value="A">Class A</option>
+                    <option value="B">Class B</option>
+                  </select>
+                </div>
+                <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
+                <div style="display: none" id="doctorLmFilterGroup">
+                  <select
+                    id="doctorLmSelect"
+                    onchange="onDoctorLmChange()"
+                  ></select>
+                </div>
+                <div style="display: none" id="doctorDmFilterGroup">
+                  <select
+                    id="doctorDmSelect"
+                    onchange="onDoctorDmChange()"
+                  ></select>
+                </div>
+                <div style="display: none" id="doctorRepFilterGroup">
+                  <select
+                    id="doctorRepSelectLegacy"
+                    onchange="onDoctorFilterChange()"
+                  ></select>
+                </div>
+              </div>
+            </div>
+            <!-- Doctors Cards Grid -->
+            <div id="doctorsDirectoryGrid" class="directory-cards-grid"></div>
+            <!-- Doctors Empty State -->
+            <div
+              id="doctorsEmptyState"
+              class="directory-empty-state"
+              style="display: none"
+            >
+              <div class="empty-state-icon">👨‍⚕️</div>
+              <h4 data-i18n="noDoctorsFound">No Doctors Found</h4>
+              <p class="text-muted" data-i18n="noDoctorsDesc">
+                Try adjusting search query or filters.
+              </p>
+            </div>
+          </div>
+          <!-- TAB 5: Pharmacies List -->
+          <div class="report-content-panel" id="tabPanel-pharmacies">
+            <!-- Employee filter bar (visits-page style) -->
+            <div
+              id="pharmacyRepFilterContainer"
+              class="manager-rep-filter-container"
+              style="margin-bottom: 0"
+            >
+              <label class="manager-rep-filter-label">
+                <span>👥</span>
+                <span data-i18n="teamFilterLabel">Employee Filter:</span>
+              </label>
+              <select
+                id="pharmacyRepSelect"
+                class="filter-input"
+                style="
+                  min-width: min(300px, 100%);
+                  max-width: 100%;
+                  height: 38px;
+                  font-weight: 500;
+                "
+                onchange="onPharmacyFilterChange()"
+              >
+                <option value="all" data-i18n="allReps">All Employees</option>
+              </select>
+            </div>
+            <div class="sales-filter-card" style="margin-top: 8px">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 1rem;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                "
+              >
+                <div>
+                  <h3
+                    style="
+                      margin: 0;
+                      font-size: 1.15rem;
+                      font-weight: 700;
+                      color: var(--gray-800);
+                    "
+                    data-i18n="pharmaciesDirectoryTitle"
+                  >
+                    💊 Pharmacies Directory
+                  </h3>
+                  <p
+                    style="
+                      margin: 4px 0 0;
+                      font-size: 0.82rem;
+                      color: var(--gray-500);
+                    "
+                    data-i18n="pharmaciesDirectorySubtitle"
+                  >
+                    Directory of authorized partner pharmacies, contact
+                    personnel, and assigned territories.
+                  </p>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <span
+                    class="badge"
+                    style="
+                      background: var(--success-light);
+                      color: var(--success);
+                      font-weight: 700;
+                      padding: 6px 12px;
+                      border-radius: 8px;
+                    "
+                    id="totalPharmaciesCountBadge"
+                    >0 Pharmacies</span
+                  >
+                  <button
+                    type="button"
+                    class="btn btn-outline admin-only-action"
+                    id="btnImportPharmacies"
+                    onclick="openImportPharmaciesModal()"
+                    style="display: none"
+                  >
+                    <span>📥</span>
+                    <span data-i18n="importPharmacies">Import Sheet</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary admin-only-action"
+                    id="btnAddPharmacy"
+                    onclick="openPharmacyModal()"
+                    style="display: none"
+                  >
+                    <span>➕</span>
+                    <span data-i18n="addPharmacy">Add Pharmacy</span>
+                  </button>
+                </div>
+              </div>
+              <!-- Filters Grid -->
+              <div
+                class="sales-filter-form-grid"
+                style="
+                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                "
+              >
+                <!-- Search -->
+                <div class="sales-filter-field">
+                  <label data-i18n="searchPharmacies">Search:</label>
+                  <input
+                    type="text"
+                    id="pharmacySearchInput"
+                    class="form-control"
+                    data-i18n-placeholder="searchPharmaciesPlaceholder"
+                    placeholder="Search by pharmacy name, address, contact..."
+                    oninput="onPharmacyFilterChange()"
+                  />
+                </div>
+                <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
+                <div style="display: none" id="pharmacyLmFilterGroup">
+                  <select
+                    id="pharmacyLmSelect"
+                    onchange="onPharmacyLmChange()"
+                  ></select>
+                </div>
+                <div style="display: none" id="pharmacyDmFilterGroup">
+                  <select
+                    id="pharmacyDmSelect"
+                    onchange="onPharmacyDmChange()"
+                  ></select>
+                </div>
+                <div style="display: none" id="pharmacyRepFilterGroup">
+                  <select
+                    id="pharmacyRepSelectLegacy"
+                    onchange="onPharmacyFilterChange()"
+                  ></select>
+                </div>
+              </div>
+            </div>
+            <!-- Pharmacies Cards Grid -->
+            <div
+              id="pharmaciesDirectoryGrid"
+              class="directory-cards-grid"
+            ></div>
+            <!-- Pharmacies Empty State -->
+            <div
+              id="pharmaciesEmptyState"
+              class="directory-empty-state"
+              style="display: none"
+            >
+              <div class="empty-state-icon">💊</div>
+              <h4 data-i18n="noPharmaciesFound">No Pharmacies Found</h4>
+              <p class="text-muted" data-i18n="noPharmaciesDesc">
+                Try adjusting search query or filters.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
     <!-- Modals for Doctors & Pharmacies Management (Admin Only) -->
     <!-- Modals for Doctors & Pharmacies Management (Admin Only) -->
     <!-- Doctor Modal -->
-    <div id="doctorModal" class="custom-modal" style="display:none;">
-        <div class="custom-modal-dialog modal-dialog-lg">
-            <div class="custom-modal-content card">
-                <div class="custom-modal-header modern-modal-header">
-                    <div class="modal-header-left">
-                        <div class="modal-header-avatar doctor">🩺</div>
-                        <div>
-                            <h3 id="doctorModalTitle" data-i18n="addDoctor">Add Doctor</h3>
-                            <p class="modal-subtitle" id="doctorModalSubtitle" data-i18n="addDoctorSubtitle">Register a new healthcare professional and assign territory.</p>
-                        </div>
-                    </div>
-                    <button class="custom-modal-close" onclick="closeDoctorModal()" title="Close">&times;</button>
-                </div>
-                <div class="custom-modal-body">
-                    <form id="doctorForm" onsubmit="event.preventDefault(); saveDoctor();">
-                        <input type="hidden" id="doctorId">
-                        <div class="modal-form-grid">
-                            <!-- Doctor Name -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="doctorNameInput">
-                                    <span class="label-icon">👨‍⚕️</span> <span data-i18n="doctorName">Doctor Name</span> <span class="required-star">*</span>
-                                </label>
-                                <input type="text" id="doctorNameInput" class="form-control modern-input" required placeholder="e.g. Dr. Ahmed Mostafa">
-                            </div>
-                            <!-- Specialty -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="doctorSpecialtyInput">
-                                    <span class="label-icon">🏥</span> <span data-i18n="specialty">Specialty</span> <span class="required-star">*</span>
-                                </label>
-                                <select id="doctorSpecialtyInput" class="form-control modern-select" required>
-                                    <option value="Internal Medicine">Internal Medicine</option>
-                                    <option value="Pediatrics">Pediatrics</option>
-                                    <option value="Cardiology">Cardiology</option>
-                                    <option value="Dermatology">Dermatology</option>
-                                    <option value="Ophthalmology">Ophthalmology</option>
-                                    <option value="ENT">ENT</option>
-                                    <option value="Orthopedics">Orthopedics</option>
-                                    <option value="Neurology">Neurology</option>
-                                    <option value="Urology">Urology</option>
-                                    <option value="Gynecology">Gynecology</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <!-- Class -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="doctorClassInput">
-                                    <span class="label-icon">🏷️</span> <span data-i18n="doctorClass">Class</span> <span class="required-star">*</span>
-                                </label>
-                                <select id="doctorClassInput" class="form-control modern-select" required>
-                                    <option value="A">⭐ Class A (High Priority)</option>
-                                    <option value="B">Class B (Standard Target)</option>
-                                </select>
-                            </div>
-                            <!-- Clinic Address -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="doctorAddressInput">
-                                    <span class="label-icon">📍</span> <span data-i18n="clinicAddress">Clinic Address</span> <span class="required-star">*</span>
-                                </label>
-                                <input type="text" id="doctorAddressInput" class="form-control modern-input" required placeholder="e.g. 15 Makram Ebeid, Nasr City, Cairo">
-                            </div>
-                            <!-- Phone Number -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="doctorPhoneInput">
-                                    <span class="label-icon">📞</span> <span data-i18n="phone">Phone Number</span>
-                                </label>
-                                <input type="tel" id="doctorPhoneInput" class="form-control modern-input" placeholder="e.g. 01001234567">
-                            </div>
-                            <!-- Section Divider: Territory & Representative Assignment -->
-                            <div class="col-span-2 modal-section-divider">
-                                <span class="modal-section-title">
-                                    <span class="label-icon">🏢</span> <span data-i18n="territoryAssignment">Territory & Rep Assignment</span>
-                                </span>
-                            </div>
-                            <!-- Hierarchy Filter 1: Line / LM -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="doctorModalLmSelect">
-                                    <span class="label-icon">👔</span> <span data-i18n="filterLm">Line / LM</span>
-                                </label>
-                                <select id="doctorModalLmSelect" class="form-control modern-select" onchange="onDoctorModalLmChange()"></select>
-                            </div>
-                            <!-- Hierarchy Filter 2: District / DM -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="doctorModalDmSelect">
-                                    <span class="label-icon">💼</span> <span data-i18n="filterDm">District / DM</span>
-                                </label>
-                                <select id="doctorModalDmSelect" class="form-control modern-select" onchange="onDoctorModalDmChange()"></select>
-                            </div>
-                            <!-- Assigned Medical Rep -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="doctorRepInput">
-                                    <span class="label-icon">👤</span> <span data-i18n="assignedRep">Assigned Medical Rep</span> <span class="required-star">*</span>
-                                </label>
-                                <select id="doctorRepInput" class="form-control modern-select" required></select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="custom-modal-footer modern-modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeDoctorModal()">
-                        <span>✕</span> <span data-i18n="cancel">Cancel</span>
-                    </button>
-                    <button type="button" class="btn btn-primary btn-save-modal" onclick="saveDoctor()">
-                        <span>💾</span> <span data-i18n="save">Save Doctor</span>
-                    </button>
-                </div>
+    <div id="doctorModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog modal-dialog-lg">
+        <div class="custom-modal-content card">
+          <div class="custom-modal-header modern-modal-header">
+            <div class="modal-header-left">
+              <div class="modal-header-avatar doctor">🩺</div>
+              <div>
+                <h3 id="doctorModalTitle" data-i18n="addDoctor">Add Doctor</h3>
+                <p
+                  class="modal-subtitle"
+                  id="doctorModalSubtitle"
+                  data-i18n="addDoctorSubtitle"
+                >
+                  Register a new healthcare professional and assign territory.
+                </p>
+              </div>
             </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeDoctorModal()"
+              title="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <form
+              id="doctorForm"
+              onsubmit="
+                event.preventDefault();
+                saveDoctor();
+              "
+            >
+              <input type="hidden" id="doctorId" />
+              <div class="modal-form-grid">
+                <!-- Doctor Name -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="doctorNameInput">
+                    <span class="label-icon">👨‍⚕️</span>
+                    <span data-i18n="doctorName">Doctor Name</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="doctorNameInput"
+                    class="form-control modern-input"
+                    required
+                    placeholder="e.g. Dr. Ahmed Mostafa"
+                  />
+                </div>
+                <!-- Specialty -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="doctorSpecialtyInput">
+                    <span class="label-icon">🏥</span>
+                    <span data-i18n="specialty">Specialty</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="doctorSpecialtyInput"
+                    class="form-control modern-select"
+                    required
+                  >
+                    <option value="Internal Medicine">Internal Medicine</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="Dermatology">Dermatology</option>
+                    <option value="Ophthalmology">Ophthalmology</option>
+                    <option value="ENT">ENT</option>
+                    <option value="Orthopedics">Orthopedics</option>
+                    <option value="Neurology">Neurology</option>
+                    <option value="Urology">Urology</option>
+                    <option value="Gynecology">Gynecology</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <!-- Class -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="doctorClassInput">
+                    <span class="label-icon">🏷️</span>
+                    <span data-i18n="doctorClass">Class</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="doctorClassInput"
+                    class="form-control modern-select"
+                    required
+                  >
+                    <option value="A">⭐ Class A (High Priority)</option>
+                    <option value="B">Class B (Standard Target)</option>
+                  </select>
+                </div>
+                <!-- Clinic Address -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="doctorAddressInput">
+                    <span class="label-icon">📍</span>
+                    <span data-i18n="clinicAddress">Clinic Address</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="doctorAddressInput"
+                    class="form-control modern-input"
+                    required
+                    placeholder="e.g. 15 Makram Ebeid, Nasr City, Cairo"
+                  />
+                </div>
+                <!-- Phone Number -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="doctorPhoneInput">
+                    <span class="label-icon">📞</span>
+                    <span data-i18n="phone">Phone Number</span>
+                  </label>
+                  <input
+                    type="tel"
+                    id="doctorPhoneInput"
+                    class="form-control modern-input"
+                    placeholder="e.g. 01001234567"
+                  />
+                </div>
+                <!-- Section Divider: Territory & Representative Assignment -->
+                <div class="col-span-2 modal-section-divider">
+                  <span class="modal-section-title">
+                    <span class="label-icon">🏢</span>
+                    <span data-i18n="territoryAssignment"
+                      >Territory & Rep Assignment</span
+                    >
+                  </span>
+                </div>
+                <!-- Hierarchy Filter 1: Line / LM -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="doctorModalLmSelect">
+                    <span class="label-icon">👔</span>
+                    <span data-i18n="filterLm">Line / LM</span>
+                  </label>
+                  <select
+                    id="doctorModalLmSelect"
+                    class="form-control modern-select"
+                    onchange="onDoctorModalLmChange()"
+                  ></select>
+                </div>
+                <!-- Hierarchy Filter 2: District / DM -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="doctorModalDmSelect">
+                    <span class="label-icon">💼</span>
+                    <span data-i18n="filterDm">District / DM</span>
+                  </label>
+                  <select
+                    id="doctorModalDmSelect"
+                    class="form-control modern-select"
+                    onchange="onDoctorModalDmChange()"
+                  ></select>
+                </div>
+                <!-- Assigned Medical Rep -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="doctorRepInput">
+                    <span class="label-icon">👤</span>
+                    <span data-i18n="assignedRep">Assigned Medical Rep</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="doctorRepInput"
+                    class="form-control modern-select"
+                    required
+                  ></select>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="custom-modal-footer modern-modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeDoctorModal()"
+            >
+              <span>✕</span> <span data-i18n="cancel">Cancel</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-save-modal"
+              onclick="saveDoctor()"
+            >
+              <span>💾</span> <span data-i18n="save">Save Doctor</span>
+            </button>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Delete Doctor Modal -->
-    <div id="deleteDoctorModal" class="custom-modal" style="display:none;">
-        <div class="custom-modal-dialog" style="max-width: 440px;">
-            <div class="custom-modal-content card text-center p-3">
-                <div class="custom-modal-header border-bottom pb-2">
-                    <div class="d-flex align-items-center gap-2" style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size: 1.4rem;">⚠️</span>
-                        <h3 class="text-danger" style="margin:0; font-size:1.15rem;" data-i18n="deleteDoctor">Delete Doctor</h3>
-                    </div>
-                    <button class="custom-modal-close" onclick="closeDeleteDoctorModal()">&times;</button>
-                </div>
-                <div class="custom-modal-body py-4">
-                    <p style="font-size:0.95rem; color:var(--gray-600); margin:0;" data-i18n="confirmDeleteDoctor">Are you sure you want to delete this doctor? This action cannot be undone.</p>
-                </div>
-                <div class="custom-modal-footer border-top pt-2">
-                    <button type="button" class="btn btn-outline" onclick="closeDeleteDoctorModal()" data-i18n="cancel">Cancel</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmDeleteDoctor()">
-                        <span>🗑️</span> <span data-i18n="delete">Delete</span>
-                    </button>
-                </div>
+    <div id="deleteDoctorModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog" style="max-width: 440px">
+        <div class="custom-modal-content card text-center p-3">
+          <div class="custom-modal-header border-bottom pb-2">
+            <div
+              class="d-flex align-items-center gap-2"
+              style="display: flex; align-items: center; gap: 8px"
+            >
+              <span style="font-size: 1.4rem">⚠️</span>
+              <h3
+                class="text-danger"
+                style="margin: 0; font-size: 1.15rem"
+                data-i18n="deleteDoctor"
+              >
+                Delete Doctor
+              </h3>
             </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeDeleteDoctorModal()"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body py-4">
+            <p
+              style="font-size: 0.95rem; color: var(--gray-600); margin: 0"
+              data-i18n="confirmDeleteDoctor"
+            >
+              Are you sure you want to delete this doctor? This action cannot be
+              undone.
+            </p>
+          </div>
+          <div class="custom-modal-footer border-top pt-2">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeDeleteDoctorModal()"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmDeleteDoctor()"
+            >
+              <span>🗑️</span> <span data-i18n="delete">Delete</span>
+            </button>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Pharmacy Modal -->
-    <div id="pharmacyModal" class="custom-modal" style="display:none;">
-        <div class="custom-modal-dialog modal-dialog-lg">
-            <div class="custom-modal-content card">
-                <div class="custom-modal-header modern-modal-header">
-                    <div class="modal-header-left">
-                        <div class="modal-header-avatar pharmacy">💊</div>
-                        <div>
-                            <h3 id="pharmacyModalTitle" data-i18n="addPharmacy">Add Pharmacy</h3>
-                            <p class="modal-subtitle" id="pharmacyModalSubtitle" data-i18n="addPharmacySubtitle">Register an authorized partner pharmacy, contact pharmacist, and assigned representative.</p>
-                        </div>
-                    </div>
-                    <button class="custom-modal-close" onclick="closePharmacyModal()" title="Close">&times;</button>
-                </div>
-                <div class="custom-modal-body">
-                    <form id="pharmacyForm" onsubmit="event.preventDefault(); savePharmacy();">
-                        <input type="hidden" id="pharmacyId">
-                        <div class="modal-form-grid">
-                            <!-- Pharmacy Name -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="pharmacyNameInput">
-                                    <span class="label-icon">🏪</span> <span data-i18n="pharmacyName">Pharmacy Name</span> <span class="required-star">*</span>
-                                </label>
-                                <input type="text" id="pharmacyNameInput" class="form-control modern-input" required placeholder="e.g. Al-Ezaby Pharmacy">
-                            </div>
-                            <!-- Address -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="pharmacyAddressInput">
-                                    <span class="label-icon">📍</span> <span data-i18n="address">Address</span> <span class="required-star">*</span>
-                                </label>
-                                <input type="text" id="pharmacyAddressInput" class="form-control modern-input" required placeholder="e.g. 15 Abbas Al-Akkad, Nasr City, Cairo">
-                            </div>
-                            <!-- Contact Person -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="pharmacyContactInput">
-                                    <span class="label-icon">👨‍🔬</span> <span data-i18n="contactPerson">Contact Person / Pharmacist</span>
-                                </label>
-                                <input type="text" id="pharmacyContactInput" class="form-control modern-input" placeholder="e.g. Dr. Mohamed Ibrahim">
-                            </div>
-                            <!-- Phone Number -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="pharmacyPhoneInput">
-                                    <span class="label-icon">📞</span> <span data-i18n="phone">Phone Number</span>
-                                </label>
-                                <input type="tel" id="pharmacyPhoneInput" class="form-control modern-input" placeholder="e.g. 01001112233">
-                            </div>
-                            <!-- Section Divider: Territory & Representative Assignment -->
-                            <div class="col-span-2 modal-section-divider">
-                                <span class="modal-section-title">
-                                    <span class="label-icon">🏢</span> <span data-i18n="territoryAssignment">Territory & Rep Assignment</span>
-                                </span>
-                            </div>
-                            <!-- Hierarchy Filter 1: Line / LM -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="pharmacyModalLmSelect">
-                                    <span class="label-icon">👔</span> <span data-i18n="filterLm">Line / LM</span>
-                                </label>
-                                <select id="pharmacyModalLmSelect" class="form-control modern-select" onchange="onPharmacyModalLmChange()"></select>
-                            </div>
-                            <!-- Hierarchy Filter 2: District / DM -->
-                            <div class="form-group col-span-1">
-                                <label class="form-label" for="pharmacyModalDmSelect">
-                                    <span class="label-icon">💼</span> <span data-i18n="filterDm">District / DM</span>
-                                </label>
-                                <select id="pharmacyModalDmSelect" class="form-control modern-select" onchange="onPharmacyModalDmChange()"></select>
-                            </div>
-                            <!-- Assigned Medical Rep -->
-                            <div class="form-group col-span-2">
-                                <label class="form-label" for="pharmacyRepInput">
-                                    <span class="label-icon">👤</span> <span data-i18n="assignedRep">Assigned Medical Rep</span> <span class="required-star">*</span>
-                                </label>
-                                <select id="pharmacyRepInput" class="form-control modern-select" required></select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="custom-modal-footer modern-modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closePharmacyModal()">
-                        <span>✕</span> <span data-i18n="cancel">Cancel</span>
-                    </button>
-                    <button type="button" class="btn btn-primary btn-save-modal" onclick="savePharmacy()">
-                        <span>💾</span> <span data-i18n="save">Save Pharmacy</span>
-                    </button>
-                </div>
+    <div id="pharmacyModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog modal-dialog-lg">
+        <div class="custom-modal-content card">
+          <div class="custom-modal-header modern-modal-header">
+            <div class="modal-header-left">
+              <div class="modal-header-avatar pharmacy">💊</div>
+              <div>
+                <h3 id="pharmacyModalTitle" data-i18n="addPharmacy">
+                  Add Pharmacy
+                </h3>
+                <p
+                  class="modal-subtitle"
+                  id="pharmacyModalSubtitle"
+                  data-i18n="addPharmacySubtitle"
+                >
+                  Register an authorized partner pharmacy, contact pharmacist,
+                  and assigned representative.
+                </p>
+              </div>
             </div>
+            <button
+              class="custom-modal-close"
+              onclick="closePharmacyModal()"
+              title="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <form
+              id="pharmacyForm"
+              onsubmit="
+                event.preventDefault();
+                savePharmacy();
+              "
+            >
+              <input type="hidden" id="pharmacyId" />
+              <div class="modal-form-grid">
+                <!-- Pharmacy Name -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="pharmacyNameInput">
+                    <span class="label-icon">🏪</span>
+                    <span data-i18n="pharmacyName">Pharmacy Name</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="pharmacyNameInput"
+                    class="form-control modern-input"
+                    required
+                    placeholder="e.g. Al-Ezaby Pharmacy"
+                  />
+                </div>
+                <!-- Address -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="pharmacyAddressInput">
+                    <span class="label-icon">📍</span>
+                    <span data-i18n="address">Address</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="pharmacyAddressInput"
+                    class="form-control modern-input"
+                    required
+                    placeholder="e.g. 15 Abbas Al-Akkad, Nasr City, Cairo"
+                  />
+                </div>
+                <!-- Contact Person -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="pharmacyContactInput">
+                    <span class="label-icon">👨‍🔬</span>
+                    <span data-i18n="contactPerson"
+                      >Contact Person / Pharmacist</span
+                    >
+                  </label>
+                  <input
+                    type="text"
+                    id="pharmacyContactInput"
+                    class="form-control modern-input"
+                    placeholder="e.g. Dr. Mohamed Ibrahim"
+                  />
+                </div>
+                <!-- Phone Number -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="pharmacyPhoneInput">
+                    <span class="label-icon">📞</span>
+                    <span data-i18n="phone">Phone Number</span>
+                  </label>
+                  <input
+                    type="tel"
+                    id="pharmacyPhoneInput"
+                    class="form-control modern-input"
+                    placeholder="e.g. 01001112233"
+                  />
+                </div>
+                <!-- Section Divider: Territory & Representative Assignment -->
+                <div class="col-span-2 modal-section-divider">
+                  <span class="modal-section-title">
+                    <span class="label-icon">🏢</span>
+                    <span data-i18n="territoryAssignment"
+                      >Territory & Rep Assignment</span
+                    >
+                  </span>
+                </div>
+                <!-- Hierarchy Filter 1: Line / LM -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="pharmacyModalLmSelect">
+                    <span class="label-icon">👔</span>
+                    <span data-i18n="filterLm">Line / LM</span>
+                  </label>
+                  <select
+                    id="pharmacyModalLmSelect"
+                    class="form-control modern-select"
+                    onchange="onPharmacyModalLmChange()"
+                  ></select>
+                </div>
+                <!-- Hierarchy Filter 2: District / DM -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="pharmacyModalDmSelect">
+                    <span class="label-icon">💼</span>
+                    <span data-i18n="filterDm">District / DM</span>
+                  </label>
+                  <select
+                    id="pharmacyModalDmSelect"
+                    class="form-control modern-select"
+                    onchange="onPharmacyModalDmChange()"
+                  ></select>
+                </div>
+                <!-- Assigned Medical Rep -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="pharmacyRepInput">
+                    <span class="label-icon">👤</span>
+                    <span data-i18n="assignedRep">Assigned Medical Rep</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="pharmacyRepInput"
+                    class="form-control modern-select"
+                    required
+                  ></select>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="custom-modal-footer modern-modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closePharmacyModal()"
+            >
+              <span>✕</span> <span data-i18n="cancel">Cancel</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-save-modal"
+              onclick="savePharmacy()"
+            >
+              <span>💾</span> <span data-i18n="save">Save Pharmacy</span>
+            </button>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Delete Pharmacy Modal -->
-    <div id="deletePharmacyModal" class="custom-modal" style="display:none;">
-        <div class="custom-modal-dialog" style="max-width: 440px;">
-            <div class="custom-modal-content card text-center p-3">
-                <div class="custom-modal-header border-bottom pb-2">
-                    <div class="d-flex align-items-center gap-2" style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size: 1.4rem;">⚠️</span>
-                        <h3 class="text-danger" style="margin:0; font-size:1.15rem;" data-i18n="deletePharmacy">Delete Pharmacy</h3>
-                    </div>
-                    <button class="custom-modal-close" onclick="closeDeletePharmacyModal()">&times;</button>
-                </div>
-                <div class="custom-modal-body py-4">
-                    <p style="font-size:0.95rem; color:var(--gray-600); margin:0;" data-i18n="confirmDeletePharmacy">Are you sure you want to delete this pharmacy? This action cannot be undone.</p>
-                </div>
-                <div class="custom-modal-footer border-top pt-2">
-                    <button type="button" class="btn btn-outline" onclick="closeDeletePharmacyModal()" data-i18n="cancel">Cancel</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmDeletePharmacy()">
-                        <span>🗑️</span> <span data-i18n="delete">Delete</span>
-                    </button>
-                </div>
+    <div id="deletePharmacyModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog" style="max-width: 440px">
+        <div class="custom-modal-content card text-center p-3">
+          <div class="custom-modal-header border-bottom pb-2">
+            <div
+              class="d-flex align-items-center gap-2"
+              style="display: flex; align-items: center; gap: 8px"
+            >
+              <span style="font-size: 1.4rem">⚠️</span>
+              <h3
+                class="text-danger"
+                style="margin: 0; font-size: 1.15rem"
+                data-i18n="deletePharmacy"
+              >
+                Delete Pharmacy
+              </h3>
             </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeDeletePharmacyModal()"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body py-4">
+            <p
+              style="font-size: 0.95rem; color: var(--gray-600); margin: 0"
+              data-i18n="confirmDeletePharmacy"
+            >
+              Are you sure you want to delete this pharmacy? This action cannot
+              be undone.
+            </p>
+          </div>
+          <div class="custom-modal-footer border-top pt-2">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeDeletePharmacyModal()"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmDeletePharmacy()"
+            >
+              <span>🗑️</span> <span data-i18n="delete">Delete</span>
+            </button>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Import Doctors Sheet Modal (Admin Only) -->
-    <div id="importDoctorsModal" class="custom-modal" style="display:none;">
-        <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px;">
-            <div class="custom-modal-content card">
-                <div class="custom-modal-header modern-modal-header">
-                    <div class="modal-header-left">
-                        <div class="modal-header-avatar doctor">📥</div>
-                        <div>
-                            <h3 id="importDoctorsModalTitle" data-i18n="importDoctorsTitle">Import Doctors from Sheet</h3>
-                            <p class="modal-subtitle" data-i18n="importDoctorsSubtitle">Download our standardized English template, fill physician data, and upload for instant bulk import.</p>
-                        </div>
-                    </div>
-                    <button class="custom-modal-close" onclick="closeImportDoctorsModal()" title="Close">&times;</button>
-                </div>
-                <div class="custom-modal-body">
-                    <!-- Step 1: Download Template Banner -->
-                    <div class="import-step-card mb-3">
-                        <div class="import-step-header">
-                            <span class="step-badge">Step 1</span>
-                            <span class="step-title" data-i18n="step1DownloadTemplate">Download Official Template (English Only)</span>
-                        </div>
-                        <p class="import-step-desc" data-i18n="step1Desc">Use this official pre-formatted CSV template. Mandatory columns: <strong>Doctor Name</strong>, <strong>Specialty</strong>, <strong>Class</strong>, <strong>Address</strong>.</p>
-                        <button type="button" class="btn btn-outline btn-download-template" onclick="downloadDoctorsTemplate()">
-                            <span>📊</span> <span data-i18n="btnDownloadTemplate">Download Template (.xlsx)</span>
-                        </button>
-                    </div>
-                    <!-- Step 2: Territory & Representative Assignment -->
-                    <div class="import-step-card mb-3">
-                        <div class="import-step-header">
-                            <span class="step-badge">Step 2</span>
-                            <span class="step-title" data-i18n="step2AssignRep">Territory & Representative Assignment</span>
-                        </div>
-                        <p class="import-step-desc" data-i18n="step2Desc">Filter by Line and District to select a representative for all rows, or leave as Auto-detect to read each row's Rep Code.</p>
-                        <div class="row g-2" style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <div style="flex: 1 1 30%; min-width: 140px;">
-                                <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;" for="importDoctorsLmSelect">
-                                    <span class="label-icon">👔</span> <span data-i18n="filterLm">Line / LM</span>
-                                </label>
-                                <select id="importDoctorsLmSelect" class="form-control modern-select" onchange="onDoctorsImportLmChange()"></select>
-                            </div>
-                            <div style="flex: 1 1 30%; min-width: 140px;">
-                                <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;" for="importDoctorsDmSelect">
-                                    <span class="label-icon">💼</span> <span data-i18n="filterDm">District / DM</span>
-                                </label>
-                                <select id="importDoctorsDmSelect" class="form-control modern-select" onchange="onDoctorsImportDmChange()"></select>
-                            </div>
-                            <div style="flex: 1 1 34%; min-width: 170px;">
-                                <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;" for="importDoctorsRepSelect">
-                                    <span class="label-icon">👤</span> <span data-i18n="assignedRep">Assigned Medical Rep</span>
-                                </label>
-                                <select id="importDoctorsRepSelect" class="form-control modern-select" onchange="onDoctorsImportRepChange()"></select>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Step 3: Upload File Zone -->
-                    <div class="import-step-card mb-3">
-                        <div class="import-step-header">
-                            <span class="step-badge">Step 3</span>
-                            <span class="step-title" data-i18n="step3UploadFile">Upload Completed Sheet (.xlsx or .csv)</span>
-                        </div>
-                        <input type="file" id="doctorsFileInput" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleDoctorsFileSelected(event)">
-                        <div class="file-drop-zone" id="doctorsDropZone" onclick="document.getElementById('doctorsFileInput').click()">
-                            <div class="drop-zone-icon">📂</div>
-                            <div class="drop-zone-text" data-i18n="dropZoneText">Click to browse or drag & drop Excel / CSV file here</div>
-                            <div class="drop-zone-subtext" data-i18n="dropZoneSubtext">Supports Excel (.xlsx, .xls) & CSV format</div>
-                            <div class="selected-file-name" id="doctorsSelectedFileName" style="display:none;"></div>
-                        </div>
-                    </div>
-                    <!-- Live Validation & Preview Container -->
-                    <div id="doctorsPreviewContainer" style="display:none;" class="import-preview-section">
-                        <div class="preview-header">
-                            <h4 class="preview-title" data-i18n="previewTitle">Data Preview & Validation</h4>
-                            <div class="preview-badges" id="doctorsValidationBadges"></div>
-                        </div>
-                        <div class="import-preview-table-wrapper">
-                            <table class="report-table import-preview-table" id="doctorsPreviewTable">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Status</th>
-                                        <th>Doctor Name</th>
-                                        <th>Specialty</th>
-                                        <th>Class</th>
-                                        <th>Address</th>
-                                        <th>Phone</th>
-                                        <th>Assigned Rep</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="doctorsPreviewTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="custom-modal-footer modern-modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeImportDoctorsModal()">
-                        <span>✕</span> <span data-i18n="cancel">Cancel</span>
-                    </button>
-                    <button type="button" class="btn btn-primary btn-save-modal" id="btnConfirmImportDoctors" onclick="confirmImportDoctors()" disabled>
-                        <span>🚀</span> <span data-i18n="btnConfirmImport">Confirm & Import</span>
-                    </button>
-                </div>
+    <div id="importDoctorsModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px">
+        <div class="custom-modal-content card">
+          <div class="custom-modal-header modern-modal-header">
+            <div class="modal-header-left">
+              <div class="modal-header-avatar doctor">📥</div>
+              <div>
+                <h3 id="importDoctorsModalTitle" data-i18n="importDoctorsTitle">
+                  Import Doctors from Sheet
+                </h3>
+                <p class="modal-subtitle" data-i18n="importDoctorsSubtitle">
+                  Download our standardized English template, fill physician
+                  data, and upload for instant bulk import.
+                </p>
+              </div>
             </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeImportDoctorsModal()"
+              title="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <!-- Step 1: Download Template Banner -->
+            <div class="import-step-card mb-3">
+              <div class="import-step-header">
+                <span class="step-badge">Step 1</span>
+                <span class="step-title" data-i18n="step1DownloadTemplate"
+                  >Download Official Template (English Only)</span
+                >
+              </div>
+              <p class="import-step-desc" data-i18n="step1Desc">
+                Use this official pre-formatted CSV template. Mandatory columns:
+                <strong>Doctor Name</strong>, <strong>Specialty</strong>,
+                <strong>Class</strong>, <strong>Address</strong>.
+              </p>
+              <button
+                type="button"
+                class="btn btn-outline btn-download-template"
+                onclick="downloadDoctorsTemplate()"
+              >
+                <span>📊</span>
+                <span data-i18n="btnDownloadTemplate"
+                  >Download Template (.xlsx)</span
+                >
+              </button>
+            </div>
+            <!-- Step 2: Territory & Representative Assignment -->
+            <div class="import-step-card mb-3">
+              <div class="import-step-header">
+                <span class="step-badge">Step 2</span>
+                <span class="step-title" data-i18n="step2AssignRep"
+                  >Territory & Representative Assignment</span
+                >
+              </div>
+              <p class="import-step-desc" data-i18n="step2Desc">
+                Filter by Line and District to select a representative for all
+                rows, or leave as Auto-detect to read each row's Rep Code.
+              </p>
+              <div
+                class="row g-2"
+                style="display: flex; gap: 10px; flex-wrap: wrap"
+              >
+                <div style="flex: 1 1 30%; min-width: 140px">
+                  <label
+                    class="form-label"
+                    style="font-size: 0.75rem; margin-bottom: 4px"
+                    for="importDoctorsLmSelect"
+                  >
+                    <span class="label-icon">👔</span>
+                    <span data-i18n="filterLm">Line / LM</span>
+                  </label>
+                  <select
+                    id="importDoctorsLmSelect"
+                    class="form-control modern-select"
+                    onchange="onDoctorsImportLmChange()"
+                  ></select>
+                </div>
+                <div style="flex: 1 1 30%; min-width: 140px">
+                  <label
+                    class="form-label"
+                    style="font-size: 0.75rem; margin-bottom: 4px"
+                    for="importDoctorsDmSelect"
+                  >
+                    <span class="label-icon">💼</span>
+                    <span data-i18n="filterDm">District / DM</span>
+                  </label>
+                  <select
+                    id="importDoctorsDmSelect"
+                    class="form-control modern-select"
+                    onchange="onDoctorsImportDmChange()"
+                  ></select>
+                </div>
+                <div style="flex: 1 1 34%; min-width: 170px">
+                  <label
+                    class="form-label"
+                    style="font-size: 0.75rem; margin-bottom: 4px"
+                    for="importDoctorsRepSelect"
+                  >
+                    <span class="label-icon">👤</span>
+                    <span data-i18n="assignedRep">Assigned Medical Rep</span>
+                  </label>
+                  <select
+                    id="importDoctorsRepSelect"
+                    class="form-control modern-select"
+                    onchange="onDoctorsImportRepChange()"
+                  ></select>
+                </div>
+              </div>
+            </div>
+            <!-- Step 3: Upload File Zone -->
+            <div class="import-step-card mb-3">
+              <div class="import-step-header">
+                <span class="step-badge">Step 3</span>
+                <span class="step-title" data-i18n="step3UploadFile"
+                  >Upload Completed Sheet (.xlsx or .csv)</span
+                >
+              </div>
+              <input
+                type="file"
+                id="doctorsFileInput"
+                accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                style="display: none"
+                onchange="handleDoctorsFileSelected(event)"
+              />
+              <div
+                class="file-drop-zone"
+                id="doctorsDropZone"
+                onclick="document.getElementById('doctorsFileInput').click()"
+              >
+                <div class="drop-zone-icon">📂</div>
+                <div class="drop-zone-text" data-i18n="dropZoneText">
+                  Click to browse or drag & drop Excel / CSV file here
+                </div>
+                <div class="drop-zone-subtext" data-i18n="dropZoneSubtext">
+                  Supports Excel (.xlsx, .xls) & CSV format
+                </div>
+                <div
+                  class="selected-file-name"
+                  id="doctorsSelectedFileName"
+                  style="display: none"
+                ></div>
+              </div>
+            </div>
+            <!-- Live Validation & Preview Container -->
+            <div
+              id="doctorsPreviewContainer"
+              style="display: none"
+              class="import-preview-section"
+            >
+              <div class="preview-header">
+                <h4 class="preview-title" data-i18n="previewTitle">
+                  Data Preview & Validation
+                </h4>
+                <div class="preview-badges" id="doctorsValidationBadges"></div>
+              </div>
+              <div class="import-preview-table-wrapper">
+                <table
+                  class="report-table import-preview-table"
+                  id="doctorsPreviewTable"
+                >
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status</th>
+                      <th>Doctor Name</th>
+                      <th>Specialty</th>
+                      <th>Class</th>
+                      <th>Address</th>
+                      <th>Phone</th>
+                      <th>Assigned Rep</th>
+                    </tr>
+                  </thead>
+                  <tbody id="doctorsPreviewTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="custom-modal-footer modern-modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeImportDoctorsModal()"
+            >
+              <span>✕</span> <span data-i18n="cancel">Cancel</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-save-modal"
+              id="btnConfirmImportDoctors"
+              onclick="confirmImportDoctors()"
+              disabled
+            >
+              <span>🚀</span>
+              <span data-i18n="btnConfirmImport">Confirm & Import</span>
+            </button>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Import Pharmacies Sheet Modal (Admin Only) -->
-    <div id="importPharmaciesModal" class="custom-modal" style="display:none;">
-        <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px;">
-            <div class="custom-modal-content card">
-                <div class="custom-modal-header modern-modal-header">
-                    <div class="modal-header-left">
-                        <div class="modal-header-avatar pharmacy">📥</div>
-                        <div>
-                            <h3 id="importPharmaciesModalTitle" data-i18n="importPharmaciesTitle">Import Pharmacies from Sheet</h3>
-                            <p class="modal-subtitle" data-i18n="importPharmaciesSubtitle">Download our standardized English template, fill pharmacy data, and upload for instant bulk import.</p>
-                        </div>
-                    </div>
-                    <button class="custom-modal-close" onclick="closeImportPharmaciesModal()" title="Close">&times;</button>
-                </div>
-                <div class="custom-modal-body">
-                    <!-- Step 1: Download Template Banner -->
-                    <div class="import-step-card mb-3">
-                        <div class="import-step-header">
-                            <span class="step-badge">Step 1</span>
-                            <span class="step-title" data-i18n="step1DownloadTemplate">Download Official Template (English Only)</span>
-                        </div>
-                        <p class="import-step-desc" data-i18n="step1PharmDesc">Use this official pre-formatted Excel template. Mandatory columns: <strong>Pharmacy Name</strong>, <strong>Address</strong>.</p>
-                        <button type="button" class="btn btn-outline btn-download-template" onclick="downloadPharmaciesTemplate()">
-                            <span>📊</span> <span data-i18n="btnDownloadTemplate">Download Template (.xlsx)</span>
-                        </button>
-                    </div>
-                    <!-- Step 2: Territory & Representative Assignment -->
-                    <div class="import-step-card mb-3">
-                        <div class="import-step-header">
-                            <span class="step-badge">Step 2</span>
-                            <span class="step-title" data-i18n="step2AssignRep">Territory & Representative Assignment</span>
-                        </div>
-                        <p class="import-step-desc" data-i18n="step2Desc">Filter by Line and District to select a representative for all rows, or leave as Auto-detect to read each row's Rep Code.</p>
-                        <div class="row g-2" style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <div style="flex: 1 1 30%; min-width: 140px;">
-                                <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;" for="importPharmaciesLmSelect">
-                                    <span class="label-icon">👔</span> <span data-i18n="filterLm">Line / LM</span>
-                                </label>
-                                <select id="importPharmaciesLmSelect" class="form-control modern-select" onchange="onPharmaciesImportLmChange()"></select>
-                            </div>
-                            <div style="flex: 1 1 30%; min-width: 140px;">
-                                <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;" for="importPharmaciesDmSelect">
-                                    <span class="label-icon">💼</span> <span data-i18n="filterDm">District / DM</span>
-                                </label>
-                                <select id="importPharmaciesDmSelect" class="form-control modern-select" onchange="onPharmaciesImportDmChange()"></select>
-                            </div>
-                            <div style="flex: 1 1 34%; min-width: 170px;">
-                                <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;" for="importPharmaciesRepSelect">
-                                    <span class="label-icon">👤</span> <span data-i18n="assignedRep">Assigned Medical Rep</span>
-                                </label>
-                                <select id="importPharmaciesRepSelect" class="form-control modern-select" onchange="onPharmaciesImportRepChange()"></select>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Step 3: Upload File Zone -->
-                    <div class="import-step-card mb-3">
-                        <div class="import-step-header">
-                            <span class="step-badge">Step 3</span>
-                            <span class="step-title" data-i18n="step3UploadFile">Upload Completed Sheet (.xlsx or .csv)</span>
-                        </div>
-                        <input type="file" id="pharmaciesFileInput" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handlePharmaciesFileSelected(event)">
-                        <div class="file-drop-zone" id="pharmaciesDropZone" onclick="document.getElementById('pharmaciesFileInput').click()">
-                            <div class="drop-zone-icon">📂</div>
-                            <div class="drop-zone-text" data-i18n="dropZoneText">Click to browse or drag & drop Excel / CSV file here</div>
-                            <div class="drop-zone-subtext" data-i18n="dropZoneSubtext">Supports Excel (.xlsx, .xls) & CSV format</div>
-                            <div class="selected-file-name" id="pharmaciesSelectedFileName" style="display:none;"></div>
-                        </div>
-                    </div>
-                    <!-- Live Validation & Preview Container -->
-                    <div id="pharmaciesPreviewContainer" style="display:none;" class="import-preview-section">
-                        <div class="preview-header">
-                            <h4 class="preview-title" data-i18n="previewTitle">Data Preview & Validation</h4>
-                            <div class="preview-badges" id="pharmaciesValidationBadges"></div>
-                        </div>
-                        <div class="import-preview-table-wrapper">
-                            <table class="report-table import-preview-table" id="pharmaciesPreviewTable">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Status</th>
-                                        <th>Pharmacy Name</th>
-                                        <th>Address</th>
-                                        <th>Contact Person</th>
-                                        <th>Phone</th>
-                                        <th>Assigned Rep</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pharmaciesPreviewTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="custom-modal-footer modern-modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeImportPharmaciesModal()">
-                        <span>✕</span> <span data-i18n="cancel">Cancel</span>
-                    </button>
-                    <button type="button" class="btn btn-primary btn-save-modal" id="btnConfirmImportPharmacies" onclick="confirmImportPharmacies()" disabled>
-                        <span>🚀</span> <span data-i18n="btnConfirmImport">Confirm & Import</span>
-                    </button>
-                </div>
+    <div id="importPharmaciesModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px">
+        <div class="custom-modal-content card">
+          <div class="custom-modal-header modern-modal-header">
+            <div class="modal-header-left">
+              <div class="modal-header-avatar pharmacy">📥</div>
+              <div>
+                <h3
+                  id="importPharmaciesModalTitle"
+                  data-i18n="importPharmaciesTitle"
+                >
+                  Import Pharmacies from Sheet
+                </h3>
+                <p class="modal-subtitle" data-i18n="importPharmaciesSubtitle">
+                  Download our standardized English template, fill pharmacy
+                  data, and upload for instant bulk import.
+                </p>
+              </div>
             </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeImportPharmaciesModal()"
+              title="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <!-- Step 1: Download Template Banner -->
+            <div class="import-step-card mb-3">
+              <div class="import-step-header">
+                <span class="step-badge">Step 1</span>
+                <span class="step-title" data-i18n="step1DownloadTemplate"
+                  >Download Official Template (English Only)</span
+                >
+              </div>
+              <p class="import-step-desc" data-i18n="step1PharmDesc">
+                Use this official pre-formatted Excel template. Mandatory
+                columns: <strong>Pharmacy Name</strong>,
+                <strong>Address</strong>.
+              </p>
+              <button
+                type="button"
+                class="btn btn-outline btn-download-template"
+                onclick="downloadPharmaciesTemplate()"
+              >
+                <span>📊</span>
+                <span data-i18n="btnDownloadTemplate"
+                  >Download Template (.xlsx)</span
+                >
+              </button>
+            </div>
+            <!-- Step 2: Territory & Representative Assignment -->
+            <div class="import-step-card mb-3">
+              <div class="import-step-header">
+                <span class="step-badge">Step 2</span>
+                <span class="step-title" data-i18n="step2AssignRep"
+                  >Territory & Representative Assignment</span
+                >
+              </div>
+              <p class="import-step-desc" data-i18n="step2Desc">
+                Filter by Line and District to select a representative for all
+                rows, or leave as Auto-detect to read each row's Rep Code.
+              </p>
+              <div
+                class="row g-2"
+                style="display: flex; gap: 10px; flex-wrap: wrap"
+              >
+                <div style="flex: 1 1 30%; min-width: 140px">
+                  <label
+                    class="form-label"
+                    style="font-size: 0.75rem; margin-bottom: 4px"
+                    for="importPharmaciesLmSelect"
+                  >
+                    <span class="label-icon">👔</span>
+                    <span data-i18n="filterLm">Line / LM</span>
+                  </label>
+                  <select
+                    id="importPharmaciesLmSelect"
+                    class="form-control modern-select"
+                    onchange="onPharmaciesImportLmChange()"
+                  ></select>
+                </div>
+                <div style="flex: 1 1 30%; min-width: 140px">
+                  <label
+                    class="form-label"
+                    style="font-size: 0.75rem; margin-bottom: 4px"
+                    for="importPharmaciesDmSelect"
+                  >
+                    <span class="label-icon">💼</span>
+                    <span data-i18n="filterDm">District / DM</span>
+                  </label>
+                  <select
+                    id="importPharmaciesDmSelect"
+                    class="form-control modern-select"
+                    onchange="onPharmaciesImportDmChange()"
+                  ></select>
+                </div>
+                <div style="flex: 1 1 34%; min-width: 170px">
+                  <label
+                    class="form-label"
+                    style="font-size: 0.75rem; margin-bottom: 4px"
+                    for="importPharmaciesRepSelect"
+                  >
+                    <span class="label-icon">👤</span>
+                    <span data-i18n="assignedRep">Assigned Medical Rep</span>
+                  </label>
+                  <select
+                    id="importPharmaciesRepSelect"
+                    class="form-control modern-select"
+                    onchange="onPharmaciesImportRepChange()"
+                  ></select>
+                </div>
+              </div>
+            </div>
+            <!-- Step 3: Upload File Zone -->
+            <div class="import-step-card mb-3">
+              <div class="import-step-header">
+                <span class="step-badge">Step 3</span>
+                <span class="step-title" data-i18n="step3UploadFile"
+                  >Upload Completed Sheet (.xlsx or .csv)</span
+                >
+              </div>
+              <input
+                type="file"
+                id="pharmaciesFileInput"
+                accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                style="display: none"
+                onchange="handlePharmaciesFileSelected(event)"
+              />
+              <div
+                class="file-drop-zone"
+                id="pharmaciesDropZone"
+                onclick="document.getElementById('pharmaciesFileInput').click()"
+              >
+                <div class="drop-zone-icon">📂</div>
+                <div class="drop-zone-text" data-i18n="dropZoneText">
+                  Click to browse or drag & drop Excel / CSV file here
+                </div>
+                <div class="drop-zone-subtext" data-i18n="dropZoneSubtext">
+                  Supports Excel (.xlsx, .xls) & CSV format
+                </div>
+                <div
+                  class="selected-file-name"
+                  id="pharmaciesSelectedFileName"
+                  style="display: none"
+                ></div>
+              </div>
+            </div>
+            <!-- Live Validation & Preview Container -->
+            <div
+              id="pharmaciesPreviewContainer"
+              style="display: none"
+              class="import-preview-section"
+            >
+              <div class="preview-header">
+                <h4 class="preview-title" data-i18n="previewTitle">
+                  Data Preview & Validation
+                </h4>
+                <div
+                  class="preview-badges"
+                  id="pharmaciesValidationBadges"
+                ></div>
+              </div>
+              <div class="import-preview-table-wrapper">
+                <table
+                  class="report-table import-preview-table"
+                  id="pharmaciesPreviewTable"
+                >
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status</th>
+                      <th>Pharmacy Name</th>
+                      <th>Address</th>
+                      <th>Contact Person</th>
+                      <th>Phone</th>
+                      <th>Assigned Rep</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pharmaciesPreviewTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="custom-modal-footer modern-modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeImportPharmaciesModal()"
+            >
+              <span>✕</span> <span data-i18n="cancel">Cancel</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-save-modal"
+              id="btnConfirmImportPharmacies"
+              onclick="confirmImportPharmacies()"
+              disabled
+            >
+              <span>🚀</span>
+              <span data-i18n="btnConfirmImport">Confirm & Import</span>
+            </button>
+          </div>
         </div>
+      </div>
     </div>
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -900,5 +1878,5 @@ Period: September 2026 | All Products
     <script src="js/coverage-report.js"></script>
     <script src="js/doctors-report.js"></script>
     <script src="js/pharmacies-report.js"></script>
-</body>
+  </body>
 </html>
