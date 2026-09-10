@@ -1,6 +1,8 @@
 /**
  * @file users.js
  * @description User Management Module refactored to strictly rely on the Central Store.
+ * Responsibility for assigning/unassigning areas is now solely delegated to areas.html
+ * to fully support multiple areas per representative without data loss.
  */
 
 const userTranslations = {
@@ -29,7 +31,7 @@ const userTranslations = {
     col_code: "Code",
     col_role: "Role",
     col_manager: "Manager",
-    col_area: "Area",
+    col_area: "Area(s)",
     col_status: "Status",
     col_actions: "Actions",
     status_active: "Active",
@@ -44,8 +46,7 @@ const userTranslations = {
     phone: "Phone",
     manager: "Assign Manager",
     select_manager: "Select Manager...",
-    area: "Assign Area",
-    select_area: "Select Area...",
+    area: "Assigned Area(s)",
     product_line: "Assign Product Line",
     cancel: "Cancel",
     save: "Save",
@@ -66,12 +67,6 @@ const userTranslations = {
     save_line: "Save Line",
     line_name: "Line Name",
     active_managers: "Assigned LM",
-    add_new_area: "Add / Assign Area",
-    save_area: "Save Area",
-    area_name: "Area Name",
-    area_code: "Code",
-    assigned_rep: "Assigned Rep",
-    select_rep: "Assign Rep...",
     close: "Close",
     leaveAllocationTitle: "Leave Balance Allocation (Days)",
     leaveAllocationSub: "Set initial annual, casual, and sick days",
@@ -104,7 +99,7 @@ const userTranslations = {
     col_code: "الكود",
     col_role: "الدور",
     col_manager: "المدير المباشر",
-    col_area: "المنطقة",
+    col_area: "المناطق",
     col_status: "الحالة",
     col_actions: "إجراءات",
     status_active: "نشط",
@@ -119,8 +114,7 @@ const userTranslations = {
     phone: "رقم الهاتف",
     manager: "تعيين مدير",
     select_manager: "اختر المدير...",
-    area: "تعيين منطقة",
-    select_area: "اختر المنطقة...",
+    area: "المناطق المخصصة",
     product_line: "تعيين خط منتجات",
     cancel: "إلغاء",
     save: "حفظ",
@@ -141,12 +135,6 @@ const userTranslations = {
     save_line: "حفظ الخط",
     line_name: "اسم الخط",
     active_managers: "مدير الخط (LM)",
-    add_new_area: "إضافة / تخصيص منطقة",
-    save_area: "حفظ المنطقة",
-    area_name: "اسم المنطقة",
-    area_code: "كود المنطقة",
-    assigned_rep: "المندوب المعين",
-    select_rep: "تعيين مندوب...",
     close: "إغلاق",
     leaveAllocationTitle: "تخصيص أرصدة الإجازات السنوية (بالأيام)",
     leaveAllocationSub: "تحديد رصيد الإجازة الاعتيادية والعارضة والمرضية",
@@ -196,7 +184,6 @@ const userMgmt = {
 
   selectedUserId: null,
   editingLineId: null,
-  editingAreaId: null,
 
   init() {
     if (window.translations) {
@@ -217,7 +204,7 @@ const userMgmt = {
     }
 
     this.loadDemoData();
-    this.initLinesAndAreas();
+    this.initLines();
 
     const searchInput = document.getElementById("searchUser");
     if (searchInput) searchInput.addEventListener("input", () => this.render());
@@ -244,7 +231,7 @@ const userMgmt = {
     const instance = new bootstrap.Modal(el);
     this._modalInstances[id] = instance;
 
-    if (id === "linesModal" || id === "areasModal") {
+    if (id === "linesModal") {
       el.addEventListener("hidden.bs.modal", () => {
         if (this.returnToUserModal) {
           this.returnToUserModal = false;
@@ -263,11 +250,10 @@ const userMgmt = {
       resetPwd: "resetPwdModal",
       deactivate: "deactivateModal",
       lines: "linesModal",
-      areas: "areasModal",
     };
     const id = idMap[type];
     if (!id) return;
-    if (type === "lines" || type === "areas") {
+    if (type === "lines") {
       const userModalEl = document.getElementById("userModal");
       if (userModalEl && userModalEl.classList.contains("show")) {
         this.returnToUserModal = true;
@@ -284,7 +270,6 @@ const userMgmt = {
       resetPwd: "resetPwdModal",
       deactivate: "deactivateModal",
       lines: "linesModal",
-      areas: "areasModal",
     };
     const id = idMap[type];
     if (!id) return;
@@ -292,7 +277,7 @@ const userMgmt = {
     if (instance) instance.hide();
   },
 
-  initLinesAndAreas() {
+  initLines() {
     if (!window.store) return;
     if (this.lines.length === 0) {
       window.store.productLines.save({
@@ -312,32 +297,6 @@ const userMgmt = {
         name: "Derma Line",
         desc: "Dermatology & Skin Care",
         status: "Active",
-      });
-    }
-    if (this.areas.length === 0) {
-      window.store.areas.save({
-        id: "area1",
-        name: "Nasr City",
-        code: "CAI-N01",
-        repId: "rep1",
-      });
-      window.store.areas.save({
-        id: "area2",
-        name: "Heliopolis",
-        code: "CAI-H01",
-        repId: "rep2",
-      });
-      window.store.areas.save({
-        id: "area3",
-        name: "Maadi",
-        code: "CAI-M01",
-        repId: null,
-      });
-      window.store.areas.save({
-        id: "area4",
-        name: "Dokki",
-        code: "GZA-D01",
-        repId: null,
       });
     }
     this.populateDropdowns();
@@ -398,8 +357,6 @@ const userMgmt = {
           role: "medical_rep",
           status: "Active",
           managerId: "dm1",
-          area: "Nasr City",
-          areaId: "area1",
           lineIds: ["line1"],
         },
         {
@@ -411,8 +368,6 @@ const userMgmt = {
           role: "medical_rep",
           status: "Active",
           managerId: "dm1",
-          area: "Heliopolis",
-          areaId: "area2",
           lineIds: ["line1"],
         },
         {
@@ -431,16 +386,6 @@ const userMgmt = {
   },
 
   populateDropdowns() {
-    const areaSelect = document.getElementById("uArea");
-    if (areaSelect) {
-      const currentVal = areaSelect.value;
-      let areaOpts = `<option value="" data-i18n="select_area">Select Area...</option>`;
-      this.areas.forEach((a) => {
-        areaOpts += `<option value="${a.name}">${a.name} (${a.code})</option>`;
-      });
-      areaSelect.innerHTML = areaOpts;
-      if (currentVal) areaSelect.value = currentVal;
-    }
     const linesContainer = document.getElementById("uProductLinesContainer");
     if (linesContainer) {
       linesContainer.replaceChildren();
@@ -561,115 +506,8 @@ const userMgmt = {
     showToast("Product Line deleted.", "info");
   },
 
-  // ==========================================
-  // Section: Areas Operations
-  // ==========================================
   openAreasModal() {
     window.location.href = "areas.html";
-  },
-  populateAreaRepSelect() {
-    const repSelect = document.getElementById("areaRepSelect");
-    if (!repSelect) return;
-    const reps = this.users.filter(
-      (u) => u.role === "Rep" && u.status === "Active",
-    );
-    repSelect.innerHTML = `<option value="">Assign Rep...</option>
-      ${reps.map((r) => `<option value="${r.id}">${r.name} (${r.code})</option>`).join("")}`;
-  },
-  renderAreasTable() {
-    const tbody = document.getElementById("areasTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = this.areas
-      .map((area) => {
-        const assignedRep = this.users.find(
-          (u) => u.id === area.repId || u.area === area.name,
-        );
-        return `
-        <tr>
-          <td class="ps-3 fw-bold text-dark">${area.name}</td>
-          <td><span class="badge bg-light text-dark border">${area.code}</span></td>
-          <td>
-            ${
-              assignedRep
-                ? `<span class="badge bg-success-subtle text-success me-2">${assignedRep.name}</span>
-                   <button class="btn btn-sm btn-link text-danger p-0" onclick="userMgmt.unassignArea('${area.id}')"><i class="fas fa-times-circle"></i> Remove</button>`
-                : `<span class="text-muted">Unassigned</span>`
-            }
-          </td>
-          <td class="text-end pe-3">
-            <button class="btn btn-sm btn-light text-primary me-1" onclick="userMgmt.editArea('${area.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-sm btn-light text-danger" onclick="userMgmt.deleteArea('${area.id}')" title="Delete"><i class="fas fa-trash"></i></button>
-          </td>
-        </tr>`;
-      })
-      .join("");
-  },
-  saveArea() {
-    const nameInput = document.getElementById("areaNameInput");
-    const codeInput = document.getElementById("areaCodeInput");
-    const repSelect = document.getElementById("areaRepSelect");
-    const name = nameInput ? nameInput.value.trim() : "";
-    const code = codeInput ? codeInput.value.trim() : "";
-    const repId = repSelect ? repSelect.value : null;
-
-    if (!name) return showToast("Please enter an Area Name.", "warning");
-
-    let areaObj = {
-      id: this.editingAreaId || "area_" + Date.now(),
-      name,
-      code: code || "CAI-" + Math.floor(100 + Math.random() * 900),
-      repId,
-    };
-
-    if (repId) {
-      const rep = this.users.find((u) => u.id === repId);
-      if (rep) areaObj.repName = rep.name;
-    } else {
-      areaObj.repName = null;
-    }
-
-    window.store.areas.save(areaObj);
-
-    this.cancelEditArea();
-    this.renderAreasTable();
-    this.populateDropdowns();
-    this.render();
-    showToast("Area configuration updated successfully.", "success");
-  },
-  editArea(id) {
-    const area = this.areas.find((a) => a.id === id);
-    if (!area) return;
-    this.editingAreaId = id;
-    document.getElementById("areaNameInput").value = area.name;
-    document.getElementById("areaCodeInput").value = area.code;
-    const rep = this.users.find(
-      (u) => u.id === area.repId || u.area === area.name,
-    );
-    if (rep) document.getElementById("areaRepSelect").value = rep.id;
-    document.getElementById("saveAreaBtn").textContent = "Update";
-    document.getElementById("cancelAreaBtn").style.display = "inline-block";
-  },
-  cancelEditArea() {
-    this.editingAreaId = null;
-    document.getElementById("areaNameInput").value = "";
-    document.getElementById("areaCodeInput").value = "";
-    document.getElementById("areaRepSelect").value = "";
-    document.getElementById("saveAreaBtn").textContent = "Save";
-    document.getElementById("cancelAreaBtn").style.display = "none";
-  },
-  unassignArea(areaId) {
-    window.store.areas.unassignRep(areaId);
-    this.renderAreasTable();
-    this.render();
-    showToast("Area unassigned.", "info");
-  },
-  deleteArea(id) {
-    if (!confirm("Are you sure you want to delete this area?")) return;
-    window.store.areas.delete(id);
-    this.renderAreasTable();
-    this.populateDropdowns();
-    this.render();
-    showToast("Area deleted.", "info");
   },
 
   normalizeRole(role) {
@@ -731,6 +569,16 @@ const userMgmt = {
     if (matched.length === 1)
       return `<span class="badge bg-primary-subtle text-primary">${matched[0].name}</span>`;
     return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => m.name).join(", ")})</span>`;
+  },
+  renderAreasSummary(user) {
+    const assignedAreas = window.store.areas ? window.store.areas.getByRep(user.id) : [];
+    if (assignedAreas.length === 0) return `<span class="text-muted">-</span>`;
+    return assignedAreas
+      .map(
+        (a) =>
+          `<span class="badge bg-light text-dark border me-1" title="${a.code}">${a.name}</span>`
+      )
+      .join("");
   },
 
   render() {
@@ -798,7 +646,7 @@ const userMgmt = {
           <td><span class="badge rounded-pill role-badge ${this.getRoleBadgeClass(u.role)}" data-i18n="role_${u.role.toLowerCase()}">${u.role}</span></td>
           <td>${this.getManagerNameWithVacant(u.managerId)}</td>
           <td>${this.renderLinesSummary(u)}</td>
-          <td>${u.area || "-"}</td>
+          <td>${this.renderAreasSummary(u)}</td>
           <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${dispStatus}</span></td>
           <td class="text-end pe-4 user-actions-cell">
             <button class="btn btn-sm btn-light text-primary me-1" onclick="userMgmt.openEditModal('${u.id}')"><i class="fas fa-edit"></i></button>
@@ -945,15 +793,16 @@ const userMgmt = {
 
   onRoleChange() {
     const role = document.getElementById("uRole").value;
-    document.getElementById("areaGroup").style.display =
-      role === "Rep" ? "block" : "none";
-    document.getElementById("productLineGroup").style.display = [
-      "LM",
-      "DM",
-      "Rep",
-    ].includes(role)
-      ? "block"
-      : "none";
+    const areaGroup = document.getElementById("areaGroup");
+    if (areaGroup) {
+      areaGroup.style.display = role === "Rep" ? "block" : "none";
+    }
+    const productLineGroup = document.getElementById("productLineGroup");
+    if (productLineGroup) {
+      productLineGroup.style.display = ["LM", "DM", "Rep"].includes(role)
+        ? "block"
+        : "none";
+    }
 
     this.updateManagerDropdown();
   },
@@ -977,6 +826,11 @@ const userMgmt = {
       document.getElementById("uCasualLeave").value = 6;
     if (document.getElementById("uSickLeave"))
       document.getElementById("uSickLeave").value = 7;
+
+    const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
+    if (areaDisplayEl) {
+      areaDisplayEl.innerHTML = `<span class="text-muted small">Assigned via Areas Management page</span>`;
+    }
 
     this.onRoleChange();
     this.showModal("user");
@@ -1005,8 +859,23 @@ const userMgmt = {
 
     if (user.managerId && document.getElementById("uManager"))
       document.getElementById("uManager").value = user.managerId;
-    if (user.area && document.getElementById("uArea"))
-      document.getElementById("uArea").value = user.area;
+
+    // Display assigned areas as informative badges with direct link to areas.html
+    const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
+    if (areaDisplayEl) {
+      const repAreas = window.store.areas ? window.store.areas.getByRep(user.id) : [];
+      if (repAreas.length > 0) {
+        areaDisplayEl.innerHTML = repAreas
+          .map(
+            (a) =>
+              `<span class="badge bg-primary text-white me-1 p-2">${a.name} (${a.code})</span>`
+          )
+          .join("") +
+          `<div class="mt-2"><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">Manage in Areas Page →</a></div>`;
+      } else {
+        areaDisplayEl.innerHTML = `<span class="badge bg-secondary-subtle text-secondary me-2">No areas assigned</span><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">Assign Areas →</a>`;
+      }
+    }
 
     const lb = user.leaveBalance || { annual: 21, emergency: 6, sick: 7 };
     if (document.getElementById("uAnnualLeave"))
@@ -1079,13 +948,6 @@ const userMgmt = {
       HR: "hr",
     };
 
-    const selectedAreaName = document.getElementById("uArea")
-      ? document.getElementById("uArea").value
-      : null;
-    const targetAreaObj = selectedAreaName
-      ? this.areas.find((a) => a.name === selectedAreaName)
-      : null;
-
     const userData = {
       id: id || "u" + Date.now(),
       name,
@@ -1112,41 +974,13 @@ const userMgmt = {
         unpaid: rawExistingUser?.leaveBalance?.unpaid || 0,
         maternity: rawExistingUser?.leaveBalance?.maternity || 90,
       },
-      area: role === "Rep" && targetAreaObj ? targetAreaObj.name : null,
-      areaId: role === "Rep" && targetAreaObj ? targetAreaObj.id : null,
+      // Territory information is managed through areas.html and synchronized via store.users.syncAreasFromStore()
+      area: rawExistingUser ? rawExistingUser.area : null,
+      areaId: rawExistingUser ? rawExistingUser.areaId : null,
+      areaIds: rawExistingUser ? (rawExistingUser.areaIds || []) : [],
     };
 
     window.store.users.save(userData);
-
-    // تحديث وتعيين المناطق بدقة (فك القديم وربط الجديد)
-    if (role === "Rep") {
-      // 1. فك المندوب من أي مناطق قديمة مسجل عليها
-      const currentAssignedAreas = window.store.areas
-        .getAll()
-        .filter((a) => a.repId === userData.id);
-      currentAssignedAreas.forEach((a) => {
-        if (!targetAreaObj || a.id !== targetAreaObj.id) {
-          window.store.areas.unassignRep(a.id);
-        }
-      });
-
-      // 2. ربطه بالمنطقة الجديدة وتحديث الـ repId فيها
-      if (targetAreaObj) {
-        targetAreaObj.repId = userData.id;
-        targetAreaObj.repName = userData.name;
-        window.store.areas.save(targetAreaObj);
-      }
-    } else {
-      // إذا لم يكن مندوباً، فك أي مناطق قديمة مرتبطة به
-      const oldAreas = window.store.areas
-        .getAll()
-        .filter((a) => a.repId === userData.id);
-      oldAreas.forEach((a) => {
-        window.store.areas.unassignRep(a.id);
-      });
-    }
-
-    // إعادة مزامنة حقول المستخدم بعد تحديث المناطق لضمان تطابق الـ areaId
     window.store.users.syncAreasFromStore();
 
     this.syncAuthUser(window.store.users.getById(userData.id));
@@ -1206,9 +1040,7 @@ const userMgmt = {
       rawUser.status = willBeInactive ? "Inactive" : "Active";
 
       if (willBeInactive) {
-        const assignedAreas = this.areas.filter(
-          (a) => a.repId === rawUser.id || a.name === rawUser.area,
-        );
+        const assignedAreas = window.store.areas ? window.store.areas.getByRep(rawUser.id) : [];
         assignedAreas.forEach((assignedArea) => {
           rawUser.vacantArea = assignedArea.name;
           window.store.areas.unassignRep(assignedArea.id);
