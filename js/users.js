@@ -399,6 +399,7 @@ const userMgmt = {
           status: "Active",
           managerId: "dm1",
           area: "Nasr City",
+          areaId: "area1",
           lineIds: ["line1"],
         },
         {
@@ -411,6 +412,7 @@ const userMgmt = {
           status: "Active",
           managerId: "dm1",
           area: "Heliopolis",
+          areaId: "area2",
           lineIds: ["line1"],
         },
         {
@@ -656,11 +658,7 @@ const userMgmt = {
     document.getElementById("cancelAreaBtn").style.display = "none";
   },
   unassignArea(areaId) {
-    const area = this.areas.find((a) => a.id === areaId);
-    if (!area) return;
-    area.repId = null;
-    area.repName = null;
-    window.store.areas.save(area);
+    window.store.areas.unassignRep(areaId);
     this.renderAreasTable();
     this.render();
     showToast("Area unassigned.", "info");
@@ -896,7 +894,6 @@ const userMgmt = {
       view === "tree" ? "block" : "none";
   },
 
-  // Dynamic manager filtering based on role and assigned product lines
   updateManagerDropdown() {
     const role = document.getElementById("uRole").value;
     const managerSelect = document.getElementById("uManager");
@@ -1082,6 +1079,13 @@ const userMgmt = {
       HR: "hr",
     };
 
+    const selectedAreaName = document.getElementById("uArea")
+      ? document.getElementById("uArea").value
+      : null;
+    const targetAreaObj = selectedAreaName
+      ? this.areas.find((a) => a.name === selectedAreaName)
+      : null;
+
     const userData = {
       id: id || "u" + Date.now(),
       name,
@@ -1108,51 +1112,44 @@ const userMgmt = {
         unpaid: rawExistingUser?.leaveBalance?.unpaid || 0,
         maternity: rawExistingUser?.leaveBalance?.maternity || 90,
       },
-      area: rawExistingUser ? rawExistingUser.area : null,
-      areaId: rawExistingUser ? rawExistingUser.areaId : null,
+      area: role === "Rep" && targetAreaObj ? targetAreaObj.name : null,
+      areaId: role === "Rep" && targetAreaObj ? targetAreaObj.id : null,
     };
-
-    if (role === "Rep") {
-      const selectedArea = document.getElementById("uArea")
-        ? document.getElementById("uArea").value
-        : null;
-      userData.area = selectedArea;
-    } else {
-      userData.area = null;
-      userData.areaId = null;
-    }
 
     window.store.users.save(userData);
 
+    // تحديث وتعيين المناطق بدقة (فك القديم وربط الجديد)
     if (role === "Rep") {
-      const selectedArea = document.getElementById("uArea")
-        ? document.getElementById("uArea").value
-        : null;
-      if (selectedArea) {
-        const areaToAssign = this.areas.find((a) => a.name === selectedArea);
-        if (areaToAssign) {
-          areaToAssign.repId = userData.id;
-          areaToAssign.repName = userData.name;
-          window.store.areas.save(areaToAssign);
+      // 1. فك المندوب من أي مناطق قديمة مسجل عليها
+      const currentAssignedAreas = window.store.areas
+        .getAll()
+        .filter((a) => a.repId === userData.id);
+      currentAssignedAreas.forEach((a) => {
+        if (!targetAreaObj || a.id !== targetAreaObj.id) {
+          window.store.areas.unassignRep(a.id);
         }
-      } else {
-        const oldAreas = this.areas.filter((a) => a.repId === userData.id);
-        oldAreas.forEach((a) => {
-          a.repId = null;
-          a.repName = null;
-          window.store.areas.save(a);
-        });
+      });
+
+      // 2. ربطه بالمنطقة الجديدة وتحديث الـ repId فيها
+      if (targetAreaObj) {
+        targetAreaObj.repId = userData.id;
+        targetAreaObj.repName = userData.name;
+        window.store.areas.save(targetAreaObj);
       }
     } else {
-      const oldAreas = this.areas.filter((a) => a.repId === userData.id);
+      // إذا لم يكن مندوباً، فك أي مناطق قديمة مرتبطة به
+      const oldAreas = window.store.areas
+        .getAll()
+        .filter((a) => a.repId === userData.id);
       oldAreas.forEach((a) => {
-        a.repId = null;
-        a.repName = null;
-        window.store.areas.save(a);
+        window.store.areas.unassignRep(a.id);
       });
     }
 
-    this.syncAuthUser(userData);
+    // إعادة مزامنة حقول المستخدم بعد تحديث المناطق لضمان تطابق الـ areaId
+    window.store.users.syncAreasFromStore();
+
+    this.syncAuthUser(window.store.users.getById(userData.id));
     this.closeModal("user");
     this.render();
     showToast(
@@ -1209,19 +1206,16 @@ const userMgmt = {
       rawUser.status = willBeInactive ? "Inactive" : "Active";
 
       if (willBeInactive) {
-        const assignedArea = this.areas.find(
+        const assignedAreas = this.areas.filter(
           (a) => a.repId === rawUser.id || a.name === rawUser.area,
         );
-        if (assignedArea) {
-          assignedArea.repId = null;
-          assignedArea.repName = null;
-          window.store.areas.save(assignedArea);
+        assignedAreas.forEach((assignedArea) => {
           rawUser.vacantArea = assignedArea.name;
-        } else if (rawUser.area) {
-          rawUser.vacantArea = rawUser.area;
-        }
+          window.store.areas.unassignRep(assignedArea.id);
+        });
         rawUser.area = null;
         rawUser.areaId = null;
+        rawUser.areaIds = [];
 
         this.lines.forEach((l) => {
           if (l.lineManagerId === rawUser.id) {
@@ -1230,7 +1224,6 @@ const userMgmt = {
           }
         });
 
-        // Skip-level manager re-assignment for orphaned team members
         const allSystemUsers = window.DEMO_DATA.users || [];
         let hasSubordinateUpdates = false;
 
