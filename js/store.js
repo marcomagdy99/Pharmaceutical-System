@@ -391,6 +391,32 @@
     },
 
     // ==========================================
+    // Section: Distributor Sales Module (pharmacy-level raw imports)
+    // Each row = one pharmacy + one product + one value, straight from a
+    // distributor's sheet via that distributor's saved columnMap. Rows
+    // land here with repId/areaId left null ("unassigned") because no
+    // raw-area-text -> Area/rep alias matching exists yet -- that's a
+    // separate step. This table is NOT read by the rep-based Sales report
+    // (REPORTS_DATA.sales / DEMO_DATA.sales) until that matching exists.
+    // ==========================================
+    distributorSales: {
+      getAll() {
+        return window.DEMO_DATA.distributorSales || [];
+      },
+      getByDistributor(distributorId) {
+        return this.getAll().filter((s) => s.distributorId === distributorId);
+      },
+      getUnassigned() {
+        return this.getAll().filter((s) => !s.repId);
+      },
+      addBatch(rows) {
+        if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
+        window.DEMO_DATA.distributorSales.push(...rows);
+        autoSave("distributorSales", "importBatch", { count: rows.length });
+      },
+    },
+
+    // ==========================================
     // Section: Leaves Module
     // ==========================================
     leaves: {
