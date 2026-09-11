@@ -145,6 +145,44 @@
           (a) => a.repId === repId,
         );
       },
+      /**
+       * Records that `rawText` from `distributorId`'s sheets refers to
+       * this area (e.g. "FAYOUM ETSA" from Ibn Sina -> the "Fayoum" area).
+       * Matching is case/whitespace-insensitive but exact otherwise; it
+       * does not try to guess partial or fuzzy matches.
+       */
+      addAlias(areaId, distributorId, rawText) {
+        const area = this.getById(areaId);
+        if (!area || !rawText) return;
+        if (!Array.isArray(area.aliases)) area.aliases = [];
+        const normalized = String(rawText).trim().toLowerCase();
+        const exists = area.aliases.some(
+          (al) =>
+            al.distributorId === distributorId &&
+            String(al.rawText).trim().toLowerCase() === normalized,
+        );
+        if (!exists) {
+          area.aliases.push({ distributorId, rawText: String(rawText).trim() });
+        }
+        autoSave("areas", "addAlias", { areaId, distributorId, rawText });
+      },
+      /**
+       * Finds the Area (if any) whose alias list has this exact raw text
+       * for this distributor.
+       */
+      findByAliasText(distributorId, rawText) {
+        if (!rawText) return null;
+        const normalized = String(rawText).trim().toLowerCase();
+        return (window.DEMO_DATA.areas || []).find(
+          (a) =>
+            Array.isArray(a.aliases) &&
+            a.aliases.some(
+              (al) =>
+                al.distributorId === distributorId &&
+                String(al.rawText).trim().toLowerCase() === normalized,
+            ),
+        );
+      },
       save(areaObj) {
         if (!window.DEMO_DATA.areas) window.DEMO_DATA.areas = [];
         const areas = window.DEMO_DATA.areas;
@@ -392,12 +430,16 @@
 
     // ==========================================
     // Section: Distributor Sales Module (pharmacy-level raw imports)
-    // Each row = one pharmacy + one product + one value, straight from a
-    // distributor's sheet via that distributor's saved columnMap. Rows
-    // land here with repId/areaId left null ("unassigned") because no
-    // raw-area-text -> Area/rep alias matching exists yet -- that's a
-    // separate step. This table is NOT read by the rep-based Sales report
-    // (REPORTS_DATA.sales / DEMO_DATA.sales) until that matching exists.
+    // Each row = one pharmacy + one product + one value (+ optional
+    // quantity), straight from a distributor's sheet via that
+    // distributor's saved columnMap. Returns/credit notes are kept as
+    // negative `value` rows (not dropped), so summing a set of rows
+    // nets them out automatically. Rows start unassigned (repId/areaId
+    // null); applyAreaMatching() below fills those in once an alias
+    // exists for their (distributorId, areaRaw) pair via
+    // areas.addAlias(). This table is still separate from the rep-based
+    // Sales report (REPORTS_DATA.sales / DEMO_DATA.sales) -- matching a
+    // row to a rep doesn't yet make it appear there.
     // ==========================================
     distributorSales: {
       getAll() {
@@ -413,6 +455,61 @@
         if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
         window.DEMO_DATA.distributorSales.push(...rows);
         autoSave("distributorSales", "importBatch", { count: rows.length });
+        // Auto-resolve any rows whose raw area text already has a saved
+        // alias from a previous import, so re-uploading a distributor
+        // you've already configured doesn't require re-resolving the
+        // same territories every time.
+        this.applyAreaMatching();
+      },
+      /**
+       * Distinct (distributorId, areaRaw) pairs among still-unassigned
+       * rows that have no alias yet -- these need an admin to pick the
+       * real Area for them once, via areas.addAlias().
+       */
+      getPendingAreaTexts() {
+        const rows = this.getAll().filter((s) => !s.repId && s.areaRaw);
+        const seen = {};
+        const pending = [];
+        rows.forEach((row) => {
+          if (store.areas.findByAliasText(row.distributorId, row.areaRaw)) return;
+          const key = row.distributorId + "||" + row.areaRaw.trim().toLowerCase();
+          if (seen[key]) {
+            seen[key].count++;
+            return;
+          }
+          const entry = { distributorId: row.distributorId, areaRaw: row.areaRaw, count: 1 };
+          seen[key] = entry;
+          pending.push(entry);
+        });
+        return pending;
+      },
+      /**
+       * Attributes every still-unassigned row to a rep wherever its
+       * (distributorId, areaRaw) now has a matching alias -- filling in
+       * areaId, repId, and (via the rep's own manager chain) dmId/lmId.
+       * lineId is intentionally left null: distributor sheets only give
+       * a product name, and matching that to a product Line is a
+       * separate, not-yet-built step. Returns how many rows it resolved.
+       */
+      applyAreaMatching() {
+        const rows = this.getAll().filter((s) => !s.repId && s.areaRaw);
+        let matchedCount = 0;
+        rows.forEach((row) => {
+          const area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
+          if (!area || !area.repId) return;
+          row.areaId = area.id;
+          row.repId = area.repId;
+          const rep = store.users.getById(area.repId);
+          const dmId = rep ? rep.managerId || null : null;
+          row.dmId = dmId;
+          const dm = dmId ? store.users.getById(dmId) : null;
+          row.lmId = dm ? dm.managerId || null : null;
+          matchedCount++;
+        });
+        if (matchedCount) {
+          autoSave("distributorSales", "applyAreaMatching", { matchedCount });
+        }
+        return matchedCount;
       },
     },
 
