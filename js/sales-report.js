@@ -125,8 +125,65 @@ function populateDistributorsFilter() {
   }
 }
 
-// ============================================================================
-// Section 5.5: Multi-Select Month Dropdown Logic
+/**
+ * Fills the upload bar's Distributor/Month/Year selects. Distributors
+ * without a saved column mapping are still listed (so the admin can see
+ * they exist) but flagged, since handleExcelUpload() will refuse to
+ * proceed with them and point back to distributors.html instead of
+ * silently hiding them and leaving the admin wondering where they went.
+ */
+function populateUploadControls() {
+  const distSelect = document.getElementById('uploadDistributorSelect');
+  const monthSelect = document.getElementById('uploadMonthSelect');
+  const yearSelect = document.getElementById('uploadYearSelect');
+  const lang = getCurrentLang();
+
+  if (distSelect) {
+    const currentVal = distSelect.value;
+    const distributors = (window.store && window.store.distributors.getAll()) || [];
+    const placeholder = lang === 'ar' ? '-- اختار الموزّع --' : '-- Select Distributor --';
+    distSelect.innerHTML = `<option value="">${placeholder}</option>`;
+    distributors.forEach((d) => {
+      const hasMapping = !!(d.columnMap && d.columnMap.product && d.columnMap.value);
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = hasMapping
+        ? d.name
+        : `${d.name} ${lang === 'ar' ? '(غير مضبوط)' : '(not configured)'}`;
+      distSelect.appendChild(opt);
+    });
+    if (currentVal && distributors.some((d) => d.id === currentVal)) {
+      distSelect.value = currentVal;
+    }
+  }
+
+  if (monthSelect && !monthSelect.dataset.populated) {
+    const now = new Date();
+    MONTH_NAMES.forEach((m, idx) => {
+      const val = String(idx + 1).padStart(2, '0');
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : m;
+      if (idx === now.getMonth()) opt.selected = true;
+      monthSelect.appendChild(opt);
+    });
+    monthSelect.dataset.populated = 'true';
+  }
+
+  if (yearSelect && !yearSelect.dataset.populated) {
+    const currentYear = String(new Date().getFullYear());
+    ['2025', '2026', '2027'].forEach((y) => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    });
+    yearSelect.dataset.populated = 'true';
+  }
+}
+
+
 // (Same interaction pattern as the Product dropdown above. Months are a
 // fixed, non-user-supplied list, so building labels via textContent isn't
 // a security requirement here, but it's used anyway to stay consistent.)
@@ -431,10 +488,31 @@ function renderSalesReport() {
 
 function triggerExcelUpload() {
   const user = checkAuth();
+  const lang = getCurrentLang();
   if (window.isAdmin && !window.isAdmin(user)) {
-    showToast(getCurrentLang() === 'ar' ? 'عفواً، الأدمن فقط هو المصرح له برفع شيت المبيعات' : 'Permission Denied: Admin only.', 'error');
+    showToast(lang === 'ar' ? 'عفواً، الأدمن فقط هو المصرح له برفع شيت المبيعات' : 'Permission Denied: Admin only.', 'error');
     return;
   }
+
+  const distSelect = document.getElementById('uploadDistributorSelect');
+  const distId = distSelect ? distSelect.value : '';
+  if (!distId) {
+    showToast(lang === 'ar' ? 'اختار الموزّع الأول.' : 'Select a distributor first.', 'warning');
+    return;
+  }
+
+  const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
+  const hasMapping = !!(dist && dist.columnMap && dist.columnMap.product && dist.columnMap.value);
+  if (!hasMapping) {
+    showToast(
+      lang === 'ar'
+        ? 'الموزّع ده لسه مفيهوش ربط أعمدة. اضبطه من صفحة الموزعين الأول.'
+        : "This distributor's sheet columns aren't mapped yet. Configure it from the Distributors page first.",
+      'error',
+    );
+    return;
+  }
+
   const fileInput = document.getElementById('salesExcelFileInput');
   if (fileInput) fileInput.click();
 }
@@ -443,38 +521,116 @@ function handleExcelUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   const lang = getCurrentLang();
-  showToast(lang === 'ar' ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, 'info');
-  setTimeout(() => {
-    // NOTE: this still doesn't read the uploaded file's real rows (see
-    // shared-report.js's parseExcelFile for the parser this will use) and
-    // doesn't yet set distributorId/distributorName -- that's wired up
-    // together with the per-distributor column-mapping feature (see
-    // distributors.html), not here, so an upload doesn't silently tag
-    // sales with the wrong distributor before that mapping exists.
-    const newRecord = {
-      id: 's_' + Date.now(),
-      month: '2026-09',
-      repName: 'Ahmed Mostafa',
-      area: 'Nasr City',
-      product: 'Amoxicillin 500mg',
-      target: 25000,
-      actual: 27000,
-      amount: 27000,
-      repId: 'rep1',
-      dmId: 'dm1',
-      lmId: 'lm1',
-      lineId: 'line1'
-    };
-    REPORTS_DATA.sales.unshift(newRecord);
-    if (window.DEMO_DATA) {
-      if (!Array.isArray(window.DEMO_DATA.sales)) window.DEMO_DATA.sales = [];
-      window.DEMO_DATA.sales.unshift(newRecord);
-      if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
-    }
-    renderSalesReport();
-    showToast(lang === 'ar' ? 'تم استيراد شيت المبيعات وتحديث الأرقام بنجاح!' : 'Sales spreadsheet imported and targets updated successfully!', 'success');
+
+  const distSelect = document.getElementById('uploadDistributorSelect');
+  const monthSelect = document.getElementById('uploadMonthSelect');
+  const yearSelect = document.getElementById('uploadYearSelect');
+  const distId = distSelect ? distSelect.value : '';
+  const month = monthSelect ? monthSelect.value : '';
+  const year = yearSelect ? yearSelect.value : '';
+  const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
+
+  if (!dist || !dist.columnMap || !dist.columnMap.product || !dist.columnMap.value || !month || !year) {
+    showToast(lang === 'ar' ? 'محتاج تختار الموزّع والشهر والسنة الأول.' : 'Select a distributor, month, and year first.', 'warning');
     e.target.value = '';
-  }, 700);
+    return;
+  }
+
+  if (typeof XLSX === 'undefined') {
+    showToast(lang === 'ar' ? 'مكتبة قراءة الإكسيل غير محملة.' : 'Excel reader library failed to load.', 'error');
+    e.target.value = '';
+    return;
+  }
+
+  showToast(lang === 'ar' ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, 'info');
+
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    try {
+      const data = new Uint8Array(ev.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      // Keyed by the sheet's own header text, which is exactly what
+      // dist.columnMap's values point to -- no positional guessing.
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+      const map = dist.columnMap;
+      const monthKey = `${year}-${month}`;
+      const imported = [];
+      let skippedReturns = 0;
+      let skippedInvalid = 0;
+
+      rows.forEach((row, idx) => {
+        const productRaw = map.product ? row[map.product] : '';
+        const valueRaw = map.value ? row[map.value] : '';
+        const product = String(productRaw || '').trim();
+        // Sheets from these distributors use plain numbers or numbers
+        // with thousands separators; strip anything that isn't a digit,
+        // minus sign, or decimal point before parsing.
+        const numericValue = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ''));
+
+        if (!product || isNaN(numericValue)) {
+          skippedInvalid++;
+          return;
+        }
+        // Negative values are returns/credit notes, not sales -- excluded
+        // rather than added as negative sales (see the Ibn Sina/Overseas
+        // sample sheets, which mix both in the same 'value' column).
+        if (numericValue <= 0) {
+          skippedReturns++;
+          return;
+        }
+
+        imported.push({
+          id: `dsale_${Date.now()}_${idx}`,
+          distributorId: distId,
+          month: monthKey,
+          product,
+          value: numericValue,
+          pharmacyName: map.pharmacy ? String(row[map.pharmacy] || '').trim() : '',
+          areaRaw: map.area ? String(row[map.area] || '').trim() : '',
+          // Deliberately unassigned: no raw-area-text -> Area/rep alias
+          // matching exists yet, so these don't get attributed to a rep,
+          // DM, LM, or line automatically.
+          repId: null,
+          dmId: null,
+          lmId: null,
+          lineId: null,
+          areaId: null,
+        });
+      });
+
+      if (window.store && window.store.distributorSales) {
+        window.store.distributorSales.addBatch(imported);
+      }
+
+      const totalValue = imported.reduce((sum, r) => sum + r.value, 0);
+      const panel = document.getElementById('salesImportResultsPanel');
+      if (panel) {
+        panel.style.display = 'block';
+        panel.innerHTML = lang === 'ar'
+          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey} (إجمالي القيمة: ${totalValue.toLocaleString()}). اتجاهل ${skippedReturns} صف مرتجعات و${skippedInvalid} صف بيانات ناقصة.<br><span style="font-weight:600;">هام:</span> البيانات دي متسجلة على مستوى الصيدلية وغير مربوطة بمندوب لسه، فمش هتظهر في الجدول تحت لحد ما نبني خطوة ربط المنطقة بالمندوب.`
+          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey} (total value: ${totalValue.toLocaleString()}). Skipped ${skippedReturns} return rows and ${skippedInvalid} rows with missing data.<br><span style="font-weight:600;">Note:</span> this data is pharmacy-level and not yet attributed to a rep, so it won't appear in the table below until the area-to-rep matching step is built.`;
+      }
+
+      showToast(
+        lang === 'ar'
+          ? `تم استيراد ${imported.length} صف بنجاح.`
+          : `Successfully imported ${imported.length} rows.`,
+        'success',
+      );
+    } catch (err) {
+      console.error('Error parsing distributor sheet:', err);
+      showToast(
+        lang === 'ar'
+          ? 'تعذرت قراءة الملف. تأكد إنه بنفس شكل الشيت اللي اتعمل عليه الربط.'
+          : "Couldn't read this file. Make sure it matches the sheet layout the mapping was configured from.",
+        'error',
+      );
+    }
+    e.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function exportSalesReport() {
