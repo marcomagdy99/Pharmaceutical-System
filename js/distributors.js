@@ -308,3 +308,177 @@ function confirmDelete() {
   if (typeof showToast === "function")
     showToast("Distributor deleted successfully.", "info");
 }
+
+// ==========================================
+// Section: Column Mapping Modal
+// Teaches the system which column in THIS distributor's sheet holds the
+// pharmacy name, product, sales value, and (optionally) the raw area
+// text -- the pharmacy-level rows this produces are the single source
+// of truth that both the Sales report (aggregated) and any future
+// Territory/Brick-style achievement view will be computed from.
+// ==========================================
+const MAPPING_ROLES = [
+  { value: "", i18nKey: "role_ignore" },
+  { value: "pharmacy", i18nKey: "role_pharmacy" },
+  { value: "product", i18nKey: "role_product" },
+  { value: "value", i18nKey: "role_value" },
+  { value: "area", i18nKey: "role_area" },
+];
+
+function openMappingModal(id) {
+  mappingTargetDistId = id;
+  mappingDetectedHeaders = [];
+  const dist = getDistributorsList().find((d) => d.id === id);
+  const isAr = document.documentElement.dir === "rtl";
+  const nameEl = document.getElementById("mappingModalDistName");
+  if (nameEl && dist) {
+    nameEl.textContent = isAr ? `الموزّع: ${dist.name}` : `Distributor: ${dist.name}`;
+  }
+  resetMappingUpload();
+  mappingModal.show();
+}
+
+function resetMappingUpload() {
+  mappingDetectedHeaders = [];
+  const fileInput = document.getElementById("mappingFileInput");
+  if (fileInput) fileInput.value = "";
+  document.getElementById("mappingUploadStep").style.display = "block";
+  document.getElementById("mappingRolesStep").style.display = "none";
+  document.getElementById("saveMappingBtn").style.display = "none";
+}
+
+function handleMappingFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (typeof XLSX === "undefined") {
+    if (typeof showToast === "function")
+      showToast("Excel reader library failed to load. Check your connection.", "error");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        blankrows: false,
+        defval: "",
+      });
+      const headerRow =
+        rows.find((r) => Array.isArray(r) && r.some((c) => String(c).trim() !== "")) || [];
+      const headers = headerRow
+        .map((h) => String(h).trim())
+        .filter((h) => h !== "");
+      if (!headers.length) {
+        if (typeof showToast === "function")
+          showToast("No columns detected in this sheet.", "error");
+        return;
+      }
+      mappingDetectedHeaders = headers;
+      buildRolesTable(headers);
+      document.getElementById("mappingUploadStep").style.display = "none";
+      document.getElementById("mappingRolesStep").style.display = "block";
+      document.getElementById("saveMappingBtn").style.display = "inline-block";
+    } catch (err) {
+      console.error("Error reading sheet headers:", err);
+      if (typeof showToast === "function")
+        showToast(
+          "Couldn't read this file's columns. Make sure it's a valid Excel/CSV file.",
+          "error",
+        );
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildRolesTable(headers) {
+  const tbody = document.getElementById("mappingRolesTableBody");
+  if (!tbody) return;
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const dist = getDistributorsList().find((d) => d.id === mappingTargetDistId);
+  const existingMap = (dist && dist.columnMap) || {};
+
+  tbody.replaceChildren();
+  headers.forEach((header, idx) => {
+    // Pre-select a role if this exact header text was already mapped for
+    // this distributor before (e.g. re-configuring after the sheet
+    // layout added or removed a column).
+    let preselected = "";
+    Object.keys(existingMap).forEach((role) => {
+      if (existingMap[role] === header) preselected = role;
+    });
+
+    const tr = document.createElement("tr");
+    const nameTd = document.createElement("td");
+    nameTd.className = "fw-medium";
+    nameTd.textContent = header;
+
+    const roleTd = document.createElement("td");
+    const select = document.createElement("select");
+    select.className = "form-select form-select-sm mapping-role-select";
+    select.dataset.header = header;
+    select.dataset.rowIndex = String(idx);
+    MAPPING_ROLES.forEach((role) => {
+      const opt = document.createElement("option");
+      opt.value = role.value;
+      opt.textContent = t[role.i18nKey];
+      if (role.value === preselected) opt.selected = true;
+      select.appendChild(opt);
+    });
+    roleTd.appendChild(select);
+
+    tr.appendChild(nameTd);
+    tr.appendChild(roleTd);
+    tbody.appendChild(tr);
+  });
+}
+
+function saveMapping() {
+  const selects = document.querySelectorAll(".mapping-role-select");
+  const columnMap = {};
+  const usedRoles = {};
+  let duplicateRole = null;
+
+  selects.forEach((sel) => {
+    const role = sel.value;
+    if (!role) return;
+    if (usedRoles[role]) {
+      duplicateRole = role;
+    }
+    usedRoles[role] = true;
+    columnMap[role] = sel.dataset.header;
+  });
+
+  if (duplicateRole) {
+    if (typeof showToast === "function")
+      showToast(
+        "Each role (Product, Value, Area, Pharmacy) can only be assigned to one column.",
+        "warning",
+      );
+    return;
+  }
+
+  if (!columnMap.product || !columnMap.value) {
+    if (typeof showToast === "function")
+      showToast("Product and Sales Value columns are required.", "warning");
+    return;
+  }
+
+  if (window.store && window.store.distributors && mappingTargetDistId) {
+    window.store.distributors.save({
+      id: mappingTargetDistId,
+      columnMap,
+      mappingSampleHeaders: mappingDetectedHeaders,
+    });
+  }
+
+  mappingModal.hide();
+  renderDistributors();
+  updateStats();
+  if (typeof showToast === "function")
+    showToast("Mapping saved successfully.", "success");
+}
