@@ -336,15 +336,53 @@
                 >
                   📥 Export CSV
                 </button>
-                <button
-                  class="btn btn-primary"
-                  id="uploadSalesBtn"
-                  onclick="triggerExcelUpload()"
+                <!-- Upload controls: a sheet always belongs to one specific
+                     distributor and one specific month/year, chosen here
+                     before the file picker opens. Visibility mirrors
+                     uploadSalesBtn (admin only) -- see setupRolePermissions
+                     in shared-report.js. -->
+                <div
+                  id="salesUploadControls"
+                  style="display: none; align-items: center; gap: 6px"
                 >
-                  📤 Upload Excel Sheet
-                </button>
+                  <select
+                    id="uploadDistributorSelect"
+                    class="form-control"
+                    style="width: auto; height: 38px"
+                  >
+                    <option value="" data-i18n="selectDistributor">
+                      -- Select Distributor --
+                    </option>
+                  </select>
+                  <select
+                    id="uploadMonthSelect"
+                    class="form-control"
+                    style="width: auto; height: 38px"
+                  ></select>
+                  <select
+                    id="uploadYearSelect"
+                    class="form-control"
+                    style="width: auto; height: 38px"
+                  ></select>
+                  <button
+                    class="btn btn-primary"
+                    id="uploadSalesBtn"
+                    onclick="triggerExcelUpload()"
+                  >
+                    📤 Upload Excel Sheet
+                  </button>
+                </div>
               </div>
             </div>
+            <!-- Import results: shown after a sheet is processed, summarizing
+                 how many pharmacy-level rows were imported vs skipped
+                 (e.g. negative-value return rows) so the admin can sanity
+                 check the upload before trusting the numbers. -->
+            <div
+              id="salesImportResultsPanel"
+              class="sales-period-pill"
+              style="display: none; margin-top: 10px"
+            ></div>
             <!-- Sales Table with Product Breakdown -->
             <div class="table-container">
               <table class="report-table">
