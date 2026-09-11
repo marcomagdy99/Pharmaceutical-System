@@ -183,6 +183,51 @@
               Add your first distributor to start mapping their sales sheets.
             </p>
           </div>
+
+          <!-- Unmatched Territories: raw area/territory text from imported
+               sheets that hasn't been linked to a real Area yet. Linking
+               one here (via areas.addAlias) retroactively attributes every
+               already-imported row with that same raw text to that Area's
+               rep, and any future upload from the same distributor with
+               the same text resolves automatically. -->
+          <div
+            id="pendingAreasSection"
+            class="card border-0 shadow-sm rounded-4 mb-4"
+            style="display: none"
+          >
+            <div class="card-body">
+              <h5 class="fw-bold mb-1" data-i18n="unmatched_territories">
+                Unmatched Territories
+              </h5>
+              <p class="text-muted small mb-3" data-i18n="unmatched_territories_desc">
+                Raw territory text from imported sheets that isn't linked to
+                a real Area yet. Link each one once to attribute those
+                sales to the right rep.
+              </p>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="border-0 px-3 py-2" data-i18n="distributor_name">
+                        Distributor
+                      </th>
+                      <th class="border-0 px-3 py-2" data-i18n="raw_territory_text">
+                        Raw Text
+                      </th>
+                      <th class="border-0 px-3 py-2" data-i18n="affected_rows">
+                        Rows
+                      </th>
+                      <th class="border-0 px-3 py-2" data-i18n="link_to_area">
+                        Link to Area
+                      </th>
+                      <th class="border-0 px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="pendingAreasTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
