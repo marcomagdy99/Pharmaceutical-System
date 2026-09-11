@@ -77,6 +77,16 @@ function populateProductCheckboxes(lineId = 'all') {
   let availableProducts = [];
   if (!lineId || lineId === 'all') {
     availableProducts = Array.from(new Set(salesData.map((s) => s.product).filter(Boolean)));
+    // Imported (distributor-sourced) products have no known lineId yet,
+    // so they only surface here in the unfiltered "All Lines" view, not
+    // when a specific line is picked below.
+    const importedProducts = (window.store && window.store.distributorSales
+      ? window.store.distributorSales.getAll()
+      : []
+    ).map((s) => s.product).filter(Boolean);
+    importedProducts.forEach((p) => {
+      if (!availableProducts.includes(p)) availableProducts.push(p);
+    });
   } else {
     availableProducts = Array.from(
       new Set(salesData.filter((s) => s.lineId === lineId).map((s) => s.product).filter(Boolean))
@@ -290,6 +300,42 @@ function buildMonthsLabel(selectedMonths, allMonthsCount, lang) {
     .join(', ');
 }
 
+/**
+ * Groups every rep-attributed distributorSales row (see distributors.html's
+ * Unmatched Territories linking) by (repId, product, month), summing their
+ * (already-signed, returns-netted) value. Each group becomes one
+ * report-shaped row so it can merge into the same table as
+ * REPORTS_DATA.sales -- with target left at 0 since distributor sheets
+ * carry no target figure, and lineId left null since sheets only give a
+ * product name, not which product Line it belongs to.
+ */
+function buildDistributorAggregatedSales() {
+  const rows = (window.store && window.store.distributorSales
+    ? window.store.distributorSales.getAll()
+    : []
+  ).filter((r) => r.repId);
+  const groups = {};
+  rows.forEach((r) => {
+    const key = `${r.repId}||${r.product}||${r.month}`;
+    if (!groups[key]) {
+      groups[key] = {
+        repId: r.repId,
+        dmId: r.dmId,
+        lmId: r.lmId,
+        product: r.product,
+        month: r.month,
+        actual: 0,
+        distributorIds: [],
+      };
+    }
+    groups[key].actual += r.value;
+    if (!groups[key].distributorIds.includes(r.distributorId)) {
+      groups[key].distributorIds.push(r.distributorId);
+    }
+  });
+  return Object.values(groups);
+}
+
 // ============================================================================
 // Section 7: Tab 1 - Monthly Sales & Target Filter Execution (No Currency Symbols)
 // ============================================================================
@@ -343,9 +389,47 @@ function renderSalesReport() {
     periodLabel.textContent = `${lang === 'ar' ? 'الفترة:' : 'Period:'} ${monthsLabel} ${selectedYear} | ${prodLabel}`;
   }
 
-  const activeSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
+  const baseSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
     ? window.DEMO_DATA.sales
     : REPORTS_DATA.sales;
+
+  // Merge in imported (distributor-sourced) sales that have been matched
+  // to a rep via an Area alias (see distributors.html's Unmatched
+  // Territories). If a legacy row already exists for the same
+  // rep+product+month, its actual is replaced with the real imported net
+  // value (keeping that row's existing target/lineId/area); otherwise a
+  // new row is appended with target 0, since distributor sheets carry no
+  // target figure.
+  const activeSales = baseSales.map((r) => ({ ...r }));
+  buildDistributorAggregatedSales().forEach((g) => {
+    const existingIdx = activeSales.findIndex(
+      (r) => r.repId === g.repId && r.product === g.product && r.month === g.month,
+    );
+    if (existingIdx >= 0) {
+      activeSales[existingIdx].actual = g.actual;
+      activeSales[existingIdx].amount = g.actual;
+      activeSales[existingIdx].distributorId = g.distributorIds[0];
+      activeSales[existingIdx].isImported = true;
+    } else {
+      const rep = window.store && window.store.users ? window.store.users.getById(g.repId) : null;
+      activeSales.push({
+        id: `dagg_${g.repId}_${g.product}_${g.month}`,
+        month: g.month,
+        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
+        area: rep && rep.area ? rep.area : '',
+        product: g.product,
+        target: 0,
+        actual: g.actual,
+        amount: g.actual,
+        repId: g.repId,
+        dmId: g.dmId,
+        lmId: g.lmId,
+        lineId: null,
+        distributorId: g.distributorIds[0],
+        isImported: true,
+      });
+    }
+  });
 
   let filtered = activeSales.filter((row) => targetPeriods.includes(row.month));
 
@@ -427,11 +511,14 @@ function renderSalesReport() {
       totalActual += actualVal;
       totalTarget += targetVal;
       if (row.product) activeProductsSet.add(row.product);
-      const achievement = targetVal > 0 ? ((actualVal / targetVal) * 100).toFixed(1) : 0;
-      const isAchieved = actualVal >= targetVal;
-      const statusBadge = isAchieved
-        ? `<span class="sales-status-badge achieved">${lang === 'ar' ? 'مكتمل' : 'Achieved'}</span>`
-        : `<span class="sales-status-badge in-progress">${lang === 'ar' ? 'قيد التنفيذ' : 'In Progress'}</span>`;
+      const hasTarget = targetVal > 0;
+      const achievement = hasTarget ? ((actualVal / targetVal) * 100).toFixed(1) : null;
+      const isAchieved = hasTarget && actualVal >= targetVal;
+      const statusBadge = !hasTarget
+        ? `<span class="sales-status-badge" style="background: var(--gray-100, #f1f1f1); color: var(--gray-500);">${lang === 'ar' ? 'بدون تارجت' : 'No Target'}</span>`
+        : isAchieved
+          ? `<span class="sales-status-badge achieved">${lang === 'ar' ? 'مكتمل' : 'Achieved'}</span>`
+          : `<span class="sales-status-badge in-progress">${lang === 'ar' ? 'قيد التنفيذ' : 'In Progress'}</span>`;
       const dist = row.distributorId && window.store && window.store.distributors
         ? window.store.distributors.getById(row.distributorId)
         : null;
@@ -460,7 +547,7 @@ function renderSalesReport() {
         <td style="font-weight: 600; white-space: nowrap;">${targetVal.toLocaleString()}</td>
         <td style="font-weight: 700; color: var(--primary); white-space: nowrap;">${actualVal.toLocaleString()}</td>
         <td style="white-space: nowrap;">
-          <span style="font-weight: 800; color: ${isAchieved ? 'var(--success)' : 'var(--warning)'};">${achievement}%</span>
+          <span style="font-weight: 800; color: ${hasTarget ? (isAchieved ? 'var(--success)' : 'var(--warning)') : 'var(--gray-500)'};">${hasTarget ? achievement + '%' : '—'}</span>
         </td>
         <td style="white-space: nowrap;">${statusBadge}</td>
       `;
@@ -557,28 +644,33 @@ function handleExcelUpload(e) {
       const map = dist.columnMap;
       const monthKey = `${year}-${month}`;
       const imported = [];
-      let skippedReturns = 0;
+      let returnsCount = 0;
       let skippedInvalid = 0;
 
       rows.forEach((row, idx) => {
         const productRaw = map.product ? row[map.product] : '';
         const valueRaw = map.value ? row[map.value] : '';
+        const quantityRaw = map.quantity ? row[map.quantity] : '';
         const product = String(productRaw || '').trim();
         // Sheets from these distributors use plain numbers or numbers
         // with thousands separators; strip anything that isn't a digit,
         // minus sign, or decimal point before parsing.
         const numericValue = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ''));
+        const numericQuantity = map.quantity
+          ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ''))
+          : null;
 
         if (!product || isNaN(numericValue)) {
           skippedInvalid++;
           return;
         }
-        // Negative values are returns/credit notes, not sales -- excluded
-        // rather than added as negative sales (see the Ibn Sina/Overseas
-        // sample sheets, which mix both in the same 'value' column).
-        if (numericValue <= 0) {
-          skippedReturns++;
-          return;
+        // Negative values are returns/credit notes (both the Ibn Sina and
+        // Overseas sample sheets mix these into the same 'value' column).
+        // They're kept, not dropped, so they net out of the totals when
+        // summed -- and they stay visibly negative rather than being
+        // flipped to a positive "return amount".
+        if (numericValue < 0) {
+          returnsCount++;
         }
 
         imported.push({
@@ -587,6 +679,7 @@ function handleExcelUpload(e) {
           month: monthKey,
           product,
           value: numericValue,
+          quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
           pharmacyName: map.pharmacy ? String(row[map.pharmacy] || '').trim() : '',
           areaRaw: map.area ? String(row[map.area] || '').trim() : '',
           // Deliberately unassigned: no raw-area-text -> Area/rep alias
@@ -609,8 +702,8 @@ function handleExcelUpload(e) {
       if (panel) {
         panel.style.display = 'block';
         panel.innerHTML = lang === 'ar'
-          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey} (إجمالي القيمة: ${totalValue.toLocaleString()}). اتجاهل ${skippedReturns} صف مرتجعات و${skippedInvalid} صف بيانات ناقصة.<br><span style="font-weight:600;">هام:</span> البيانات دي متسجلة على مستوى الصيدلية وغير مربوطة بمندوب لسه، فمش هتظهر في الجدول تحت لحد ما نبني خطوة ربط المنطقة بالمندوب.`
-          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey} (total value: ${totalValue.toLocaleString()}). Skipped ${skippedReturns} return rows and ${skippedInvalid} rows with missing data.<br><span style="font-weight:600;">Note:</span> this data is pharmacy-level and not yet attributed to a rep, so it won't appear in the table below until the area-to-rep matching step is built.`;
+          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> البيانات دي متسجلة على مستوى الصيدلية وغير مربوطة بمندوب لسه، فمش هتظهر في الجدول تحت لحد ما نبني خطوة ربط المنطقة بالمندوب.`
+          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> this data is pharmacy-level and not yet attributed to a rep, so it won't appear in the table below until the area-to-rep matching step is built.`;
       }
 
       showToast(
