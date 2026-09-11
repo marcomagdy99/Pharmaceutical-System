@@ -51,6 +51,7 @@ const distributorTranslations = {
     role_ignore: "-- Ignore this column --",
     role_product: "Product / Medicine Name",
     role_value: "Sales Value (Amount)",
+    role_quantity: "Quantity / Units Pulled",
     role_area: "Area / Territory (raw text)",
     role_pharmacy: "Pharmacy / Client Name",
     supply_type: "Supply Type",
@@ -58,6 +59,16 @@ const distributorTranslations = {
       'Commercial and Tender business from the same wholesaler (e.g. "Ibn Sina" vs "Tender Ibn Sina") are separate distributor entries.',
     type_commercial: "Commercial / Trade",
     type_tender: "Tender / Institutional",
+    unmatched_territories: "Unmatched Territories",
+    unmatched_territories_desc:
+      "Raw territory text from imported sheets that isn't linked to a real Area yet. Link each one once to attribute those sales to the right rep.",
+    raw_territory_text: "Raw Text",
+    affected_rows: "Rows",
+    link_to_area: "Link to Area",
+    select_area: "-- Select Area --",
+    link: "Link",
+    linked_successfully: "Territory linked and matching sales attributed to the rep.",
+    select_area_first: "Select an Area first.",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -93,6 +104,7 @@ const distributorTranslations = {
     role_ignore: "-- تجاهل العمود ده --",
     role_product: "اسم المنتج / الدواء",
     role_value: "قيمة المبيعات",
+    role_quantity: "الكمية / عدد الوحدات المسحوبة",
     role_area: "المنطقة / الإقليم (نص خام)",
     role_pharmacy: "اسم الصيدلية / العميل",
     supply_type: "نوع التوريد",
@@ -100,6 +112,16 @@ const distributorTranslations = {
       'التجاري والمناقصات من نفس الموزّع (زي "ابن سينا" و"Tender ابن سينا") بيتسجلوا كموزّعين منفصلين.',
     type_commercial: "تجاري",
     type_tender: "مناقصات",
+    unmatched_territories: "مناطق غير مربوطة",
+    unmatched_territories_desc:
+      "نص المنطقة الخام من الشيتات المستوردة اللي لسه مش مربوط بمنطقة حقيقية. اربط كل واحدة مرة عشان مبيعاتها تتحسب على المندوب الصح.",
+    raw_territory_text: "النص الخام",
+    affected_rows: "عدد الصفوف",
+    link_to_area: "اربط بمنطقة",
+    select_area: "-- اختار المنطقة --",
+    link: "اربط",
+    linked_successfully: "اتربطت المنطقة وحسبنا المبيعات المطابقة على المندوب.",
+    select_area_first: "اختار منطقة الأول.",
   },
 };
 
@@ -138,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderDistributors();
   updateStats();
+  renderPendingAreas();
 });
 
 function renderDistributors(filterText = "") {
@@ -322,6 +345,7 @@ const MAPPING_ROLES = [
   { value: "pharmacy", i18nKey: "role_pharmacy" },
   { value: "product", i18nKey: "role_product" },
   { value: "value", i18nKey: "role_value" },
+  { value: "quantity", i18nKey: "role_quantity" },
   { value: "area", i18nKey: "role_area" },
 ];
 
@@ -481,4 +505,82 @@ function saveMapping() {
   updateStats();
   if (typeof showToast === "function")
     showToast("Mapping saved successfully.", "success");
+}
+
+// ==========================================
+// Section: Unmatched Territories
+// Shows raw (distributorId, areaRaw) pairs from imported
+// distributorSales rows that have no Area alias yet, and lets the admin
+// link each one to a real Area -- which retroactively attributes every
+// already-imported row with that text to that Area's rep.
+// ==========================================
+function renderPendingAreas() {
+  const section = document.getElementById("pendingAreasSection");
+  const tbody = document.getElementById("pendingAreasTableBody");
+  if (!section || !tbody) return;
+  if (!window.store || !window.store.distributorSales) {
+    section.style.display = "none";
+    return;
+  }
+
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const pending = window.store.distributorSales.getPendingAreaTexts();
+
+  if (!pending.length) {
+    section.style.display = "none";
+    tbody.replaceChildren();
+    return;
+  }
+  section.style.display = "block";
+  tbody.replaceChildren();
+
+  const distributors = getDistributorsList();
+  const areas = (window.store.areas && window.store.areas.getAll()) || [];
+
+  pending.forEach((entry, idx) => {
+    const dist = distributors.find((d) => d.id === entry.distributorId);
+    const rowId = `pendingArea_${idx}`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="px-3 py-2">${esc(dist ? dist.name : entry.distributorId)}</td>
+      <td class="px-3 py-2 fw-medium">${esc(entry.areaRaw)}</td>
+      <td class="px-3 py-2">${entry.count}</td>
+      <td class="px-3 py-2">
+        <select class="form-select form-select-sm" id="${rowId}_select">
+          <option value="">${esc(t.select_area)}</option>
+          ${areas.map((a) => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("")}
+        </select>
+      </td>
+      <td class="px-3 py-2">
+        <button class="btn btn-sm btn-primary" onclick="linkAreaAlias('${esc(entry.distributorId)}', '${esc(entry.areaRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
+          ${esc(t.link)}
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function linkAreaAlias(distributorId, areaRaw, selectId) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const select = document.getElementById(selectId);
+  const areaId = select ? select.value : "";
+
+  if (!areaId) {
+    if (typeof showToast === "function") showToast(t.select_area_first, "warning");
+    return;
+  }
+
+  if (window.store && window.store.areas) {
+    window.store.areas.addAlias(areaId, distributorId, areaRaw);
+  }
+  if (window.store && window.store.distributorSales) {
+    window.store.distributorSales.applyAreaMatching();
+  }
+
+  renderPendingAreas();
+  if (typeof showToast === "function") showToast(t.linked_successfully, "success");
 }
