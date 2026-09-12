@@ -361,6 +361,52 @@
       getById(id) {
         return (window.DEMO_DATA.productLines || []).find((l) => l.id === id);
       },
+      /**
+       * Records that `rawText` from `distributorId`'s sheets refers to
+       * this specific product (e.g. "CHOLEROSE PLUS 10/20MG" from Ibn
+       * Sina -> a real product in the Cardio line). Matching is
+       * case/whitespace-insensitive but exact otherwise.
+       */
+      addProductAlias(lineId, productId, distributorId, rawText) {
+        const line = this.getById(lineId);
+        if (!line || !Array.isArray(line.products) || !rawText) return;
+        const prod = line.products.find((p) => p.id === productId);
+        if (!prod) return;
+        if (!Array.isArray(prod.aliases)) prod.aliases = [];
+        const normalized = String(rawText).trim().toLowerCase();
+        const exists = prod.aliases.some(
+          (al) =>
+            al.distributorId === distributorId &&
+            String(al.rawText).trim().toLowerCase() === normalized,
+        );
+        if (!exists) {
+          prod.aliases.push({ distributorId, rawText: String(rawText).trim() });
+        }
+        autoSave("productLines", "addProductAlias", { lineId, productId, distributorId, rawText });
+      },
+      /**
+       * Finds the { line, product } pair (if any) whose product alias
+       * list has this exact raw text for this distributor.
+       */
+      findProductByAlias(distributorId, rawText) {
+        if (!rawText) return null;
+        const normalized = String(rawText).trim().toLowerCase();
+        const lines = window.DEMO_DATA.productLines || [];
+        for (const line of lines) {
+          if (!Array.isArray(line.products)) continue;
+          const prod = line.products.find(
+            (p) =>
+              Array.isArray(p.aliases) &&
+              p.aliases.some(
+                (al) =>
+                  al.distributorId === distributorId &&
+                  String(al.rawText).trim().toLowerCase() === normalized,
+              ),
+          );
+          if (prod) return { line, product: prod };
+        }
+        return null;
+      },
       save(lineObj) {
         if (!window.DEMO_DATA.productLines) window.DEMO_DATA.productLines = [];
         const lines = window.DEMO_DATA.productLines;
@@ -460,6 +506,7 @@
         // you've already configured doesn't require re-resolving the
         // same territories every time.
         this.applyAreaMatching();
+        this.applyProductMatching();
       },
       /**
        * Distinct (distributorId, areaRaw) pairs among still-unassigned
@@ -508,6 +555,50 @@
         });
         if (matchedCount) {
           autoSave("distributorSales", "applyAreaMatching", { matchedCount });
+        }
+        return matchedCount;
+      },
+      /**
+       * Distinct (distributorId, product-raw-text) pairs among rows with
+       * no resolved Line yet and no product alias -- these need an admin
+       * to pick the real product for them once, via
+       * productLines.addProductAlias().
+       */
+      getPendingProductTexts() {
+        const rows = this.getAll().filter((s) => !s.lineId && s.product);
+        const seen = {};
+        const pending = [];
+        rows.forEach((row) => {
+          if (store.productLines.findProductByAlias(row.distributorId, row.product)) return;
+          const key = row.distributorId + "||" + row.product.trim().toLowerCase();
+          if (seen[key]) {
+            seen[key].count++;
+            return;
+          }
+          const entry = { distributorId: row.distributorId, productRaw: row.product, count: 1 };
+          seen[key] = entry;
+          pending.push(entry);
+        });
+        return pending;
+      },
+      /**
+       * Fills in lineId (and productId) on every row whose raw product
+       * text now has a matching alias. Doesn't touch repId/areaId --
+       * product matching and area matching are independent and can
+       * resolve in either order.
+       */
+      applyProductMatching() {
+        const rows = this.getAll().filter((s) => !s.lineId && s.product);
+        let matchedCount = 0;
+        rows.forEach((row) => {
+          const match = store.productLines.findProductByAlias(row.distributorId, row.product);
+          if (!match) return;
+          row.lineId = match.line.id;
+          row.productId = match.product.id;
+          matchedCount++;
+        });
+        if (matchedCount) {
+          autoSave("distributorSales", "applyProductMatching", { matchedCount });
         }
         return matchedCount;
       },
