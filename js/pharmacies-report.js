@@ -31,7 +31,7 @@ function renderPharmaciesReport() {
 
   // Role scoping
   if (!isMgr) {
-    pharms = pharms.filter((p) => p.repId === currentUser.id || p.repId === "rep1" || !p.repId);
+    pharms = pharms.filter((p) => p.repId === currentUser.id || !p.repId);
   } else if (repId !== "all") {
     pharms = pharms.filter((p) => p.repId === repId);
   }
@@ -120,11 +120,19 @@ function openPharmacyModal(pharmId = null) {
   const phoneInput = document.getElementById("pharmacyPhoneInput");
   const repInput = document.getElementById("pharmacyRepInput");
 
-  // Populate Rep select dropdown
-  if (repInput) {
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const reps = allUsers.filter((u) => u.role === "medical_rep" || u.role === "rep");
-    repInput.innerHTML = reps.map((r) => `<option value="${r.id}">${r.name} (${r.employeeCode || "Rep"})</option>`).join("");
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const existingRepId = pharmId ? (getPharmaciesData().find((p) => p.id === pharmId) || {}).repId : null;
+
+  // Populates pharmacyModalLmSelect -> pharmacyModalDmSelect -> pharmacyRepInput
+  // as a real cascading hierarchy (defined in shared-report.js), instead
+  // of a flat list of every rep in the system.
+  if (typeof populateModalHierarchy === "function") {
+    populateModalHierarchy(
+      "pharmacyModalLmSelect",
+      "pharmacyModalDmSelect",
+      "pharmacyRepInput",
+      existingRepId || currentUser.id,
+    );
   }
 
   if (pharmId) {
@@ -136,7 +144,6 @@ function openPharmacyModal(pharmId = null) {
       if (addressInput) addressInput.value = pharm.address || "";
       if (contactInput) contactInput.value = pharm.contactPerson || "";
       if (phoneInput) phoneInput.value = pharm.phone || "";
-      if (repInput && pharm.repId) repInput.value = pharm.repId;
     }
   } else {
     if (idInput) idInput.value = "";
@@ -144,8 +151,6 @@ function openPharmacyModal(pharmId = null) {
     if (addressInput) addressInput.value = "";
     if (contactInput) contactInput.value = "";
     if (phoneInput) phoneInput.value = "";
-    const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
-    if (repInput) repInput.value = currentUser.id;
   }
 
   modal.style.display = "flex";
@@ -254,8 +259,6 @@ function onPharmacyFilterChange() {
 
 function onPharmacyLmChange() {}
 function onPharmacyDmChange() {}
-function onPharmacyModalLmChange() {}
-function onPharmacyModalDmChange() {}
 
 window.renderPharmaciesReport = renderPharmaciesReport;
 window.openPharmacyModal = openPharmacyModal;
