@@ -44,7 +44,7 @@ function renderCoverageReport() {
   else if (classFilter === 'hospital') targetList = targetList.filter((d) => d.class === 'hospital');
 
   if (isRep) {
-    targetList = targetList.filter((d) => d.repId === user.id || d.repId === 'rep1');
+    targetList = targetList.filter((d) => d.repId === user.id);
   } else if (role === 'line_manager') {
     const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
     const dmIds = dms.map((d) => d.id);
@@ -177,7 +177,7 @@ function exportCoverageReport() {
   const user = checkAuth();
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
   if (isRep) {
-    targetList = targetList.filter((d) => d.repId === user.id || d.repId === 'rep1');
+    targetList = targetList.filter((d) => d.repId === user.id);
   } else if (selectedRep && selectedRep !== 'all') {
     targetList = targetList.filter((d) => d.repId === selectedRep);
   }
@@ -215,5 +215,3 @@ function exportCoverageReport() {
   a.download = `PharmaCare_Coverage_${startDate}_to_${endDate}.csv`;
   a.click();
 }
-
-
