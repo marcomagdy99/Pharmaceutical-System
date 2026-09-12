@@ -475,6 +475,99 @@
     },
 
     // ==========================================
+    // Section: Targets Module
+    // One manually-set target per (repId, productId, month), entered by
+    // an Admin against an individual rep. There is no separate target
+    // stored for DM/LM/BU -- their "target" for a product/month is just
+    // the sum of their team's rep-level targets, which falls out
+    // naturally from summing rows in the Sales report once every rep's
+    // target is represented there (see sales-report.js's phantom-row
+    // logic for targets with no matching sales yet).
+    // ==========================================
+    targets: {
+      getAll() {
+        return window.DEMO_DATA.targets || [];
+      },
+      getById(id) {
+        return this.getAll().find((t) => t.id === id);
+      },
+      find(repId, productId, month) {
+        return this.getAll().find(
+          (t) => t.repId === repId && t.productId === productId && t.month === month,
+        );
+      },
+      getValue(repId, productId, month) {
+        const t = this.find(repId, productId, month);
+        return t ? parseFloat(t.target) || 0 : 0;
+      },
+      /**
+       * Upserts by (repId, productId, month) -- saving a target for a
+       * combination that already has one updates it in place rather than
+       * creating a duplicate row.
+       */
+      save(targetObj) {
+        if (!window.DEMO_DATA.targets) window.DEMO_DATA.targets = [];
+        const list = window.DEMO_DATA.targets;
+        const idx = list.findIndex(
+          (t) =>
+            t.id === targetObj.id ||
+            (t.repId === targetObj.repId &&
+              t.productId === targetObj.productId &&
+              t.month === targetObj.month),
+        );
+        if (idx >= 0) {
+          list[idx] = { ...list[idx], ...targetObj, id: list[idx].id };
+        } else {
+          list.push({ ...targetObj, id: targetObj.id || "target_" + Date.now() });
+        }
+        autoSave("targets", idx >= 0 ? "update" : "create", targetObj);
+        return idx >= 0 ? list[idx] : list[list.length - 1];
+      },
+      delete(id) {
+        window.DEMO_DATA.targets = (window.DEMO_DATA.targets || []).filter((t) => t.id !== id);
+        autoSave("targets", "delete", { id });
+      },
+    },
+
+    // ==========================================
+    // Section: Import Batches Module
+    // One record per (distributorId, month) upload -- lets the upload
+    // flow detect "you already uploaded this distributor's data for this
+    // month" and offer to replace it instead of silently double-counting.
+    // ==========================================
+    importBatches: {
+      getAll() {
+        return window.DEMO_DATA.importBatches || [];
+      },
+      getById(id) {
+        return this.getAll().find((b) => b.id === id);
+      },
+      find(distributorId, month) {
+        return this.getAll().find(
+          (b) => b.distributorId === distributorId && b.month === month,
+        );
+      },
+      save(batchObj) {
+        if (!window.DEMO_DATA.importBatches) window.DEMO_DATA.importBatches = [];
+        const list = window.DEMO_DATA.importBatches;
+        const idx = list.findIndex((b) => b.id === batchObj.id);
+        if (idx >= 0) {
+          list[idx] = { ...list[idx], ...batchObj };
+        } else {
+          list.push({ ...batchObj, id: batchObj.id || "batch_" + Date.now() });
+        }
+        autoSave("importBatches", idx >= 0 ? "update" : "create", batchObj);
+        return idx >= 0 ? list[idx] : list[list.length - 1];
+      },
+      delete(id) {
+        window.DEMO_DATA.importBatches = (window.DEMO_DATA.importBatches || []).filter(
+          (b) => b.id !== id,
+        );
+        autoSave("importBatches", "delete", { id });
+      },
+    },
+
+    // ==========================================
     // Section: Distributor Sales Module (pharmacy-level raw imports)
     // Each row = one pharmacy + one product + one value (+ optional
     // quantity), straight from a distributor's sheet via that
@@ -496,6 +589,19 @@
       },
       getUnassigned() {
         return this.getAll().filter((s) => !s.repId);
+      },
+      /**
+       * Removes every row tagged with this batchId -- used when the admin
+       * chooses to replace a previous upload for the same
+       * distributor+month instead of adding to it.
+       */
+      deleteByBatch(batchId) {
+        const before = this.getAll().length;
+        window.DEMO_DATA.distributorSales = this.getAll().filter(
+          (s) => s.batchId !== batchId,
+        );
+        autoSave("distributorSales", "deleteByBatch", { batchId });
+        return before - this.getAll().length;
       },
       addBatch(rows) {
         if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
