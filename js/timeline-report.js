@@ -38,7 +38,7 @@ function renderDailyTimeline() {
   let visitsInRange = REPORTS_DATA.visits.filter((v) => v.date >= fromDate && v.date <= toDate);
 
   if (isRep) {
-    visitsInRange = visitsInRange.filter((v) => v.repId === user.id || v.repId === 'rep1');
+    visitsInRange = visitsInRange.filter((v) => v.repId === user.id);
   } else if (role === 'line_manager') {
     const dms    = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
     const dmIds  = dms.map((d) => d.id);
@@ -72,16 +72,19 @@ function renderDailyTimeline() {
   } catch (e) {}
 
   const activityEvents = [];
-  Object.keys(storedActivities).forEach((dateKey) => {
-    if (dateKey < fromDate || dateKey > toDate) return;
-    const dayActivities = storedActivities[dateKey] || {};
-    if (dayActivities.AM && dayActivities.AM.type && (selectedRep === 'all' || selectedRep === 'rep1' || isRep || selectedRep === user.id)) {
-      activityEvents.push({ targetName: `${dayActivities.AM.type} (AM Activity)`, class: 'Activity', specialty: dayActivities.AM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '09:00', period: 'AM', repName: selectedRep === user.id ? user.name : 'Ahmed Mostafa', isActual: true });
-    }
-    if (dayActivities.PM && dayActivities.PM.type && (selectedRep === 'all' || selectedRep === 'rep1' || isRep || selectedRep === user.id)) {
-      activityEvents.push({ targetName: `${dayActivities.PM.type} (PM Activity)`, class: 'Activity', specialty: dayActivities.PM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '14:00', period: 'PM', repName: selectedRep === user.id ? user.name : 'Ahmed Mostafa', isActual: true });
-    }
-  });
+  const showOwnActivities = isRep || selectedRep === user.id;
+  if (showOwnActivities) {
+    Object.keys(storedActivities).forEach((dateKey) => {
+      if (dateKey < fromDate || dateKey > toDate) return;
+      const dayActivities = storedActivities[dateKey] || {};
+      if (dayActivities.AM && dayActivities.AM.type) {
+        activityEvents.push({ targetName: `${dayActivities.AM.type} (AM Activity)`, class: 'Activity', specialty: dayActivities.AM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '09:00', period: 'AM', repName: user.name, isActual: true });
+      }
+      if (dayActivities.PM && dayActivities.PM.type) {
+        activityEvents.push({ targetName: `${dayActivities.PM.type} (PM Activity)`, class: 'Activity', specialty: dayActivities.PM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '14:00', period: 'PM', repName: user.name, isActual: true });
+      }
+    });
+  }
 
   const combinedTimeline = [...visitsInRange, ...activityEvents];
   const totalItems   = combinedTimeline.length;
