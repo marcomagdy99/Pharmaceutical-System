@@ -35,7 +35,7 @@ function renderDoctorsReport() {
 
   // Role scoping
   if (!isMgr) {
-    docs = docs.filter((d) => d.repId === currentUser.id || d.repId === "rep1" || !d.repId);
+    docs = docs.filter((d) => d.repId === currentUser.id || !d.repId);
   } else if (repId !== "all") {
     docs = docs.filter((d) => d.repId === repId);
   }
@@ -129,11 +129,19 @@ function openDoctorModal(docId = null) {
   const phoneInput = document.getElementById("doctorPhoneInput");
   const repInput = document.getElementById("doctorRepInput");
 
-  // Populate Rep select dropdown
-  if (repInput) {
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const reps = allUsers.filter((u) => u.role === "medical_rep" || u.role === "rep");
-    repInput.innerHTML = reps.map((r) => `<option value="${r.id}">${r.name} (${r.employeeCode || "Rep"})</option>`).join("");
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const existingRepId = docId ? (getDoctorsData().find((d) => d.id === docId) || {}).repId : null;
+
+  // Populates doctorModalLmSelect -> doctorModalDmSelect -> doctorRepInput
+  // as a real cascading hierarchy (defined in shared-report.js), instead
+  // of a flat list of every rep in the system.
+  if (typeof populateModalHierarchy === "function") {
+    populateModalHierarchy(
+      "doctorModalLmSelect",
+      "doctorModalDmSelect",
+      "doctorRepInput",
+      existingRepId || currentUser.id,
+    );
   }
 
   if (docId) {
@@ -146,15 +154,12 @@ function openDoctorModal(docId = null) {
       if (classInput) classInput.value = doc.class || "A";
       if (addressInput) addressInput.value = doc.clinicAddress || doc.address || "";
       if (phoneInput) phoneInput.value = doc.phone || "";
-      if (repInput && doc.repId) repInput.value = doc.repId;
     }
   } else {
     if (idInput) idInput.value = "";
     if (nameInput) nameInput.value = "";
     if (addressInput) addressInput.value = "";
     if (phoneInput) phoneInput.value = "";
-    const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
-    if (repInput) repInput.value = currentUser.id;
   }
 
   modal.style.display = "flex";
@@ -268,8 +273,6 @@ function onDoctorFilterChange() {
 
 function onDoctorLmChange() {}
 function onDoctorDmChange() {}
-function onDoctorModalLmChange() {}
-function onDoctorModalDmChange() {}
 
 window.renderDoctorsReport = renderDoctorsReport;
 window.openDoctorModal = openDoctorModal;
