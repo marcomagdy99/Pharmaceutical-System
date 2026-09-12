@@ -396,6 +396,7 @@ function setupRolePermissions(user) {
   const noticeText = document.getElementById('roleNoticeText');
   const uploadBtn = document.getElementById('uploadSalesBtn');
   const uploadControls = document.getElementById('salesUploadControls');
+  const manageTargetsBtn = document.getElementById('manageTargetsBtn');
   const btnAddDoctor = document.getElementById('btnAddDoctor');
   const btnAddPharmacy = document.getElementById('btnAddPharmacy');
   const btnImportDoctors = document.getElementById('btnImportDoctors');
@@ -406,6 +407,7 @@ function setupRolePermissions(user) {
     if (noticeText) noticeText.textContent = lang === 'ar' ? 'صلاحية الإدارة: متاح رفع شيتات المبيعات وإدارة الأطباء والصيدليات' : 'Admin Role: Full Sales Upload, Doctors & Pharmacies Management';
     if (uploadBtn) uploadBtn.style.display = 'inline-flex';
     if (uploadControls) uploadControls.style.display = 'flex';
+    if (manageTargetsBtn) manageTargetsBtn.style.display = 'inline-flex';
     if (typeof populateUploadControls === 'function') populateUploadControls();
     if (btnAddDoctor) btnAddDoctor.style.display = 'inline-flex';
     if (btnAddPharmacy) btnAddPharmacy.style.display = 'inline-flex';
@@ -416,6 +418,7 @@ function setupRolePermissions(user) {
     if (noticeText) noticeText.textContent = lang === 'ar' ? 'عرض فقط: تعديل التارجت والأطباء والصيدليات مقتصر على الإدارة' : 'View-Only: Directories and Sales managed by Admin';
     if (uploadBtn) uploadBtn.style.display = 'none';
     if (uploadControls) uploadControls.style.display = 'none';
+    if (manageTargetsBtn) manageTargetsBtn.style.display = 'none';
     if (btnAddDoctor) btnAddDoctor.style.display = 'none';
     if (btnAddPharmacy) btnAddPharmacy.style.display = 'none';
     if (btnImportDoctors) btnImportDoctors.style.display = 'none';
