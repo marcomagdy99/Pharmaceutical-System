@@ -69,6 +69,14 @@ const distributorTranslations = {
     link: "Link",
     linked_successfully: "Territory linked and matching sales attributed to the rep.",
     select_area_first: "Select an Area first.",
+    unmatched_products: "Unmatched Products",
+    unmatched_products_desc:
+      "Raw product text from imported sheets that isn't linked to a real product yet. Link each one once to attribute those sales to the right product Line.",
+    raw_product_text: "Raw Text",
+    link_to_product: "Link to Product",
+    select_product: "-- Select Product --",
+    product_linked_successfully: "Product linked and matching sales attributed to its Line.",
+    select_product_first: "Select a product first.",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -122,6 +130,14 @@ const distributorTranslations = {
     link: "اربط",
     linked_successfully: "اتربطت المنطقة وحسبنا المبيعات المطابقة على المندوب.",
     select_area_first: "اختار منطقة الأول.",
+    unmatched_products: "منتجات غير مربوطة",
+    unmatched_products_desc:
+      "نص المنتج الخام من الشيتات المستوردة اللي لسه مش مربوط بمنتج حقيقي. اربط كل واحد مرة عشان مبيعاته تتحسب على الـ Line الصح.",
+    raw_product_text: "النص الخام",
+    link_to_product: "اربط بمنتج",
+    select_product: "-- اختار المنتج --",
+    product_linked_successfully: "اتربط المنتج وحسبنا المبيعات المطابقة على الـ Line بتاعه.",
+    select_product_first: "اختار منتج الأول.",
   },
 };
 
@@ -161,6 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderDistributors();
   updateStats();
   renderPendingAreas();
+  renderPendingProducts();
 });
 
 function renderDistributors(filterText = "") {
@@ -583,4 +600,92 @@ function linkAreaAlias(distributorId, areaRaw, selectId) {
 
   renderPendingAreas();
   if (typeof showToast === "function") showToast(t.linked_successfully, "success");
+}
+
+// ==========================================
+// Section: Unmatched Products
+// Same idea as Unmatched Territories, but for raw product text ->
+// real product (and therefore its Line).
+// ==========================================
+function renderPendingProducts() {
+  const section = document.getElementById("pendingProductsSection");
+  const tbody = document.getElementById("pendingProductsTableBody");
+  if (!section || !tbody) return;
+  if (!window.store || !window.store.distributorSales || !window.store.productLines) {
+    section.style.display = "none";
+    return;
+  }
+
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const pending = window.store.distributorSales.getPendingProductTexts();
+
+  if (!pending.length) {
+    section.style.display = "none";
+    tbody.replaceChildren();
+    return;
+  }
+  section.style.display = "block";
+  tbody.replaceChildren();
+
+  const distributors = getDistributorsList();
+  const lines = window.store.productLines.getAll();
+
+  pending.forEach((entry, idx) => {
+    const dist = distributors.find((d) => d.id === entry.distributorId);
+    const rowId = `pendingProduct_${idx}`;
+
+    const optionsHtml = lines
+      .map((line) => {
+        const products = Array.isArray(line.products) ? line.products : [];
+        if (!products.length) return "";
+        const opts = products
+          .map((p) => `<option value="${esc(line.id)}::${esc(p.id)}">${esc(p.name)}${p.dosage ? " " + esc(p.dosage) : ""}</option>`)
+          .join("");
+        return `<optgroup label="${esc(line.name)}">${opts}</optgroup>`;
+      })
+      .join("");
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="px-3 py-2">${esc(dist ? dist.name : entry.distributorId)}</td>
+      <td class="px-3 py-2 fw-medium">${esc(entry.productRaw)}</td>
+      <td class="px-3 py-2">${entry.count}</td>
+      <td class="px-3 py-2">
+        <select class="form-select form-select-sm" id="${rowId}_select">
+          <option value="">${esc(t.select_product)}</option>
+          ${optionsHtml}
+        </select>
+      </td>
+      <td class="px-3 py-2">
+        <button class="btn btn-sm btn-primary" onclick="linkProductAlias('${esc(entry.distributorId)}', '${esc(entry.productRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
+          ${esc(t.link)}
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function linkProductAlias(distributorId, productRaw, selectId) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const select = document.getElementById(selectId);
+  const combined = select ? select.value : "";
+
+  if (!combined) {
+    if (typeof showToast === "function") showToast(t.select_product_first, "warning");
+    return;
+  }
+  const [lineId, productId] = combined.split("::");
+
+  if (window.store && window.store.productLines) {
+    window.store.productLines.addProductAlias(lineId, productId, distributorId, productRaw);
+  }
+  if (window.store && window.store.distributorSales) {
+    window.store.distributorSales.applyProductMatching();
+  }
+
+  renderPendingProducts();
+  if (typeof showToast === "function") showToast(t.product_linked_successfully, "success");
 }
