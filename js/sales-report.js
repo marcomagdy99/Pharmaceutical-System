@@ -322,12 +322,14 @@ function buildDistributorAggregatedSales() {
         repId: r.repId,
         dmId: r.dmId,
         lmId: r.lmId,
+        lineId: r.lineId || null,
         product: r.product,
         month: r.month,
         actual: 0,
         distributorIds: [],
       };
     }
+    if (!groups[key].lineId && r.lineId) groups[key].lineId = r.lineId;
     groups[key].actual += r.value;
     if (!groups[key].distributorIds.includes(r.distributorId)) {
       groups[key].distributorIds.push(r.distributorId);
@@ -424,7 +426,7 @@ function renderSalesReport() {
         repId: g.repId,
         dmId: g.dmId,
         lmId: g.lmId,
-        lineId: null,
+        lineId: g.lineId || null,
         distributorId: g.distributorIds[0],
         isImported: true,
       });
