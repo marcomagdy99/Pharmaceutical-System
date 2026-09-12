@@ -331,6 +331,14 @@
                 />
                 <button
                   class="btn btn-outline"
+                  id="manageTargetsBtn"
+                  onclick="openTargetsModal()"
+                  style="display: none"
+                >
+                  🎯 Manage Targets
+                </button>
+                <button
+                  class="btn btn-outline"
                   id="exportSalesBtn"
                   onclick="exportSalesReport()"
                 >
@@ -1907,6 +1915,110 @@
         </div>
       </div>
     </div>
+
+    <!-- Manage Targets Modal (Admin Only): one manually-set target per
+         rep + product + month. DM/LM/BU targets are never entered here
+         directly -- they fall out of summing their team's rep-level
+         targets in the Sales report itself. -->
+    <div id="targetsModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog modal-dialog-lg">
+        <div class="custom-modal-content card">
+          <div class="custom-modal-header modern-modal-header">
+            <div class="modal-header-left">
+              <div class="modal-header-avatar doctor">🎯</div>
+              <div>
+                <h3>Manage Sales Targets</h3>
+                <p class="modal-subtitle">
+                  Set a monthly target per rep and product. Each rep's
+                  target only applies to that specific month -- set a new
+                  one any time it changes.
+                </p>
+              </div>
+            </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeTargetsModal()"
+              title="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <!-- Add/Edit target form -->
+            <div class="modal-form-grid">
+              <input type="hidden" id="targetEditId" />
+              <div class="form-group col-span-1">
+                <label class="form-label">Rep</label>
+                <select id="targetRepSelect" class="form-control modern-select"></select>
+              </div>
+              <div class="form-group col-span-1">
+                <label class="form-label">Product</label>
+                <select id="targetProductSelect" class="form-control modern-select"></select>
+              </div>
+              <div class="form-group col-span-1">
+                <label class="form-label">Month</label>
+                <select id="targetMonthSelect" class="form-control modern-select"></select>
+              </div>
+              <div class="form-group col-span-1">
+                <label class="form-label">Year</label>
+                <select id="targetYearSelect" class="form-control modern-select"></select>
+              </div>
+              <div class="form-group col-span-2">
+                <label class="form-label">Target Value</label>
+                <input
+                  type="number"
+                  id="targetValueInput"
+                  class="form-control modern-input"
+                  min="0"
+                  step="1"
+                  placeholder="e.g. 20000"
+                />
+              </div>
+            </div>
+            <div style="margin-top: 10px; text-align: end;">
+              <button
+                type="button"
+                class="btn btn-outline"
+                id="cancelTargetEditBtn"
+                onclick="resetTargetForm()"
+                style="display: none; margin-inline-end: 8px;"
+              >
+                Cancel Edit
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                onclick="saveTarget()"
+              >
+                <span id="saveTargetBtnLabel">Add Target</span>
+              </button>
+            </div>
+
+            <!-- Existing targets table -->
+            <div class="table-container" style="margin-top: 18px;">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Rep</th>
+                    <th>Product</th>
+                    <th>Month</th>
+                    <th>Target</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="targetsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="custom-modal-footer modern-modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeTargetsModal()">
+              <span>✕</span> <span>Close</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/excel-templates-data.js"></script>
