@@ -323,6 +323,7 @@ function buildDistributorAggregatedSales() {
         dmId: r.dmId,
         lmId: r.lmId,
         lineId: r.lineId || null,
+        productId: r.productId || null,
         product: r.product,
         month: r.month,
         actual: 0,
@@ -330,6 +331,7 @@ function buildDistributorAggregatedSales() {
       };
     }
     if (!groups[key].lineId && r.lineId) groups[key].lineId = r.lineId;
+    if (!groups[key].productId && r.productId) groups[key].productId = r.productId;
     groups[key].actual += r.value;
     if (!groups[key].distributorIds.includes(r.distributorId)) {
       groups[key].distributorIds.push(r.distributorId);
@@ -400,8 +402,8 @@ function renderSalesReport() {
   // Territories). If a legacy row already exists for the same
   // rep+product+month, its actual is replaced with the real imported net
   // value (keeping that row's existing target/lineId/area); otherwise a
-  // new row is appended with target 0, since distributor sheets carry no
-  // target figure.
+  // new row is appended using this rep+product+month's manually-set
+  // target (via Manage Targets), or 0 if none has been set.
   const activeSales = baseSales.map((r) => ({ ...r }));
   buildDistributorAggregatedSales().forEach((g) => {
     const existingIdx = activeSales.findIndex(
@@ -411,27 +413,64 @@ function renderSalesReport() {
       activeSales[existingIdx].actual = g.actual;
       activeSales[existingIdx].amount = g.actual;
       activeSales[existingIdx].distributorId = g.distributorIds[0];
+      activeSales[existingIdx].productId = g.productId || null;
       activeSales[existingIdx].isImported = true;
     } else {
       const rep = window.store && window.store.users ? window.store.users.getById(g.repId) : null;
+      const targetVal = g.productId && window.store && window.store.targets
+        ? window.store.targets.getValue(g.repId, g.productId, g.month)
+        : 0;
       activeSales.push({
         id: `dagg_${g.repId}_${g.product}_${g.month}`,
         month: g.month,
         repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
         area: rep && rep.area ? rep.area : '',
         product: g.product,
-        target: 0,
+        target: targetVal,
         actual: g.actual,
         amount: g.actual,
         repId: g.repId,
         dmId: g.dmId,
         lmId: g.lmId,
         lineId: g.lineId || null,
+        productId: g.productId || null,
         distributorId: g.distributorIds[0],
         isImported: true,
       });
     }
   });
+
+  // Phantom rows: a rep can have a target set for a product/month before
+  // any sales for it have come in (or ever, if they simply miss it). Those
+  // targets still need to show up (as 0 actual) so a DM/LM/BU's rolled-up
+  // total target isn't silently missing part of their team.
+  if (window.store && window.store.targets && window.store.users) {
+    window.store.targets.getAll().forEach((t) => {
+      const alreadyPresent = activeSales.some(
+        (r) => r.repId === t.repId && r.productId === t.productId && r.month === t.month,
+      );
+      if (alreadyPresent) return;
+      const rep = window.store.users.getById(t.repId);
+      const prod = getAllProductsFlat().find((p) => p.id === t.productId);
+      activeSales.push({
+        id: `target_only_${t.id}`,
+        month: t.month,
+        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
+        area: rep && rep.area ? rep.area : '',
+        product: prod ? prod.name : t.productId,
+        target: parseFloat(t.target) || 0,
+        actual: 0,
+        amount: 0,
+        repId: t.repId,
+        dmId: rep ? rep.managerId || null : null,
+        lmId: rep ? (window.store.users.getById(rep.managerId || '') || {}).managerId || null : null,
+        lineId: prod ? prod.lineId : null,
+        productId: t.productId,
+        distributorId: null,
+        isImported: false,
+      });
+    });
+  }
 
   let filtered = activeSales.filter((row) => targetPeriods.includes(row.month));
 
@@ -631,6 +670,24 @@ function handleExcelUpload(e) {
     return;
   }
 
+  const monthKey = `${year}-${month}`;
+  const existingBatch = window.store && window.store.importBatches
+    ? window.store.importBatches.find(distId, monthKey)
+    : null;
+  let replacingPreviousBatch = false;
+
+  if (existingBatch) {
+    const uploadedDate = existingBatch.uploadedAt ? new Date(existingBatch.uploadedAt).toLocaleString() : '';
+    const confirmMsg = lang === 'ar'
+      ? `اتعملت رفعة قبل كده لـ "${dist.name}" لشهر ${monthKey} (${existingBatch.rowCount} صف${uploadedDate ? '، بتاريخ ' + uploadedDate : ''}). لو كملت، الرفعة القديمة هتتمسح ويتحل محلها الملف الجديد بالكامل (مش هتتضاف فوق بعض). عايز تكمل؟`
+      : `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ', on ' + uploadedDate : ''}). Continuing will replace that previous upload entirely with this new file (not add on top of it). Continue?`;
+    if (!confirm(confirmMsg)) {
+      e.target.value = '';
+      return;
+    }
+    replacingPreviousBatch = true;
+  }
+
   showToast(lang === 'ar' ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, 'info');
 
   const reader = new FileReader();
@@ -644,7 +701,7 @@ function handleExcelUpload(e) {
       const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
       const map = dist.columnMap;
-      const monthKey = `${year}-${month}`;
+      const batchId = 'batch_' + Date.now();
       const imported = [];
       let returnsCount = 0;
       let skippedInvalid = 0;
@@ -677,6 +734,7 @@ function handleExcelUpload(e) {
 
         imported.push({
           id: `dsale_${Date.now()}_${idx}`,
+          batchId,
           distributorId: distId,
           month: monthKey,
           product,
@@ -695,17 +753,35 @@ function handleExcelUpload(e) {
         });
       });
 
+      if (replacingPreviousBatch && existingBatch && window.store && window.store.distributorSales) {
+        window.store.distributorSales.deleteByBatch(existingBatch.id);
+        window.store.importBatches.delete(existingBatch.id);
+      }
+
       if (window.store && window.store.distributorSales) {
         window.store.distributorSales.addBatch(imported);
+      }
+      if (window.store && window.store.importBatches) {
+        window.store.importBatches.save({
+          id: batchId,
+          distributorId: distId,
+          month: monthKey,
+          rowCount: imported.length,
+          fileName: file.name,
+          uploadedAt: new Date().toISOString(),
+        });
       }
 
       const totalValue = imported.reduce((sum, r) => sum + r.value, 0);
       const panel = document.getElementById('salesImportResultsPanel');
       if (panel) {
         panel.style.display = 'block';
+        const replacedNote = replacingPreviousBatch
+          ? (lang === 'ar' ? ' (استبدلت رفعة سابقة لنفس الشهر/الموزّع)' : ' (replaced a previous upload for this month/distributor)')
+          : '';
         panel.innerHTML = lang === 'ar'
-          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> البيانات دي متسجلة على مستوى الصيدلية وغير مربوطة بمندوب لسه، فمش هتظهر في الجدول تحت لحد ما نبني خطوة ربط المنطقة بالمندوب.`
-          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> this data is pharmacy-level and not yet attributed to a rep, so it won't appear in the table below until the area-to-rep matching step is built.`;
+          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> البيانات دي متسجلة على مستوى الصيدلية وغير مربوطة بمندوب لسه، فمش هتظهر في الجدول تحت لحد ما نبني خطوة ربط المنطقة بالمندوب.`
+          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> this data is pharmacy-level and not yet attributed to a rep, so it won't appear in the table below until the area-to-rep matching step is built.`;
       }
 
       showToast(
@@ -777,4 +853,193 @@ function exportSalesReport() {
   a.href = url;
   a.download = `PharmaCare_Sales_${selectedYear}_${selectedMonths.join('-')}.csv`;
   a.click();
+}
+
+// ============================================================================
+// Section: Manage Targets (Admin Only)
+// One manually-set target per rep + product + month (see store.js's
+// targets module). DM/LM/BU targets are never entered directly -- they
+// fall out of summing their team's rep-level targets once every rep's
+// target is represented as a row in the Sales report (see the
+// phantom-row logic inside renderSalesReport()/buildDistributorAggregatedSales()).
+// ============================================================================
+let targetsModalEl = null;
+
+function getAllProductsFlat() {
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  const out = [];
+  lines.forEach((line) => {
+    (line.products || []).forEach((p) => {
+      out.push({ id: p.id, name: p.name + (p.dosage ? ' ' + p.dosage : ''), lineId: line.id, lineName: line.name });
+    });
+  });
+  return out;
+}
+
+function populateTargetFormSelects() {
+  const repSelect = document.getElementById('targetRepSelect');
+  const productSelect = document.getElementById('targetProductSelect');
+  const monthSelect = document.getElementById('targetMonthSelect');
+  const yearSelect = document.getElementById('targetYearSelect');
+
+  if (repSelect) {
+    const reps = (window.store && window.store.users ? window.store.users.getReps() : []);
+    renderSelectOptions(repSelect, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+  }
+
+  if (productSelect) {
+    productSelect.replaceChildren();
+    const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+    lines.forEach((line) => {
+      const products = line.products || [];
+      if (!products.length) return;
+      const group = document.createElement('optgroup');
+      group.label = line.name;
+      products.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name + (p.dosage ? ' ' + p.dosage : '');
+        group.appendChild(opt);
+      });
+      productSelect.appendChild(group);
+    });
+  }
+
+  if (monthSelect && !monthSelect.dataset.populated) {
+    const now = new Date();
+    MONTH_NAMES.forEach((m, idx) => {
+      const val = String(idx + 1).padStart(2, '0');
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = m;
+      if (idx === now.getMonth()) opt.selected = true;
+      monthSelect.appendChild(opt);
+    });
+    monthSelect.dataset.populated = 'true';
+  }
+
+  if (yearSelect && !yearSelect.dataset.populated) {
+    const currentYear = String(new Date().getFullYear());
+    ['2025', '2026', '2027'].forEach((y) => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    });
+    yearSelect.dataset.populated = 'true';
+  }
+}
+
+function renderTargetsTable() {
+  const tbody = document.getElementById('targetsTableBody');
+  if (!tbody) return;
+  const esc = window.escapeHtml || ((s) => s || '');
+  const targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
+    .slice()
+    .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+  const allProducts = getAllProductsFlat();
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+
+  tbody.replaceChildren();
+  if (!targets.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 16px; color: var(--gray-500); font-style: italic;">No targets set yet.</td></tr>`;
+    return;
+  }
+
+  targets.forEach((t) => {
+    const rep = allUsers.find((u) => u.id === t.repId);
+    const prod = allProducts.find((p) => p.id === t.productId);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${esc(rep ? rep.name : t.repId)}</td>
+      <td>${esc(prod ? prod.name : t.productId)}</td>
+      <td>${esc(t.month)}</td>
+      <td style="font-weight:700;">${(parseFloat(t.target) || 0).toLocaleString()}</td>
+      <td style="text-align:end; white-space:nowrap;">
+        <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${esc(t.id)}')" title="Edit">✏️</button>
+        <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${esc(t.id)}')" title="Delete">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openTargetsModal() {
+  targetsModalEl = document.getElementById('targetsModal');
+  if (!targetsModalEl) return;
+  populateTargetFormSelects();
+  resetTargetForm();
+  renderTargetsTable();
+  targetsModalEl.style.display = 'flex';
+  targetsModalEl.classList.add('active');
+}
+
+function closeTargetsModal() {
+  if (targetsModalEl) {
+    targetsModalEl.style.display = 'none';
+    targetsModalEl.classList.remove('active');
+  }
+}
+
+function resetTargetForm() {
+  document.getElementById('targetEditId').value = '';
+  document.getElementById('targetValueInput').value = '';
+  const label = document.getElementById('saveTargetBtnLabel');
+  if (label) label.textContent = 'Add Target';
+  const cancelBtn = document.getElementById('cancelTargetEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
+
+function editTarget(id) {
+  const t = window.store && window.store.targets ? window.store.targets.getById(id) : null;
+  if (!t) return;
+  document.getElementById('targetEditId').value = t.id;
+  document.getElementById('targetRepSelect').value = t.repId;
+  document.getElementById('targetProductSelect').value = t.productId;
+  document.getElementById('targetMonthSelect').value = t.month.split('-')[1];
+  document.getElementById('targetYearSelect').value = t.month.split('-')[0];
+  document.getElementById('targetValueInput').value = t.target;
+  const label = document.getElementById('saveTargetBtnLabel');
+  if (label) label.textContent = 'Update Target';
+  const cancelBtn = document.getElementById('cancelTargetEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+}
+
+function saveTarget() {
+  const editId = document.getElementById('targetEditId').value;
+  const repId = document.getElementById('targetRepSelect').value;
+  const productId = document.getElementById('targetProductSelect').value;
+  const month = document.getElementById('targetMonthSelect').value;
+  const year = document.getElementById('targetYearSelect').value;
+  const valueInput = document.getElementById('targetValueInput');
+  const value = parseFloat(valueInput.value);
+
+  if (!repId || !productId || !month || !year || isNaN(value) || value < 0) {
+    if (typeof showToast === 'function') showToast('Fill in Rep, Product, Month, Year, and a valid Target value.', 'warning');
+    return;
+  }
+
+  if (window.store && window.store.targets) {
+    window.store.targets.save({
+      id: editId || undefined,
+      repId,
+      productId,
+      month: `${year}-${month}`,
+      target: value,
+    });
+  }
+
+  resetTargetForm();
+  renderTargetsTable();
+  if (typeof showToast === 'function') showToast('Target saved.', 'success');
+}
+
+function deleteTarget(id) {
+  if (!confirm('Delete this target?')) return;
+  if (window.store && window.store.targets) {
+    window.store.targets.delete(id);
+  }
+  renderTargetsTable();
+  if (typeof showToast === 'function') showToast('Target deleted.', 'info');
 }
