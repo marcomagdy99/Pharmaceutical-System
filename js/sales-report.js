@@ -327,12 +327,14 @@ function buildDistributorAggregatedSales() {
         product: r.product,
         month: r.month,
         actual: 0,
+        actualUnits: 0,
         distributorIds: [],
       };
     }
     if (!groups[key].lineId && r.lineId) groups[key].lineId = r.lineId;
     if (!groups[key].productId && r.productId) groups[key].productId = r.productId;
     groups[key].actual += r.value;
+    groups[key].actualUnits += parseFloat(r.quantity) || 0;
     if (!groups[key].distributorIds.includes(r.distributorId)) {
       groups[key].distributorIds.push(r.distributorId);
     }
@@ -343,6 +345,103 @@ function buildDistributorAggregatedSales() {
 // ============================================================================
 // Section 7: Tab 1 - Monthly Sales & Target Filter Execution (No Currency Symbols)
 // ============================================================================
+/**
+ * Builds the full merged sales dataset: legacy REPORTS_DATA.sales/DEMO_DATA.sales
+ * rows, with imported (distributor-sourced, rep-attributed) sales merged
+ * in on top (replacing `actual` where a legacy row already exists for
+ * the same rep+product+month, or appended as a new row otherwise using
+ * that rep+product+month's manually-set target), plus phantom
+ * zero-actual rows for any target that has no matching sales row yet.
+ * Not filtered by period/role/etc -- callers do that themselves.
+ */
+function buildMergedSalesRows(lang) {
+  const baseSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
+    ? window.DEMO_DATA.sales
+    : REPORTS_DATA.sales;
+
+  const activeSales = baseSales.map((r) => ({ ...r }));
+  buildDistributorAggregatedSales().forEach((g) => {
+    const existingIdx = activeSales.findIndex(
+      (r) => r.repId === g.repId && r.product === g.product && r.month === g.month,
+    );
+    if (existingIdx >= 0) {
+      activeSales[existingIdx].actual = g.actual;
+      activeSales[existingIdx].amount = g.actual;
+      activeSales[existingIdx].actualUnits = g.actualUnits;
+      activeSales[existingIdx].distributorId = g.distributorIds[0];
+      activeSales[existingIdx].productId = g.productId || null;
+      activeSales[existingIdx].isImported = true;
+      if (g.productId && window.store && window.store.targets) {
+        const te = window.store.targets.find(g.repId, g.productId, g.month);
+        if (te) activeSales[existingIdx].targetUnits = parseFloat(te.targetUnits) || 0;
+      }
+    } else {
+      const rep = window.store && window.store.users ? window.store.users.getById(g.repId) : null;
+      const targetVal = g.productId && window.store && window.store.targets
+        ? window.store.targets.getValue(g.repId, g.productId, g.month)
+        : 0;
+      const targetEntry = g.productId && window.store && window.store.targets
+        ? window.store.targets.find(g.repId, g.productId, g.month)
+        : null;
+      activeSales.push({
+        id: `dagg_${g.repId}_${g.product}_${g.month}`,
+        month: g.month,
+        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
+        area: rep && rep.area ? rep.area : '',
+        product: g.product,
+        target: targetVal,
+        targetUnits: targetEntry ? parseFloat(targetEntry.targetUnits) || 0 : 0,
+        actual: g.actual,
+        actualUnits: g.actualUnits,
+        amount: g.actual,
+        repId: g.repId,
+        dmId: g.dmId,
+        lmId: g.lmId,
+        lineId: g.lineId || null,
+        productId: g.productId || null,
+        distributorId: g.distributorIds[0],
+        isImported: true,
+      });
+    }
+  });
+
+  // Phantom rows: a rep can have a target set for a product/month before
+  // any sales for it have come in (or ever, if they simply miss it). Those
+  // targets still need to show up (as 0 actual) so a DM/LM/BU's rolled-up
+  // total target isn't silently missing part of their team.
+  if (window.store && window.store.targets && window.store.users) {
+    window.store.targets.getAll().forEach((t) => {
+      const alreadyPresent = activeSales.some(
+        (r) => r.repId === t.repId && r.productId === t.productId && r.month === t.month,
+      );
+      if (alreadyPresent) return;
+      const rep = window.store.users.getById(t.repId);
+      const prod = getAllProductsFlat().find((p) => p.id === t.productId);
+      activeSales.push({
+        id: `target_only_${t.id}`,
+        month: t.month,
+        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
+        area: rep && rep.area ? rep.area : '',
+        product: prod ? prod.name : t.productId,
+        target: parseFloat(t.target) || 0,
+        targetUnits: parseFloat(t.targetUnits) || 0,
+        actual: 0,
+        actualUnits: 0,
+        amount: 0,
+        repId: t.repId,
+        dmId: rep ? rep.managerId || null : null,
+        lmId: rep ? (window.store.users.getById(rep.managerId || '') || {}).managerId || null : null,
+        lineId: prod ? prod.lineId : null,
+        productId: t.productId,
+        distributorId: null,
+        isImported: false,
+      });
+    });
+  }
+
+  return activeSales;
+}
+
 function renderSalesReport() {
   closeProductDropdown();
   closeMonthDropdown();
@@ -393,84 +492,7 @@ function renderSalesReport() {
     periodLabel.textContent = `${lang === 'ar' ? 'الفترة:' : 'Period:'} ${monthsLabel} ${selectedYear} | ${prodLabel}`;
   }
 
-  const baseSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-    ? window.DEMO_DATA.sales
-    : REPORTS_DATA.sales;
-
-  // Merge in imported (distributor-sourced) sales that have been matched
-  // to a rep via an Area alias (see distributors.html's Unmatched
-  // Territories). If a legacy row already exists for the same
-  // rep+product+month, its actual is replaced with the real imported net
-  // value (keeping that row's existing target/lineId/area); otherwise a
-  // new row is appended using this rep+product+month's manually-set
-  // target (via Manage Targets), or 0 if none has been set.
-  const activeSales = baseSales.map((r) => ({ ...r }));
-  buildDistributorAggregatedSales().forEach((g) => {
-    const existingIdx = activeSales.findIndex(
-      (r) => r.repId === g.repId && r.product === g.product && r.month === g.month,
-    );
-    if (existingIdx >= 0) {
-      activeSales[existingIdx].actual = g.actual;
-      activeSales[existingIdx].amount = g.actual;
-      activeSales[existingIdx].distributorId = g.distributorIds[0];
-      activeSales[existingIdx].productId = g.productId || null;
-      activeSales[existingIdx].isImported = true;
-    } else {
-      const rep = window.store && window.store.users ? window.store.users.getById(g.repId) : null;
-      const targetVal = g.productId && window.store && window.store.targets
-        ? window.store.targets.getValue(g.repId, g.productId, g.month)
-        : 0;
-      activeSales.push({
-        id: `dagg_${g.repId}_${g.product}_${g.month}`,
-        month: g.month,
-        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
-        area: rep && rep.area ? rep.area : '',
-        product: g.product,
-        target: targetVal,
-        actual: g.actual,
-        amount: g.actual,
-        repId: g.repId,
-        dmId: g.dmId,
-        lmId: g.lmId,
-        lineId: g.lineId || null,
-        productId: g.productId || null,
-        distributorId: g.distributorIds[0],
-        isImported: true,
-      });
-    }
-  });
-
-  // Phantom rows: a rep can have a target set for a product/month before
-  // any sales for it have come in (or ever, if they simply miss it). Those
-  // targets still need to show up (as 0 actual) so a DM/LM/BU's rolled-up
-  // total target isn't silently missing part of their team.
-  if (window.store && window.store.targets && window.store.users) {
-    window.store.targets.getAll().forEach((t) => {
-      const alreadyPresent = activeSales.some(
-        (r) => r.repId === t.repId && r.productId === t.productId && r.month === t.month,
-      );
-      if (alreadyPresent) return;
-      const rep = window.store.users.getById(t.repId);
-      const prod = getAllProductsFlat().find((p) => p.id === t.productId);
-      activeSales.push({
-        id: `target_only_${t.id}`,
-        month: t.month,
-        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
-        area: rep && rep.area ? rep.area : '',
-        product: prod ? prod.name : t.productId,
-        target: parseFloat(t.target) || 0,
-        actual: 0,
-        amount: 0,
-        repId: t.repId,
-        dmId: rep ? rep.managerId || null : null,
-        lmId: rep ? (window.store.users.getById(rep.managerId || '') || {}).managerId || null : null,
-        lineId: prod ? prod.lineId : null,
-        productId: t.productId,
-        distributorId: null,
-        isImported: false,
-      });
-    });
-  }
+  const activeSales = buildMergedSalesRows(lang);
 
   let filtered = activeSales.filter((row) => targetPeriods.includes(row.month));
 
@@ -943,19 +965,24 @@ function renderTargetsTable() {
 
   tbody.replaceChildren();
   if (!targets.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 16px; color: var(--gray-500); font-style: italic;">No targets set yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 16px; color: var(--gray-500); font-style: italic;">No targets set yet.</td></tr>`;
     return;
   }
 
   targets.forEach((t) => {
     const rep = allUsers.find((u) => u.id === t.repId);
     const prod = allProducts.find((p) => p.id === t.productId);
+    const units = parseFloat(t.targetUnits) || 0;
+    const unitPrice = parseFloat(t.unitPrice) || 0;
+    const storedValue = t.target != null ? parseFloat(t.target) || 0 : units * unitPrice;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${esc(rep ? rep.name : t.repId)}</td>
       <td>${esc(prod ? prod.name : t.productId)}</td>
       <td>${esc(t.month)}</td>
-      <td style="font-weight:700;">${(parseFloat(t.target) || 0).toLocaleString()}</td>
+      <td>${units.toLocaleString()}</td>
+      <td>${unitPrice.toLocaleString()}</td>
+      <td style="font-weight:700;">${storedValue.toLocaleString()}</td>
       <td style="text-align:end; white-space:nowrap;">
         <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${esc(t.id)}')" title="Edit">✏️</button>
         <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${esc(t.id)}')" title="Delete">🗑️</button>
@@ -984,11 +1011,19 @@ function closeTargetsModal() {
 
 function resetTargetForm() {
   document.getElementById('targetEditId').value = '';
-  document.getElementById('targetValueInput').value = '';
+  document.getElementById('targetUnitsInput').value = '';
+  document.getElementById('targetUnitPriceInput').value = '';
+  document.getElementById('targetComputedValueDisplay').value = '0';
   const label = document.getElementById('saveTargetBtnLabel');
   if (label) label.textContent = 'Add Target';
   const cancelBtn = document.getElementById('cancelTargetEditBtn');
   if (cancelBtn) cancelBtn.style.display = 'none';
+}
+
+function updateComputedTargetValue() {
+  const units = parseFloat(document.getElementById('targetUnitsInput').value) || 0;
+  const price = parseFloat(document.getElementById('targetUnitPriceInput').value) || 0;
+  document.getElementById('targetComputedValueDisplay').value = units * price;
 }
 
 function editTarget(id) {
@@ -999,7 +1034,9 @@ function editTarget(id) {
   document.getElementById('targetProductSelect').value = t.productId;
   document.getElementById('targetMonthSelect').value = t.month.split('-')[1];
   document.getElementById('targetYearSelect').value = t.month.split('-')[0];
-  document.getElementById('targetValueInput').value = t.target;
+  document.getElementById('targetUnitsInput').value = t.targetUnits;
+  document.getElementById('targetUnitPriceInput').value = t.unitPrice;
+  document.getElementById('targetComputedValueDisplay').value = t.target != null ? t.target : (parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0);
   const label = document.getElementById('saveTargetBtnLabel');
   if (label) label.textContent = 'Update Target';
   const cancelBtn = document.getElementById('cancelTargetEditBtn');
@@ -1012,11 +1049,15 @@ function saveTarget() {
   const productId = document.getElementById('targetProductSelect').value;
   const month = document.getElementById('targetMonthSelect').value;
   const year = document.getElementById('targetYearSelect').value;
-  const valueInput = document.getElementById('targetValueInput');
-  const value = parseFloat(valueInput.value);
+  const units = parseFloat(document.getElementById('targetUnitsInput').value);
+  const unitPrice = parseFloat(document.getElementById('targetUnitPriceInput').value);
+  // Normally units * unitPrice, but the admin can type directly into this
+  // field to override the computed figure -- whatever it holds at save
+  // time is what gets stored as the actual target value.
+  const targetValue = parseFloat(document.getElementById('targetComputedValueDisplay').value);
 
-  if (!repId || !productId || !month || !year || isNaN(value) || value < 0) {
-    if (typeof showToast === 'function') showToast('Fill in Rep, Product, Month, Year, and a valid Target value.', 'warning');
+  if (!repId || !productId || !month || !year || isNaN(units) || units < 0 || isNaN(unitPrice) || unitPrice < 0 || isNaN(targetValue) || targetValue < 0) {
+    if (typeof showToast === 'function') showToast('Fill in Rep, Product, Month, Year, Target Units, Unit Price, and a valid Target Value (all non-negative).', 'warning');
     return;
   }
 
@@ -1026,7 +1067,9 @@ function saveTarget() {
       repId,
       productId,
       month: `${year}-${month}`,
-      target: value,
+      targetUnits: units,
+      unitPrice: unitPrice,
+      target: targetValue,
     });
   }
 
