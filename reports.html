@@ -82,7 +82,7 @@
               data-tab="sales"
               onclick="switchReportTab('sales')"
             >
-              📈 <span data-i18n="tabSales">Monthly Sales & Targets</span>
+              💊 <span data-i18n="tabSales">Pharmacies Sales</span>
             </button>
             <button
               class="report-tab-btn"
@@ -122,139 +122,68 @@
           </div>
           <!-- TAB 1: Monthly Sales & Targets -->
           <div class="report-content-panel active" id="tabPanel-sales">
+            <!-- Pharmacies Sales: raw, per-pharmacy detail straight from
+                 imported distributor sheets (store.distributorSales), not
+                 an aggregation. The Achievements tab is the aggregated
+                 view built on top of this same data -- see
+                 achievements-report.js. -->
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
-                <!-- Multi-Select Month Dropdown (previously a single-choice select box;
-                                 now allows picking several months within the selected Year, same
-                                 pattern as the Products dropdown below). JS handlers live in
-                                 js/sales-report.js. -->
-                <div
-                  class="sales-filter-field col-month"
-                  id="monthMultiSelectContainer"
-                >
-                  <label data-i18n="labelMonth">Month:</label>
-                  <div class="multi-select-container">
-                    <button
-                      type="button"
-                      class="form-control multi-select-btn"
-                      id="monthDropdownBtn"
-                      onclick="toggleMonthDropdown(event)"
-                    >
-                      <span id="monthDropdownLabel">September</span>
-                      <span class="dropdown-caret">▾</span>
-                    </button>
-                    <div class="multi-select-menu" id="monthDropdownMenu">
-                      <label class="multi-select-item select-all-item">
-                        <input
-                          type="checkbox"
-                          id="selectAllMonths"
-                          onchange="toggleSelectAllMonths(this.checked)"
-                        />
-                        <span data-i18n="selectAll">Select All</span>
-                      </label>
-                      <div class="multi-select-divider"></div>
-                      <div
-                        id="monthCheckboxList"
-                        class="product-checkbox-list"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="sales-filter-field col-year">
-                  <label data-i18n="labelYear">Year:</label>
-                  <select id="salesYearSelect" class="form-control"></select>
-                </div>
-                <!-- Multi-Select Product Dropdown -->
-                <div
-                  class="sales-filter-field col-product"
-                  id="productMultiSelectContainer"
-                >
-                  <label data-i18n="labelProduct">Products / Medicines:</label>
-                  <div class="multi-select-container">
-                    <button
-                      type="button"
-                      class="form-control multi-select-btn"
-                      id="prodDropdownBtn"
-                      onclick="toggleProductDropdown(event)"
-                    >
-                      <span id="prodDropdownLabel"
-                        >All Products (Select All)</span
-                      >
-                      <span class="dropdown-caret">▾</span>
-                    </button>
-                    <div class="multi-select-menu" id="prodDropdownMenu">
-                      <label class="multi-select-item select-all-item">
-                        <input
-                          type="checkbox"
-                          id="selectAllProds"
-                          checked
-                          onchange="toggleSelectAllProducts(this.checked)"
-                        />
-                        <span data-i18n="selectAll">Select All</span>
-                      </label>
-                      <div class="multi-select-divider"></div>
-                      <div
-                        id="productCheckboxList"
-                        class="product-checkbox-list"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <!-- Cascading Level 1: Line / Line Manager -->
-                <div
-                  class="sales-filter-field col-line"
-                  id="salesLineFilterGroup"
-                  style="display: none"
-                >
-                  <label data-i18n="labelLine">Line / LM:</label>
-                  <select
-                    id="salesLineSelect"
-                    class="form-control"
-                    onchange="onSalesLineChange()"
-                  ></select>
-                </div>
-                <!-- Cascading Level 2: District / District Manager -->
-                <div
-                  class="sales-filter-field col-dm"
-                  id="salesDmFilterGroup"
-                  style="display: none"
-                >
-                  <label data-i18n="labelDm">District / DM:</label>
-                  <select
-                    id="salesDmSelect"
-                    class="form-control"
-                    onchange="onSalesDmChange()"
-                  ></select>
-                </div>
-                <!-- Cascading Level 3: Medical Rep -->
-                <div
-                  class="sales-filter-field col-rep"
-                  id="salesRepFilterGroup"
-                  style="display: none"
-                >
-                  <label data-i18n="labelRep">Medical Rep:</label>
-                  <select id="salesRepSelect" class="form-control">
-                    <option value="all" data-i18n="allReps">
-                      All Representatives
+                <div class="sales-filter-field col-product">
+                  <label data-i18n="labelProduct">Product:</label>
+                  <select id="pharmSalesProductSelect" class="form-control">
+                    <option value="all" data-i18n="allProducts">
+                      All Products
                     </option>
                   </select>
                 </div>
-                <!-- Distributor filter: populated from store.distributors.getAll() -->
+                <div class="sales-filter-field col-month">
+                  <label data-i18n="labelMonth">Month:</label>
+                  <select
+                    id="pharmSalesMonthSelect"
+                    class="form-control"
+                  ></select>
+                </div>
+                <div class="sales-filter-field col-year">
+                  <label data-i18n="labelYear">Year:</label>
+                  <select
+                    id="pharmSalesYearSelect"
+                    class="form-control"
+                  ></select>
+                </div>
                 <div class="sales-filter-field col-distributor">
                   <label data-i18n="labelDistributor">Distributor:</label>
-                  <select id="salesDistributorSelect" class="form-control">
-                    <option value="all" data-i18n="allDistributors">All Distributors</option>
+                  <select id="pharmSalesDistributorSelect" class="form-control">
+                    <option value="all" data-i18n="allDistributors">
+                      All Distributors
+                    </option>
                   </select>
                 </div>
-                <!-- Supply Type filter: Commercial vs Tender, derived from the
-                     selected distributor's own type, not a separate flag on each sale row -->
-                <div class="sales-filter-field col-tender">
-                  <label data-i18n="labelSupplyType">Supply Type:</label>
-                  <select id="salesTenderSelect" class="form-control">
-                    <option value="all" data-i18n="allSupplyTypes">All (Commercial &amp; Tenders)</option>
-                    <option value="commercial" data-i18n="commercialOnly">Commercial Only</option>
-                    <option value="tender" data-i18n="tendersOnly">Tenders Only</option>
-                  </select>
+                <!-- Line: locked to the viewer's own line(s) for Rep/DM/LM
+                     (a DM or LM covering 2 lines gets both), fully open
+                     for BU/Admin/HR. See populatePharmSalesLineSelect(). -->
+                <div class="sales-filter-field col-line">
+                  <label data-i18n="labelLine">Line:</label>
+                  <select
+                    id="pharmSalesLineSelect"
+                    class="form-control"
+                  ></select>
+                </div>
+                <div class="sales-filter-field">
+                  <label data-i18n="labelDateFrom">Date From:</label>
+                  <input
+                    type="date"
+                    id="pharmSalesDateFrom"
+                    class="form-control"
+                  />
+                </div>
+                <div class="sales-filter-field">
+                  <label data-i18n="labelDateTo">Date To:</label>
+                  <input
+                    type="date"
+                    id="pharmSalesDateTo"
+                    class="form-control"
+                  />
                 </div>
                 <div class="sales-filter-field col-btn">
                   <button
@@ -274,39 +203,37 @@
             <!-- Dynamic KPI Cards Row -->
             <div class="kpi-grid">
               <div class="kpi-card primary">
-                <span class="kpi-label" data-i18n="kpiActualSales"
-                  >Actual Sales</span
-                >
+                <span class="kpi-label" data-i18n="kpiTotalRows">Rows</span>
                 <span class="kpi-value" id="kpiTotalActual">0</span>
                 <span class="kpi-subtext" id="kpiActualSubtext"
                   >Selected Scope</span
                 >
               </div>
               <div class="kpi-card info">
-                <span class="kpi-label" data-i18n="kpiAssignedTarget"
-                  >Assigned Target</span
+                <span class="kpi-label" data-i18n="kpiTotalQuantity"
+                  >Total Quantity</span
                 >
                 <span class="kpi-value" id="kpiTotalTarget">0</span>
                 <span class="kpi-subtext" id="kpiTargetSubtext"
-                  >Monthly Target</span
+                  >Units Pulled</span
                 >
               </div>
               <div class="kpi-card success">
-                <span class="kpi-label" data-i18n="kpiAchievement"
-                  >Achievement</span
+                <span class="kpi-label" data-i18n="kpiTotalValue"
+                  >Total Value</span
                 >
-                <span class="kpi-value" id="kpiAchievement">0%</span>
+                <span class="kpi-value" id="kpiAchievement">0</span>
                 <span class="kpi-subtext" id="kpiAchievementSubtext"
-                  >Target vs Actual</span
+                  >Net of Returns</span
                 >
               </div>
               <div class="kpi-card warning">
-                <span class="kpi-label" data-i18n="kpiActiveProducts"
-                  >Products Filtered</span
+                <span class="kpi-label" data-i18n="kpiDistinctPharmacies"
+                  >Pharmacies</span
                 >
-                <span class="kpi-value" id="kpiActiveReps">All</span>
+                <span class="kpi-value" id="kpiActiveReps">0</span>
                 <span class="kpi-subtext" id="kpiProductsSubtext"
-                  >Product breakdown</span
+                  >Distinct in scope</span
                 >
               </div>
             </div>
@@ -398,20 +325,19 @@
               class="sales-period-pill"
               style="display: none; margin-top: 10px"
             ></div>
-            <!-- Sales Table with Product Breakdown -->
+            <!-- Pharmacy Sales Table (raw rows) -->
             <div class="table-container">
               <table class="report-table">
                 <thead>
                   <tr>
-                    <th>Month</th>
-                    <th>Rep Name / Area</th>
+                    <th data-i18n="colDate">Date</th>
+                    <th data-i18n="colPharmacy">Pharmacy</th>
                     <th>Product / Medicine</th>
                     <th data-i18n="colDistributor">Distributor</th>
-                    <th data-i18n="colSupplyType">Type</th>
-                    <th>Target</th>
-                    <th>Actual Sales</th>
-                    <th>Achievement</th>
-                    <th>Status</th>
+                    <th data-i18n="colArea">Area / Territory</th>
+                    <th data-i18n="colRep">Rep</th>
+                    <th data-i18n="colQuantity">Quantity</th>
+                    <th data-i18n="colValue">Value</th>
                   </tr>
                 </thead>
                 <tbody id="salesReportTbody"></tbody>
@@ -436,7 +362,11 @@
                   <select id="achYearSelect" class="form-control"></select>
                 </div>
                 <div class="sales-filter-field col-btn">
-                  <button type="button" class="btn btn-primary" onclick="renderAchievementsReport()">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="renderAchievementsReport()"
+                  >
                     <span>🔍</span> <span data-i18n="btnShow">Show</span>
                   </button>
                 </div>
@@ -1995,9 +1925,9 @@
               <div>
                 <h3>Manage Sales Targets</h3>
                 <p class="modal-subtitle">
-                  Set a monthly target per rep and product. Each rep's
-                  target only applies to that specific month -- set a new
-                  one any time it changes.
+                  Set a monthly target per rep and product. Each rep's target
+                  only applies to that specific month -- set a new one any time
+                  it changes.
                 </p>
               </div>
             </div>
@@ -2015,19 +1945,32 @@
               <input type="hidden" id="targetEditId" />
               <div class="form-group col-span-1">
                 <label class="form-label">Rep</label>
-                <select id="targetRepSelect" class="form-control modern-select"></select>
+                <select
+                  id="targetRepSelect"
+                  class="form-control modern-select"
+                ></select>
               </div>
               <div class="form-group col-span-1">
                 <label class="form-label">Product</label>
-                <select id="targetProductSelect" class="form-control modern-select"></select>
+                <select
+                  id="targetProductSelect"
+                  class="form-control modern-select"
+                  onchange="onTargetProductSelectChange()"
+                ></select>
               </div>
               <div class="form-group col-span-1">
                 <label class="form-label">Month</label>
-                <select id="targetMonthSelect" class="form-control modern-select"></select>
+                <select
+                  id="targetMonthSelect"
+                  class="form-control modern-select"
+                ></select>
               </div>
               <div class="form-group col-span-1">
                 <label class="form-label">Year</label>
-                <select id="targetYearSelect" class="form-control modern-select"></select>
+                <select
+                  id="targetYearSelect"
+                  class="form-control modern-select"
+                ></select>
               </div>
               <div class="form-group col-span-1">
                 <label class="form-label">Target Units</label>
@@ -2056,8 +1999,15 @@
               <div class="form-group col-span-2">
                 <label class="form-label">
                   Target Value
-                  <span style="font-weight: 400; color: var(--gray-500); font-size: 0.78rem;">
-                    (auto-filled as Units × Unit Price -- you can still edit it directly)
+                  <span
+                    style="
+                      font-weight: 400;
+                      color: var(--gray-500);
+                      font-size: 0.78rem;
+                    "
+                  >
+                    (auto-filled as Units × Unit Price -- you can still edit it
+                    directly)
                   </span>
                 </label>
                 <input
@@ -2070,13 +2020,13 @@
                 />
               </div>
             </div>
-            <div style="margin-top: 10px; text-align: end;">
+            <div style="margin-top: 10px; text-align: end">
               <button
                 type="button"
                 class="btn btn-outline"
                 id="cancelTargetEditBtn"
                 onclick="resetTargetForm()"
-                style="display: none; margin-inline-end: 8px;"
+                style="display: none; margin-inline-end: 8px"
               >
                 Cancel Edit
               </button>
@@ -2090,7 +2040,7 @@
             </div>
 
             <!-- Existing targets table -->
-            <div class="table-container" style="margin-top: 18px;">
+            <div class="table-container" style="margin-top: 18px">
               <table class="report-table">
                 <thead>
                   <tr>
@@ -2108,7 +2058,11 @@
             </div>
           </div>
           <div class="custom-modal-footer modern-modal-footer">
-            <button type="button" class="btn btn-outline" onclick="closeTargetsModal()">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeTargetsModal()"
+            >
               <span>✕</span> <span>Close</span>
             </button>
           </div>

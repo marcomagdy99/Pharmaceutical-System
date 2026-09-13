@@ -52,6 +52,7 @@ const distributorTranslations = {
     role_product: "Product / Medicine Name",
     role_value: "Sales Value (Amount)",
     role_quantity: "Quantity / Units Pulled",
+    role_date: "Transaction Date (optional)",
     role_area: "Area / Territory (raw text)",
     role_pharmacy: "Pharmacy / Client Name",
     supply_type: "Supply Type",
@@ -77,6 +78,15 @@ const distributorTranslations = {
     select_product: "-- Select Product --",
     product_linked_successfully: "Product linked and matching sales attributed to its Line.",
     select_product_first: "Select a product first.",
+    import_history: "Import History",
+    import_history_desc: "Every sheet uploaded so far. Deleting a batch removes all the sales rows it created -- use this to undo a mistaken upload (wrong distributor, wrong file, etc.).",
+    import_month: "Month",
+    import_file: "File",
+    import_uploaded_at: "Uploaded",
+    no_imports_yet: "No sheets uploaded yet.",
+    confirm_delete_batch: "Delete this import? This will permanently remove",
+    confirm_delete_batch_suffix: "sales rows. This cannot be undone.",
+    batch_deleted: "Import deleted.",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -113,6 +123,7 @@ const distributorTranslations = {
     role_product: "اسم المنتج / الدواء",
     role_value: "قيمة المبيعات",
     role_quantity: "الكمية / عدد الوحدات المسحوبة",
+    role_date: "تاريخ العملية (اختياري)",
     role_area: "المنطقة / الإقليم (نص خام)",
     role_pharmacy: "اسم الصيدلية / العميل",
     supply_type: "نوع التوريد",
@@ -138,6 +149,15 @@ const distributorTranslations = {
     select_product: "-- اختار المنتج --",
     product_linked_successfully: "اتربط المنتج وحسبنا المبيعات المطابقة على الـ Line بتاعه.",
     select_product_first: "اختار منتج الأول.",
+    import_history: "سجل الاستيراد",
+    import_history_desc: "كل شيت اترفع لحد دلوقتي. مسح رفعة بيشيل كل صفوف المبيعات اللي اتسجلت منها -- استخدمها عشان تلغي رفعة غلط (موزّع غلط، ملف غلط...).",
+    import_month: "الشهر",
+    import_file: "الملف",
+    import_uploaded_at: "تاريخ الرفع",
+    no_imports_yet: "مفيش شيتات اترفعت لحد دلوقتي.",
+    confirm_delete_batch: "تمسح الاستيراد ده؟ هيتشال نهائيًا",
+    confirm_delete_batch_suffix: "صف مبيعات. الإجراء ده مايتراجعش.",
+    batch_deleted: "اتمسح الاستيراد.",
   },
 };
 
@@ -178,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStats();
   renderPendingAreas();
   renderPendingProducts();
+  renderImportBatches();
 });
 
 function renderDistributors(filterText = "") {
@@ -363,6 +384,7 @@ const MAPPING_ROLES = [
   { value: "product", i18nKey: "role_product" },
   { value: "value", i18nKey: "role_value" },
   { value: "quantity", i18nKey: "role_quantity" },
+  { value: "date", i18nKey: "role_date" },
   { value: "area", i18nKey: "role_area" },
 ];
 
@@ -688,4 +710,76 @@ function linkProductAlias(distributorId, productRaw, selectId) {
 
   renderPendingProducts();
   if (typeof showToast === "function") showToast(t.product_linked_successfully, "success");
+}
+
+// ==========================================
+// Section: Import History
+// Lists every upload batch (store.importBatches) and lets the admin
+// delete one entirely -- e.g. to undo a mistaken upload -- removing
+// every distributorSales row it created (store.distributorSales.deleteByBatch).
+// ==========================================
+function renderImportBatches() {
+  const tbody = document.getElementById("importBatchesTableBody");
+  const emptyMsg = document.getElementById("importBatchesEmptyMsg");
+  if (!tbody) return;
+  if (!window.store || !window.store.importBatches) return;
+
+  const isAr = document.documentElement.dir === "rtl";
+  const batches = window.store.importBatches.getAll()
+    .slice()
+    .sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
+  const distributors = getDistributorsList();
+
+  tbody.replaceChildren();
+
+  if (!batches.length) {
+    if (emptyMsg) emptyMsg.style.display = "block";
+    return;
+  }
+  if (emptyMsg) emptyMsg.style.display = "none";
+
+  batches.forEach((b) => {
+    const dist = distributors.find((d) => d.id === b.distributorId);
+    const uploadedLabel = b.uploadedAt
+      ? new Date(b.uploadedAt).toLocaleString(isAr ? "ar-EG" : "en-US")
+      : "";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="px-3 py-2">${esc(dist ? dist.name : b.distributorId)}</td>
+      <td class="px-3 py-2">${esc(b.month)}</td>
+      <td class="px-3 py-2">${b.rowCount || 0}</td>
+      <td class="px-3 py-2">${esc(b.fileName || "")}</td>
+      <td class="px-3 py-2" style="white-space:nowrap;">${esc(uploadedLabel)}</td>
+      <td class="px-3 py-2 text-end">
+        <button class="btn btn-sm btn-light text-danger" onclick="deleteImportBatch('${esc(b.id)}')" title="Delete">
+          🗑️
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteImportBatch(batchId) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const batch = window.store && window.store.importBatches
+    ? window.store.importBatches.getById(batchId)
+    : null;
+  const rowCount = batch ? (batch.rowCount || 0) : 0;
+
+  if (!confirm(`${t.confirm_delete_batch} ${rowCount} ${t.confirm_delete_batch_suffix}`)) return;
+
+  if (window.store && window.store.distributorSales) {
+    window.store.distributorSales.deleteByBatch(batchId);
+  }
+  if (window.store && window.store.importBatches) {
+    window.store.importBatches.delete(batchId);
+  }
+
+  renderImportBatches();
+  renderPendingAreas();
+  renderPendingProducts();
+  if (typeof showToast === "function") showToast(t.batch_deleted, "info");
 }

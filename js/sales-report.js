@@ -1,21 +1,21 @@
 /**
  * @file sales-report.js
- * @description Reports page - "Sales" tab: monthly sales vs target, the
- * product multi-select filter, the month multi-select filter, Excel
- * upload, and CSV export.
+ * @description Reports page - "Pharmacies Sales" tab: raw, per-pharmacy
+ * detail straight from imported distributor sheets (store.distributorSales),
+ * filterable by Product/Month/Year/Distributor/Date range/Line (Line is
+ * locked to the viewer's own line(s) for Rep/DM/LM, open for BU/Admin/HR).
+ * Also owns the Excel upload flow and the Manage Targets modal used by
+ * the Achievements tab (achievements-report.js), which aggregates this
+ * same distributorSales data on top -- this file is not itself an
+ * aggregated view anymore.
  * Depends on shared-report.js (must load after it).
  *
- * Changes in this revision:
- *  - Added a Month multi-select dropdown (Section 5.5), mirroring the
- *    existing Product multi-select dropdown (Section 5), so a user can
- *    pick several months within the selected Year instead of just one.
- *  - renderSalesReport() and exportSalesReport() now filter by an array
- *    of selected months (selectedMonths / targetPeriods) instead of a
- *    single targetPeriod string.
- *  - Requires the matching markup change in reports.html: the old
- *    <select id="salesMonthSelect"> is replaced with a multi-select
- *    dropdown container (id="monthMultiSelectContainer") built the same
- *    way as the existing #productMultiSelectContainer.
+ * Note: buildMergedSalesRows()/buildDistributorAggregatedSales() below
+ * (and the old multi-select month/product dropdown helpers earlier in
+ * this file) supported the previous rep+product+month aggregated Sales
+ * table that this tab used to show. They're unused now that the tab is
+ * the raw Pharmacies Sales view, but are left defined rather than
+ * deleted in case they're wired back in later.
  */
 
 // ============================================================================
@@ -442,198 +442,235 @@ function buildMergedSalesRows(lang) {
   return activeSales;
 }
 
-function renderSalesReport() {
-  closeProductDropdown();
-  closeMonthDropdown();
-  const tbody = document.getElementById('salesReportTbody');
-  if (!tbody) return;
-  tbody.replaceChildren();
-  const yearSelect = document.getElementById('salesYearSelect');
-  const lineSelect = document.getElementById('salesLineSelect');
-  const dmSelect = document.getElementById('salesDmSelect');
-  const repSelect = document.getElementById('salesRepSelect');
-  const distributorSelect = document.getElementById('salesDistributorSelect');
-  const tenderSelect = document.getElementById('salesTenderSelect');
-  const periodLabel = document.getElementById('salesFilterPeriodLabel');
+/**
+ * Returns the list of Line ids this user is restricted to (Rep/DM/LM --
+ * a DM or LM covering more than one line gets all of them), or null for
+ * an unrestricted role (BU/Admin/HR), meaning "every line".
+ */
+function getPharmSalesAllowedLineIds(user) {
+  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
+  const isOpenRole = role === 'admin' || role === 'business_unit' || role === 'hr';
+  if (isOpenRole) return null;
+  const userLines = typeof window.getUserLines === 'function' && user ? window.getUserLines(user.id) : [];
+  return userLines.map((l) => l.id);
+}
+
+/**
+ * Populates the Pharmacies Sales tab's filters: Product, Month, Year,
+ * Distributor, and the role-scoped Line select (locked to the viewer's
+ * own line(s) for Rep/DM/LM, fully open for BU/Admin/HR).
+ */
+function initPharmSalesFilters(user) {
+  const productSelect = document.getElementById('pharmSalesProductSelect');
+  const monthSelect = document.getElementById('pharmSalesMonthSelect');
+  const yearSelect = document.getElementById('pharmSalesYearSelect');
+  const distSelect = document.getElementById('pharmSalesDistributorSelect');
+  const lineSelect = document.getElementById('pharmSalesLineSelect');
   const lang = getCurrentLang();
-  const _n = new Date();
-  const _defMonth = String(_n.getMonth() + 1).padStart(2, '0');
-  const _defYear = String(_n.getFullYear());
+  const now = new Date();
 
-  const checkedMonthBoxes = Array.from(document.querySelectorAll('.month-checkbox:checked'));
-  const allMonthsCount = document.querySelectorAll('.month-checkbox').length;
-  // If nothing is checked (edge case, e.g. user unchecked everything),
-  // fall back to the current month instead of matching zero rows silently.
-  const selectedMonths = checkedMonthBoxes.length > 0 ? checkedMonthBoxes.map((cb) => cb.value) : [_defMonth];
-  const selectedYear = yearSelect ? yearSelect.value : _defYear;
-  const targetPeriods = selectedMonths.map((m) => `${selectedYear}-${m}`);
-
-  const selectedLine = lineSelect ? lineSelect.value : 'all';
-  const selectedDm = dmSelect ? dmSelect.value : 'all';
-  const selectedRep = repSelect ? repSelect.value : 'all';
-  const checkedBoxes = Array.from(document.querySelectorAll('.prod-checkbox:checked'));
-  const selectedProducts = checkedBoxes.map((cb) => cb.value);
-  const user = checkAuth();
-  const isRep = window.isRepRole ? window.isRepRole(user) : ((user?.role === 'medical_rep' || user?.role === 'rep'));
-
-  const monthsLabel = buildMonthsLabel(selectedMonths, allMonthsCount, lang);
-
-  const allProdsCount = document.querySelectorAll('.prod-checkbox').length;
-  let prodLabel = '';
-  if (selectedProducts.length === allProdsCount) {
-    prodLabel = lang === 'ar' ? 'جميع الأدوية' : 'All Products';
-  } else if (selectedProducts.length === 1) {
-    prodLabel = selectedProducts[0];
-  } else {
-    prodLabel = lang === 'ar' ? `${selectedProducts.length} أدوية محددة` : `${selectedProducts.length} Products Selected`;
+  if (monthSelect && !monthSelect.dataset.populated) {
+    MONTH_NAMES.forEach((m, idx) => {
+      const val = String(idx + 1).padStart(2, '0');
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : m;
+      if (idx === now.getMonth()) opt.selected = true;
+      monthSelect.appendChild(opt);
+    });
+    monthSelect.dataset.populated = 'true';
   }
 
-  if (periodLabel) {
-    periodLabel.textContent = `${lang === 'ar' ? 'الفترة:' : 'Period:'} ${monthsLabel} ${selectedYear} | ${prodLabel}`;
+  if (yearSelect && !yearSelect.dataset.populated) {
+    const currentYear = String(now.getFullYear());
+    ['2025', '2026', '2027'].forEach((y) => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    });
+    yearSelect.dataset.populated = 'true';
   }
 
-  const activeSales = buildMergedSalesRows(lang);
-
-  let filtered = activeSales.filter((row) => targetPeriods.includes(row.month));
-
-  if (isRep) {
-    filtered = filtered.filter((row) => row.repId === user.id);
-  } else if (user && (user.role === 'district_manager' || user.role === 'dm')) {
-    filtered = filtered.filter((row) => row.dmId === user.id);
-    if (selectedLine && selectedLine !== 'all') {
-      filtered = filtered.filter((row) => row.lineId === selectedLine);
-    }
-    if (selectedRep && selectedRep !== 'all') {
-      filtered = filtered.filter((row) => row.repId === selectedRep);
-    }
-  } else if (user && (user.role === 'line_manager' || user.role === 'lm')) {
-    const userLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id) : [];
-    const myLineIds = userLines.map((l) => l.id);
-    if (myLineIds.length > 0) {
-      filtered = filtered.filter((row) => myLineIds.includes(row.lineId) || row.lmId === user.id);
-    }
-    if (selectedLine && selectedLine !== 'all') {
-      filtered = filtered.filter((row) => row.lineId === selectedLine);
-    }
-    if (selectedDm && selectedDm !== 'all') {
-      filtered = filtered.filter((row) => row.dmId === selectedDm);
-    }
-    if (selectedRep && selectedRep !== 'all') {
-      filtered = filtered.filter((row) => row.repId === selectedRep);
-    }
-  } else {
-    if (selectedLine && selectedLine !== 'all') {
-      filtered = filtered.filter((row) => row.lineId === selectedLine);
-    }
-    if (selectedDm && selectedDm !== 'all') {
-      filtered = filtered.filter((row) => row.dmId === selectedDm);
-    }
-    if (selectedRep && selectedRep !== 'all') {
-      filtered = filtered.filter((row) => row.repId === selectedRep);
-    }
-  }
-
-  const selectedDistributor = distributorSelect ? distributorSelect.value : 'all';
-  const selectedSupplyType = tenderSelect ? tenderSelect.value : 'all';
-
-  if (selectedDistributor && selectedDistributor !== 'all') {
-    filtered = filtered.filter((row) => row.distributorId === selectedDistributor);
-  }
-  if (selectedSupplyType && selectedSupplyType !== 'all') {
-    filtered = filtered.filter((row) => {
-      // Rows with no distributorId at all (legacy/manually-entered sales
-      // that predate this feature) have no determinable supply type, so
-      // they're excluded from a Commercial-only or Tenders-only view
-      // rather than being guessed into either bucket.
-      if (!row.distributorId) return false;
-      const type = window.store && window.store.distributors
-        ? window.store.distributors.getType(row.distributorId)
-        : 'commercial';
-      return type === selectedSupplyType;
+  if (distSelect) {
+    const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
+    const allLabel = lang === 'ar' ? 'جميع الموزعين' : 'All Distributors';
+    distSelect.innerHTML = `<option value="all">${allLabel}</option>`;
+    distributors.forEach((d) => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.name;
+      distSelect.appendChild(opt);
     });
   }
 
-  filtered = filtered.filter((row) => selectedProducts.includes(row.product));
+  const allowedLineIds = getPharmSalesAllowedLineIds(user);
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  const scopedLines = allowedLineIds === null ? allLines : allLines.filter((l) => allowedLineIds.includes(l.id));
 
-  let totalActual = 0;
-  let totalTarget = 0;
-  const activeProductsSet = new Set();
+  if (lineSelect) {
+    if (allowedLineIds === null) {
+      const allLabel = lang === 'ar' ? 'كل الخطوط' : 'All Lines';
+      lineSelect.innerHTML = `<option value="all">${allLabel}</option>`;
+      appendSelectOptions(lineSelect, allLines, (l) => l.id, (l) => l.name);
+      lineSelect.disabled = false;
+    } else if (scopedLines.length <= 1) {
+      lineSelect.innerHTML = '';
+      const opt = document.createElement('option');
+      opt.value = scopedLines[0] ? scopedLines[0].id : 'none';
+      opt.textContent = scopedLines[0] ? scopedLines[0].name : (lang === 'ar' ? 'مفيش خط متعين' : 'No line assigned');
+      lineSelect.appendChild(opt);
+      lineSelect.disabled = true;
+    } else {
+      lineSelect.innerHTML = '';
+      renderSelectOptions(lineSelect, scopedLines, (l) => l.id, (l) => l.name);
+      lineSelect.disabled = false;
+    }
+  }
 
-  if (filtered.length === 0) {
+  if (productSelect) {
+    const allLabel = lang === 'ar' ? 'جميع الأدوية' : 'All Products';
+    productSelect.innerHTML = `<option value="all">${allLabel}</option>`;
+    const scopedLineIds = scopedLines.map((l) => l.id);
+    const products = getAllProductsFlat().filter((p) => allowedLineIds === null || scopedLineIds.includes(p.lineId));
+    products.forEach((p) => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.name} (${p.lineName})`;
+      productSelect.appendChild(opt);
+    });
+  }
+}
+
+// ============================================================================
+// Section 7: Pharmacies Sales tab -- raw, per-pharmacy detail straight from
+// imported distributor sheets (store.distributorSales). This is NOT an
+// aggregation; the Achievements tab (achievements-report.js) builds the
+// aggregated rep/product view on top of this same underlying data.
+// ============================================================================
+/**
+ * Applies the Pharmacies Sales tab's filters (Product, Month/Year,
+ * Distributor, role-scoped Line, Date range, and the Rep-only self
+ * restriction) to store.distributorSales and returns the matching rows.
+ * Shared by renderSalesReport() and exportSalesReport() so they can never
+ * drift out of sync with each other.
+ */
+function getFilteredPharmSalesRows() {
+  const productSelect = document.getElementById('pharmSalesProductSelect');
+  const monthSelect = document.getElementById('pharmSalesMonthSelect');
+  const yearSelect = document.getElementById('pharmSalesYearSelect');
+  const distSelect = document.getElementById('pharmSalesDistributorSelect');
+  const lineSelect = document.getElementById('pharmSalesLineSelect');
+  const dateFromInput = document.getElementById('pharmSalesDateFrom');
+  const dateToInput = document.getElementById('pharmSalesDateTo');
+  const user = checkAuth();
+
+  const selectedProduct = productSelect ? productSelect.value : 'all';
+  const selectedMonth = monthSelect ? monthSelect.value : '';
+  const selectedYear = yearSelect ? yearSelect.value : '';
+  const selectedDistributor = distSelect ? distSelect.value : 'all';
+  const selectedLine = lineSelect ? lineSelect.value : 'all';
+  const dateFrom = dateFromInput ? dateFromInput.value : '';
+  const dateTo = dateToInput ? dateToInput.value : '';
+  const monthKey = selectedMonth && selectedYear ? `${selectedYear}-${selectedMonth}` : null;
+  const allowedLineIds = getPharmSalesAllowedLineIds(user);
+
+  let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
+
+  if (monthKey) rows = rows.filter((r) => r.month === monthKey);
+  if (selectedProduct !== 'all') rows = rows.filter((r) => r.productId === selectedProduct);
+  if (selectedDistributor !== 'all') rows = rows.filter((r) => r.distributorId === selectedDistributor);
+  if (selectedLine !== 'all' && selectedLine !== 'none') {
+    rows = rows.filter((r) => r.lineId === selectedLine);
+  } else if (allowedLineIds !== null) {
+    rows = rows.filter((r) => r.lineId && allowedLineIds.includes(r.lineId));
+  }
+  if (dateFrom) rows = rows.filter((r) => r.date && r.date >= dateFrom);
+  if (dateTo) rows = rows.filter((r) => r.date && r.date <= dateTo);
+
+  const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
+  if (isRep) rows = rows.filter((r) => r.repId === user.id);
+
+  return rows;
+}
+
+function renderSalesReport() {
+  const tbody = document.getElementById('salesReportTbody');
+  if (!tbody) return;
+  tbody.replaceChildren();
+
+  const periodLabel = document.getElementById('salesFilterPeriodLabel');
+  const lang = getCurrentLang();
+  const monthSelect = document.getElementById('pharmSalesMonthSelect');
+  const yearSelect = document.getElementById('pharmSalesYearSelect');
+  const monthKey = monthSelect && yearSelect && monthSelect.value && yearSelect.value
+    ? `${yearSelect.value}-${monthSelect.value}`
+    : null;
+
+  const rows = getFilteredPharmSalesRows();
+
+  if (periodLabel) {
+    const periodText = monthKey ? monthKey : (lang === 'ar' ? 'كل الفترات' : 'All periods');
+    periodLabel.textContent = `${lang === 'ar' ? 'الفترة:' : 'Period:'} ${periodText}`;
+  }
+
+  let totalValue = 0;
+  let totalQuantity = 0;
+  const pharmacySet = new Set();
+
+  if (rows.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-          ${lang === 'ar' ? 'لا توجد بيانات مبيعات مسجلة لهذا الاختيار.' : 'No sales records found for this selection.'}
+        <td colspan="8" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
+          ${lang === 'ar' ? 'لا توجد بيانات مبيعات صيدليات لهذا الاختيار.' : 'No pharmacy sales found for this selection.'}
         </td>
       </tr>
     `;
   } else {
-    filtered.forEach((row) => {
-      const actualVal = parseFloat(row.actual) || parseFloat(row.amount) || 0;
-      const targetVal = parseFloat(row.target) || 0;
-      totalActual += actualVal;
-      totalTarget += targetVal;
-      if (row.product) activeProductsSet.add(row.product);
-      const hasTarget = targetVal > 0;
-      const achievement = hasTarget ? ((actualVal / targetVal) * 100).toFixed(1) : null;
-      const isAchieved = hasTarget && actualVal >= targetVal;
-      const statusBadge = !hasTarget
-        ? `<span class="sales-status-badge" style="background: var(--gray-100, #f1f1f1); color: var(--gray-500);">${lang === 'ar' ? 'بدون تارجت' : 'No Target'}</span>`
-        : isAchieved
-          ? `<span class="sales-status-badge achieved">${lang === 'ar' ? 'مكتمل' : 'Achieved'}</span>`
-          : `<span class="sales-status-badge in-progress">${lang === 'ar' ? 'قيد التنفيذ' : 'In Progress'}</span>`;
-      const dist = row.distributorId && window.store && window.store.distributors
-        ? window.store.distributors.getById(row.distributorId)
-        : null;
-      const distName = dist ? dist.name : (row.distributorName || (lang === 'ar' ? 'غير محدد' : 'Unspecified'));
-      const distIsTender = dist ? window.store.distributors.getType(dist.id) === 'tender' : false;
-      const distBadge = row.distributorId
-        ? (distIsTender
-            ? `<span class="sales-status-badge" style="background: var(--danger-light, #fde8e8); color: var(--danger, #c0392b);">${lang === 'ar' ? 'مناقصات' : 'Tender'}</span>`
-            : `<span class="sales-status-badge" style="background: var(--primary-light); color: var(--primary);">${lang === 'ar' ? 'تجاري' : 'Commercial'}</span>`)
-        : `<span class="sales-status-badge" style="background: var(--gray-100, #f1f1f1); color: var(--gray-500);">—</span>`;
-      const esc = window.escapeHtml || ((s) => s || '');
+    const esc = window.escapeHtml || ((s) => s || '');
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+    const areas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
+    const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
+
+    rows.sort((a, b) => (b.date || b.month || '').localeCompare(a.date || a.month || ''));
+
+    rows.forEach((row) => {
+      const value = parseFloat(row.value) || 0;
+      const qty = parseFloat(row.quantity) || 0;
+      totalValue += value;
+      totalQuantity += qty;
+      if (row.pharmacyName) pharmacySet.add(row.pharmacyName.trim().toLowerCase());
+
+      const rep = row.repId ? allUsers.find((u) => u.id === row.repId) : null;
+      const area = row.areaId ? areas.find((a) => a.id === row.areaId) : null;
+      const dist = row.distributorId ? distributors.find((d) => d.id === row.distributorId) : null;
+      const areaLabel = area ? area.name : (row.areaRaw || (lang === 'ar' ? 'غير مربوط' : 'Unmatched'));
+      const repLabel = rep ? rep.name : (lang === 'ar' ? 'غير مربوط' : 'Unassigned');
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="white-space: nowrap;"><strong>${row.month}</strong></td>
-        <td>
-          <strong style="white-space: nowrap;">${row.repName}</strong>
-          <div style="font-size: 0.78rem; color: var(--gray-500); white-space: nowrap;">${row.area}</div>
-        </td>
-        <td>
-          <span class="sales-product-badge">
-            💊 ${row.product || 'General Product'}
-          </span>
-        </td>
-        <td style="white-space: nowrap;">${esc(distName)}</td>
-        <td style="white-space: nowrap;">${distBadge}</td>
-        <td style="font-weight: 600; white-space: nowrap;">${targetVal.toLocaleString()}</td>
-        <td style="font-weight: 700; color: var(--primary); white-space: nowrap;">${actualVal.toLocaleString()}</td>
-        <td style="white-space: nowrap;">
-          <span style="font-weight: 800; color: ${hasTarget ? (isAchieved ? 'var(--success)' : 'var(--warning)') : 'var(--gray-500)'};">${hasTarget ? achievement + '%' : '—'}</span>
-        </td>
-        <td style="white-space: nowrap;">${statusBadge}</td>
+        <td style="white-space: nowrap;">${esc(row.date || row.month)}</td>
+        <td>${esc(row.pharmacyName || '—')}</td>
+        <td><span class="sales-product-badge">💊 ${esc(row.product || 'General Product')}</span></td>
+        <td style="white-space: nowrap;">${esc(dist ? dist.name : (row.distributorId || '—'))}</td>
+        <td style="white-space: nowrap;">${esc(areaLabel)}</td>
+        <td style="white-space: nowrap;">${esc(repLabel)}</td>
+        <td style="font-weight: 600;">${qty.toLocaleString()}</td>
+        <td style="font-weight: 700; color: var(--primary);">${value.toLocaleString()}</td>
       `;
       tbody.appendChild(tr);
     });
   }
 
-  const kpiActualEl = document.getElementById('kpiTotalActual');
-  const kpiTargetEl = document.getElementById('kpiTotalTarget');
-  const kpiAchEl = document.getElementById('kpiAchievement');
-  const kpiRepsEl = document.getElementById('kpiActiveReps');
-  if (kpiActualEl) kpiActualEl.textContent = `${totalActual.toLocaleString()}`;
-  if (kpiTargetEl) kpiTargetEl.textContent = `${totalTarget.toLocaleString()}`;
-  if (kpiRepsEl) {
-    kpiRepsEl.textContent = selectedProducts.length === allProdsCount
-      ? `${activeProductsSet.size} ${lang === 'ar' ? 'أدوية' : 'Products'}`
-      : `${selectedProducts.length} ${lang === 'ar' ? 'أدوية' : 'Products'}`;
-  }
-  if (kpiAchEl) {
-    const overallAch = totalTarget > 0 ? ((totalActual / totalTarget) * 100).toFixed(1) : 0;
-    kpiAchEl.textContent = `${overallAch}%`;
-    kpiAchEl.style.color = overallAch >= 100 ? 'var(--success)' : 'var(--warning)';
-  }
+  const kpiRowsEl = document.getElementById('kpiTotalActual');
+  const kpiQtyEl = document.getElementById('kpiTotalTarget');
+  const kpiValueEl = document.getElementById('kpiAchievement');
+  const kpiPharmEl = document.getElementById('kpiActiveReps');
+  if (kpiRowsEl) kpiRowsEl.textContent = rows.length.toLocaleString();
+  if (kpiQtyEl) kpiQtyEl.textContent = totalQuantity.toLocaleString();
+  if (kpiValueEl) kpiValueEl.textContent = totalValue.toLocaleString();
+  if (kpiPharmEl) kpiPharmEl.textContent = pharmacySet.size.toLocaleString();
 }
 
 function triggerExcelUpload() {
@@ -732,6 +769,7 @@ function handleExcelUpload(e) {
         const productRaw = map.product ? row[map.product] : '';
         const valueRaw = map.value ? row[map.value] : '';
         const quantityRaw = map.quantity ? row[map.quantity] : '';
+        const dateRaw = map.date ? row[map.date] : '';
         const product = String(productRaw || '').trim();
         // Sheets from these distributors use plain numbers or numbers
         // with thousands separators; strip anything that isn't a digit,
@@ -740,6 +778,24 @@ function handleExcelUpload(e) {
         const numericQuantity = map.quantity
           ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ''))
           : null;
+        // Best-effort date parsing: SheetJS may hand back a JS Date object
+        // (for real Excel date cells), an Excel serial number, or plain
+        // text (for CSV). Unparseable values are left null rather than
+        // guessed -- the row still gets the required Month/Year picked at
+        // upload time, it just won't be narrowable by exact date.
+        let parsedDate = null;
+        if (map.date && dateRaw !== '' && dateRaw !== null && dateRaw !== undefined) {
+          if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
+            parsedDate = dateRaw.toISOString().slice(0, 10);
+          } else if (typeof dateRaw === 'number') {
+            // Excel serial date (days since 1899-12-30)
+            const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+            if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+          } else {
+            const d = new Date(String(dateRaw).trim());
+            if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+          }
+        }
 
         if (!product || isNaN(numericValue)) {
           skippedInvalid++;
@@ -759,6 +815,7 @@ function handleExcelUpload(e) {
           batchId,
           distributorId: distId,
           month: monthKey,
+          date: parsedDate,
           product,
           value: numericValue,
           quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
@@ -802,8 +859,8 @@ function handleExcelUpload(e) {
           ? (lang === 'ar' ? ' (استبدلت رفعة سابقة لنفس الشهر/الموزّع)' : ' (replaced a previous upload for this month/distributor)')
           : '';
         panel.innerHTML = lang === 'ar'
-          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> البيانات دي متسجلة على مستوى الصيدلية وغير مربوطة بمندوب لسه، فمش هتظهر في الجدول تحت لحد ما نبني خطوة ربط المنطقة بالمندوب.`
-          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> this data is pharmacy-level and not yet attributed to a rep, so it won't appear in the table below until the area-to-rep matching step is built.`;
+          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> هتظهر الصفوف دي في جدول Pharmacies Sales فورًا، لكن لو فيها مناطق أو منتجات مش مربوطة لسه، مش هتتحسب في تبويب Achievements ولا في فلتر الـ Line لحد ما تربطها من صفحة الموزعين.`
+          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
       }
 
       showToast(
@@ -827,63 +884,43 @@ function handleExcelUpload(e) {
 }
 
 function exportSalesReport() {
-  syncReportsData();
-  const yearSelect = document.getElementById('salesYearSelect');
-  const selectedYear = yearSelect ? yearSelect.value : '2026';
-  const checkedMonthBoxes = Array.from(document.querySelectorAll('.month-checkbox:checked'));
-  const selectedMonths = checkedMonthBoxes.length > 0 ? checkedMonthBoxes.map((cb) => cb.value) : ['09'];
-  const targetPeriods = selectedMonths.map((m) => `${selectedYear}-${m}`);
-  const checkedBoxes = Array.from(document.querySelectorAll('.prod-checkbox:checked'));
-  const selectedProducts = checkedBoxes.map((cb) => cb.value);
-  const distributorSelect = document.getElementById('salesDistributorSelect');
-  const tenderSelect = document.getElementById('salesTenderSelect');
-  const selectedDistributor = distributorSelect ? distributorSelect.value : 'all';
-  const selectedSupplyType = tenderSelect ? tenderSelect.value : 'all';
-  const activeSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-    ? window.DEMO_DATA.sales
-    : REPORTS_DATA.sales;
-  let csv = 'Month,Rep Name,Area,Product,Distributor,Type,Target,Actual,Achievement\n';
-  let filtered = activeSales.filter((r) => targetPeriods.includes(r.month) && selectedProducts.includes(r.product));
-  if (selectedDistributor !== 'all') {
-    filtered = filtered.filter((r) => r.distributorId === selectedDistributor);
-  }
-  if (selectedSupplyType !== 'all') {
-    filtered = filtered.filter((r) => {
-      if (!r.distributorId) return false;
-      const type = window.store && window.store.distributors
-        ? window.store.distributors.getType(r.distributorId)
-        : 'commercial';
-      return type === selectedSupplyType;
-    });
-  }
-  filtered.forEach((s) => {
-    const actualVal = parseFloat(s.actual) || parseFloat(s.amount) || 0;
-    const targetVal = parseFloat(s.target) || 0;
-    const ach = targetVal > 0 ? ((actualVal / targetVal) * 100).toFixed(1) : 0;
-    const dist = s.distributorId && window.store && window.store.distributors
-      ? window.store.distributors.getById(s.distributorId)
-      : null;
-    const distName = dist ? dist.name : (s.distributorName || '');
-    const distType = s.distributorId
-      ? (window.store && window.store.distributors ? window.store.distributors.getType(s.distributorId) : 'commercial')
-      : '';
-    csv += `"${s.month}","${s.repName}","${s.area}","${s.product || ''}","${distName}","${distType}",${targetVal},${actualVal},"${ach}%"\n`;
+  const rows = getFilteredPharmSalesRows();
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+  const areas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
+  const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
+
+  let csv = 'Date,Pharmacy,Product,Distributor,Area,Rep,Quantity,Value\n';
+  rows.forEach((r) => {
+    const rep = r.repId ? allUsers.find((u) => u.id === r.repId) : null;
+    const area = r.areaId ? areas.find((a) => a.id === r.areaId) : null;
+    const dist = r.distributorId ? distributors.find((d) => d.id === r.distributorId) : null;
+    const areaLabel = area ? area.name : (r.areaRaw || '');
+    const repLabel = rep ? rep.name : '';
+    const qty = parseFloat(r.quantity) || 0;
+    const value = parseFloat(r.value) || 0;
+    csv += `"${r.date || r.month}","${r.pharmacyName || ''}","${r.product || ''}","${dist ? dist.name : (r.distributorId || '')}","${areaLabel}","${repLabel}",${qty},${value}\n`;
   });
+
+  const monthSelect = document.getElementById('pharmSalesMonthSelect');
+  const yearSelect = document.getElementById('pharmSalesYearSelect');
+  const periodSuffix = monthSelect && yearSelect && monthSelect.value && yearSelect.value
+    ? `${yearSelect.value}_${monthSelect.value}`
+    : 'all_periods';
+
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `PharmaCare_Sales_${selectedYear}_${selectedMonths.join('-')}.csv`;
+  a.download = `PharmaCare_PharmaciesSales_${periodSuffix}.csv`;
   a.click();
 }
 
 // ============================================================================
 // Section: Manage Targets (Admin Only)
-// One manually-set target per rep + product + month (see store.js's
-// targets module). DM/LM/BU targets are never entered directly -- they
-// fall out of summing their team's rep-level targets once every rep's
-// target is represented as a row in the Sales report (see the
-// phantom-row logic inside renderSalesReport()/buildDistributorAggregatedSales()).
+// One manually-set target per rep + product + month. DM/LM/BU targets are
+// never entered directly -- the Achievements tab (achievements-report.js)
+// sums each team's rep-level targets to get theirs, defaulting to 0 for
+// any rep+product+month with no target set.
 // ============================================================================
 let targetsModalEl = null;
 
@@ -892,7 +929,7 @@ function getAllProductsFlat() {
   const out = [];
   lines.forEach((line) => {
     (line.products || []).forEach((p) => {
-      out.push({ id: p.id, name: p.name + (p.dosage ? ' ' + p.dosage : ''), lineId: line.id, lineName: line.name });
+      out.push({ id: p.id, name: p.name + (p.dosage ? ' ' + p.dosage : ''), lineId: line.id, lineName: line.name, price: p.price !== undefined && p.price !== null && p.price !== '' ? parseFloat(p.price) : null });
     });
   });
   return out;
@@ -997,6 +1034,7 @@ function openTargetsModal() {
   if (!targetsModalEl) return;
   populateTargetFormSelects();
   resetTargetForm();
+  onTargetProductSelectChange();
   renderTargetsTable();
   targetsModalEl.style.display = 'flex';
   targetsModalEl.classList.add('active');
@@ -1018,6 +1056,20 @@ function resetTargetForm() {
   if (label) label.textContent = 'Add Target';
   const cancelBtn = document.getElementById('cancelTargetEditBtn');
   if (cancelBtn) cancelBtn.style.display = 'none';
+}
+
+function onTargetProductSelectChange() {
+  const productId = document.getElementById('targetProductSelect').value;
+  const prod = getAllProductsFlat().find((p) => p.id === productId);
+  const priceInput = document.getElementById('targetUnitPriceInput');
+  // Auto-fills from the product's catalog price (set in Products page) as
+  // a starting point -- this is a convenience default, not a lock: the
+  // admin can still type a different price here for this specific
+  // rep/month as an exception, same as before.
+  if (prod && prod.price !== null && priceInput) {
+    priceInput.value = prod.price;
+  }
+  updateComputedTargetValue();
 }
 
 function updateComputedTargetValue() {

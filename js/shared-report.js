@@ -363,6 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (startDate) startDate.value = firstOfMonth;
   if (endDate) endDate.value = lastOfMonthStr;
   renderSalesReport();
+  if (typeof populateAchievementsFilters === 'function') populateAchievementsFilters();
+  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
   renderDailyTimeline();
   renderCoverageReport();
   // Initialize Doctors and Pharmacies directories
@@ -371,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check URL query parameter for active tab
   const urlParams = new URLSearchParams(window.location.search);
   const requestedTab = urlParams.get('tab');
-  if (requestedTab && ['sales', 'timeline', 'coverage', 'doctors', 'pharmacies'].includes(requestedTab)) {
+  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'pharmacies'].includes(requestedTab)) {
     switchReportTab(requestedTab);
   }
 });
@@ -451,74 +453,9 @@ const MONTH_NAMES_AR = [
 ];
 
 function initAllFilters(user) {
-  const yearSelect = document.getElementById('salesYearSelect');
-  const lineGroup = document.getElementById('salesLineFilterGroup');
-  const dmGroup = document.getElementById('salesDmFilterGroup');
-  const repGroup = document.getElementById('salesRepFilterGroup');
-  const lineSelect = document.getElementById('salesLineSelect');
-  const dmSelect = document.getElementById('salesDmSelect');
-  const repSelect = document.getElementById('salesRepSelect');
-  const lang = getCurrentLang();
-
-  // Populate Month (multi-select checkbox dropdown, same pattern as the
-  // Products filter; defined in sales-report.js which loads right after
-  // this file, so it's already available by the time initAllFilters runs).
-  if (typeof populateMonthCheckboxes === 'function') {
-    populateMonthCheckboxes();
+  if (typeof initPharmSalesFilters === 'function') {
+    initPharmSalesFilters(user);
   }
-
-  // Populate Year
-  if (yearSelect) {
-    yearSelect.replaceChildren();
-    ['2025', '2026', '2027'].forEach((y) => {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      if (y === '2026') opt.selected = true;
-      yearSelect.appendChild(opt);
-    });
-  }
-
-  populateProductCheckboxes('all');
-  if (typeof populateDistributorsFilter === 'function') {
-    populateDistributorsFilter();
-  }
-
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : ((user && user.role) || 'medical_rep').toLowerCase();
-  const userLines = typeof window.getUserLines === 'function' && user ? window.getUserLines(user.id) : [];
-  const hasMultipleLines = userLines.length > 1;
-
-  if (role === 'medical_rep') {
-    if (lineGroup) lineGroup.style.display = 'none';
-    if (dmGroup) dmGroup.style.display = 'none';
-    if (repGroup) repGroup.style.display = 'none';
-  } else if (role === 'district_manager') {
-    if (lineGroup) lineGroup.style.display = hasMultipleLines ? 'flex' : 'none';
-    if (dmGroup) dmGroup.style.display = 'none';
-    if (repGroup) repGroup.style.display = 'flex';
-    if (hasMultipleLines) {
-      populateLinesFilter(lineSelect, user);
-    }
-    populateRepsFilter(repSelect, user.id, null);
-  } else if (role === 'line_manager') {
-    if (lineGroup) lineGroup.style.display = hasMultipleLines ? 'flex' : 'none';
-    if (dmGroup) dmGroup.style.display = 'flex';
-    if (repGroup) repGroup.style.display = 'flex';
-    if (hasMultipleLines) {
-      populateLinesFilter(lineSelect, user);
-    }
-    populateDMsFilter(dmSelect, user.id);
-    populateRepsFilter(repSelect, null, hasMultipleLines ? 'all' : (user.lineId || 'line1'));
-    populateProductCheckboxes(hasMultipleLines ? 'all' : (user.lineId || 'line1'));
-  } else if (role === 'business_unit' || role === 'admin') {
-    if (lineGroup) lineGroup.style.display = 'flex';
-    if (dmGroup) dmGroup.style.display = 'flex';
-    if (repGroup) repGroup.style.display = 'flex';
-    populateLinesFilter(lineSelect, user);
-    populateDMsFilter(dmSelect, null);
-    populateRepsFilter(repSelect, null, null);
-  }
-
   populateTimelineAndCoverageFilters(user);
 }
 

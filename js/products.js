@@ -73,6 +73,9 @@ const productTranslations = {
     productName: "Product Name",
     dosage: "Dosage",
     form: "Form",
+    price: "Price",
+    pricePlaceholder: "e.g., 40",
+    priceHint: "Used to auto-fill Unit Price when this product is picked in Manage Targets -- still editable per rep there as an exception.",
     description: "Description",
     actions: "Actions",
     tablet: "Tablet",
@@ -117,6 +120,9 @@ const productTranslations = {
     productName: "اسم المنتج",
     dosage: "الجرعة",
     form: "الشكل الدوائي",
+    price: "السعر",
+    pricePlaceholder: "مثال: 40",
+    priceHint: "بيتحط تلقائي كسعر الوحدة لما تختار المنتج ده في شاشة إدارة التارجت -- لسه ممكن تعدّله لكل مندوب كاستثناء.",
     description: "الوصف",
     actions: "إجراءات",
     tablet: "أقراص",
@@ -223,6 +229,7 @@ function renderProductLines() {
                                 <th data-i18n="productName">Product Name</th>
                                 <th data-i18n="dosage">Dosage</th>
                                 <th data-i18n="form">Form</th>
+                                <th data-i18n="price">Price</th>
                                 <th class="text-end" data-i18n="actions">Actions</th>
                             </tr>
                         </thead>
@@ -232,6 +239,7 @@ function renderProductLines() {
                                     <td class="fw-medium">${esc(prod.name)}</td>
                                     <td><span class="badge bg-secondary">${esc(prod.dosage)}</span></td>
                                     <td>${esc(prod.form)}</td>
+                                    <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? Number(prod.price).toLocaleString() : "—"}</td>
                                     <td class="text-end product-actions-cell">
                                         <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
                                             <i class="bi bi-arrow-left-right"></i>
@@ -353,6 +361,8 @@ function saveProduct() {
   const dosage = document.getElementById("productDosage").value;
   const form = document.getElementById("productFormSelect").value;
   const description = document.getElementById("productDescription").value;
+  const priceInput = document.getElementById("productPrice").value;
+  const price = priceInput === "" ? null : parseFloat(priceInput);
 
   if (!name || !dosage || !form) {
     return typeof showToast === "function" ? showToast("Please fill Product Name, Dosage, and Form.", "warning") : alert("Missing details.");
@@ -370,9 +380,10 @@ function saveProduct() {
       prod.dosage = dosage;
       prod.form = form;
       prod.description = description;
+      prod.price = price;
     }
   } else {
-    line.products.push({ id: "prod_" + Date.now(), name, dosage, form, description });
+    line.products.push({ id: "prod_" + Date.now(), name, dosage, form, description, price });
   }
 
   window.store.productLines.save(line);
@@ -391,6 +402,7 @@ function openEditProduct(lineId, prodId) {
       document.getElementById("productDosage").value = prod.dosage;
       document.getElementById("productFormSelect").value = prod.form;
       document.getElementById("productDescription").value = prod.description;
+      document.getElementById("productPrice").value = prod.price !== undefined && prod.price !== null ? prod.price : "";
 
       document.getElementById("productModalTitle").setAttribute("data-i18n", "editProduct");
       document.getElementById("productModalTitle").textContent = productTranslations[currentLang].editProduct;

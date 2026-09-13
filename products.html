@@ -124,6 +124,11 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-semibold" data-i18n="price">Price (per unit)</label>
+                        <input type="number" class="form-control" id="productPrice" min="0" step="0.01" data-i18n-placeholder="pricePlaceholder" placeholder="e.g., 40">
+                        <div class="form-text" data-i18n="priceHint">Used to auto-fill Unit Price when this product is picked in Manage Targets -- still editable per rep there as an exception.</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-semibold" data-i18n="description">Description (Optional)</label>
                         <textarea class="form-control" id="productDescription" rows="3" data-i18n-placeholder="descriptionPlaceholder" placeholder="Enter product description"></textarea>
                     </div>
