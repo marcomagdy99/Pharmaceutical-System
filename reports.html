@@ -86,6 +86,13 @@
             </button>
             <button
               class="report-tab-btn"
+              data-tab="achievements"
+              onclick="switchReportTab('achievements')"
+            >
+              🏆 <span data-i18n="tabAchievements">Achievements</span>
+            </button>
+            <button
+              class="report-tab-btn"
               data-tab="timeline"
               onclick="switchReportTab('timeline')"
             >
@@ -408,6 +415,65 @@
                   </tr>
                 </thead>
                 <tbody id="salesReportTbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- TAB (Achievements): Territory/Rep achievement, product breakdown,
+               driven by Manage Targets (Units x Unit Price) vs actual imported
+               sales. Only covers rep+product combinations that have gone
+               through the distributor-import + area/product matching
+               pipeline (see distributors.html) -- legacy demo rows aren't
+               included since they carry no productId. -->
+          <div class="report-content-panel" id="tabPanel-achievements">
+            <div class="sales-filter-card">
+              <div class="sales-filter-form-grid">
+                <div class="sales-filter-field col-month">
+                  <label>Month:</label>
+                  <select id="achMonthSelect" class="form-control"></select>
+                </div>
+                <div class="sales-filter-field col-year">
+                  <label>Year:</label>
+                  <select id="achYearSelect" class="form-control"></select>
+                </div>
+                <div class="sales-filter-field col-btn">
+                  <button type="button" class="btn btn-primary" onclick="renderAchievementsReport()">
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="kpi-grid">
+              <div class="kpi-card primary">
+                <span class="kpi-label">Total Target Value</span>
+                <span class="kpi-value" id="kpiAchTotalTarget">0</span>
+              </div>
+              <div class="kpi-card success">
+                <span class="kpi-label">Total Actual Value</span>
+                <span class="kpi-value" id="kpiAchTotalActual">0</span>
+              </div>
+              <div class="kpi-card info">
+                <span class="kpi-label">Overall Achievement</span>
+                <span class="kpi-value" id="kpiAchOverallPct">0%</span>
+              </div>
+              <div class="kpi-card warning">
+                <span class="kpi-label">Reps Covered</span>
+                <span class="kpi-value" id="kpiAchRepsCount">0</span>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Rep / Territory</th>
+                    <th>Product</th>
+                    <th>Target Units</th>
+                    <th>Actual Units</th>
+                    <th>Target Value</th>
+                    <th>Actual Value</th>
+                    <th>Achievement</th>
+                  </tr>
+                </thead>
+                <tbody id="achievementsReportTbody"></tbody>
               </table>
             </div>
           </div>
@@ -1963,15 +2029,44 @@
                 <label class="form-label">Year</label>
                 <select id="targetYearSelect" class="form-control modern-select"></select>
               </div>
-              <div class="form-group col-span-2">
-                <label class="form-label">Target Value</label>
+              <div class="form-group col-span-1">
+                <label class="form-label">Target Units</label>
                 <input
                   type="number"
-                  id="targetValueInput"
+                  id="targetUnitsInput"
                   class="form-control modern-input"
                   min="0"
                   step="1"
-                  placeholder="e.g. 20000"
+                  placeholder="e.g. 500"
+                  oninput="updateComputedTargetValue()"
+                />
+              </div>
+              <div class="form-group col-span-1">
+                <label class="form-label">Unit Price</label>
+                <input
+                  type="number"
+                  id="targetUnitPriceInput"
+                  class="form-control modern-input"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 40"
+                  oninput="updateComputedTargetValue()"
+                />
+              </div>
+              <div class="form-group col-span-2">
+                <label class="form-label">
+                  Target Value
+                  <span style="font-weight: 400; color: var(--gray-500); font-size: 0.78rem;">
+                    (auto-filled as Units × Unit Price -- you can still edit it directly)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="targetComputedValueDisplay"
+                  class="form-control modern-input"
+                  min="0"
+                  step="1"
+                  value="0"
                 />
               </div>
             </div>
@@ -2002,7 +2097,9 @@
                     <th>Rep</th>
                     <th>Product</th>
                     <th>Month</th>
-                    <th>Target</th>
+                    <th>Units</th>
+                    <th>Unit Price</th>
+                    <th>Value</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -2024,6 +2121,7 @@
     <script src="js/excel-templates-data.js"></script>
     <script src="js/shared-report.js"></script>
     <script src="js/sales-report.js"></script>
+    <script src="js/achievements-report.js"></script>
     <script src="js/timeline-report.js"></script>
     <script src="js/coverage-report.js"></script>
     <script src="js/doctors-report.js"></script>
