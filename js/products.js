@@ -356,10 +356,12 @@ function renderProductLines(activeLineId) {
                     <div class="d-flex w-100 bg-white">
                         <button class="accordion-button ${buttonClass} shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${line.id}" aria-expanded="${isExpanded}" aria-controls="collapse${line.id}">
                             <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
-                                <div>
-                                    <span class="fw-bold fs-5 line-title">${window.escapeHtml(line.name)}</span>
-                                    <span class="badge bg-primary rounded-pill ms-2">${line.products ? line.products.length : 0} <span data-i18n="products">Products</span></span>
-                                    <span class="badge bg-light text-dark border ms-2 line-freq-badge" title="Quarterly Target Call Frequency">
+                                <div class="d-flex flex-column align-items-start gap-1">
+                                    <div class="d-flex align-items-center flex-wrap gap-2">
+                                        <span class="fw-bold fs-5 line-title">${window.escapeHtml(line.name)}</span>
+                                        <span class="badge bg-primary rounded-pill">${line.products ? line.products.length : 0} <span data-i18n="products">Products</span></span>
+                                    </div>
+                                    <span class="badge bg-light text-dark border line-freq-badge" title="Quarterly Target Call Frequency">
                                         🎯 A: <strong>${freq.classA ?? 4}</strong> | B: <strong>${freq.classB ?? 3}</strong> | C: <strong>${freq.classC ?? 1}</strong>
                                     </span>
                                 </div>

@@ -279,27 +279,41 @@ function saveArea() {
   const repSelect = document.getElementById("assignRep");
   const repId = repSelect.value || null;
 
-  // Fetch rep name directly from store to avoid formatted dropdown text (e.g. "EMP001 - Name")
+  // Fetch rep name directly from store to avoid formatted dropdown text
   let repName = null;
   if (repId && window.store && window.store.users) {
     const rep = window.store.users.getById(repId);
     repName = rep ? rep.name : null;
   }
 
+  const isAr = document.documentElement.dir === "rtl";
+
   if (!name || !code) {
-    if (typeof showToast === "function")
-      showToast("Area Name and Code are required.", "warning");
+    const msg = isAr ? "يرجى إدخال اسم المنطقة والرمز." : "Area Name and Code are required.";
+    if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
 
   const currentAreas = getAreasList();
   const targetId = id || "area_" + Date.now();
 
+  // Validate unique Area Code (case-insensitive)
+  const isDuplicateCode = currentAreas.some(
+    (a) => a.id !== id && a.code && a.code.trim().toUpperCase() === code.toUpperCase()
+  );
+  if (isDuplicateCode) {
+    const msg = isAr
+      ? `رمز المنطقة "${code.toUpperCase()}" مستخدم مسبقاً لمنطقة أخرى.`
+      : `Area code "${code.toUpperCase()}" is already in use by another area.`;
+    if (typeof showToast === "function") showToast(msg, "warning");
+    return;
+  }
+
   if (window.store && window.store.areas) {
     window.store.areas.save({
       id: targetId,
       name,
-      code,
+      code: code.toUpperCase(),
       repId,
       repName,
     });
@@ -308,17 +322,133 @@ function saveArea() {
   areaModal.hide();
   renderAreas();
   updateStats();
-  if (typeof showToast === "function")
-    showToast("Area saved successfully.", "success");
+  const successMsg = isAr ? "تم حفظ المنطقة بنجاح." : "Area saved successfully.";
+  if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
 function openDeleteModal(id) {
+  const currentAreas = getAreasList();
+  const area = currentAreas.find((a) => a.id === id);
+  if (!area) return;
+
   document.getElementById("deleteAreaId").value = id;
+
+  const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+
+  const linkedDoctors = allDoctors.filter(
+    (d) => d.areaId === id || (d.area && d.area.toLowerCase() === area.name.toLowerCase())
+  );
+  const linkedVisits = allVisits.filter(
+    (v) => v.areaId === id || (v.area && v.area.toLowerCase() === area.name.toLowerCase())
+  );
+  const hasRep = Boolean(area.repId);
+
+  const isAr = document.documentElement.dir === "rtl";
+  const warningContainer = document.getElementById("deleteWarningContainer");
+  const warningDetails = document.getElementById("deleteWarningDetails");
+  const transferSelect = document.getElementById("transferAreaSelect");
+  const deleteMsg = document.getElementById("deleteAreaMsg");
+  const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+  const otherAreas = currentAreas.filter((a) => a.id !== id);
+
+  if (linkedDoctors.length > 0 || linkedVisits.length > 0 || hasRep) {
+    warningContainer.style.display = "block";
+
+    if (isAr) {
+      deleteMsg.textContent = `تحذير: المنطقة "${area.name}" تحتوي على بيانات نشطة ولا يمكن حذفها مباشرة:`;
+      warningDetails.innerHTML = `
+        <ul class="mb-1 ps-3">
+          <li><strong>${linkedDoctors.length}</strong> طبيب مسجل بالمنطقة.</li>
+          <li><strong>${linkedVisits.length}</strong> زيارة مسجلة بالمنطقة.</li>
+          ${hasRep ? `<li>مندوب معيّن: <strong>${area.repName || area.repId}</strong>.</li>` : ""}
+        </ul>
+      `;
+      confirmBtn.textContent = "نقل البيانات وحذف المنطقة";
+    } else {
+      deleteMsg.textContent = `Warning: "${area.name}" contains active records and cannot be deleted directly:`;
+      warningDetails.innerHTML = `
+        <ul class="mb-1 ps-3">
+          <li><strong>${linkedDoctors.length}</strong> registered doctor(s).</li>
+          <li><strong>${linkedVisits.length}</strong> logged visit(s).</li>
+          ${hasRep ? `<li>Assigned rep: <strong>${area.repName || area.repId}</strong>.</li>` : ""}
+        </ul>
+      `;
+      confirmBtn.textContent = "Transfer & Delete";
+    }
+
+    let optHtml = "";
+    otherAreas.forEach((oa) => {
+      optHtml += `<option value="${oa.id}">${oa.name} (${oa.code})</option>`;
+    });
+
+    if (otherAreas.length === 0) {
+      optHtml = `<option value="">${isAr ? "لا توجد مناطق أخرى متاحة للنقل!" : "No other areas available for transfer!"}</option>`;
+      confirmBtn.disabled = true;
+    } else {
+      confirmBtn.disabled = false;
+    }
+    transferSelect.innerHTML = optHtml;
+  } else {
+    warningContainer.style.display = "none";
+    deleteMsg.textContent = isAr
+      ? `هل أنت متأكد من حذف منطقة "${area.name}"؟ (المنطقة فارغة ولا تحتوي على أطباء أو زيارات)`
+      : `Are you sure you want to delete "${area.name}"? (Area is empty with no doctors or visits)`;
+    confirmBtn.textContent = isAr ? "حذف" : "Delete";
+    confirmBtn.disabled = false;
+  }
+
   deleteModal.show();
 }
 
 function confirmDelete() {
   const id = document.getElementById("deleteAreaId").value;
+  const currentAreas = getAreasList();
+  const area = currentAreas.find((a) => a.id === id);
+  if (!area) return;
+
+  const warningContainer = document.getElementById("deleteWarningContainer");
+  const isTransferRequired = warningContainer && warningContainer.style.display !== "none";
+  const isAr = document.documentElement.dir === "rtl";
+
+  let destinationArea = null;
+
+  if (isTransferRequired) {
+    const transferSelect = document.getElementById("transferAreaSelect");
+    const targetAreaId = transferSelect ? transferSelect.value : "";
+    destinationArea = currentAreas.find((a) => a.id === targetAreaId);
+
+    if (!destinationArea) {
+      const msg = isAr ? "يرجى تحديد منطقة صالحة لنقل السجلات إليها." : "Please select a valid destination area for transfer.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      return;
+    }
+
+    // Reassign doctors to the destination area
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.doctors)) {
+      window.DEMO_DATA.doctors.forEach((d) => {
+        if (d.areaId === id || (d.area && d.area.toLowerCase() === area.name.toLowerCase())) {
+          d.areaId = destinationArea.id;
+          d.area = destinationArea.name;
+        }
+      });
+    }
+
+    // Reassign visits to the destination area
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
+      window.DEMO_DATA.visits.forEach((v) => {
+        if (v.areaId === id || (v.area && v.area.toLowerCase() === area.name.toLowerCase())) {
+          v.areaId = destinationArea.id;
+          v.area = destinationArea.name;
+        }
+      });
+    }
+
+    if (typeof window.saveDataToStorage === "function") {
+      window.saveDataToStorage();
+    }
+  }
 
   if (window.store && window.store.areas) {
     window.store.areas.delete(id);
@@ -327,6 +457,9 @@ function confirmDelete() {
   deleteModal.hide();
   renderAreas();
   updateStats();
-  if (typeof showToast === "function")
-    showToast("Area deleted successfully.", "info");
+
+  const successMsg = isAr
+    ? (isTransferRequired ? `تم نقل كافة السجلات إلى ${destinationArea ? destinationArea.name : ""} وحذف المنطقة بنجاح.` : "تم حذف المنطقة بنجاح.")
+    : (isTransferRequired ? `All records safely transferred to ${destinationArea ? destinationArea.name : ""} and area deleted.` : "Area deleted successfully.");
+  if (typeof showToast === "function") showToast(successMsg, "info");
 }

@@ -363,6 +363,23 @@ input, select, textarea {
   box-shadow: 0 0 8px rgba(255, 159, 28, 0.25);
 }
 
+.nav-pending-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: 10px !important;
+  min-width: 18px;
+  height: 18px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.35);
+  vertical-align: middle;
+}
+
 /* ==========================================================================
    Responsive Breakpoints: Desktop Full Width vs Mobile
    ========================================================================== */
@@ -641,6 +658,8 @@ body[data-theme="dark"],
 [data-theme="dark"] .table {
   --bs-table-bg: transparent !important;
   --bs-table-color: #dee2e6 !important;
+  --bs-table-hover-color: #ffffff !important;
+  --bs-table-hover-bg: #282d38 !important;
   color: #dee2e6 !important;
   border-color: #2d3340 !important;
 }
@@ -661,9 +680,22 @@ body[data-theme="dark"],
   border-bottom-color: #2d3340 !important;
 }
 
-[data-theme="dark"] .table-hover tbody tr:hover {
+[data-theme="dark"] .table tbody tr td,
+[data-theme="dark"] .table tbody tr th,
+[data-theme="dark"] .table > :not(caption) > * > * {
+  color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover,
+[data-theme="dark"] .table-hover tbody tr:hover > *,
+[data-theme="dark"] .table-hover tbody tr:active,
+[data-theme="dark"] .table-hover tbody tr:active > *,
+[data-theme="dark"] .table-hover tbody tr:focus,
+[data-theme="dark"] .table-hover tbody tr:focus > * {
   background-color: #282d38 !important;
   color: #ffffff !important;
+  --bs-table-color-state: #ffffff !important;
+  --bs-table-bg-state: #282d38 !important;
 }
 
 [data-theme="dark"] .form-control,

@@ -78,6 +78,9 @@
 }
 
 [data-theme="dark"] .table {
+    --bs-table-color: #dee2e6 !important;
+    --bs-table-hover-color: #ffffff !important;
+    --bs-table-hover-bg: #282d38 !important;
     color: #dee2e6 !important;
     border-color: #2d3340 !important;
 }
@@ -94,8 +97,25 @@
     border-bottom-color: #2d3340 !important;
 }
 
-[data-theme="dark"] .table-hover tbody tr:hover {
+[data-theme="dark"] .table tbody tr td,
+[data-theme="dark"] .table tbody tr th,
+[data-theme="dark"] .table > :not(caption) > * > * {
+    color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover,
+[data-theme="dark"] .table-hover tbody tr:hover > *,
+[data-theme="dark"] .table-hover tbody tr:active,
+[data-theme="dark"] .table-hover tbody tr:active > *,
+[data-theme="dark"] .table-hover tbody tr:focus,
+[data-theme="dark"] .table-hover tbody tr:focus > * {
     background-color: #282d38 !important;
+    color: #ffffff !important;
+    --bs-table-color-state: #ffffff !important;
+    --bs-table-bg-state: #282d38 !important;
+}
+
+[data-theme="dark"] .table tbody tr td.fw-medium {
     color: #ffffff !important;
 }
 
@@ -254,27 +274,29 @@
 @media (max-width: 768px) {
     .product-actions-cell {
         white-space: nowrap !important;
-        min-width: 105px !important;
+        min-width: 95px !important;
+        text-align: end;
     }
 
     .product-actions-cell .btn {
-        padding: 4px 6px !important;
-        font-size: 0.75rem !important;
+        padding: 3px 5px !important;
+        font-size: 0.72rem !important;
+        margin-right: 2px !important;
     }
 
     .table-responsive {
         -webkit-overflow-scrolling: touch;
+        overflow-x: auto !important;
     }
 
     .accordion-body {
-        padding: 0.5rem 0.5rem !important;
+        padding: 0.5rem 0.25rem !important;
     }
 
     .accordion-body .table th,
     .accordion-body .table td {
-        padding: 8px 6px !important;
-        font-size: 0.82rem !important;
-        white-space: nowrap;
+        padding: 6px 5px !important;
+        font-size: 0.8rem !important;
     }
 }
 

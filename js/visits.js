@@ -45,12 +45,14 @@ const visitTranslations = {
     targetHospital: "Hospital",
     targetDoctor: "Doctor",
     modalTarget: "Doctor/Hospital/Pharmacy",
+    modalFilterDoctor: "Filter Doctor by Team Member",
     modalAccompaniedRep: "Accompanied Rep",
     modalType: "Visit Type",
     modalSingle: "Single",
     modalDouble: "Double",
     modalSelectManager: "Accompanied By",
     modalProducts: "Products Discussed",
+    modalGiveawaySamples: "Giveaway Samples",
     modalComment: "Comment",
     btnCancel: "Cancel",
     btnSaveVisit: "Save Visit",
@@ -133,12 +135,14 @@ const visitTranslations = {
     targetHospital: "مستشفى",
     targetDoctor: "طبيب",
     modalTarget: "الطبيب/المستشفى/الصيدلية",
+    modalFilterDoctor: "تصفية الأطباء حسب أعضاء الفريق",
     modalAccompaniedRep: "المندوب المرافق",
     modalType: "نوع الزيارة",
     modalSingle: "فردي",
     modalDouble: "مزدوج",
     modalSelectManager: "مرافق مع",
     modalProducts: "المنتجات التي تمت مناقشتها",
+    modalGiveawaySamples: "عينات ومواد دعائية (Giveaway Samples)",
     modalComment: "تعليق",
     btnCancel: "إلغاء",
     btnSaveVisit: "حفظ الزيارة",
@@ -302,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupRoleBasedView();
   renderVisits(false);
+  setupModalTargetFilter();
   updateTargetOptions();
 });
 
@@ -325,8 +330,12 @@ function setupRoleBasedView() {
       filterRep.style.display = "inline-block";
       populateManagerRepDropdown();
     }
-    if (planVisitBtn) planVisitBtn.style.display = "none";
-    if (addActualVisitBtn) addActualVisitBtn.style.display = "none";
+    const canLogVisits =
+      currentUserRole === "district_manager" ||
+      currentUserRole === "line_manager" ||
+      currentUserRole === "business_unit";
+    if (planVisitBtn) planVisitBtn.style.display = canLogVisits ? "inline-flex" : "none";
+    if (addActualVisitBtn) addActualVisitBtn.style.display = canLogVisits ? "inline-flex" : "none";
   } else {
     if (filterContainer) filterContainer.style.display = "none";
     if (filterRep) filterRep.style.display = "none";
@@ -462,6 +471,17 @@ function populateManagerRepDropdown() {
       : "🌐 All Team (Entire Organization)";
   filterRep.appendChild(optAll);
 
+  if (currentUserRole === "business_unit") {
+    const optSelf = document.createElement("option");
+    optSelf.value = currentUser.id;
+    optSelf.className = "filter-opt-bu";
+    optSelf.textContent =
+      lang === "ar"
+        ? `👔 ${currentUser.name} (BU - زياراتي)`
+        : `👔 ${currentUser.name} (BU - My Visits)`;
+    filterRep.appendChild(optSelf);
+  }
+
   const optAllLMs = document.createElement("option");
   optAllLMs.value = "all_lms";
   optAllLMs.className = "filter-opt-lm";
@@ -548,7 +568,7 @@ function getScopedVisits() {
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
   if (!isManager) {
-    list = list.filter((v) => v.repId === currentUser.id || v.repId === "rep1");
+    list = list.filter((v) => v.repId === currentUser.id);
   } else if (
     currentUserRole === "admin" ||
     currentUserRole === "hr" ||
@@ -690,7 +710,42 @@ const visitsApp = {
 
     container.replaceChildren();
     const isHospital = period.toLowerCase() === "am";
-    const sourceList = isHospital ? getMockHospitals() : getMockDoctors();
+    let sourceList = isHospital ? getMockHospitals() : getMockDoctors();
+
+    if (!isHospital) {
+      const role = window.normalizeRole
+        ? window.normalizeRole(currentUser.role)
+        : (currentUser.role || "").toLowerCase();
+      const allUsers =
+        (window.store && window.store.users
+          ? window.store.users.getAll()
+          : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+      if (role === "medical_rep") {
+        sourceList = sourceList.filter(
+          (d) => !d.repId || d.repId === currentUser.id,
+        );
+      } else if (role === "district_manager") {
+        const myReps = allUsers
+          .filter((u) => u.managerId === currentUser.id)
+          .map((u) => u.id);
+        const allowed = [...myReps, currentUser.id];
+        sourceList = sourceList.filter(
+          (d) => !d.repId || allowed.includes(d.repId),
+        );
+      } else if (role === "line_manager") {
+        const myDms = allUsers
+          .filter((u) => u.managerId === currentUser.id)
+          .map((u) => u.id);
+        const myReps = allUsers
+          .filter((u) => myDms.includes(u.managerId))
+          .map((u) => u.id);
+        const allowed = [currentUser.id, ...myDms, ...myReps];
+        sourceList = sourceList.filter(
+          (d) => !d.repId || allowed.includes(d.repId),
+        );
+      }
+    }
 
     const filtered = sourceList.filter((item) => {
       const nameMatch = item.name.toLowerCase().includes(searchTerm);
@@ -1544,6 +1599,11 @@ function renderVisitsTimeline(triggeredByShow = false) {
           })()
         }
         ${
+          v.giveawaySamples
+            ? `<div style="font-size: 0.8rem; color: #d97706; margin-bottom: 6px;">🎁 <strong>${lang === "ar" ? "عينات ومواد دعائية:" : "Giveaway Samples:"}</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
+            : ""
+        }
+        ${
           v.comment
             ? `<div class="timeline-comment-text" style="font-size: 0.8rem; margin-bottom: 6px; font-style: italic;">💬 "${window.escapeHtml(v.comment)}"</div>`
             : ""
@@ -1636,31 +1696,81 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
   container.replaceChildren();
 
   const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const managerRoles = ["district_manager", "line_manager", "business_unit"];
-  let managers = [];
-
   const effectiveId = targetId || currentUser.id || "rep1";
-  let chain = [];
-  if (typeof window.getManagerChain === "function") {
-    chain = window.getManagerChain(effectiveId);
-  } else {
-    let curr = users.find((u) => u.id === effectiveId);
-    while (curr && curr.managerId) {
-      curr = users.find((u) => u.id === curr.managerId);
-      if (curr) chain.push(curr);
+  let candidates = [];
+
+  const currentUserObj = users.find((u) => u.id === currentUser.id);
+  const role = currentUserRole;
+
+  if (role === "business_unit") {
+    candidates = users.filter(
+      (u) =>
+        u.id !== currentUser.id &&
+        u.id !== effectiveId &&
+        u.status !== "Inactive" &&
+        (u.role === "line_manager" || u.role === "district_manager"),
+    );
+  } else if (role === "admin" || role === "hr") {
+    candidates = users.filter(
+      (u) =>
+        u.id !== currentUser.id &&
+        u.id !== effectiveId &&
+        u.status !== "Inactive" &&
+        u.role !== "admin" &&
+        u.role !== "hr",
+    );
+  } else if (role === "line_manager") {
+    const dms = users.filter(
+      (u) => u.managerId === currentUser.id && u.role === "district_manager",
+    );
+    let chain = [];
+    if (typeof window.getManagerChain === "function") {
+      chain = window.getManagerChain(currentUser.id);
     }
+    const higherManagers = chain.filter(
+      (u) => u.role === "business_unit",
+    );
+    candidates = [...dms, ...higherManagers].filter(
+      (u, idx, arr) =>
+        u.id !== currentUser.id &&
+        u.status !== "Inactive" &&
+        u.role !== "admin" &&
+        arr.findIndex((x) => x.id === u.id) === idx,
+    );
+  } else if (role === "district_manager") {
+    const myReps = getReportingReps();
+    let chain = [];
+    if (typeof window.getManagerChain === "function") {
+      chain = window.getManagerChain(currentUser.id);
+    }
+    candidates = [...myReps, ...chain].filter(
+      (u, idx, arr) =>
+        u.id !== currentUser.id &&
+        u.status !== "Inactive" &&
+        arr.findIndex((x) => x.id === u.id) === idx,
+    );
+  } else {
+    let chain = [];
+    if (typeof window.getManagerChain === "function") {
+      chain = window.getManagerChain(effectiveId);
+    } else {
+      let curr = users.find((u) => u.id === effectiveId);
+      while (curr && curr.managerId) {
+        curr = users.find((u) => u.id === curr.managerId);
+        if (curr) chain.push(curr);
+      }
+    }
+    candidates = chain.filter(
+      (u) =>
+        u.status !== "Inactive" &&
+        u.id !== effectiveId &&
+        u.id !== currentUser.id,
+    );
   }
 
-  managers = chain.filter(
-    (u) =>
-      managerRoles.includes(u.role) &&
-      u.status !== "Inactive" &&
-      u.id !== effectiveId &&
-      u.id !== currentUser.id,
-  );
-
-  if (managers.length === 0) {
-    container.innerHTML = `<span style="font-size: 0.82rem; color: var(--gray-500); font-style: italic;">No higher manager available for companion selection.</span>`;
+  if (candidates.length === 0) {
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    container.innerHTML = `<span style="font-size: 0.82rem; color: var(--gray-500); font-style: italic;">${lang === "ar" ? "لا يوجد زملاء أو مدراء متاحين للاختيار" : "No colleagues or managers available for companion selection."}</span>`;
     return;
   }
 
@@ -1668,17 +1778,20 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
     district_manager: "DM",
     line_manager: "LM",
     business_unit: "BU",
+    medical_rep: "Rep",
+    rep: "Rep",
+    admin: "Admin",
   };
 
-  managers.forEach((m) => {
-    const tag = roleTags[m.role] || "Mgr";
+  candidates.forEach((m) => {
+    const tag = roleTags[m.role] || "User";
     const val = `${m.name} (${tag})`;
     const isChecked =
       Array.isArray(selectedCompanions) &&
-      selectedCompanions.some((c) => c.includes(m.name));
+      selectedCompanions.some((c) => c.includes(m.name) || c.includes(m.id));
     const lbl = document.createElement("label");
     lbl.className = "checkbox-label companion-chip";
-    lbl.innerHTML = `<input type="checkbox" name="doubleCompanion" value="${val}" ${isChecked ? "checked" : ""}> ${val}`;
+    lbl.innerHTML = `<input type="checkbox" name="doubleCompanion" value="${val}" data-user-id="${m.id}" ${isChecked ? "checked" : ""}> ${val}`;
     container.appendChild(lbl);
   });
 }
@@ -1706,6 +1819,8 @@ function openVisitModal(isActual = false) {
   updateVisitModalDayDisplay();
 
   document.getElementById("visitComment").value = "";
+  const samplesInput = document.getElementById("visitGiveawaySamples");
+  if (samplesInput) samplesInput.value = "";
   document
     .querySelectorAll('#visitProducts input[type="checkbox"]')
     .forEach((cb) => (cb.checked = false));
@@ -1726,6 +1841,7 @@ function openVisitModal(isActual = false) {
   );
   if (pmRadio) pmRadio.checked = true;
 
+  setupModalTargetFilter();
   updateTargetOptions();
 
   const modal = document.getElementById("visitModal");
@@ -1736,16 +1852,214 @@ function openVisitModal(isActual = false) {
   }
 }
 
+function setupModalTargetFilter() {
+  const filterSelect = document.getElementById("modalTargetFilterSelect");
+  const filterLabel = document.getElementById("modalTargetFilterLabel");
+  const filterContainer = document.getElementById("modalTargetFilterContainer");
+  if (!filterSelect || !filterContainer) return;
+
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser.role)
+    : (currentUser.role || "").toLowerCase();
+  const isManager = [
+    "district_manager",
+    "line_manager",
+    "business_unit",
+    "admin",
+  ].includes(role);
+
+  if (!isManager) {
+    filterContainer.style.display = "none";
+    return;
+  }
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const allUsers =
+    (window.store && window.store.users
+      ? window.store.users.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+  filterSelect.replaceChildren();
+
+  const allOpt = document.createElement("option");
+  allOpt.value = "all";
+
+  if (role === "district_manager") {
+    if (filterLabel) {
+      filterLabel.textContent = isAr
+        ? "تصفية الأطباء حسب المندوب:"
+        : "Filter Doctors by Medical Rep:";
+    }
+    allOpt.textContent = isAr ? "👥 جميع أطباء فريقي" : "👥 All My Team Doctors";
+    filterSelect.appendChild(allOpt);
+
+    const vacantOpt = document.createElement("option");
+    vacantOpt.value = "vacant";
+    vacantOpt.textContent = isAr
+      ? "📍 أطباء المناطق الشاغرة (بدون مندوب)"
+      : "📍 Vacant / Unassigned Doctors";
+    filterSelect.appendChild(vacantOpt);
+
+    const myReps = allUsers.filter(
+      (u) =>
+        u.managerId === currentUser.id &&
+        u.role === "medical_rep" &&
+        u.status !== "Inactive",
+    );
+    myReps.forEach((rep) => {
+      const opt = document.createElement("option");
+      opt.value = rep.id;
+      const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
+      opt.textContent = `👤 ${repName}`;
+      filterSelect.appendChild(opt);
+    });
+  } else if (role === "line_manager") {
+    if (filterLabel) {
+      filterLabel.textContent = isAr
+        ? "تصفية الأطباء حسب مدير المنطقة (DM):"
+        : "Filter Doctors by District Manager (DM):";
+    }
+    allOpt.textContent = isAr ? "👥 جميع أطباء الخط" : "👥 All Line Doctors";
+    filterSelect.appendChild(allOpt);
+
+    const vacantOpt = document.createElement("option");
+    vacantOpt.value = "vacant";
+    vacantOpt.textContent = isAr
+      ? "📍 أطباء المناطق الشاغرة بالخط"
+      : "📍 Vacant / Unassigned Line Doctors";
+    filterSelect.appendChild(vacantOpt);
+
+    const myDms = allUsers.filter(
+      (u) =>
+        u.managerId === currentUser.id &&
+        u.role === "district_manager" &&
+        u.status !== "Inactive",
+    );
+    myDms.forEach((dm) => {
+      const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
+      const opt = document.createElement("option");
+      opt.value = `dm:${dm.id}`;
+      opt.textContent = `👔 ${dmName} (DM)`;
+      filterSelect.appendChild(opt);
+
+      const dmReps = allUsers.filter(
+        (u) =>
+          u.managerId === dm.id &&
+          u.role === "medical_rep" &&
+          u.status !== "Inactive",
+      );
+      dmReps.forEach((rep) => {
+        const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
+        const repOpt = document.createElement("option");
+        repOpt.value = `rep:${rep.id}`;
+        repOpt.textContent = `　↳ 👤 ${repName}`;
+        filterSelect.appendChild(repOpt);
+      });
+    });
+  } else if (role === "business_unit" || role === "admin") {
+    if (filterLabel) {
+      filterLabel.textContent = isAr
+        ? "تصفية الأطباء بالمدير (LM / DM):"
+        : "Filter Doctors by Manager (LM / DM):";
+    }
+    allOpt.textContent = isAr ? "👥 جميع الأطباء" : "👥 All Doctors";
+    filterSelect.appendChild(allOpt);
+
+    const vacantOpt = document.createElement("option");
+    vacantOpt.value = "vacant";
+    vacantOpt.textContent = isAr
+      ? "📍 أطباء المناطق الشاغرة بالشركة"
+      : "📍 Vacant / Unassigned Organization Doctors";
+    filterSelect.appendChild(vacantOpt);
+
+    const lms =
+      role === "business_unit"
+        ? allUsers.filter(
+            (u) =>
+              u.managerId === currentUser.id &&
+              u.role === "line_manager" &&
+              u.status !== "Inactive",
+          )
+        : allUsers.filter(
+            (u) => u.role === "line_manager" && u.status !== "Inactive",
+          );
+
+    if (lms.length > 0) {
+      const lmGrp = document.createElement("optgroup");
+      lmGrp.label = isAr ? "مديرو الخطوط (Line Managers)" : "Line Managers (LMs)";
+      lms.forEach((lm) => {
+        const lmName = isAr && lm.nameAr ? lm.nameAr : lm.name;
+        const opt = document.createElement("option");
+        opt.value = `lm:${lm.id}`;
+        opt.textContent = `👔 ${lmName} (LM)`;
+        lmGrp.appendChild(opt);
+      });
+      filterSelect.appendChild(lmGrp);
+    }
+
+    const lmIds = lms.map((l) => l.id);
+    const dms =
+      role === "business_unit"
+        ? allUsers.filter(
+            (u) =>
+              lmIds.includes(u.managerId) &&
+              u.role === "district_manager" &&
+              u.status !== "Inactive",
+          )
+        : allUsers.filter(
+            (u) => u.role === "district_manager" && u.status !== "Inactive",
+          );
+
+    if (dms.length > 0) {
+      const dmGrp = document.createElement("optgroup");
+      dmGrp.label = isAr
+        ? "مديرو المناطق (District Managers)"
+        : "District Managers (DMs)";
+      dms.forEach((dm) => {
+        const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
+        const parentLm = allUsers.find((u) => u.id === dm.managerId);
+        const parentName = parentLm
+          ? isAr && parentLm.nameAr
+            ? parentLm.nameAr
+            : parentLm.name
+          : "";
+        const opt = document.createElement("option");
+        opt.value = `dm:${dm.id}`;
+        opt.textContent = `👔 ${dmName} (DM${parentName ? " - " + parentName : ""})`;
+        dmGrp.appendChild(opt);
+      });
+      filterSelect.appendChild(dmGrp);
+    }
+  }
+}
+
 function updateTargetOptions() {
   const period =
     document.querySelector('input[name="visitPeriod"]:checked')?.value || "pm";
   const targetSelect = document.getElementById("visitTarget");
   const targetLabel = document.getElementById("visitTargetLabel");
+  const filterContainer = document.getElementById("modalTargetFilterContainer");
+  const filterSelect = document.getElementById("modalTargetFilterSelect");
   if (!targetSelect) return;
   targetSelect.replaceChildren();
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const isAr = lang === "ar";
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser.role)
+    : (currentUser.role || "").toLowerCase();
+  const isManager = [
+    "district_manager",
+    "line_manager",
+    "business_unit",
+    "admin",
+  ].includes(role);
+
+  if (filterContainer) {
+    filterContainer.style.display =
+      period.toLowerCase() === "pm" && isManager ? "block" : "none";
+  }
 
   let options = [];
   if (period.toLowerCase() === "am") {
@@ -1755,8 +2069,126 @@ function updateTargetOptions() {
     options = getMockPharmacies();
     if (targetLabel) targetLabel.textContent = isAr ? "الصيدلية" : "Pharmacy";
   } else {
-    options = getMockDoctors();
     if (targetLabel) targetLabel.textContent = isAr ? "الطبيب" : "Doctor";
+    const allDocs = getMockDoctors();
+    const allUsers =
+      (window.store && window.store.users
+        ? window.store.users.getAll()
+        : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const selectedFilter = filterSelect ? filterSelect.value : "all";
+
+    const inactiveUserIds = allUsers
+      .filter((u) => u.status === "Inactive")
+      .map((u) => u.id);
+
+    if (!isManager) {
+      options = allDocs.filter((d) => !d.repId || d.repId === currentUser.id);
+    } else if (selectedFilter === "vacant") {
+      if (role === "district_manager") {
+        const myRepIds = allUsers
+          .filter((u) => u.managerId === currentUser.id)
+          .map((u) => u.id);
+        const myInactiveRepIds = myRepIds.filter((id) =>
+          inactiveUserIds.includes(id),
+        );
+        options = allDocs.filter(
+          (d) => !d.repId || myInactiveRepIds.includes(d.repId),
+        );
+      } else if (role === "line_manager") {
+        const myDms = allUsers
+          .filter((u) => u.managerId === currentUser.id)
+          .map((u) => u.id);
+        const myReps = allUsers
+          .filter((u) => myDms.includes(u.managerId))
+          .map((u) => u.id);
+        const myTeamRepIds = [...myDms, ...myReps];
+        const myInactiveRepIds = myTeamRepIds.filter((id) =>
+          inactiveUserIds.includes(id),
+        );
+        options = allDocs.filter(
+          (d) => !d.repId || myInactiveRepIds.includes(d.repId),
+        );
+      } else {
+        options = allDocs.filter(
+          (d) => !d.repId || inactiveUserIds.includes(d.repId),
+        );
+      }
+    } else if (role === "district_manager") {
+      const myRepIds = allUsers
+        .filter((u) => u.managerId === currentUser.id)
+        .map((u) => u.id);
+      const allowedRepIds = [...myRepIds, currentUser.id];
+      if (!selectedFilter || selectedFilter === "all") {
+        options = allDocs.filter(
+          (d) => !d.repId || allowedRepIds.includes(d.repId),
+        );
+      } else {
+        options = allDocs.filter((d) => d.repId === selectedFilter);
+      }
+    } else if (role === "line_manager") {
+      const myDms = allUsers.filter(
+        (u) => u.managerId === currentUser.id && u.role === "district_manager",
+      );
+      const myDmIds = myDms.map((u) => u.id);
+      const myReps = allUsers.filter((u) => myDmIds.includes(u.managerId));
+      const myRepIds = myReps.map((u) => u.id);
+      const allowedTeamIds = [currentUser.id, ...myDmIds, ...myRepIds];
+
+      if (!selectedFilter || selectedFilter === "all") {
+        options = allDocs.filter(
+          (d) => !d.repId || allowedTeamIds.includes(d.repId),
+        );
+      } else if (selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmRepIds = allUsers
+          .filter((u) => u.managerId === dmId)
+          .map((u) => u.id);
+        const allowed = [dmId, ...dmRepIds];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else if (selectedFilter.startsWith("rep:")) {
+        const repId = selectedFilter.split(":")[1];
+        options = allDocs.filter((d) => d.repId === repId);
+      } else {
+        options = allDocs.filter((d) => d.repId === selectedFilter);
+      }
+    } else if (role === "business_unit" || role === "admin") {
+      if (!selectedFilter || selectedFilter === "all") {
+        options = allDocs;
+      } else if (selectedFilter.startsWith("lm:")) {
+        const lmId = selectedFilter.split(":")[1];
+        const lmDmIds = allUsers
+          .filter((u) => u.managerId === lmId)
+          .map((u) => u.id);
+        const lmRepIds = allUsers
+          .filter((u) => lmDmIds.includes(u.managerId))
+          .map((u) => u.id);
+        const allowed = [lmId, ...lmDmIds, ...lmRepIds];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else if (selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmRepIds = allUsers
+          .filter((u) => u.managerId === dmId)
+          .map((u) => u.id);
+        const allowed = [dmId, ...dmRepIds];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else {
+        options = allDocs;
+      }
+    } else {
+      options = allDocs;
+    }
+  }
+
+  if (options.length === 0) {
+    const emptyOpt = document.createElement("option");
+    emptyOpt.value = "";
+    emptyOpt.textContent = isAr
+      ? "-- لا توجد أهداف مطابقة --"
+      : "-- No targets found --";
+    emptyOpt.disabled = true;
+    emptyOpt.selected = true;
+    targetSelect.appendChild(emptyOpt);
+    return;
   }
 
   options.forEach((opt) => {
@@ -1804,6 +2236,7 @@ function openCompleteModal(visitId) {
     `input[name="visitPeriod"][value="${periodValue}"]`,
   );
   if (periodEl) periodEl.checked = true;
+  setupModalTargetFilter();
   updateTargetOptions();
 
   document.getElementById("visitTarget").value = visit.doctorId;
@@ -1825,6 +2258,8 @@ function openCompleteModal(visitId) {
   populateVisitCompanions(visit.repId || currentUser.id || "rep1", compList);
 
   document.getElementById("visitComment").value = visit.comment || "";
+  const samplesInput = document.getElementById("visitGiveawaySamples");
+  if (samplesInput) samplesInput.value = visit.giveawaySamples || "";
 
   const modal = document.getElementById("visitModal");
   if (modal) {
@@ -1861,10 +2296,15 @@ function saveVisit() {
     );
     doubleWithUserName = companionCbs.map((cb) => cb.value).join(", ");
     const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const matchedMgr = allUsers.find((u) =>
-      companionCbs.some((cb) => cb.value.includes(u.name)),
-    );
-    if (matchedMgr) doubleWithUserId = matchedMgr.id;
+    const firstCb = companionCbs[0];
+    if (firstCb && firstCb.dataset.userId) {
+      doubleWithUserId = firstCb.dataset.userId;
+    } else {
+      const matchedUser = allUsers.find((u) =>
+        companionCbs.some((cb) => cb.value.includes(u.name) || (cb.dataset && cb.dataset.userId === u.id)),
+      );
+      if (matchedUser) doubleWithUserId = matchedUser.id;
+    }
   }
 
   const checkedBoxes = Array.from(
@@ -1872,6 +2312,8 @@ function saveVisit() {
   );
   const selectedProductIds = checkedBoxes.map((cb) => cb.value);
   const selectedProductNames = checkedBoxes.map((cb) => cb.dataset.name || cb.value);
+
+  const giveawaySamples = document.getElementById("visitGiveawaySamples")?.value.trim() || "";
 
   if (currentEditVisitId) {
     const visit = demoVisits.find((v) => v.id === currentEditVisitId);
@@ -1884,6 +2326,7 @@ function saveVisit() {
       visit.time = visitTime;
       visit.entryDate = visitDate;
       visit.comment = document.getElementById("visitComment").value;
+      visit.giveawaySamples = giveawaySamples;
       visit.visitType = visitType;
       visit.doubleWithUserName = doubleWithUserName;
       if (doubleWithUserId) {
@@ -1899,10 +2342,26 @@ function saveVisit() {
       document.querySelector('input[name="visitPeriod"]:checked')?.value ||
       "pm";
     const targetSelect = document.getElementById("visitTarget");
-    const targetId = targetSelect.value;
-    const targetName =
+    const targetId = targetSelect ? targetSelect.value : "";
+    if (!targetId) {
+      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+      alert(isAr ? "يرجى اختيار الهدف أولاً" : "Please select a target first");
+      return;
+    }
+
+    let targetName =
       targetSelect.options[targetSelect.selectedIndex]?.text ||
       "Doctor/Hospital/Pharmacy";
+    if (period.toLowerCase() === "pm") {
+      const doc = getMockDoctors().find((d) => d.id === targetId);
+      if (doc) targetName = doc.name;
+    } else if (period.toLowerCase() === "am") {
+      const hosp = getMockHospitals().find((h) => h.id === targetId);
+      if (hosp) targetName = hosp.name;
+    } else if (period.toLowerCase() === "pharmacy") {
+      const pharm = getMockPharmacies().find((p) => p.id === targetId);
+      if (pharm) targetName = pharm.name;
+    }
 
     let assignedRepId = currentUser.id;
     const isPharmacy = period.toLowerCase() === "pharmacy";
@@ -1926,6 +2385,7 @@ function saveVisit() {
       productIds: selectedProductIds,
       products: selectedProductNames,
       comment: document.getElementById("visitComment").value,
+      giveawaySamples: giveawaySamples,
       status: "completed",
       source: modalSource,
       createdAt: new Date().toISOString(),

@@ -819,11 +819,7 @@ const DEFAULT_DEMO_DATA = {
       attachmentName: "doctor_prescription.pdf",
       status: "pending",
       approvals: {
-        dm: {
-          status: "approved",
-          approverName: "Karim Nasser",
-          updatedAt: "2026-09-02 11:30 AM",
-        },
+        dm: { status: "pending", approverName: null, updatedAt: null },
         lm: { status: "pending", approverName: null, updatedAt: null },
         hr: { status: "pending", approverName: null, updatedAt: null },
       },
@@ -971,6 +967,8 @@ function loadDataFromStorage() {
                 ...data.leaves[existingIdx],
                 approvals: l.approvals,
               };
+            } else if (l.id === "l2" && data.leaves[existingIdx].approvals?.dm?.updatedAt === "2026-09-02 11:30 AM") {
+              data.leaves[existingIdx].approvals.dm = { status: "pending", approverName: null, updatedAt: null };
             }
           });
           data.leaves.forEach((lv) => {
@@ -1172,22 +1170,40 @@ function getDoctorCallTarget(doc) {
   const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   let targetFreq = null;
 
-  if (doc.repId) {
+  // 1. Direct lineId on doctor
+  let lineId = doc.lineId || (doc.lineIds && doc.lineIds[0]);
+
+  // 2. Line via assigned rep
+  if (!lineId && doc.repId) {
     const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
     const rep = allUsers.find((u) => u.id === doc.repId);
     if (rep) {
-      const repLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId;
-      if (repLineId) {
-        const line = allLines.find((l) => l.id === repLineId);
-        if (line && line.callFrequency) {
-          if (docClass === "A" && line.callFrequency.classA !== undefined) {
-            targetFreq = Number(line.callFrequency.classA);
-          } else if (docClass === "B" && line.callFrequency.classB !== undefined) {
-            targetFreq = Number(line.callFrequency.classB);
-          } else if (docClass === "C" && line.callFrequency.classC !== undefined) {
-            targetFreq = Number(line.callFrequency.classC);
-          }
-        }
+      lineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId;
+    }
+  }
+
+  // 3. Line via territory/area assignment if rep is not directly set
+  if (!lineId && (doc.areaId || doc.area)) {
+    const allAreas = (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+    const area = allAreas.find((a) => a.id === doc.areaId || a.name === doc.area);
+    if (area && area.repId) {
+      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const rep = allUsers.find((u) => u.id === area.repId);
+      if (rep) {
+        lineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId;
+      }
+    }
+  }
+
+  if (lineId) {
+    const line = allLines.find((l) => l.id === lineId);
+    if (line && line.callFrequency) {
+      if (docClass === "A" && line.callFrequency.classA !== undefined) {
+        targetFreq = Number(line.callFrequency.classA);
+      } else if (docClass === "B" && line.callFrequency.classB !== undefined) {
+        targetFreq = Number(line.callFrequency.classB);
+      } else if (docClass === "C" && line.callFrequency.classC !== undefined) {
+        targetFreq = Number(line.callFrequency.classC);
       }
     }
   }
@@ -1668,6 +1684,78 @@ function getNavItemsForRole(role) {
   return { primaryNavItems, managementNavItems };
 }
 
+function getNavPendingCount(itemId, user) {
+  if (!user) return 0;
+  const role = normalizeRole(user.role);
+
+  if (itemId === "plans-review") {
+    if (role !== "district_manager" && role !== "admin") return 0;
+    const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+    if (role === "admin") {
+      return allVisits.filter((v) => v.status === "pending_approval").length;
+    }
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const subordinateReps = allUsers.filter(
+      (u) =>
+        normalizeRole(u.role) === "medical_rep" &&
+        (u.dmId === user.id || u.districtManagerId === user.id || u.managerId === user.id),
+    );
+    const subRepIds = subordinateReps.map((r) => r.id);
+    return allVisits.filter(
+      (v) => v.status === "pending_approval" && subRepIds.includes(v.repId),
+    ).length;
+  }
+
+  if (itemId === "leaves") {
+    const allLeaves =
+      (window.store && window.store.leaves
+        ? window.store.leaves.getAll()
+        : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
+
+    if (role === "admin" || role === "hr") {
+      return allLeaves.filter(
+        (l) =>
+          l.status === "pending" &&
+          l.approvals &&
+          l.approvals.lm &&
+          l.approvals.lm.status === "approved" &&
+          (!l.approvals.hr || l.approvals.hr.status === "pending"),
+      ).length;
+    }
+
+    if (role === "district_manager") {
+      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const subReps = allUsers.filter(
+        (u) =>
+          normalizeRole(u.role) === "medical_rep" &&
+          (u.dmId === user.id || u.districtManagerId === user.id || u.managerId === user.id),
+      );
+      const subRepIds = subReps.map((r) => r.id);
+      return allLeaves.filter(
+        (l) =>
+          l.status === "pending" &&
+          subRepIds.includes(l.userId) &&
+          (!l.approvals || !l.approvals.dm || l.approvals.dm.status === "pending"),
+      ).length;
+    }
+
+    if (role === "line_manager") {
+      return allLeaves.filter(
+        (l) =>
+          l.status === "pending" &&
+          l.approvals &&
+          l.approvals.dm &&
+          l.approvals.dm.status === "approved" &&
+          (!l.approvals.lm || l.approvals.lm.status === "pending"),
+      ).length;
+    }
+
+    return 0;
+  }
+
+  return 0;
+}
+
 function renderSidebar(activePage) {
   const resolved = activePage || resolveActivePage();
   window.currentActivePage = resolved;
@@ -1702,11 +1790,17 @@ function renderSidebar(activePage) {
 
   primaryNavItems.forEach((item) => {
     const activeClass = item.id === resolved ? "active" : "";
+    const pendingCount = getNavPendingCount(item.id, user);
+    const badgeHtml =
+      pendingCount > 0
+        ? `<span class="badge bg-danger rounded-pill nav-pending-badge ${lang === "ar" ? "me-auto" : "ms-auto"}" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
+        : "";
     html += `
       <li class="nav-item">
         <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === resolved ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === resolved ? "600" : "500"}; background: ${item.id === resolved ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
           <span style="font-size: 1.1rem; width: 22px; text-align: center;">${getIconSymbol(item.id)}</span>
           <span data-i18n="${item.i18n}">${translations[lang][item.i18n] || item.id}</span>
+          ${badgeHtml}
         </a>
       </li>
     `;
@@ -1720,11 +1814,17 @@ function renderSidebar(activePage) {
     `;
     managementNavItems.forEach((item) => {
       const activeClass = item.id === resolved ? "active" : "";
+      const pendingCount = getNavPendingCount(item.id, user);
+      const badgeHtml =
+        pendingCount > 0
+          ? `<span class="badge bg-danger rounded-pill nav-pending-badge ${lang === "ar" ? "me-auto" : "ms-auto"}" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
+          : "";
       html += `
         <li class="nav-item">
-          <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === activePage ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === activePage ? "600" : "500"}; background: ${item.id === activePage ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
+          <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === resolved ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === resolved ? "600" : "500"}; background: ${item.id === resolved ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
             <span style="font-size: 1.1rem; width: 22px; text-align: center;">${getIconSymbol(item.id)}</span>
             <span data-i18n="${item.i18n}">${translations[lang][item.i18n] || item.id}</span>
+            ${badgeHtml}
           </a>
         </li>
       `;
@@ -1822,7 +1922,9 @@ function renderTopbar() {
           const textEl = linkEl.querySelector(".nav-item-text");
           if (textEl) {
             const expectedText = translations[lang]?.[item.i18n] || item.id;
-            if (textEl.textContent !== expectedText) textEl.textContent = expectedText;
+            const pCount = getNavPendingCount(item.id, user);
+            const badge = pCount > 0 ? ` <span class="badge bg-danger rounded-pill nav-pending-badge ms-1" style="font-size: 0.65rem; padding: 1px 5px;">${pCount}</span>` : "";
+            textEl.innerHTML = `${expectedText}${badge}`;
           }
         }
       });
@@ -1830,10 +1932,12 @@ function renderTopbar() {
       let topNavLinksHtml = "";
       allTopNavItems.forEach((item) => {
         const isAct = item.id === activePage;
+        const pCount = getNavPendingCount(item.id, user);
+        const badge = pCount > 0 ? ` <span class="badge bg-danger rounded-pill nav-pending-badge ms-1" style="font-size: 0.65rem; padding: 1px 5px;">${pCount}</span>` : "";
         topNavLinksHtml += `
           <a href="${item.link}" class="pharma-nav-item ${isAct ? "active" : ""}">
             <span class="nav-item-icon">${getIconSymbol(item.id)}</span>
-            <span class="nav-item-text">${translations[lang]?.[item.i18n] || item.id}</span>
+            <span class="nav-item-text">${translations[lang]?.[item.i18n] || item.id}${badge}</span>
           </a>
         `;
       });

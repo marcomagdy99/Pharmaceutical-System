@@ -790,12 +790,16 @@ function renderDMDashboard(userName, user) {
   );
   const myRepIds = myReps.map((r) => r.id);
 
-  const allLeaves = (window.DEMO_DATA && window.DEMO_DATA.leaves) || [];
+  const allLeaves =
+    (window.store && window.store.leaves
+      ? window.store.leaves.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
   const pendingLeavesCount = allLeaves.filter(
     (l) =>
+      l.status !== "rejected" &&
+      l.status !== "approved" &&
       myRepIds.includes(l.userId) &&
-      (l.status === "pending" ||
-        (l.approvals && l.approvals.dm && l.approvals.dm.status === "pending")),
+      (!l.approvals || !l.approvals.dm || l.approvals.dm.status === "pending"),
   ).length;
 
   const pendingPlansCount = allVisits.filter(

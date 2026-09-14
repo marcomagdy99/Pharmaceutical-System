@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -198,6 +198,10 @@
                     <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy">💊 Pharmacy</span></label>
                 </div>
             </div>
+            <div class="form-group" id="modalTargetFilterContainer" style="display: none;">
+                <label class="form-label" id="modalTargetFilterLabel" data-i18n="modalFilterDoctor">Filter Doctor by Team Member</label>
+                <select id="modalTargetFilterSelect" class="form-control" onchange="updateTargetOptions()"></select>
+            </div>
             <div class="form-group">
                 <label class="form-label" id="visitTargetLabel" data-i18n="modalTarget">Doctor/Hospital</label>
                 <select id="visitTarget" class="form-control"></select>
@@ -219,6 +223,10 @@
     <label class="form-label" data-i18n="modalProducts">Products Discussed</label>
     <div class="checkbox-group" id="visitProducts">
     </div>
+</div>
+<div class="form-group" id="giveawaySamplesSection">
+    <label class="form-label" id="labelGiveawaySamples" data-i18n="modalGiveawaySamples">Giveaway Samples</label>
+    <input type="text" id="visitGiveawaySamples" class="form-control" placeholder="e.g. 2 Packs, Pen, Note Pad...">
 </div>
 <div class="form-group">
                 <label class="form-label" data-i18n="modalComment">Comment</label>

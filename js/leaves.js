@@ -53,11 +53,7 @@ let demoLeaves = (window.store && window.store.leaves
     attachmentName: "doctor_prescription.pdf",
     status: "pending",
     approvals: {
-      dm: {
-        status: "approved",
-        approverName: "Karim Nasser",
-        updatedAt: "2026-09-02 11:30 AM",
-      },
+      dm: { status: "pending", approverName: null, updatedAt: null },
       lm: { status: "pending", approverName: null, updatedAt: null },
       hr: { status: "pending", approverName: null, updatedAt: null },
     },
