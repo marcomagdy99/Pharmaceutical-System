@@ -382,4 +382,49 @@ html[dir="rtl"] .tree-node {
   border-color: #785a10 !important;
 }
 
+/* Action Buttons in Lines Modal */
+#linesModal .action-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200, #e2e8f0);
+  background: #ffffff;
+  color: var(--gray-700, #475569);
+  transition: all 0.15s ease;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+#linesModal .action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+#linesModal .action-btn.edit-line-btn:hover {
+  background: #eff6ff;
+  color: #0d6efd;
+  border-color: #bfdbfe;
+}
+
+#linesModal .action-btn.delete-line-btn:hover {
+  background: #fef2f2;
+  color: #dc3545;
+  border-color: #fecaca;
+}
+
+[data-theme="dark"] #linesModal .action-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] #linesModal .action-btn:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
 

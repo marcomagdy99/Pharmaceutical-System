@@ -258,12 +258,12 @@ function initRepView(userId) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="fw-medium ps-4">${escapeHtml(score.quizTitle)}</td>
-      <td class="text-secondary">${score.date}</td>
-      <td class="fw-bold">${score.score}</td>
-      <td class="text-secondary">${score.totalMarks}</td>
-      <td><span class="badge quiz-perc-badge border">${perc.toFixed(1)}%</span></td>
-      <td class="pe-4">${getGradeBadge(perc)}</td>
+      <td class="fw-medium ps-3 col-quiz-name">${escapeHtml(score.quizTitle)}</td>
+      <td class="text-secondary text-center col-quiz-date">${score.date}</td>
+      <td class="fw-bold text-center col-quiz-score">${score.score}</td>
+      <td class="text-secondary text-center col-quiz-total">${score.totalMarks}</td>
+      <td class="text-center col-quiz-perc"><span class="badge quiz-perc-badge border">${perc.toFixed(1)}%</span></td>
+      <td class="text-center pe-3 col-quiz-grade">${getGradeBadge(perc)}</td>
     `;
     tbody.appendChild(tr);
   });

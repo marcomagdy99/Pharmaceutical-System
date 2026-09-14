@@ -429,15 +429,19 @@ const userMgmt = {
             u.role === "LM" &&
             (u.lineIds?.includes(line.id) || u.lineId === line.id),
         );
+        const status = line.status || "Active";
+        const isActive = status === "Active";
         return `
         <tr>
-          <td class="ps-3 fw-bold text-dark">${line.name} <small class="text-muted d-block">${line.desc || ""}</small></td>
-          <td>${assignedLM ? `<span class="badge bg-primary-subtle text-primary">${assignedLM.name}</span>` : '<span class="text-muted">Unassigned</span>'}</td>
-          <td><span class="badge bg-${line.status === "Active" ? "success" : "secondary"}-subtle text-${line.status === "Active" ? "success" : "secondary"} rounded-pill">${line.status}</span></td>
-          <td class="text-end pe-3">
-            <button class="btn btn-sm btn-light text-primary me-1" onclick="userMgmt.editLine('${line.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-sm btn-light text-${line.status === "Active" ? "warning" : "success"} me-1" onclick="userMgmt.toggleLineStatus('${line.id}')"><i class="fas fa-${line.status === "Active" ? "ban" : "check"}"></i></button>
-            <button class="btn btn-sm btn-light text-danger" onclick="userMgmt.deleteLine('${line.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+          <td class="ps-3 fw-bold text-dark">${window.escapeHtml(line.name)} <small class="text-muted d-block">${window.escapeHtml(line.desc || "")}</small></td>
+          <td>${assignedLM ? `<span class="badge bg-primary-subtle text-primary">${window.escapeHtml(assignedLM.name)}</span>` : '<span class="text-muted">Unassigned</span>'}</td>
+          <td><span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"} rounded-pill">${status}</span></td>
+          <td class="text-end pe-3" style="white-space: nowrap; width: 110px;">
+            <div class="d-inline-flex align-items-center gap-1 justify-content-end">
+              <button class="btn btn-sm action-btn edit-line-btn" onclick="userMgmt.editLine('${line.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm action-btn status-line-btn ${isActive ? "text-warning" : "text-success"}" onclick="userMgmt.toggleLineStatus('${line.id}')" title="${isActive ? "Deactivate" : "Activate"}"><i class="fas fa-${isActive ? "ban" : "check"}"></i></button>
+              <button class="btn btn-sm action-btn delete-line-btn text-danger" onclick="userMgmt.deleteLine('${line.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
           </td>
         </tr>`;
       })

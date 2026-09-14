@@ -389,8 +389,8 @@ function populateManagerRepDropdown() {
       const dmGroup = document.createElement("optgroup");
       dmGroup.label =
         lang === "ar"
-          ? "── مدراء المناطق (District Managers) ──"
-          : "── District Managers (DMs) ──";
+          ? "مدراء المناطق (DMs)"
+          : "District Managers (DMs)";
       dms.forEach((dm) => {
         const opt = document.createElement("option");
         opt.value = dm.id;
@@ -405,14 +405,13 @@ function populateManagerRepDropdown() {
       const repGroup = document.createElement("optgroup");
       repGroup.label =
         lang === "ar"
-          ? "── المناديب الطبيين (Medical Reps) ──"
-          : "── Medical Representatives (Reps) ──";
+          ? "المناديب الطبيين (Reps)"
+          : "Medical Reps (Reps)";
       reps.forEach((rep) => {
-        const dm = dms.find((d) => d.id === rep.managerId);
         const opt = document.createElement("option");
         opt.value = rep.id;
         opt.className = "filter-opt-rep";
-        opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"}${dm ? ` - DM: ${dm.name}` : ""})`;
+        opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
         repGroup.appendChild(opt);
       });
       filterRep.appendChild(repGroup);
@@ -432,8 +431,8 @@ function populateManagerRepDropdown() {
     selfOpt.className = "filter-opt-dm";
     selfOpt.textContent =
       lang === "ar"
-        ? `👔 ${currentUser.name} (DM - زياراتي والنزول المشترك)`
-        : `👔 ${currentUser.name} (DM - My Visits & Joint Accompaniments)`;
+        ? `👔 ${currentUser.name} (DM - زياراتي)`
+        : `👔 ${currentUser.name} (DM - My Visits)`;
     filterRep.appendChild(selfOpt);
 
     const myReps = getReportingReps();
@@ -441,8 +440,8 @@ function populateManagerRepDropdown() {
       const repGroup = document.createElement("optgroup");
       repGroup.label =
         lang === "ar"
-          ? "── المناديب الطبيين (Medical Reps) ──"
-          : "── Medical Representatives (Reps) ──";
+          ? "المناديب الطبيين (Reps)"
+          : "Medical Reps (Reps)";
       myReps.forEach((rep) => {
         const opt = document.createElement("option");
         opt.value = rep.id;
@@ -468,8 +467,8 @@ function populateManagerRepDropdown() {
   optAllLMs.className = "filter-opt-lm";
   optAllLMs.textContent =
     lang === "ar"
-      ? "👔 جميع مديري الخطوط (Line Managers فقط)"
-      : "👔 All Line Managers (LMs Only)";
+      ? "👔 جميع مديري الخطوط (LMs)"
+      : "👔 All Line Managers (LMs)";
   filterRep.appendChild(optAllLMs);
 
   const optAllDMs = document.createElement("option");
@@ -477,8 +476,8 @@ function populateManagerRepDropdown() {
   optAllDMs.className = "filter-opt-dm";
   optAllDMs.textContent =
     lang === "ar"
-      ? "👥 جميع مديري المناطق (District Managers فقط)"
-      : "👥 All District Managers (DMs Only)";
+      ? "👥 جميع مديري المناطق (DMs)"
+      : "👥 All District Managers (DMs)";
   filterRep.appendChild(optAllDMs);
 
   const optAllReps = document.createElement("option");
@@ -486,8 +485,8 @@ function populateManagerRepDropdown() {
   optAllReps.className = "filter-opt-rep";
   optAllReps.textContent =
     lang === "ar"
-      ? "💼 جميع المناديب (Medical Reps فقط)"
-      : "💼 All Medical Reps (Reps Only)";
+      ? "💼 جميع المناديب (Reps)"
+      : "💼 All Medical Reps (Reps)";
   filterRep.appendChild(optAllReps);
 
   const lms = allUsers.filter((u) => u.role === "line_manager");
@@ -495,8 +494,8 @@ function populateManagerRepDropdown() {
     const lmGroup = document.createElement("optgroup");
     lmGroup.label =
       lang === "ar"
-        ? "── مدراء الخطوط / الفريق (Line Managers) ──"
-        : "── Line Managers / Team Leaders (LMs) ──";
+        ? "مدراء الخطوط (Line Managers)"
+        : "Line Managers (LMs)";
     lms.forEach((lm) => {
       const opt = document.createElement("option");
       opt.value = lm.id;
@@ -512,14 +511,13 @@ function populateManagerRepDropdown() {
     const dmGroup = document.createElement("optgroup");
     dmGroup.label =
       lang === "ar"
-        ? "── مدراء المناطق (District Managers) ──"
-        : "── District Managers (DMs) ──";
+        ? "مدراء المناطق (District Managers)"
+        : "District Managers (DMs)";
     dms.forEach((dm) => {
-      const lm = lms.find((l) => l.id === dm.managerId);
       const opt = document.createElement("option");
       opt.value = dm.id;
       opt.className = "filter-opt-dm";
-      opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"}${lm ? ` - LM: ${lm.name}` : ""})`;
+      opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"})`;
       dmGroup.appendChild(opt);
     });
     filterRep.appendChild(dmGroup);
@@ -532,14 +530,13 @@ function populateManagerRepDropdown() {
     const repGroup = document.createElement("optgroup");
     repGroup.label =
       lang === "ar"
-        ? "── المناديب الطبيين (Medical Reps) ──"
-        : "── Medical Representatives (Reps) ──";
+        ? "المناديب الطبيين (Medical Reps)"
+        : "Medical Representatives (Reps)";
     reps.forEach((rep) => {
-      const dm = dms.find((d) => d.id === rep.managerId);
       const opt = document.createElement("option");
       opt.value = rep.id;
       opt.className = "filter-opt-rep";
-      opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"}${dm ? ` - DM: ${dm.name}` : ""})`;
+      opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
       repGroup.appendChild(opt);
     });
     filterRep.appendChild(repGroup);
@@ -1616,9 +1613,7 @@ function populateVisitProducts(selectedProducts = []) {
 
   productsToShow.forEach((prod) => {
     const label = document.createElement("label");
-    label.className = "checkbox-label";
-    label.style.cssText =
-      "display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px;";
+    label.className = "checkbox-label product-chip";
     const displayName =
       prod.dosage &&
       !prod.name.toLowerCase().includes(prod.dosage.toLowerCase())
@@ -1680,9 +1675,7 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
       Array.isArray(selectedCompanions) &&
       selectedCompanions.some((c) => c.includes(m.name));
     const lbl = document.createElement("label");
-    lbl.className = "checkbox-label";
-    lbl.style.cssText =
-      "display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px;";
+    lbl.className = "checkbox-label companion-chip";
     lbl.innerHTML = `<input type="checkbox" name="doubleCompanion" value="${val}" ${isChecked ? "checked" : ""}> ${val}`;
     container.appendChild(lbl);
   });

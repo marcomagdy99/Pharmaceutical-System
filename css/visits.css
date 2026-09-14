@@ -302,6 +302,96 @@
     color: var(--gray-800);
 }
 
+/* Segmented Radio Group Control in Visit & Bulk Modals */
+#visitModal .radio-group,
+#bulkPlanModal .radio-group {
+    display: flex;
+    gap: 6px;
+    background: var(--gray-100, #f1f5f9);
+    padding: 4px;
+    border-radius: 10px;
+    margin-top: 6px;
+    border: 1px solid var(--gray-200, #e2e8f0);
+}
+
+#visitModal .radio-label,
+#bulkPlanModal .radio-label {
+    flex: 1 1 0;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-600, #475569);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0;
+    user-select: none;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+#visitModal .radio-label input[type="radio"],
+#bulkPlanModal .radio-label input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+}
+
+#visitModal .radio-label:has(input:checked),
+#bulkPlanModal .radio-label:has(input:checked) {
+    background: var(--white, #ffffff);
+    color: var(--primary, #0d6efd);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Products Discussed & Companions Grid */
+#visitProducts,
+#visitManagersGroup {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 6px;
+}
+
+#visitProducts .checkbox-label,
+#visitManagersGroup .checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    background: var(--gray-50, #f8fafc) !important;
+    border: 1px solid var(--gray-200, #e2e8f0) !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 500;
+    color: var(--gray-800, #1e293b);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+#visitProducts .checkbox-label:hover,
+#visitManagersGroup .checkbox-label:hover {
+    border-color: var(--primary, #0d6efd) !important;
+}
+
+#visitProducts .checkbox-label:has(input:checked),
+#visitManagersGroup .checkbox-label:has(input:checked) {
+    background: rgba(13, 110, 253, 0.08) !important;
+    border-color: var(--primary, #0d6efd) !important;
+    color: var(--primary, #0d6efd) !important;
+    font-weight: 600;
+}
+
 .radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
 .radio-label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; }
 .checkbox-group { margin-top: 0.5rem; }
@@ -391,6 +481,38 @@
 [data-theme="dark"] .bulk-target-item:hover {
     border-color: #388bfd !important;
     background-color: #282d38 !important;
+}
+
+[data-theme="dark"] #visitModal .radio-group,
+[data-theme="dark"] #bulkPlanModal .radio-group {
+    background: #15181e !important;
+    border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] #visitModal .radio-label,
+[data-theme="dark"] #bulkPlanModal .radio-label {
+    color: #9da5b1;
+}
+
+[data-theme="dark"] #visitModal .radio-label:has(input:checked),
+[data-theme="dark"] #bulkPlanModal .radio-label:has(input:checked) {
+    background: #252b36 !important;
+    color: #58a6ff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] #visitProducts .checkbox-label,
+[data-theme="dark"] #visitManagersGroup .checkbox-label {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #visitProducts .checkbox-label:has(input:checked),
+[data-theme="dark"] #visitManagersGroup .checkbox-label:has(input:checked) {
+    background: rgba(56, 189, 248, 0.12) !important;
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
 }
 
 /* ==========================================================================
@@ -914,16 +1036,41 @@
     #filterRep {
         min-width: 100% !important;
         width: 100% !important;
+        font-size: 0.85rem !important;
+    }
+    #filterRep option,
+    #filterRep optgroup,
+    .manager-rep-filter-container option,
+    .manager-rep-filter-container optgroup {
+        font-size: 0.85rem !important;
     }
     .manager-rep-filter-container {
         flex-direction: column;
         align-items: stretch;
     }
+    .manager-rep-filter-container select {
+        font-size: 0.85rem !important;
+    }
 }
 
 @media (max-width: 520px) {
-    .bulk-plan-grid,
+    .bulk-plan-grid {
+        grid-template-columns: 1fr !important;
+    }
     .visit-modal-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+    #visitModal .modal-content {
+        width: 95% !important;
+        padding: 1.25rem 1rem !important;
+    }
+    #visitModal .radio-label {
+        font-size: 0.76rem !important;
+        padding: 7px 3px !important;
+    }
+    #visitProducts,
+    #visitManagersGroup {
         grid-template-columns: 1fr !important;
     }
 }

@@ -183,6 +183,7 @@ const DEFAULT_DEMO_DATA = {
     {
       id: "line1",
       name: "Cardio Line",
+      status: "Active",
       lineManagerId: "lm1",
       products: [
         { id: "prod1", name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet" },
@@ -194,6 +195,7 @@ const DEFAULT_DEMO_DATA = {
     {
       id: "line2",
       name: "Neuro Line",
+      status: "Active",
       lineManagerId: "lm1",
       products: [
         { id: "prod5", name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule" },

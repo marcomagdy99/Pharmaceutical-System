@@ -574,12 +574,12 @@ function populateTimelineAndCoverageFilters(user) {
 
       const optAllDMs = document.createElement('option');
       optAllDMs.value = 'all_dms';
-      optAllDMs.textContent = lang === 'ar' ? 'جميع مديري المناطق (DMs فقط)' : 'All District Managers (DMs Only)';
+      optAllDMs.textContent = lang === 'ar' ? 'جميع مديري المناطق (DMs)' : 'All District Managers (DMs)';
       selectEl.appendChild(optAllDMs);
 
       const optAllReps = document.createElement('option');
       optAllReps.value = 'all_reps';
-      optAllReps.textContent = lang === 'ar' ? 'جميع المناديب (Reps فقط)' : 'All Medical Reps (Reps Only)';
+      optAllReps.textContent = lang === 'ar' ? 'جميع المناديب (Reps)' : 'All Medical Reps (Reps)';
       selectEl.appendChild(optAllReps);
 
       if (dms.length > 0) {
@@ -590,11 +590,8 @@ function populateTimelineAndCoverageFilters(user) {
       }
       if (reps.length > 0) {
         const repGroup = document.createElement('optgroup');
-        repGroup.label = lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Representatives (Reps)';
-        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => {
-          const dm = dms.find((d) => d.id === rep.managerId);
-          return `${rep.name} (${rep.employeeCode || 'Rep'}${dm ? ` - DM: ${dm.name}` : ''})`;
-        });
+        repGroup.label = lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Reps (Reps)';
+        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `${rep.name} (${rep.employeeCode || 'Rep'})`);
         selectEl.appendChild(repGroup);
       }
     } else if (role === 'district_manager') {
