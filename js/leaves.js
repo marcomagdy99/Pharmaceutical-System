@@ -4,8 +4,6 @@
  * Full/Half Day Duration, File Attachments, Dynamic Balance Deduction, and HR Public Holiday declarations.
  */
 
-const esc = window.escapeHtml || ((s) => s || "");
-
 // Master Leave Requests with 3-tier Approval Tracking
 let demoLeaves = (window.store && window.store.leaves
   ? window.store.leaves.getAll()
@@ -446,7 +444,7 @@ function calcDays() {
                 : isAr
                   ? "يوم كامل"
                   : "Full Day";
-            return `<strong>${esc(h.title)}</strong> (${esc(h.date)} - ${durLabel})`;
+            return `<strong>${window.escapeHtml(h.title)}</strong> (${window.escapeHtml(h.date)} - ${durLabel})`;
           })
           .join("، ");
         holidayNotice.innerHTML = isAr
@@ -745,7 +743,7 @@ function renderHistory() {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.dm.status}">
-            ${esc(dmName)}: ${app.dm.status.toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
+            ${window.escapeHtml(dmName)}: ${app.dm.status.toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -755,7 +753,7 @@ function renderHistory() {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.lm.status}">
-            ${esc(lmName)}: ${app.lm.status.toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
+            ${window.escapeHtml(lmName)}: ${app.lm.status.toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -765,7 +763,7 @@ function renderHistory() {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.hr.status}">
-            ${esc(hrName)}: ${app.hr.status.toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
+            ${window.escapeHtml(hrName)}: ${app.hr.status.toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -783,7 +781,7 @@ function renderHistory() {
       <td>
         ${
           l.attachmentName
-            ? `<span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">📎 ${esc(l.attachmentName)}</span>`
+            ? `<span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">📎 ${window.escapeHtml(l.attachmentName)}</span>`
             : '<span class="text-muted" style="font-size:0.75rem;">None</span>'
         }
       </td>
@@ -863,7 +861,7 @@ function renderPendingApprovals() {
               ${(l.userName || "U").charAt(0)}
             </div>
             <div>
-              <h6 class="m-0 fw-bold" style="color:#ffffff;">${esc(l.userName)} (${esc(l.userRole || "Rep")})</h6>
+              <h6 class="m-0 fw-bold" style="color:#ffffff;">${window.escapeHtml(l.userName)} (${window.escapeHtml(l.userRole || "Rep")})</h6>
               <small style="color:#cbd5e1;">${typeLabel} • ${l.days} Day(s) (${l.dayDuration || "full"})</small>
             </div>
           </div>
@@ -872,7 +870,7 @@ function renderPendingApprovals() {
         <p class="mb-2 small" style="color:#dee2e6;"><strong>Reason:</strong> <span class="leave-reason-text"></span></p>
         ${
           l.attachmentName
-            ? `<div class="mb-3"><span class="badge bg-primary-subtle text-primary border">📎 Attached: ${esc(l.attachmentName)}</span></div>`
+            ? `<div class="mb-3"><span class="badge bg-primary-subtle text-primary border">📎 Attached: ${window.escapeHtml(l.attachmentName)}</span></div>`
             : ""
         }
         <div class="d-flex gap-2">
@@ -920,7 +918,7 @@ function renderDeclaredHolidaysList() {
 
       return `
       <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2" style="font-size: 13px;">
-        <span>🌴 <strong>${h.date}</strong>: ${esc(h.title)}</span>
+        <span>🌴 <strong>${h.date}</strong>: ${window.escapeHtml(h.title)}</span>
         ${durationBadge}
         <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none" onclick="removeDeclaredHoliday(${idx})" title="Remove Holiday" style="font-size: 14px; line-height: 1;">✕</button>
       </span>
@@ -945,7 +943,7 @@ function populateHrAllLeavesFilter() {
     .map((u) => {
       const displayName = isAr && u.nameAr ? u.nameAr : u.name || u.id;
       const roleBadge = u.role ? ` (${u.role})` : "";
-      return `<option value="${u.id}">${esc(displayName)}${roleBadge}</option>`;
+      return `<option value="${u.id}">${window.escapeHtml(displayName)}${roleBadge}</option>`;
     })
     .join("");
 
@@ -1069,7 +1067,7 @@ function renderHrAllLeaves() {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.dm.status}">
-            ${esc(dmName)}: ${app.dm.status.toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
+            ${window.escapeHtml(dmName)}: ${app.dm.status.toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -1079,7 +1077,7 @@ function renderHrAllLeaves() {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.lm.status}">
-            ${esc(lmName)}: ${app.lm.status.toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
+            ${window.escapeHtml(lmName)}: ${app.lm.status.toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -1089,7 +1087,7 @@ function renderHrAllLeaves() {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.hr.status}">
-            ${esc(hrName)}: ${app.hr.status.toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
+            ${window.escapeHtml(hrName)}: ${app.hr.status.toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -1103,8 +1101,8 @@ function renderHrAllLeaves() {
             ${(l.userName || "U").charAt(0)}
           </div>
           <div>
-            <div class="fw-bold leave-item-title">${esc(l.userName || "Employee")}</div>
-            <small class="text-muted">${esc(l.userRole || "Staff")}</small>
+            <div class="fw-bold leave-item-title">${window.escapeHtml(l.userName || "Employee")}</div>
+            <small class="text-muted">${window.escapeHtml(l.userRole || "Staff")}</small>
           </div>
         </div>
       </td>
@@ -1118,7 +1116,7 @@ function renderHrAllLeaves() {
       <td>
         ${
           l.attachmentName
-            ? `<span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">📎 ${esc(l.attachmentName)}</span>`
+            ? `<span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">📎 ${window.escapeHtml(l.attachmentName)}</span>`
             : '<span class="text-muted" style="font-size:0.75rem;">None</span>'
         }
       </td>
@@ -1453,8 +1451,8 @@ Object.assign(leavesApp, {
       const remCasual = Math.max(0, casualTotal - used.casual);
       const remSick = Math.max(0, sickTotal - used.sick);
       const rawDisplayName = isAr && user.nameAr ? user.nameAr : user.name;
-      const displayName = esc(rawDisplayName);
-      const safeUserName = esc(user.name);
+      const displayName = window.escapeHtml(rawDisplayName);
+      const safeUserName = window.escapeHtml(user.name);
 
       summaryEl.style.display = "block";
       summaryEl.innerHTML = isAr

@@ -6,8 +6,6 @@
  * list that the (future) sales-sheet import mapping will reference by id.
  */
 
-const esc = window.escapeHtml || ((s) => s || "");
-
 let distributorModal = null;
 let deleteModal = null;
 let mappingModal = null;
@@ -87,6 +85,14 @@ const distributorTranslations = {
     confirm_delete_batch: "Delete this import? This will permanently remove",
     confirm_delete_batch_suffix: "sales rows. This cannot be undone.",
     batch_deleted: "Import deleted.",
+    tab_distributors_mapping: "Distributors & Mapping",
+    tab_sales_import: "Upload Sales Sheets",
+    upload_sales_title: "Upload Monthly Sales Sheet",
+    upload_sales_desc: "Select the distributor, month, and year, then upload the official sales spreadsheet.",
+    select_distributor: "-- Select Distributor --",
+    label_month: "Month",
+    label_year: "Year",
+    upload_excel_btn: "Upload Excel Sheet",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -158,6 +164,14 @@ const distributorTranslations = {
     confirm_delete_batch: "تمسح الاستيراد ده؟ هيتشال نهائيًا",
     confirm_delete_batch_suffix: "صف مبيعات. الإجراء ده مايتراجعش.",
     batch_deleted: "اتمسح الاستيراد.",
+    tab_distributors_mapping: "الموزعين وضبط القوالب",
+    tab_sales_import: "رفع شيتات المبيعات",
+    upload_sales_title: "رفع شيت المبيعات الشهري",
+    upload_sales_desc: "اختر الموزع والشهر والسنة ثم ارفع شيت المبيعات المعتمد.",
+    select_distributor: "-- اختر الموزّع --",
+    label_month: "الشهر",
+    label_year: "السنة",
+    upload_excel_btn: "رفع شيت إكسيل",
   },
 };
 
@@ -199,6 +213,12 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPendingAreas();
   renderPendingProducts();
   renderImportBatches();
+  populateUploadControls();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("tab") === "import") {
+    switchDistTab("import");
+  }
 });
 
 function renderDistributors(filterText = "") {
@@ -247,24 +267,24 @@ function renderDistributors(filterText = "") {
     tr.innerHTML = `
       <td class="px-4 py-3 fw-medium">
         <div class="d-flex align-items-center">
-          <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${esc((dist.name || "D").charAt(0))}</div>
-          <span>${esc(dist.name)}</span>
+          <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${window.escapeHtml((dist.name || "D").charAt(0))}</div>
+          <span>${window.escapeHtml(dist.name)}</span>
         </div>
       </td>
       <td class="px-4 py-3">${typeBadge}</td>
       <td class="px-4 py-3">
         <div class="d-flex align-items-center gap-2">
           ${mappingBadge}
-          <button class="btn btn-sm btn-outline-primary" onclick="openMappingModal('${esc(dist.id)}')">
-            <i class="fas fa-table-columns me-1"></i>${esc(configureLabel)}
+          <button class="btn btn-sm btn-outline-primary" onclick="openMappingModal('${window.escapeHtml(dist.id)}')">
+            <i class="fas fa-table-columns me-1"></i>${window.escapeHtml(configureLabel)}
           </button>
         </div>
       </td>
       <td class="px-4 py-3 text-end area-actions-cell">
-        <button class="btn btn-sm btn-light me-1 text-primary" onclick="openEditModal('${esc(dist.id)}')" title="${isAr ? distributorTranslations.ar.edit : distributorTranslations.en.edit}">
+        <button class="btn btn-sm btn-light me-1 text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.edit : distributorTranslations.en.edit}">
           <i class="fas fa-edit"></i>
         </button>
-        <button class="btn btn-sm btn-light text-danger" onclick="openDeleteModal('${esc(dist.id)}')" title="${isAr ? distributorTranslations.ar.delete : distributorTranslations.en.delete}">
+        <button class="btn btn-sm btn-light text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.delete : distributorTranslations.en.delete}">
           <i class="fas fa-trash"></i>
         </button>
       </td>
@@ -583,18 +603,18 @@ function renderPendingAreas() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="px-3 py-2">${esc(dist ? dist.name : entry.distributorId)}</td>
-      <td class="px-3 py-2 fw-medium">${esc(entry.areaRaw)}</td>
+      <td class="px-3 py-2">${window.escapeHtml(dist ? dist.name : entry.distributorId)}</td>
+      <td class="px-3 py-2 fw-medium">${window.escapeHtml(entry.areaRaw)}</td>
       <td class="px-3 py-2">${entry.count}</td>
       <td class="px-3 py-2">
         <select class="form-select form-select-sm" id="${rowId}_select">
-          <option value="">${esc(t.select_area)}</option>
-          ${areas.map((a) => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("")}
+          <option value="">${window.escapeHtml(t.select_area)}</option>
+          ${areas.map((a) => `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(a.name)}</option>`).join("")}
         </select>
       </td>
       <td class="px-3 py-2">
-        <button class="btn btn-sm btn-primary" onclick="linkAreaAlias('${esc(entry.distributorId)}', '${esc(entry.areaRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
-          ${esc(t.link)}
+        <button class="btn btn-sm btn-primary" onclick="linkAreaAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.areaRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
+          ${window.escapeHtml(t.link)}
         </button>
       </td>
     `;
@@ -662,26 +682,26 @@ function renderPendingProducts() {
         const products = Array.isArray(line.products) ? line.products : [];
         if (!products.length) return "";
         const opts = products
-          .map((p) => `<option value="${esc(line.id)}::${esc(p.id)}">${esc(p.name)}${p.dosage ? " " + esc(p.dosage) : ""}</option>`)
+          .map((p) => `<option value="${window.escapeHtml(line.id)}::${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)}${p.dosage ? " " + window.escapeHtml(p.dosage) : ""}</option>`)
           .join("");
-        return `<optgroup label="${esc(line.name)}">${opts}</optgroup>`;
+        return `<optgroup label="${window.escapeHtml(line.name)}">${opts}</optgroup>`;
       })
       .join("");
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="px-3 py-2">${esc(dist ? dist.name : entry.distributorId)}</td>
-      <td class="px-3 py-2 fw-medium">${esc(entry.productRaw)}</td>
+      <td class="px-3 py-2">${window.escapeHtml(dist ? dist.name : entry.distributorId)}</td>
+      <td class="px-3 py-2 fw-medium">${window.escapeHtml(entry.productRaw)}</td>
       <td class="px-3 py-2">${entry.count}</td>
       <td class="px-3 py-2">
         <select class="form-select form-select-sm" id="${rowId}_select">
-          <option value="">${esc(t.select_product)}</option>
+          <option value="">${window.escapeHtml(t.select_product)}</option>
           ${optionsHtml}
         </select>
       </td>
       <td class="px-3 py-2">
-        <button class="btn btn-sm btn-primary" onclick="linkProductAlias('${esc(entry.distributorId)}', '${esc(entry.productRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
-          ${esc(t.link)}
+        <button class="btn btn-sm btn-primary" onclick="linkProductAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.productRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
+          ${window.escapeHtml(t.link)}
         </button>
       </td>
     `;
@@ -746,13 +766,13 @@ function renderImportBatches() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="px-3 py-2">${esc(dist ? dist.name : b.distributorId)}</td>
-      <td class="px-3 py-2">${esc(b.month)}</td>
+      <td class="px-3 py-2">${window.escapeHtml(dist ? dist.name : b.distributorId)}</td>
+      <td class="px-3 py-2">${window.escapeHtml(b.month)}</td>
       <td class="px-3 py-2">${b.rowCount || 0}</td>
-      <td class="px-3 py-2">${esc(b.fileName || "")}</td>
-      <td class="px-3 py-2" style="white-space:nowrap;">${esc(uploadedLabel)}</td>
+      <td class="px-3 py-2">${window.escapeHtml(b.fileName || "")}</td>
+      <td class="px-3 py-2" style="white-space:nowrap;">${window.escapeHtml(uploadedLabel)}</td>
       <td class="px-3 py-2 text-end">
-        <button class="btn btn-sm btn-light text-danger" onclick="deleteImportBatch('${esc(b.id)}')" title="Delete">
+        <button class="btn btn-sm btn-light text-danger" onclick="deleteImportBatch('${window.escapeHtml(b.id)}')" title="Delete">
           🗑️
         </button>
       </td>
@@ -783,3 +803,301 @@ function deleteImportBatch(batchId) {
   renderPendingProducts();
   if (typeof showToast === "function") showToast(t.batch_deleted, "info");
 }
+
+// ==========================================
+// Section: Sales Sheet Upload & Tab Switching
+// ==========================================
+
+function switchDistTab(tabKey) {
+  const btnDist = document.getElementById("tabBtn-distributors");
+  const btnImport = document.getElementById("tabBtn-import");
+  const panelDist = document.getElementById("panel-distributors");
+  const panelImport = document.getElementById("panel-import");
+
+  if (tabKey === "import") {
+    if (btnDist) btnDist.classList.remove("active");
+    if (btnImport) btnImport.classList.add("active");
+    if (panelDist) panelDist.style.display = "none";
+    if (panelImport) panelImport.style.display = "block";
+
+    populateUploadControls();
+    renderPendingAreas();
+    renderPendingProducts();
+    renderImportBatches();
+  } else {
+    if (btnDist) btnDist.classList.add("active");
+    if (btnImport) btnImport.classList.remove("active");
+    if (panelDist) panelDist.style.display = "block";
+    if (panelImport) panelImport.style.display = "none";
+
+    renderDistributors();
+    updateStats();
+  }
+}
+
+function populateUploadControls() {
+  const distSelect = document.getElementById("uploadDistributorSelect");
+  const monthSelect = document.getElementById("uploadMonthSelect");
+  const yearSelect = document.getElementById("uploadYearSelect");
+  const isAr = document.documentElement.dir === "rtl";
+
+  if (distSelect) {
+    const prevVal = distSelect.value;
+    distSelect.innerHTML = `<option value="">${isAr ? "-- اختر الموزّع --" : "-- Select Distributor --"}</option>`;
+    const distributors = getDistributorsList();
+    distributors.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      const isMapped = d.columnMap && d.columnMap.product && d.columnMap.value;
+      const mapLabel = isMapped
+        ? (isAr ? " (مربوط)" : " (Mapped)")
+        : (isAr ? " (غير مربوط)" : " (Unmapped)");
+      opt.textContent = `${d.name}${mapLabel}`;
+      distSelect.appendChild(opt);
+    });
+    if (prevVal) distSelect.value = prevVal;
+  }
+
+  if (monthSelect && monthSelect.options.length === 0) {
+    const monthNamesEn = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const monthNamesAr = [
+      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+    ];
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+    monthNamesEn.forEach((m, idx) => {
+      const val = String(idx + 1).padStart(2, "0");
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = isAr ? `${val} - ${monthNamesAr[idx]}` : `${val} - ${m}`;
+      if (val === currentMonth) opt.selected = true;
+      monthSelect.appendChild(opt);
+    });
+  }
+
+  if (yearSelect && yearSelect.options.length === 0) {
+    const currentYear = String(new Date().getFullYear());
+    ["2025", "2026", "2027"].forEach((y) => {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    });
+  }
+}
+
+function triggerExcelUpload() {
+  const distSelect = document.getElementById("uploadDistributorSelect");
+  const distId = distSelect ? distSelect.value : "";
+  const isAr = document.documentElement.dir === "rtl";
+
+  if (!distId) {
+    if (typeof showToast === "function") {
+      showToast(isAr ? "اختر الموزّع الأول." : "Select a distributor first.", "warning");
+    }
+    return;
+  }
+
+  const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
+  const hasMapping = dist && dist.columnMap && dist.columnMap.product && dist.columnMap.value;
+  if (!hasMapping) {
+    if (typeof showToast === "function") {
+      showToast(
+        isAr
+          ? "الموزّع ده لسه مفيهوش ربط أعمدة. اضبطه من تبويب قائمة الموزعين الأول."
+          : "This distributor's sheet columns aren't mapped yet. Configure it from the Distributors tab first.",
+        "error"
+      );
+    }
+    return;
+  }
+
+  const fileInput = document.getElementById("salesExcelFileInput");
+  if (fileInput) fileInput.click();
+}
+
+function handleExcelUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const isAr = document.documentElement.dir === "rtl";
+
+  const distSelect = document.getElementById("uploadDistributorSelect");
+  const monthSelect = document.getElementById("uploadMonthSelect");
+  const yearSelect = document.getElementById("uploadYearSelect");
+  const distId = distSelect ? distSelect.value : "";
+  const month = monthSelect ? monthSelect.value : "";
+  const year = yearSelect ? yearSelect.value : "";
+  const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
+
+  if (!dist || !dist.columnMap || !dist.columnMap.product || !dist.columnMap.value || !month || !year) {
+    if (typeof showToast === "function") {
+      showToast(isAr ? "محتاج تختار الموزّع والشهر والسنة الأول." : "Select a distributor, month, and year first.", "warning");
+    }
+    e.target.value = "";
+    return;
+  }
+
+  if (typeof XLSX === "undefined") {
+    if (typeof showToast === "function") {
+      showToast(isAr ? "مكتبة قراءة الإكسيل غير محملة." : "Excel reader library failed to load.", "error");
+    }
+    e.target.value = "";
+    return;
+  }
+
+  const monthKey = `${year}-${month}`;
+  const existingBatch = window.store && window.store.importBatches
+    ? window.store.importBatches.find(distId, monthKey)
+    : null;
+  let replacingPreviousBatch = false;
+
+  if (existingBatch) {
+    const uploadedDate = existingBatch.uploadedAt ? new Date(existingBatch.uploadedAt).toLocaleString() : "";
+    const confirmMsg = isAr
+      ? `اتعملت رفعة قبل كده لـ "${dist.name}" لشهر ${monthKey} (${existingBatch.rowCount} صف${uploadedDate ? '، بتاريخ ' + uploadedDate : ''}). لو كملت، الرفعة القديمة هتتمسح ويتحل محلها الملف الجديد بالكامل. عايز تكمل؟`
+      : `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ', on ' + uploadedDate : ''}). Continuing will replace that previous upload entirely. Continue?`;
+    if (!confirm(confirmMsg)) {
+      e.target.value = "";
+      return;
+    }
+    replacingPreviousBatch = true;
+  }
+
+  if (typeof showToast === "function") {
+    showToast(isAr ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, "info");
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    try {
+      const data = new Uint8Array(ev.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      const map = dist.columnMap;
+      const batchId = "batch_" + Date.now();
+      const imported = [];
+      let returnsCount = 0;
+      let skippedInvalid = 0;
+
+      rows.forEach((row, idx) => {
+        const productRaw = map.product ? row[map.product] : "";
+        const valueRaw = map.value ? row[map.value] : "";
+        const quantityRaw = map.quantity ? row[map.quantity] : "";
+        const dateRaw = map.date ? row[map.date] : "";
+        const product = String(productRaw || "").trim();
+
+        const numericValue = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ""));
+        const numericQuantity = map.quantity
+          ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ""))
+          : null;
+
+        let parsedDate = null;
+        if (map.date && dateRaw !== "" && dateRaw !== null && dateRaw !== undefined) {
+          if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
+            parsedDate = dateRaw.toISOString().slice(0, 10);
+          } else if (typeof dateRaw === "number") {
+            const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+            if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+          } else {
+            const d = new Date(String(dateRaw).trim());
+            if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+          }
+        }
+
+        if (!product || isNaN(numericValue)) {
+          skippedInvalid++;
+          return;
+        }
+
+        if (numericValue < 0) {
+          returnsCount++;
+        }
+
+        imported.push({
+          id: `dsale_${Date.now()}_${idx}`,
+          batchId,
+          distributorId: distId,
+          month: monthKey,
+          date: parsedDate,
+          product,
+          value: numericValue,
+          quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
+          pharmacyName: map.pharmacy ? String(row[map.pharmacy] || "").trim() : "",
+          areaRaw: map.area ? String(row[map.area] || "").trim() : "",
+          repId: null,
+          dmId: null,
+          lmId: null,
+          lineId: null,
+          areaId: null,
+        });
+      });
+
+      if (replacingPreviousBatch && existingBatch && window.store && window.store.distributorSales) {
+        window.store.distributorSales.deleteByBatch(existingBatch.id);
+        window.store.importBatches.delete(existingBatch.id);
+      }
+
+      if (window.store && window.store.distributorSales) {
+        window.store.distributorSales.addBatch(imported);
+      }
+      if (window.store && window.store.importBatches) {
+        window.store.importBatches.save({
+          id: batchId,
+          distributorId: distId,
+          month: monthKey,
+          rowCount: imported.length,
+          fileName: file.name,
+          uploadedAt: new Date().toISOString(),
+        });
+      }
+
+      const totalValue = imported.reduce((sum, r) => sum + r.value, 0);
+      const panel = document.getElementById("salesImportResultsPanel");
+      if (panel) {
+        panel.style.display = "block";
+        const replacedNote = replacingPreviousBatch
+          ? (isAr ? " (استبدلت رفعة سابقة لنفس الشهر/الموزّع)" : " (replaced a previous upload for this month/distributor)")
+          : "";
+        panel.innerHTML = isAr
+          ? `✅ تم تسجيل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب). صافي القيمة: <strong>${totalValue.toLocaleString()}</strong>. تم تجاهل ${skippedInvalid} صف ببيانات غير مكتملة.<br><span class="fw-bold">ملاحظة:</span> يمكنك ربط المناطق والمنتجات غير المربوطة من الجداول بالأسفل مباشرة.`
+          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
+      }
+
+      renderImportBatches();
+      renderPendingAreas();
+      renderPendingProducts();
+
+      if (typeof showToast === "function") {
+        showToast(
+          isAr
+            ? `تم استيراد ${imported.length} صف بنجاح.`
+            : `Successfully imported ${imported.length} rows.`,
+          "success"
+        );
+      }
+    } catch (err) {
+      console.error("Error parsing distributor sheet:", err);
+      if (typeof showToast === "function") {
+        showToast(
+          isAr
+            ? "تعذرت قراءة الملف. تأكد إنه بنفس شكل الشيت اللي اتعمل عليه الربط."
+            : "Could not read this file. Make sure it matches the sheet layout the mapping was configured from.",
+          "error"
+        );
+      }
+    }
+    e.target.value = "";
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+window.switchDistTab = switchDistTab;
+window.triggerExcelUpload = triggerExcelUpload;
+window.handleExcelUpload = handleExcelUpload;
+window.deleteImportBatch = deleteImportBatch;

@@ -9,131 +9,7 @@
  * same distributorSales data on top -- this file is not itself an
  * aggregated view anymore.
  * Depends on shared-report.js (must load after it).
- *
- * Note: buildMergedSalesRows()/buildDistributorAggregatedSales() below
- * (and the old multi-select month/product dropdown helpers earlier in
- * this file) supported the previous rep+product+month aggregated Sales
- * table that this tab used to show. They're unused now that the tab is
- * the raw Pharmacies Sales view, but are left defined rather than
- * deleted in case they're wired back in later.
  */
-
-// ============================================================================
-// Section 5: Multi-Select Product Dropdown Logic
-// ============================================================================
-window.toggleProductDropdown = function(e) {
-  if (e) e.stopPropagation();
-  const menu = document.getElementById('prodDropdownMenu');
-  if (menu) menu.classList.toggle('show');
-};
-
-window.closeProductDropdown = function() {
-  const menu = document.getElementById('prodDropdownMenu');
-  if (menu) menu.classList.remove('show');
-};
-
-window.toggleSelectAllProducts = function(isChecked) {
-  document.querySelectorAll('.prod-checkbox').forEach((cb) => {
-    cb.checked = isChecked;
-  });
-  updateProductDropdownLabel();
-};
-
-window.onProductCheckboxChange = function() {
-  const allCheckboxes = document.querySelectorAll('.prod-checkbox');
-  const checkedBoxes = document.querySelectorAll('.prod-checkbox:checked');
-  const selectAll = document.getElementById('selectAllProds');
-  if (selectAll) {
-    selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
-  }
-  updateProductDropdownLabel();
-};
-
-function updateProductDropdownLabel() {
-  const labelEl = document.getElementById('prodDropdownLabel');
-  if (!labelEl) return;
-  const lang = getCurrentLang();
-  const allBoxes = document.querySelectorAll('.prod-checkbox');
-  const checkedBoxes = Array.from(document.querySelectorAll('.prod-checkbox:checked'));
-  if (checkedBoxes.length === 0) {
-    labelEl.textContent = lang === 'ar' ? 'لم يتم تحديد أدوية' : 'None Selected';
-  } else if (checkedBoxes.length === allBoxes.length) {
-    labelEl.textContent = lang === 'ar' ? `جميع الأدوية (${allBoxes.length})` : `All Products (${allBoxes.length})`;
-  } else if (checkedBoxes.length === 1) {
-    labelEl.textContent = checkedBoxes[0].value;
-  } else {
-    labelEl.textContent = lang === 'ar'
-      ? `تم اختيار (${checkedBoxes.length}) أدوية`
-      : `${checkedBoxes.length} Products Selected`;
-  }
-}
-
-function populateProductCheckboxes(lineId = 'all') {
-  const checkboxList = document.getElementById('productCheckboxList');
-  if (!checkboxList) return;
-  const salesData = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-    ? window.DEMO_DATA.sales
-    : REPORTS_DATA.sales;
-  let availableProducts = [];
-  if (!lineId || lineId === 'all') {
-    availableProducts = Array.from(new Set(salesData.map((s) => s.product).filter(Boolean)));
-    // Imported (distributor-sourced) products have no known lineId yet,
-    // so they only surface here in the unfiltered "All Lines" view, not
-    // when a specific line is picked below.
-    const importedProducts = (window.store && window.store.distributorSales
-      ? window.store.distributorSales.getAll()
-      : []
-    ).map((s) => s.product).filter(Boolean);
-    importedProducts.forEach((p) => {
-      if (!availableProducts.includes(p)) availableProducts.push(p);
-    });
-  } else {
-    availableProducts = Array.from(
-      new Set(salesData.filter((s) => s.lineId === lineId).map((s) => s.product).filter(Boolean))
-    );
-  }
-  checkboxList.replaceChildren();
-  const esc = window.escapeHtml || ((s) => s || '');
-  availableProducts.forEach((prodName) => {
-    const label = document.createElement('label');
-    label.className = 'multi-select-item';
-    const safeName = esc(prodName);
-    label.innerHTML = `
-      <input type="checkbox" class="prod-checkbox" value="${safeName}" checked onchange="onProductCheckboxChange()">
-      <span>${safeName}</span>
-    `;
-    checkboxList.appendChild(label);
-  });
-  const selectAll = document.getElementById('selectAllProds');
-  if (selectAll) selectAll.checked = true;
-  updateProductDropdownLabel();
-}
-
-// ============================================================================
-// Section 5.7: Distributor & Supply Type Filters
-// The Supply Type (Commercial/Tender) is NOT a flag stored on each sale
-// row -- it's read from the distributor record itself, since Commercial
-// and Tender business from the same wholesaler are separate distributor
-// entries (e.g. "Ibn Sina" vs "Tender Ibn Sina"), matching the real CRM.
-// ============================================================================
-function populateDistributorsFilter() {
-  const select = document.getElementById('salesDistributorSelect');
-  if (!select) return;
-  const lang = getCurrentLang();
-  const allLabel = lang === 'ar' ? 'جميع الموزعين' : 'All Distributors';
-  const currentVal = select.value;
-  const distributors = (window.store && window.store.distributors.getAll()) || [];
-  select.innerHTML = `<option value="all">${allLabel}</option>`;
-  distributors.forEach((d) => {
-    const opt = document.createElement('option');
-    opt.value = d.id;
-    opt.textContent = d.name;
-    select.appendChild(opt);
-  });
-  if (currentVal && distributors.some((d) => d.id === currentVal)) {
-    select.value = currentVal;
-  }
-}
 
 /**
  * Fills the upload bar's Distributor/Month/Year selects. Distributors
@@ -191,255 +67,6 @@ function populateUploadControls() {
     });
     yearSelect.dataset.populated = 'true';
   }
-}
-
-
-// (Same interaction pattern as the Product dropdown above. Months are a
-// fixed, non-user-supplied list, so building labels via textContent isn't
-// a security requirement here, but it's used anyway to stay consistent.)
-// ============================================================================
-window.toggleMonthDropdown = function(e) {
-  if (e) e.stopPropagation();
-  const menu = document.getElementById('monthDropdownMenu');
-  if (menu) menu.classList.toggle('show');
-};
-
-window.closeMonthDropdown = function() {
-  const menu = document.getElementById('monthDropdownMenu');
-  if (menu) menu.classList.remove('show');
-};
-
-window.toggleSelectAllMonths = function(isChecked) {
-  document.querySelectorAll('.month-checkbox').forEach((cb) => {
-    cb.checked = isChecked;
-  });
-  updateMonthDropdownLabel();
-};
-
-window.onMonthCheckboxChange = function() {
-  const allCheckboxes = document.querySelectorAll('.month-checkbox');
-  const checkedBoxes = document.querySelectorAll('.month-checkbox:checked');
-  const selectAll = document.getElementById('selectAllMonths');
-  if (selectAll) {
-    selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
-  }
-  updateMonthDropdownLabel();
-};
-
-function updateMonthDropdownLabel() {
-  const labelEl = document.getElementById('monthDropdownLabel');
-  if (!labelEl) return;
-  const lang = getCurrentLang();
-  const allBoxes = document.querySelectorAll('.month-checkbox');
-  const checkedBoxes = Array.from(document.querySelectorAll('.month-checkbox:checked'));
-  if (checkedBoxes.length === 0) {
-    labelEl.textContent = lang === 'ar' ? 'لم يتم اختيار شهور' : 'No Months Selected';
-  } else if (checkedBoxes.length === allBoxes.length) {
-    labelEl.textContent = lang === 'ar' ? 'كل الشهور' : 'All Months';
-  } else if (checkedBoxes.length === 1) {
-    const idx = parseInt(checkedBoxes[0].value, 10) - 1;
-    labelEl.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : MONTH_NAMES[idx];
-  } else {
-    labelEl.textContent = lang === 'ar'
-      ? `${checkedBoxes.length} شهور محددة`
-      : `${checkedBoxes.length} Months Selected`;
-  }
-}
-
-/**
- * Populates the month checkbox list (Jan-Dec). By default only the
- * current month is checked, matching the old single-select's default.
- * Pass a specific '01'-'12' string in defaultMonth to preselect a
- * different month instead (e.g. when restoring a saved filter).
- */
-function populateMonthCheckboxes(defaultMonth = null) {
-  const checkboxList = document.getElementById('monthCheckboxList');
-  if (!checkboxList) return;
-  const lang = getCurrentLang();
-  const now = new Date();
-  const defaultMonthVal = defaultMonth || String(now.getMonth() + 1).padStart(2, '0');
-  checkboxList.replaceChildren();
-  MONTH_NAMES.forEach((m, idx) => {
-    const val = String(idx + 1).padStart(2, '0');
-    const label = document.createElement('label');
-    label.className = 'multi-select-item';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'month-checkbox';
-    checkbox.value = val;
-    checkbox.checked = (val === defaultMonthVal);
-    checkbox.addEventListener('change', onMonthCheckboxChange);
-    const span = document.createElement('span');
-    span.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : m;
-    label.appendChild(checkbox);
-    label.appendChild(span);
-    checkboxList.appendChild(label);
-  });
-  const selectAll = document.getElementById('selectAllMonths');
-  if (selectAll) selectAll.checked = false;
-  updateMonthDropdownLabel();
-}
-
-/**
- * Builds a human-readable label for a set of selected months, e.g.
- * "September" (one), "All Months" (all), or "September, October" (some).
- */
-function buildMonthsLabel(selectedMonths, allMonthsCount, lang) {
-  if (selectedMonths.length === allMonthsCount) {
-    return lang === 'ar' ? 'كل الشهور' : 'All Months';
-  }
-  if (selectedMonths.length === 1) {
-    const idx = parseInt(selectedMonths[0], 10) - 1;
-    return lang === 'ar' ? MONTH_NAMES_AR[idx] : MONTH_NAMES[idx];
-  }
-  return selectedMonths
-    .map((m) => {
-      const idx = parseInt(m, 10) - 1;
-      return lang === 'ar' ? MONTH_NAMES_AR[idx] : MONTH_NAMES[idx];
-    })
-    .join(', ');
-}
-
-/**
- * Groups every rep-attributed distributorSales row (see distributors.html's
- * Unmatched Territories linking) by (repId, product, month), summing their
- * (already-signed, returns-netted) value. Each group becomes one
- * report-shaped row so it can merge into the same table as
- * REPORTS_DATA.sales -- with target left at 0 since distributor sheets
- * carry no target figure, and lineId left null since sheets only give a
- * product name, not which product Line it belongs to.
- */
-function buildDistributorAggregatedSales() {
-  const rows = (window.store && window.store.distributorSales
-    ? window.store.distributorSales.getAll()
-    : []
-  ).filter((r) => r.repId);
-  const groups = {};
-  rows.forEach((r) => {
-    const key = `${r.repId}||${r.product}||${r.month}`;
-    if (!groups[key]) {
-      groups[key] = {
-        repId: r.repId,
-        dmId: r.dmId,
-        lmId: r.lmId,
-        lineId: r.lineId || null,
-        productId: r.productId || null,
-        product: r.product,
-        month: r.month,
-        actual: 0,
-        actualUnits: 0,
-        distributorIds: [],
-      };
-    }
-    if (!groups[key].lineId && r.lineId) groups[key].lineId = r.lineId;
-    if (!groups[key].productId && r.productId) groups[key].productId = r.productId;
-    groups[key].actual += r.value;
-    groups[key].actualUnits += parseFloat(r.quantity) || 0;
-    if (!groups[key].distributorIds.includes(r.distributorId)) {
-      groups[key].distributorIds.push(r.distributorId);
-    }
-  });
-  return Object.values(groups);
-}
-
-// ============================================================================
-// Section 7: Tab 1 - Monthly Sales & Target Filter Execution (No Currency Symbols)
-// ============================================================================
-/**
- * Builds the full merged sales dataset: legacy REPORTS_DATA.sales/DEMO_DATA.sales
- * rows, with imported (distributor-sourced, rep-attributed) sales merged
- * in on top (replacing `actual` where a legacy row already exists for
- * the same rep+product+month, or appended as a new row otherwise using
- * that rep+product+month's manually-set target), plus phantom
- * zero-actual rows for any target that has no matching sales row yet.
- * Not filtered by period/role/etc -- callers do that themselves.
- */
-function buildMergedSalesRows(lang) {
-  const baseSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-    ? window.DEMO_DATA.sales
-    : REPORTS_DATA.sales;
-
-  const activeSales = baseSales.map((r) => ({ ...r }));
-  buildDistributorAggregatedSales().forEach((g) => {
-    const existingIdx = activeSales.findIndex(
-      (r) => r.repId === g.repId && r.product === g.product && r.month === g.month,
-    );
-    if (existingIdx >= 0) {
-      activeSales[existingIdx].actual = g.actual;
-      activeSales[existingIdx].amount = g.actual;
-      activeSales[existingIdx].actualUnits = g.actualUnits;
-      activeSales[existingIdx].distributorId = g.distributorIds[0];
-      activeSales[existingIdx].productId = g.productId || null;
-      activeSales[existingIdx].isImported = true;
-      if (g.productId && window.store && window.store.targets) {
-        const te = window.store.targets.find(g.repId, g.productId, g.month);
-        if (te) activeSales[existingIdx].targetUnits = parseFloat(te.targetUnits) || 0;
-      }
-    } else {
-      const rep = window.store && window.store.users ? window.store.users.getById(g.repId) : null;
-      const targetVal = g.productId && window.store && window.store.targets
-        ? window.store.targets.getValue(g.repId, g.productId, g.month)
-        : 0;
-      const targetEntry = g.productId && window.store && window.store.targets
-        ? window.store.targets.find(g.repId, g.productId, g.month)
-        : null;
-      activeSales.push({
-        id: `dagg_${g.repId}_${g.product}_${g.month}`,
-        month: g.month,
-        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
-        area: rep && rep.area ? rep.area : '',
-        product: g.product,
-        target: targetVal,
-        targetUnits: targetEntry ? parseFloat(targetEntry.targetUnits) || 0 : 0,
-        actual: g.actual,
-        actualUnits: g.actualUnits,
-        amount: g.actual,
-        repId: g.repId,
-        dmId: g.dmId,
-        lmId: g.lmId,
-        lineId: g.lineId || null,
-        productId: g.productId || null,
-        distributorId: g.distributorIds[0],
-        isImported: true,
-      });
-    }
-  });
-
-  // Phantom rows: a rep can have a target set for a product/month before
-  // any sales for it have come in (or ever, if they simply miss it). Those
-  // targets still need to show up (as 0 actual) so a DM/LM/BU's rolled-up
-  // total target isn't silently missing part of their team.
-  if (window.store && window.store.targets && window.store.users) {
-    window.store.targets.getAll().forEach((t) => {
-      const alreadyPresent = activeSales.some(
-        (r) => r.repId === t.repId && r.productId === t.productId && r.month === t.month,
-      );
-      if (alreadyPresent) return;
-      const rep = window.store.users.getById(t.repId);
-      const prod = getAllProductsFlat().find((p) => p.id === t.productId);
-      activeSales.push({
-        id: `target_only_${t.id}`,
-        month: t.month,
-        repName: rep ? rep.name : (lang === 'ar' ? 'مندوب غير معروف' : 'Unknown Rep'),
-        area: rep && rep.area ? rep.area : '',
-        product: prod ? prod.name : t.productId,
-        target: parseFloat(t.target) || 0,
-        targetUnits: parseFloat(t.targetUnits) || 0,
-        actual: 0,
-        actualUnits: 0,
-        amount: 0,
-        repId: t.repId,
-        dmId: rep ? rep.managerId || null : null,
-        lmId: rep ? (window.store.users.getById(rep.managerId || '') || {}).managerId || null : null,
-        lineId: prod ? prod.lineId : null,
-        productId: t.productId,
-        distributorId: null,
-        isImported: false,
-      });
-    });
-  }
-
-  return activeSales;
 }
 
 /**
@@ -579,7 +206,16 @@ function getFilteredPharmSalesRows() {
   let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
 
   if (monthKey) rows = rows.filter((r) => r.month === monthKey);
-  if (selectedProduct !== 'all') rows = rows.filter((r) => r.productId === selectedProduct);
+  if (selectedProduct !== 'all') {
+    const allProds = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
+    const matchedProd = allProds.find((p) => p.id === selectedProduct);
+    const prodName = matchedProd ? matchedProd.name.trim().toLowerCase() : null;
+    rows = rows.filter((r) => {
+      if (r.productId) return r.productId === selectedProduct;
+      if (prodName && r.product) return r.product.trim().toLowerCase() === prodName;
+      return false;
+    });
+  }
   if (selectedDistributor !== 'all') rows = rows.filter((r) => r.distributorId === selectedDistributor);
   if (selectedLine !== 'all' && selectedLine !== 'none') {
     rows = rows.filter((r) => r.lineId === selectedLine);
@@ -589,8 +225,21 @@ function getFilteredPharmSalesRows() {
   if (dateFrom) rows = rows.filter((r) => r.date && r.date >= dateFrom);
   if (dateTo) rows = rows.filter((r) => r.date && r.date <= dateTo);
 
+  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
-  if (isRep) rows = rows.filter((r) => r.repId === user.id);
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+
+  if (isRep) {
+    rows = rows.filter((r) => r.repId === user.id);
+  } else if (role === 'district_manager') {
+    const teamRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
+    rows = rows.filter((r) => r.dmId === user.id || (r.repId && teamRepIds.includes(r.repId)));
+  } else if (role === 'line_manager') {
+    const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
+    const dmIds = dms.map((d) => d.id);
+    const teamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    rows = rows.filter((r) => r.lmId === user.id || (r.dmId && dmIds.includes(r.dmId)) || (r.repId && teamRepIds.includes(r.repId)));
+  }
 
   return rows;
 }
@@ -628,7 +277,6 @@ function renderSalesReport() {
       </tr>
     `;
   } else {
-    const esc = window.escapeHtml || ((s) => s || '');
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
     const areas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
     const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
@@ -650,12 +298,12 @@ function renderSalesReport() {
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="white-space: nowrap;">${esc(row.date || row.month)}</td>
-        <td>${esc(row.pharmacyName || '—')}</td>
-        <td><span class="sales-product-badge">💊 ${esc(row.product || 'General Product')}</span></td>
-        <td style="white-space: nowrap;">${esc(dist ? dist.name : (row.distributorId || '—'))}</td>
-        <td style="white-space: nowrap;">${esc(areaLabel)}</td>
-        <td style="white-space: nowrap;">${esc(repLabel)}</td>
+        <td style="white-space: nowrap;">${window.escapeHtml(row.date || row.month)}</td>
+        <td>${window.escapeHtml(row.pharmacyName || '—')}</td>
+        <td><span class="sales-product-badge">💊 ${window.escapeHtml(row.product || 'General Product')}</span></td>
+        <td style="white-space: nowrap;">${window.escapeHtml(dist ? dist.name : (row.distributorId || '—'))}</td>
+        <td style="white-space: nowrap;">${window.escapeHtml(areaLabel)}</td>
+        <td style="white-space: nowrap;">${window.escapeHtml(repLabel)}</td>
         <td style="font-weight: 600;">${qty.toLocaleString()}</td>
         <td style="font-weight: 700; color: var(--primary);">${value.toLocaleString()}</td>
       `;
@@ -993,7 +641,6 @@ function populateTargetFormSelects() {
 function renderTargetsTable() {
   const tbody = document.getElementById('targetsTableBody');
   if (!tbody) return;
-  const esc = window.escapeHtml || ((s) => s || '');
   const targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
     .slice()
     .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
@@ -1014,15 +661,15 @@ function renderTargetsTable() {
     const storedValue = t.target != null ? parseFloat(t.target) || 0 : units * unitPrice;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${esc(rep ? rep.name : t.repId)}</td>
-      <td>${esc(prod ? prod.name : t.productId)}</td>
-      <td>${esc(t.month)}</td>
+      <td>${window.escapeHtml(rep ? rep.name : t.repId)}</td>
+      <td>${window.escapeHtml(prod ? prod.name : t.productId)}</td>
+      <td>${window.escapeHtml(t.month)}</td>
       <td>${units.toLocaleString()}</td>
       <td>${unitPrice.toLocaleString()}</td>
       <td style="font-weight:700;">${storedValue.toLocaleString()}</td>
       <td style="text-align:end; white-space:nowrap;">
-        <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${esc(t.id)}')" title="Edit">✏️</button>
-        <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${esc(t.id)}')" title="Delete">🗑️</button>
+        <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${window.escapeHtml(t.id)}')" title="Edit">✏️</button>
+        <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${window.escapeHtml(t.id)}')" title="Delete">🗑️</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -1045,6 +692,7 @@ function closeTargetsModal() {
     targetsModalEl.style.display = 'none';
     targetsModalEl.classList.remove('active');
   }
+  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
 }
 
 function resetTargetForm() {
@@ -1127,6 +775,7 @@ function saveTarget() {
 
   resetTargetForm();
   renderTargetsTable();
+  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
   if (typeof showToast === 'function') showToast('Target saved.', 'success');
 }
 
@@ -1136,5 +785,6 @@ function deleteTarget(id) {
     window.store.targets.delete(id);
   }
   renderTargetsTable();
+  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
   if (typeof showToast === 'function') showToast('Target deleted.', 'info');
 }

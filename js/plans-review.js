@@ -111,7 +111,6 @@ const plansReviewTranslations = {
 // Section 2: State Management & Scoping
 // ============================================================================
 let activeRejectTarget = { visitId: null, repId: null };
-const esc = window.escapeHtml || ((s) => s || "");
 
 function getDmAccompanimentSchedule(dmId) {
   try {
@@ -473,7 +472,7 @@ function renderPlansReview(currentUser) {
                       <tr class="visit-row">
                         <td class="plans-col-doctor">
                           <div class="d-flex align-items-center gap-2">
-                            <strong class="visit-doctor-title">${esc(v.doctorName)}</strong>
+                            <strong class="visit-doctor-title">${window.escapeHtml(v.doctorName)}</strong>
                             ${targetTypeBadge}
                           </div>
                         </td>
@@ -482,9 +481,12 @@ function renderPlansReview(currentUser) {
                         </td>
                         <td class="plans-col-products">
                           ${
-                            v.products && v.products.length
-                              ? `<span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;">💊 ${v.products.join(", ")}</span>`
-                              : `<span class="text-muted small">-</span>`
+                            (() => {
+                              const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
+                              return prods.length
+                                ? `<span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;">💊 ${prods.join(", ")}</span>`
+                                : `<span class="text-muted small">-</span>`;
+                            })()
                           }
                         </td>
                         <td class="text-end plans-col-actions">

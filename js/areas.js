@@ -3,8 +3,6 @@
  * @description Area Management Logic migrated to central store.
  */
 
-const esc = window.escapeHtml || ((s) => s || "");
-
 let currentView = "table";
 let areaModal = null;
 let deleteModal = null;
@@ -99,7 +97,7 @@ function populateRepDropdown(selectedRepId = "") {
   activeReps.forEach((r) => {
     const rName = isAr && r.nameAr ? r.nameAr : r.name;
     const sel = r.id === selectedRepId ? "selected" : "";
-    html += `<option value="${esc(r.id)}" ${sel}>${esc(rName)} (${esc(r.employeeCode || r.code || r.id)})</option>`;
+    html += `<option value="${window.escapeHtml(r.id)}" ${sel}>${window.escapeHtml(rName)} (${window.escapeHtml(r.employeeCode || r.code || r.id)})</option>`;
   });
   repSelect.innerHTML = html;
 }
@@ -164,22 +162,22 @@ function renderAreas(filterText = "") {
 
     const repDisplay = isAssigned
       ? `<div class="d-flex align-items-center">
-           <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${esc((area.repName || "U").charAt(0))}</div>
-           <span>${esc(area.repName)}</span>
+           <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${window.escapeHtml((area.repName || "U").charAt(0))}</div>
+           <span>${window.escapeHtml(area.repName)}</span>
          </div>`
       : `<span class="text-muted fst-italic">${unassignedText}</span>`;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="px-4 py-3"><span class="area-code-badge">${esc(area.code)}</span></td>
-      <td class="px-4 py-3 fw-medium">${esc(area.name)}</td>
+      <td class="px-4 py-3"><span class="area-code-badge">${window.escapeHtml(area.code)}</span></td>
+      <td class="px-4 py-3 fw-medium">${window.escapeHtml(area.name)}</td>
       <td class="px-4 py-3">${repDisplay}</td>
       <td class="px-4 py-3">${statusBadge}</td>
       <td class="px-4 py-3 text-end area-actions-cell">
-        <button class="btn btn-sm btn-light me-1 text-primary" onclick="openEditModal('${esc(area.id)}')" title="Edit">
+        <button class="btn btn-sm btn-light me-1 text-primary" onclick="openEditModal('${window.escapeHtml(area.id)}')" title="Edit">
           <i class="fas fa-edit"></i>
         </button>
-        <button class="btn btn-sm btn-light text-danger" onclick="openDeleteModal('${esc(area.id)}')" title="Delete">
+        <button class="btn btn-sm btn-light text-danger" onclick="openDeleteModal('${window.escapeHtml(area.id)}')" title="Delete">
           <i class="fas fa-trash"></i>
         </button>
       </td>
@@ -193,18 +191,18 @@ function renderAreas(filterText = "") {
       <div class="card border-0 shadow-sm area-card h-100 ${cardClass}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-3">
-            <span class="area-code-badge fs-6">${esc(area.code)}</span>
+            <span class="area-code-badge fs-6">${window.escapeHtml(area.code)}</span>
             <div class="dropdown">
               <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
                 <i class="fas fa-ellipsis-v"></i>
               </button>
               <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                <li><a class="dropdown-item" href="#" onclick="openEditModal('${esc(area.id)}')"><i class="fas fa-edit me-2 text-primary"></i> <span>${isAr ? areaTranslations.ar.edit : areaTranslations.en.edit}</span></a></li>
-                <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteModal('${esc(area.id)}')"><i class="fas fa-trash me-2"></i> <span>${isAr ? areaTranslations.ar.delete : areaTranslations.en.delete}</span></a></li>
+                <li><a class="dropdown-item" href="#" onclick="openEditModal('${window.escapeHtml(area.id)}')"><i class="fas fa-edit me-2 text-primary"></i> <span>${isAr ? areaTranslations.ar.edit : areaTranslations.en.edit}</span></a></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteModal('${window.escapeHtml(area.id)}')"><i class="fas fa-trash me-2"></i> <span>${isAr ? areaTranslations.ar.delete : areaTranslations.en.delete}</span></a></li>
               </ul>
             </div>
           </div>
-          <h5 class="card-title fw-bold mb-3">${esc(area.name)}</h5>
+          <h5 class="card-title fw-bold mb-3">${window.escapeHtml(area.name)}</h5>
           <div class="mt-auto pt-3 border-top">
             <small class="text-muted d-block mb-1">${isAr ? areaTranslations.ar.assigned_rep : areaTranslations.en.assigned_rep}</small>
             ${repDisplay}

@@ -3,8 +3,6 @@
  * @description Visits Management Module supporting Multi-Doctor Bulk Planning, Direct Actual Logging, Co-Visiting (Double Visits), and 7-Day Auto-Expiry.
  */
 
-const esc = window.escapeHtml || ((s) => s || "");
-
 // ============================================================================
 // Section 1: Localization Dictionary
 // ============================================================================
@@ -1010,7 +1008,6 @@ function renderTodayVisits() {
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const trans = visitTranslations[lang] || visitTranslations.en;
-  const esc = window.escapeHtml || ((s) => s || "");
 
   todayVisits.forEach((v) => {
     const card = document.createElement("div");
@@ -1079,7 +1076,7 @@ function renderTodayVisits() {
     card.innerHTML = `
       <div class="visit-info">
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-          <span class="visit-name" style="font-weight: 700; font-size: 1.05rem;">${esc(v.doctorName)}</span>
+          <span class="visit-name" style="font-weight: 700; font-size: 1.05rem;">${window.escapeHtml(v.doctorName)}</span>
           ${targetBadge}
         </div>
         <span class="visit-time" style="font-weight: 600; color: var(--gray-700); font-size: 0.85rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
@@ -1092,8 +1089,8 @@ function renderTodayVisits() {
       <div style="display: flex; align-items: center; gap: 6px; margin: 6px 0; flex-wrap: wrap;">
         <span class="visit-status-badge ${v.status}">${statusText}</span>
         ${sourceBadge}
-        ${isManager ? `<span style="font-size: 0.75rem; color: var(--gray-600); font-weight: bold;">(By: ${esc(repDisplayName)})</span>` : ""}
-        ${v.visitType === "double" ? `<span style="font-size: 0.75rem; color: var(--purple, #6f42c1); font-weight: 600;">[Double: ${esc(v.doubleWithUserName || "Manager")}]</span>` : ""}
+        ${isManager ? `<span style="font-size: 0.75rem; color: var(--gray-600); font-weight: bold;">(By: ${window.escapeHtml(repDisplayName)})</span>` : ""}
+        ${v.visitType === "double" ? `<span style="font-size: 0.75rem; color: var(--purple, #6f42c1); font-weight: 600;">[Double: ${window.escapeHtml(v.doubleWithUserName || "Manager")}]</span>` : ""}
       </div>
       <div class="visit-comment-box" style="display: none; font-size: 0.82rem; color: var(--gray-600); margin-top: 4px;"></div>
       ${actionsHtml}
@@ -1243,10 +1240,10 @@ function renderAllVisits() {
     tr.innerHTML = `
       <td>
         <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-          <strong>${esc(v.doctorName)}</strong>
+          <strong>${window.escapeHtml(v.doctorName)}</strong>
           ${targetBadge}
         </div>
-        ${isManager ? `<small style="color: var(--gray-500); font-weight: bold;">By: ${esc(repDisplayName)}</small>` : ""}
+        ${isManager ? `<small style="color: var(--gray-500); font-weight: bold;">By: ${window.escapeHtml(repDisplayName)}</small>` : ""}
       </td>
       <td>
         <div style="font-weight: 700; color: var(--primary); font-size: 0.85rem;">${dt.dayName}</div>
@@ -1255,14 +1252,14 @@ function renderAllVisits() {
       </td>
       <td><span class="period-badge ${v.period}">${(v.period || "").toUpperCase()}</span></td>
       <td>
-        ${typeText} ${v.visitType === "double" && v.doubleWithUserName ? `<br><small style="color: var(--purple, #6f42c1);">[${esc(v.doubleWithUserName)}]</small>` : ""}
+        ${typeText} ${v.visitType === "double" && v.doubleWithUserName ? `<br><small style="color: var(--purple, #6f42c1);">[${window.escapeHtml(v.doubleWithUserName)}]</small>` : ""}
         <div style="margin-top: 4px;">${sourceBadge}</div>
       </td>
       <td>
         <span class="visit-status-badge ${v.status}">${statusText}</span>
-        ${v.status === "rejected" && v.rejectionReason ? `<div style="font-size: 0.75rem; color: var(--danger, #dc3545); margin-top: 4px; font-weight: 600;">⚠️ ${esc(v.rejectionReason)}</div>` : ""}
+        ${v.status === "rejected" && v.rejectionReason ? `<div style="font-size: 0.75rem; color: var(--danger, #dc3545); margin-top: 4px; font-weight: 600;">⚠️ ${window.escapeHtml(v.rejectionReason)}</div>` : ""}
       </td>
-      <td>${v.products && v.products.length ? v.products.join(", ") : "-"}</td>
+      <td>${(window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join(", ") || "-"}</td>
       <td>${actions || "-"}</td>
     `;
     tbody.appendChild(tr);
@@ -1512,7 +1509,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
         partnerName =
           v.repId === currentUser.id ? "Team Rep" : currentUser.name;
       }
-      accompanimentNote = ` • <span style="color: var(--purple, #6f42c1); font-weight: 700;">🤝 ${lang === "ar" ? "نزول مشترك مع:" : "Co-visiting with:"} ${esc(partnerName)}</span>`;
+      accompanimentNote = ` • <span style="color: var(--purple, #6f42c1); font-weight: 700;">🤝 ${lang === "ar" ? "نزول مشترك مع:" : "Co-visiting with:"} ${window.escapeHtml(partnerName)}</span>`;
     } else if (repUser && repUser.role === "district_manager") {
       accompanimentNote = ` • <span style="color: #b45309; font-weight: 700;">👔 ${trans.supervisoryVisit}</span>`;
     } else if (repUser && repUser.role === "line_manager") {
@@ -1533,20 +1530,23 @@ function renderVisitsTimeline(triggeredByShow = false) {
       </div>
       <div class="timeline-content-box ${borderClass}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-          <strong class="timeline-target-title">${esc(v.doctorName)}</strong>
+          <strong class="timeline-target-title">${window.escapeHtml(v.doctorName)}</strong>
           <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
         </div>
         <div class="timeline-meta-row">
-          <span>🩺 ${esc(specialtyText)}</span> • <span>Class: <strong>${esc(classText)}</strong></span> • <span>${repRoleLabel}: <strong>${esc(repDisplayName)}</strong></span>${accompanimentNote}
+          <span>🩺 ${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span> • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
         </div>
         ${
-          v.products && v.products.length > 0
-            ? `<div style="font-size: 0.8rem; color: var(--primary); margin-bottom: 6px;">📦 <strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${v.products.map((p) => esc(p)).join(", ")}</div>`
-            : ""
+          (() => {
+            const cardProds = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
+            return cardProds.length > 0
+              ? `<div style="font-size: 0.8rem; color: var(--primary); margin-bottom: 6px;">📦 <strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
+              : "";
+          })()
         }
         ${
           v.comment
-            ? `<div class="timeline-comment-text" style="font-size: 0.8rem; margin-bottom: 6px; font-style: italic;">💬 "${esc(v.comment)}"</div>`
+            ? `<div class="timeline-comment-text" style="font-size: 0.8rem; margin-bottom: 6px; font-style: italic;">💬 "${window.escapeHtml(v.comment)}"</div>`
             : ""
         }
         <div class="timeline-timestamp-chip">
@@ -1612,6 +1612,8 @@ function populateVisitProducts(selectedProducts = []) {
     return;
   }
 
+  const selectedList = Array.isArray(selectedProducts) ? selectedProducts : [];
+
   productsToShow.forEach((prod) => {
     const label = document.createElement("label");
     label.className = "checkbox-label";
@@ -1623,10 +1625,10 @@ function populateVisitProducts(selectedProducts = []) {
         ? `${prod.name} ${prod.dosage}`
         : prod.name;
     const isChecked =
-      Array.isArray(selectedProducts) &&
-      (selectedProducts.includes(displayName) ||
-        selectedProducts.includes(prod.name));
-    label.innerHTML = `<input type="checkbox" value="${displayName}" ${isChecked ? "checked" : ""}> ${displayName}`;
+      selectedList.includes(prod.id) ||
+      selectedList.includes(displayName) ||
+      selectedList.includes(prod.name);
+    label.innerHTML = `<input type="checkbox" value="${prod.id}" data-name="${displayName}" ${isChecked ? "checked" : ""}> ${displayName}`;
     container.appendChild(label);
   });
 }
@@ -1782,7 +1784,8 @@ function openCompleteModal(visitId) {
   currentEditVisitId = visitId;
   const visit = demoVisits.find((v) => v.id === visitId);
   if (!visit) return;
-  populateVisitProducts(visit.products || []);
+  const editSelectedProds = (visit.productIds && visit.productIds.length > 0) ? visit.productIds : (visit.products || []);
+  populateVisitProducts(editSelectedProds);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const trans = visitTranslations[lang] || visitTranslations.en;
   document.getElementById("visitModalTitle").innerText =
@@ -1869,11 +1872,11 @@ function saveVisit() {
     if (matchedMgr) doubleWithUserId = matchedMgr.id;
   }
 
-  const selectedProducts = Array.from(
-    document.querySelectorAll(
-      '#visitProducts input[type="checkbox"]:checked',
-    ),
-  ).map((cb) => cb.value);
+  const checkedBoxes = Array.from(
+    document.querySelectorAll('#visitProducts input[type="checkbox"]:checked'),
+  );
+  const selectedProductIds = checkedBoxes.map((cb) => cb.value);
+  const selectedProductNames = checkedBoxes.map((cb) => cb.dataset.name || cb.value);
 
   if (currentEditVisitId) {
     const visit = demoVisits.find((v) => v.id === currentEditVisitId);
@@ -1890,7 +1893,8 @@ function saveVisit() {
       } else if (visitType === "single") {
         delete visit.doubleWithUserId;
       }
-      visit.products = selectedProducts;
+      visit.productIds = selectedProductIds;
+      visit.products = selectedProductNames;
     }
   } else {
     const period =
@@ -1921,7 +1925,8 @@ function saveVisit() {
       visitType: visitType,
       doubleWithUserName: doubleWithUserName,
       doubleWithUserId: doubleWithUserId || undefined,
-      products: selectedProducts,
+      productIds: selectedProductIds,
+      products: selectedProductNames,
       comment: document.getElementById("visitComment").value,
       status: "completed",
       source: modalSource,
@@ -1994,7 +1999,7 @@ function exportVisitsToCSV() {
   let csv =
     "Target Name,Date,Time,Period,Type,Status,Source,Rep ID,Products,Comment\n";
   filtered.forEach((v) => {
-    const prods = (v.products || []).join("; ");
+    const prods = (window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join("; ");
     csv += `"${v.doctorName || ""}","${v.date || ""}","${v.time || ""}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${v.source || ""}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
   });
 

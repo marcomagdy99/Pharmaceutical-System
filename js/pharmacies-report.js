@@ -3,8 +3,6 @@
  * @description Pharmacies directory management, filtering, rendering, and CRUD operations within the reports page, with automatic repId binding.
  */
 
-const escPharm = window.escapeHtml || ((s) => s || "");
-
 function getPharmaciesData() {
   if (window.store && window.store.pharmacies) {
     return window.store.pharmacies.getAll();
@@ -25,6 +23,7 @@ function renderPharmaciesReport() {
   const repId = repFilter ? repFilter.value : "all";
 
   const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
 
   let pharms = getPharmaciesData();
@@ -34,6 +33,17 @@ function renderPharmaciesReport() {
     pharms = pharms.filter((p) => p.repId === currentUser.id || !p.repId);
   } else if (repId !== "all") {
     pharms = pharms.filter((p) => p.repId === repId);
+  } else if (role === "district_manager") {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+    teamRepIds.push(currentUser.id);
+    pharms = pharms.filter((p) => !p.repId || teamRepIds.includes(p.repId));
+  } else if (role === "line_manager") {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+    const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    const teamIds = [currentUser.id, ...dmIds, ...repIds];
+    pharms = pharms.filter((p) => !p.repId || teamIds.includes(p.repId));
   }
 
   // Search filter
@@ -60,7 +70,7 @@ function renderPharmaciesReport() {
   grid.style.display = "grid";
   if (emptyState) emptyState.style.display = "none";
 
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
   grid.innerHTML = filtered
@@ -73,26 +83,26 @@ function renderPharmaciesReport() {
         <div class="directory-card-header">
           <div class="directory-avatar pharmacy">💊</div>
           <div class="directory-header-info">
-            <h4 class="directory-name">${escPharm(p.name)}</h4>
+            <h4 class="directory-name">${window.escapeHtml(p.name)}</h4>
             <span class="directory-meta-tag pharmacy">Partner Pharmacy</span>
           </div>
         </div>
         <div class="directory-card-body">
           <div class="directory-info-row">
             <span class="info-icon">📍</span>
-            <span class="info-text">${escPharm(p.address || "No address specified")}</span>
+            <span class="info-text">${window.escapeHtml(p.address || "No address specified")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👨‍🔬</span>
-            <span class="info-text">Contact: <strong>${escPharm(p.contactPerson || "N/A")}</strong></span>
+            <span class="info-text">Contact: <strong>${window.escapeHtml(p.contactPerson || "N/A")}</strong></span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">📞</span>
-            <span class="info-text">${escPharm(p.phone || "No phone provided")}</span>
+            <span class="info-text">${window.escapeHtml(p.phone || "No phone provided")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👤</span>
-            <span class="info-text">Rep: <strong>${escPharm(repName)}</strong></span>
+            <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         <div class="directory-card-footer">
@@ -260,7 +270,12 @@ function onPharmacyFilterChange() {
 function onPharmacyLmChange() {}
 function onPharmacyDmChange() {}
 
+function initPharmaciesDirectory(user) {
+  renderPharmaciesReport();
+}
+
 window.renderPharmaciesReport = renderPharmaciesReport;
+window.initPharmaciesDirectory = initPharmaciesDirectory;
 window.openPharmacyModal = openPharmacyModal;
 window.closePharmacyModal = closePharmacyModal;
 window.savePharmacy = savePharmacy;

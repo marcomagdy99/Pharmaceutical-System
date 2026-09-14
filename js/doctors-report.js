@@ -3,8 +3,6 @@
  * @description Doctors directory management, filtering, rendering, and CRUD operations within the reports page, with automatic repId binding.
  */
 
-const esc = window.escapeHtml || ((s) => s || "");
-
 function getDoctorsData() {
   if (window.store && window.store.doctors) {
     return window.store.doctors.getAll();
@@ -29,6 +27,7 @@ function renderDoctorsReport() {
   const repId = repFilter ? repFilter.value : "all";
 
   const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
 
   let docs = getDoctorsData();
@@ -38,6 +37,17 @@ function renderDoctorsReport() {
     docs = docs.filter((d) => d.repId === currentUser.id || !d.repId);
   } else if (repId !== "all") {
     docs = docs.filter((d) => d.repId === repId);
+  } else if (role === "district_manager") {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+    teamRepIds.push(currentUser.id);
+    docs = docs.filter((d) => !d.repId || teamRepIds.includes(d.repId));
+  } else if (role === "line_manager") {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+    const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    const teamIds = [currentUser.id, ...dmIds, ...repIds];
+    docs = docs.filter((d) => !d.repId || teamIds.includes(d.repId));
   }
 
   // Filters
@@ -68,7 +78,7 @@ function renderDoctorsReport() {
   grid.style.display = "grid";
   if (emptyState) emptyState.style.display = "none";
 
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
   grid.innerHTML = filtered
@@ -82,8 +92,8 @@ function renderDoctorsReport() {
         <div class="directory-card-header">
           <div class="directory-avatar doctor">🩺</div>
           <div class="directory-header-info">
-            <h4 class="directory-name">${esc(d.name)}</h4>
-            <span class="directory-meta-tag specialty">${esc(d.specialty || "General")}</span>
+            <h4 class="directory-name">${window.escapeHtml(d.name)}</h4>
+            <span class="directory-meta-tag specialty">${window.escapeHtml(d.specialty || "General")}</span>
           </div>
           <span class="badge ${isClassA ? "bg-warning text-dark" : "bg-secondary"} ms-auto" style="font-size: 0.72rem;">
             Class ${d.class || "B"}
@@ -92,15 +102,15 @@ function renderDoctorsReport() {
         <div class="directory-card-body">
           <div class="directory-info-row">
             <span class="info-icon">📍</span>
-            <span class="info-text">${esc(d.clinicAddress || d.address || "No address specified")}</span>
+            <span class="info-text">${window.escapeHtml(d.clinicAddress || d.address || "No address specified")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">📞</span>
-            <span class="info-text">${esc(d.phone || "No phone provided")}</span>
+            <span class="info-text">${window.escapeHtml(d.phone || "No phone provided")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👤</span>
-            <span class="info-text">Rep: <strong>${esc(repName)}</strong></span>
+            <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         <div class="directory-card-footer">
@@ -274,7 +284,12 @@ function onDoctorFilterChange() {
 function onDoctorLmChange() {}
 function onDoctorDmChange() {}
 
+function initDoctorsDirectory(user) {
+  renderDoctorsReport();
+}
+
 window.renderDoctorsReport = renderDoctorsReport;
+window.initDoctorsDirectory = initDoctorsDirectory;
 window.openDoctorModal = openDoctorModal;
 window.closeDoctorModal = closeDoctorModal;
 window.saveDoctor = saveDoctor;

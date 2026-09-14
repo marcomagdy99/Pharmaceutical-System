@@ -1,13 +1,12 @@
-﻿# PharmaCare Project Coding Standards & Guidelines
+# PharmaCare Project Coding Standards & Guidelines
 
 This document outlines the strict project guidelines and coding standards established for all files in this project. All future code additions and modifications must strictly adhere to these rules.
 
 ## 1. XSS Protection & HTML Escaping
-- Every JavaScript file generating dynamic HTML via template literals must define the escape helper at the top:
-  ```javascript
-  const esc = window.escapeHtml || ((s) => s || "");
-  ```
-- Any variable, user attribute, name, title, code, dosage, role, or description interpolated into HTML MUST be escaped using `esc(...)` or `escapeHtml(...)`.
+- Escaping is centrally defined once in `js/app.js` on `window.escapeHtml`.
+- **NO local aliases**: Do NOT define local aliases (such as `const esc = ...` or `const escPharm = ...`) in individual script files.
+- **NO silent fallbacks**: Do NOT use fallbacks like `|| ((s) => s || "")` which fail open.
+- Any variable, user attribute, name, title, code, dosage, role, or description interpolated into HTML MUST be escaped by calling `window.escapeHtml(...)` directly.
 
 ## 2. File Headers & JSDoc
 - Every `.js` file must start with a clean JSDoc file header:

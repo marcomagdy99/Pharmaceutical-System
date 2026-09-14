@@ -1,9 +1,7 @@
-﻿/**
+/**
  * @file calendar.js
  * @description Monthly Calendar Schedule Engine synchronized dynamically with Central Store visits, leaves, and HR public holidays.
  */
-
-const esc = window.escapeHtml || ((s) => s || "");
 
 const calendarTranslations = {
   en: {
@@ -390,7 +388,7 @@ function renderCalendar() {
     if (matchedHoliday) {
       dayEvents.unshift({
         type: "holiday",
-        title: `🌴 ${esc(matchedHoliday.title)}`,
+        title: `🌴 ${window.escapeHtml(matchedHoliday.title)}`,
         status: "holiday",
       });
     }
@@ -494,7 +492,7 @@ function renderDetailSection(title, evts, container, t, lang) {
 
   const sec = document.createElement("div");
   sec.className = "detail-section";
-  sec.innerHTML = `<div class="detail-section-title">${esc(title)}</div>`;
+  sec.innerHTML = `<div class="detail-section-title">${window.escapeHtml(title)}</div>`;
 
   const list = document.createElement("div");
   list.className = "detail-list";
@@ -555,7 +553,7 @@ function renderDetailSection(title, evts, container, t, lang) {
       const u = allUsers.find((user) => user.id === evt.repId);
       if (u) {
         const uName = isAr && u.nameAr ? u.nameAr : u.name;
-        ownerText = ` • 👤 ${esc(uName)}`;
+        ownerText = ` • 👤 ${window.escapeHtml(uName)}`;
       }
     }
 
@@ -563,8 +561,8 @@ function renderDetailSection(title, evts, container, t, lang) {
       <div class="detail-item-info">
         <div class="detail-item-icon ${iconClass}">${iconChar}</div>
         <div class="detail-item-text">
-          <span class="detail-item-title">${esc(evt.title)}</span>
-          <span class="detail-item-time">${esc((evt.type || "").toUpperCase())}${ownerText}</span>
+          <span class="detail-item-title">${window.escapeHtml(evt.title)}</span>
+          <span class="detail-item-time">${window.escapeHtml((evt.type || "").toUpperCase())}${ownerText}</span>
         </div>
       </div>
       <div class="badge ${badgeClass}">${statusText}</div>
@@ -732,10 +730,10 @@ function renderOrgTreeNodes(searchTerm = "") {
           <div class="search-result-info">
             <div class="d-flex align-items-center gap-2">
               <span class="role-badge ${roleInfo.badgeClass}">${roleInfo.short}</span>
-              <span class="fw-bold" style="color: var(--gray-900);">${esc(uName)}</span>
-              <span class="text-muted small">(${esc(u.employeeCode || u.id)})</span>
+              <span class="fw-bold" style="color: var(--gray-900);">${window.escapeHtml(uName)}</span>
+              <span class="text-muted small">(${window.escapeHtml(u.employeeCode || u.id)})</span>
             </div>
-            <div class="search-breadcrumb">${esc(breadcrumb)}</div>
+            <div class="search-breadcrumb">${window.escapeHtml(breadcrumb)}</div>
           </div>
           <button class="btn-select-node ${isSelected ? "active-target" : ""}"
             onclick="selectCalendarTarget('${u.id}')">
@@ -761,8 +759,8 @@ function renderOrgTreeNodes(searchTerm = "") {
       ? `(${directs.length} ${t.directReports})`
       : "";
 
-    let displayName = esc(nodeName);
-    let subline = `(${esc(userNode.employeeCode || userNode.id)})`;
+    let displayName = window.escapeHtml(nodeName);
+    let subline = `(${window.escapeHtml(userNode.employeeCode || userNode.id)})`;
     let cardStyle = "";
     let actionBtnHtml = "";
 
@@ -771,11 +769,11 @@ function renderOrgTreeNodes(searchTerm = "") {
       const vacantBadge = `<span class="badge bg-warning text-dark me-1" style="font-size:0.7rem;">[Vacant / شاغر]</span>`;
       if (userNode.role === "medical_rep") {
         const areaName = userNode.vacantArea || userNode.area || "Territory";
-        displayName = `${vacantBadge} Area: ${esc(areaName)}`;
-        subline = `(Former: ${esc(nodeName)})`;
+        displayName = `${vacantBadge} Area: ${window.escapeHtml(areaName)}`;
+        subline = `(Former: ${window.escapeHtml(nodeName)})`;
       } else {
         displayName = `${vacantBadge} ${roleInfo.short} Position`;
-        subline = `(Position Open • Former: ${esc(nodeName)})`;
+        subline = `(Position Open • Former: ${window.escapeHtml(nodeName)})`;
       }
       actionBtnHtml = `<span class="badge bg-light text-muted border px-2 py-1" style="font-size:0.75rem;">Vacant</span>`;
     } else {

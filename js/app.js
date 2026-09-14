@@ -411,6 +411,7 @@ const DEFAULT_DEMO_DATA = {
       time: "11:30",
       period: "pm",
       visitType: "single",
+      productIds: ["prod1"],
       products: ["Amoxicillin 500mg"],
       comment: "Discussed new formulation",
       status: "completed",
@@ -427,6 +428,7 @@ const DEFAULT_DEMO_DATA = {
       visitType: "double",
       doubleWithUserId: "dm1",
       doubleWithUserName: "Karim Nasser",
+      productIds: ["prod2"],
       products: ["Vitamin D Drops 1000IU"],
       comment: "Joint visit with DM",
       status: "completed",
@@ -441,6 +443,7 @@ const DEFAULT_DEMO_DATA = {
       time: "09:45",
       period: "am",
       visitType: "single",
+      productIds: [],
       products: [],
       comment: "Morning rounds",
       status: "completed",
@@ -455,6 +458,7 @@ const DEFAULT_DEMO_DATA = {
       time: "16:00",
       period: "pm",
       visitType: "single",
+      productIds: ["prod3"],
       products: ["Omeprazole 20mg"],
       comment: "Urgent visit",
       status: "completed",
@@ -469,6 +473,7 @@ const DEFAULT_DEMO_DATA = {
       time: "10:00",
       period: "am",
       visitType: "single",
+      productIds: [],
       products: [],
       comment: "",
       status: "planned",
@@ -483,6 +488,7 @@ const DEFAULT_DEMO_DATA = {
       time: "13:00",
       period: "pm",
       visitType: "single",
+      productIds: [],
       products: [],
       comment: "",
       status: "planned",
@@ -497,6 +503,7 @@ const DEFAULT_DEMO_DATA = {
       time: "13:00",
       period: "pm",
       visitType: "single",
+      productIds: [],
       products: [],
       comment: "",
       status: "planned",
@@ -511,6 +518,7 @@ const DEFAULT_DEMO_DATA = {
       time: "14:20",
       period: "pm",
       visitType: "single",
+      productIds: ["prod4"],
       products: ["Azithromycin 250mg"],
       comment: "Sample dropped",
       status: "completed",
@@ -525,6 +533,7 @@ const DEFAULT_DEMO_DATA = {
       time: "10:30",
       period: "am",
       visitType: "single",
+      productIds: ["prod1"],
       products: ["Amoxicillin 500mg"],
       comment: "Key account hospital follow-up",
       status: "completed",
@@ -539,6 +548,7 @@ const DEFAULT_DEMO_DATA = {
       time: "15:00",
       period: "pm",
       visitType: "single",
+      productIds: ["prod3"],
       products: ["Omeprazole 20mg"],
       comment: "Quarterly review",
       status: "planned",
@@ -553,6 +563,7 @@ const DEFAULT_DEMO_DATA = {
       time: "09:30",
       period: "am",
       visitType: "single",
+      productIds: ["prod4"],
       products: ["Azithromycin 250mg"],
       comment: "",
       status: "completed",
@@ -567,6 +578,7 @@ const DEFAULT_DEMO_DATA = {
       time: "14:00",
       period: "pm",
       visitType: "single",
+      productIds: ["prod2"],
       products: ["Vitamin D Drops 1000IU"],
       comment: "",
       status: "planned",
@@ -581,6 +593,7 @@ const DEFAULT_DEMO_DATA = {
       time: "16:30",
       period: "pm",
       visitType: "single",
+      productIds: ["prod3"],
       products: ["Omeprazole 20mg"],
       comment: "Product presentation",
       status: "completed",
@@ -595,6 +608,8 @@ const DEFAULT_DEMO_DATA = {
       time: "11:00",
       period: "pm",
       status: "pending_approval",
+      productIds: [],
+      products: [],
       comment: "Monthly regular visit plan",
       source: "plan",
     },
@@ -607,6 +622,8 @@ const DEFAULT_DEMO_DATA = {
       time: "09:30",
       period: "am",
       status: "pending_approval",
+      productIds: [],
+      products: [],
       comment: "Morning clinical rounds",
       source: "plan",
     },
@@ -619,6 +636,8 @@ const DEFAULT_DEMO_DATA = {
       time: "13:30",
       period: "pm",
       status: "pending_approval",
+      productIds: [],
+      products: [],
       comment: "Follow-up discussion",
       source: "plan",
     },
@@ -631,6 +650,8 @@ const DEFAULT_DEMO_DATA = {
       time: "12:15",
       period: "pm",
       status: "pending_approval",
+      productIds: [],
+      products: [],
       comment: "Cardio line product update",
       source: "plan",
     },
@@ -643,6 +664,8 @@ const DEFAULT_DEMO_DATA = {
       time: "15:00",
       period: "pm",
       status: "pending_approval",
+      productIds: [],
+      products: [],
       comment: "Quarterly sampling",
       source: "plan",
     },
@@ -655,6 +678,8 @@ const DEFAULT_DEMO_DATA = {
       time: "10:30",
       period: "pm",
       status: "pending_approval",
+      productIds: [],
+      products: [],
       comment: "Pediatrics field plan",
       source: "plan",
     },
@@ -667,6 +692,8 @@ const DEFAULT_DEMO_DATA = {
       time: "11:00",
       period: "pm",
       status: "planned",
+      productIds: [],
+      products: [],
       comment: "Cardiology follow-up & product presentation",
       source: "plan",
     },
@@ -679,6 +706,8 @@ const DEFAULT_DEMO_DATA = {
       time: "13:30",
       period: "pm",
       status: "planned",
+      productIds: [],
+      products: [],
       comment: "Internal medicine sampling & discussion",
       source: "plan",
     },
@@ -763,20 +792,20 @@ const DEFAULT_DEMO_DATA = {
     },
   ],
   sales: [
-    { id: 's1', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', target: 20000, actual: 22500, amount: 22500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's2', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', target: 12000, actual: 13000, amount: 13000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's3', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', target: 10000, actual: 9500, amount: 9500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's4', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', target: 8000, actual: 7000, amount: 7000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's5', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', target: 18000, actual: 19000, amount: 19000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's6', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', target: 12000, actual: 11000, amount: 11000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's7', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Omeprazole 20mg', target: 9000, actual: 7500, amount: 7500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's8', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Azithromycin 250mg', target: 6000, actual: 3500, amount: 3500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's9', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', target: 18000, actual: 21000, amount: 21000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's10', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', target: 12000, actual: 14000, amount: 14000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', target: 9000, actual: 8500, amount: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', target: 6000, actual: 6500, amount: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', target: 17000, actual: 18500, amount: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', target: 11000, actual: 11500, amount: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' }
+    { id: 's1', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 20000, actual: 22500, amount: 22500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's2', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 13000, amount: 13000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's3', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 10000, actual: 9500, amount: 9500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's4', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 8000, actual: 7000, amount: 7000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's5', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 19000, amount: 19000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's6', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 11000, amount: 11000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's7', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 7500, amount: 7500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's8', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 3500, amount: 3500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's9', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 21000, amount: 21000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's10', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 14000, amount: 14000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 8500, amount: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 6500, amount: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 17000, actual: 18500, amount: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 11000, actual: 11500, amount: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' }
   ],
   announcements: [
     {
@@ -1894,6 +1923,29 @@ function showToast(message, type = "info") {
   }, 3000);
 }
 window.showToast = showToast;
+
+function getVisitDisplayProducts(visit) {
+  if (!visit) return [];
+  if (Array.isArray(visit.productIds) && visit.productIds.length > 0) {
+    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
+    const productMap = {};
+    allLines.forEach((l) => {
+      (l.products || []).forEach((p) => {
+        const displayName = p.dosage && !p.name.toLowerCase().includes(p.dosage.toLowerCase())
+          ? `${p.name} ${p.dosage}`
+          : p.name;
+        productMap[p.id] = displayName;
+      });
+    });
+    const resolved = visit.productIds.map((id) => productMap[id] || id);
+    if (resolved.length > 0) return resolved;
+  }
+  if (Array.isArray(visit.products) && visit.products.length > 0) {
+    return visit.products;
+  }
+  return [];
+}
+window.getVisitDisplayProducts = getVisitDisplayProducts;
 
 function initPage(pageName) {
   requireAuth();

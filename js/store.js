@@ -361,6 +361,16 @@
       getById(id) {
         return (window.DEMO_DATA.productLines || []).find((l) => l.id === id);
       },
+      findProductById(productId) {
+        if (!productId) return null;
+        const lines = this.getAll();
+        for (const line of lines) {
+          if (!Array.isArray(line.products)) continue;
+          const prod = line.products.find((p) => p.id === productId);
+          if (prod) return { line, product: prod };
+        }
+        return null;
+      },
       /**
        * Records that `rawText` from `distributorId`'s sheets refers to
        * this specific product (e.g. "CHOLEROSE PLUS 10/20MG" from Ibn

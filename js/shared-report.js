@@ -22,21 +22,6 @@
 // Section 0: Shared DOM helpers
 // ============================================================================
 
-/**
- * Escapes a value for safe interpolation into innerHTML. Use this any time
- * a string that could originate from user input (imported CSV/Excel rows,
- * form fields, etc.) needs to be placed inside an HTML string rather than
- * set via textContent.
- */
-function escapeHtml(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 /**
  * Clears a <select> and repopulates it from `items` using textContent
@@ -74,30 +59,30 @@ function appendSelectOptions(selectEl, items, getValue, getLabel) {
 const REPORTS_DATA = {
   sales: [
     // September 2026 (2026-09) - Cardio Line (line1 / lm1) - Cairo District (dm1)
-    { id: 's1', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', target: 20000, actual: 22500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's2', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', target: 12000, actual: 13000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's3', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', target: 10000, actual: 9500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's4', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', target: 8000, actual: 7000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's5', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', target: 18000, actual: 19000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's6', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', target: 12000, actual: 11000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's7', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Omeprazole 20mg', target: 9000, actual: 7500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's8', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Azithromycin 250mg', target: 6000, actual: 3500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's1', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 20000, actual: 22500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's2', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 13000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's3', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 10000, actual: 9500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's4', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 8000, actual: 7000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's5', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 19000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's6', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 11000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's7', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 7500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's8', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 3500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
     // August 2026 (2026-08)
-    { id: 's9', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', target: 18000, actual: 21000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's10', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', target: 12000, actual: 14000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', target: 9000, actual: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', target: 6000, actual: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', target: 17000, actual: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', target: 11000, actual: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' }
+    { id: 's9', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 21000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's10', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 14000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 17000, actual: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 11000, actual: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' }
   ],
   visits: [
-    { id: 'v1', targetName: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', type: 'doctor', date: '2026-09-02', time: '11:30', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa' },
-    { id: 'v2', targetName: 'Sara Abdullah', class: 'A', specialty: 'Pediatrics', type: 'doctor', date: '2026-09-02', time: '14:15', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa' },
-    { id: 'v3', targetName: 'Al-Salam Hospital', class: 'Hospital', specialty: 'General & Surgery', type: 'hospital', date: '2026-09-02', time: '09:45', period: 'AM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa' },
-    { id: 'v4', targetName: 'Mohamed Hassan', class: 'B', specialty: 'Dermatology', type: 'doctor', date: '2026-09-02', time: '16:00', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa' },
-    { id: 'v5', targetName: 'Youssef Fathy', class: 'B', specialty: 'Orthopedics', type: 'doctor', date: '2026-09-01', time: '14:20', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa' },
-    { id: 'v6', targetName: 'Nasser Institute', class: 'Hospital', specialty: 'Oncology & Surgery', type: 'hospital', date: '2026-09-01', time: '10:15', period: 'AM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa' },
-    { id: 'v7', targetName: 'Khaled Omar', class: 'A', specialty: 'Cardiology', type: 'doctor', date: '2026-09-02', time: '13:00', period: 'PM', status: 'completed', isActual: false, repId: 'rep2', repName: 'Omar Youssef' }
+    { id: 'v1', targetName: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', type: 'doctor', date: '2026-09-02', time: '11:30', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1'], products: ['Amoxicillin 500mg'] },
+    { id: 'v2', targetName: 'Sara Abdullah', class: 'A', specialty: 'Pediatrics', type: 'doctor', date: '2026-09-02', time: '14:15', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod2'], products: ['Vitamin D Drops 1000IU'] },
+    { id: 'v3', targetName: 'Al-Salam Hospital', class: 'Hospital', specialty: 'General & Surgery', type: 'hospital', date: '2026-09-02', time: '09:45', period: 'AM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: [], products: [] },
+    { id: 'v4', targetName: 'Mohamed Hassan', class: 'B', specialty: 'Dermatology', type: 'doctor', date: '2026-09-02', time: '16:00', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod3'], products: ['Omeprazole 20mg'] },
+    { id: 'v5', targetName: 'Youssef Fathy', class: 'B', specialty: 'Orthopedics', type: 'doctor', date: '2026-09-01', time: '14:20', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod4'], products: ['Azithromycin 250mg'] },
+    { id: 'v6', targetName: 'Nasser Institute', class: 'Hospital', specialty: 'Oncology & Surgery', type: 'hospital', date: '2026-09-01', time: '10:15', period: 'AM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: [], products: [] },
+    { id: 'v7', targetName: 'Khaled Omar', class: 'A', specialty: 'Cardiology', type: 'doctor', date: '2026-09-02', time: '13:00', period: 'PM', status: 'completed', isActual: false, repId: 'rep2', repName: 'Omar Youssef', productIds: ['prod1'], products: ['Amoxicillin 500mg'] }
   ],
   doctors: [
     { id: 'd1', name: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', area: 'Nasr City', repId: 'rep1', targetQuarterly: 4 },
@@ -172,6 +157,7 @@ function syncReportsData() {
           repId: v.repId || 'rep1',
           repName: repName,
           comment: v.comment || '',
+          productIds: v.productIds || [],
           products: v.products || []
         };
         if (existingIdx >= 0) {
@@ -368,8 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDailyTimeline();
   renderCoverageReport();
   // Initialize Doctors and Pharmacies directories
-  initDoctorsDirectory(user);
-  initPharmaciesDirectory(user);
+  if (typeof initDoctorsDirectory === 'function') initDoctorsDirectory(user);
+  if (typeof initPharmaciesDirectory === 'function') initPharmaciesDirectory(user);
   // Check URL query parameter for active tab
   const urlParams = new URLSearchParams(window.location.search);
   const requestedTab = urlParams.get('tab');
@@ -379,8 +365,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('click', (e) => {
+  const achMonthContainer = document.getElementById('achMonthMultiSelectContainer');
+  if (achMonthContainer && !achMonthContainer.contains(e.target) && typeof closeAchMonthDropdown === 'function') {
+    closeAchMonthDropdown();
+  }
   const productContainer = document.getElementById('productMultiSelectContainer');
-  if (productContainer && !productContainer.contains(e.target)) {
+  if (productContainer && !productContainer.contains(e.target) && typeof closeProductDropdown === 'function') {
     closeProductDropdown();
   }
   const monthContainer = document.getElementById('monthMultiSelectContainer');
@@ -396,8 +386,7 @@ function setupRolePermissions(user) {
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
   const noticeBadge = document.getElementById('adminBadgeNotice');
   const noticeText = document.getElementById('roleNoticeText');
-  const uploadBtn = document.getElementById('uploadSalesBtn');
-  const uploadControls = document.getElementById('salesUploadControls');
+  const linkUpload = document.getElementById('linkUploadDistributorSales');
   const manageTargetsBtn = document.getElementById('manageTargetsBtn');
   const btnAddDoctor = document.getElementById('btnAddDoctor');
   const btnAddPharmacy = document.getElementById('btnAddPharmacy');
@@ -406,21 +395,18 @@ function setupRolePermissions(user) {
   const lang = getCurrentLang();
   if (isAdmin) {
     if (noticeBadge) noticeBadge.className = 'admin-notice-pill admin-mode';
-    if (noticeText) noticeText.textContent = lang === 'ar' ? 'صلاحية الإدارة: متاح رفع شيتات المبيعات وإدارة الأطباء والصيدليات' : 'Admin Role: Full Sales Upload, Doctors & Pharmacies Management';
-    if (uploadBtn) uploadBtn.style.display = 'inline-flex';
-    if (uploadControls) uploadControls.style.display = 'flex';
+    if (noticeText) noticeText.textContent = lang === 'ar' ? 'صلاحية الإدارة: متاح إدارة الأهداف والتقارير والأطباء والصيدليات' : 'Admin Role: Full Targets Management, Doctors & Pharmacies Management';
     if (manageTargetsBtn) manageTargetsBtn.style.display = 'inline-flex';
-    if (typeof populateUploadControls === 'function') populateUploadControls();
+    if (linkUpload) linkUpload.style.display = 'inline-flex';
     if (btnAddDoctor) btnAddDoctor.style.display = 'inline-flex';
     if (btnAddPharmacy) btnAddPharmacy.style.display = 'inline-flex';
     if (btnImportDoctors) btnImportDoctors.style.display = 'inline-flex';
     if (btnImportPharmacies) btnImportPharmacies.style.display = 'inline-flex';
   } else {
     if (noticeBadge) noticeBadge.className = 'admin-notice-pill';
-    if (noticeText) noticeText.textContent = lang === 'ar' ? 'عرض فقط: تعديل التارجت والأطباء والصيدليات مقتصر على الإدارة' : 'View-Only: Directories and Sales managed by Admin';
-    if (uploadBtn) uploadBtn.style.display = 'none';
-    if (uploadControls) uploadControls.style.display = 'none';
+    if (noticeText) noticeText.textContent = lang === 'ar' ? 'عرض فقط: تعديل التارجت والأطباء والصيدليات مقتصر على الإدارة' : 'View-Only: Targets and Directories managed by Admin';
     if (manageTargetsBtn) manageTargetsBtn.style.display = 'none';
+    if (linkUpload) linkUpload.style.display = 'none';
     if (btnAddDoctor) btnAddDoctor.style.display = 'none';
     if (btnAddPharmacy) btnAddPharmacy.style.display = 'none';
     if (btnImportDoctors) btnImportDoctors.style.display = 'none';
@@ -438,6 +424,16 @@ function switchReportTab(tabKey) {
   document.querySelectorAll('.report-content-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tabPanel-${tabKey}`);
   });
+  if (tabKey === 'doctors' && typeof renderDoctorsReport === 'function') {
+    renderDoctorsReport();
+  }
+  if (tabKey === 'pharmacies' && typeof renderPharmaciesReport === 'function') {
+    renderPharmaciesReport();
+  }
+  if (tabKey === 'achievements') {
+    if (typeof populateAchFilters === 'function') populateAchFilters();
+    if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
+  }
 }
 
 // ============================================================================
@@ -451,12 +447,103 @@ const MONTH_NAMES_AR = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
 ];
+window.MONTH_NAMES = MONTH_NAMES;
+window.MONTH_NAMES_AR = MONTH_NAMES_AR;
+
+function getSharedReportUsers() {
+  return (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+}
 
 function initAllFilters(user) {
   if (typeof initPharmSalesFilters === 'function') {
     initPharmSalesFilters(user);
   }
   populateTimelineAndCoverageFilters(user);
+  populateDirectoryRepFilters(user);
+}
+
+function populateDirectoryRepFilters(user) {
+  const docSelect = document.getElementById('doctorRepSelect');
+  const pharmSelect = document.getElementById('pharmacyRepSelect');
+  if (!docSelect && !pharmSelect) return;
+
+  const lang = getCurrentLang();
+  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
+  const allUsers = getSharedReportUsers();
+
+  const populateSelect = (selectEl) => {
+    if (!selectEl) return;
+    selectEl.replaceChildren();
+
+    if (role === 'line_manager') {
+      const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+      const dmIds = dms.map((d) => d.id);
+      const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
+
+      const optAll = document.createElement('option');
+      optAll.value = 'all';
+      optAll.textContent = lang === 'ar' ? 'كل الفريق' : 'All Team';
+      selectEl.appendChild(optAll);
+
+      if (dms.length > 0) {
+        const dmGroup = document.createElement('optgroup');
+        dmGroup.label = lang === 'ar' ? 'مديرو المناطق (DMs)' : 'District Managers (DMs)';
+        appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `${dm.name} (${dm.employeeCode || 'DM'})`);
+        selectEl.appendChild(dmGroup);
+      }
+      if (reps.length > 0) {
+        const repGroup = document.createElement('optgroup');
+        repGroup.label = lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Representatives (Reps)';
+        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => {
+          const dm = dms.find((d) => d.id === rep.managerId);
+          return `${rep.name} (${rep.employeeCode || 'Rep'}${dm ? ` - DM: ${dm.name}` : ''})`;
+        });
+        selectEl.appendChild(repGroup);
+      }
+    } else if (role === 'district_manager') {
+      const allLabel = lang === 'ar' ? 'كل مناديب الفريق' : 'All Team Reps';
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      allOpt.textContent = allLabel;
+      selectEl.appendChild(allOpt);
+
+      const reps = allUsers.filter((u) => u.managerId === user.id);
+      appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+    } else if (role === 'medical_rep' || role === 'rep') {
+      const opt = document.createElement('option');
+      opt.value = user.id;
+      opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
+      selectEl.appendChild(opt);
+    } else {
+      // Admin / BU: list team members by role
+      const allLabel = lang === 'ar' ? 'جميع الموظفين' : 'All Employees';
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      allOpt.textContent = allLabel;
+      selectEl.appendChild(allOpt);
+
+      const directoryRoles = [
+        { key: 'business_unit', label: lang === 'ar' ? 'وحدة الأعمال (BU)' : 'Business Unit (BU)' },
+        { key: 'line_manager', label: lang === 'ar' ? 'مديرو الخطوط (LM)' : 'Line Managers (LM)' },
+        { key: 'district_manager', label: lang === 'ar' ? 'مديرو المناطق (DM)' : 'District Managers (DM)' },
+        { key: 'medical_rep', label: lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Representatives (Reps)' },
+      ];
+      directoryRoles.forEach(({ key, label }) => {
+        const members = allUsers.filter((u) => {
+          const r = window.normalizeRole ? window.normalizeRole(u.role) : u.role;
+          return r === key || u.role === key || (key === 'medical_rep' && u.role === 'rep');
+        });
+        if (!members.length) return;
+        const group = document.createElement('optgroup');
+        group.label = label;
+        appendSelectOptions(group, members, (u) => u.id, (u) => `${u.name} (${u.employeeCode || key})`);
+        selectEl.appendChild(group);
+      });
+    }
+  };
+
+  populateSelect(docSelect);
+  populateSelect(pharmSelect);
 }
 
 function populateTimelineAndCoverageFilters(user) {
@@ -465,7 +552,7 @@ function populateTimelineAndCoverageFilters(user) {
   if (!timelineRepSelect && !coverageRepSelect) return;
   const lang = getCurrentLang();
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
 
   const populateSelect = (selectEl) => {
     if (!selectEl) return;
@@ -570,7 +657,7 @@ function populateLinesFilter(lineSelect, user = null) {
   const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [
     { id: 'line1', name: 'Cardio Line', lineManagerId: 'lm1' }
   ];
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
   let lines = allLines;
   if (user && user.role !== 'admin' && user.role !== 'business_unit') {
     const userLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id) : [];
@@ -587,7 +674,7 @@ function populateDMsFilter(dmSelect, lmId = null, lineId = null) {
   const lang = getCurrentLang();
   const allDMsLabel = lang === 'ar' ? 'جميع المناطق ومديريها (الكل)' : 'All Districts & DMs';
   dmSelect.innerHTML = `<option value="all">${allDMsLabel}</option>`;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
   let dms = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
   if (lmId) {
     dms = dms.filter((u) => u.managerId === lmId);
@@ -603,7 +690,7 @@ function populateRepsFilter(repSelect, dmId = null, lineId = null) {
   const lang = getCurrentLang();
   const allRepsLabel = lang === 'ar' ? 'جميع المناديب (الكل)' : 'All Representatives';
   repSelect.innerHTML = `<option value="all">${allRepsLabel}</option>`;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
   let reps = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')));
   if (dmId && dmId !== 'all') {
     reps = reps.filter((u) => u.managerId === dmId);
@@ -628,19 +715,21 @@ window.onSalesLineChange = function() {
     populateRepsFilter(repSelect, null, selectedLineId);
   } else {
     const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
-    const selectedLine = lines.find((l) => l.id === selectedLineId);
-    const lmId = selectedLine ? selectedLine.lineManagerId : null;
-    populateDMsFilter(dmSelect, lmId, selectedLineId);
+    const lineObj = lines.find((l) => l.id === selectedLineId);
+    const lmUserId = lineObj ? lineObj.lineManagerId : null;
+    populateDMsFilter(dmSelect, lmUserId, selectedLineId);
     populateRepsFilter(repSelect, null, selectedLineId);
   }
   populateProductCheckboxes(selectedLineId);
 };
 
 window.onSalesDmChange = function() {
+  const lineSelect = document.getElementById('salesLineSelect');
   const dmSelect = document.getElementById('salesDmSelect');
   const repSelect = document.getElementById('salesRepSelect');
+  const selectedLineId = lineSelect ? lineSelect.value : 'all';
   const selectedDmId = dmSelect ? dmSelect.value : 'all';
-  populateRepsFilter(repSelect, selectedDmId, null);
+  populateRepsFilter(repSelect, selectedDmId, selectedLineId);
 };
 
 // ============================================================================
@@ -652,7 +741,7 @@ function printCurrentReport() {
 // Section 13: Modal Cascading Hierarchy (Line/LM -> District/DM -> Med Rep)
 // ============================================================================
 function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId = null) {
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
   const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const lmSelect = document.getElementById(lmSelectId);
   if (!lmSelect) return;
@@ -687,7 +776,7 @@ function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId
 }
 
 function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null, targetRepId = null) {
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
   const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const lmSelect = document.getElementById(lmSelectId);
   const dmSelect = document.getElementById(dmSelectId);
@@ -706,7 +795,7 @@ function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null
 }
 
 function updateModalReps(dmSelectId, repSelectId, targetRepId = null) {
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getSharedReportUsers();
   const dmSelect = document.getElementById(dmSelectId);
   const repSelect = document.getElementById(repSelectId);
   if (!repSelect) return;

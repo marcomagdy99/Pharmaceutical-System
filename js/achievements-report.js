@@ -14,32 +14,115 @@
  * they carry no productId, so they can't be placed in this breakdown.
  */
 
-function populateAchFilters() {
-  const monthSelect = document.getElementById('achMonthSelect');
-  const yearSelect = document.getElementById('achYearSelect');
+const ACH_MONTHS = (typeof window !== 'undefined' && Array.isArray(window.MONTH_NAMES) && window.MONTH_NAMES.length === 12)
+  ? window.MONTH_NAMES
+  : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-  if (monthSelect && !monthSelect.dataset.populated) {
-    const now = new Date();
-    MONTH_NAMES.forEach((m, idx) => {
-      const val = String(idx + 1).padStart(2, '0');
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = m;
-      if (idx === now.getMonth()) opt.selected = true;
-      monthSelect.appendChild(opt);
+const ACH_MONTHS_AR = (typeof window !== 'undefined' && Array.isArray(window.MONTH_NAMES_AR) && window.MONTH_NAMES_AR.length === 12)
+  ? window.MONTH_NAMES_AR
+  : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+window.toggleAchMonthDropdown = function(e) {
+  if (e) {
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+  }
+  populateAchFilters();
+  const menu = document.getElementById('achMonthDropdownMenu');
+  if (menu) menu.classList.toggle('show');
+};
+
+window.closeAchMonthDropdown = function() {
+  const menu = document.getElementById('achMonthDropdownMenu');
+  if (menu) menu.classList.remove('show');
+};
+
+window.toggleSelectAllAchMonths = function(isChecked) {
+  document.querySelectorAll('.ach-month-checkbox').forEach((cb) => {
+    cb.checked = isChecked;
+  });
+  updateAchMonthDropdownLabel();
+};
+
+window.onAchMonthCheckboxChange = function() {
+  const allCheckboxes = document.querySelectorAll('.ach-month-checkbox');
+  const checkedBoxes = document.querySelectorAll('.ach-month-checkbox:checked');
+  const selectAll = document.getElementById('achSelectAllMonths');
+  if (selectAll) {
+    selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
+  }
+  updateAchMonthDropdownLabel();
+};
+
+function updateAchMonthDropdownLabel() {
+  const labelEl = document.getElementById('achMonthDropdownLabel');
+  if (!labelEl) return;
+  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+  const allBoxes = document.querySelectorAll('.ach-month-checkbox');
+  const checkedBoxes = Array.from(document.querySelectorAll('.ach-month-checkbox:checked'));
+
+  if (checkedBoxes.length === 0) {
+    labelEl.textContent = lang === 'ar' ? 'لم يتم اختيار شهور' : 'No Months Selected';
+  } else if (checkedBoxes.length === allBoxes.length && allBoxes.length > 0) {
+    labelEl.textContent = lang === 'ar' ? 'كل الشهور' : 'All Months';
+  } else if (checkedBoxes.length <= 2) {
+    const names = checkedBoxes.map((cb) => {
+      const idx = parseInt(cb.value, 10) - 1;
+      return lang === 'ar' ? ACH_MONTHS_AR[idx] : ACH_MONTHS[idx];
     });
-    monthSelect.dataset.populated = 'true';
+    labelEl.textContent = names.join(lang === 'ar' ? '، ' : ', ');
+  } else {
+    labelEl.textContent = lang === 'ar'
+      ? `${checkedBoxes.length} شهور محددة`
+      : `${checkedBoxes.length} Months Selected`;
+  }
+}
+
+function getSelectedAchMonths() {
+  const checked = document.querySelectorAll('.ach-month-checkbox:checked');
+  return Array.from(checked).map((cb) => cb.value);
+}
+
+function populateAchFilters() {
+  const container = document.getElementById('achMonthCheckboxList');
+  const yearSelect = document.getElementById('achYearSelect');
+  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+  const now = new Date();
+
+  if (container && !container.dataset.populated) {
+    container.textContent = '';
+    const currentMonthVal = String(now.getMonth() + 1).padStart(2, '0');
+    ACH_MONTHS.forEach((m, idx) => {
+      const val = String(idx + 1).padStart(2, '0');
+      const label = document.createElement('label');
+      label.className = 'multi-select-item';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'ach-month-checkbox';
+      cb.value = val;
+      if (val === currentMonthVal) cb.checked = true;
+      cb.addEventListener('change', window.onAchMonthCheckboxChange);
+      const span = document.createElement('span');
+      span.textContent = lang === 'ar' ? ACH_MONTHS_AR[idx] : m;
+      label.appendChild(cb);
+      label.appendChild(span);
+      container.appendChild(label);
+    });
+    container.dataset.populated = 'true';
+    updateAchMonthDropdownLabel();
   }
 
   if (yearSelect && !yearSelect.dataset.populated) {
-    const currentYear = String(new Date().getFullYear());
-    ['2025', '2026', '2027'].forEach((y) => {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      if (y === currentYear) opt.selected = true;
-      yearSelect.appendChild(opt);
-    });
+    if (yearSelect.options.length === 0) {
+      const currentYear = String(now.getFullYear());
+      ['2025', '2026', '2027'].forEach((y) => {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if (y === currentYear) opt.selected = true;
+        yearSelect.appendChild(opt);
+      });
+    }
     yearSelect.dataset.populated = 'true';
   }
 }
@@ -75,11 +158,14 @@ function getAchievementsScopeRepIds(user) {
  * too (target columns at 0, so achievement is left as "--" rather than
  * a misleading percentage).
  */
-function buildAchievementsData(monthKey, scopeRepIds) {
+function buildAchievementsData(monthKeys, scopeRepIds) {
+  const keys = Array.isArray(monthKeys) ? monthKeys : [monthKeys];
+  if (!keys.length) return [];
+
   const targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
-    .filter((t) => t.month === monthKey && (!scopeRepIds || scopeRepIds.includes(t.repId)));
+    .filter((t) => keys.includes(t.month) && (!scopeRepIds || scopeRepIds.includes(t.repId)));
   const salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-    .filter((s) => s.month === monthKey && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
+    .filter((s) => keys.includes(s.month) && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
 
   const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
@@ -143,35 +229,58 @@ function buildAchievementsData(monthKey, scopeRepIds) {
 
 function renderAchievementsReport() {
   populateAchFilters();
-  const monthSelect = document.getElementById('achMonthSelect');
   const yearSelect = document.getElementById('achYearSelect');
   const tbody = document.getElementById('achievementsReportTbody');
   if (!tbody) return;
 
   const now = new Date();
-  const month = monthSelect ? monthSelect.value : String(now.getMonth() + 1).padStart(2, '0');
   const year = yearSelect ? yearSelect.value : String(now.getFullYear());
-  const monthKey = `${year}-${month}`;
+  const selectedMonths = getSelectedAchMonths();
+  const monthKeys = selectedMonths.map((m) => `${year}-${m}`);
 
   const user = checkAuth();
   const scopeRepIds = getAchievementsScopeRepIds(user);
-  const groups = buildAchievementsData(monthKey, scopeRepIds);
-  const esc = window.escapeHtml || ((s) => s || '');
+  const groups = buildAchievementsData(monthKeys, scopeRepIds);
   const lang = getCurrentLang();
 
   tbody.replaceChildren();
   let grandTarget = 0;
   let grandActual = 0;
 
+  const kpiTarget = document.getElementById('kpiAchTotalTarget');
+  const kpiActual = document.getElementById('kpiAchTotalActual');
+  const kpiPct = document.getElementById('kpiAchOverallPct');
+  const kpiReps = document.getElementById('kpiAchRepsCount');
+
+  if (!selectedMonths.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
+          ${lang === 'ar' ? 'يرجى اختيار شهر واحد على الأقل.' : 'Please select at least one month.'}
+        </td>
+      </tr>
+    `;
+    if (kpiTarget) kpiTarget.textContent = '0';
+    if (kpiActual) kpiActual.textContent = '0';
+    if (kpiPct) kpiPct.textContent = '0%';
+    if (kpiReps) kpiReps.textContent = '0';
+    return;
+  }
+
   if (!groups.length) {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-          ${lang === 'ar' ? 'لا توجد تارجت أو مبيعات مربوطة بمندوب ومنتج لهذا الشهر.' : 'No targets or rep/product-matched sales for this month.'}
+          ${lang === 'ar' ? 'لا توجد تارجت أو مبيعات مربوطة بمندوب ومنتج للشهور المحددة.' : 'No targets or rep/product-matched sales for selected months.'}
         </td>
       </tr>
     `;
-  } else {
+    if (kpiTarget) kpiTarget.textContent = '0';
+    if (kpiActual) kpiActual.textContent = '0';
+    if (kpiPct) kpiPct.textContent = '0%';
+    if (kpiReps) kpiReps.textContent = '0';
+    return;
+  }
     groups.forEach((g) => {
       grandTarget += g.totalTValue;
       grandActual += g.totalSValue;
@@ -183,8 +292,8 @@ function renderAchievementsReport() {
       totalRow.style.background = 'var(--gray-50, #f8f9fa)';
       totalRow.innerHTML = `
         <td>
-          ${esc(g.repName)}
-          ${g.areaName ? `<div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${esc(g.areaName)}</div>` : ''}
+          ${window.escapeHtml(g.repName)}
+          ${g.areaName ? `<div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${window.escapeHtml(g.areaName)}</div>` : ''}
         </td>
         <td>${lang === 'ar' ? 'الإجمالي' : 'TOTAL'}</td>
         <td>${g.totalTUnit.toLocaleString()}</td>
@@ -201,7 +310,7 @@ function renderAchievementsReport() {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td></td>
-          <td style="padding-inline-start: 24px; color: var(--gray-600);">${esc(p.productName)}</td>
+          <td style="padding-inline-start: 24px; color: var(--gray-600);">${window.escapeHtml(p.productName)}</td>
           <td>${p.tUnit.toLocaleString()}</td>
           <td>${p.sUnit.toLocaleString()}</td>
           <td>${p.tValue.toLocaleString()}</td>
@@ -211,14 +320,23 @@ function renderAchievementsReport() {
         tbody.appendChild(row);
       });
     });
-  }
 
-  const kpiTarget = document.getElementById('kpiAchTotalTarget');
-  const kpiActual = document.getElementById('kpiAchTotalActual');
-  const kpiPct = document.getElementById('kpiAchOverallPct');
-  const kpiReps = document.getElementById('kpiAchRepsCount');
   if (kpiTarget) kpiTarget.textContent = grandTarget.toLocaleString();
   if (kpiActual) kpiActual.textContent = grandActual.toLocaleString();
   if (kpiPct) kpiPct.textContent = grandTarget > 0 ? ((grandActual / grandTarget) * 100).toFixed(1) + '%' : '—';
   if (kpiReps) kpiReps.textContent = groups.length;
+}
+
+window.populateAchFilters = populateAchFilters;
+window.populateAchievementsFilters = populateAchFilters;
+window.renderAchievementsReport = renderAchievementsReport;
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      populateAchFilters();
+    });
+  } else {
+    populateAchFilters();
+  }
 }

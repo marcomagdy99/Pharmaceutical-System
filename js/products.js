@@ -1,9 +1,7 @@
-﻿/**
+/**
  * @file products.js
  * @description Product Lines & Products directory management (CRUD + transfer between lines) using Central Store.
  */
-
-const esc = window.escapeHtml || ((s) => s || "");
 
 // Initialize default lines if empty via Store
 function initProductLinesData() {
@@ -170,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const managerSelect = document.getElementById("lineManager");
   managerSelect.innerHTML = `<option value="" disabled selected data-i18n="selectManager">${productTranslations[currentLang].selectManager}</option>`;
   getActiveLineManagers().forEach((m) => {
-    managerSelect.innerHTML += `<option value="${esc(m.id)}">${esc(m.name)}</option>`;
+    managerSelect.innerHTML += `<option value="${window.escapeHtml(m.id)}">${window.escapeHtml(m.name)}</option>`;
   });
 
   renderProductLines();
@@ -236,9 +234,9 @@ function renderProductLines() {
                         <tbody>
                             ${line.products.map((prod) => `
                                 <tr>
-                                    <td class="fw-medium">${esc(prod.name)}</td>
-                                    <td><span class="badge bg-secondary">${esc(prod.dosage)}</span></td>
-                                    <td>${esc(prod.form)}</td>
+                                    <td class="fw-medium">${window.escapeHtml(prod.name)}</td>
+                                    <td><span class="badge bg-secondary">${window.escapeHtml(prod.dosage)}</span></td>
+                                    <td>${window.escapeHtml(prod.form)}</td>
                                     <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? Number(prod.price).toLocaleString() : "—"}</td>
                                     <td class="text-end product-actions-cell">
                                         <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
@@ -268,11 +266,11 @@ function renderProductLines() {
                         <button class="accordion-button ${buttonClass} shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${line.id}" aria-expanded="${isExpanded}" aria-controls="collapse${line.id}">
                             <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                 <div>
-                                    <span class="fw-bold fs-5">${esc(line.name)}</span>
+                                    <span class="fw-bold fs-5">${window.escapeHtml(line.name)}</span>
                                     <span class="badge bg-primary rounded-pill ms-2">${line.products ? line.products.length : 0} <span data-i18n="products">Products</span></span>
                                 </div>
                                 <div class="text-muted small d-none d-sm-block">
-                                    <i class="bi bi-person-badge"></i> <span data-i18n="manager">Manager</span>: ${esc(line.lineManagerName || "Unassigned")}
+                                    <i class="bi bi-person-badge"></i> <span data-i18n="manager">Manager</span>: ${window.escapeHtml(line.lineManagerName || "Unassigned")}
                                 </div>
                             </div>
                         </button>
@@ -484,7 +482,7 @@ function openTransferModal(lineId, productId) {
 
   window.store.productLines.getAll().forEach((l) => {
     if (l.id !== lineId) {
-      selectEl.innerHTML += `<option value="${esc(l.id)}">${esc(l.name)} (${l.products ? l.products.length : 0} products)</option>`;
+      selectEl.innerHTML += `<option value="${window.escapeHtml(l.id)}">${window.escapeHtml(l.name)} (${l.products ? l.products.length : 0} products)</option>`;
     }
   });
 

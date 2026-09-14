@@ -389,14 +389,13 @@ const userMgmt = {
     const linesContainer = document.getElementById("uProductLinesContainer");
     if (linesContainer) {
       linesContainer.replaceChildren();
-      const esc = window.escapeHtml || ((s) => s || "");
       this.lines
         .filter((l) => l.status === "Active")
         .forEach((l) => {
           const lbl = document.createElement("label");
           lbl.className = "d-flex align-items-center gap-2 mb-1 cursor-pointer";
-          lbl.innerHTML = `<input type="checkbox" class="user-line-cb form-check-input" value="${esc(l.id)}">
-                         <span class="small fw-semibold text-dark">${esc(l.name)}</span>`;
+          lbl.innerHTML = `<input type="checkbox" class="user-line-cb form-check-input" value="${window.escapeHtml(l.id)}">
+                         <span class="small fw-semibold text-dark">${window.escapeHtml(l.name)}</span>`;
           linesContainer.appendChild(lbl);
         });
 

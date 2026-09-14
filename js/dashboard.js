@@ -4,8 +4,6 @@
  * Includes: Team planned visits visibility for DMs with 7-day auto-expiry & double visit linking, LM hierarchy, and dynamic KPIs.
  */
 
-const esc = window.escapeHtml || ((s) => s || "");
-
 const dashboardTranslations = {
   en: {
     welcome_back: "Welcome back",
@@ -678,7 +676,7 @@ function renderRepDashboard(userName, user) {
                           (h) => `
                     <div class="planned-target-row">
                       <div class="planned-target-info">
-                        <strong class="planned-target-name">${esc(h.doctorName || h.targetName || "Hospital")}</strong>
+                        <strong class="planned-target-name">${window.escapeHtml(h.doctorName || h.targetName || "Hospital")}</strong>
                         <div class="planned-target-date"><span class="date-icon">📅</span> ${h.date}</div>
                       </div>
                       <button class="btn-convert-action" onclick="openCompletePlanModal('${h.id}', false)">
@@ -706,7 +704,7 @@ function renderRepDashboard(userName, user) {
                           (d) => `
                     <div class="planned-target-row">
                       <div class="planned-target-info">
-                        <strong class="planned-target-name">${esc(d.doctorName || d.targetName || "Doctor")}</strong>
+                        <strong class="planned-target-name">${window.escapeHtml(d.doctorName || d.targetName || "Doctor")}</strong>
                         <div class="planned-target-date"><span class="date-icon">📅</span> ${d.date}</div>
                       </div>
                       <button class="btn-convert-action" onclick="openCompletePlanModal('${d.id}', false)">
@@ -748,7 +746,7 @@ function renderRepDashboard(userName, user) {
                         : { dayName: "", time: v.time || "10:00" };
                     return `
                   <tr>
-                    <td style="padding: 10px; font-weight: 600;">${esc(v.doctorName || v.targetName)}</td>
+                    <td style="padding: 10px; font-weight: 600;">${window.escapeHtml(v.doctorName || v.targetName)}</td>
                     <td style="padding: 10px; color: var(--gray-700);">
                       <div style="font-weight: 700; color: var(--primary); font-size: 0.82rem; white-space: nowrap;">${dt.dayName}</div>
                       <div style="font-weight: 600; font-size: 0.8rem; white-space: nowrap;">${v.date}</div>
@@ -1075,13 +1073,16 @@ function renderDMDashboard(userName, user) {
                         </td>
                         <td>
                           <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <strong class="visit-doc-name">${esc(sv.doctorName || sv.targetName || "Doctor")}</strong>
+                            <strong class="visit-doc-name">${window.escapeHtml(sv.doctorName || sv.targetName || "Doctor")}</strong>
                             ${periodBadge}
                           </div>
                           <div class="target-type-badge" style="font-size: 0.75rem; margin-top: 2px;">${targetTypeBadge}</div>
                         </td>
                         <td class="dm-covisit-products-col">
-                          ${sv.products && sv.products.length ? `<span class="badge badge-product">💊 ${sv.products.join(", ")}</span>` : '<span class="text-muted">-</span>'}
+                          ${(() => {
+                            const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(sv) : (sv.products || []);
+                            return prods.length ? `<span class="badge badge-product">💊 ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
+                          })()}
                         </td>
                         <td class="text-end covisit-action-cell">
                           <button class="btn-convert-action" onclick="openCompletePlanModal('${sv.id}', true)">
@@ -1219,14 +1220,17 @@ function renderDMDashboard(userName, user) {
                               return `
                         <tr>
                           <td>
-                            <strong class="visit-doc-name">${esc(pv.doctorName || pv.targetName || "Doctor")}</strong>
+                            <strong class="visit-doc-name">${window.escapeHtml(pv.doctorName || pv.targetName || "Doctor")}</strong>
                             <div class="target-type-badge" style="font-size: 0.75rem;">${targetTypeBadge}</div>
                           </td>
                           <td>
                             ${periodBadge}
                           </td>
                           <td class="dm-covisit-products-col">
-                            ${pv.products && pv.products.length ? `<span class="badge badge-product">💊 ${pv.products.join(", ")}</span>` : '<span class="text-muted">-</span>'}
+                            ${(() => {
+                              const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(pv) : (pv.products || []);
+                              return prods.length ? `<span class="badge badge-product">💊 ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
+                            })()}
                           </td>
                           <td class="text-end covisit-action-cell">
                             <button class="btn-convert-action" onclick="openCompletePlanModal('${pv.id}', true)">
@@ -2017,7 +2021,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
       container.innerHTML =
         '<span style="color: var(--gray-500);">No products available.</span>';
     } else {
-      const selectedProds = (target && target.products) || [];
+      const selectedProds = (target && (target.productIds && target.productIds.length ? target.productIds : target.products)) || [];
       productsToShow.forEach((prod) => {
         const displayName =
           prod.dosage &&
@@ -2025,13 +2029,14 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
             ? `${prod.name} ${prod.dosage}`
             : prod.name;
         const isChecked =
+          selectedProds.includes(prod.id) ||
           selectedProds.includes(displayName) ||
           selectedProds.includes(prod.name);
         const lbl = document.createElement("label");
         lbl.className = "pill-item";
         lbl.style.cssText =
           "display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.82rem;";
-        lbl.innerHTML = `<input type="checkbox" name="dashProd" value="${displayName}" ${isChecked ? "checked" : ""}> ${displayName}`;
+        lbl.innerHTML = `<input type="checkbox" name="dashProd" value="${prod.id}" data-name="${displayName}" ${isChecked ? "checked" : ""}> ${displayName}`;
         container.appendChild(lbl);
       });
     }
@@ -2077,9 +2082,11 @@ window.handleDashCompleteSubmit = function (e) {
     document.getElementById("dashVisitTime").value ||
     `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const commentVal = document.getElementById("dashVisitComment").value;
-  const selectedProducts = Array.from(
+  const checkedProductInputs = Array.from(
     document.querySelectorAll('input[name="dashProd"]:checked'),
-  ).map((c) => c.value);
+  );
+  const selectedProductIds = checkedProductInputs.map((c) => c.value);
+  const selectedProductNames = checkedProductInputs.map((c) => c.dataset.name || c.value);
 
   let visitType = "single";
   let doubleWithUserName = "";
@@ -2121,7 +2128,8 @@ window.handleDashCompleteSubmit = function (e) {
     target.time = timeVal;
     target.entryDate = dateVal;
     target.comment = commentVal;
-    target.products = selectedProducts;
+    target.productIds = selectedProductIds;
+    target.products = selectedProductNames;
     target.visitType = visitType;
     target.doubleWithUserName = doubleWithUserName;
     if (doubleWithUserId) {
