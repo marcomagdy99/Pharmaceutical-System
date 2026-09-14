@@ -34,7 +34,7 @@ function renderDoctorsReport() {
 
   // Role scoping
   if (!isMgr) {
-    docs = docs.filter((d) => d.repId === currentUser.id || !d.repId);
+    docs = docs.filter((d) => d.repId === currentUser.id);
   } else if (repId !== "all") {
     docs = docs.filter((d) => d.repId === repId);
   } else if (role === "district_manager") {

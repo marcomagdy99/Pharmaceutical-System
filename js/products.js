@@ -290,7 +290,22 @@ function renderProductLines(activeLineId) {
   if (!container) return;
   container.replaceChildren();
 
-  const productLines = window.store.productLines.getAll();
+  const allLines = window.store.productLines.getAll();
+  const currentUser = window.checkAuth ? window.checkAuth() : null;
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser?.role)
+    : (currentUser?.role || "").toLowerCase();
+
+  let productLines = allLines;
+  if (currentUser && role !== "admin") {
+    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
+    if (userLines.length > 0) {
+      const allowedIds = userLines.map((l) => l.id);
+      productLines = allLines.filter((l) => allowedIds.includes(l.id));
+    } else if (["business_unit", "line_manager", "district_manager", "medical_rep", "rep"].includes(role)) {
+      productLines = [];
+    }
+  }
 
   if (productLines.length === 0) {
     container.innerHTML = `<div class="p-4 text-center text-muted">No product lines found.</div>`;

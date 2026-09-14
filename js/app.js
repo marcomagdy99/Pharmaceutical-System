@@ -1065,17 +1065,42 @@ function getAllSubordinates(managerId) {
 window.getAllSubordinates = getAllSubordinates;
 
 function getUserLines(userId) {
-  const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const user = users.find((u) => u.id === userId);
   if (!user) return [];
 
-  const assignedLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+  const assignedLineIds = [...(user.lineIds || (user.lineId ? [user.lineId] : []))];
   lines.forEach((l) => {
     if (l.lineManagerId === userId && !assignedLineIds.includes(l.id)) {
       assignedLineIds.push(l.id);
     }
   });
+
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+  if (role === 'business_unit') {
+    const isLM = (u) => {
+      const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+      return r === 'line_manager' || r === 'lm';
+    };
+    const myLMs = users.filter((u) => u.managerId === userId && isLM(u));
+    const myLmIds = myLMs.map((u) => u.id);
+
+    lines.forEach((l) => {
+      if (myLmIds.includes(l.lineManagerId) && !assignedLineIds.includes(l.id)) {
+        assignedLineIds.push(l.id);
+      }
+    });
+
+    myLMs.forEach((lm) => {
+      const lmLines = lm.lineIds || (lm.lineId ? [lm.lineId] : []);
+      lmLines.forEach((lId) => {
+        if (!assignedLineIds.includes(lId)) {
+          assignedLineIds.push(lId);
+        }
+      });
+    });
+  }
 
   return lines.filter((l) => assignedLineIds.includes(l.id));
 }

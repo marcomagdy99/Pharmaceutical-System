@@ -515,7 +515,15 @@ function populateDirectoryRepFilters(user) {
       opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
       selectEl.appendChild(opt);
     } else {
-      // Admin / BU: list team members by role
+      const isBU = role === 'business_unit';
+      const mySubordinates = isBU && typeof window.getAllSubordinates === 'function'
+        ? window.getAllSubordinates(user.id)
+        : [];
+      const mySubordinateIds = mySubordinates.map((u) => u.id);
+      const myDirectLMs = isBU ? allUsers.filter((u) => u.managerId === user.id) : [];
+      const myDirectLmIds = myDirectLMs.map((u) => u.id);
+      const myAllowedIds = isBU ? [user.id, ...myDirectLmIds, ...mySubordinateIds] : null;
+
       const allLabel = lang === 'ar' ? 'جميع الموظفين' : 'All Employees';
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
@@ -530,6 +538,7 @@ function populateDirectoryRepFilters(user) {
       ];
       directoryRoles.forEach(({ key, label }) => {
         const members = allUsers.filter((u) => {
+          if (myAllowedIds && !myAllowedIds.includes(u.id)) return false;
           const r = window.normalizeRole ? window.normalizeRole(u.role) : u.role;
           return r === key || u.role === key || (key === 'medical_rep' && u.role === 'rep');
         });
@@ -614,7 +623,15 @@ function populateTimelineAndCoverageFilters(user) {
       opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
       selectEl.appendChild(opt);
     } else {
-      // Admin / BU: show all visit-making roles (Reps, DMs, LMs, BUs)
+      const isBU = role === 'business_unit';
+      const mySubordinates = isBU && typeof window.getAllSubordinates === 'function'
+        ? window.getAllSubordinates(user.id)
+        : [];
+      const mySubordinateIds = mySubordinates.map((u) => u.id);
+      const myDirectLMs = isBU ? allUsers.filter((u) => u.managerId === user.id) : [];
+      const myDirectLmIds = myDirectLMs.map((u) => u.id);
+      const myAllowedIds = isBU ? [user.id, ...myDirectLmIds, ...mySubordinateIds] : null;
+
       const lang2 = getCurrentLang();
       const allLabel = lang2 === 'ar' ? 'جميع الفريق' : 'All Team';
       const allOpt = document.createElement('option');
@@ -630,6 +647,7 @@ function populateTimelineAndCoverageFilters(user) {
       ];
       visitRoles.forEach(({ key, label }) => {
         const members = allUsers.filter((u) => {
+          if (myAllowedIds && !myAllowedIds.includes(u.id)) return false;
           const r = window.normalizeRole ? window.normalizeRole(u.role) : u.role;
           return r === key || u.role === key || (key === 'medical_rep' && u.role === 'rep');
         });
@@ -656,9 +674,14 @@ function populateLinesFilter(lineSelect, user = null) {
   ];
   const allUsers = getSharedReportUsers();
   let lines = allLines;
-  if (user && user.role !== 'admin' && user.role !== 'business_unit') {
+  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
+  if (user && role !== 'admin') {
     const userLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id) : [];
-    if (userLines.length > 0) lines = userLines;
+    if (userLines.length > 0) {
+      lines = userLines;
+    } else if (role === 'business_unit' || role === 'line_manager' || role === 'district_manager' || role === 'medical_rep' || role === 'rep') {
+      lines = [];
+    }
   }
   appendSelectOptions(lineSelect, lines, (l) => l.id, (l) => {
     const lm = allUsers.find((u) => u.id === l.lineManagerId);
@@ -672,7 +695,19 @@ function populateDMsFilter(dmSelect, lmId = null, lineId = null) {
   const allDMsLabel = lang === 'ar' ? 'جميع المناطق ومديريها (الكل)' : 'All Districts & DMs';
   dmSelect.innerHTML = `<option value="all">${allDMsLabel}</option>`;
   const allUsers = getSharedReportUsers();
+  const currentUser = checkAuth();
+  const role = window.normalizeRole ? window.normalizeRole(currentUser?.role) : (currentUser?.role || '').toLowerCase();
+
   let dms = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+
+  if (role === 'business_unit' && currentUser) {
+    const mySubordinates = typeof window.getAllSubordinates === 'function'
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    const mySubordinateIds = mySubordinates.map((u) => u.id);
+    dms = dms.filter((u) => mySubordinateIds.includes(u.id));
+  }
+
   if (lmId) {
     dms = dms.filter((u) => u.managerId === lmId);
   }
@@ -688,7 +723,19 @@ function populateRepsFilter(repSelect, dmId = null, lineId = null) {
   const allRepsLabel = lang === 'ar' ? 'جميع المناديب (الكل)' : 'All Representatives';
   repSelect.innerHTML = `<option value="all">${allRepsLabel}</option>`;
   const allUsers = getSharedReportUsers();
+  const currentUser = checkAuth();
+  const role = window.normalizeRole ? window.normalizeRole(currentUser?.role) : (currentUser?.role || '').toLowerCase();
+
   let reps = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')));
+
+  if (role === 'business_unit' && currentUser) {
+    const mySubordinates = typeof window.getAllSubordinates === 'function'
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    const mySubordinateIds = mySubordinates.map((u) => u.id);
+    reps = reps.filter((u) => mySubordinateIds.includes(u.id));
+  }
+
   if (dmId && dmId !== 'all') {
     reps = reps.filter((u) => u.managerId === dmId);
   }

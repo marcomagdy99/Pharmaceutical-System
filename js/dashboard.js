@@ -504,13 +504,13 @@ function renderRepDashboard(userName, user) {
       : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
 
   const repDoctors = allDoctors.filter(
-    (d) => !d.repId || d.repId === currentUserId || d.repId === "rep1",
+    (d) => d.repId === currentUserId || (!d.repId && currentUserId === "rep1"),
   );
   const totalDoctorsCount = repDoctors.length;
 
   const activePlanned = allVisits.filter(
     (v) =>
-      (v.repId === currentUserId || v.repId === "rep1") &&
+      v.repId === currentUserId &&
       v.status === "planned" &&
       !isPlannedVisitExpired(v.date),
   );
@@ -525,7 +525,7 @@ function renderRepDashboard(userName, user) {
   const currentYearMonth = new Date().toISOString().slice(0, 7);
   const completedVisits = allVisits.filter(
     (v) =>
-      (v.repId === currentUserId || v.repId === "rep1") &&
+      v.repId === currentUserId &&
       v.status === "completed" &&
       v.date &&
       v.date.startsWith(currentYearMonth),
@@ -552,7 +552,7 @@ function renderRepDashboard(userName, user) {
   const currentQuarterCompletedVisits = allVisits.filter((v) => {
     if (
       !(
-        (v.repId === currentUserId || v.repId === "rep1") &&
+        v.repId === currentUserId &&
         v.status === "completed" &&
         v.date
       )
@@ -593,7 +593,7 @@ function renderRepDashboard(userName, user) {
   const currentYear = new Date().toISOString().slice(0, 4);
   const repYTDSales = allSales.filter(
     (s) =>
-      (s.repId === currentUserId || s.repId === "rep1") &&
+      s.repId === currentUserId &&
       s.month &&
       s.month.startsWith(currentYear),
   );
@@ -1516,11 +1516,19 @@ function renderBUDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const myUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+  const myLineIds = myUserLines.map((l) => l.id);
 
   const myLMs = allUsers.filter(
     (u) =>
       u.managerId === user.id && (u.role === "line_manager" || u.role === "lm"),
+  );
+
+  const lines = allLines.filter(
+    (l) =>
+      myLineIds.includes(l.id) ||
+      myLMs.some((lm) => lm.id === l.lineManagerId || (lm.lineIds && lm.lineIds.includes(l.id)))
   );
 
   const allDownstream = window.getAllSubordinates

@@ -76,7 +76,7 @@ function populateUploadControls() {
  */
 function getPharmSalesAllowedLineIds(user) {
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const isOpenRole = role === 'admin' || role === 'business_unit' || role === 'hr';
+  const isOpenRole = role === 'admin' || role === 'hr';
   if (isOpenRole) return null;
   const userLines = typeof window.getUserLines === 'function' && user ? window.getUserLines(user.id) : [];
   return userLines.map((l) => l.id);

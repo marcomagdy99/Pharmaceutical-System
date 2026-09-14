@@ -895,7 +895,7 @@ const userMgmt = {
     }
     const productLineGroup = document.getElementById("productLineGroup");
     if (productLineGroup) {
-      productLineGroup.style.display = ["LM", "DM", "Rep"].includes(role)
+      productLineGroup.style.display = ["BU", "LM", "DM", "Rep"].includes(role)
         ? "block"
         : "none";
     }

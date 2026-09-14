@@ -509,7 +509,14 @@ function populateManagerRepDropdown() {
       : "💼 All Medical Reps (Reps)";
   filterRep.appendChild(optAllReps);
 
-  const lms = allUsers.filter((u) => u.role === "line_manager");
+  const isBU = currentUserRole === "business_unit";
+  const myDownstream = isBU && window.getAllSubordinates ? window.getAllSubordinates(currentUser.id) : [];
+  const myDownstreamIds = myDownstream.map((u) => u.id);
+
+  const lms = isBU
+    ? allUsers.filter((u) => u.managerId === currentUser.id && (u.role === "line_manager" || u.role === "lm"))
+    : allUsers.filter((u) => u.role === "line_manager" || u.role === "lm");
+
   if (lms.length > 0) {
     const lmGroup = document.createElement("optgroup");
     lmGroup.label =
@@ -526,7 +533,10 @@ function populateManagerRepDropdown() {
     filterRep.appendChild(lmGroup);
   }
 
-  const dms = allUsers.filter((u) => u.role === "district_manager");
+  const dms = isBU
+    ? allUsers.filter((u) => myDownstreamIds.includes(u.id) && (u.role === "district_manager" || u.role === "dm"))
+    : allUsers.filter((u) => u.role === "district_manager" || u.role === "dm");
+
   if (dms.length > 0) {
     const dmGroup = document.createElement("optgroup");
     dmGroup.label =
@@ -543,9 +553,10 @@ function populateManagerRepDropdown() {
     filterRep.appendChild(dmGroup);
   }
 
-  const reps = allUsers.filter(
-    (u) => u.role === "medical_rep" || u.role === "rep",
-  );
+  const reps = isBU
+    ? allUsers.filter((u) => myDownstreamIds.includes(u.id) && (u.role === "medical_rep" || u.role === "rep"))
+    : allUsers.filter((u) => u.role === "medical_rep" || u.role === "rep");
+
   if (reps.length > 0) {
     const repGroup = document.createElement("optgroup");
     repGroup.label =
@@ -569,11 +580,7 @@ function getScopedVisits() {
 
   if (!isManager) {
     list = list.filter((v) => v.repId === currentUser.id);
-  } else if (
-    currentUserRole === "admin" ||
-    currentUserRole === "hr" ||
-    currentUserRole === "business_unit"
-  ) {
+  } else if (currentUserRole === "admin" || currentUserRole === "hr") {
     const selectedRepFilter =
       document.getElementById("filterRep")?.value || "all";
     if (selectedRepFilter === "all") {
@@ -602,6 +609,48 @@ function getScopedVisits() {
         (v) =>
           v.repId === selectedRepFilter ||
           v.doubleWithUserId === selectedRepFilter,
+      );
+    }
+  } else if (currentUserRole === "business_unit") {
+    const myLMs = allUsers.filter(
+      (u) => u.managerId === currentUser.id && (u.role === "line_manager" || u.role === "lm"),
+    );
+    const lmIds = myLMs.map((u) => u.id);
+    const myDownstream = window.getAllSubordinates
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    const dmIds = myDownstream
+      .filter((u) => u.role === "district_manager" || u.role === "dm")
+      .map((u) => u.id);
+    const repIds = myDownstream
+      .filter((u) => u.role === "medical_rep" || u.role === "rep")
+      .map((u) => u.id);
+    const allAllowedSubordinateIds = [currentUser.id, ...lmIds, ...dmIds, ...repIds];
+
+    const selectedRepFilter =
+      document.getElementById("filterRep")?.value || "all";
+
+    if (selectedRepFilter === "all") {
+      list = list.filter(
+        (v) =>
+          allAllowedSubordinateIds.includes(v.repId) ||
+          allAllowedSubordinateIds.includes(v.doubleWithUserId),
+      );
+    } else if (selectedRepFilter === "all_lms") {
+      list = list.filter(
+        (v) => lmIds.includes(v.repId) || lmIds.includes(v.doubleWithUserId),
+      );
+    } else if (selectedRepFilter === "all_dms") {
+      list = list.filter(
+        (v) => dmIds.includes(v.repId) || dmIds.includes(v.doubleWithUserId),
+      );
+    } else if (selectedRepFilter === "all_reps") {
+      list = list.filter((v) => repIds.includes(v.repId));
+    } else {
+      list = list.filter(
+        (v) =>
+          (v.repId === selectedRepFilter || v.doubleWithUserId === selectedRepFilter) &&
+          (allAllowedSubordinateIds.includes(v.repId) || allAllowedSubordinateIds.includes(v.doubleWithUserId)),
       );
     }
   } else if (currentUserRole === "line_manager") {
@@ -723,7 +772,7 @@ const visitsApp = {
 
       if (role === "medical_rep") {
         sourceList = sourceList.filter(
-          (d) => !d.repId || d.repId === currentUser.id,
+          (d) => d.repId === currentUser.id,
         );
       } else if (role === "district_manager") {
         const myReps = allUsers
@@ -1383,7 +1432,6 @@ function renderVisitsTimeline(triggeredByShow = false) {
   const shouldIncludeActivities =
     !isManager ||
     selectedRepFilter === "all" ||
-    selectedRepFilter === "rep1" ||
     selectedRepFilter === currentUser.id;
 
   if (shouldIncludeActivities) {
@@ -1396,10 +1444,13 @@ function renderVisitsTimeline(triggeredByShow = false) {
         date: selectedDate,
         time: "09:00",
         period: "AM",
-        repName:
-          selectedRepFilter === currentUser.id
-            ? currentUser.name
-            : "Ahmed Mostafa",
+        repName: (() => {
+          if (selectedRepFilter && selectedRepFilter !== "all") {
+            const foundRep = allUsers.find((u) => u.id === selectedRepFilter);
+            if (foundRep) return foundRep.name;
+          }
+          return currentUser.name || "Medical Rep";
+        })(),
         isActual: true,
         source: "actual",
         status: "completed",
@@ -1415,10 +1466,13 @@ function renderVisitsTimeline(triggeredByShow = false) {
         date: selectedDate,
         time: "14:00",
         period: "PM",
-        repName:
-          selectedRepFilter === currentUser.id
-            ? currentUser.name
-            : "Ahmed Mostafa",
+        repName: (() => {
+          if (selectedRepFilter && selectedRepFilter !== "all") {
+            const foundRep = allUsers.find((u) => u.id === selectedRepFilter);
+            if (foundRep) return foundRep.name;
+          }
+          return currentUser.name || "Medical Rep";
+        })(),
         isActual: true,
         source: "actual",
         status: "completed",
@@ -1652,13 +1706,19 @@ function populateVisitProducts(selectedProducts = []) {
     : (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
 
   const currentUser = window.checkAuth ? window.checkAuth() : null;
-  const userLineIds = currentUser
-    ? (window.store && window.store.users.getById(currentUser.id))?.lineIds || []
-    : [];
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser?.role)
+    : (currentUser?.role || "").toLowerCase();
 
-  const linesToShow = userLineIds.length > 0
-    ? allLines.filter((l) => userLineIds.includes(l.id))
-    : allLines;
+  let linesToShow = allLines;
+  if (currentUser && role !== "admin") {
+    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
+    if (userLines.length > 0) {
+      linesToShow = userLines;
+    } else if (["business_unit", "line_manager", "district_manager", "medical_rep", "rep"].includes(role)) {
+      linesToShow = [];
+    }
+  }
 
   let productsToShow = [];
   linesToShow.forEach((line) => {
@@ -2082,7 +2142,7 @@ function updateTargetOptions() {
       .map((u) => u.id);
 
     if (!isManager) {
-      options = allDocs.filter((d) => !d.repId || d.repId === currentUser.id);
+      options = allDocs.filter((d) => d.repId === currentUser.id);
     } else if (selectedFilter === "vacant") {
       if (role === "district_manager") {
         const myRepIds = allUsers
@@ -2151,9 +2211,51 @@ function updateTargetOptions() {
       } else {
         options = allDocs.filter((d) => d.repId === selectedFilter);
       }
-    } else if (role === "business_unit" || role === "admin") {
+    } else if (role === "business_unit") {
+      const myLMs = allUsers.filter(
+        (u) => u.managerId === currentUser.id && (u.role === "line_manager" || u.role === "lm"),
+      );
+      const myLmIds = myLMs.map((u) => u.id);
+      const myDownstream = window.getAllSubordinates
+        ? window.getAllSubordinates(currentUser.id)
+        : [];
+      const myDmIds = myDownstream
+        .filter((u) => u.role === "district_manager" || u.role === "dm")
+        .map((u) => u.id);
+      const myRepIds = myDownstream
+        .filter((u) => u.role === "medical_rep" || u.role === "rep")
+        .map((u) => u.id);
+      const allowedTeamIds = [currentUser.id, ...myLmIds, ...myDmIds, ...myRepIds];
+
+      if (!selectedFilter || selectedFilter === "all") {
+        options = allDocs.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
+      } else if (selectedFilter === "vacant") {
+        options = allDocs.filter((d) => !d.repId);
+      } else if (selectedFilter.startsWith("lm:")) {
+        const lmId = selectedFilter.split(":")[1];
+        const lmDmIds = allUsers
+          .filter((u) => u.managerId === lmId)
+          .map((u) => u.id);
+        const lmRepIds = allUsers
+          .filter((u) => lmDmIds.includes(u.managerId))
+          .map((u) => u.id);
+        const allowed = [lmId, ...lmDmIds, ...lmRepIds];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else if (selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmRepIds = allUsers
+          .filter((u) => u.managerId === dmId)
+          .map((u) => u.id);
+        const allowed = [dmId, ...dmRepIds];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else {
+        options = allDocs.filter((d) => allowedTeamIds.includes(d.repId));
+      }
+    } else if (role === "admin") {
       if (!selectedFilter || selectedFilter === "all") {
         options = allDocs;
+      } else if (selectedFilter === "vacant") {
+        options = allDocs.filter((d) => !d.repId);
       } else if (selectedFilter.startsWith("lm:")) {
         const lmId = selectedFilter.split(":")[1];
         const lmDmIds = allUsers

@@ -37,11 +37,68 @@ function renderCoverageReport() {
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
+  const numMonths = Math.max(
+    1,
+    (end.getFullYear() - start.getFullYear()) * 12 +
+      (end.getMonth() - start.getMonth()) +
+      1
+  );
+
+  const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  let lineObj = null;
+  if (selectedRep && selectedRep !== "all") {
+    const repUser = allUsers.find((u) => u.id === selectedRep);
+    const lId = repUser
+      ? (repUser.lineIds && repUser.lineIds[0]) || repUser.lineId
+      : null;
+    lineObj = allLines.find((l) => l.id === lId);
+  }
+  if (!lineObj && user) {
+    const lId = (user.lineIds && user.lineIds[0]) || user.lineId;
+    lineObj = allLines.find((l) => l.id === lId);
+  }
+  if (!lineObj && allLines.length > 0) {
+    lineObj = allLines[0];
+  }
+
+  const freqA =
+    lineObj &&
+    lineObj.callFrequency &&
+    lineObj.callFrequency.classA !== undefined
+      ? lineObj.callFrequency.classA
+      : 4;
+  const freqB =
+    lineObj &&
+    lineObj.callFrequency &&
+    lineObj.callFrequency.classB !== undefined
+      ? lineObj.callFrequency.classB
+      : 3;
+  const freqC =
+    lineObj &&
+    lineObj.callFrequency &&
+    lineObj.callFrequency.classC !== undefined
+      ? lineObj.callFrequency.classC
+      : 1;
+
+  const rulesEl = document.getElementById("coverageRulesBox");
+  if (rulesEl) {
+    const lineTag = lineObj && lineObj.name ? ` (${lineObj.name})` : "";
+    if (lang === "ar") {
+      rulesEl.innerHTML = `💡 <strong>قواعد التغطية${lineTag}:</strong> أطباء فئة A = ${freqA} زيارات/ربع سنوي | أطباء فئة B = ${freqB} زيارات/ربع سنوي | مستشفيات = 2 زيارة/شهر`;
+    } else {
+      rulesEl.innerHTML = `💡 <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
+    }
+  }
+
   let targetList = REPORTS_DATA.doctors;
-  if (classFilter === 'all_doctors') targetList = targetList.filter((d) => d.class === 'A' || d.class === 'B');
-  else if (classFilter === 'A') targetList = targetList.filter((d) => d.class === 'A');
-  else if (classFilter === 'B') targetList = targetList.filter((d) => d.class === 'B');
-  else if (classFilter === 'hospital') targetList = targetList.filter((d) => d.class === 'hospital');
+  if (classFilter === "all_doctors")
+    targetList = targetList.filter((d) => d.class === "A" || d.class === "B");
+  else if (classFilter === "A")
+    targetList = targetList.filter((d) => d.class === "A");
+  else if (classFilter === "B")
+    targetList = targetList.filter((d) => d.class === "B");
+  else if (classFilter === "hospital")
+    targetList = targetList.filter((d) => d.class === "hospital");
 
   if (isRep) {
     targetList = targetList.filter((d) => d.repId === user.id);
@@ -180,6 +237,13 @@ function exportCoverageReport() {
   } else if (selectedRep && selectedRep !== 'all') {
     targetList = targetList.filter((d) => d.repId === selectedRep);
   }
+
+  const numMonths = Math.max(
+    1,
+    (end.getFullYear() - start.getFullYear()) * 12 +
+      (end.getMonth() - start.getMonth()) +
+      1
+  );
 
   let totalTarget = 0;
   let totalExecuted = 0;

@@ -30,7 +30,7 @@ function renderPharmaciesReport() {
 
   // Role scoping
   if (!isMgr) {
-    pharms = pharms.filter((p) => p.repId === currentUser.id || !p.repId);
+    pharms = pharms.filter((p) => p.repId === currentUser.id);
   } else if (repId !== "all") {
     pharms = pharms.filter((p) => p.repId === repId);
   } else if (role === "district_manager") {
