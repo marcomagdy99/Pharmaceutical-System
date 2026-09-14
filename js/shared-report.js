@@ -369,6 +369,10 @@ document.addEventListener('click', (e) => {
   if (achMonthContainer && !achMonthContainer.contains(e.target) && typeof closeAchMonthDropdown === 'function') {
     closeAchMonthDropdown();
   }
+  const pharmSalesMonthContainer = document.getElementById('pharmSalesMonthMultiSelectContainer');
+  if (pharmSalesMonthContainer && !pharmSalesMonthContainer.contains(e.target) && typeof closePharmSalesMonthDropdown === 'function') {
+    closePharmSalesMonthDropdown();
+  }
   const productContainer = document.getElementById('productMultiSelectContainer');
   if (productContainer && !productContainer.contains(e.target) && typeof closeProductDropdown === 'function') {
     closeProductDropdown();
@@ -433,6 +437,9 @@ function switchReportTab(tabKey) {
   if (tabKey === 'achievements') {
     if (typeof populateAchFilters === 'function') populateAchFilters();
     if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
+  }
+  if (tabKey === 'coverage' && typeof renderCoverageReport === 'function') {
+    renderCoverageReport();
   }
 }
 

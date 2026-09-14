@@ -82,30 +82,101 @@ function getPharmSalesAllowedLineIds(user) {
   return userLines.map((l) => l.id);
 }
 
+window.togglePharmSalesMonthDropdown = function(e) {
+  if (e) {
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+  }
+  const menu = document.getElementById('pharmSalesMonthDropdownMenu');
+  if (menu) menu.classList.toggle('show');
+};
+
+window.closePharmSalesMonthDropdown = function() {
+  const menu = document.getElementById('pharmSalesMonthDropdownMenu');
+  if (menu) menu.classList.remove('show');
+};
+
+window.toggleSelectAllPharmSalesMonths = function(isChecked) {
+  document.querySelectorAll('.pharm-sales-month-checkbox').forEach((cb) => {
+    cb.checked = isChecked;
+  });
+  updatePharmSalesMonthDropdownLabel();
+};
+
+window.onPharmSalesMonthCheckboxChange = function() {
+  const allCheckboxes = document.querySelectorAll('.pharm-sales-month-checkbox');
+  const checkedBoxes = document.querySelectorAll('.pharm-sales-month-checkbox:checked');
+  const selectAll = document.getElementById('pharmSalesSelectAllMonths');
+  if (selectAll) {
+    selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
+  }
+  updatePharmSalesMonthDropdownLabel();
+};
+
+function updatePharmSalesMonthDropdownLabel() {
+  const labelEl = document.getElementById('pharmSalesMonthDropdownLabel');
+  if (!labelEl) return;
+  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+  const allBoxes = document.querySelectorAll('.pharm-sales-month-checkbox');
+  const checkedBoxes = Array.from(document.querySelectorAll('.pharm-sales-month-checkbox:checked'));
+
+  if (checkedBoxes.length === 0) {
+    labelEl.textContent = lang === 'ar' ? 'لم يتم اختيار شهور' : 'No Months Selected';
+  } else if (checkedBoxes.length === allBoxes.length && allBoxes.length > 0) {
+    labelEl.textContent = lang === 'ar' ? 'كل الشهور' : 'All Months';
+  } else if (checkedBoxes.length <= 2) {
+    const names = checkedBoxes.map((cb) => {
+      const idx = parseInt(cb.value, 10) - 1;
+      return lang === 'ar' ? MONTH_NAMES_AR[idx] : MONTH_NAMES[idx];
+    });
+    labelEl.textContent = names.join(lang === 'ar' ? '، ' : ', ');
+  } else {
+    labelEl.textContent = lang === 'ar'
+      ? `${checkedBoxes.length} شهور محددة`
+      : `${checkedBoxes.length} Months Selected`;
+  }
+}
+
+function getSelectedPharmSalesMonths() {
+  const checked = document.querySelectorAll('.pharm-sales-month-checkbox:checked');
+  return Array.from(checked).map((cb) => cb.value);
+}
+
 /**
- * Populates the Pharmacies Sales tab's filters: Product, Month, Year,
+ * Populates the Pharmacies Sales tab's filters: Product, Month (Multi-select), Year,
  * Distributor, and the role-scoped Line select (locked to the viewer's
  * own line(s) for Rep/DM/LM, fully open for BU/Admin/HR).
  */
 function initPharmSalesFilters(user) {
   const productSelect = document.getElementById('pharmSalesProductSelect');
-  const monthSelect = document.getElementById('pharmSalesMonthSelect');
+  const monthContainer = document.getElementById('pharmSalesMonthCheckboxList');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
   const lineSelect = document.getElementById('pharmSalesLineSelect');
   const lang = getCurrentLang();
   const now = new Date();
 
-  if (monthSelect && !monthSelect.dataset.populated) {
+  if (monthContainer && !monthContainer.dataset.populated) {
+    monthContainer.textContent = '';
+    const currentMonthVal = String(now.getMonth() + 1).padStart(2, '0');
     MONTH_NAMES.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, '0');
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : m;
-      if (idx === now.getMonth()) opt.selected = true;
-      monthSelect.appendChild(opt);
+      const label = document.createElement('label');
+      label.className = 'multi-select-item';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'pharm-sales-month-checkbox';
+      cb.value = val;
+      if (val === currentMonthVal) cb.checked = true;
+      cb.addEventListener('change', window.onPharmSalesMonthCheckboxChange);
+      const span = document.createElement('span');
+      span.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : m;
+      label.appendChild(cb);
+      label.appendChild(span);
+      monthContainer.appendChild(label);
     });
-    monthSelect.dataset.populated = 'true';
+    monthContainer.dataset.populated = 'true';
+    updatePharmSalesMonthDropdownLabel();
   }
 
   if (yearSelect && !yearSelect.dataset.populated) {
@@ -177,35 +248,39 @@ function initPharmSalesFilters(user) {
 // aggregated rep/product view on top of this same underlying data.
 // ============================================================================
 /**
- * Applies the Pharmacies Sales tab's filters (Product, Month/Year,
- * Distributor, role-scoped Line, Date range, and the Rep-only self
+ * Applies the Pharmacies Sales tab's filters (Product, Months/Year,
+ * Distributor, role-scoped Line, and the Rep-only self
  * restriction) to store.distributorSales and returns the matching rows.
  * Shared by renderSalesReport() and exportSalesReport() so they can never
  * drift out of sync with each other.
  */
 function getFilteredPharmSalesRows() {
   const productSelect = document.getElementById('pharmSalesProductSelect');
-  const monthSelect = document.getElementById('pharmSalesMonthSelect');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
   const lineSelect = document.getElementById('pharmSalesLineSelect');
-  const dateFromInput = document.getElementById('pharmSalesDateFrom');
-  const dateToInput = document.getElementById('pharmSalesDateTo');
   const user = checkAuth();
 
   const selectedProduct = productSelect ? productSelect.value : 'all';
-  const selectedMonth = monthSelect ? monthSelect.value : '';
   const selectedYear = yearSelect ? yearSelect.value : '';
   const selectedDistributor = distSelect ? distSelect.value : 'all';
   const selectedLine = lineSelect ? lineSelect.value : 'all';
-  const dateFrom = dateFromInput ? dateFromInput.value : '';
-  const dateTo = dateToInput ? dateToInput.value : '';
-  const monthKey = selectedMonth && selectedYear ? `${selectedYear}-${selectedMonth}` : null;
+  const selectedMonths = typeof getSelectedPharmSalesMonths === 'function' ? getSelectedPharmSalesMonths() : [];
+  const monthKeys = selectedYear ? selectedMonths.map((m) => `${selectedYear}-${m}`) : [];
   const allowedLineIds = getPharmSalesAllowedLineIds(user);
 
   let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
 
-  if (monthKey) rows = rows.filter((r) => r.month === monthKey);
+  if (selectedMonths.length === 0) {
+    return [];
+  }
+
+  if (monthKeys.length > 0) {
+    rows = rows.filter((r) => {
+      const mKey = r.month || (r.date ? r.date.slice(0, 7) : null);
+      return mKey && monthKeys.includes(mKey);
+    });
+  }
   if (selectedProduct !== 'all') {
     const allProds = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
     const matchedProd = allProds.find((p) => p.id === selectedProduct);
@@ -222,8 +297,6 @@ function getFilteredPharmSalesRows() {
   } else if (allowedLineIds !== null) {
     rows = rows.filter((r) => r.lineId && allowedLineIds.includes(r.lineId));
   }
-  if (dateFrom) rows = rows.filter((r) => r.date && r.date >= dateFrom);
-  if (dateTo) rows = rows.filter((r) => r.date && r.date <= dateTo);
 
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
@@ -251,18 +324,37 @@ function renderSalesReport() {
 
   const periodLabel = document.getElementById('salesFilterPeriodLabel');
   const lang = getCurrentLang();
-  const monthSelect = document.getElementById('pharmSalesMonthSelect');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
-  const monthKey = monthSelect && yearSelect && monthSelect.value && yearSelect.value
-    ? `${yearSelect.value}-${monthSelect.value}`
-    : null;
-
-  const rows = getFilteredPharmSalesRows();
+  const yearVal = yearSelect ? yearSelect.value : '';
+  const labelEl = document.getElementById('pharmSalesMonthDropdownLabel');
+  const monthText = labelEl ? labelEl.textContent.trim() : '';
 
   if (periodLabel) {
-    const periodText = monthKey ? monthKey : (lang === 'ar' ? 'كل الفترات' : 'All periods');
+    const periodText = monthText ? `${monthText} ${yearVal}`.trim() : (lang === 'ar' ? 'كل الفترات' : 'All periods');
     periodLabel.textContent = `${lang === 'ar' ? 'الفترة:' : 'Period:'} ${periodText}`;
   }
+
+  const selectedMonths = typeof getSelectedPharmSalesMonths === 'function' ? getSelectedPharmSalesMonths() : [];
+  if (selectedMonths.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
+          ${lang === 'ar' ? 'يرجى اختيار شهر واحد على الأقل.' : 'Please select at least one month.'}
+        </td>
+      </tr>
+    `;
+    const kpiRowsEl = document.getElementById('kpiTotalActual');
+    const kpiQtyEl = document.getElementById('kpiTotalTarget');
+    const kpiValueEl = document.getElementById('kpiAchievement');
+    const kpiPharmEl = document.getElementById('kpiActiveReps');
+    if (kpiRowsEl) kpiRowsEl.textContent = '0';
+    if (kpiQtyEl) kpiQtyEl.textContent = '0';
+    if (kpiValueEl) kpiValueEl.textContent = '0';
+    if (kpiPharmEl) kpiPharmEl.textContent = '0';
+    return;
+  }
+
+  const rows = getFilteredPharmSalesRows();
 
   let totalValue = 0;
   let totalQuantity = 0;
@@ -549,11 +641,13 @@ function exportSalesReport() {
     csv += `"${r.date || r.month}","${r.pharmacyName || ''}","${r.product || ''}","${dist ? dist.name : (r.distributorId || '')}","${areaLabel}","${repLabel}",${qty},${value}\n`;
   });
 
-  const monthSelect = document.getElementById('pharmSalesMonthSelect');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
-  const periodSuffix = monthSelect && yearSelect && monthSelect.value && yearSelect.value
-    ? `${yearSelect.value}_${monthSelect.value}`
-    : 'all_periods';
+  const selectedMonths = typeof getSelectedPharmSalesMonths === 'function' ? getSelectedPharmSalesMonths() : [];
+  const yearVal = yearSelect ? yearSelect.value : '';
+  let periodSuffix = 'all_periods';
+  if (selectedMonths.length > 0 && yearVal) {
+    periodSuffix = `${yearVal}_${selectedMonths.join('_')}`;
+  }
 
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

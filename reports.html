@@ -139,16 +139,36 @@
                 </div>
                 <div class="sales-filter-field col-month">
                   <label data-i18n="labelMonth">Month:</label>
-                  <select
-                    id="pharmSalesMonthSelect"
-                    class="form-control"
-                  ></select>
+                  <div class="multi-select-container" id="pharmSalesMonthMultiSelectContainer">
+                    <button
+                      type="button"
+                      class="multi-select-btn"
+                      id="pharmSalesMonthDropdownBtn"
+                      onclick="togglePharmSalesMonthDropdown(event)"
+                    >
+                      <span id="pharmSalesMonthDropdownLabel">Current Month</span>
+                      <span class="dropdown-caret">▼</span>
+                    </button>
+                    <div class="multi-select-menu" id="pharmSalesMonthDropdownMenu">
+                      <label class="multi-select-item select-all-item">
+                        <input
+                          type="checkbox"
+                          id="pharmSalesSelectAllMonths"
+                          onchange="toggleSelectAllPharmSalesMonths(this.checked)"
+                        />
+                        <span data-i18n="selectAll">Select All</span>
+                      </label>
+                      <div class="multi-select-divider"></div>
+                      <div id="pharmSalesMonthCheckboxList"></div>
+                    </div>
+                  </div>
                 </div>
                 <div class="sales-filter-field col-year">
                   <label data-i18n="labelYear">Year:</label>
                   <select
                     id="pharmSalesYearSelect"
                     class="form-control"
+                    onchange="renderSalesReport()"
                   ></select>
                 </div>
                 <div class="sales-filter-field col-distributor">
@@ -168,22 +188,6 @@
                     id="pharmSalesLineSelect"
                     class="form-control"
                   ></select>
-                </div>
-                <div class="sales-filter-field">
-                  <label data-i18n="labelDateFrom">Date From:</label>
-                  <input
-                    type="date"
-                    id="pharmSalesDateFrom"
-                    class="form-control"
-                  />
-                </div>
-                <div class="sales-filter-field">
-                  <label data-i18n="labelDateTo">Date To:</label>
-                  <input
-                    type="date"
-                    id="pharmSalesDateTo"
-                    class="form-control"
-                  />
                 </div>
                 <div class="sales-filter-field col-btn">
                   <button
@@ -516,6 +520,7 @@
               <select
                 id="coverageRepSelect"
                 class="filter-input"
+                onchange="renderCoverageReport()"
                 style="
                   min-width: min(300px, 100%);
                   max-width: 100%;
@@ -567,7 +572,7 @@
                     "
                     >Doctor Class Filter:</label
                   >
-                  <select id="coverageClassFilter" class="form-control">
+                  <select id="coverageClassFilter" class="form-control" onchange="renderCoverageReport()">
                     <option value="all">All Targets (A, B & Hospitals)</option>
                     <option value="all_doctors">
                       All Doctors (Class A & B)
@@ -637,6 +642,37 @@
                 >
               </div>
             </div>
+            <!-- Employee Coverage & Frequency Summary Table -->
+            <div class="coverage-summary-card" id="coverageSummaryCard" style="margin-bottom: 20px;">
+              <div class="table-container">
+                <table class="report-table" id="coverageSummaryTable">
+                  <thead>
+                    <tr>
+                      <th id="covColTerritory">Territory / Area</th>
+                      <th id="covColEmployee">Employee</th>
+                      <th id="covColDoctors">Doctors</th>
+                      <th id="covColVisited">Visited Doctors</th>
+                      <th id="covColUnvisited">Unvisited Doctors</th>
+                      <th id="covColActual">Actual Visits</th>
+                      <th id="covColAvgFreq">Average Frequency</th>
+                    </tr>
+                  </thead>
+                  <tbody id="coverageSummaryTbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Active Drilldown Filter Indicator & Reset -->
+            <div id="coverageActiveDrilldownBar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 10px 16px; background: var(--primary-light, #e0f2fe); border-radius: 8px; border: 1px solid var(--primary, #0284c7);">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>🔍</span>
+                <span id="coverageActiveDrilldownText" style="font-weight: 600; color: var(--primary-dark, #0369a1); font-size: 0.9rem;"></span>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline" onclick="resetCoverageDrilldown()" style="font-size: 0.8rem; padding: 4px 12px; background: white;">
+                ✖ Show All
+              </button>
+            </div>
+
             <div class="table-container">
               <table class="report-table">
                 <thead>
