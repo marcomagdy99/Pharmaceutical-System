@@ -120,6 +120,18 @@ function renderCoverageReport() {
     } else if (selectedRep) {
       targetList = targetList.filter((d) => d.repId === selectedRep);
     }
+  } else if (role === 'business_unit') {
+    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
+    const lmIds = myLMs.map((u) => u.id);
+    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    const myDownstreamIds = myDownstream.map((u) => u.id);
+    const allowedTeamIds = [user.id, ...lmIds, ...myDownstreamIds];
+
+    if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
+    } else {
+      targetList = targetList.filter((d) => d.repId === selectedRep && allowedTeamIds.includes(d.repId));
+    }
   } else if (selectedRep && selectedRep !== 'all') {
     targetList = targetList.filter((d) => d.repId === selectedRep);
   }

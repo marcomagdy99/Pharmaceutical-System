@@ -101,6 +101,9 @@ if (window.translations) {
 
 // Retrieve master doctors array from DEMO_DATA (Single Source of Truth)
 function getDoctorsData() {
+    if (window.store && window.store.doctors) {
+        return window.store.doctors.getAll();
+    }
     if (!window.DEMO_DATA) window.DEMO_DATA = {};
     if (!Array.isArray(window.DEMO_DATA.doctors)) {
         window.DEMO_DATA.doctors = [
@@ -230,7 +233,34 @@ function setupEventListeners() {
 }
 
 function getFilteredAndSortedDoctors() {
-    let result = getDoctorsData().filter(doc => {
+    const currentUser = (window.checkAuth && window.checkAuth()) || null;
+    const role = window.normalizeRole ? window.normalizeRole(currentUser?.role) : (currentUser?.role || "").toLowerCase();
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    let allDocs = getDoctorsData();
+
+    if (currentUser && role !== 'admin') {
+        if (role === 'medical_rep' || role === 'rep') {
+            allDocs = allDocs.filter(doc => !doc.repId || doc.repId === currentUser.id);
+        } else if (role === 'district_manager' || role === 'dm') {
+            const teamRepIds = allUsers.filter(u => u.managerId === currentUser.id).map(u => u.id);
+            teamRepIds.push(currentUser.id);
+            allDocs = allDocs.filter(doc => !doc.repId || teamRepIds.includes(doc.repId));
+        } else if (role === 'line_manager' || role === 'lm') {
+            const dmIds = allUsers.filter(u => u.managerId === currentUser.id).map(u => u.id);
+            const repIds = allUsers.filter(u => dmIds.includes(u.managerId)).map(u => u.id);
+            const teamIds = [currentUser.id, ...dmIds, ...repIds];
+            allDocs = allDocs.filter(doc => !doc.repId || teamIds.includes(doc.repId));
+        } else if (role === 'business_unit') {
+            const myLMs = allUsers.filter(u => u.managerId === currentUser.id);
+            const myLmIds = myLMs.map(u => u.id);
+            const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+            const myDownstreamIds = myDownstream.map(u => u.id);
+            const allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
+            allDocs = allDocs.filter(doc => !doc.repId || allowedTeamIds.includes(doc.repId));
+        }
+    }
+
+    let result = allDocs.filter(doc => {
         const matchesSearch = doc.name.toLowerCase().includes(filters.search) || 
                               (doc.address && doc.address.toLowerCase().includes(filters.search));
         const matchesSpec = filters.specialty === 'all' || doc.specialty === filters.specialty || (filters.specialty==='Other' && !isStandardSpecialty(doc.specialty));

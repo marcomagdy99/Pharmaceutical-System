@@ -48,6 +48,14 @@ function renderDoctorsReport() {
     const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
     const teamIds = [currentUser.id, ...dmIds, ...repIds];
     docs = docs.filter((d) => !d.repId || teamIds.includes(d.repId));
+  } else if (role === "business_unit") {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
+    const myLmIds = myLMs.map((u) => u.id);
+    const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+    const myDownstreamIds = myDownstream.map((u) => u.id);
+    const allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
+    docs = docs.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
   }
 
   // Filters

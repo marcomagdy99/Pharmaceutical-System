@@ -147,6 +147,12 @@ function getAchievementsScopeRepIds(user) {
     const dmIds = dms.map((d) => d.id);
     return allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
   }
+  if (role === 'business_unit') {
+    const mySubordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    return mySubordinates
+      .filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))
+      .map((u) => u.id);
+  }
   return null;
 }
 

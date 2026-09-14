@@ -56,6 +56,18 @@ function renderDailyTimeline() {
     } else if (selectedRep) {
       visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep);
     }
+  } else if (role === 'business_unit') {
+    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
+    const lmIds = myLMs.map((u) => u.id);
+    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    const myDownstreamIds = myDownstream.map((u) => u.id);
+    const allowedTeamIds = [user.id, ...lmIds, ...myDownstreamIds];
+
+    if (selectedRep === 'all') {
+      visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
+    } else {
+      visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
+    }
   } else if (selectedRep && selectedRep !== 'all') {
     if (selectedRep === user.id || selectedRep === 'dm1') {
       visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep);
