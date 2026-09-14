@@ -80,10 +80,9 @@ function renderCoverageReport() {
     });
 
     const visitsCount = matchingVisits.length;
-    const startMonthIndex = start.getFullYear() * 12 + start.getMonth();
-    const endMonthIndex = end.getFullYear() * 12 + end.getMonth();
-    const numMonths = Math.max(1, endMonthIndex - startMonthIndex + 1);
-    const quarterlyRate = target.targetQuarterly || (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : 6));
+    const quarterlyRate = target.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
+      ? window.getDoctorCallTarget(target)
+      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : 6)));
     const targetFreq = Math.max(1, Math.round((quarterlyRate / 3) * numMonths));
     
     totalTargetFreq += targetFreq;
@@ -195,9 +194,9 @@ function exportCoverageReport() {
     });
     const visitsCount = matchingVisits.length;
     const startMonthIndex = start.getFullYear() * 12 + start.getMonth();
-    const endMonthIndex = end.getFullYear() * 12 + end.getMonth();
-    const numMonths = Math.max(1, endMonthIndex - startMonthIndex + 1);
-    const quarterlyRate = target.targetQuarterly || (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : 6));
+    const quarterlyRate = target.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
+      ? window.getDoctorCallTarget(target)
+      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : 6)));
     const targetFreq = Math.max(1, Math.round((quarterlyRate / 3) * numMonths));
     totalTarget += targetFreq;
     totalExecuted += visitsCount;

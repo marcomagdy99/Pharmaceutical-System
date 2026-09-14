@@ -1,4 +1,4 @@
-﻿const doctorTranslations = {
+const doctorTranslations = {
     en: {
         doctorsTitle: "Doctors",
         addDoctor: "Add Doctor",
@@ -302,9 +302,12 @@ function getInitials(name) {
 }
 
 function getCoverageHTML(doc) {
-    const target = doc.class === 'A' ? 4 : 2;
+    const quarterlyTarget = (typeof window.getDoctorCallTarget === 'function')
+        ? window.getDoctorCallTarget(doc)
+        : (doc.class === 'A' ? 4 : (doc.class === 'B' ? 3 : 1));
+    const target = quarterlyTarget;
     const current = doc.visitsThisQuarter || 0;
-    const percentage = Math.min(100, (current / target) * 100);
+    const percentage = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
     
     return `
         <div class="coverage-progress">

@@ -44,7 +44,7 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="fw-bold mb-0" data-i18n="productLinesHeader">Product Lines</h2>
-                <button class="btn btn-primary shadow-sm" id="add-line-btn" data-bs-toggle="modal" data-bs-target="#lineModal">
+                <button class="btn btn-primary shadow-sm" id="add-line-btn" onclick="openAddLineModal()">
                     <i class="bi bi-plus-lg"></i> <span data-i18n="addProductLine">Add Product Line</span>
                 </button>
             </div>
@@ -77,9 +77,36 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold" data-i18n="assignManager">Assign Line Manager</label>
-                        <select class="form-select" id="lineManager" required>
+                        <select class="form-select" id="lineManager">
                             <!-- Populated via JS -->
                         </select>
+                    </div>
+                    <div class="border rounded-3 p-3 mb-3 bg-light-subtle">
+                        <label class="form-label fw-bold d-block mb-2" data-i18n="callFrequencyTitle">Quarterly Target Visits (Per Doctor Class)</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold text-primary mb-1">Class A</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control text-center fw-bold" id="lineFreqA" min="1" max="20" value="4" required>
+                                    <span class="input-group-text" data-i18n="visitsUnit">v/q</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold text-success mb-1">Class B</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control text-center fw-bold" id="lineFreqB" min="1" max="20" value="3" required>
+                                    <span class="input-group-text" data-i18n="visitsUnit">v/q</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Class C</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control text-center fw-bold" id="lineFreqC" min="1" max="20" value="1" required>
+                                    <span class="input-group-text" data-i18n="visitsUnit">v/q</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text small mt-1 text-muted" data-i18n="callFrequencyHint">Configures quarterly target visits per doctor in this sales line for coverage compliance.</div>
                     </div>
                 </form>
             </div>
@@ -124,9 +151,9 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" data-i18n="price">Price (per unit)</label>
+                        <label class="form-label fw-semibold" data-i18n="price">Value (per unit)</label>
                         <input type="number" class="form-control" id="productPrice" min="0" step="0.01" data-i18n-placeholder="pricePlaceholder" placeholder="e.g., 40">
-                        <div class="form-text" data-i18n="priceHint">Used to auto-fill Unit Price when this product is picked in Manage Targets -- still editable per rep there as an exception.</div>
+                        <div class="form-text" data-i18n="priceHint">Used to auto-fill Unit Value when this product is picked in Manage Targets -- still editable per rep there as an exception.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold" data-i18n="description">Description (Optional)</label>

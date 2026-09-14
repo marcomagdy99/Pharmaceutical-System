@@ -193,9 +193,57 @@
     color: #9da5b1 !important;
 }
 
+[data-theme="dark"] .border.bg-light-subtle {
+    background-color: #161a22 !important;
+    border-color: #30363d !important;
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #21262d !important;
+    border-color: #30363d !important;
+    color: #8b949e !important;
+}
+
+[data-theme="dark"] .line-freq-badge {
+    background-color: #21262d !important;
+    border-color: #30363d !important;
+    color: #c9d1d9 !important;
+}
+
 [data-theme="dark"] .badge.bg-secondary {
     background-color: #2d3340 !important;
     color: #dee2e6 !important;
+}
+
+.line-title {
+    color: #1f2937;
+}
+
+.line-manager-name {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.08);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(13, 110, 253, 0.2);
+    font-weight: 600;
+}
+
+[data-theme="dark"] .line-title {
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .accordion-button:not(.collapsed) .line-title {
+    color: #58a6ff !important;
+}
+
+[data-theme="dark"] .line-manager-info {
+    color: #8b949e !important;
+}
+
+[data-theme="dark"] .line-manager-name {
+    color: #79c0ff !important;
+    background-color: rgba(56, 139, 253, 0.15) !important;
+    border: 1px solid rgba(56, 139, 253, 0.35) !important;
 }
 
 /* Responsive styles for product tables and action buttons */

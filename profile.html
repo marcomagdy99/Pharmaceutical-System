@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -56,7 +56,7 @@
                         <form id="personalInfoForm">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="full_name">Full Name</label>
-                                <input type="text" class="form-control" id="fullName" value="" required>
+                                <input type="text" class="form-control" id="fullName" value="" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="email">Email</label>
@@ -64,7 +64,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="phone">Phone</label>
-                                <input type="tel" class="form-control" id="phone" value="" required>
+                                <input type="tel" class="form-control" id="phone" value="" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="employee_code">Employee Code</label>
@@ -78,7 +78,13 @@
                                 <label class="form-label" data-i18n="manager">Manager</label>
                                 <input type="text" class="form-control" id="managerInput" value="" readonly>
                             </div>
-                            <button type="submit" class="btn-primary" data-i18n="save_changes">Save Changes</button>
+                            <div class="admin-only-note">
+                                <span class="note-icon">🔒</span>
+                                <span data-i18n="managed_by_admin_hint">Official personal & employee details are managed by the System Administrator or HR.</span>
+                            </div>
+                            <div id="adminManageUsersShortcut" style="display: none; margin-top: 12px;">
+                                <a href="users.html" class="btn-primary" style="display: inline-block; text-decoration: none; font-size: 0.85rem; padding: 8px 16px;" data-i18n="manage_users_link">Manage in Users Module</a>
+                            </div>
                         </form>
                     </div>
 

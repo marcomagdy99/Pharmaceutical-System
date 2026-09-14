@@ -34,6 +34,9 @@ const profileTranslations = {
     req_length: "At least 8 characters",
     req_upper: "At least one uppercase letter",
     req_number: "At least one number",
+    managed_by_admin_hint: "Official personal & employee details are managed by the System Administrator or HR.",
+    manage_users_link: "Manage in Users Module",
+    photo_updated: "Profile photo updated successfully!",
   },
   ar: {
     upload_photo: "رفع صورة",
@@ -65,6 +68,9 @@ const profileTranslations = {
     req_length: "8 أحرف على الأقل",
     req_upper: "حرف كبير واحد على الأقل",
     req_number: "رقم واحد على الأقل",
+    managed_by_admin_hint: "البيانات الشخصية والوظيفية الرسمية يتم تعديلها فقط من قِبل إدارة النظام أو الموارد البشرية.",
+    manage_users_link: "إدارة بيانات الموظفين في شاشة المستخدمين",
+    photo_updated: "تم تحديث الصورة الشخصية بنجاح!",
   },
 };
 
@@ -85,12 +91,27 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = function (ev) {
+          const photoData = ev.target.result;
           if (profileImagePreview) {
-            profileImagePreview.src = e.target.result;
+            profileImagePreview.src = photoData;
             profileImagePreview.style.display = "block";
           }
           if (profileInitials) profileInitials.style.display = "none";
+
+          const currentUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
+          if (currentUser) {
+            try {
+              localStorage.setItem("user_photo_" + (currentUser.id || currentUser.employeeCode || "current"), photoData);
+            } catch (err) {
+              console.warn("Could not save photo to localStorage:", err);
+            }
+          }
+
+          const currentLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+          const msg = (window.translations && window.translations[currentLang]?.photo_updated) ||
+            (currentLang === "ar" ? "تم تحديث الصورة الشخصية بنجاح!" : "Profile photo updated successfully!");
+          if (typeof showToast === "function") showToast(msg, "success");
         };
         reader.readAsDataURL(file);
       }
@@ -101,15 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("personalInfoForm")
     ?.addEventListener("submit", (e) => {
       e.preventDefault();
-      const newName = document.getElementById("fullName").value;
-      const disp = document.getElementById("profileNameDisplay");
-      if (disp) disp.innerText = newName;
-      
-      const parts = newName.split(" ");
-      let initials = parts[0][0];
-      if (parts.length > 1) initials += parts[parts.length - 1][0];
-      if (profileInitials) profileInitials.innerText = initials.toUpperCase();
-      if (typeof showToast === "function") showToast("Personal information updated successfully!", "success");
     });
 
   document.getElementById("preferencesForm")?.addEventListener("submit", (e) => {
@@ -273,6 +285,19 @@ function loadUserProfile() {
     let inits = parts[0][0];
     if (parts.length > 1) inits += parts[parts.length - 1][0];
     profileInitials.textContent = inits.toUpperCase();
+  }
+
+  const profileImagePreview = document.getElementById("profileImagePreview");
+  const storedPhoto = localStorage.getItem("user_photo_" + (user.id || user.employeeCode || "current"));
+  if (storedPhoto && profileImagePreview) {
+    profileImagePreview.src = storedPhoto;
+    profileImagePreview.style.display = "block";
+    if (profileInitials) profileInitials.style.display = "none";
+  }
+
+  const adminShortcut = document.getElementById("adminManageUsersShortcut");
+  if (adminShortcut) {
+    adminShortcut.style.display = (user.role === "admin") ? "block" : "none";
   }
 
   // Dynamic leave balances calculation synchronized with store leaves

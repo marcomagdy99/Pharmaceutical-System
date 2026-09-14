@@ -440,7 +440,7 @@ html[dir="rtl"] .data-table {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: var(--gray-800, #343a40);
+    background-color: #3a5a7a;
     color: white;
     padding: 10px;
     display: flex;

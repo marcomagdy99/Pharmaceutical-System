@@ -166,10 +166,21 @@ async function hashPassword(str) {
 const userMgmt = {
   get users() {
     if (!window.store || !window.store.users) return [];
-    return window.store.users.getAll().map((u) => ({
-      ...u,
-      role: this.normalizeRole(u.role),
-    }));
+    return window.store.users.getAll().map((u) => {
+      const code = u.employeeCode || u.code || u.id;
+      const email = u.email || (u.id ? `${u.id.toLowerCase()}@pharmacare.com` : "");
+      const phone = u.phone || "+201001234567";
+      const status = u.status || "Active";
+      return {
+        ...u,
+        code,
+        employeeCode: code,
+        email,
+        phone,
+        status,
+        role: this.normalizeRole(u.role),
+      };
+    });
   },
   get lines() {
     return window.store && window.store.productLines
@@ -205,6 +216,7 @@ const userMgmt = {
 
     this.loadDemoData();
     this.initLines();
+    this.populateDropdowns();
 
     const searchInput = document.getElementById("searchUser");
     if (searchInput) searchInput.addEventListener("input", () => this.render());
@@ -389,35 +401,43 @@ const userMgmt = {
     const linesContainer = document.getElementById("uProductLinesContainer");
     if (linesContainer) {
       linesContainer.replaceChildren();
-      this.lines
-        .filter((l) => l.status === "Active")
-        .forEach((l) => {
+      const activeLines = this.lines.filter((l) => (l.status || "Active") === "Active");
+      if (activeLines.length === 0) {
+        linesContainer.innerHTML = `<span class="text-muted small">No active sales lines</span>`;
+      } else {
+        activeLines.forEach((l) => {
           const lbl = document.createElement("label");
           lbl.className = "d-flex align-items-center gap-2 mb-1 cursor-pointer";
           lbl.innerHTML = `<input type="checkbox" class="user-line-cb form-check-input" value="${window.escapeHtml(l.id)}">
                          <span class="small fw-semibold text-dark">${window.escapeHtml(l.name)}</span>`;
           linesContainer.appendChild(lbl);
         });
+      }
 
       document.querySelectorAll(".user-line-cb").forEach((cb) => {
         cb.addEventListener("change", () => this.updateManagerDropdown());
       });
     }
+
+    const areaSelect = document.getElementById("uArea");
+    if (areaSelect) {
+      const curVal = areaSelect.value;
+      areaSelect.innerHTML = `<option value="" data-i18n="select_area">Select Area...</option>` +
+        this.areas
+          .map((a) => {
+            const rep = a.repId ? this.users.find((u) => u.id === a.repId) : null;
+            const repNote = rep ? ` (Assigned: ${rep.name})` : " (Unassigned)";
+            return `<option value="${a.id}">${a.name} (${a.code})${repNote}</option>`;
+          })
+          .join("");
+      if (curVal) areaSelect.value = curVal;
+    }
   },
 
-  // ==========================================
   // Section: Lines Modal Operations
   // ==========================================
   openLinesModal() {
-    this.editingLineId = null;
-    if (document.getElementById("lineNameInput"))
-      document.getElementById("lineNameInput").value = "";
-    if (document.getElementById("lineDescInput"))
-      document.getElementById("lineDescInput").value = "";
-    if (document.getElementById("cancelLineBtn"))
-      document.getElementById("cancelLineBtn").style.display = "none";
-    this.renderLinesTable();
-    this.showModal("lines");
+    window.location.href = "products.html";
   },
   renderLinesTable() {
     const tbody = document.getElementById("linesTableBody");
@@ -574,14 +594,70 @@ const userMgmt = {
     return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => m.name).join(", ")})</span>`;
   },
   renderAreasSummary(user) {
-    const assignedAreas = window.store.areas ? window.store.areas.getByRep(user.id) : [];
-    if (assignedAreas.length === 0) return `<span class="text-muted">-</span>`;
-    return assignedAreas
-      .map(
-        (a) =>
-          `<span class="badge bg-light text-dark border me-1" title="${a.code}">${a.name}</span>`
-      )
-      .join("");
+    if (user.role === "Rep") {
+      const assignedAreas = window.store.areas
+        ? window.store.areas.getByRep(user.id)
+        : [];
+      if (assignedAreas.length === 0) return `<span class="text-muted">-</span>`;
+      return assignedAreas
+        .map(
+          (a) =>
+            `<span class="badge bg-light text-dark border me-1" title="${a.code}">${a.name}</span>`,
+        )
+        .join("");
+    }
+
+    if (user.role === "DM") {
+      const teamReps = this.users.filter((u) => u.managerId === user.id);
+      const teamAreaIds = new Set();
+      const teamAreas = [];
+      teamReps.forEach((rep) => {
+        const areas = window.store.areas
+          ? window.store.areas.getByRep(rep.id)
+          : [];
+        areas.forEach((a) => {
+          if (!teamAreaIds.has(a.id)) {
+            teamAreaIds.add(a.id);
+            teamAreas.push(a);
+          }
+        });
+      });
+      if (teamAreas.length === 0) return `<span class="text-muted">-</span>`;
+      return teamAreas
+        .map(
+          (a) =>
+            `<span class="badge bg-primary-subtle text-primary border me-1" title="${a.code}">${a.name}</span>`,
+        )
+        .join("");
+    }
+
+    if (user.role === "LM") {
+      const teamDMs = this.users.filter((u) => u.managerId === user.id);
+      const dmIds = new Set(teamDMs.map((d) => d.id));
+      const teamReps = this.users.filter((u) => dmIds.has(u.managerId));
+      const teamAreaIds = new Set();
+      const teamAreas = [];
+      teamReps.forEach((rep) => {
+        const areas = window.store.areas
+          ? window.store.areas.getByRep(rep.id)
+          : [];
+        areas.forEach((a) => {
+          if (!teamAreaIds.has(a.id)) {
+            teamAreaIds.add(a.id);
+            teamAreas.push(a);
+          }
+        });
+      });
+      if (teamAreas.length === 0) return `<span class="text-muted">-</span>`;
+      return teamAreas
+        .map(
+          (a) =>
+            `<span class="badge bg-info-subtle text-info-emphasis border me-1" title="${a.code}">${a.name}</span>`,
+        )
+        .join("");
+    }
+
+    return `<span class="text-muted">-</span>`;
   },
 
   render() {
@@ -762,8 +838,13 @@ const userMgmt = {
     else if (role === "DM") targetManagerRole = "LM";
     else if (role === "Rep") targetManagerRole = "DM";
 
+    const currentUserId = document.getElementById("userId")?.value;
+
     let possibleManagers = this.users.filter(
-      (u) => u.role === targetManagerRole && u.status === "Active",
+      (u) =>
+        u.role === targetManagerRole &&
+        (u.status || "Active") === "Active" &&
+        u.id !== currentUserId,
     );
 
     const selectedLineIds = Array.from(
@@ -771,17 +852,29 @@ const userMgmt = {
     ).map((cb) => cb.value);
 
     if ((role === "DM" || role === "Rep") && selectedLineIds.length > 0) {
-      possibleManagers = possibleManagers.filter((m) => {
+      const lineMatched = possibleManagers.filter((m) => {
         const mgrLines = m.lineIds || (m.lineId ? [m.lineId] : []);
         return mgrLines.some((id) => selectedLineIds.includes(id));
       });
+      if (lineMatched.length > 0) {
+        possibleManagers = lineMatched;
+      }
+    }
+
+    if (possibleManagers.length === 0) {
+      possibleManagers = this.users.filter(
+        (u) =>
+          ["Admin", "BU", "LM", "DM"].includes(u.role) &&
+          (u.status || "Active") === "Active" &&
+          u.id !== currentUserId,
+      );
     }
 
     const currentSelection = managerSelect.value;
 
     managerSelect.innerHTML = `<option value="" data-i18n="select_manager">Select Manager...</option>
       ${possibleManagers
-        .map((m) => `<option value="${m.id}">${m.name} (${m.code})</option>`)
+        .map((m) => `<option value="${m.id}">${m.name} (${m.employeeCode || m.code || m.id}) - ${m.role}</option>`)
         .join("")}`;
 
     if (
@@ -818,6 +911,8 @@ const userMgmt = {
     const titleEl = document.getElementById("userModalTitle");
     if (titleEl) titleEl.setAttribute("data-i18n", "add_user");
 
+    this.populateDropdowns();
+
     const pwdInput = document.getElementById("uPassword");
     if (pwdInput) {
       pwdInput.placeholder = "Required for new user";
@@ -832,7 +927,7 @@ const userMgmt = {
 
     const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
     if (areaDisplayEl) {
-      areaDisplayEl.innerHTML = `<span class="text-muted small">Assigned via Areas Management page</span>`;
+      areaDisplayEl.innerHTML = `<span class="text-muted small">Select area above or assign via Areas page</span>`;
     }
 
     this.onRoleChange();
@@ -844,10 +939,12 @@ const userMgmt = {
     const user = this.users.find((u) => u.id === id);
     if (!user) return;
 
+    this.populateDropdowns();
+
     document.getElementById("userId").value = user.id;
     document.getElementById("uName").value = user.name || "";
     document.getElementById("uEmail").value = user.email || "";
-    document.getElementById("uCode").value = user.code || "";
+    document.getElementById("uCode").value = user.employeeCode || user.code || "";
     if (document.getElementById("uPhone"))
       document.getElementById("uPhone").value = user.phone || "";
 
@@ -863,10 +960,14 @@ const userMgmt = {
     if (user.managerId && document.getElementById("uManager"))
       document.getElementById("uManager").value = user.managerId;
 
-    // Display assigned areas as informative badges with direct link to areas.html
+    const repAreas = window.store.areas ? window.store.areas.getByRep(user.id) : [];
+    const currentAreaId = repAreas.length > 0 ? repAreas[0].id : "";
+    if (document.getElementById("uArea")) {
+      document.getElementById("uArea").value = currentAreaId;
+    }
+
     const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
     if (areaDisplayEl) {
-      const repAreas = window.store.areas ? window.store.areas.getByRep(user.id) : [];
       if (repAreas.length > 0) {
         areaDisplayEl.innerHTML = repAreas
           .map(
@@ -984,6 +1085,30 @@ const userMgmt = {
     };
 
     window.store.users.save(userData);
+
+    const selectedAreaId = document.getElementById("uArea")
+      ? document.getElementById("uArea").value
+      : null;
+    if (role === "Rep" && window.store && window.store.areas) {
+      if (selectedAreaId) {
+        const areaObj = window.store.areas.getById(selectedAreaId);
+        if (areaObj && areaObj.repId !== userData.id) {
+          const oldAreas = window.store.areas.getByRep(userData.id);
+          oldAreas.forEach((a) => {
+            if (a.id !== selectedAreaId) {
+              window.store.areas.unassignRep(a.id);
+            }
+          });
+          areaObj.repId = userData.id;
+          areaObj.repName = userData.name;
+          window.store.areas.save(areaObj);
+        }
+      } else {
+        const oldAreas = window.store.areas.getByRep(userData.id);
+        oldAreas.forEach((a) => window.store.areas.unassignRep(a.id));
+      }
+    }
+
     window.store.users.syncAreasFromStore();
 
     this.syncAuthUser(window.store.users.getById(userData.id));

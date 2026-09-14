@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
@@ -70,13 +70,6 @@
                 >
               </div>
               <div class="d-flex gap-2 flex-wrap">
-                <button
-                  class="btn btn-outline-primary shadow-sm px-3"
-                  onclick="userMgmt.openLinesModal()"
-                >
-                  <i class="fas fa-layer-group me-1"></i>
-                  <span data-i18n="manage_lines">Manage Sales Lines</span>
-                </button>
                 <button
                   class="btn btn-primary shadow-sm px-4"
                   onclick="userMgmt.openAddModal()"
@@ -424,6 +417,7 @@
                       Select Area...
                     </option>
                   </select>
+                  <div id="uAssignedAreasDisplay" class="mt-2"></div>
                 </div>
 
                 <!-- Multi-Line Assignment Checkboxes Container for LM / DM / Rep -->
@@ -432,20 +426,8 @@
                   id="productLineGroup"
                   style="display: none"
                 >
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-1"
-                  >
-                    <label class="form-label fw-bold mb-0"
-                      >Assign Sales Line(s)</label
-                    >
-                    <button
-                      type="button"
-                      class="btn btn-link btn-sm p-0 text-decoration-none fw-bold"
-                      onclick="userMgmt.openLinesModal()"
-                    >
-                      <i class="fas fa-cog"></i>
-                      <span data-i18n="manage_lines">Manage Sales Lines</span>
-                    </button>
+                  <div class="mb-1">
+                    <label class="form-label fw-bold mb-0">Assign Sales Line(s)</label>
                   </div>
                   <div
                     id="uProductLinesContainer"
@@ -636,100 +618,6 @@
               data-i18n="confirm_deactivate"
             >
               Deactivate
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Manage Lines Modal -->
-    <div class="modal fade" id="linesModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow">
-          <div class="modal-header border-bottom py-3">
-            <h5 class="modal-title fw-bold text-primary">
-              <i class="fas fa-layer-group me-2"></i
-              ><span data-i18n="manage_lines">Manage Sales Lines</span>
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              onclick="userMgmt.closeModal('lines')"
-            ></button>
-          </div>
-          <div class="modal-body py-3">
-            <div class="card bg-light border-0 rounded-3 p-3 mb-3">
-              <h6
-                class="fw-bold mb-2"
-                id="lineFormTitle"
-                data-i18n="add_new_line"
-              >
-                Add New Line
-              </h6>
-              <input type="hidden" id="editingLineId" value="" />
-              <div class="row g-2 align-items-center">
-                <div class="col-md-5">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="lineNameInput"
-                    placeholder="Line Name (e.g. Cardio Line)"
-                  />
-                </div>
-                <div class="col-md-4">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="lineDescInput"
-                    placeholder="Description / Specialty"
-                  />
-                </div>
-                <div class="col-md-3 d-flex gap-2">
-                  <button
-                    type="button"
-                    class="btn btn-primary w-100"
-                    onclick="userMgmt.saveLine()"
-                    id="saveLineBtn"
-                    data-i18n="save_line"
-                  >
-                    Save Line
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    onclick="userMgmt.cancelEditLine()"
-                    id="cancelLineBtn"
-                    style="display: none"
-                    data-i18n="cancel"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="table-responsive border rounded-3">
-              <table class="table align-middle mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th class="ps-3" data-i18n="line_name">Line Name</th>
-                    <th data-i18n="active_managers">Assigned LM</th>
-                    <th data-i18n="status">Status</th>
-                    <th class="text-end pe-3" data-i18n="actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="linesTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="modal-footer border-top py-3">
-            <button
-              type="button"
-              class="btn btn-secondary px-4"
-              onclick="userMgmt.closeModal('lines')"
-              data-i18n="close"
-            >
-              Close
             </button>
           </div>
         </div>

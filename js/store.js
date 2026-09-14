@@ -442,6 +442,43 @@
     },
 
     // ==========================================
+    // Section: Specialties Module
+    // ==========================================
+    specialties: {
+      getAll() {
+        return window.DEMO_DATA.specialties || [];
+      },
+      getById(id) {
+        return (window.DEMO_DATA.specialties || []).find((s) => s.id === id);
+      },
+      save(specObj) {
+        if (!window.DEMO_DATA.specialties) window.DEMO_DATA.specialties = [];
+        const specs = window.DEMO_DATA.specialties;
+        const idx = specs.findIndex((s) => s.id === specObj.id);
+        if (idx >= 0) {
+          specs[idx] = { ...specs[idx], ...specObj };
+        } else {
+          specs.push(specObj);
+        }
+        autoSave("specialties", idx >= 0 ? "update" : "create", specObj);
+        return specObj;
+      },
+      delete(id) {
+        window.DEMO_DATA.specialties = (
+          window.DEMO_DATA.specialties || []
+        ).filter((s) => s.id !== id);
+        autoSave("specialties", "delete", { id });
+      },
+    },
+
+    getDoctorCallTarget(doc) {
+      if (typeof window.getDoctorCallTarget === "function") {
+        return window.getDoctorCallTarget(doc);
+      }
+      return (doc && doc.class === "A") ? 4 : 3;
+    },
+
+    // ==========================================
     // Section: Distributors Module
     // (e.g. "Ibn Sina", "Tender Ibn Sina", "Overseas" -- Commercial and
     // Tender channels are separate distributor records, matching how the

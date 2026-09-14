@@ -62,6 +62,9 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "مدير النظام",
       role: "admin",
       employeeCode: "ADM-001",
+      email: "admin@pharmacare.com",
+      phone: "+20100111222",
+      status: "Active",
     },
     {
       id: "bu1",
@@ -69,7 +72,10 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "طارق سعد",
       role: "business_unit",
       employeeCode: "BU-001",
+      email: "bu@pharmacare.com",
+      phone: "+20100222333",
       managerId: "admin1",
+      status: "Active",
     },
     {
       id: "lm1",
@@ -77,9 +83,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "حسن علي",
       role: "line_manager",
       employeeCode: "LM-001",
+      email: "lm@pharmacare.com",
+      phone: "+20100333444",
       managerId: "bu1",
       lineId: "line1",
       lineIds: ["line1", "line2"],
+      status: "Active",
     },
     {
       id: "lm2",
@@ -87,9 +96,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "سيد إبراهيم",
       role: "line_manager",
       employeeCode: "LM-002",
+      email: "lm2@pharmacare.com",
+      phone: "+20100444555",
       managerId: "bu1",
       lineId: "line2",
       lineIds: ["line2"],
+      status: "Active",
     },
     {
       id: "dm1",
@@ -97,9 +109,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "كريم ناصر",
       role: "district_manager",
       employeeCode: "DM-001",
+      email: "dm@pharmacare.com",
+      phone: "+20100555666",
       managerId: "lm1",
       lineId: "line1",
       lineIds: ["line1"],
+      status: "Active",
     },
     {
       id: "dm2",
@@ -107,9 +122,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "منى عادل",
       role: "district_manager",
       employeeCode: "DM-002",
+      email: "dm2@pharmacare.com",
+      phone: "+20100666777",
       managerId: "lm1",
       lineId: "line1",
       lineIds: ["line1"],
+      status: "Active",
     },
     {
       id: "dm3",
@@ -117,9 +135,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "رامي سمير",
       role: "district_manager",
       employeeCode: "DM-003",
+      email: "dm3@pharmacare.com",
+      phone: "+20100777888",
       managerId: "lm2",
       lineId: "line2",
       lineIds: ["line2"],
+      status: "Active",
     },
     {
       id: "rep1",
@@ -127,10 +148,13 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "أحمد مصطفى",
       role: "medical_rep",
       employeeCode: "EMP-001",
+      email: "rep@pharmacare.com",
+      phone: "+201001234567",
       managerId: "dm1",
       areaId: "area1",
       lineId: "line1",
       lineIds: ["line1"],
+      status: "Active",
     },
     {
       id: "rep2",
@@ -138,10 +162,13 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "عمر يوسف",
       role: "medical_rep",
       employeeCode: "EMP-002",
+      email: "rep2@pharmacare.com",
+      phone: "+201001234568",
       managerId: "dm1",
       areaId: "area2",
       lineId: "line1",
       lineIds: ["line1"],
+      status: "Active",
     },
     {
       id: "rep3",
@@ -149,10 +176,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "علي محمود",
       role: "medical_rep",
       employeeCode: "EMP-003",
+      email: "rep3@pharmacare.com",
+      phone: "+201001234569",
       managerId: "dm2",
-      areaId: "area1",
       lineId: "line1",
       lineIds: ["line1"],
+      status: "Active",
     },
     {
       id: "rep4",
@@ -160,10 +189,12 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "نورهان عز",
       role: "medical_rep",
       employeeCode: "EMP-004",
+      email: "rep4@pharmacare.com",
+      phone: "+201001234570",
       managerId: "dm3",
-      areaId: "area2",
       lineId: "line2",
       lineIds: ["line2"],
+      status: "Active",
     },
     {
       id: "hr1",
@@ -172,8 +203,23 @@ const DEFAULT_DEMO_DATA = {
       role: "hr",
       employeeCode: "HR-001",
       email: "hr@pharmacare.com",
+      phone: "+20100888999",
       managerId: "admin1",
+      status: "Active",
     },
+  ],
+  specialties: [
+    { id: "spec_internal", code: "IM", name: "Internal Medicine", nameAr: "باطنة" },
+    { id: "spec_pediatrics", code: "PED", name: "Pediatrics", nameAr: "أطفال" },
+    { id: "spec_cardiology", code: "CARD", name: "Cardiology", nameAr: "قلب وأوعية" },
+    { id: "spec_dermatology", code: "DERM", name: "Dermatology", nameAr: "جلدية" },
+    { id: "spec_ophthalmology", code: "OPHTH", name: "Ophthalmology", nameAr: "عيون" },
+    { id: "spec_orthopedics", code: "ORTHO", name: "Orthopedics", nameAr: "عظام" },
+    { id: "spec_ent", code: "ENT", name: "ENT", nameAr: "أنف وأذن وحنجرة" },
+    { id: "spec_neurology", code: "NEURO", name: "Neurology", nameAr: "مخ وأعصاب" },
+    { id: "spec_urology", code: "URO", name: "Urology", nameAr: "مسالك بولية" },
+    { id: "spec_gynecology", code: "GYN", name: "Gynecology", nameAr: "نساء وتوليد" },
+    { id: "spec_other", code: "OTHER", name: "Other", nameAr: "أخرى" },
   ],
   areas: [
     { id: "area1", name: "Nasr City", code: "CAI-N01", repId: "rep1" },
@@ -185,6 +231,8 @@ const DEFAULT_DEMO_DATA = {
       name: "Cardio Line",
       status: "Active",
       lineManagerId: "lm1",
+      lineManagerName: "Hassan Ali",
+      callFrequency: { classA: 4, classB: 3, classC: 1 },
       products: [
         { id: "prod1", name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet" },
         { id: "prod2", name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops" },
@@ -196,7 +244,9 @@ const DEFAULT_DEMO_DATA = {
       id: "line2",
       name: "Neuro Line",
       status: "Active",
-      lineManagerId: "lm1",
+      lineManagerId: "lm2",
+      lineManagerName: "Sayed Ibrahim",
+      callFrequency: { classA: 4, classB: 2, classC: 1 },
       products: [
         { id: "prod5", name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule" },
         { id: "prod6", name: "Carbamazepine 200mg", dosage: "200mg", form: "Tablet" },
@@ -208,6 +258,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d1",
       name: "Ahmed Mostafa",
       nameAr: "د. أحمد مصطفى",
+      specialtyId: "spec_internal",
       specialty: "Internal Medicine",
       specialtyAr: "باطنة",
       class: "A",
@@ -220,6 +271,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d2",
       name: "Sara Abdullah",
       nameAr: "د. سارة عبدالله",
+      specialtyId: "spec_pediatrics",
       specialty: "Pediatrics",
       specialtyAr: "أطفال",
       class: "A",
@@ -232,6 +284,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d3",
       name: "Mohamed Hassan",
       nameAr: "د. محمد حسن",
+      specialtyId: "spec_dermatology",
       specialty: "Dermatology",
       specialtyAr: "جلدية",
       class: "B",
@@ -244,6 +297,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d4",
       name: "Noura Mahmoud",
       nameAr: "د. نورا محمود",
+      specialtyId: "spec_ophthalmology",
       specialty: "Ophthalmology",
       specialtyAr: "عيون",
       class: "B",
@@ -256,6 +310,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d5",
       name: "Khaled Omar",
       nameAr: "د. خالد عمر",
+      specialtyId: "spec_cardiology",
       specialty: "Cardiology",
       specialtyAr: "قلب وأوعية",
       class: "A",
@@ -268,6 +323,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d6",
       name: "Mona Wagdy",
       nameAr: "د. منى وجدي",
+      specialtyId: "spec_cardiology",
       specialty: "Cardiology",
       specialtyAr: "قلب وأوعية",
       class: "A",
@@ -280,6 +336,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d7",
       name: "Tamer Shawky",
       nameAr: "د. تامر شوقي",
+      specialtyId: "spec_internal",
       specialty: "Internal Medicine",
       specialtyAr: "باطنة",
       class: "B",
@@ -292,6 +349,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d8",
       name: "Essam Badawy",
       nameAr: "د. عصام بدوي",
+      specialtyId: "spec_pediatrics",
       specialty: "Pediatrics",
       specialtyAr: "أطفال",
       class: "A",
@@ -304,6 +362,7 @@ const DEFAULT_DEMO_DATA = {
       id: "d9",
       name: "Rania Helmy",
       nameAr: "د. رانيا حلمي",
+      specialtyId: "spec_dermatology",
       specialty: "Dermatology",
       specialtyAr: "جلدية",
       class: "B",
@@ -866,10 +925,25 @@ function loadDataFromStorage() {
             }
           });
         }
+        if (!Array.isArray(data.specialties) || data.specialties.length === 0) {
+          data.specialties = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.specialties));
+        }
+        if (Array.isArray(data.productLines)) {
+          data.productLines.forEach((pl) => {
+            if (!pl.callFrequency) {
+              pl.callFrequency = { classA: 4, classB: 3, classC: 1 };
+            }
+          });
+        } else {
+          data.productLines = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.productLines));
+        }
         if (Array.isArray(data.doctors)) {
           DEFAULT_DEMO_DATA.doctors.forEach((d) => {
-            if (!data.doctors.some((existing) => existing.id === d.id)) {
+            const existing = data.doctors.find((ed) => ed.id === d.id);
+            if (!existing) {
               data.doctors.push(d);
+            } else if (!existing.specialtyId && d.specialtyId) {
+              existing.specialtyId = d.specialtyId;
             }
           });
         } else {
@@ -1081,6 +1155,56 @@ function formatVisitDateTime(dateStr, timeStr, lang) {
 }
 
 window.formatVisitDateTime = formatVisitDateTime;
+
+function getSpecialtyById(specialtyId) {
+  const specs = (window.DEMO_DATA && window.DEMO_DATA.specialties) || [];
+  return specs.find((s) => s.id === specialtyId) || null;
+}
+window.getSpecialtyById = getSpecialtyById;
+
+function getDoctorCallTarget(doc) {
+  if (!doc) return 4;
+  const docClass = (doc.class || "A").toUpperCase();
+  if (docClass === "HOSPITAL" || doc.type === "hospital" || doc.type === "Hospital") {
+    return 6;
+  }
+
+  const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  let targetFreq = null;
+
+  if (doc.repId) {
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const rep = allUsers.find((u) => u.id === doc.repId);
+    if (rep) {
+      const repLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId;
+      if (repLineId) {
+        const line = allLines.find((l) => l.id === repLineId);
+        if (line && line.callFrequency) {
+          if (docClass === "A" && line.callFrequency.classA !== undefined) {
+            targetFreq = Number(line.callFrequency.classA);
+          } else if (docClass === "B" && line.callFrequency.classB !== undefined) {
+            targetFreq = Number(line.callFrequency.classB);
+          } else if (docClass === "C" && line.callFrequency.classC !== undefined) {
+            targetFreq = Number(line.callFrequency.classC);
+          }
+        }
+      }
+    }
+  }
+
+  if (targetFreq === null && allLines.length > 0 && allLines[0].callFrequency) {
+    const defaultFreq = allLines[0].callFrequency;
+    if (docClass === "A" && defaultFreq.classA !== undefined) targetFreq = Number(defaultFreq.classA);
+    else if (docClass === "B" && defaultFreq.classB !== undefined) targetFreq = Number(defaultFreq.classB);
+    else if (docClass === "C" && defaultFreq.classC !== undefined) targetFreq = Number(defaultFreq.classC);
+  }
+
+  if (targetFreq === null) {
+    targetFreq = docClass === "A" ? 4 : (docClass === "B" ? 3 : 1);
+  }
+  return targetFreq;
+}
+window.getDoctorCallTarget = getDoctorCallTarget;
 
 // ============================================================================
 // Section 3.5: Centralized Role & Permission Engine (Single Source of Truth)

@@ -795,8 +795,10 @@ const visitsApp = {
       const targetName = cb.getAttribute("data-name") || "Doctor";
       const assignedTime = defaultTimes[index % defaultTimes.length];
 
+      const planUniqueId = "plan_" + Date.now() + "_" + index;
       const newVisit = {
         id: "v_bulk_" + Date.now() + "_" + index,
+        planId: planUniqueId,
         repId: currentUser.id || "rep1",
         doctorId: targetId,
         doctorName: targetName,
@@ -1188,7 +1190,7 @@ function renderAllVisits() {
     const sourceBadge =
       v.source === "actual"
         ? `<span style="background: #fff3cd; color: #664d03; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; border: 1px solid #ffecb5;">${trans.directActual}</span>`
-        : `<span style="background: #e7f1ff; color: #0d6efd; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; border: 1px solid #cfe2ff;">${trans.fromPlan}</span>`;
+        : `<span style="background: #e7f1ff; color: #0d6efd; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; border: 1px solid #cfe2ff;" ${v.planId ? `title="Plan ID: ${window.escapeHtml(v.planId)}"` : ""}>${trans.fromPlan}${v.planId ? ` <span style="font-size:0.68rem; opacity:0.8;">#✓</span>` : ""}</span>`;
 
     const currentUser =
       (window.checkAuth && window.checkAuth()) ||
@@ -1874,6 +1876,9 @@ function saveVisit() {
   if (currentEditVisitId) {
     const visit = demoVisits.find((v) => v.id === currentEditVisitId);
     if (visit) {
+      if (!visit.planId && visit.source === "plan") {
+        visit.planId = "plan_" + (visit.id || Date.now());
+      }
       visit.status = "completed";
       visit.date = visitDate;
       visit.time = visitTime;

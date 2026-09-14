@@ -154,13 +154,29 @@ function openDoctorModal(docId = null) {
     );
   }
 
+  if (specialtyInput) {
+    const specs = (window.store && window.store.specialties ? window.store.specialties.getAll() : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
+    if (specs.length > 0) {
+      const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
+      specialtyInput.innerHTML = specs.map((s) => `<option value="${s.id}">${window.escapeHtml(isAr ? (s.nameAr || s.name) : s.name)}</option>`).join("");
+    }
+  }
+
   if (docId) {
     const docs = getDoctorsData();
     const doc = docs.find((d) => d.id === docId);
     if (doc) {
       if (idInput) idInput.value = doc.id;
       if (nameInput) nameInput.value = doc.name || "";
-      if (specialtyInput) specialtyInput.value = doc.specialty || "Internal Medicine";
+      if (specialtyInput) {
+        if (doc.specialtyId) {
+          specialtyInput.value = doc.specialtyId;
+        } else {
+          // Fallback match by name
+          const matchOpt = Array.from(specialtyInput.options).find((o) => o.text.toLowerCase() === (doc.specialty || "").toLowerCase() || o.value.toLowerCase() === (doc.specialty || "").toLowerCase());
+          if (matchOpt) specialtyInput.value = matchOpt.value;
+        }
+      }
       if (classInput) classInput.value = doc.class || "A";
       if (addressInput) addressInput.value = doc.clinicAddress || doc.address || "";
       if (phoneInput) phoneInput.value = doc.phone || "";
@@ -197,7 +213,14 @@ function saveDoctor() {
 
   const id = idInput ? idInput.value : "";
   const name = nameInput.value.trim();
-  const specialty = specialtyInput ? specialtyInput.value : "Internal Medicine";
+  const selectedSpecVal = specialtyInput ? specialtyInput.value : "spec_internal";
+  
+  const allSpecs = (window.store && window.store.specialties ? window.store.specialties.getAll() : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
+  const foundSpec = allSpecs.find((s) => s.id === selectedSpecVal || s.name === selectedSpecVal);
+  const specialtyId = foundSpec ? foundSpec.id : (selectedSpecVal.startsWith("spec_") ? selectedSpecVal : "spec_other");
+  const specialty = foundSpec ? foundSpec.name : (specialtyInput?.options[specialtyInput.selectedIndex]?.text || "Internal Medicine");
+  const specialtyAr = foundSpec ? (foundSpec.nameAr || foundSpec.name) : specialty;
+
   const docClass = classInput ? classInput.value : "A";
   const address = addressInput.value.trim();
   const phone = phoneInput ? phoneInput.value.trim() : "";
@@ -214,7 +237,9 @@ function saveDoctor() {
   const doctorObj = {
     id: id || "doc_" + Date.now(),
     name,
+    specialtyId,
     specialty,
+    specialtyAr,
     class: docClass,
     address,
     clinicAddress: address,

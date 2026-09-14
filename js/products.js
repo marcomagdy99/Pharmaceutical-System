@@ -32,6 +32,19 @@ function initProductLinesData() {
   } else {
     lines.forEach(line => {
       let updated = false;
+      if (!line.lineManagerId) {
+        if (line.id === "line1") { line.lineManagerId = "lm1"; updated = true; }
+        else if (line.id === "line2") { line.lineManagerId = "lm2"; updated = true; }
+        else {
+          const mgr = getLineManager(line);
+          if (mgr) { line.lineManagerId = mgr.id; updated = true; }
+        }
+      }
+      const mgr = getLineManager(line);
+      if (mgr && line.lineManagerName !== mgr.name) {
+        line.lineManagerName = mgr.name;
+        updated = true;
+      }
       if (Array.isArray(line.products)) {
         line.products.forEach((p, pIdx) => {
           if (!p.id) {
@@ -54,6 +67,33 @@ function getActiveLineManagers() {
   return [];
 }
 
+function getLineManager(line) {
+  if (!line) return null;
+  const allUsers = (window.store && window.store.users)
+    ? window.store.users.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+  if (line.lineManagerId) {
+    const found = allUsers.find(
+      (u) => u.id === line.lineManagerId && (u.role === "line_manager" || u.role === "LM")
+    );
+    if (found) return found;
+  }
+
+  const foundReverse = allUsers.find(
+    (u) =>
+      (u.role === "line_manager" || u.role === "LM") &&
+      (u.lineId === line.id || (Array.isArray(u.lineIds) && u.lineIds.includes(line.id)))
+  );
+  if (foundReverse) return foundReverse;
+
+  if (line.lineManagerId) {
+    return allUsers.find((u) => u.id === line.lineManagerId) || null;
+  }
+
+  return null;
+}
+
 const productTranslations = {
   en: {
     productLinesTitle: "Product Lines - PharmaCare",
@@ -71,9 +111,9 @@ const productTranslations = {
     productName: "Product Name",
     dosage: "Dosage",
     form: "Form",
-    price: "Price",
+    price: "Value",
     pricePlaceholder: "e.g., 40",
-    priceHint: "Used to auto-fill Unit Price when this product is picked in Manage Targets -- still editable per rep there as an exception.",
+    priceHint: "Used to auto-fill Unit Value when this product is picked in Manage Targets -- still editable per rep there as an exception.",
     description: "Description",
     actions: "Actions",
     tablet: "Tablet",
@@ -94,6 +134,7 @@ const productTranslations = {
     descriptionPlaceholder: "Enter product description",
     logout: "Logout",
     selectManager: "Select a manager",
+    unassignedManager: "-- Unassigned (Optional) --",
     transferProduct: "Transfer Product",
     currentLine: "Current Line",
     destinationLine: "Transfer To Line",
@@ -101,6 +142,10 @@ const productTranslations = {
     selectLinePlaceholder: "-- Select Destination Line --",
     transferSuccess: "Product transferred successfully.",
     transferErrorSameLine: "Cannot transfer product to the same line.",
+    callFrequencyTitle: "Quarterly Target Visits (Per Doctor Class)",
+    callFrequencyHint: "Configures quarterly target visits per doctor in this sales line for coverage compliance.",
+    visitsUnit: "v/q",
+    targetFrequencyBadge: "Quarterly Targets",
   },
   ar: {
     productLinesTitle: "خطوط الإنتاج - فارماكير",
@@ -118,9 +163,9 @@ const productTranslations = {
     productName: "اسم المنتج",
     dosage: "الجرعة",
     form: "الشكل الدوائي",
-    price: "السعر",
+    price: "القيمة",
     pricePlaceholder: "مثال: 40",
-    priceHint: "بيتحط تلقائي كسعر الوحدة لما تختار المنتج ده في شاشة إدارة التارجت -- لسه ممكن تعدّله لكل مندوب كاستثناء.",
+    priceHint: "تُحدد تلقائياً كقيمة افتراضية للوحدة عند اختيار هذا المنتج في شاشة إدارة التارجت -- وقابلة للتعديل لكل مندوب كاستثناء.",
     description: "الوصف",
     actions: "إجراءات",
     tablet: "أقراص",
@@ -141,6 +186,7 @@ const productTranslations = {
     descriptionPlaceholder: "أدخل وصف المنتج",
     logout: "تسجيل الخروج",
     selectManager: "اختر مديرًا",
+    unassignedManager: "-- غير محدد (اختياري) --",
     transferProduct: "نقل المنتج إلى خط آخر",
     currentLine: "الخط الحالي",
     destinationLine: "نقل إلى الخط",
@@ -148,6 +194,10 @@ const productTranslations = {
     selectLinePlaceholder: "-- اختر الخط المراد النقل إليه --",
     transferSuccess: "تم نقل المنتج بنجاح.",
     transferErrorSameLine: "لا يمكن نقل المنتج إلى نفس الخط.",
+    callFrequencyTitle: "المستهدف الربع سنوي للزيارات (حسب فئة الطبيب)",
+    callFrequencyHint: "تحديد عدد الزيارات الربع سنوية (الكوارتر) الإلزامية لكل طبيب في هذا الخط لحساب نسبة التغطية.",
+    visitsUnit: "ز/ك",
+    targetFrequencyBadge: "مستهدف الكوارتر",
   },
 };
 
@@ -165,12 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initProductLinesData();
 
-  const managerSelect = document.getElementById("lineManager");
-  managerSelect.innerHTML = `<option value="" disabled selected data-i18n="selectManager">${productTranslations[currentLang].selectManager}</option>`;
-  getActiveLineManagers().forEach((m) => {
-    managerSelect.innerHTML += `<option value="${window.escapeHtml(m.id)}">${window.escapeHtml(m.name)}</option>`;
-  });
-
+  populateLineManagersDropdown();
   renderProductLines();
   applyProductTranslations(currentLang);
 
@@ -179,28 +224,68 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("saveLineBtn").addEventListener("click", saveLine);
   document.getElementById("saveProductBtn").addEventListener("click", saveProduct);
   document.getElementById("confirmDeleteBtn").addEventListener("click", confirmDelete);
-
-  document.getElementById("lineModal").addEventListener("show.bs.modal", function (event) {
-    if (!event.relatedTarget || !event.relatedTarget.hasAttribute("data-edit-id")) {
-      document.getElementById("lineForm").reset();
-      document.getElementById("lineId").value = "";
-      document.getElementById("lineModalTitle").setAttribute("data-i18n", "addProductLine");
-      document.getElementById("lineModalTitle").textContent = productTranslations[currentLang].addProductLine;
-    }
-  });
-
-  document.getElementById("productModal").addEventListener("show.bs.modal", function (event) {
-    if (event.relatedTarget && event.relatedTarget.hasAttribute("data-add-to-line")) {
-      document.getElementById("productForm").reset();
-      document.getElementById("productId").value = "";
-      document.getElementById("targetLineId").value = event.relatedTarget.getAttribute("data-add-to-line");
-      document.getElementById("productModalTitle").setAttribute("data-i18n", "addProduct");
-      document.getElementById("productModalTitle").textContent = productTranslations[currentLang].addProduct;
-    }
-  });
 });
 
-function renderProductLines() {
+function populateLineManagersDropdown() {
+  const managerSelect = document.getElementById("lineManager");
+  if (!managerSelect) return;
+  const currentVal = managerSelect.value;
+  const optLabel = productTranslations[currentLang]?.unassignedManager || "-- Unassigned (Optional) --";
+  managerSelect.innerHTML = `<option value="">${optLabel}</option>`;
+  getActiveLineManagers().forEach((m) => {
+    managerSelect.innerHTML += `<option value="${window.escapeHtml(m.id)}">${window.escapeHtml(m.name)}</option>`;
+  });
+  if (currentVal) managerSelect.value = currentVal;
+}
+
+function openAddLineModal() {
+  const form = document.getElementById("lineForm");
+  if (form) form.reset();
+  document.getElementById("lineId").value = "";
+  populateLineManagersDropdown();
+  document.getElementById("lineManager").value = "";
+
+  if (document.getElementById("lineFreqA")) document.getElementById("lineFreqA").value = 4;
+  if (document.getElementById("lineFreqB")) document.getElementById("lineFreqB").value = 3;
+  if (document.getElementById("lineFreqC")) document.getElementById("lineFreqC").value = 1;
+
+  const titleEl = document.getElementById("lineModalTitle");
+  if (titleEl) {
+    titleEl.setAttribute("data-i18n", "addProductLine");
+    titleEl.textContent = productTranslations[currentLang].addProductLine;
+  }
+
+  if (lineModal) lineModal.show();
+}
+
+function openEditLine(id) {
+  const line = window.store.productLines.getById(id);
+  if (!line) return;
+
+  populateLineManagersDropdown();
+
+  const manager = getLineManager(line);
+  const resolvedManagerId = (manager ? manager.id : line.lineManagerId) || "";
+
+  document.getElementById("lineId").value = line.id;
+  document.getElementById("lineName").value = line.name || "";
+  document.getElementById("lineManager").value = resolvedManagerId;
+
+  const freq = line.callFrequency || { classA: 4, classB: 3, classC: 1 };
+  if (document.getElementById("lineFreqA")) document.getElementById("lineFreqA").value = freq.classA ?? 4;
+  if (document.getElementById("lineFreqB")) document.getElementById("lineFreqB").value = freq.classB ?? 3;
+  if (document.getElementById("lineFreqC")) document.getElementById("lineFreqC").value = freq.classC ?? 1;
+
+  const titleEl = document.getElementById("lineModalTitle");
+  if (titleEl) {
+    titleEl.setAttribute("data-i18n", "editProductLine");
+    titleEl.textContent = productTranslations[currentLang].editProductLine;
+  }
+
+  if (lineModal) lineModal.show();
+}
+
+function renderProductLines(activeLineId) {
   const container = document.getElementById("productLinesAccordion");
   if (!container) return;
   container.replaceChildren();
@@ -213,9 +298,9 @@ function renderProductLines() {
   }
 
   productLines.forEach((line, index) => {
-    const isExpanded = index === 0 ? "true" : "false";
-    const collapseClass = index === 0 ? "show" : "";
-    const buttonClass = index === 0 ? "" : "collapsed";
+    const isExpanded = (activeLineId && line.id === activeLineId) ? "true" : "false";
+    const collapseClass = isExpanded === "true" ? "show" : "";
+    const buttonClass = isExpanded === "true" ? "" : "collapsed";
 
     let productsHtml = "";
     if (line.products && line.products.length > 0) {
@@ -227,7 +312,7 @@ function renderProductLines() {
                                 <th data-i18n="productName">Product Name</th>
                                 <th data-i18n="dosage">Dosage</th>
                                 <th data-i18n="form">Form</th>
-                                <th data-i18n="price">Price</th>
+                                <th data-i18n="price">Value</th>
                                 <th class="text-end" data-i18n="actions">Actions</th>
                             </tr>
                         </thead>
@@ -259,18 +344,27 @@ function renderProductLines() {
       productsHtml = `<div class="text-center text-muted py-3">No products in this line yet.</div>`;
     }
 
+    const freq = line.callFrequency || { classA: 4, classB: 3, classC: 1 };
+    const manager = getLineManager(line);
+    const managerDisplayName = manager
+      ? (currentLang === "ar" ? (manager.nameAr || manager.name) : manager.name)
+      : (line.lineManagerName || (currentLang === "ar" ? "غير محدد" : "Unassigned"));
+
     const html = `
             <div class="accordion-item border-0 border-bottom">
                 <h2 class="accordion-header" id="heading${line.id}">
                     <div class="d-flex w-100 bg-white">
                         <button class="accordion-button ${buttonClass} shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${line.id}" aria-expanded="${isExpanded}" aria-controls="collapse${line.id}">
-                            <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                            <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
                                 <div>
-                                    <span class="fw-bold fs-5">${window.escapeHtml(line.name)}</span>
+                                    <span class="fw-bold fs-5 line-title">${window.escapeHtml(line.name)}</span>
                                     <span class="badge bg-primary rounded-pill ms-2">${line.products ? line.products.length : 0} <span data-i18n="products">Products</span></span>
+                                    <span class="badge bg-light text-dark border ms-2 line-freq-badge" title="Quarterly Target Call Frequency">
+                                        🎯 A: <strong>${freq.classA ?? 4}</strong> | B: <strong>${freq.classB ?? 3}</strong> | C: <strong>${freq.classC ?? 1}</strong>
+                                    </span>
                                 </div>
-                                <div class="text-muted small d-none d-sm-block">
-                                    <i class="bi bi-person-badge"></i> <span data-i18n="manager">Manager</span>: ${window.escapeHtml(line.lineManagerName || "Unassigned")}
+                                <div class="line-manager-info small d-none d-sm-block">
+                                    <i class="bi bi-person-badge"></i> <span data-i18n="manager">Manager</span>: <span class="line-manager-name">${window.escapeHtml(managerDisplayName)}</span>
                                 </div>
                             </div>
                         </button>
@@ -278,7 +372,7 @@ function renderProductLines() {
                 </h2>
                 <div id="collapse${line.id}" class="accordion-collapse collapse ${collapseClass}" aria-labelledby="heading${line.id}" data-bs-parent="#productLinesAccordion">
                     <div class="accordion-body bg-white">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                             <div>
                                 <button class="btn btn-sm btn-outline-secondary me-2" onclick="openEditLine('${line.id}')">
                                     <i class="bi bi-pencil"></i> <span data-i18n="editProductLine">Edit Line</span>
@@ -287,7 +381,7 @@ function renderProductLines() {
                                     <i class="bi bi-trash"></i> <span data-i18n="deleteLine">Delete Line</span>
                                 </button>
                             </div>
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" data-add-to-line="${line.id}">
+                            <button class="btn btn-sm btn-primary" onclick="openAddProductModal('${line.id}')">
                                 <i class="bi bi-plus-circle"></i> <span data-i18n="addProduct">Add Product</span>
                             </button>
                         </div>
@@ -304,21 +398,33 @@ function renderProductLines() {
 
 function saveLine() {
   const id = document.getElementById("lineId").value;
-  const name = document.getElementById("lineName").value;
+  const name = (document.getElementById("lineName").value || "").trim();
   const managerId = document.getElementById("lineManager").value;
+  const isAr = currentLang === "ar";
 
-  if (!name || !managerId) {
-    return typeof showToast === "function" ? showToast("Please enter Line Name and Manager.", "warning") : alert("Please enter Line Name and Manager.");
+  const freqA = parseInt(document.getElementById("lineFreqA")?.value, 10) || 4;
+  const freqB = parseInt(document.getElementById("lineFreqB")?.value, 10) || 3;
+  const freqC = parseInt(document.getElementById("lineFreqC")?.value, 10) || 1;
+
+  if (!name) {
+    const msg = isAr ? "يرجى إدخال اسم الخط." : "Please enter Line Name.";
+    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
   }
 
-  const managers = getActiveLineManagers();
-  const manager = managers.find((m) => m.id === managerId);
+  const manager = managerId ? getActiveLineManagers().find((m) => m.id === managerId) : null;
+  const managerName = manager ? manager.name : (managerId ? "Unknown" : "Unassigned");
 
+  const lineIdToUse = id || ("line_" + Date.now());
   const lineObj = {
-    id: id || "line_" + Date.now(),
+    id: lineIdToUse,
     name,
-    lineManagerId: managerId,
-    lineManagerName: manager ? manager.name : "Unknown",
+    lineManagerId: managerId || null,
+    lineManagerName: managerName,
+    callFrequency: {
+      classA: freqA,
+      classB: freqB,
+      classC: freqC,
+    },
     status: "Active"
   };
 
@@ -333,41 +439,125 @@ function saveLine() {
   }
 
   window.store.productLines.save(lineObj);
-  lineModal.hide();
-  renderProductLines();
+
+  if (window.store && window.store.users) {
+    const allUsers = window.store.users.getAll();
+    allUsers.forEach((u) => {
+      if (u.role === "line_manager" || u.role === "LM") {
+        let userChanged = false;
+        if (managerId && u.id === managerId) {
+          if (!Array.isArray(u.lineIds)) u.lineIds = u.lineId ? [u.lineId] : [];
+          if (!u.lineIds.includes(lineIdToUse)) {
+            u.lineIds.push(lineIdToUse);
+            userChanged = true;
+          }
+          if (u.lineId !== lineIdToUse) {
+            u.lineId = lineIdToUse;
+            userChanged = true;
+          }
+        } else {
+          if (Array.isArray(u.lineIds) && u.lineIds.includes(lineIdToUse)) {
+            u.lineIds = u.lineIds.filter((lid) => lid !== lineIdToUse);
+            if (u.lineId === lineIdToUse) u.lineId = u.lineIds[0] || null;
+            userChanged = true;
+          } else if (u.lineId === lineIdToUse) {
+            u.lineId = null;
+            userChanged = true;
+          }
+        }
+        if (userChanged) window.store.users.save(u);
+      }
+    });
+  }
+
+  if (lineModal) lineModal.hide();
+  renderProductLines(lineIdToUse);
+
+  const successMsg = isAr
+    ? (id ? "تم تعديل خط الإنتاج بنجاح." : "تمت إضافة خط الإنتاج بنجاح.")
+    : (id ? "Product Line updated successfully." : "Product Line added successfully.");
+  if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
-function openEditLine(id) {
-  const line = window.store.productLines.getById(id);
-  if (line) {
-    document.getElementById("lineId").value = line.id;
-    document.getElementById("lineName").value = line.name;
-    document.getElementById("lineManager").value = line.lineManagerId;
+function openAddProductModal(lineId) {
+  const line = window.store.productLines.getById(lineId);
+  if (!line) {
+    const isAr = currentLang === "ar";
+    const msg = isAr ? "تعذر العثور على هذا الخط." : "Target line not found.";
+    return typeof showToast === "function" ? showToast(msg, "danger") : alert(msg);
+  }
 
-    document.getElementById("lineModalTitle").setAttribute("data-i18n", "editProductLine");
-    document.getElementById("lineModalTitle").textContent = productTranslations[currentLang].editProductLine;
+  const form = document.getElementById("productForm");
+  if (form) form.reset();
 
-    document.getElementById("lineModal").setAttribute("data-edit-id", id);
-    lineModal.show();
+  document.getElementById("targetLineId").value = lineId;
+  document.getElementById("productId").value = "";
+  document.getElementById("productPrice").value = "";
+
+  const titleEl = document.getElementById("productModalTitle");
+  if (titleEl) {
+    titleEl.setAttribute("data-i18n", "addProduct");
+    titleEl.textContent = productTranslations[currentLang].addProduct;
+  }
+
+  if (productModal) productModal.show();
+}
+
+function openEditProduct(lineId, prodId) {
+  const line = window.store.productLines.getById(lineId);
+  if (line && Array.isArray(line.products)) {
+    const prod = line.products.find((p) => p.id === prodId);
+    if (prod) {
+      document.getElementById("targetLineId").value = lineId;
+      document.getElementById("productId").value = prod.id;
+      document.getElementById("productName").value = prod.name || "";
+      document.getElementById("productDosage").value = prod.dosage || "";
+      document.getElementById("productFormSelect").value = prod.form || "Tablet";
+      document.getElementById("productDescription").value = prod.description || "";
+      document.getElementById("productPrice").value = prod.price !== undefined && prod.price !== null ? prod.price : "";
+
+      const titleEl = document.getElementById("productModalTitle");
+      if (titleEl) {
+        titleEl.setAttribute("data-i18n", "editProduct");
+        titleEl.textContent = productTranslations[currentLang].editProduct;
+      }
+
+      if (productModal) productModal.show();
+    }
   }
 }
 
 function saveProduct() {
   const targetLineId = document.getElementById("targetLineId").value;
   const prodId = document.getElementById("productId").value;
-  const name = document.getElementById("productName").value;
-  const dosage = document.getElementById("productDosage").value;
+  const name = (document.getElementById("productName").value || "").trim();
+  const dosage = (document.getElementById("productDosage").value || "").trim();
   const form = document.getElementById("productFormSelect").value;
-  const description = document.getElementById("productDescription").value;
+  const description = (document.getElementById("productDescription").value || "").trim();
   const priceInput = document.getElementById("productPrice").value;
   const price = priceInput === "" ? null : parseFloat(priceInput);
+  const isAr = currentLang === "ar";
 
-  if (!name || !dosage || !form) {
-    return typeof showToast === "function" ? showToast("Please fill Product Name, Dosage, and Form.", "warning") : alert("Missing details.");
+  if (!targetLineId) {
+    const msg = isAr ? "خطأ: لم يتم تحديد الخط المستهدف." : "Error: Target Line not identified.";
+    return typeof showToast === "function" ? showToast(msg, "danger") : alert(msg);
+  }
+
+  if (!name) {
+    const msg = isAr ? "يرجى إدخال اسم الدواء/المنتج." : "Please enter Product Name.";
+    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+  }
+
+  if (!dosage) {
+    const msg = isAr ? "يرجى إدخال الجرعة (مثل 500mg)." : "Please enter Dosage.";
+    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
   }
 
   const line = window.store.productLines.getById(targetLineId);
-  if (!line) return;
+  if (!line) {
+    const msg = isAr ? "تعذر العثور على هذا الخط." : "Target line not found.";
+    return typeof showToast === "function" ? showToast(msg, "danger") : alert(msg);
+  }
 
   if (!Array.isArray(line.products)) line.products = [];
 
@@ -381,34 +571,30 @@ function saveProduct() {
       prod.price = price;
     }
   } else {
-    line.products.push({ id: "prod_" + Date.now(), name, dosage, form, description, price });
+    line.products.push({
+      id: "prod_" + Date.now(),
+      name,
+      dosage,
+      form,
+      description,
+      price,
+    });
   }
 
   window.store.productLines.save(line);
-  productModal.hide();
-  renderProductLines();
+  if (productModal) productModal.hide();
+  renderProductLines(targetLineId);
+
+  const successMsg = isAr
+    ? (prodId ? "تم تعديل المنتج بنجاح." : "تمت إضافة المنتج إلى الخط بنجاح.")
+    : (prodId ? "Product updated successfully." : "Product added to line successfully.");
+  if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
-function openEditProduct(lineId, prodId) {
-  const line = window.store.productLines.getById(lineId);
-  if (line && line.products) {
-    const prod = line.products.find((p) => p.id === prodId);
-    if (prod) {
-      document.getElementById("targetLineId").value = lineId;
-      document.getElementById("productId").value = prod.id;
-      document.getElementById("productName").value = prod.name;
-      document.getElementById("productDosage").value = prod.dosage;
-      document.getElementById("productFormSelect").value = prod.form;
-      document.getElementById("productDescription").value = prod.description;
-      document.getElementById("productPrice").value = prod.price !== undefined && prod.price !== null ? prod.price : "";
-
-      document.getElementById("productModalTitle").setAttribute("data-i18n", "editProduct");
-      document.getElementById("productModalTitle").textContent = productTranslations[currentLang].editProduct;
-
-      productModal.show();
-    }
-  }
-}
+window.openAddLineModal = openAddLineModal;
+window.openEditLine = openEditLine;
+window.openAddProductModal = openAddProductModal;
+window.openEditProduct = openEditProduct;
 
 function openDeleteModal(type, targetId, lineId = null) {
   document.getElementById("deleteTargetType").value = type;
