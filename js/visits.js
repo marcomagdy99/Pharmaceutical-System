@@ -2573,7 +2573,6 @@ function saveVisit() {
   closeVisitModal();
   renderVisits(true);
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const successMsg =
     lang === "ar"
       ? "تم تسجيل وحفظ الزيارة بنجاح."
