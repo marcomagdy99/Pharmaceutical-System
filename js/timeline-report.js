@@ -34,8 +34,8 @@ function renderDailyTimeline() {
   const isRep   = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
-  // Filter visits within the date range
-  let visitsInRange = REPORTS_DATA.visits.filter((v) => v.date >= fromDate && v.date <= toDate);
+  // Filter visits within the date range (only completed or actual visits)
+  let visitsInRange = REPORTS_DATA.visits.filter((v) => (v.status === 'completed' || v.isActual === true || v.source === 'actual') && v.date >= fromDate && v.date <= toDate);
 
   if (isRep) {
     visitsInRange = visitsInRange.filter((v) => v.repId === user.id);
@@ -69,7 +69,9 @@ function renderDailyTimeline() {
       visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
     }
   } else if (selectedRep && selectedRep !== 'all') {
-    if (selectedRep === user.id || selectedRep === 'dm1') {
+    const selectedUserObj = allUsers.find((u) => u.id === selectedRep);
+    const isManagerRole = selectedUserObj && ['district_manager', 'line_manager', 'business_unit', 'dm', 'lm', 'bu'].includes(window.normalizeRole ? window.normalizeRole(selectedUserObj.role) : (selectedUserObj.role || '').toLowerCase());
+    if (selectedRep === user.id || isManagerRole) {
       visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep);
     } else {
       visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep);

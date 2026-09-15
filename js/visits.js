@@ -285,7 +285,16 @@ function persistVisits() {
 }
 
 let currentEditVisitId = null;
-const todayStr = "2026-09-02";
+const _nowDate = new Date();
+const _padZ = (n) => String(n).padStart(2, "0");
+const todayStr = `${_nowDate.getFullYear()}-${_padZ(_nowDate.getMonth() + 1)}-${_padZ(_nowDate.getDate())}`;
+
+function getTwoDaysAgoStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 2);
+  return `${d.getFullYear()}-${_padZ(d.getMonth() + 1)}-${_padZ(d.getDate())}`;
+}
+
 let hasLoadedTimelineOnce = false;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -723,7 +732,11 @@ const visitsApp = {
     const modal = document.getElementById("bulkPlanModal");
     if (!modal) return;
 
-    document.getElementById("bulkPlanDate").value = todayStr;
+    const bulkDateInput = document.getElementById("bulkPlanDate");
+    if (bulkDateInput) {
+      bulkDateInput.min = todayStr;
+      bulkDateInput.value = todayStr;
+    }
     document.getElementById("bulkSearchInput").value = "";
     const pmRadio = document.querySelector(
       'input[name="bulkPeriod"][value="pm"]',
@@ -879,6 +892,15 @@ const visitsApp = {
     }
 
     const planDate = document.getElementById("bulkPlanDate").value || todayStr;
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    if (planDate < todayStr) {
+      const msg = lang === "ar"
+        ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
+        : "Cannot plan visits in the past. Please select today or a future date.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
     const period =
       document.querySelector('input[name="bulkPeriod"]:checked')?.value || "pm";
     const defaultTimes = [
@@ -1134,7 +1156,7 @@ function renderTodayVisits() {
     const isOwnerRep =
       (userRole === "medical_rep" || userRole === "rep") &&
       currentUser &&
-      (currentUser.id === v.repId || currentUser.id === "rep1");
+      currentUser.id === v.repId;
 
     let actionsHtml = "";
     const actionButtons = [];
@@ -1305,7 +1327,7 @@ function renderAllVisits() {
     const isOwnerRep =
       (userRole === "medical_rep" || userRole === "rep") &&
       currentUser &&
-      (currentUser.id === v.repId || currentUser.id === "rep1");
+      currentUser.id === v.repId;
 
     let actions = "";
     if (v.status === "planned" && isOwnerRep) {
@@ -1869,7 +1891,19 @@ function openVisitModal(isActual = false) {
     titleEl.innerText = isActual ? trans.logActualVisit : trans.modalAddVisit;
   }
 
-  document.getElementById("visitDate").value = todayStr;
+  const dateInput = document.getElementById("visitDate");
+  const twoDaysAgoStr = getTwoDaysAgoStr();
+  if (dateInput) {
+    if (isActual) {
+      dateInput.max = todayStr;
+      dateInput.min = twoDaysAgoStr;
+      dateInput.value = todayStr;
+    } else {
+      dateInput.removeAttribute("max");
+      dateInput.min = todayStr;
+      dateInput.value = todayStr;
+    }
+  }
 
   const now = new Date();
   const timeInput = document.getElementById("visitTime");
@@ -2320,7 +2354,17 @@ function openCompleteModal(visitId) {
   document.getElementById("visitModalTitle").innerText =
     trans.modalCompleteVisit;
 
-  document.getElementById("visitDate").value = visit.date || todayStr;
+  const dateInput = document.getElementById("visitDate");
+  const twoDaysAgoStr = getTwoDaysAgoStr();
+  if (dateInput) {
+    dateInput.max = todayStr;
+    dateInput.min = twoDaysAgoStr;
+    if (visit.date && visit.date >= twoDaysAgoStr && visit.date <= todayStr) {
+      dateInput.value = visit.date;
+    } else {
+      dateInput.value = todayStr;
+    }
+  }
   const timeInput = document.getElementById("visitTime");
   if (timeInput) {
     const now = new Date();
@@ -2386,6 +2430,36 @@ function saveVisit() {
   const visitDate = dateInput && dateInput.value ? dateInput.value : todayStr;
   const modalSource =
     document.getElementById("visitModal").dataset.source || "actual";
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+
+  if (modalSource === "plan") {
+    if (visitDate < todayStr) {
+      const msg = lang === "ar"
+        ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
+        : "Cannot plan visits in the past. Please select today or a future date.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
+  } else {
+    const twoDaysAgoStr = getTwoDaysAgoStr();
+    if (visitDate > todayStr) {
+      const msg = lang === "ar"
+        ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
+        : "Cannot log an actual visit in a future date.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
+    if (visitDate < twoDaysAgoStr) {
+      const msg = lang === "ar"
+        ? "لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من يومين على تاريخها."
+        : "Cannot log an actual visit older than 2 days.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
+  }
 
   const typeChecked = document.querySelector('input[name="visitType"]:checked');
   const visitType = typeChecked ? typeChecked.value : "single";

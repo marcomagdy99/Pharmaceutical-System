@@ -131,10 +131,18 @@ function syncReportsData() {
         }
       });
     }
-    // 2. Sync Visits from visits module
+    // 2. Sync Visits from visits module (only completed or actual visits)
     if (Array.isArray(window.DEMO_DATA.visits) && window.DEMO_DATA.visits.length > 0) {
       window.DEMO_DATA.visits.forEach((v) => {
+        const isCompleted = v.status === 'completed' || v.isActual === true || v.source === 'actual';
         const existingIdx = REPORTS_DATA.visits.findIndex((rv) => rv.id === v.id);
+        if (!isCompleted) {
+          if (existingIdx >= 0) {
+            REPORTS_DATA.visits.splice(existingIdx, 1);
+          }
+          return;
+        }
+
         const rep = (window.DEMO_DATA.users || []).find((u) => u.id === v.repId);
         // Was previously hardcoded to rep1/rep2 -> 'Ahmed Mostafa'/'Omar Youssef'.
         // A rep that isn't in window.DEMO_DATA.users (or a future rep3, rep4...)
@@ -152,8 +160,8 @@ function syncReportsData() {
           date: v.date,
           time: v.time || '10:00',
           period: (v.period || 'PM').toUpperCase(),
-          status: v.status || 'planned',
-          isActual: v.source === 'actual',
+          status: 'completed',
+          isActual: v.source === 'actual' || v.isActual === true,
           repId: v.repId || 'rep1',
           repName: repName,
           comment: v.comment || '',
@@ -167,6 +175,8 @@ function syncReportsData() {
         }
       });
     }
+    // Guarantee REPORTS_DATA.visits contains only completed or actual visits
+    REPORTS_DATA.visits = REPORTS_DATA.visits.filter((rv) => rv.status === 'completed' || rv.isActual === true || rv.source === 'actual');
   }
 }
 

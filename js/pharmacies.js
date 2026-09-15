@@ -288,16 +288,19 @@ function savePharmacy() {
             p.contactPerson = contact;
         }
     } else {
+        const currentUser = (window.checkAuth && window.checkAuth()) || null;
+        const assignedRepId = currentUser ? currentUser.id : 'rep1';
+        const assignedAreaId = (currentUser && currentUser.areaId) ? currentUser.areaId : 'area1';
         const newId = 'pharm_' + Date.now();
         const newP = {
             id: newId,
-            name: currentLanguage === 'ar' ? name : name, // For demo, we just assign to both if AR
-            nameAr: currentLanguage === 'ar' ? name : name,
+            name: name,
+            nameAr: name,
             address: address,
             phone: phone,
             contactPerson: contact,
-            areaId: 'area1',
-            repId: 'rep1'
+            areaId: assignedAreaId,
+            repId: assignedRepId
         };
         pharms.unshift(newP);
     }

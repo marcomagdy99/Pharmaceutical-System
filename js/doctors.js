@@ -573,11 +573,14 @@ function handleSaveDoctor(e) {
             };
         }
     } else {
-        // Add
+        const currentUser = (window.checkAuth && window.checkAuth()) || null;
+        const assignedRepId = currentUser ? currentUser.id : 'rep1';
+        const assignedArea = (currentUser && (currentUser.territory || currentUser.areaName || currentUser.area)) || 'North District';
         const newDoc = {
             id: 'doc_' + Date.now(),
             name, type, specialty, class: docClass, address, phone,
-            area: 'North District', // default for demo
+            area: assignedArea,
+            repId: assignedRepId,
             visitsThisQuarter: 0
         };
         docs.unshift(newDoc);

@@ -504,7 +504,7 @@ function renderRepDashboard(userName, user) {
       : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
 
   const repDoctors = allDoctors.filter(
-    (d) => d.repId === currentUserId || (!d.repId && currentUserId === "rep1"),
+    (d) => d.repId === currentUserId,
   );
   const totalDoctorsCount = repDoctors.length;
 
@@ -2054,6 +2054,25 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
     }
   }
 
+  const dateInput = document.getElementById("dashVisitDate");
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const todayISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${pad(twoDaysAgo.getMonth() + 1)}-${pad(twoDaysAgo.getDate())}`;
+
+  if (dateInput) {
+    dateInput.max = todayISO;
+    dateInput.min = twoDaysAgoISO;
+    if (target && target.date && target.date >= twoDaysAgoISO && target.date <= todayISO) {
+      dateInput.value = target.date;
+    } else {
+      dateInput.value = todayISO;
+    }
+    updateDashModalDayDisplay();
+  }
+
   modal.style.display = "flex";
   modal.classList.add("active");
 };
@@ -2090,6 +2109,27 @@ window.handleDashCompleteSubmit = function (e) {
   const now = new Date();
   const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const dateVal = dateInput && dateInput.value ? dateInput.value : todayISO;
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${String(twoDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(twoDaysAgo.getDate()).padStart(2, "0")}`;
+
+  if (dateVal > todayISO) {
+    const msg = lang === "ar"
+      ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
+      : "Cannot log an actual visit in a future date.";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    else alert(msg);
+    return;
+  }
+  if (dateVal < twoDaysAgoISO) {
+    const msg = lang === "ar"
+      ? "لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من يومين على تاريخها."
+      : "Cannot log an actual visit older than 2 days.";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    else alert(msg);
+    return;
+  }
   const timeVal =
     document.getElementById("dashVisitTime").value ||
     `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;

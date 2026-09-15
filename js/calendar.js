@@ -119,6 +119,7 @@ const calendarTranslations = {
  */
 function getDynamicCalendarEvents() {
   const events = [];
+  const currentCalendarUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
 
   // 1. Synchronize visits from store or DEMO_DATA
   const visits =
@@ -190,7 +191,7 @@ function getDynamicCalendarEvents() {
               period: period.toLowerCase(),
               title: `${act.type}: ${act.notes || "Activity"}`,
               status: "completed",
-              repId: "rep1",
+              repId: currentCalendarUser.id || "rep1",
             });
           }
         });

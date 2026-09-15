@@ -185,6 +185,8 @@ function renderCoverageReport() {
   const visits = REPORTS_DATA.visits || [];
   targetList.forEach((target) => {
     const matchingVisits = visits.filter((v) => {
+      const isCompleted = v.status === 'completed' || Boolean(v.isActual) || v.source === 'actual';
+      if (!isCompleted) return false;
       const matchesTarget = (v.doctorId && target.id) ? (v.doctorId === target.id) : (v.targetName === target.name);
       if (!matchesTarget) return false;
       const vDate = new Date(v.date);
@@ -352,8 +354,8 @@ function renderCoverageReportView() {
         const isCurrentRep = coverageDrilldownState.repId === row.rep.id;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="font-weight: 600; color: var(--gray-700);">${window.escapeHtml(row.territory)}</td>
           <td style="font-weight: 700; color: var(--gray-900);">${window.escapeHtml(row.rep.name || 'Rep')}</td>
+          <td style="font-weight: 600; color: var(--gray-700);">${window.escapeHtml(row.territory)}</td>
           <td>
             <button
               type="button"
@@ -410,8 +412,8 @@ function renderCoverageReportView() {
         totalTr.style.background = 'var(--gray-50, #f8f9fa)';
         totalTr.style.borderTop = '2px solid var(--border-color, #e5e7eb)';
         totalTr.innerHTML = `
-          <td>${lang === 'ar' ? 'كافة المناطق' : 'All Territories'}</td>
           <td style="color: var(--primary);">${lang === 'ar' ? 'الإجمالي' : 'TOTAL'}</td>
+          <td>${lang === 'ar' ? 'كافة المناطق' : 'All Territories'}</td>
           <td>
             <button
               type="button"
@@ -552,7 +554,6 @@ function renderCoverageReportView() {
         tr.innerHTML = `
           <td>
             <strong>${window.escapeHtml(target.name)}</strong>
-            <div style="font-size: 0.78rem; color: var(--gray-500);">${window.escapeHtml(target.area || '')}</div>
           </td>
           <td>
             <span class="badge" style="background: ${target.class === 'A' ? 'var(--primary)' : target.class === 'B' ? 'var(--info)' : '#6f42c1'}; color: white; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem;">
@@ -642,6 +643,8 @@ function exportCoverageReport() {
   let csv = 'Target Name,Area,Class,Specialty,Target Visits,Actual Visits\n';
   targetList.forEach((target) => {
     const matchingVisits = (REPORTS_DATA.visits || []).filter((v) => {
+      const isCompleted = v.status === 'completed' || Boolean(v.isActual) || v.source === 'actual';
+      if (!isCompleted) return false;
       const matchesTarget = (v.doctorId && target.id) ? (v.doctorId === target.id) : (v.targetName === target.name);
       if (!matchesTarget) return false;
       const vDate = new Date(v.date);
