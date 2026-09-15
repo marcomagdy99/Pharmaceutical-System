@@ -946,7 +946,6 @@ const visitsApp = {
     persistVisits();
     this.closeBulkPlanModal();
     renderVisits(true);
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     showToast(
       lang === "ar"
         ? `تم إرسال ${checkedBoxes.length} زيارة للمراجعة والاعتماد من المدير!`

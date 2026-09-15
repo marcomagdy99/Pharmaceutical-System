@@ -2009,10 +2009,21 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   if (lblFeedback) lblFeedback.innerText = t.visit_feedback;
 
   const now = new Date();
-  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const pad = (n) => String(n).padStart(2, "0");
+  const todayISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${pad(twoDaysAgo.getMonth() + 1)}-${pad(twoDaysAgo.getDate())}`;
+
   const dateInput = document.getElementById("dashVisitDate");
   if (dateInput) {
-    dateInput.value = (target && target.date) || todayISO;
+    dateInput.max = todayISO;
+    dateInput.min = twoDaysAgoISO;
+    if (target && target.date && target.date >= twoDaysAgoISO && target.date <= todayISO) {
+      dateInput.value = target.date;
+    } else {
+      dateInput.value = todayISO;
+    }
     updateDashModalDayDisplay();
   }
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -2052,25 +2063,6 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
         container.appendChild(lbl);
       });
     }
-  }
-
-  const dateInput = document.getElementById("dashVisitDate");
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const todayISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const twoDaysAgo = new Date();
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-  const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${pad(twoDaysAgo.getMonth() + 1)}-${pad(twoDaysAgo.getDate())}`;
-
-  if (dateInput) {
-    dateInput.max = todayISO;
-    dateInput.min = twoDaysAgoISO;
-    if (target && target.date && target.date >= twoDaysAgoISO && target.date <= todayISO) {
-      dateInput.value = target.date;
-    } else {
-      dateInput.value = todayISO;
-    }
-    updateDashModalDayDisplay();
   }
 
   modal.style.display = "flex";
