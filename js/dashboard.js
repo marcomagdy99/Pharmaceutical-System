@@ -528,14 +528,23 @@ function initDashboardCharts(user) {
     scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
   }
 
-  // 1. Sales vs Target Trend
-  let filteredSales = allSales;
+  // Determine active calendar year (auto-resets every year on January 1st)
+  const currentCalendarYear = new Date().getFullYear().toString();
+  const hasCurrentYearSales = allSales.some((s) => s.month && s.month.startsWith(currentCalendarYear));
+  let activeYear = currentCalendarYear;
+  if (!hasCurrentYearSales && allSales.length > 0) {
+    const allYears = allSales.map((s) => (s.month ? s.month.slice(0, 4) : "2026")).sort();
+    activeYear = allYears[allYears.length - 1] || currentCalendarYear;
+  }
+
+  // 1. Sales vs Target Trend (Filtered strictly for active/current year)
+  let filteredSales = allSales.filter((s) => s.month && s.month.startsWith(activeYear));
   if (scopedRepIds) {
-    filteredSales = allSales.filter((s) => scopedRepIds.includes(s.repId));
+    filteredSales = filteredSales.filter((s) => scopedRepIds.includes(s.repId));
   }
   const monthsMap = {};
   filteredSales.forEach((s) => {
-    const m = s.month || "2026-09";
+    const m = s.month || (activeYear + "-01");
     if (!monthsMap[m]) monthsMap[m] = { target: 0, actual: 0 };
     monthsMap[m].target += parseFloat(s.target) || 0;
     monthsMap[m].actual += parseFloat(s.actual) || parseFloat(s.amount) || 0;
@@ -588,6 +597,45 @@ function initDashboardCharts(user) {
   const coveragePct = totalDocs > 0 ? Math.round((coveredDocs / totalDocs) * 100) : 75;
 
   window.renderCoverageGaugeChart("dashCoverageGaugeChart", "dashCoverageGaugeLabel", coveragePct);
+
+  // 4. Per-Line Sales Trend Charts (LM & BU dashboards)
+  const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUserId) : [];
+  if (userLines.length > 0 && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu")) {
+    const monthNames = isAr
+      ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    userLines.forEach(function (line) {
+      const canvasId = "dashLineTrend_" + line.id;
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      // Filter sales for this specific line in the active year
+      const lineSales = allSales.filter(function (s) { return s.lineId === line.id && s.month && s.month.startsWith(activeYear); });
+      const lineMonthsMap = {};
+      lineSales.forEach(function (s) {
+        var m = s.month || (activeYear + "-01");
+        if (!lineMonthsMap[m]) lineMonthsMap[m] = { target: 0, actual: 0 };
+        lineMonthsMap[m].target += parseFloat(s.target) || 0;
+        lineMonthsMap[m].actual += parseFloat(s.actual) || parseFloat(s.amount) || 0;
+      });
+
+      var lineSortedMonths = Object.keys(lineMonthsMap).sort();
+      var lineLabels = lineSortedMonths.map(function (m) {
+        var parts = m.split("-");
+        var mIdx = parseInt(parts[1], 10) - 1;
+        return monthNames[mIdx] || m;
+      });
+      var lineTargets = lineSortedMonths.map(function (m) { return lineMonthsMap[m].target; });
+      var lineActuals = lineSortedMonths.map(function (m) { return lineMonthsMap[m].actual; });
+
+      window.renderSalesTargetTrendChart(canvasId, {
+        labels: lineLabels.length ? lineLabels : undefined,
+        targets: lineTargets.length ? lineTargets : undefined,
+        actuals: lineActuals.length ? lineActuals : undefined
+      });
+    });
+  }
 }
 
 function renderDashboard() {
@@ -622,7 +670,9 @@ function renderDashboard() {
   attachDashboardModal();
   animateCounters();
   if (window.applyTranslations) window.applyTranslations();
-  initDashboardCharts(user);
+  setTimeout(() => {
+    initDashboardCharts(user);
+  }, 50);
 }
 
 /**
@@ -1648,6 +1698,37 @@ function renderLMDashboard(userName, user) {
           </table>
         </div>
       </div>
+
+      ${(() => {
+        const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+        const myUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+        const linesToShow = myUserLines.length > 0 ? myUserLines : allLines.filter(l => l.lineManagerId === user.id);
+        if (linesToShow.length === 0) return "";
+        const isAr = lang === "ar";
+        return `
+      <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
+        <div style="margin-bottom: 1.25rem;">
+          <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
+            📈 ${isAr ? "منحنى المبيعات شهرياً حسب الخط" : "Monthly Sales vs Target Trend (Per Line)"}
+          </h3>
+          <small style="color: var(--gray-500); font-size: 0.82rem;">
+            ${isAr ? "مقارنة المبيعات الفعلية بالمستهدف لكل خط إنتاج" : "Actual vs Target comparison for each product line under your management"}
+          </small>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          ${linesToShow.map(line => `
+          <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
+            <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+              📦 ${line.name}
+            </h4>
+            <div style="position: relative; height: 250px; width: 100%;">
+              <canvas id="dashLineTrend_${line.id}"></canvas>
+            </div>
+          </div>
+          `).join("")}
+        </div>
+      </div>`;
+      })()}
     </div>
   `;
 }
@@ -1786,8 +1867,40 @@ function renderBUDashboard(userName, user) {
             <a href="leaves.html" class="action-btn warning" style="text-decoration: none; text-align: center; padding: 14px; border-radius: 8px; background: var(--warning); color: white; font-weight: bold;">🏖️ Approvals Inbox</a>
             <a href="calendar.html" class="action-btn" style="text-decoration: none; text-align: center; padding: 14px; border-radius: 8px; background: var(--gray-200); color: var(--gray-800); font-weight: bold;">📅 Team Calendar</a>
           </div>
+          </div>
         </div>
       </div>
+
+      ${(() => {
+        const allLinesLocal = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+        const buUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+        const linesToShow = buUserLines.length > 0 ? buUserLines : allLinesLocal;
+        if (linesToShow.length === 0) return "";
+        const isAr = lang === "ar";
+        return `
+      <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
+        <div style="margin-bottom: 1.25rem;">
+          <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
+            📈 ${isAr ? "منحنى المبيعات شهرياً حسب الخط" : "Monthly Sales vs Target Trend (Per Line)"}
+          </h3>
+          <small style="color: var(--gray-500); font-size: 0.82rem;">
+            ${isAr ? "مقارنة المبيعات الفعلية بالمستهدف لكل خط إنتاج تحت إدارتك" : "Actual vs Target comparison for each product line under your business unit"}
+          </small>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          ${linesToShow.map(line => `
+          <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
+            <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+              📦 ${line.name}
+            </h4>
+            <div style="position: relative; height: 250px; width: 100%;">
+              <canvas id="dashLineTrend_${line.id}"></canvas>
+            </div>
+          </div>
+          `).join("")}
+        </div>
+      </div>`;
+      })()}
     </div>
   `;
 }

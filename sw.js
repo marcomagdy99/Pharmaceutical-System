@@ -40,7 +40,7 @@ const ASSETS_TO_CACHE = [
   './js/dashboard.js',
   './js/visits.js',
   './js/excel-templates-data.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js',
+  './js/chart.umd.min.js',
   './js/interactive-charts.js',
   './js/shared-report.js',
   './js/sales-report.js',

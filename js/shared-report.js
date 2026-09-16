@@ -73,7 +73,13 @@ const REPORTS_DATA = {
     { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
     { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
     { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 17000, actual: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 11000, actual: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' }
+    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 11000, actual: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
+    // September 2026 (2026-09) - Neuro Line (line2 / lm2) - Alex District (dm3)
+    { id: 's15', month: '2026-09', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Pregabalin 75mg', productId: 'prod5', target: 25000, actual: 27000, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' },
+    { id: 's16', month: '2026-09', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Carbamazepine 200mg', productId: 'prod6', target: 15000, actual: 14200, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' },
+    // August 2026 (2026-08) - Neuro Line (line2 / lm2)
+    { id: 's17', month: '2026-08', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Pregabalin 75mg', productId: 'prod5', target: 22000, actual: 24500, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' },
+    { id: 's18', month: '2026-08', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Carbamazepine 200mg', productId: 'prod6', target: 14000, actual: 13800, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' }
   ],
   visits: [
     { id: 'v1', targetName: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', type: 'doctor', date: '2026-09-02', time: '11:30', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1'], products: ['Amoxicillin 500mg'] },
