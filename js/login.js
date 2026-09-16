@@ -387,8 +387,7 @@ async function handleLogin() {
         password === 'admin123' ||
         password === 'rep123' ||
         password === '123' ||
-        password === 'password' ||
-        Boolean(password)
+        password === 'password'
       )
     );
 

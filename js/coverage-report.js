@@ -600,6 +600,10 @@ function renderCoverageReportView() {
   if (elTargetsCount) elTargetsCount.textContent = `${coveredTargetsCount} / ${targetList.length}`;
   if (elPeriodSubtext) elPeriodSubtext.textContent = `${startDate} ~ ${endDate}`;
   if (elTargetsSubtext) elTargetsSubtext.textContent = lang === 'ar' ? 'الأطباء والمستشفيات المزارة' : 'Doctors/Hospitals Visited';
+
+  if (typeof window.renderCoverageGaugeChart === 'function') {
+    window.renderCoverageGaugeChart('repCoverageGaugeChart', 'repCoverageGaugeLabel', overallCoveragePct);
+  }
 }
 
 // ============================================================================

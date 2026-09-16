@@ -331,6 +331,36 @@ function renderAchievementsReport() {
   if (kpiActual) kpiActual.textContent = grandActual.toLocaleString();
   if (kpiPct) kpiPct.textContent = grandTarget > 0 ? ((grandActual / grandTarget) * 100).toFixed(1) + '%' : '—';
   if (kpiReps) kpiReps.textContent = groups.length;
+
+  if (typeof window.renderSalesTargetTrendChart === 'function') {
+    const isAr = lang === 'ar';
+    const chartLabels = selectedMonths.map((mVal) => {
+      const idx = parseInt(mVal, 10) - 1;
+      return isAr ? ACH_MONTHS_AR[idx] : ACH_MONTHS[idx];
+    });
+
+    const chartTargets = selectedMonths.map((mVal) => {
+      const mKey = `${year}-${mVal}`;
+      const mTargets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
+        .filter((t) => t.month === mKey && (!scopeRepIds || scopeRepIds.includes(t.repId)));
+      return mTargets.reduce((sum, t) => {
+        return sum + (t.target != null ? (parseFloat(t.target) || 0) : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0)));
+      }, 0);
+    });
+
+    const chartActuals = selectedMonths.map((mVal) => {
+      const mKey = `${year}-${mVal}`;
+      const mSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
+        .filter((s) => s.month === mKey && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
+      return mSales.reduce((sum, s) => sum + (parseFloat(s.value) || 0), 0);
+    });
+
+    window.renderSalesTargetTrendChart('achSalesTrendChart', {
+      labels: chartLabels.length ? chartLabels : undefined,
+      targets: chartTargets,
+      actuals: chartActuals
+    });
+  }
 }
 
 window.populateAchFilters = populateAchFilters;

@@ -206,6 +206,208 @@ function isPlannedVisitExpired(dateStr) {
 }
 
 // ============================================================================
+// Section 2B: Field Governance (Duplicate Check, Min PM Visits & GPS Geofencing)
+// ============================================================================
+function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId = null) {
+  if (!doctorId || !visitDate) return false;
+  const list = typeof demoVisits !== "undefined" && Array.isArray(demoVisits)
+    ? demoVisits
+    : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+
+  return list.some((v) =>
+    v.id !== currentVisitId &&
+    v.repId === repId &&
+    v.doctorId === doctorId &&
+    v.date === visitDate &&
+    v.status !== "rejected"
+  );
+}
+
+function isWorkdayExemptFromMinVisits(dateStr, repId) {
+  if (!dateStr) return { exempt: false };
+
+  // 1. Weekend check: Thursday (4) and Friday (5)
+  const dateObj = new Date(dateStr + "T00:00:00");
+  const dayOfWeek = dateObj.getDay();
+  if (dayOfWeek === 4 || dayOfWeek === 5) {
+    return { exempt: true, reason: "weekend" };
+  }
+
+  // 2. Official public holidays check
+  const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays) || [];
+  try {
+    const cachedHolidays = localStorage.getItem("pharma_public_holidays");
+    if (cachedHolidays) {
+      const parsed = JSON.parse(cachedHolidays);
+      if (Array.isArray(parsed)) holidays.push(...parsed);
+    }
+  } catch (e) {}
+
+  if (holidays.some((h) => h.date === dateStr)) {
+    return { exempt: true, reason: "public_holiday" };
+  }
+
+  // 3. Employee leave in system (approved or pending, non-rejected)
+  const leaves = (window.store && window.store.leaves
+    ? window.store.leaves.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
+
+  const matchedLeave = leaves.find((l) =>
+    l.userId === repId &&
+    l.status !== "rejected" &&
+    dateStr >= l.startDate &&
+    dateStr <= l.endDate
+  );
+
+  if (matchedLeave) {
+    return { exempt: true, reason: "employee_leave", leave: matchedLeave };
+  }
+
+  return { exempt: false };
+}
+
+function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const R = 6371e3;
+  const rad = Math.PI / 180;
+  const phi1 = lat1 * rad;
+  const phi2 = lat2 * rad;
+  const deltaPhi = (lat2 - lat1) * rad;
+  const deltaLambda = (lon2 - lon1) * rad;
+
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) *
+    Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
+function captureVisitLocation(callback) {
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+  if (!companySettings.requireGpsValidation) {
+    return callback({ required: false });
+  }
+
+  if (!navigator.geolocation) {
+    return callback({
+      required: true,
+      status: "permission_denied",
+      reason: "Geolocation not supported"
+    });
+  }
+
+  let finished = false;
+  const timer = setTimeout(() => {
+    if (!finished) {
+      finished = true;
+      callback({
+        required: true,
+        status: "permission_denied",
+        reason: "Location timeout"
+      });
+    }
+  }, 4000);
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      callback({
+        required: true,
+        status: "obtained",
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      });
+    },
+    (err) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      callback({
+        required: true,
+        status: "permission_denied",
+        reason: err ? err.message : "Permission denied"
+      });
+    },
+    { enableHighAccuracy: true, timeout: 3500, maximumAge: 60000 }
+  );
+}
+
+function renderGpsBadge(v, lang) {
+  if (!v || !v.gpsStatus) return "";
+  if (v.gpsStatus === "permission_denied") {
+    const text = lang === "ar" ? "⚠️ تم تعطيل الـ GPS من المندوب" : "⚠️ GPS Disabled by Rep";
+    return `<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">${text}</span>`;
+  }
+  if (v.gpsStatus === "in_range") {
+    const text = lang === "ar" ? "✅ تم التحقق (داخل النطاق)" : "✅ Verified (In Range)";
+    return `<span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">${text}</span>`;
+  }
+  if (v.gpsStatus === "out_of_range") {
+    const distText = v.distanceMeters ? ` (${v.distanceMeters}m)` : "";
+    const text = lang === "ar" ? `⚠️ خارج النطاق${distText}` : `⚠️ Out of Range${distText}`;
+    return `<span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">${text}</span>`;
+  }
+  return "";
+}
+
+function toggleCompanyGpsPolicy() {
+  if (currentUserRole !== "admin") return;
+  const current = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+  const updatedVal = !current.requireGpsValidation;
+  if (window.store && window.store.companySettings) {
+    window.store.companySettings.update({ requireGpsValidation: updatedVal });
+  }
+
+  updateAdminGpsButton();
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const msg = updatedVal
+    ? (lang === "ar" ? "تم تفعيل سياسة التحقق الجغرافي بالـ GPS لجميع المناديب!" : "GPS verification policy enabled for all reps!")
+    : (lang === "ar" ? "تم تعطيل سياسة التحقق بالـ GPS للشركة." : "GPS verification policy disabled for the company.");
+
+  if (typeof showToast === "function") showToast(msg, "info");
+}
+window.toggleCompanyGpsPolicy = toggleCompanyGpsPolicy;
+
+function updateAdminGpsButton() {
+  const btn = document.getElementById("adminGpsPolicyBtn");
+  const label = document.getElementById("adminGpsPolicyLabel");
+  if (!btn || !label) return;
+
+  if (currentUserRole !== "admin") {
+    btn.style.display = "none";
+    return;
+  }
+
+  btn.style.display = "inline-flex";
+  const current = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  if (current.requireGpsValidation) {
+    label.textContent = lang === "ar" ? "سياسة الـ GPS: مفعلة ✅" : "GPS Policy: Active ✅";
+    btn.style.borderColor = "#166534";
+    btn.style.color = "#166534";
+    btn.style.background = "#dcfce7";
+  } else {
+    label.textContent = lang === "ar" ? "سياسة الـ GPS: معطلة ⏸️" : "GPS Policy: Paused ⏸️";
+    btn.style.borderColor = "#6b7280";
+    btn.style.color = "#4b5563";
+    btn.style.background = "#f3f4f6";
+  }
+}
+
+// ============================================================================
 // Section 3: Active User Session & Role Scope
 // ============================================================================
 const currentUser = (window.checkAuth && window.checkAuth()) || {
@@ -903,6 +1105,53 @@ const visitsApp = {
     }
     const period =
       document.querySelector('input[name="bulkPeriod"]:checked')?.value || "pm";
+
+    // 1. Duplicate check: filter out targets already visited or scheduled today for this rep (excluding rejected)
+    const duplicateTargets = [];
+    const validBoxes = [];
+    checkedBoxes.forEach((cb) => {
+      const targetId = cb.value;
+      const targetName = cb.getAttribute("data-name") || "Doctor";
+      if (isDoctorAlreadyVisitedToday(targetId, planDate, currentUser.id || "rep1")) {
+        duplicateTargets.push(targetName);
+      } else {
+        validBoxes.push(cb);
+      }
+    });
+
+    if (duplicateTargets.length > 0 && validBoxes.length === 0) {
+      const msg = lang === "ar"
+        ? `الأهداف المحددة مسجلة بالفعل في هذا اليوم: (${duplicateTargets.join("، ")}). لا يمكن تكرار الزيارة لنفس الطبيب مرتين في نفس اليوم.`
+        : `Selected targets are already scheduled/visited today: (${duplicateTargets.join(", ")}). Duplicate visits on the same day are not permitted.`;
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
+
+    // 2. Minimum PM visits check: 4 visits per day (unless exempt)
+    if (period.toLowerCase() === "pm") {
+      const exemption = isWorkdayExemptFromMinVisits(planDate, currentUser.id || "rep1");
+      if (!exemption.exempt) {
+        const existingPmCount = demoVisits.filter(
+          (v) =>
+            v.repId === (currentUser.id || "rep1") &&
+            v.date === planDate &&
+            (v.period || "").toLowerCase() === "pm" &&
+            v.status !== "rejected",
+        ).length;
+        const totalPm = existingPmCount + validBoxes.length;
+        if (totalPm < 4) {
+          const needed = 4 - totalPm;
+          const msg = lang === "ar"
+            ? `الحد الأدنى لزيارات الفترة المسائية (PM) هو 4 زيارات يومياً. إجمالي زيارات هذا اليوم (${totalPm}) فقط. يرجى اختيار ${needed} أطباء إضافيين لاستكمال خطة اليوم.`
+            : `Minimum PM visits requirement is 4 visits per day. Total for this day is (${totalPm}). Please select ${needed} more target(s) to complete today's plan.`;
+          if (typeof showToast === "function") showToast(msg, "warning");
+          else alert(msg);
+          return;
+        }
+      }
+    }
+
     const defaultTimes = [
       "09:30",
       "10:15",
@@ -916,7 +1165,7 @@ const visitsApp = {
       "16:45",
     ];
 
-    checkedBoxes.forEach((cb, index) => {
+    validBoxes.forEach((cb, index) => {
       const targetId = cb.value;
       const targetName = cb.getAttribute("data-name") || "Doctor";
       const assignedTime = defaultTimes[index % defaultTimes.length];
@@ -946,12 +1195,19 @@ const visitsApp = {
     persistVisits();
     this.closeBulkPlanModal();
     renderVisits(true);
-    showToast(
+
+    let successMsg =
       lang === "ar"
-        ? `تم إرسال ${checkedBoxes.length} زيارة للمراجعة والاعتماد من المدير!`
-        : `${checkedBoxes.length} planned visits submitted for manager review and approval!`,
-      "success",
-    );
+        ? `تم إرسال ${validBoxes.length} زيارة للمراجعة والاعتماد من المدير!`
+        : `${validBoxes.length} planned visits submitted for manager review and approval!`;
+
+    if (duplicateTargets.length > 0) {
+      successMsg += lang === "ar"
+        ? ` (تم تخطي الأطباء المكررين اليوم: ${duplicateTargets.join("، ")})`
+        : ` (Skipped duplicate targets: ${duplicateTargets.join(", ")})`;
+    }
+
+    showToast(successMsg, "success");
   },
 };
 
@@ -1660,7 +1916,10 @@ function renderVisitsTimeline(triggeredByShow = false) {
       <div class="timeline-content-box ${borderClass}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
           <strong class="timeline-target-title">${window.escapeHtml(v.doctorName)}</strong>
-          <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            ${renderGpsBadge(v, lang)}
+            <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
+          </div>
         </div>
         <div class="timeline-meta-row">
           <span>🩺 ${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span> • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
@@ -1714,6 +1973,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
     `;
     container.appendChild(card);
   });
+  updateAdminGpsButton();
 }
 
 function populateVisitProducts(selectedProducts = []) {
@@ -2511,6 +2771,49 @@ function saveVisit() {
       }
       visit.productIds = selectedProductIds;
       visit.products = selectedProductNames;
+
+      const companySettings = (window.store && window.store.companySettings)
+        ? window.store.companySettings.get()
+        : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+      const finalizeEdit = (gpsPayload) => {
+        if (gpsPayload) {
+          visit.gpsStatus = gpsPayload.status;
+          if (gpsPayload.distanceMeters != null) visit.distanceMeters = gpsPayload.distanceMeters;
+        }
+        persistVisits();
+        closeVisitModal();
+        renderVisits(true);
+        const successMsg = lang === "ar"
+          ? "تم تسجيل وحفظ الزيارة بنجاح."
+          : "Visit saved successfully.";
+        showToast(successMsg, "success");
+      };
+
+      if (companySettings.requireGpsValidation) {
+        captureVisitLocation((loc) => {
+          let gpsPayload = { status: "permission_denied" };
+          if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
+            const allDocs = getMockDoctors();
+            const allHosps = getMockHospitals();
+            const targetItem = allDocs.find((d) => d.id === visit.doctorId) || allHosps.find((h) => h.id === visit.doctorId);
+            if (targetItem && targetItem.lat != null && targetItem.lng != null) {
+              const dist = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
+              const maxDist = companySettings.gpsMaxDistanceMeters || 200;
+              gpsPayload = dist <= maxDist
+                ? { status: "in_range", distanceMeters: dist }
+                : { status: "out_of_range", distanceMeters: dist };
+            } else {
+              gpsPayload = { status: "in_range", distanceMeters: 0 };
+              if (targetItem) { targetItem.lat = loc.lat; targetItem.lng = loc.lng; }
+            }
+          }
+          finalizeEdit(gpsPayload);
+        });
+      } else {
+        finalizeEdit(null);
+      }
+      return;
     }
   } else {
     const period =
@@ -2522,6 +2825,14 @@ function saveVisit() {
       const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
       alert(isAr ? "يرجى اختيار الهدف أولاً" : "Please select a target first");
       return;
+    }
+
+    // Duplicate check on same date for same rep (excluding rejected visits)
+    if (isDoctorAlreadyVisitedToday(targetId, visitDate, currentUser.id, currentEditVisitId)) {
+      const msg = lang === "ar"
+        ? "تم تسجيل أو جدولة زيارة لهذا الطبيب بالفعل في هذا اليوم. لا يمكن تكرار زيارة نفس الطبيب مرتين في نفس اليوم."
+        : "A visit for this target is already logged or scheduled today. Duplicate visits to the same target on the same day are not allowed.";
+      return showToast(msg, "warning");
     }
 
     let targetName =
@@ -2566,18 +2877,52 @@ function saveVisit() {
       createdAt: new Date().toISOString(),
       entryDate: visitDate,
     };
-    demoVisits.unshift(newVisit);
+
+    const finalizeNewSave = (gpsPayload) => {
+      if (gpsPayload) {
+        newVisit.gpsStatus = gpsPayload.status;
+        if (gpsPayload.distanceMeters != null) newVisit.distanceMeters = gpsPayload.distanceMeters;
+      }
+      demoVisits.unshift(newVisit);
+      persistVisits();
+      closeVisitModal();
+      renderVisits(true);
+
+      const successMsg =
+        lang === "ar"
+          ? "تم تسجيل وحفظ الزيارة بنجاح."
+          : "Visit saved successfully.";
+      showToast(successMsg, "success");
+    };
+
+    const companySettings = (window.store && window.store.companySettings)
+      ? window.store.companySettings.get()
+      : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+    if (modalSource === "actual" && companySettings.requireGpsValidation) {
+      captureVisitLocation((loc) => {
+        let gpsPayload = { status: "permission_denied" };
+        if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
+          const allDocs = getMockDoctors();
+          const allHosps = getMockHospitals();
+          const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+          if (targetItem && targetItem.lat != null && targetItem.lng != null) {
+            const dist = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
+            const maxDist = companySettings.gpsMaxDistanceMeters || 200;
+            gpsPayload = dist <= maxDist
+              ? { status: "in_range", distanceMeters: dist }
+              : { status: "out_of_range", distanceMeters: dist };
+          } else {
+            gpsPayload = { status: "in_range", distanceMeters: 0 };
+            if (targetItem) { targetItem.lat = loc.lat; targetItem.lng = loc.lng; }
+          }
+        }
+        finalizeNewSave(gpsPayload);
+      });
+    } else {
+      finalizeNewSave(null);
+    }
   }
-
-  persistVisits();
-  closeVisitModal();
-  renderVisits(true);
-
-  const successMsg =
-    lang === "ar"
-      ? "تم تسجيل وحفظ الزيارة بنجاح."
-      : "Visit saved successfully.";
-  showToast(successMsg, "success");
 }
 
 // ============================================================================

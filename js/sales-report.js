@@ -671,7 +671,10 @@ function getAllProductsFlat() {
   const out = [];
   lines.forEach((line) => {
     (line.products || []).forEach((p) => {
-      out.push({ id: p.id, name: p.name + (p.dosage ? ' ' + p.dosage : ''), lineId: line.id, lineName: line.name, price: p.price !== undefined && p.price !== null && p.price !== '' ? parseFloat(p.price) : null });
+      const displayName = p.dosage && !p.name.toLowerCase().includes(p.dosage.toLowerCase())
+        ? `${p.name} ${p.dosage}`
+        : p.name;
+      out.push({ id: p.id, name: displayName, lineId: line.id, lineName: line.name, price: p.price !== undefined && p.price !== null && p.price !== '' ? parseFloat(p.price) : null });
     });
   });
   return out;

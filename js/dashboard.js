@@ -452,6 +452,144 @@ window.switchDmScheduleTab = function (tab) {
 
 window.onDmSelectRep = window.onDmRepDropdownChange;
 
+/**
+ * Generates the HTML markup for interactive dashboard charts.
+ * @param {string} lang
+ */
+function renderDashboardChartsMarkup(lang) {
+  const isAr = lang === "ar";
+  return `
+    <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
+            📊 ${isAr ? "التحليلات والمؤشرات التفاعلية" : "Interactive Analytics & KPI Trends"}
+          </h3>
+          <small style="color: var(--gray-500); font-size: 0.82rem;">
+            ${isAr ? "متابعة فورية للمبيعات، نسبة التغطية وتوزيع فئات الأطباء" : "Real-time trends for sales achievement, doctor coverage and category breakdown"}
+          </small>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px;">
+        <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
+          <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+            📈 ${isAr ? "منحنى تحقيق المبيعات شهرياً" : "Monthly Sales vs Target Trend"}
+          </h4>
+          <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="dashSalesTrendChart"></canvas>
+          </div>
+        </div>
+        <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
+          <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+            🎯 ${isAr ? "مؤشر قياس التغطية" : "Doctor Coverage Gauge"}
+          </h4>
+          <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
+            <canvas id="dashCoverageGaugeChart"></canvas>
+          </div>
+          <div id="dashCoverageGaugeLabel" style="font-weight: 800; font-size: 1.2rem; color: var(--primary); margin-top: -12px;"></div>
+        </div>
+        <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
+          <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+            🥧 ${isAr ? "توزيع فئات الأطباء والمستشفيات" : "Doctor Classes & Hospitals"}
+          </h4>
+          <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
+            <canvas id="dashDoctorClassesChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Initializes and updates Chart.js charts on the active dashboard.
+ * @param {Object} user 
+ */
+function initDashboardCharts(user) {
+  if (typeof window.renderSalesTargetTrendChart !== "function") return;
+
+  const currentUserId = user?.id || "rep1";
+  const role = (user?.role || "rep").toLowerCase();
+  const allSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
+    ? window.DEMO_DATA.sales
+    : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+  const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+  const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+
+  let scopedRepIds = null;
+  if (role === "medical_rep" || role === "rep") {
+    scopedRepIds = [currentUserId];
+  } else if (role === "district_manager" || role === "dm") {
+    scopedRepIds = allUsers.filter((u) => u.managerId === currentUserId).map((u) => u.id);
+  } else if (role === "line_manager" || role === "lm") {
+    const dms = allUsers.filter((u) => u.managerId === currentUserId && u.role === "district_manager").map((d) => d.id);
+    scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+  }
+
+  // 1. Sales vs Target Trend
+  let filteredSales = allSales;
+  if (scopedRepIds) {
+    filteredSales = allSales.filter((s) => scopedRepIds.includes(s.repId));
+  }
+  const monthsMap = {};
+  filteredSales.forEach((s) => {
+    const m = s.month || "2026-09";
+    if (!monthsMap[m]) monthsMap[m] = { target: 0, actual: 0 };
+    monthsMap[m].target += parseFloat(s.target) || 0;
+    monthsMap[m].actual += parseFloat(s.actual) || parseFloat(s.amount) || 0;
+  });
+
+  const sortedMonths = Object.keys(monthsMap).sort();
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const monthLabels = sortedMonths.map((m) => {
+    const parts = m.split("-");
+    const mIdx = parseInt(parts[1], 10) - 1;
+    const names = isAr
+      ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return names[mIdx] || m;
+  });
+  const trendTargets = sortedMonths.map((m) => monthsMap[m].target);
+  const trendActuals = sortedMonths.map((m) => monthsMap[m].actual);
+
+  window.renderSalesTargetTrendChart("dashSalesTrendChart", {
+    labels: monthLabels.length ? monthLabels : undefined,
+    targets: trendTargets.length ? trendTargets : undefined,
+    actuals: trendActuals.length ? trendActuals : undefined,
+  });
+
+  // 2. Doctor Classes & Hospitals
+  let scopedDoctors = allDoctors;
+  let scopedHospitals = allHospitals;
+  if (scopedRepIds) {
+    scopedDoctors = allDoctors.filter((d) => scopedRepIds.includes(d.repId));
+    scopedHospitals = allHospitals.filter((h) => !h.repId || scopedRepIds.includes(h.repId));
+  }
+  const classACount = scopedDoctors.filter((d) => d.class === "A").length;
+  const classBCount = scopedDoctors.filter((d) => d.class === "B").length;
+  const hospitalsCount = scopedHospitals.length + scopedDoctors.filter((d) => d.type === "hospital" || d.class === "hospital").length;
+
+  window.renderDoctorClassesChart("dashDoctorClassesChart", classACount, classBCount, hospitalsCount);
+
+  // 3. Coverage Radial Gauge
+  let scopedVisits = allVisits.filter((v) => v.status === "completed");
+  if (scopedRepIds) {
+    scopedVisits = scopedVisits.filter((v) => scopedRepIds.includes(v.repId));
+  }
+  const coveredDoctorIds = new Set();
+  scopedVisits.forEach((v) => {
+    if (v.doctorId) coveredDoctorIds.add(v.doctorId);
+  });
+  const totalDocs = scopedDoctors.length;
+  const coveredDocs = scopedDoctors.filter((d) => coveredDoctorIds.has(d.id)).length;
+  const coveragePct = totalDocs > 0 ? Math.round((coveredDocs / totalDocs) * 100) : 75;
+
+  window.renderCoverageGaugeChart("dashCoverageGaugeChart", "dashCoverageGaugeLabel", coveragePct);
+}
+
 function renderDashboard() {
   const container = document.getElementById("pageContent");
   if (!container) return;
@@ -484,6 +622,7 @@ function renderDashboard() {
   attachDashboardModal();
   animateCounters();
   if (window.applyTranslations) window.applyTranslations();
+  initDashboardCharts(user);
 }
 
 /**
@@ -771,6 +910,8 @@ function renderRepDashboard(userName, user) {
             </table>
           </div>
         </div>
+
+        ${renderDashboardChartsMarkup(lang)}
       </div>
     `;
 }
@@ -1372,6 +1513,8 @@ function renderDMDashboard(userName, user) {
           </table>
         </div>
       </div>
+
+      ${renderDashboardChartsMarkup(lang)}
     </div>
   `;
 }
@@ -1736,6 +1879,8 @@ function renderAdminDashboard(userName, user) {
           </ul>
         </div>
       </div>
+
+      ${renderDashboardChartsMarkup(lang)}
     </div>
   `;
 }

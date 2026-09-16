@@ -159,6 +159,12 @@ function getScopedSubordinateReps(currentUser) {
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
 
+  if (role === "admin") {
+    return allUsers.filter(
+      (u) => u.role === "medical_rep" || u.role === "rep",
+    );
+  }
+
   if (role === "district_manager" || role === "dm") {
     return allUsers.filter(
       (u) =>
@@ -167,7 +173,6 @@ function getScopedSubordinateReps(currentUser) {
     );
   }
 
-  // Only District Managers review medical rep plans (LM, BU, HR, and Admin do not review plans)
   return [];
 }
 
@@ -188,11 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const userRole = window.normalizeRole
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
-
-  if (userRole === "admin") {
-    window.location.href = "index.html";
-    return;
-  }
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   applyPlansReviewTranslations(lang);

@@ -781,6 +781,42 @@
         return l;
       },
     },
+
+    // ==========================================
+    // Section: Company Settings Module
+    // ==========================================
+    companySettings: {
+      get() {
+        if (!window.DEMO_DATA.companySettings) {
+          try {
+            const cached = localStorage.getItem("pharma_company_settings");
+            if (cached) {
+              window.DEMO_DATA.companySettings = JSON.parse(cached);
+            }
+          } catch (e) {}
+        }
+        if (!window.DEMO_DATA.companySettings) {
+          window.DEMO_DATA.companySettings = {
+            requireGpsValidation: true,
+            gpsMaxDistanceMeters: 200,
+            minPmVisitsPerDay: 4,
+          };
+        }
+        return window.DEMO_DATA.companySettings;
+      },
+      update(updates) {
+        const current = this.get();
+        Object.assign(current, updates);
+        try {
+          localStorage.setItem(
+            "pharma_company_settings",
+            JSON.stringify(current),
+          );
+        } catch (e) {}
+        autoSave("companySettings", "update", current);
+        return current;
+      },
+    },
   };
 
   window.store = store;

@@ -77,6 +77,19 @@ function renderDoctorsReport() {
     countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? "Doctor" : "Doctors"}`;
   }
 
+  if (typeof window.renderDoctorClassesChart === "function") {
+    const classACount = docs.filter((d) => d.class === "A").length;
+    const classBCount = docs.filter((d) => d.class === "B").length;
+    const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+    const repVal = repFilter ? repFilter.value : "all";
+    let hospitalsCount = allHospitals.length;
+    if (repVal && repVal !== "all") {
+      hospitalsCount = allHospitals.filter((h) => !h.repId || h.repId === repVal).length;
+    }
+    hospitalsCount += docs.filter((d) => d.type === "hospital" || d.class === "hospital").length;
+    window.renderDoctorClassesChart("repDoctorClassesChart", classACount, classBCount, hospitalsCount);
+  }
+
   if (filtered.length === 0) {
     grid.style.display = "none";
     if (emptyState) emptyState.style.display = "block";

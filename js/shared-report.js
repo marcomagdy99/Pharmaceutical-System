@@ -252,7 +252,10 @@ const directoryTranslations = {
     dropZoneText: 'Click to browse or drag & drop CSV file here',
     dropZoneSubtext: 'Supports CSV format (Comma delimited)',
     previewTitle: 'Data Preview & Validation',
-    btnConfirmImport: 'Confirm & Import'
+    btnConfirmImport: 'Confirm & Import',
+    salesTrendTitle: 'Monthly Sales vs Target Trend',
+    coverageGaugeTitle: 'Doctor Coverage Speedometer Gauge',
+    doctorClassesTitle: 'Doctor Classes & Hospitals Distribution'
   },
   ar: {
     tabDoctorsList: 'قائمة الأطباء',
@@ -322,7 +325,10 @@ const directoryTranslations = {
     dropZoneText: 'انقر للاختيار أو اسحب الملف وأفلته هنا',
     dropZoneSubtext: 'يدعم ملفات CSV (مفصولة بفواصل)',
     previewTitle: 'معاينة وفحص صحة البيانات',
-    btnConfirmImport: 'تأكيد واستيراد'
+    btnConfirmImport: 'تأكيد واستيراد',
+    salesTrendTitle: 'منحنى تحقيق المبيعات شهرياً',
+    coverageGaugeTitle: 'مؤشر قياس التغطية',
+    doctorClassesTitle: 'توزيع فئات الأطباء والمستشفيات'
   }
 };
 

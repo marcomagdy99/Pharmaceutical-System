@@ -53,6 +53,9 @@
                         <span id="visitsPageTitle" data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
                     </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="toggleCompanyGpsPolicy()" id="adminGpsPolicyBtn" style="display: none;" title="Toggle Company GPS Enforcement Policy">
+                            📍 <span id="adminGpsPolicyLabel">GPS: Active</span>
+                        </button>
                         <button class="btn btn-outline" onclick="exportVisitsToCSV()" id="exportVisitsBtn" title="Export to CSV/Excel">
                             📥 <span data-i18n="btnExportCSV">Export CSV</span>
                         </button>

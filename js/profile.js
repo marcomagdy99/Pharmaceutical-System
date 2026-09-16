@@ -37,6 +37,14 @@ const profileTranslations = {
     managed_by_admin_hint: "Official personal & employee details are managed by the System Administrator or HR.",
     manage_users_link: "Manage in Users Module",
     photo_updated: "Profile photo updated successfully!",
+    companyGovernanceTitle: "Company Field Governance & Policies",
+    adminExclusive: "Admin Exclusive",
+    companyGovernanceDesc: "Configure organizational policies that apply across all Medical Representatives and Managers in the field.",
+    toggleGpsLabel: "Enforce GPS Location Verification for Visits",
+    toggleGpsHint: "When enabled, reps must record visits within the clinic geofence. If rep disables GPS, an audit flag is reported to the manager.",
+    gpsRadiusLabel: "Geofencing Validation Radius (Meters)",
+    saveCompanyPolicies: "Save Company Policies",
+    companyPoliciesSaved: "Company field policies updated successfully!",
   },
   ar: {
     upload_photo: "رفع صورة",
@@ -71,6 +79,14 @@ const profileTranslations = {
     managed_by_admin_hint: "البيانات الشخصية والوظيفية الرسمية يتم تعديلها فقط من قِبل إدارة النظام أو الموارد البشرية.",
     manage_users_link: "إدارة بيانات الموظفين في شاشة المستخدمين",
     photo_updated: "تم تحديث الصورة الشخصية بنجاح!",
+    companyGovernanceTitle: "إعدادات وسياسات الشركة الميدانية",
+    adminExclusive: "خاص بالإدارة العامة",
+    companyGovernanceDesc: "تهيئة السياسات التنظيمية الملزمة لكافة المناديب والمشرفين والمديرين في الميدان.",
+    toggleGpsLabel: "إلزام التحقق الجغرافي بالـ GPS للزيارات الميدانية",
+    toggleGpsHint: "عند التفعيل، يتم فحص تواجد المندوب داخل نطاق العيادة/المستشفى (200 متر). وفي حال تعطيل المندوب للـ GPS يتم تسجيل شارة تدقيق للمدير.",
+    gpsRadiusLabel: "نصف قطر نطاق العيادة المسموح به (بالأمتار)",
+    saveCompanyPolicies: "حفظ سياسات الشركة",
+    companyPoliciesSaved: "تم حفظ وتطبيق سياسات الشركة بنجاح على جميع المستخدمين!",
   },
 };
 
@@ -341,4 +357,49 @@ function loadUserProfile() {
   const unpaidProg = document.getElementById("unpaidLeaveProgress");
   if (unpaidText) unpaidText.innerHTML = `${used.unpaid} <span>${daysSuffix}</span>`;
   if (unpaidProg) unpaidProg.style.width = used.unpaid > 0 ? "100%" : "0%";
+
+  const adminCompanyCard = document.getElementById("adminCompanySettingsCard");
+  if (adminCompanyCard) {
+    if (user.role === "admin") {
+      adminCompanyCard.style.display = "block";
+      const currentSettings = (window.store && window.store.companySettings)
+        ? window.store.companySettings.get()
+        : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+      const toggleInput = document.getElementById("toggleGpsValidation");
+      const radiusInput = document.getElementById("gpsMaxRadiusInput");
+      if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
+      if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
+    } else {
+      adminCompanyCard.style.display = "none";
+    }
+  }
 }
+
+function handleSaveCompanySettings(e) {
+  if (e) e.preventDefault();
+  const toggleInput = document.getElementById("toggleGpsValidation");
+  const radiusInput = document.getElementById("gpsMaxRadiusInput");
+
+  const requireGpsValidation = toggleInput ? toggleInput.checked : true;
+  const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
+
+  if (window.store && window.store.companySettings) {
+    window.store.companySettings.update({
+      requireGpsValidation,
+      gpsMaxDistanceMeters,
+    });
+  }
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const t = profileTranslations[lang] || profileTranslations.en;
+  const msg = t.companyPoliciesSaved || "Company field policies updated successfully!";
+
+  if (typeof showToast === "function") {
+    showToast(msg, "success");
+  } else {
+    alert(msg);
+  }
+}
+
+window.handleSaveCompanySettings = handleSaveCompanySettings;
