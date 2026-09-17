@@ -378,6 +378,11 @@ function loadUserProfile() {
 
 function handleSaveCompanySettings(e) {
   if (e) e.preventDefault();
+  const user = (window.checkAuth && window.checkAuth());
+  if (!user || user.role !== "admin") {
+    if (typeof showToast === "function") showToast("Access Denied: Admin only.", "error");
+    return;
+  }
   const toggleInput = document.getElementById("toggleGpsValidation");
   const radiusInput = document.getElementById("gpsMaxRadiusInput");
 

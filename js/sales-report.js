@@ -519,8 +519,8 @@ function handleExcelUpload(e) {
         // Sheets from these distributors use plain numbers or numbers
         // with thousands separators; strip anything that isn't a digit,
         // minus sign, or decimal point before parsing.
-        const numericValue = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ''));
-        const numericQuantity = map.quantity
+        const numericValueRaw = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ''));
+        let numericQuantity = map.quantity && quantityRaw !== '' && quantityRaw !== null && quantityRaw !== undefined
           ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ''))
           : null;
         // Best-effort date parsing: SheetJS may hand back a JS Date object
@@ -542,17 +542,32 @@ function handleExcelUpload(e) {
           }
         }
 
-        if (!product || isNaN(numericValue)) {
+        if (!product || isNaN(numericValueRaw)) {
           skippedInvalid++;
           return;
         }
-        // Negative values are returns/credit notes (both the Ibn Sina and
-        // Overseas sample sheets mix these into the same 'value' column).
-        // They're kept, not dropped, so they net out of the totals when
-        // summed -- and they stay visibly negative rather than being
-        // flipped to a positive "return amount".
-        if (numericValue < 0) {
+
+        let numericValue = numericValueRaw;
+
+        // A row is definitely a return/credit note if either the quantity is negative OR the value is negative
+        const hasNegativeQuantity = numericQuantity !== null && !isNaN(numericQuantity) && numericQuantity < 0;
+        const hasNegativeValue = numericValue < 0;
+        const isReturn = hasNegativeQuantity || hasNegativeValue;
+
+        if (isReturn) {
           returnsCount++;
+
+          // Enforce consistent negative signs on both dimensions for correct arithmetic deduction
+          numericValue = -Math.abs(numericValue);
+          if (numericQuantity !== null && !isNaN(numericQuantity)) {
+            numericQuantity = -Math.abs(numericQuantity);
+          }
+        } else {
+          // Ensure standard sales rows do not carry accidental negative artifacts
+          numericValue = Math.abs(numericValue);
+          if (numericQuantity !== null && !isNaN(numericQuantity)) {
+            numericQuantity = Math.abs(numericQuantity);
+          }
         }
 
         imported.push({
@@ -779,6 +794,12 @@ function renderTargetsTable() {
 }
 
 function openTargetsModal() {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') showToast(getCurrentLang() === 'ar' ? 'غير مصرح: إدارة الأهداف للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    return;
+  }
   targetsModalEl = document.getElementById('targetsModal');
   if (!targetsModalEl) return;
   populateTargetFormSelects();
@@ -849,6 +870,12 @@ function editTarget(id) {
 }
 
 function saveTarget() {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') showToast(getCurrentLang() === 'ar' ? 'غير مصرح: إدارة الأهداف للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    return;
+  }
   const editId = document.getElementById('targetEditId').value;
   const repId = document.getElementById('targetRepSelect').value;
   const productId = document.getElementById('targetProductSelect').value;
@@ -888,6 +915,12 @@ function saveTarget() {
 }
 
 function deleteTarget(id) {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') showToast(getCurrentLang() === 'ar' ? 'غير مصرح: إدارة الأهداف للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    return;
+  }
   if (!confirm('Delete this target?')) return;
   if (window.store && window.store.targets) {
     window.store.targets.delete(id);

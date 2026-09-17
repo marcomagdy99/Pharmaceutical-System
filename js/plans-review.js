@@ -458,13 +458,21 @@ function renderPlansReview(currentUser) {
               <tbody>
                 ${dayVisits
                   .map((v) => {
-                    const isHospital = (v.period || "").toLowerCase() === "am";
-                    const targetTypeBadge = isHospital
-                      ? `<span class="badge bg-info-subtle text-info fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeHospital}</span>`
-                      : `<span class="badge bg-primary-subtle text-primary fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeDoctor}</span>`;
+                    const isPharm =
+                      v.targetType === "pharmacy" ||
+                      (v.period || "").toLowerCase() === "pharmacy" ||
+                      (v.doctorId && String(v.doctorId).startsWith("pharm"));
+                    const isHospital =
+                      !isPharm && (v.period || "").toLowerCase() === "am";
+                    const targetTypeBadge = isPharm
+                      ? `<span class="badge bg-success-subtle text-success fw-bold target-badge" style="font-size: 0.7rem;">${lang === "ar" ? "صيدلية" : "Pharmacy"}</span>`
+                      : isHospital
+                        ? `<span class="badge bg-info-subtle text-info fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeHospital}</span>`
+                        : `<span class="badge bg-primary-subtle text-primary fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeDoctor}</span>`;
 
-                    const periodBadge =
-                      (v.period || "").toLowerCase() === "am"
+                    const periodBadge = isPharm
+                      ? `<span class="badge bg-success-subtle text-success fw-bold px-2 py-1" style="font-size: 0.75rem;">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+                      : (v.period || "").toLowerCase() === "am"
                         ? `<span class="badge bg-warning-subtle text-warning fw-bold px-2 py-1" style="font-size: 0.75rem;">AM</span>`
                         : `<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1" style="font-size: 0.75rem;">PM</span>`;
 

@@ -155,17 +155,22 @@ function syncReportsData() {
         // now falls back to the visit's own repName, or a generic label,
         // instead of silently being mislabeled as one of the two demo reps.
         const repName = rep ? rep.name : (v.repName || 'Unknown Rep');
-        const doc = REPORTS_DATA.doctors.find((d) => d.name === v.doctorName || d.id === v.doctorId);
+        const isPharm =
+          v.targetType === 'pharmacy' ||
+          (v.period && v.period.toLowerCase() === 'pharmacy') ||
+          (v.doctorId && String(v.doctorId).startsWith('pharm'));
+        const isHosp = !isPharm && (v.period && v.period.toLowerCase() === 'am');
         const mappedVisit = {
           id: v.id,
           doctorId: v.doctorId || (doc ? doc.id : undefined),
           targetName: v.doctorName || (doc ? doc.name : 'Unknown Target'),
-          class: doc ? doc.class : ((v.period && v.period.toLowerCase() === 'am') ? 'Hospital' : 'B'),
-          specialty: doc ? doc.specialty : ((v.period && v.period.toLowerCase() === 'am') ? 'Hospital' : 'General'),
-          type: (v.period && v.period.toLowerCase() === 'am') ? 'hospital' : 'doctor',
+          class: isPharm ? 'Pharmacy' : doc ? doc.class : (isHosp ? 'Hospital' : 'B'),
+          specialty: isPharm ? 'Pharmacy' : doc ? doc.specialty : (isHosp ? 'Hospital' : 'General'),
+          type: isPharm ? 'pharmacy' : (isHosp ? 'hospital' : 'doctor'),
+          targetType: isPharm ? 'pharmacy' : (isHosp ? 'hospital' : 'doctor'),
           date: v.date,
           time: v.time || '10:00',
-          period: (v.period || 'PM').toUpperCase(),
+          period: isPharm ? 'PHARM' : (v.period || 'PM').toUpperCase(),
           status: 'completed',
           isActual: v.source === 'actual' || v.isActual === true,
           repId: v.repId || 'rep1',
@@ -244,6 +249,9 @@ const directoryTranslations = {
     delete: 'Delete',
     btnImportDoctors: 'Import Sheet (.csv)',
     btnImportPharmacies: 'Import Sheet (.csv)',
+    btnExportDoctors: 'Export Directory',
+    btnExportPharmacies: 'Export Directory',
+    btnExportCSV: 'Export CSV',
     importDoctorsTitle: 'Import Doctors from Sheet',
     importDoctorsSubtitle: 'Download our standardized English template, fill physician data, and upload for instant bulk import.',
     importPharmaciesTitle: 'Import Pharmacies from Sheet',
@@ -329,6 +337,9 @@ const directoryTranslations = {
     delete: 'حذف',
     btnImportDoctors: 'استيراد من شيت (.csv)',
     btnImportPharmacies: 'استيراد من شيت (.csv)',
+    btnExportDoctors: 'تصدير اللستة (Export)',
+    btnExportPharmacies: 'تصدير اللستة (Export)',
+    btnExportCSV: 'تصدير CSV',
     importDoctorsTitle: 'استيراد أطباء من شيت إكسيل',
     importDoctorsSubtitle: 'قم بتحميل القالب الرسمي المعتمد باللغة الإنجليزية، املأ البيانات، وارفع الملف للاستيراد الفوري.',
     importPharmaciesTitle: 'استيراد صيدليات من شيت إكسيل',
@@ -473,6 +484,9 @@ function switchReportTab(tabKey) {
   if (tabKey === 'achievements') {
     if (typeof populateAchFilters === 'function') populateAchFilters();
   }
+  if (tabKey === 'doctors') {
+    if (typeof populateDoctorSpecialtyFilter === 'function') populateDoctorSpecialtyFilter();
+  }
 }
 
 // ============================================================================
@@ -499,6 +513,9 @@ function initAllFilters(user) {
   }
   populateTimelineAndCoverageFilters(user);
   populateDirectoryRepFilters(user);
+  if (typeof populateDoctorSpecialtyFilter === 'function') {
+    populateDoctorSpecialtyFilter();
+  }
 }
 
 function populateDirectoryRepFilters(user) {
@@ -1104,3 +1121,56 @@ function parseExcelFile(file, callback) {
   };
   reader.readAsArrayBuffer(file);
 }
+
+/**
+ * Generic Excel (.xlsx) or UTF-8 CSV exporter with BOM
+ */
+function downloadExcelOrCsv(filename, sheetName, dataRows, headers) {
+  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  if (typeof XLSX !== 'undefined') {
+    const wsData = [headers, ...dataRows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Auto-fit column widths
+    const colWidths = headers.map((h, i) => {
+      let maxLen = (h ? h.toString().length : 10);
+      dataRows.forEach((row) => {
+        const cell = row[i];
+        if (cell !== null && cell !== undefined) {
+          const len = cell.toString().length;
+          if (len > maxLen) maxLen = Math.min(len, 50);
+        }
+      });
+      return { wch: Math.max(maxLen + 4, 14) };
+    });
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    const successMsg = isAr ? 'تم تصدير ملف الإكسيل بنجاح (.xlsx)' : 'Excel file exported successfully (.xlsx)';
+    if (typeof showToast === 'function') showToast(successMsg, 'success');
+  } else {
+    // Fallback to UTF-8 CSV with BOM
+    const escapeCsv = (val) => {
+      const s = val === null || val === undefined ? '' : String(val);
+      if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    };
+    const csvContent = [headers.map(escapeCsv).join(','), ...dataRows.map((r) => r.map(escapeCsv).join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const successMsg = isAr ? 'تم تصدير الملف بنجاح (.csv)' : 'Directory exported successfully (.csv)';
+    if (typeof showToast === 'function') showToast(successMsg, 'success');
+  }
+}
+window.downloadExcelOrCsv = downloadExcelOrCsv;

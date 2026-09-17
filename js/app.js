@@ -222,8 +222,8 @@ const DEFAULT_DEMO_DATA = {
     { id: "spec_other", code: "OTHER", name: "Other", nameAr: "أخرى" },
   ],
   areas: [
-    { id: "area1", name: "Nasr City", code: "CAI-N01", repId: "rep1" },
-    { id: "area2", name: "Heliopolis", code: "CAI-H01", repId: "rep2" },
+    { id: "area1", name: "Nasr City", code: "CAI-N01", repId: "rep1", lineId: "line1" },
+    { id: "area2", name: "Heliopolis", code: "CAI-H01", repId: "rep2", lineId: "line1" },
   ],
   productLines: [
     {
@@ -2118,11 +2118,35 @@ function checkAuth() {
   return DEMO_DATA.currentUser;
 }
 
+function enforcePageRoleSecurity() {
+  const user = checkAuth();
+  if (!user) return;
+  const path = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+
+  const restrictions = {
+    "users.html": ["admin", "hr"],
+    "distributors.html": ["admin"],
+    "areas.html": ["admin", "hr"],
+    "products.html": ["admin"],
+    "plans-review.html": ["admin", "district_manager", "line_manager", "business_unit"],
+  };
+
+  if (restrictions[path] && !restrictions[path].includes(role)) {
+    console.warn(`[RBAC] Access denied: role '${role}' cannot access '${path}'. Redirecting to index.html.`);
+    sessionStorage.setItem("pharma_rbac_denied", "true");
+    window.location.replace("index.html");
+  }
+}
+window.enforcePageRoleSecurity = enforcePageRoleSecurity;
+
 function requireAuth() {
   const user = checkAuth();
   if (!user && !window.location.href.includes("login.html")) {
     window.location.replace("login.html");
+    return null;
   }
+  enforcePageRoleSecurity();
   return user;
 }
 
@@ -2220,6 +2244,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const topbar = document.getElementById("topbar");
   if (topbar) {
     renderTopbar();
+  }
+
+  if (sessionStorage.getItem("pharma_rbac_denied") === "true") {
+    sessionStorage.removeItem("pharma_rbac_denied");
+    const isAr = (getCurrentLang && getCurrentLang() === "ar");
+    setTimeout(() => {
+      if (typeof showToast === "function") {
+        showToast(
+          isAr
+            ? "عفواً، لا تملك الصلاحية للوصول إلى هذه الصفحة."
+            : "Access Denied: You do not have permission to view this page.",
+          "error"
+        );
+      }
+    }, 200);
   }
 
   const sidebar = document.getElementById("sidebar");

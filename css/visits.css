@@ -583,10 +583,16 @@
     background-color: #1e2229;
 }
 
-.timeline-date-label {
+.timeline-date-label,
+.timeline-area-label,
+.timeline-period-label,
+.timeline-status-label {
     font-weight: 700;
     font-size: 0.95rem;
     color: var(--gray-800);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .timeline-date-badge {
@@ -772,6 +778,9 @@
 
 [data-theme="dark"] .manager-rep-filter-label,
 [data-theme="dark"] .timeline-date-label,
+[data-theme="dark"] .timeline-area-label,
+[data-theme="dark"] .timeline-period-label,
+[data-theme="dark"] .timeline-status-label,
 [data-theme="dark"] .timeline-target-title {
     color: #f1f3f5 !important;
 }

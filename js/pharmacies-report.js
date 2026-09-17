@@ -10,6 +10,72 @@ function getPharmaciesData() {
   return (window.DEMO_DATA && window.DEMO_DATA.pharmacies) || [];
 }
 
+function getScopedPharmacies(respectActiveFilters = true) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
+
+  let pharms = getPharmaciesData();
+
+  // Role scoping: Reps get all pharmacies assigned to their id OR located in any of their assigned areas
+  if (!isMgr) {
+    const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
+    const repAreaIds = repAreas.map((a) => a.id);
+    const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
+    pharms = pharms.filter((p) =>
+      p.repId === currentUser.id ||
+      (p.areaId && repAreaIds.includes(p.areaId)) ||
+      (p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
+    );
+  } else {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    let allowedTeamIds = null;
+
+    if (role === "district_manager") {
+      const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+      allowedTeamIds = [currentUser.id, ...teamRepIds];
+    } else if (role === "line_manager") {
+      const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+      const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      allowedTeamIds = [currentUser.id, ...dmIds, ...repIds];
+    } else if (role === "business_unit") {
+      const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
+      const myLmIds = myLMs.map((u) => u.id);
+      const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+      const myDownstreamIds = myDownstream.map((u) => u.id);
+      allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
+    }
+
+    if (allowedTeamIds) {
+      pharms = pharms.filter((p) => !p.repId || allowedTeamIds.includes(p.repId));
+    }
+
+    const repFilter = document.getElementById("pharmacyRepSelect");
+    const repId = repFilter ? repFilter.value : "all";
+    if (repId !== "all") {
+      pharms = pharms.filter((p) => p.repId === repId);
+    }
+  }
+
+  if (!respectActiveFilters) {
+    return pharms;
+  }
+
+  const searchInput = document.getElementById("pharmacySearchInput");
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+  return pharms.filter((p) => {
+    return (
+      !query ||
+      (p.name && p.name.toLowerCase().includes(query)) ||
+      (p.nameAr && p.nameAr.toLowerCase().includes(query)) ||
+      (p.address && p.address.toLowerCase().includes(query)) ||
+      (p.contactPerson && p.contactPerson.toLowerCase().includes(query)) ||
+      (p.phone && p.phone.toLowerCase().includes(query))
+    );
+  });
+}
+
 function renderPharmaciesReport() {
   const prompt = document.getElementById("pharmaciesPromptContainer");
   const results = document.getElementById("pharmaciesResultsContainer");
@@ -22,54 +88,7 @@ function renderPharmaciesReport() {
   if (countBadge) countBadge.style.display = "inline-flex";
   if (!grid) return;
 
-  const searchInput = document.getElementById("pharmacySearchInput");
-  const repFilter = document.getElementById("pharmacyRepSelect");
-
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
-  const repId = repFilter ? repFilter.value : "all";
-
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
-  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
-  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
-
-  let pharms = getPharmaciesData();
-
-  // Role scoping
-  if (!isMgr) {
-    pharms = pharms.filter((p) => p.repId === currentUser.id);
-  } else if (repId !== "all") {
-    pharms = pharms.filter((p) => p.repId === repId);
-  } else if (role === "district_manager") {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
-    teamRepIds.push(currentUser.id);
-    pharms = pharms.filter((p) => !p.repId || teamRepIds.includes(p.repId));
-  } else if (role === "line_manager") {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
-    const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
-    const teamIds = [currentUser.id, ...dmIds, ...repIds];
-    pharms = pharms.filter((p) => !p.repId || teamIds.includes(p.repId));
-  } else if (role === "business_unit") {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
-    const myLmIds = myLMs.map((u) => u.id);
-    const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
-    const myDownstreamIds = myDownstream.map((u) => u.id);
-    const allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
-    pharms = pharms.filter((p) => !p.repId || allowedTeamIds.includes(p.repId));
-  }
-
-  // Search filter
-  const filtered = pharms.filter((p) => {
-    return (
-      !query ||
-      (p.name && p.name.toLowerCase().includes(query)) ||
-      (p.address && p.address.toLowerCase().includes(query)) ||
-      (p.contactPerson && p.contactPerson.toLowerCase().includes(query)) ||
-      (p.phone && p.phone.toLowerCase().includes(query))
-    );
-  });
+  const filtered = getScopedPharmacies(true);
 
   if (countBadge) {
     countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? "Pharmacy" : "Pharmacies"}`;
@@ -288,6 +307,80 @@ function initPharmaciesDirectory(user) {
   // Directories only render when user clicks Show
 }
 
+function exportPharmaciesDirectory() {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  const pharmsToExport = getScopedPharmacies(true);
+
+  if (!pharmsToExport || pharmsToExport.length === 0) {
+    const msg = isAr ? "لا توجد بيانات صيدليات لتصديرها." : "No pharmacy records found to export.";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    return;
+  }
+
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+  const headers = isAr
+    ? ["اسم الصيدلية", "المنطقة", "العنوان", "مسؤول التواصل / الصيدلي", "رقم الهاتف", "المندوب المسؤول"]
+    : ["Pharmacy Name", "Area", "Address", "Contact Person", "Phone", "Representative"];
+
+  const rows = pharmsToExport.map((p) => {
+    const pharmName = isAr ? (p.nameAr || p.name || "") : (p.name || p.nameAr || "");
+
+    let areaName = p.area || "";
+    if (!areaName && p.areaId) {
+      const a = allAreas.find((x) => x.id === p.areaId);
+      if (a) areaName = a.name;
+    }
+
+    const addr = p.address || "";
+    const contact = p.contactPerson || "";
+    const phone = p.phone || "";
+
+    let repName = "";
+    if (p.repId) {
+      const u = allUsers.find((x) => x.id === p.repId);
+      if (u) repName = u.name;
+    }
+
+    return [pharmName, areaName, addr, contact, phone, repName];
+  });
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const fileName = isAr ? `دليل_الصيدليات_${dateStr}` : `pharmacies_directory_${dateStr}`;
+  const sheetTitle = isAr ? "الصيدليات" : "Pharmacies";
+
+  if (typeof window.downloadExcelOrCsv === "function") {
+    window.downloadExcelOrCsv(fileName, sheetTitle, rows, headers);
+  } else {
+    const escapeCsv = (val) => {
+      const s = val === null || val === undefined ? "" : String(val);
+      if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    };
+    const csvContent = [headers.map(escapeCsv).join(","), ...rows.map((r) => r.map(escapeCsv).join(","))].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileName}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const successMsg = isAr ? "تم تصدير الدليل بنجاح (.csv)" : "Directory exported successfully (.csv)";
+    if (typeof showToast === "function") showToast(successMsg, "success");
+  }
+}
+
+window.getScopedPharmacies = getScopedPharmacies;
+window.exportPharmaciesDirectory = exportPharmaciesDirectory;
 window.renderPharmaciesReport = renderPharmaciesReport;
 window.initPharmaciesDirectory = initPharmaciesDirectory;
 window.openPharmacyModal = openPharmacyModal;
@@ -297,3 +390,4 @@ window.openDeletePharmacyModal = openDeletePharmacyModal;
 window.closeDeletePharmacyModal = closeDeletePharmacyModal;
 window.confirmDeletePharmacy = confirmDeletePharmacy;
 window.onPharmacyFilterChange = onPharmacyFilterChange;
+

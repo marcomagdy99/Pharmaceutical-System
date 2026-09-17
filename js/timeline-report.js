@@ -83,24 +83,30 @@ function renderDailyTimeline() {
     }
   }
 
-  // Load stored activities across the range
+  // Load stored activities across the range for the target rep
+  const targetRepId = isRep ? user.id : (selectedRep !== 'all' ? selectedRep : user.id);
+  const targetUserObj = allUsers.find((u) => u.id === targetRepId) || user;
   let storedActivities = {};
   try {
-    const raw = localStorage.getItem('pharma_activities_data');
+    const userKey = `pharma_activities_data_${targetRepId}`;
+    let raw = localStorage.getItem(userKey);
+    if (!raw && targetRepId === 'rep1') {
+      raw = localStorage.getItem('pharma_activities_data');
+    }
     if (raw) storedActivities = JSON.parse(raw);
   } catch (e) {}
 
   const activityEvents = [];
-  const showOwnActivities = isRep || selectedRep === user.id;
+  const showOwnActivities = isRep || selectedRep !== 'all';
   if (showOwnActivities) {
     Object.keys(storedActivities).forEach((dateKey) => {
       if (dateKey < fromDate || dateKey > toDate) return;
       const dayActivities = storedActivities[dateKey] || {};
       if (dayActivities.AM && dayActivities.AM.type) {
-        activityEvents.push({ targetName: `${dayActivities.AM.type} (AM Activity)`, class: 'Activity', specialty: dayActivities.AM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '09:00', period: 'AM', repName: user.name, isActual: true });
+        activityEvents.push({ targetName: `${dayActivities.AM.type} (AM Activity)`, class: 'Activity', specialty: dayActivities.AM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '09:00', period: 'AM', repName: targetUserObj.name || user.name, isActual: true });
       }
       if (dayActivities.PM && dayActivities.PM.type) {
-        activityEvents.push({ targetName: `${dayActivities.PM.type} (PM Activity)`, class: 'Activity', specialty: dayActivities.PM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '14:00', period: 'PM', repName: user.name, isActual: true });
+        activityEvents.push({ targetName: `${dayActivities.PM.type} (PM Activity)`, class: 'Activity', specialty: dayActivities.PM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '14:00', period: 'PM', repName: targetUserObj.name || user.name, isActual: true });
       }
     });
   }
@@ -159,8 +165,8 @@ function renderDailyTimeline() {
     const isActual   = !!v.isActual;
     const borderClass = isActual ? 'actual-border' : 'planned-border';
     const dotClass    = isActual ? 'actual' : 'planned';
-    const badgeClass  = isActual ? 'actual' : 'planned';
-    const period      = (v.period || 'PM').toUpperCase();
+    const isPharm     = v.targetType === 'pharmacy' || (v.period || '').toLowerCase() === 'pharmacy' || (v.doctorId && String(v.doctorId).startsWith('pharm'));
+    const period      = isPharm ? (lang === 'ar' ? 'صيدلية' : 'PHARM') : (v.period || 'PM').toUpperCase();
 
     let badgeLabel = '';
     if (isActivity) {
@@ -171,10 +177,12 @@ function renderDailyTimeline() {
       badgeLabel = lang === 'ar' ? 'زيارة من الخطة (Planned Visit)' : 'Planned & Executed';
     }
 
-    // Colored AM/PM pill replaces the old time display
-    const periodPillStyle = period === 'AM'
-      ? 'background:#d1fae5; color:#065f46;'
-      : 'background:#dbeafe; color:#1e40af;';
+    // Colored AM/PM/PHARM pill replaces the old time display
+    const periodPillStyle = isPharm
+      ? 'background:#fef3c7; color:#92400e;'
+      : period === 'AM'
+        ? 'background:#d1fae5; color:#065f46;'
+        : 'background:#dbeafe; color:#1e40af;';
 
     const card = document.createElement('div');
     card.className = 'timeline-event-card';
@@ -183,7 +191,7 @@ function renderDailyTimeline() {
         <span style="font-size:0.8rem; color:var(--gray-500); font-weight:600; white-space:nowrap;">${v.date}</span>
         <span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.78rem; font-weight:700; ${periodPillStyle}">${period}</span>
         <div class="timeline-icon-dot ${dotClass}" style="font-size:1.1rem; display:flex; align-items:center; justify-content:center;">
-          ${isActivity ? '📝' : (v.type === 'hospital' ? '🏥' : '👨‍⚕️')}
+          ${isActivity ? '📝' : isPharm ? '💊' : (v.type === 'hospital' ? '🏥' : '👨‍⚕️')}
         </div>
       </div>
       <div class="timeline-content-box ${borderClass}">

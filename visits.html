@@ -76,7 +76,7 @@
                     <label for="filterRep" class="manager-rep-filter-label">
                         <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
                     </label>
-                    <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;">
+                    <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="renderVisitsTimeline(true); if(typeof populateAreaFilters==='function') populateAreaFilters();">
                         <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
                     </select>
                 </div>
@@ -88,6 +88,35 @@
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label class="timeline-date-label" data-i18n="timelineSelectDate">Select Date:</label>
                                 <input type="date" id="timelineDatePicker" class="form-control filter-input" style="width: auto;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label class="timeline-area-label" for="timelineAreaFilter">
+                                    <span>📍</span> <span data-i18n="filterArea">Area:</span>
+                                </label>
+                                <select id="timelineAreaFilter" class="form-control filter-input" style="min-width: 140px; width: auto;" onchange="renderVisitsTimeline(true)">
+                                    <option value="all" data-i18n="allAreas">All Areas</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label class="timeline-period-label" for="timelinePeriodFilter">
+                                    <span>⏰</span> <span data-i18n="filterPeriod">Period:</span>
+                                </label>
+                                <select id="timelinePeriodFilter" class="form-control filter-input" style="min-width: 130px; width: auto;" onchange="renderVisitsTimeline(true)">
+                                    <option value="all" data-i18n="allPeriods">All Periods</option>
+                                    <option value="am" data-i18n="periodAM">AM (Hospitals)</option>
+                                    <option value="pm" data-i18n="periodPM">PM (Doctors)</option>
+                                    <option value="pharmacy" data-i18n="periodPharm">Pharmacy</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label class="timeline-status-label" for="timelineStatusFilter">
+                                    <span>📊</span> <span data-i18n="filterStatus">Status:</span>
+                                </label>
+                                <select id="timelineStatusFilter" class="form-control filter-input" style="min-width: 130px; width: auto;" onchange="renderVisitsTimeline(true)">
+                                    <option value="all" data-i18n="allStatuses">All Statuses</option>
+                                    <option value="actual" data-i18n="statusExecuted">Executed / Actual</option>
+                                    <option value="plan" data-i18n="statusPlannedOnly">Planned</option>
+                                </select>
                             </div>
                             <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)" style="padding: 6px 18px; border-radius: 6px; font-weight: 600;">
                                 🔍 <span data-i18n="btnShow">Show</span>
@@ -119,7 +148,7 @@
     
     <!-- Fast Bulk Plan Visits Modal -->
     <div class="modal" id="bulkPlanModal">
-        <div class="modal-content" style="max-width: 580px;">
+        <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <div class="modal-title" style="font-weight: 700; font-size: 1.25rem;">🗓️ Plan Visits (Multi-Select)</div>
                 <button class="close-btn" onclick="closeBulkPlanModal()">&times;</button>
@@ -145,9 +174,12 @@
                 </div>
             </div>
 
-            <div class="bulk-search-bar" style="margin-bottom: 12px; display: flex; gap: 8px;">
-                <input type="text" id="bulkSearchInput" class="form-control" placeholder="Search doctor by name or specialty..." oninput="filterBulkTargetsList()">
-                <select id="bulkClassFilter" class="form-control" style="max-width: 140px;" onchange="filterBulkTargetsList()">
+            <div class="bulk-search-bar" style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <input type="text" id="bulkSearchInput" class="form-control" style="flex: 1; min-width: 160px;" placeholder="Search doctor by name or specialty..." oninput="filterBulkTargetsList()">
+                <select id="bulkAreaFilter" class="form-control" style="max-width: 160px;" onchange="filterBulkTargetsList()">
+                    <option value="all" data-i18n="allAreas">All Areas</option>
+                </select>
+                <select id="bulkClassFilter" class="form-control" style="max-width: 130px;" onchange="filterBulkTargetsList()">
                     <option value="all">All Classes</option>
                     <option value="A">Class A Only</option>
                     <option value="B">Class B Only</option>

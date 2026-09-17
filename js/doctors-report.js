@@ -10,6 +10,128 @@ function getDoctorsData() {
   return (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
 }
 
+function populateDoctorSpecialtyFilter() {
+  const selectEl = document.getElementById("doctorSpecialtyFilter");
+  if (!selectEl) return;
+
+  const currentVal = selectEl.value || "all";
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  const allSpecs =
+    (window.store && window.store.specialties
+      ? window.store.specialties.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
+
+  const allLabel = isAr ? "جميع التخصصات" : "All Specialties";
+
+  let html = `<option value="all" data-i18n="allSpecialties">${allLabel}</option>`;
+  allSpecs.forEach((s) => {
+    const label = isAr ? (s.nameAr ? `${s.nameAr} (${s.name})` : s.name) : s.name;
+    const isSelected = (currentVal === s.name || currentVal === s.id) ? " selected" : "";
+    html += `<option value="${window.escapeHtml(s.name)}" data-id="${window.escapeHtml(s.id)}"${isSelected}>${window.escapeHtml(label)}</option>`;
+  });
+
+  selectEl.innerHTML = html;
+  if (currentVal && currentVal !== "all") {
+    selectEl.value = currentVal;
+  }
+}
+
+function getScopedDoctors(respectActiveFilters = true) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
+
+  let docs = getDoctorsData();
+
+  // Role scoping: Reps get all doctors assigned to their id OR located in any of their assigned areas
+  if (!isMgr) {
+    const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
+    const repAreaIds = repAreas.map((a) => a.id);
+    const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
+    docs = docs.filter((d) =>
+      d.repId === currentUser.id ||
+      (d.areaId && repAreaIds.includes(d.areaId)) ||
+      (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+    );
+  } else {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    let allowedTeamIds = null;
+
+    if (role === "district_manager") {
+      const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+      allowedTeamIds = [currentUser.id, ...teamRepIds];
+    } else if (role === "line_manager") {
+      const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+      const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      allowedTeamIds = [currentUser.id, ...dmIds, ...repIds];
+    } else if (role === "business_unit") {
+      const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
+      const myLmIds = myLMs.map((u) => u.id);
+      const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+      const myDownstreamIds = myDownstream.map((u) => u.id);
+      allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
+    }
+
+    if (allowedTeamIds) {
+      docs = docs.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
+    }
+
+    const repFilter = document.getElementById("doctorRepSelect");
+    const repId = repFilter ? repFilter.value : "all";
+    if (repId !== "all") {
+      docs = docs.filter((d) => d.repId === repId);
+    }
+  }
+
+  if (!respectActiveFilters) {
+    return docs;
+  }
+
+  const searchInput = document.getElementById("doctorSearchInput");
+  const specialtyFilter = document.getElementById("doctorSpecialtyFilter");
+  const classFilter = document.getElementById("doctorClassFilter");
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+  const specialty = specialtyFilter ? specialtyFilter.value : "all";
+  const docClass = classFilter ? classFilter.value : "all";
+
+  const allSpecs =
+    (window.store && window.store.specialties
+      ? window.store.specialties.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
+  const selectedSpecObj = allSpecs.find(
+    (s) => s.name === specialty || s.id === specialty,
+  );
+
+  return docs.filter((d) => {
+    const matchQuery =
+      !query ||
+      (d.name && d.name.toLowerCase().includes(query)) ||
+      (d.nameAr && d.nameAr.toLowerCase().includes(query)) ||
+      (d.address && d.address.toLowerCase().includes(query)) ||
+      (d.clinicAddress && d.clinicAddress.toLowerCase().includes(query)) ||
+      (d.phone && d.phone.toLowerCase().includes(query));
+
+    const matchSpecialty =
+      specialty === "all" ||
+      d.specialty === specialty ||
+      d.specialtyId === specialty ||
+      (d.specialtyAr && d.specialtyAr === specialty) ||
+      (selectedSpecObj &&
+        (d.specialtyId === selectedSpecObj.id ||
+          (d.specialty &&
+            d.specialty.toLowerCase() === selectedSpecObj.name.toLowerCase()) ||
+          (selectedSpecObj.nameAr && d.specialty === selectedSpecObj.nameAr) ||
+          (selectedSpecObj.nameAr && d.specialtyAr === selectedSpecObj.nameAr)));
+
+    const matchClass = docClass === "all" || d.class === docClass;
+
+    return matchQuery && matchSpecialty && matchClass;
+  });
+}
+
 function renderDoctorsReport() {
   const prompt = document.getElementById("doctorsPromptContainer");
   const results = document.getElementById("doctorsResultsContainer");
@@ -22,62 +144,13 @@ function renderDoctorsReport() {
   if (countBadge) countBadge.style.display = "inline-flex";
   if (!grid) return;
 
-  const searchInput = document.getElementById("doctorSearchInput");
   const specialtyFilter = document.getElementById("doctorSpecialtyFilter");
-  const classFilter = document.getElementById("doctorClassFilter");
-  const repFilter = document.getElementById("doctorRepSelect");
-
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
-  const specialty = specialtyFilter ? specialtyFilter.value : "all";
-  const docClass = classFilter ? classFilter.value : "all";
-  const repId = repFilter ? repFilter.value : "all";
-
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
-  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
-  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
-
-  let docs = getDoctorsData();
-
-  // Role scoping
-  if (!isMgr) {
-    docs = docs.filter((d) => d.repId === currentUser.id);
-  } else if (repId !== "all") {
-    docs = docs.filter((d) => d.repId === repId);
-  } else if (role === "district_manager") {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
-    teamRepIds.push(currentUser.id);
-    docs = docs.filter((d) => !d.repId || teamRepIds.includes(d.repId));
-  } else if (role === "line_manager") {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
-    const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
-    const teamIds = [currentUser.id, ...dmIds, ...repIds];
-    docs = docs.filter((d) => !d.repId || teamIds.includes(d.repId));
-  } else if (role === "business_unit") {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
-    const myLmIds = myLMs.map((u) => u.id);
-    const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
-    const myDownstreamIds = myDownstream.map((u) => u.id);
-    const allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
-    docs = docs.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
+  if (specialtyFilter && specialtyFilter.options.length <= 1) {
+    populateDoctorSpecialtyFilter();
   }
 
-  // Filters
-  const filtered = docs.filter((d) => {
-    const matchQuery =
-      !query ||
-      (d.name && d.name.toLowerCase().includes(query)) ||
-      (d.address && d.address.toLowerCase().includes(query)) ||
-      (d.clinicAddress && d.clinicAddress.toLowerCase().includes(query)) ||
-      (d.phone && d.phone.toLowerCase().includes(query));
-
-    const matchSpecialty = specialty === "all" || d.specialty === specialty;
-    const matchClass = docClass === "all" || d.class === docClass;
-
-    return matchQuery && matchSpecialty && matchClass;
-  });
+  const docs = getScopedDoctors(false);
+  const filtered = getScopedDoctors(true);
 
   if (countBadge) {
     countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? "Doctor" : "Doctors"}`;
@@ -337,9 +410,93 @@ function onDoctorLmChange() {}
 function onDoctorDmChange() {}
 
 function initDoctorsDirectory(user) {
-  // Directories only render when user clicks Show
+  populateDoctorSpecialtyFilter();
 }
 
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    populateDoctorSpecialtyFilter();
+  });
+} else {
+  populateDoctorSpecialtyFilter();
+}
+
+function exportDoctorsDirectory() {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  const docsToExport = getScopedDoctors(true);
+
+  if (!docsToExport || docsToExport.length === 0) {
+    const msg = isAr ? "لا توجد بيانات أطباء لتصديرها." : "No doctor records found to export.";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    return;
+  }
+
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+  const headers = isAr
+    ? ["اسم الطبيب", "التخصص", "الفئة", "المنطقة", "عنوان العيادة", "رقم الهاتف", "المندوب المسؤول"]
+    : ["Doctor Name", "Specialty", "Class", "Area", "Clinic Address", "Phone", "Representative"];
+
+  const rows = docsToExport.map((d) => {
+    const docName = isAr ? (d.nameAr || d.name || "") : (d.name || d.nameAr || "");
+    const spec = isAr ? (d.specialtyAr || d.specialty || "") : (d.specialty || d.specialtyAr || "");
+    const docClass = d.class || "";
+
+    let areaName = d.area || "";
+    if (!areaName && d.areaId) {
+      const a = allAreas.find((x) => x.id === d.areaId);
+      if (a) areaName = a.name;
+    }
+
+    const clinicAddr = d.clinicAddress || d.address || "";
+    const phone = d.phone || "";
+
+    let repName = "";
+    if (d.repId) {
+      const u = allUsers.find((x) => x.id === d.repId);
+      if (u) repName = u.name;
+    }
+
+    return [docName, spec, docClass, areaName, clinicAddr, phone, repName];
+  });
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const fileName = isAr ? `دليل_الأطباء_${dateStr}` : `doctors_directory_${dateStr}`;
+  const sheetTitle = isAr ? "الأطباء" : "Doctors";
+
+  if (typeof window.downloadExcelOrCsv === "function") {
+    window.downloadExcelOrCsv(fileName, sheetTitle, rows, headers);
+  } else {
+    const escapeCsv = (val) => {
+      const s = val === null || val === undefined ? "" : String(val);
+      if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    };
+    const csvContent = [headers.map(escapeCsv).join(","), ...rows.map((r) => r.map(escapeCsv).join(","))].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileName}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const successMsg = isAr ? "تم تصدير الدليل بنجاح (.csv)" : "Directory exported successfully (.csv)";
+    if (typeof showToast === "function") showToast(successMsg, "success");
+  }
+}
+
+window.getScopedDoctors = getScopedDoctors;
+window.exportDoctorsDirectory = exportDoctorsDirectory;
+window.populateDoctorSpecialtyFilter = populateDoctorSpecialtyFilter;
 window.renderDoctorsReport = renderDoctorsReport;
 window.initDoctorsDirectory = initDoctorsDirectory;
 window.openDoctorModal = openDoctorModal;
@@ -349,3 +506,4 @@ window.openDeleteDoctorModal = openDeleteDoctorModal;
 window.closeDeleteDoctorModal = closeDeleteDoctorModal;
 window.confirmDeleteDoctor = confirmDeleteDoctor;
 window.onDoctorFilterChange = onDoctorFilterChange;
+

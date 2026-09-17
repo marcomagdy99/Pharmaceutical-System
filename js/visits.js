@@ -105,6 +105,17 @@ const visitTranslations = {
     promptSelectDateAndShow: 'Select a date and click "Show" to view visits',
     promptSelectDateSub:
       "Choose your desired date and filters above, then click the Show button to load the daily visits timeline.",
+    filterArea: "Area:",
+    allAreas: "All Areas",
+    filterPeriod: "Period:",
+    allPeriods: "All Periods",
+    periodAM: "AM (Hospitals)",
+    periodPM: "PM (Doctors)",
+    periodPharm: "Pharmacy",
+    filterStatus: "Status:",
+    allStatuses: "All Statuses",
+    statusExecuted: "Executed / Actual",
+    statusPlannedOnly: "Planned",
   },
   ar: {
     visitsTitle: "الزيارات",
@@ -203,6 +214,17 @@ const visitTranslations = {
     promptSelectDateAndShow: "حدد التاريخ واضغط على «عرض» لعرض الزيارات",
     promptSelectDateSub:
       "اختر التاريخ المطلوب وفلتر الفريق أعلاه، ثم اضغط على زر «عرض» لتحميل الخط الزمني لزيارات اليوم.",
+    filterArea: "المنطقة:",
+    allAreas: "جميع المناطق",
+    filterPeriod: "الفترة:",
+    allPeriods: "كل الفترات",
+    periodAM: "AM (مستشفيات)",
+    periodPM: "PM (عيادات أطباء)",
+    periodPharm: "💊 صيدليات",
+    filterStatus: "الحالة:",
+    allStatuses: "كل الحالات",
+    statusExecuted: "منفذة / فعلية",
+    statusPlannedOnly: "مخططة",
   },
 };
 
@@ -244,6 +266,87 @@ function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId 
     v.status !== "rejected"
   );
 }
+
+function checkVisitDateAllowed(dateStr, repId, lang) {
+  if (!dateStr) return { allowed: true };
+  const isAr = lang === "ar";
+
+  // 1. Official public holidays check
+  const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays)
+    ? [...window.DEMO_DATA.publicHolidays]
+    : [];
+  try {
+    const cachedHolidays = localStorage.getItem("pharma_public_holidays");
+    if (cachedHolidays) {
+      const parsed = JSON.parse(cachedHolidays);
+      if (Array.isArray(parsed)) holidays.push(...parsed);
+    }
+  } catch (e) {}
+
+  const holiday = holidays.find((h) => h.date === dateStr);
+  if (holiday) {
+    const hTitle = holiday.title || (isAr ? "عطلة رسمية عامة" : "Public Holiday");
+    const msg = isAr
+      ? `⚠️ التاريخ المحدد (${dateStr}) يوافق عطلة رسمية عامة (${hTitle}). لا يُسمح بتسجيل أو تخطيط زيارات في العطلات الرسمية.`
+      : `⚠️ The selected date (${dateStr}) is an official public holiday (${hTitle}). Recording or planning visits on public holidays is not permitted.`;
+    return { allowed: false, reason: "public_holiday", message: msg };
+  }
+
+  // 2. Employee leaves check (both approved and pending, non-rejected)
+  const leaves = (window.store && window.store.leaves
+    ? window.store.leaves.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
+
+  const matchedLeave = leaves.find((l) => {
+    if (l.userId !== repId) return false;
+    if (l.status === "rejected") return false;
+    const lStart = l.startDate || l.endDate;
+    const lEnd = l.endDate || l.startDate;
+    if (!lStart || !lEnd) return false;
+    return dateStr >= lStart && dateStr <= lEnd;
+  });
+
+  if (matchedLeave) {
+    const typeNamesAr = {
+      annual: "اعتيادية",
+      casual: "عارضة",
+      sick: "مرضية",
+      emergency: "عارضة/طارئة",
+      unpaid: "بدون راتب",
+    };
+    const typeNamesEn = {
+      annual: "Annual",
+      casual: "Casual",
+      sick: "Sick",
+      emergency: "Casual",
+      unpaid: "Unpaid",
+    };
+    const statusLabelsAr = {
+      approved: "معتمدة",
+      pending: "قيد الانتظار",
+    };
+    const statusLabelsEn = {
+      approved: "Approved",
+      pending: "Pending Approval",
+    };
+
+    const lType = isAr
+      ? (typeNamesAr[matchedLeave.type] || matchedLeave.type)
+      : (typeNamesEn[matchedLeave.type] || matchedLeave.type);
+    const lStatus = isAr
+      ? (statusLabelsAr[matchedLeave.status] || matchedLeave.status)
+      : (statusLabelsEn[matchedLeave.status] || matchedLeave.status);
+
+    const msg = isAr
+      ? `⚠️ لديك طلب إجازة مسجل (${lStatus}: ${lType}) في هذا التاريخ (${dateStr}). لا يُسمح بتسجيل أو تخطيط زيارات أثناء الإجازات.`
+      : `⚠️ You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
+
+    return { allowed: false, reason: "employee_leave", message: msg };
+  }
+
+  return { allowed: true };
+}
+window.checkVisitDateAllowed = checkVisitDateAllowed;
 
 function isWorkdayExemptFromMinVisits(dateStr, repId) {
   if (!dateStr) return { exempt: false };
@@ -563,12 +666,16 @@ const isManager =
 
 function getReportingReps() {
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  if (
-    currentUserRole === "admin" ||
-    currentUserRole === "business_unit" ||
-    currentUserRole === "hr"
-  ) {
+  if (currentUserRole === "admin" || currentUserRole === "hr") {
     return allUsers.filter((u) =>
+      window.isRepRole
+        ? window.isRepRole(u)
+        : u.role === "medical_rep" || u.role === "rep",
+    );
+  }
+  if (currentUserRole === "business_unit") {
+    const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+    return downstream.filter((u) =>
       window.isRepRole
         ? window.isRepRole(u)
         : u.role === "medical_rep" || u.role === "rep",
@@ -652,6 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   setupRoleBasedView();
+  populateAreaFilters();
   renderVisits(false);
   setupModalTargetFilter();
   updateTargetOptions();
@@ -677,6 +785,7 @@ function setupRoleBasedView() {
       filterRep.style.display = "inline-block";
       populateManagerRepDropdown();
     }
+    populateAreaFilters();
     const canLogVisits =
       currentUserRole === "district_manager" ||
       currentUserRole === "line_manager" ||
@@ -921,6 +1030,88 @@ function populateManagerRepDropdown() {
   }
 }
 
+function getAvailableAreas() {
+  const allAreas =
+    (window.store && window.store.areas
+      ? window.store.areas.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+
+  if (!isManager) {
+    const repAreas =
+      window.store && window.store.areas
+        ? window.store.areas.getByRep(currentUser.id)
+        : [];
+    if (repAreas.length > 0) return repAreas;
+
+    if (
+      currentUser.areaIds &&
+      Array.isArray(currentUser.areaIds) &&
+      currentUser.areaIds.length > 0
+    ) {
+      return allAreas.filter((a) => currentUser.areaIds.includes(a.id));
+    }
+    if (currentUser.areaId) {
+      return allAreas.filter((a) => a.id === currentUser.areaId);
+    }
+    if (currentUser.area) {
+      const names = currentUser.area.split(",").map((s) => s.trim().toLowerCase());
+      return allAreas.filter((a) => names.includes(a.name.toLowerCase()));
+    }
+
+    const myDocs = getMockDoctors().filter((d) => d.repId === currentUser.id);
+    const docAreaNames = [...new Set(myDocs.map((d) => d.area).filter(Boolean))];
+    const docAreaIds = [...new Set(myDocs.map((d) => d.areaId).filter(Boolean))];
+    const foundAreas = allAreas.filter(
+      (a) => docAreaIds.includes(a.id) || docAreaNames.includes(a.name),
+    );
+    return foundAreas.length > 0 ? foundAreas : allAreas;
+  }
+
+  const filterRepVal = document.getElementById("filterRep")?.value || "all";
+  if (filterRepVal !== "all" && !filterRepVal.startsWith("all_")) {
+    const repAreas =
+      window.store && window.store.areas
+        ? window.store.areas.getByRep(filterRepVal)
+        : [];
+    if (repAreas.length > 0) return repAreas;
+    return allAreas.filter((a) => a.repId === filterRepVal);
+  }
+
+  return allAreas;
+}
+
+function populateAreaFilters() {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const areas = getAvailableAreas();
+
+  const timelineFilter = document.getElementById("timelineAreaFilter");
+  if (timelineFilter) {
+    const curVal = timelineFilter.value || "all";
+    const allLabel = isAr ? "جميع المناطق" : "All Areas";
+    let html = `<option value="all">${allLabel}</option>`;
+    areas.forEach((a) => {
+      const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
+      html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
+    });
+    timelineFilter.innerHTML = html;
+  }
+
+  const bulkFilter = document.getElementById("bulkAreaFilter");
+  if (bulkFilter) {
+    const curVal = bulkFilter.value || "all";
+    const allLabel = isAr ? "جميع المناطق" : "All Areas";
+    let html = `<option value="all">${allLabel}</option>`;
+    areas.forEach((a) => {
+      const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
+      html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
+    });
+    bulkFilter.innerHTML = html;
+  }
+}
+window.populateAreaFilters = populateAreaFilters;
+window.getAvailableAreas = getAvailableAreas;
+
 function getScopedVisits() {
   let list = demoVisits;
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
@@ -1031,9 +1222,11 @@ function getScopedVisits() {
     } else if (selectedFilter === "all_reps") {
       list = list.filter((v) => repIds.includes(v.repId));
     } else {
+      const allowedLmFilter = [...dmIds, ...repIds, currentUser.id];
       list = list.filter(
         (v) =>
-          v.repId === selectedFilter || v.doubleWithUserId === selectedFilter,
+          (v.repId === selectedFilter || v.doubleWithUserId === selectedFilter) &&
+          allowedLmFilter.includes(selectedFilter),
       );
     }
   } else {
@@ -1054,10 +1247,12 @@ function getScopedVisits() {
           v.repId === currentUser.id || v.doubleWithUserId === currentUser.id,
       );
     } else {
+      const allowedDmFilter = [...myRepsIds, currentUser.id];
       list = list.filter(
         (v) =>
-          v.repId === selectedRepFilter ||
-          v.doubleWithUserId === selectedRepFilter,
+          (v.repId === selectedRepFilter ||
+          v.doubleWithUserId === selectedRepFilter) &&
+          allowedDmFilter.includes(selectedRepFilter),
       );
     }
   }
@@ -1074,6 +1269,10 @@ const visitsApp = {
   openBulkPlanModal() {
     const modal = document.getElementById("bulkPlanModal");
     if (!modal) return;
+
+    if (typeof populateAreaFilters === "function") {
+      populateAreaFilters();
+    }
 
     const bulkDateInput = document.getElementById("bulkPlanDate");
     if (bulkDateInput) {
@@ -1110,6 +1309,8 @@ const visitsApp = {
       .trim();
     const classFilter =
       document.getElementById("bulkClassFilter")?.value || "all";
+    const areaFilter =
+      document.getElementById("bulkAreaFilter")?.value || "all";
     const selectAllCb = document.getElementById("bulkSelectAllToggle");
     if (selectAllCb) selectAllCb.checked = false;
 
@@ -1117,52 +1318,90 @@ const visitsApp = {
     const isHospital = period.toLowerCase() === "am";
     let sourceList = isHospital ? getMockHospitals() : getMockDoctors();
 
-    if (!isHospital) {
-      const role = window.normalizeRole
-        ? window.normalizeRole(currentUser.role)
-        : (currentUser.role || "").toLowerCase();
-      const allUsers =
-        (window.store && window.store.users
-          ? window.store.users.getAll()
-          : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const role = window.normalizeRole
+      ? window.normalizeRole(currentUser.role)
+      : (currentUser.role || "").toLowerCase();
+    const allUsers =
+      (window.store && window.store.users
+        ? window.store.users.getAll()
+        : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const allAreas =
+      (window.store && window.store.areas
+        ? window.store.areas.getAll()
+        : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
 
-      if (role === "medical_rep") {
-        sourceList = sourceList.filter(
-          (d) => d.repId === currentUser.id,
-        );
-      } else if (role === "district_manager") {
-        const myReps = allUsers
-          .filter((u) => u.managerId === currentUser.id)
-          .map((u) => u.id);
-        const allowed = [...myReps, currentUser.id];
-        sourceList = sourceList.filter(
-          (d) => !d.repId || allowed.includes(d.repId),
-        );
-      } else if (role === "line_manager") {
-        const myDms = allUsers
-          .filter((u) => u.managerId === currentUser.id)
-          .map((u) => u.id);
-        const myReps = allUsers
-          .filter((u) => myDms.includes(u.managerId))
-          .map((u) => u.id);
-        const allowed = [currentUser.id, ...myDms, ...myReps];
-        sourceList = sourceList.filter(
-          (d) => !d.repId || allowed.includes(d.repId),
-        );
-      }
+    if (role === "medical_rep") {
+      const repAreas =
+        window.store && window.store.areas
+          ? window.store.areas.getByRep(currentUser.id)
+          : [];
+      const repAreaIds = repAreas.map((a) => a.id);
+      const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
+      sourceList = sourceList.filter(
+        (d) =>
+          d.repId === currentUser.id ||
+          (d.areaId && repAreaIds.includes(d.areaId)) ||
+          (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+      );
+    } else if (role === "district_manager") {
+      const myReps = allUsers
+        .filter((u) => u.managerId === currentUser.id)
+        .map((u) => u.id);
+      const allowed = [...myReps, currentUser.id];
+      sourceList = sourceList.filter(
+        (d) => !d.repId || allowed.includes(d.repId),
+      );
+    } else if (role === "line_manager") {
+      const myDms = allUsers
+        .filter((u) => u.managerId === currentUser.id)
+        .map((u) => u.id);
+      const myReps = allUsers
+        .filter((u) => myDms.includes(u.managerId))
+        .map((u) => u.id);
+      const allowed = [currentUser.id, ...myDms, ...myReps];
+      sourceList = sourceList.filter(
+        (d) => !d.repId || allowed.includes(d.repId),
+      );
+    } else if (role === "business_unit") {
+      const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+      const allowed = [currentUser.id, ...downstream.map((u) => u.id)];
+      sourceList = sourceList.filter(
+        (d) => !d.repId || allowed.includes(d.repId),
+      );
     }
 
+    const selectedAreaObj = allAreas.find(
+      (a) => a.id === areaFilter || a.name === areaFilter,
+    );
+    const selectedAreaName = selectedAreaObj
+      ? selectedAreaObj.name.toLowerCase().trim()
+      : areaFilter.toLowerCase().trim();
+
     const filtered = sourceList.filter((item) => {
-      const nameMatch = item.name.toLowerCase().includes(searchTerm);
+      const nameMatch =
+        (item.name || "").toLowerCase().includes(searchTerm) ||
+        (item.nameAr || "").toLowerCase().includes(searchTerm);
       const specMatch = item.specialty
         ? item.specialty.toLowerCase().includes(searchTerm)
         : false;
-      const addrMatch = item.address
-        ? item.address.toLowerCase().includes(searchTerm)
-        : false;
+      const addrMatch =
+        (item.address && item.address.toLowerCase().includes(searchTerm)) ||
+        (item.clinicAddress && item.clinicAddress.toLowerCase().includes(searchTerm));
       const classMatch =
         classFilter === "all" || isHospital ? true : item.class === classFilter;
-      return (nameMatch || specMatch || addrMatch) && classMatch;
+
+      let areaMatch = true;
+      if (areaFilter !== "all") {
+        const matchId = item.areaId && item.areaId === areaFilter;
+        const matchName = item.area && item.area.toLowerCase().trim() === selectedAreaName;
+        const matchAddr =
+          selectedAreaName &&
+          ((item.clinicAddress && item.clinicAddress.toLowerCase().includes(selectedAreaName)) ||
+            (item.address && item.address.toLowerCase().includes(selectedAreaName)));
+        areaMatch = matchId || matchName || matchAddr;
+      }
+
+      return (nameMatch || specMatch || addrMatch) && classMatch && areaMatch;
     });
 
     if (filtered.length === 0) {
@@ -1172,12 +1411,21 @@ const visitsApp = {
     }
 
     filtered.forEach((target) => {
+      let targetArea = target.area;
+      if (!targetArea && target.areaId) {
+        const fa = allAreas.find((a) => a.id === target.areaId);
+        if (fa) targetArea = fa.name;
+      }
+      const areaBadge = targetArea
+        ? `<span class="badge" style="background: var(--gray-100, #f3f4f6); color: var(--gray-700, #374151); font-size: 0.72rem; margin-inline-start: 6px;">📍 ${window.escapeHtml(targetArea)}</span>`
+        : "";
+
       const itemDiv = document.createElement("label");
       itemDiv.className = "bulk-target-item";
       itemDiv.innerHTML = `
         <input type="checkbox" class="bulk-target-cb" value="${target.id}" data-name="${target.name}" onchange="visitsApp.updateBulkCounter()">
         <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 700; color: var(--gray-800); font-size: 0.9rem;">${target.name}</div>
+          <div style="font-weight: 700; color: var(--gray-800); font-size: 0.9rem;">${target.name}${areaBadge}</div>
           <div style="font-size: 0.75rem; color: var(--gray-500);">
             ${isHospital ? target.address || "Hospital" : `${target.specialty || "General"} • Class ${target.class || "A"}`}
           </div>
@@ -1244,6 +1492,15 @@ const visitsApp = {
       else alert(msg);
       return;
     }
+
+    const targetRepId = currentUser.id || "rep1";
+    const dateCheck = checkVisitDateAllowed(planDate, targetRepId, lang);
+    if (!dateCheck.allowed) {
+      if (typeof showToast === "function") showToast(dateCheck.message, "warning");
+      else alert(dateCheck.message);
+      return;
+    }
+
     const period =
       document.querySelector('input[name="bulkPeriod"]:checked')?.value || "pm";
 
@@ -1278,6 +1535,8 @@ const visitsApp = {
             v.repId === (currentUser.id || "rep1") &&
             v.date === planDate &&
             (v.period || "").toLowerCase() === "pm" &&
+            v.targetType !== "pharmacy" &&
+            !(v.doctorId && String(v.doctorId).startsWith("pharm")) &&
             v.status !== "rejected",
         ).length;
         const totalPm = existingPmCount + validBoxes.length;
@@ -1545,9 +1804,75 @@ function renderVisitsTimeline(triggeredByShow = false) {
 
   const selectedRepFilter =
     document.getElementById("filterRep")?.value || "all";
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const selectedAreaFilter =
+    document.getElementById("timelineAreaFilter")?.value || "all";
+  const selectedPeriodFilter =
+    document.getElementById("timelinePeriodFilter")?.value || "all";
+  const selectedStatusFilter =
+    document.getElementById("timelineStatusFilter")?.value || "all";
 
-  const scopedVisits = getScopedVisits().filter((v) => v.date === selectedDate);
+  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allDocs = getMockDoctors();
+  const allHosps = getMockHospitals();
+  const allPharms = getMockPharmacies();
+  const allAreas =
+    (window.store && window.store.areas
+      ? window.store.areas.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+
+  const selectedAreaObj = allAreas.find(
+    (a) => a.id === selectedAreaFilter || a.name === selectedAreaFilter,
+  );
+  const selectedAreaName = selectedAreaObj
+    ? selectedAreaObj.name.toLowerCase().trim()
+    : selectedAreaFilter.toLowerCase().trim();
+
+  function visitMatchesArea(v) {
+    if (selectedAreaFilter === "all") return true;
+    if (v.areaId && v.areaId === selectedAreaFilter) return true;
+    if (v.area && v.area.toLowerCase().trim() === selectedAreaName) return true;
+
+    const target =
+      allDocs.find((d) => d.id === v.doctorId || d.name === v.doctorName) ||
+      allHosps.find((h) => h.id === v.doctorId || h.name === v.doctorName) ||
+      allPharms.find((p) => p.id === v.doctorId || p.name === v.doctorName);
+
+    if (target) {
+      if (target.areaId && target.areaId === selectedAreaFilter) return true;
+      if (target.area && target.area.toLowerCase().trim() === selectedAreaName) return true;
+      if (selectedAreaName) {
+        const addr = (target.clinicAddress || target.address || "").toLowerCase();
+        if (addr.includes(selectedAreaName)) return true;
+      }
+    }
+    return false;
+  }
+
+  function visitMatchesPeriod(v) {
+    if (selectedPeriodFilter === "all") return true;
+    const isPharm =
+      v.targetType === "pharmacy" ||
+      (v.period || "").toLowerCase() === "pharmacy" ||
+      (v.doctorId && String(v.doctorId).startsWith("pharm"));
+    if (selectedPeriodFilter === "pharmacy") return isPharm;
+    if (isPharm) return false;
+    const p = (v.period || "pm").toLowerCase();
+    return p === selectedPeriodFilter.toLowerCase();
+  }
+
+  function visitMatchesStatus(v) {
+    if (selectedStatusFilter === "all") return true;
+    const isAct =
+      v.source === "actual" || v.isActual || v.status === "completed";
+    if (selectedStatusFilter === "actual") return isAct;
+    if (selectedStatusFilter === "plan") return !isAct && v.status !== "completed";
+    return true;
+  }
+
+  let scopedVisits = getScopedVisits().filter((v) => v.date === selectedDate);
+  scopedVisits = scopedVisits.filter(
+    (v) => visitMatchesArea(v) && visitMatchesPeriod(v) && visitMatchesStatus(v),
+  );
 
   let storedActivities = {};
   try {
@@ -1561,12 +1886,15 @@ function renderVisitsTimeline(triggeredByShow = false) {
   const activityEvents = [];
 
   const shouldIncludeActivities =
-    !isManager ||
-    selectedRepFilter === "all" ||
-    selectedRepFilter === currentUser.id;
+    (!isManager ||
+      selectedRepFilter === "all" ||
+      selectedRepFilter === currentUser.id) &&
+    selectedAreaFilter === "all" &&
+    selectedStatusFilter !== "plan" &&
+    selectedPeriodFilter !== "pharmacy";
 
   if (shouldIncludeActivities) {
-    if (dayActivities.AM && dayActivities.AM.type) {
+    if ((selectedPeriodFilter === "all" || selectedPeriodFilter === "am") && dayActivities.AM && dayActivities.AM.type) {
       activityEvents.push({
         doctorName: `${dayActivities.AM.type} (AM Activity)`,
         class: "Activity",
@@ -1588,7 +1916,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
       });
     }
 
-    if (dayActivities.PM && dayActivities.PM.type) {
+    if ((selectedPeriodFilter === "all" || selectedPeriodFilter === "pm") && dayActivities.PM && dayActivities.PM.type) {
       activityEvents.push({
         doctorName: `${dayActivities.PM.type} (PM Activity)`,
         class: "Activity",
@@ -1757,12 +2085,37 @@ function renderVisitsTimeline(triggeredByShow = false) {
       accompanimentNote = ` • <span style="color: #b45309; font-weight: 700;">👔 ${trans.supervisoryVisit}</span>`;
     }
 
+    const isPharmVisit =
+      v.targetType === "pharmacy" ||
+      (v.period || "").toLowerCase() === "pharmacy" ||
+      (v.doctorId && String(v.doctorId).startsWith("pharm"));
+    const periodDisplay = isPharmVisit
+      ? lang === "ar"
+        ? "صيدلية"
+        : "PHARM"
+      : (v.period || "PM").toUpperCase();
+
+    let targetArea = v.area;
+    if (!targetArea) {
+      const foundTarget =
+        allDocs.find((d) => d.name === v.doctorName || d.id === v.doctorId) ||
+        allHosps.find((h) => h.name === v.doctorName || h.id === v.doctorId) ||
+        allPharms.find((p) => p.name === v.doctorName || p.id === v.doctorId);
+      if (foundTarget) {
+        targetArea = foundTarget.area;
+        if (!targetArea && foundTarget.areaId) {
+          const fa = allAreas.find((a) => a.id === foundTarget.areaId);
+          if (fa) targetArea = fa.name;
+        }
+      }
+    }
+
     const card = document.createElement("div");
     card.className = "timeline-event-card";
     card.innerHTML = `
       <div class="timeline-time-col">
         <span>${v.time || "10:00"}</span>
-        <span style="font-size: 0.72rem; color: var(--gray-400);">${(v.period || "PM").toUpperCase()}</span>
+        <span style="font-size: 0.72rem; color: var(--gray-400);">${periodDisplay}</span>
         <div class="timeline-icon-dot ${dotClass}">
           ${icon}
         </div>
@@ -1776,7 +2129,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
           </div>
         </div>
         <div class="timeline-meta-row">
-          <span>🩺 ${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span> • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
+          <span>🩺 ${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span>${targetArea ? ` • <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-weight: 600; padding: 2px 8px; border-radius: 6px;">📍 ${window.escapeHtml(targetArea)}</span>` : ""} • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
         </div>
         ${
           (() => {
@@ -1797,7 +2150,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
             : ""
         }
         <div class="timeline-timestamp-chip">
-          ⏰ <strong>${trans.entryTimestamp}</strong> ${v.date} at ${v.time || "10:00"} ${(v.period || "PM").toUpperCase()}
+          ⏰ <strong>${trans.entryTimestamp}</strong> ${v.date} at ${v.time || "10:00"} ${periodDisplay}
         </div>
         ${
           !isActivity &&
@@ -2044,7 +2397,7 @@ function openVisitModal(isActual = false) {
 
   const radioPharm = document.getElementById("radioPharmacyLabel");
   if (radioPharm) {
-    radioPharm.style.display = isActual ? "inline-flex" : "none";
+    radioPharm.style.display = "inline-flex";
   }
 
   const pmRadio = document.querySelector(
@@ -2283,20 +2636,50 @@ function updateTargetOptions() {
       period.toLowerCase() === "pm" && isManager ? "block" : "none";
   }
 
+  const allUsers =
+    (window.store && window.store.users
+      ? window.store.users.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+  let allowedRepIds = [currentUser.id];
+  if (role === "admin" || role === "hr") {
+    allowedRepIds = null;
+  } else if (role === "district_manager") {
+    const myRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+    allowedRepIds = [currentUser.id, ...myRepIds];
+  } else if (role === "line_manager") {
+    const myDms = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+    const myReps = allUsers.filter((u) => myDms.includes(u.managerId)).map((u) => u.id);
+    allowedRepIds = [currentUser.id, ...myDms, ...myReps];
+  } else if (role === "business_unit") {
+    const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+    allowedRepIds = [currentUser.id, ...downstream.map((u) => u.id)];
+  }
+
   let options = [];
   if (period.toLowerCase() === "am") {
-    options = getMockHospitals();
+    const allHosps = getMockHospitals();
     if (targetLabel) targetLabel.textContent = isAr ? "المستشفى" : "Hospital";
+    if (!isManager) {
+      options = allHosps.filter((h) => !h.repId || h.repId === currentUser.id);
+    } else if (allowedRepIds) {
+      options = allHosps.filter((h) => !h.repId || allowedRepIds.includes(h.repId));
+    } else {
+      options = allHosps;
+    }
   } else if (period.toLowerCase() === "pharmacy") {
-    options = getMockPharmacies();
+    const allPharms = getMockPharmacies();
     if (targetLabel) targetLabel.textContent = isAr ? "الصيدلية" : "Pharmacy";
+    if (!isManager) {
+      options = allPharms.filter((p) => !p.repId || p.repId === currentUser.id);
+    } else if (allowedRepIds) {
+      options = allPharms.filter((p) => !p.repId || allowedRepIds.includes(p.repId));
+    } else {
+      options = allPharms;
+    }
   } else {
     if (targetLabel) targetLabel.textContent = isAr ? "الطبيب" : "Doctor";
     const allDocs = getMockDoctors();
-    const allUsers =
-      (window.store && window.store.users
-        ? window.store.users.getAll()
-        : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
     const selectedFilter = filterSelect ? filterSelect.value : "all";
 
     const inactiveUserIds = allUsers
@@ -2600,6 +2983,17 @@ function saveVisit() {
     }
   }
 
+  const targetRepId = currentEditVisitId
+    ? (demoVisits.find((v) => v.id === currentEditVisitId)?.repId || currentUser.id)
+    : currentUser.id;
+
+  const dateCheck = checkVisitDateAllowed(visitDate, targetRepId, lang);
+  if (!dateCheck.allowed) {
+    if (typeof showToast === "function") showToast(dateCheck.message, "warning");
+    else alert(dateCheck.message);
+    return;
+  }
+
   const typeChecked = document.querySelector('input[name="visitType"]:checked');
   const visitType = typeChecked ? typeChecked.value : "single";
   let doubleWithUserName = "";
@@ -2619,6 +3013,18 @@ function saveVisit() {
         companionCbs.some((cb) => cb.value.includes(u.name) || (cb.dataset && cb.dataset.userId === u.id)),
       );
       if (matchedUser) doubleWithUserId = matchedUser.id;
+    }
+
+    if (doubleWithUserId) {
+      const compCheck = checkVisitDateAllowed(visitDate, doubleWithUserId, lang);
+      if (!compCheck.allowed) {
+        const cMsg = lang === "ar"
+          ? `⚠️ المرافق المحدد في الزيارة المشتركة لديه إجازة مسجلة أو عطلة في هذا التاريخ (${visitDate}).`
+          : `⚠️ The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
+        if (typeof showToast === "function") showToast(cMsg, "warning");
+        else alert(cMsg);
+        return;
+      }
     }
   }
 
@@ -2651,6 +3057,15 @@ function saveVisit() {
       }
       visit.productIds = selectedProductIds;
       visit.products = selectedProductNames;
+
+      if (
+        visit.targetType === "pharmacy" ||
+        (visit.period || "").toLowerCase() === "pharmacy" ||
+        (visit.doctorId && String(visit.doctorId).startsWith("pharm"))
+      ) {
+        visit.targetType = "pharmacy";
+        visit.period = "pharmacy";
+      }
 
       const companySettings = (window.store && window.store.companySettings)
         ? window.store.companySettings.get()
@@ -2739,7 +3154,7 @@ function saveVisit() {
       doctorName: targetName,
       date: visitDate,
       time: visitTime,
-      period: isPharmacy ? "pm" : period,
+      period: isPharmacy ? "pharmacy" : period,
       targetType: isPharmacy
         ? "pharmacy"
         : period.toLowerCase() === "am"
@@ -2809,24 +3224,97 @@ function saveVisit() {
 // Section 9: Export Visits to CSV/Excel & Print
 // ============================================================================
 function exportVisitsToCSV() {
-  const fDate = document.getElementById("filterDate")?.value;
+  const dateInput =
+    document.getElementById("timelineDatePicker") ||
+    document.getElementById("filterDate");
+  const fDate = dateInput ? dateInput.value : null;
+  const repSelect = document.getElementById("filterRep");
+  const fRep = repSelect ? repSelect.value : "all";
+
   const fStatus = document.getElementById("filterStatus")?.value;
   const fPeriod = document.getElementById("filterPeriod")?.value;
   const fClass = document.getElementById("filterClass")?.value;
+  const fArea = document.getElementById("timelineAreaFilter")?.value || "all";
+  const fTimelinePeriod = document.getElementById("timelinePeriodFilter")?.value;
+  const fTimelineStatus = document.getElementById("timelineStatusFilter")?.value;
+
+  const allDocs = getMockDoctors();
+  const allHosps = getMockHospitals();
+  const allPharms = getMockPharmacies();
+  const allAreas =
+    (window.store && window.store.areas
+      ? window.store.areas.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
 
   let filtered = getScopedVisits();
 
+  if (fRep && fRep !== "all") {
+    filtered = filtered.filter((v) => v.repId === fRep);
+  }
   if (fDate) filtered = filtered.filter((v) => v.date === fDate);
-  if (fStatus && fStatus !== "all")
-    filtered = filtered.filter((v) => v.status === fStatus);
-  if (fPeriod && fPeriod !== "all")
-    filtered = filtered.filter(
-      (v) => v.period.toLowerCase() === fPeriod.toLowerCase(),
-    );
+
+  // Status Filter (table or timeline filter)
+  const activeStatus = (fStatus && fStatus !== "all") ? fStatus : (fTimelineStatus && fTimelineStatus !== "all" ? fTimelineStatus : null);
+  if (activeStatus) {
+    if (activeStatus === "completed" || activeStatus === "executed") {
+      filtered = filtered.filter((v) => v.source === "actual" || v.isActual || v.status === "completed");
+    } else if (activeStatus === "planned") {
+      filtered = filtered.filter((v) => (v.source === "plan" || v.source === "planned") && !v.isActual && v.status !== "completed");
+    } else {
+      filtered = filtered.filter((v) => v.status === activeStatus);
+    }
+  }
+
+  // Period Filter (table or timeline filter)
+  const activePeriod = (fPeriod && fPeriod !== "all") ? fPeriod : (fTimelinePeriod && fTimelinePeriod !== "all" ? fTimelinePeriod : null);
+  if (activePeriod) {
+    if (activePeriod.toLowerCase() === "pharmacy") {
+      filtered = filtered.filter(
+        (v) =>
+          v.targetType === "pharmacy" ||
+          (v.period || "").toLowerCase() === "pharmacy" ||
+          (v.doctorId && String(v.doctorId).startsWith("pharm")),
+      );
+    } else {
+      filtered = filtered.filter((v) => {
+        const isPharm =
+          v.targetType === "pharmacy" ||
+          (v.period || "").toLowerCase() === "pharmacy" ||
+          (v.doctorId && String(v.doctorId).startsWith("pharm"));
+        if (isPharm) return false;
+        return (v.period || "pm").toLowerCase() === activePeriod.toLowerCase();
+      });
+    }
+  }
+
+  // Area Filter
+  if (fArea && fArea !== "all") {
+    const selAreaObj = allAreas.find((a) => a.id === fArea || a.name === fArea);
+    const selAreaName = selAreaObj
+      ? selAreaObj.name.toLowerCase().trim()
+      : fArea.toLowerCase().trim();
+
+    filtered = filtered.filter((v) => {
+      if (v.areaId && v.areaId === fArea) return true;
+      if (v.area && v.area.toLowerCase().trim() === selAreaName) return true;
+      const target =
+        allDocs.find((d) => d.id === v.doctorId || d.name === v.doctorName) ||
+        allHosps.find((h) => h.id === v.doctorId || h.name === v.doctorName) ||
+        allPharms.find((p) => p.id === v.doctorId || p.name === v.doctorName);
+      if (target) {
+        if (target.areaId && target.areaId === fArea) return true;
+        if (target.area && target.area.toLowerCase().trim() === selAreaName) return true;
+        if (selAreaName) {
+          const addr = (target.clinicAddress || target.address || "").toLowerCase();
+          if (addr.includes(selAreaName)) return true;
+        }
+      }
+      return false;
+    });
+  }
+
   if (fClass && fClass !== "all") {
     filtered = filtered.filter((v) => {
-      const allDocs = getMockDoctors();
-      const allHosps = getMockHospitals();
       const doc = allDocs.find(
         (d) => d.name === v.doctorName || d.id === v.doctorId,
       );
@@ -2838,14 +3326,17 @@ function exportVisitsToCSV() {
       }
       if (fClass === "hospital") {
         return (
-          !!hosp ||
-          (v.period && v.period.toLowerCase() === "am") ||
-          (v.doctorId && v.doctorId.toString().startsWith("h"))
+          v.targetType !== "pharmacy" &&
+          (v.period || "").toLowerCase() !== "pharmacy" &&
+          (!!hosp ||
+            (v.period && v.period.toLowerCase() === "am") ||
+            (v.doctorId && v.doctorId.toString().startsWith("h")))
         );
       }
       if (fClass === "pharmacy") {
         return (
           v.targetType === "pharmacy" ||
+          (v.period && v.period.toLowerCase() === "pharmacy") ||
           (v.doctorId && v.doctorId.toString().startsWith("pharm"))
         );
       }
@@ -2854,10 +3345,24 @@ function exportVisitsToCSV() {
   }
 
   let csv =
-    "Target Name,Date,Time,Period,Type,Status,Source,Rep ID,Products,Comment\n";
+    "Target Name,Area,Date,Time,Period,Type,Status,Source,Rep ID,Products,Comment\n";
   filtered.forEach((v) => {
+    let areaName = v.area || "";
+    if (!areaName) {
+      const foundTarget =
+        allDocs.find((d) => d.name === v.doctorName || d.id === v.doctorId) ||
+        allHosps.find((h) => h.name === v.doctorName || h.id === v.doctorId) ||
+        allPharms.find((p) => p.name === v.doctorName || p.id === v.doctorId);
+      if (foundTarget) {
+        areaName = foundTarget.area || "";
+        if (!areaName && foundTarget.areaId) {
+          const fa = allAreas.find((a) => a.id === foundTarget.areaId);
+          if (fa) areaName = fa.name;
+        }
+      }
+    }
     const prods = (window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join("; ");
-    csv += `"${v.doctorName || ""}","${v.date || ""}","${v.time || ""}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${v.source || ""}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
+    csv += `"${(v.doctorName || "").replace(/"/g, '""')}","${(areaName || "").replace(/"/g, '""')}","${v.date || ""}","${v.time || ""}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${v.source || ""}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -2867,6 +3372,7 @@ function exportVisitsToCSV() {
   a.download = `PharmaCare_Visits_${fDate || "All"}.csv`;
   a.click();
 }
+
 
 function printVisitsReport() {
   window.print();

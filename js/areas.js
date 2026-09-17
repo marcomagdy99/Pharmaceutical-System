@@ -6,6 +6,7 @@
 let currentView = "table";
 let areaModal = null;
 let deleteModal = null;
+let currentSelectedLineId = null;
 
 const areaTranslations = {
   en: {
@@ -31,6 +32,8 @@ const areaTranslations = {
     delete: "Delete",
     confirm_delete: "Confirm Delete",
     delete_area_msg: "Are you sure you want to delete this area?",
+    select_line: "Product Line:",
+    all_lines: "All Lines",
   },
   ar: {
     area_management: "إدارة المناطق",
@@ -55,12 +58,21 @@ const areaTranslations = {
     delete: "حذف",
     confirm_delete: "تأكيد الحذف",
     delete_area_msg: "هل أنت متأكد أنك تريد حذف هذه المنطقة؟",
+    select_line: "الخط الإنتاجي:",
+    all_lines: "كل الخطوط",
   },
 };
 
 function getAreasList() {
   const allUsers = (window.store && window.store.users.getAll()) || [];
-  const rawAreas = (window.store && window.store.areas.getAll()) || [];
+  let rawAreas;
+
+  // Filter areas by selected product line
+  if (currentSelectedLineId && window.store && window.store.areas) {
+    rawAreas = window.store.areas.getByLine(currentSelectedLineId);
+  } else {
+    rawAreas = (window.store && window.store.areas.getAll()) || [];
+  }
 
   return rawAreas.map((a) => {
     let rId = a.repId || null;
@@ -80,6 +92,7 @@ function getAreasList() {
       code: a.code || "CAI-000",
       repId: rId,
       repName: rName,
+      lineId: a.lineId || null,
     };
   });
 }
@@ -91,7 +104,14 @@ function populateRepDropdown(selectedRepId = "") {
   const unassignedLabel = isAr
     ? "-- غير معيّنة (شاغرة) --"
     : "-- Unassigned (Vacant) --";
-  const activeReps = (window.store && window.store.users.getReps()) || [];
+
+  // Filter reps by selected line
+  let activeReps;
+  if (currentSelectedLineId && window.store && window.store.areas) {
+    activeReps = window.store.areas.getRepsByLine(currentSelectedLineId);
+  } else {
+    activeReps = (window.store && window.store.users.getReps()) || [];
+  }
 
   let html = `<option value="">${unassignedLabel}</option>`;
   activeReps.forEach((r) => {
@@ -100,6 +120,45 @@ function populateRepDropdown(selectedRepId = "") {
     html += `<option value="${window.escapeHtml(r.id)}" ${sel}>${window.escapeHtml(rName)} (${window.escapeHtml(r.employeeCode || r.code || r.id)})</option>`;
   });
   repSelect.innerHTML = html;
+}
+
+/**
+ * Populates the Product Line selector dropdown from store.productLines.
+ * Defaults to the first active line or the current user's lineId.
+ */
+function populateLineSelector() {
+  const select = document.getElementById("lineSelector");
+  if (!select) return;
+  const isAr = document.documentElement.dir === "rtl";
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+
+  let html = "";
+  allLines.forEach((line) => {
+    if (line.status && line.status !== "Active") return;
+    const sel = line.id === currentSelectedLineId ? "selected" : "";
+    const label = isAr && line.nameAr ? line.nameAr : line.name;
+    html += `<option value="${window.escapeHtml(line.id)}" ${sel}>${window.escapeHtml(label)}</option>`;
+  });
+  select.innerHTML = html;
+
+  // If no line was pre-selected, pick the first option
+  if (!currentSelectedLineId && select.options.length > 0) {
+    currentSelectedLineId = select.options[0].value;
+  }
+}
+
+/**
+ * Called when the admin changes the Product Line selector.
+ * Refreshes the area list, stats, and search filter for the new line.
+ */
+function onLineChanged() {
+  const select = document.getElementById("lineSelector");
+  currentSelectedLineId = select ? select.value : null;
+  const searchInput = document.getElementById("search-input");
+  if (searchInput) searchInput.value = "";
+  renderAreas();
+  updateStats();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -127,6 +186,15 @@ document.addEventListener("DOMContentLoaded", () => {
       ...areaTranslations.ar,
     };
   }
+
+  // Initialize line selector and set default
+  const currentUser = (window.DEMO_DATA && window.DEMO_DATA.currentUser) || user;
+  if (currentUser.lineId) {
+    currentSelectedLineId = currentUser.lineId;
+  } else if (currentUser.lineIds && currentUser.lineIds.length > 0) {
+    currentSelectedLineId = currentUser.lineIds[0];
+  }
+  populateLineSelector();
 
   renderAreas();
   updateStats();
@@ -297,9 +365,10 @@ function saveArea() {
   const currentAreas = getAreasList();
   const targetId = id || "area_" + Date.now();
 
-  // Validate unique Area Code (case-insensitive)
-  const isDuplicateCode = currentAreas.some(
-    (a) => a.id !== id && a.code && a.code.trim().toUpperCase() === code.toUpperCase()
+  // Validate unique Area Code globally (case-insensitive) across all lines
+  const allAreasGlobal = (window.store && window.store.areas) ? window.store.areas.getAll() : [];
+  const isDuplicateCode = allAreasGlobal.some(
+    (a) => a.id !== targetId && a.code && a.code.trim().toUpperCase() === code.toUpperCase()
   );
   if (isDuplicateCode) {
     const msg = isAr
@@ -309,6 +378,7 @@ function saveArea() {
     return;
   }
 
+  let reassignResult = null;
   if (window.store && window.store.areas) {
     window.store.areas.save({
       id: targetId,
@@ -316,13 +386,31 @@ function saveArea() {
       code: code.toUpperCase(),
       repId,
       repName,
+      lineId: currentSelectedLineId || null,
     });
+    if (typeof window.store.areas.reassignAreaCustomers === "function") {
+      reassignResult = window.store.areas.reassignAreaCustomers(targetId, repId, name);
+    }
+  }
+
+  // Automatically rematch distributor sales rows to the newly assigned representative
+  if (window.store && window.store.distributorSales && typeof window.store.distributorSales.rematchAreaSales === "function") {
+    window.store.distributorSales.rematchAreaSales(targetId, repId);
   }
 
   areaModal.hide();
   renderAreas();
   updateStats();
-  const successMsg = isAr ? "تم حفظ المنطقة بنجاح." : "Area saved successfully.";
+
+  let successMsg = isAr ? "تم حفظ المنطقة بنجاح." : "Area saved successfully.";
+  if (reassignResult && (reassignResult.updatedDoctors > 0 || reassignResult.updatedPharmacies > 0 || reassignResult.updatedHospitals > 0)) {
+    const totalCustomers = reassignResult.updatedDoctors + reassignResult.updatedPharmacies + reassignResult.updatedHospitals;
+    if (repId) {
+      successMsg = isAr
+        ? `تم حفظ المنطقة وتحديث تبعية ${totalCustomers} عميل للمندوب الجديد بنجاح.`
+        : `Area saved and ${totalCustomers} customer(s) reassigned to the new representative successfully.`;
+    }
+  }
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 

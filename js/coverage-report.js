@@ -149,7 +149,7 @@ function renderCoverageReport() {
     if (selectedRep === 'all') {
       targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
     } else {
-      targetList = targetList.filter((d) => d.repId === selectedRep);
+      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
     }
   } else if (role === 'line_manager') {
     const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
@@ -166,9 +166,9 @@ function renderCoverageReport() {
       targetList = targetList.filter((d) => repIds.includes(d.repId));
     } else if (dmIds.includes(selectedRep)) {
       const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
-      targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+      targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
     } else if (selectedRep) {
-      targetList = targetList.filter((d) => d.repId === selectedRep);
+      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
     }
   } else if (role === 'business_unit') {
     const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
@@ -194,6 +194,8 @@ function renderCoverageReport() {
       if (!isCompleted) return false;
       const matchesTarget = (v.doctorId && target.id) ? (v.doctorId === target.id) : (v.targetName === target.name);
       if (!matchesTarget) return false;
+      // Isolate to the representative assigned to this target
+      if (target.repId && v.repId && v.repId !== target.repId) return false;
       const vDate = new Date(v.date);
       return vDate >= start && vDate <= end;
     });

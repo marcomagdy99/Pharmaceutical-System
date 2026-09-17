@@ -336,7 +336,7 @@ function timeAgo(dateString) {
  */
 function renderPage() {
   const content = document.getElementById("pageContent");
-  const isHR = currentUserRole === "hr";
+  const isHR = currentUserRole === "hr" || currentUserRole === "admin";
 
   let html = `
         <div class="announcements-header">
@@ -367,15 +367,17 @@ function renderPage() {
   content.innerHTML = html;
 
   const modalContainer = document.getElementById("modalContainer");
-  let modalsHtml = renderLightboxModal();
-  if (isHR) {
-    modalsHtml += renderModals();
-  }
+  if (!document.getElementById("announcementModal")) {
+    let modalsHtml = renderLightboxModal();
+    if (isHR) {
+      modalsHtml += renderModals();
+    }
 
-  if (modalContainer) {
-    modalContainer.innerHTML = modalsHtml;
-  } else {
-    content.insertAdjacentHTML("beforeend", modalsHtml);
+    if (modalContainer) {
+      modalContainer.innerHTML = modalsHtml;
+    } else {
+      content.insertAdjacentHTML("beforeend", modalsHtml);
+    }
   }
 }
 
@@ -493,7 +495,7 @@ function renderAnnouncementsList() {
  * @returns {string} HTML string for the card
  */
 function renderAnnouncementCard(ann) {
-  const isHR = currentUserRole === "hr";
+  const isHR = currentUserRole === "hr" || currentUserRole === "admin";
   const isRead = ann.readBy.includes(currentUserId);
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
@@ -739,6 +741,11 @@ function markAsRead(id) {
  * @param {string|null} id Announcement ID to edit, or null for new
  */
 function openAnnouncementModal(id = null) {
+  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
+  if (!isHR) {
+    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin only.", "error");
+    return;
+  }
   editAnnouncementId = id;
   const modal = document.getElementById("announcementModal");
   const titleEl = document.getElementById("modalTitle");
@@ -925,6 +932,11 @@ function closeModal(modalId) {
  * Saves announcement (create or update).
  */
 function saveAnnouncement() {
+  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
+  if (!isHR) {
+    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin only.", "error");
+    return;
+  }
   const title = document.getElementById("annTitle").value;
   const titleAr = document.getElementById("annTitleAr").value;
   const body = document.getElementById("annBody").value;
@@ -987,6 +999,11 @@ function saveAnnouncement() {
  * @param {string} id Announcement ID
  */
 function openDeleteModal(id) {
+  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
+  if (!isHR) {
+    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin only.", "error");
+    return;
+  }
   editAnnouncementId = id;
   const modal = document.getElementById("deleteModal");
   if (modal) {
@@ -1000,6 +1017,8 @@ function openDeleteModal(id) {
  * Confirms deletion of announcement.
  */
 function confirmDelete() {
+  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
+  if (!isHR) return;
   if (editAnnouncementId) {
     announcements = announcements.filter((a) => a.id !== editAnnouncementId);
     saveAnnouncementsToStorage();

@@ -356,72 +356,6 @@ window.onDmChangeDate = function (newDate) {
   renderDashboard();
 };
 
-window.onDmRepDropdownChange = function (repId) {
-  window.currentDmSelectedRepId = repId;
-};
-
-window.confirmDmAccompaniment = function () {
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "dm1",
-    name: "Karim Nasser",
-  };
-  const dateInput = document.getElementById("dmAccompanimentDateInput");
-  const repSelect = document.getElementById("dmAccompaniedRepSelect");
-  const selectedDate = (dateInput && dateInput.value) || getDmSelectedDate();
-  const repId =
-    repSelect && repSelect.value
-      ? repSelect.value
-      : window.currentDmSelectedRepId || "";
-
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-
-  if (!repId) {
-    if (typeof window.showToast === "function") {
-      window.showToast(
-        lang === "ar"
-          ? "يرجى اختيار المندوب أولاً أو تحديد يوم عمل مكتبي"
-          : "Please select a representative or choose Office Day first",
-        "warning",
-      );
-    }
-    return;
-  }
-
-  window.currentDmSelectedDate = selectedDate;
-  window.currentDmConfirmedDate = selectedDate;
-  window.currentDmConfirmedRepId = repId;
-  window.currentDmSelectedRepId = repId;
-
-  try {
-    localStorage.setItem("pharma_dm_selected_date", selectedDate);
-  } catch (e) {}
-
-  setDmAccompaniment(currentUser.id, selectedDate, repId);
-
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const rep = allUsers.find((u) => u.id === repId);
-
-  if (typeof window.showToast === "function") {
-    if (rep) {
-      window.showToast(
-        lang === "ar"
-          ? `تم تأكيد النزول الميداني مع ${rep.name} لتاريخ ${selectedDate}`
-          : `Field accompaniment confirmed with ${rep.name} for ${selectedDate}`,
-        "success",
-      );
-    } else {
-      window.showToast(
-        lang === "ar"
-          ? `تم تأكيد تاريخ ${selectedDate} كيوم عمل مكتبي`
-          : `Date ${selectedDate} confirmed as Office Work day`,
-        "info",
-      );
-    }
-  }
-
-  renderDashboard();
-};
-
 window.deleteDmAccompanimentDate = function (dateStr) {
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     id: "dm1",
@@ -449,8 +383,6 @@ window.switchDmScheduleTab = function (tab) {
   window.dmScheduleActiveTab = tab;
   renderDashboard();
 };
-
-window.onDmSelectRep = window.onDmRepDropdownChange;
 
 /**
  * Generates the HTML markup for interactive dashboard charts.
@@ -502,6 +434,95 @@ function renderDashboardChartsMarkup(lang) {
 }
 
 /**
+ * Resolves real distributor sales and targets from the central store,
+ * synthesizing them into unified sales records for dashboard widgets and charts.
+ * Falls back to DEMO_DATA.sales if no real records exist yet.
+ */
+function getDashboardSalesData() {
+  const storeTargets = (window.store && window.store.targets) ? window.store.targets.getAll() : [];
+  const storeSales = (window.store && window.store.distributorSales) ? window.store.distributorSales.getAll() : [];
+  const allLines = (window.store && window.store.productLines) ? window.store.productLines.getAll() : [];
+  const allUsers = (window.store && window.store.users) ? window.store.users.getAll() : [];
+
+  function getLineIdByProduct(productId) {
+    if (!productId) return null;
+    for (const l of allLines) {
+      if (Array.isArray(l.products) && l.products.some((p) => p.id === productId)) {
+        return l.id;
+      }
+    }
+    return null;
+  }
+
+  if (storeSales.length > 0 || storeTargets.length > 0) {
+    const map = {};
+
+    // 1. Ingest targets
+    storeTargets.forEach((t) => {
+      if (!t.repId || !t.month) return;
+      const targetVal = t.target != null
+        ? (parseFloat(t.target) || 0)
+        : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0));
+      const lineId = t.lineId || getLineIdByProduct(t.productId) || "";
+      const key = `${t.repId}||${t.month}||${lineId}`;
+      if (!map[key]) {
+        const rep = allUsers.find((u) => u.id === t.repId);
+        map[key] = {
+          id: `synth_t_${key}`,
+          repId: t.repId,
+          repName: rep ? rep.name : t.repId,
+          month: t.month,
+          lineId: lineId || null,
+          dmId: rep ? rep.managerId || null : null,
+          lmId: null,
+          target: 0,
+          actual: 0,
+          amount: 0,
+        };
+      }
+      map[key].target += targetVal;
+    });
+
+    // 2. Ingest distributor actual sales
+    storeSales.forEach((s) => {
+      if (!s.repId) return;
+      const mKey = s.month || (s.date ? s.date.slice(0, 7) : null);
+      if (!mKey) return;
+      const val = parseFloat(s.value) || 0;
+      const lineId = s.lineId || getLineIdByProduct(s.productId) || "";
+      const key = `${s.repId}||${mKey}||${lineId}`;
+      if (!map[key]) {
+        const rep = allUsers.find((u) => u.id === s.repId);
+        map[key] = {
+          id: `synth_s_${key}`,
+          repId: s.repId,
+          repName: rep ? rep.name : s.repId,
+          month: mKey,
+          lineId: lineId || null,
+          dmId: s.dmId || (rep ? rep.managerId || null : null),
+          lmId: s.lmId || null,
+          target: 0,
+          actual: 0,
+          amount: 0,
+        };
+      }
+      map[key].actual += val;
+      map[key].amount += val;
+      if (!map[key].dmId && s.dmId) map[key].dmId = s.dmId;
+      if (!map[key].lmId && s.lmId) map[key].lmId = s.lmId;
+    });
+
+    const synthesized = Object.values(map);
+    if (synthesized.length > 0) return synthesized;
+  }
+
+  // Graceful fallback to demo data
+  return (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
+    ? window.DEMO_DATA.sales
+    : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+}
+
+/**
  * Initializes and updates Chart.js charts on the active dashboard.
  * @param {Object} user 
  */
@@ -510,9 +531,7 @@ function initDashboardCharts(user) {
 
   const currentUserId = user?.id || "rep1";
   const role = (user?.role || "rep").toLowerCase();
-  const allSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-    ? window.DEMO_DATA.sales
-    : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+  const allSales = getDashboardSalesData();
   const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
   const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
@@ -597,18 +616,37 @@ function initDashboardCharts(user) {
 
   window.renderDoctorClassesChart("dashDoctorClassesChart", classACount, classBCount, hospitalsCount);
 
-  // 3. Coverage Radial Gauge
-  let scopedVisits = allVisits.filter((v) => v.status === "completed");
+  // 3. Coverage Radial Gauge (Current Quarter)
+  const nowGauge = new Date();
+  const currentQuarterGauge = Math.floor(nowGauge.getMonth() / 3) + 1;
+  const qStartMonthGauge = (currentQuarterGauge - 1) * 3;
+  const qEndMonthGauge = qStartMonthGauge + 2;
+
+  let scopedVisits = allVisits.filter((v) => {
+    if (v.status !== "completed" || !v.date) return false;
+    const vDate = new Date(v.date);
+    return (
+      vDate.getFullYear() === nowGauge.getFullYear() &&
+      vDate.getMonth() >= qStartMonthGauge &&
+      vDate.getMonth() <= qEndMonthGauge
+    );
+  });
   if (scopedRepIds) {
     scopedVisits = scopedVisits.filter((v) => scopedRepIds.includes(v.repId));
   }
   const coveredDoctorIds = new Set();
   scopedVisits.forEach((v) => {
     if (v.doctorId) coveredDoctorIds.add(v.doctorId);
+    else if (v.doctorName || v.targetName) {
+      const matched = scopedDoctors.find(
+        (d) => d.name === (v.doctorName || v.targetName) || d.nameAr === (v.doctorName || v.targetName)
+      );
+      if (matched) coveredDoctorIds.add(matched.id);
+    }
   });
   const totalDocs = scopedDoctors.length;
   const coveredDocs = scopedDoctors.filter((d) => coveredDoctorIds.has(d.id)).length;
-  const coveragePct = totalDocs > 0 ? Math.round((coveredDocs / totalDocs) * 100) : 75;
+  const coveragePct = totalDocs > 0 ? Math.round((coveredDocs / totalDocs) * 100) : 0;
 
   window.renderCoverageGaugeChart("dashCoverageGaugeChart", "dashCoverageGaugeLabel", coveragePct);
 
@@ -704,28 +742,46 @@ function renderRepDashboard(userName, user) {
   const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
   
   // Single Source of Truth for sales records
-  const allSales =
-    (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-      ? window.DEMO_DATA.sales
-      : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+  const allSales = getDashboardSalesData();
 
   const repDoctors = allDoctors.filter(
     (d) => d.repId === currentUserId,
   );
   const totalDoctorsCount = repDoctors.length;
 
+  const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+  const repHospitals = allHospitals.filter((h) => !h.repId || h.repId === currentUserId);
+  const totalHospitalsCount = repHospitals.length;
+
+  const now = new Date();
+  const todayStr =
+    (typeof window.todayStr !== "undefined" && window.todayStr) ||
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
   const activePlanned = allVisits.filter(
     (v) =>
       v.repId === currentUserId &&
       v.status === "planned" &&
+      v.date &&
+      v.date <= todayStr &&
       !isPlannedVisitExpired(v.date),
   );
+  activePlanned.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+  const isPharmVisit = (v) =>
+    v.targetType === "pharmacy" ||
+    (v.period || "").toLowerCase() === "pharmacy" ||
+    (v.doctorId && String(v.doctorId).startsWith("pharm"));
+
   const plannedAM = activePlanned.filter(
-    (v) => v.period === "am" || v.period === "AM" || v.type === "hospital",
+    (v) =>
+      !isPharmVisit(v) &&
+      (v.period === "am" || v.period === "AM" || v.type === "hospital"),
   );
   const plannedPM = activePlanned.filter(
     (v) =>
-      v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type,
+      !isPharmVisit(v) &&
+      (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
   );
 
   const currentYearMonth = new Date().toISOString().slice(0, 7);
@@ -737,7 +793,19 @@ function renderRepDashboard(userName, user) {
       v.date.startsWith(currentYearMonth),
   );
 
-  const monthlyVisitTarget = Math.max(
+  const completedVisitsAM = completedVisits.filter(
+    (v) =>
+      !isPharmVisit(v) &&
+      (v.period === "am" || v.period === "AM" || v.type === "hospital"),
+  );
+  const completedVisitsPM = completedVisits.filter(
+    (v) =>
+      !isPharmVisit(v) &&
+      (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
+  );
+
+  // PM Clinics Target: Doctors Class A (4/3 visits per month) + Class B (1 visit per month)
+  const monthlyVisitTargetPM = Math.max(
     1,
     Math.round(
       repDoctors.reduce((sum, d) => {
@@ -748,7 +816,9 @@ function renderRepDashboard(userName, user) {
     ),
   );
 
-  const now = new Date();
+  // AM Hospitals Target: 2 visits per hospital per month (minimum 1 if hospitals exist)
+  const monthlyVisitTargetAM = totalHospitalsCount > 0 ? (totalHospitalsCount * 2) : 2;
+
   const currentMonthNum = now.getMonth();
   const currentQuarterNum = Math.floor(currentMonthNum / 3) + 1;
   const quarterStartMonth = (currentQuarterNum - 1) * 3;
@@ -829,10 +899,23 @@ function renderRepDashboard(userName, user) {
             <div class="stat-value primary counter" data-target="${totalDoctorsCount}">${totalDoctorsCount}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${t.visits_month}</div>
+            <div class="stat-label">${lang === "ar" ? "زيارات العيادات (PM)" : "Clinics (PM)"}</div>
             <div class="stat-value success">
-              <span class="counter" data-target="${completedVisits.length}">${completedVisits.length}</span>
-              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${monthlyVisitTarget}</span>
+              <span class="counter" data-target="${completedVisitsPM.length}">${completedVisitsPM.length}</span>
+              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${monthlyVisitTargetPM}</span>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+              ${lang === "ar" ? "أطباء وعيادات" : "Clinics & Doctors"}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">${lang === "ar" ? "زيارات المستشفيات (AM)" : "Hospitals (AM)"}</div>
+            <div class="stat-value info" style="color: var(--primary, #2563eb);">
+              <span class="counter" data-target="${completedVisitsAM.length}">${completedVisitsAM.length}</span>
+              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${monthlyVisitTargetAM}</span>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+              ${totalHospitalsCount} ${lang === "ar" ? "مستشفيات ومراكز" : "Hospitals"}
             </div>
           </div>
           <div class="stat-card">
@@ -883,7 +966,10 @@ function renderRepDashboard(userName, user) {
                     <div class="planned-target-row">
                       <div class="planned-target-info">
                         <strong class="planned-target-name">${window.escapeHtml(h.doctorName || h.targetName || "Hospital")}</strong>
-                        <div class="planned-target-date"><span class="date-icon">📅</span> ${h.date}</div>
+                        <div class="planned-target-date">
+                          <span class="date-icon">📅</span> ${h.date}
+                          ${h.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`}
+                        </div>
                       </div>
                       <button class="btn-convert-action" onclick="openCompletePlanModal('${h.id}', false)">
                         ✓ ${t.convert_to_actual}
@@ -911,7 +997,10 @@ function renderRepDashboard(userName, user) {
                     <div class="planned-target-row">
                       <div class="planned-target-info">
                         <strong class="planned-target-name">${window.escapeHtml(d.doctorName || d.targetName || "Doctor")}</strong>
-                        <div class="planned-target-date"><span class="date-icon">📅</span> ${d.date}</div>
+                        <div class="planned-target-date">
+                          <span class="date-icon">📅</span> ${d.date}
+                          ${d.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`}
+                        </div>
                       </div>
                       <button class="btn-convert-action" onclick="openCompletePlanModal('${d.id}', false)">
                         ✓ ${t.convert_to_actual}
@@ -1260,18 +1349,28 @@ function renderDMDashboard(userName, user) {
                                     lang,
                                   )
                                 : { dayName: "", time: sv.time || "10:00" };
+                            const isPharm =
+                              sv.targetType === "pharmacy" ||
+                              (sv.period || "").toLowerCase() === "pharmacy" ||
+                              (sv.doctorId && String(sv.doctorId).startsWith("pharm"));
                             const isHospital =
-                              (sv.period || "").toUpperCase() === "AM";
-                            const targetTypeBadge = isHospital
+                              !isPharm && (sv.period || "").toUpperCase() === "AM";
+                            const targetTypeBadge = isPharm
                               ? lang === "ar"
-                                ? "مستشفى"
-                                : "Hospital"
-                              : lang === "ar"
-                                ? "عيادة طبيب"
-                                : "Clinic Visit";
-                            const periodBadge = isHospital
-                              ? `<span class="badge" style="background: rgba(255, 193, 7, 0.2); color: #b45309; font-weight: 700; font-size: 0.72rem;">AM</span>`
-                              : `<span class="badge" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd; font-weight: 700; font-size: 0.72rem;">PM</span>`;
+                                ? "صيدلية"
+                                : "Pharmacy"
+                              : isHospital
+                                ? lang === "ar"
+                                  ? "مستشفى"
+                                  : "Hospital"
+                                : lang === "ar"
+                                  ? "عيادة طبيب"
+                                  : "Clinic Visit";
+                            const periodBadge = isPharm
+                              ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.72rem;">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+                              : isHospital
+                                ? `<span class="badge" style="background: rgba(255, 193, 7, 0.2); color: #b45309; font-weight: 700; font-size: 0.72rem;">AM</span>`
+                                : `<span class="badge" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd; font-weight: 700; font-size: 0.72rem;">PM</span>`;
 
                             return `
                       <tr>
@@ -1416,18 +1515,28 @@ function renderDMDashboard(userName, user) {
                       pendingAccompaniedVisits.length > 0
                         ? pendingAccompaniedVisits
                             .map((pv) => {
+                              const isPharm =
+                                pv.targetType === "pharmacy" ||
+                                (pv.period || "").toLowerCase() === "pharmacy" ||
+                                (pv.doctorId && String(pv.doctorId).startsWith("pharm"));
                               const isHospital =
-                                (pv.period || "").toUpperCase() === "AM";
-                              const targetTypeBadge = isHospital
+                                !isPharm && (pv.period || "").toUpperCase() === "AM";
+                              const targetTypeBadge = isPharm
                                 ? lang === "ar"
-                                  ? "مستشفى"
-                                  : "Hospital"
-                                : lang === "ar"
-                                  ? "عيادة طبيب"
-                                  : "Clinic Visit";
-                              const periodBadge = isHospital
-                                ? `<span class="badge" style="background: rgba(255, 193, 7, 0.2); color: #b45309; font-weight: 700; font-size: 0.72rem;">AM</span>`
-                                : `<span class="badge" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd; font-weight: 700; font-size: 0.72rem;">PM</span>`;
+                                  ? "صيدلية"
+                                  : "Pharmacy"
+                                : isHospital
+                                  ? lang === "ar"
+                                    ? "مستشفى"
+                                    : "Hospital"
+                                  : lang === "ar"
+                                    ? "عيادة طبيب"
+                                    : "Clinic Visit";
+                              const periodBadge = isPharm
+                                ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.72rem;">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+                                : isHospital
+                                  ? `<span class="badge" style="background: rgba(255, 193, 7, 0.2); color: #b45309; font-weight: 700; font-size: 0.72rem;">AM</span>`
+                                  : `<span class="badge" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd; font-weight: 700; font-size: 0.72rem;">PM</span>`;
 
                               return `
                         <tr>
@@ -1497,12 +1606,7 @@ function renderDMDashboard(userName, user) {
                   (a) => a.dmId === user.id || myRepIds.includes(a.repId),
                 );
 
-                const salesStore =
-                  (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-                    ? window.DEMO_DATA.sales
-                    : (typeof REPORTS_DATA !== "undefined" && Array.isArray(REPORTS_DATA.sales))
-                      ? REPORTS_DATA.sales
-                      : [];
+                const salesStore = getDashboardSalesData();
 
                 const rowsHtml = [];
 
@@ -1723,9 +1827,7 @@ function renderLMDashboard(userName, user) {
         if (linesToShow.length === 0) return "";
         const isAr = lang === "ar";
         const currentYear = new Date().getFullYear().toString();
-        const allSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-          ? window.DEMO_DATA.sales
-          : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+        const allSales = getDashboardSalesData();
 
         return `
       <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
@@ -1913,9 +2015,7 @@ function renderBUDashboard(userName, user) {
         if (linesToShow.length === 0) return "";
         const isAr = lang === "ar";
         const currentYear = new Date().getFullYear().toString();
-        const allSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-          ? window.DEMO_DATA.sales
-          : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+        const allSales = getDashboardSalesData();
 
         return `
       <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
@@ -1978,10 +2078,7 @@ function renderAdminDashboard(userName, user) {
       : 0;
 
   // Single Source of Truth for sales records
-  const allSales =
-    (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
-      ? window.DEMO_DATA.sales
-      : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+  const allSales = getDashboardSalesData();
 
   const currentYearMonth = new Date().toISOString().slice(0, 7);
   const currentMonthSales = allSales.filter(
@@ -2310,7 +2407,9 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   if (lblType) lblType.innerText = t.visit_type;
   const lblSingle = document.getElementById("lblDashSingle");
   if (lblSingle) lblSingle.innerText = t.single_visit;
-  const lblDouble = document.getElementById("lblDouble");
+  const lblDouble =
+    document.getElementById("lblDashDouble") ||
+    document.getElementById("lblDouble");
   if (lblDouble) lblDouble.innerText = t.double_visit;
   const lblAccompanied = document.getElementById("lblDashAccompanied");
   if (lblAccompanied) lblAccompanied.innerText = t.accompanied_by;

@@ -368,6 +368,15 @@
                   <button
                     type="button"
                     class="btn btn-outline"
+                    id="exportAchBtn"
+                    onclick="exportAchievementsReport()"
+                    title="Export to CSV"
+                  >
+                    📥 <span data-i18n="btnExportCSV">Export CSV</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline"
                     id="manageTargetsBtn"
                     onclick="openTargetsModal()"
                     style="display: none;"
@@ -847,6 +856,16 @@
                   >
                   <button
                     type="button"
+                    class="btn btn-outline"
+                    id="btnExportDoctors"
+                    onclick="exportDoctorsDirectory()"
+                    title="Export Doctors Directory"
+                  >
+                    <span>📥</span>
+                    <span data-i18n="btnExportDoctors">Export Directory</span>
+                  </button>
+                  <button
+                    type="button"
                     class="btn btn-outline admin-only-action"
                     id="btnImportDoctors"
                     onclick="openImportDoctorsModal()"
@@ -896,17 +915,6 @@
                     <option value="all" data-i18n="allSpecialties">
                       All Specialties
                     </option>
-                    <option value="Internal Medicine">Internal Medicine</option>
-                    <option value="Pediatrics">Pediatrics</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Dermatology">Dermatology</option>
-                    <option value="Ophthalmology">Ophthalmology</option>
-                    <option value="ENT">ENT</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Urology">Urology</option>
-                    <option value="Gynecology">Gynecology</option>
-                    <option value="Other">Other</option>
                   </select>
                 </div>
                 <!-- Class Filter -->
@@ -1073,6 +1081,16 @@
                     id="totalPharmaciesCountBadge"
                     >0 Pharmacies</span
                   >
+                  <button
+                    type="button"
+                    class="btn btn-outline"
+                    id="btnExportPharmacies"
+                    onclick="exportPharmaciesDirectory()"
+                    title="Export Pharmacies Directory"
+                  >
+                    <span>📥</span>
+                    <span data-i18n="btnExportPharmacies">Export Directory</span>
+                  </button>
                   <button
                     type="button"
                     class="btn btn-outline admin-only-action"
@@ -1245,19 +1263,7 @@
                     id="doctorSpecialtyInput"
                     class="form-control modern-select"
                     required
-                  >
-                    <option value="Internal Medicine">Internal Medicine</option>
-                    <option value="Pediatrics">Pediatrics</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Dermatology">Dermatology</option>
-                    <option value="Ophthalmology">Ophthalmology</option>
-                    <option value="ENT">ENT</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Urology">Urology</option>
-                    <option value="Gynecology">Gynecology</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  ></select>
                 </div>
                 <!-- Class -->
                 <div class="form-group col-span-1">

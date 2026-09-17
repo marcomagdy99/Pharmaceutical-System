@@ -128,11 +128,16 @@ function getDynamicCalendarEvents() {
       : window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
   visits.forEach((v) => {
+    const isPharm =
+      v.targetType === "pharmacy" ||
+      (v.period || "").toLowerCase() === "pharmacy" ||
+      (v.doctorId && String(v.doctorId).startsWith("pharm"));
     events.push({
       id: v.id,
       date: v.date,
       type: "visit",
-      period: (v.period || "pm").toLowerCase(),
+      targetType: isPharm ? "pharmacy" : v.targetType,
+      period: isPharm ? "pharmacy" : (v.period || "pm").toLowerCase(),
       title: v.doctorName || v.targetName || "Visit",
       status: v.status || "planned",
       repId: v.repId,
@@ -176,9 +181,12 @@ function getDynamicCalendarEvents() {
     }
   });
 
-  // 3. Synchronize logged daily activities from localStorage
+  // 3. Synchronize logged daily activities from localStorage (Per-User Isolation)
   try {
-    const raw = localStorage.getItem("pharma_activities_data");
+    const userActKey = `pharma_activities_data_${currentCalendarUser.id}`;
+    const raw =
+      localStorage.getItem(userActKey) ||
+      (currentCalendarUser.id === "rep1" ? localStorage.getItem("pharma_activities_data") : null);
     if (raw) {
       const activities = JSON.parse(raw);
       Object.keys(activities).forEach((dateStr) => {
@@ -466,8 +474,13 @@ function openDayDetail(dateObj, events) {
   if (events.length === 0) {
     contentEl.innerHTML = `<p style="color: var(--gray-500); padding: 15px;">${t.noEvents}</p>`;
   } else {
-    const amEvents = events.filter((e) => e.period === "am");
-    const pmEvents = events.filter((e) => e.period === "pm");
+    const isPharm = (e) =>
+      e.targetType === "pharmacy" ||
+      e.period === "pharmacy" ||
+      (e.doctorId && String(e.doctorId).startsWith("pharm"));
+    const amEvents = events.filter((e) => e.period === "am" && !isPharm(e));
+    const pmEvents = events.filter((e) => e.period === "pm" && !isPharm(e));
+    const pharmacyEvents = events.filter(isPharm);
     const leaveEvents = events.filter(
       (e) => e.type === "leave" || e.type === "holiday",
     );
@@ -478,6 +491,14 @@ function openDayDetail(dateObj, events) {
       renderDetailSection(t.amActivities, amEvents, contentEl, t, lang);
     if (pmEvents.length > 0)
       renderDetailSection(t.pmActivities, pmEvents, contentEl, t, lang);
+    if (pharmacyEvents.length > 0)
+      renderDetailSection(
+        isAr ? "💊 زيارات الصيدليات" : "💊 Pharmacy Visits",
+        pharmacyEvents,
+        contentEl,
+        t,
+        lang,
+      );
   }
 
   const panel = document.getElementById("dayDetailPanel");
@@ -526,7 +547,14 @@ function renderDetailSection(title, evts, container, t, lang) {
         evt.status === "completed" ? "badge-completed" : "badge-planned";
       statusText =
         evt.status === "completed" ? t.statusCompleted : t.statusPlanned;
-      iconChar = "🏥";
+      iconChar =
+        evt.targetType === "pharmacy" ||
+        evt.period === "pharmacy" ||
+        (evt.doctorId && String(evt.doctorId).startsWith("pharm"))
+          ? "💊"
+          : evt.period === "am"
+            ? "🏥"
+            : "👨‍⚕️";
     } else if (evt.type === "leave") {
       iconClass =
         evt.status === "approved"
@@ -622,6 +650,25 @@ function toggleTreeNode(nodeId, event) {
 }
 
 function selectCalendarTarget(targetId, targetName, targetRole) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "admin", id: "admin1" };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+  const isRep = role === "medical_rep" || role === "rep";
+
+  if (isRep) {
+    targetId = currentUser.id;
+  } else if (role !== "admin" && role !== "hr") {
+    if (targetId !== "all" && targetId !== currentUser.id) {
+      const subordinates = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(currentUser.id)
+        : [];
+      const isAllowed = subordinates.some((s) => s.id === targetId);
+      if (!isAllowed) {
+        console.warn(`[RBAC] User '${currentUser.id}' cannot view calendar of '${targetId}'. Defaulting.`);
+        targetId = currentUser.id;
+      }
+    }
+  }
+
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const isAr = lang === "ar";
@@ -886,6 +933,13 @@ function setupCalendar() {
     role: "admin",
     id: "admin1",
   };
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+  const isRep = role === "medical_rep" || role === "rep";
+  if (isRep) {
+    window.currentCalendarTargetId = user.id;
+    window.currentCalendarTargetName = user.name;
+    window.currentCalendarTargetRole = "Rep";
+  }
   setupManagerFilter(user);
   renderCalendar();
 

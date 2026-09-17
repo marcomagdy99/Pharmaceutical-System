@@ -368,9 +368,86 @@ function renderAchievementsReport() {
   }
 }
 
+function exportAchievementsReport() {
+  const yearSelect = document.getElementById('achYearSelect');
+  const now = new Date();
+  const year = yearSelect ? yearSelect.value : String(now.getFullYear());
+  const selectedMonths = getSelectedAchMonths();
+  const monthKeys = selectedMonths.map((m) => `${year}-${m}`);
+
+  const user = checkAuth();
+  const scopeRepIds = getAchievementsScopeRepIds(user);
+  const groups = buildAchievementsData(monthKeys, scopeRepIds);
+  const lang = getCurrentLang();
+
+  if (!groups.length) {
+    if (typeof showToast === 'function') {
+      showToast(lang === 'ar' ? 'لا توجد بيانات لتصديرها.' : 'No achievement data to export.', 'warning');
+    }
+    return;
+  }
+
+  const headers = [
+    lang === 'ar' ? 'المندوب' : 'Representative',
+    lang === 'ar' ? 'المنطقة' : 'Territory',
+    lang === 'ar' ? 'المنتج' : 'Product',
+    lang === 'ar' ? 'مستهدف الوحدات' : 'Target Units',
+    lang === 'ar' ? 'الوحدات المحققة' : 'Actual Units',
+    lang === 'ar' ? 'قيمة المستهدف' : 'Target Value (EGP)',
+    lang === 'ar' ? 'القيمة المحققة' : 'Actual Value (EGP)',
+    lang === 'ar' ? 'نسبة التحقيق' : 'Achievement %',
+  ];
+
+  const escapeCsv = (val) => {
+    const s = String(val ?? '').replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const rows = [];
+  groups.forEach((g) => {
+    // Rep Total Row
+    rows.push([
+      escapeCsv(g.repName),
+      escapeCsv(g.areaName || ''),
+      escapeCsv(lang === 'ar' ? 'الإجمالي' : 'TOTAL'),
+      g.totalTUnit,
+      g.totalSUnit,
+      g.totalTValue,
+      g.totalSValue,
+      escapeCsv(g.totalPct !== null ? g.totalPct.toFixed(1) + '%' : '—'),
+    ].join(','));
+
+    // Products
+    g.products.forEach((p) => {
+      rows.push([
+        escapeCsv(''),
+        escapeCsv(''),
+        escapeCsv(p.productName),
+        p.tUnit,
+        p.sUnit,
+        p.tValue,
+        p.sValue,
+        escapeCsv(p.pct !== null ? p.pct.toFixed(1) + '%' : '—'),
+      ].join(','));
+    });
+  });
+
+  const csv = [headers.map(escapeCsv).join(','), ...rows].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `achievements_report_${year}_${selectedMonths.join('-') || 'all'}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 window.populateAchFilters = populateAchFilters;
 window.populateAchievementsFilters = populateAchFilters;
 window.renderAchievementsReport = renderAchievementsReport;
+window.exportAchievementsReport = exportAchievementsReport;
 
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {

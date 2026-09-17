@@ -284,6 +284,80 @@ function setupEventListeners() {
     const endDate = document.getElementById("endDate").value;
     const reason = document.getElementById("reason").value;
 
+    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+
+    if (!startDate || !endDate) {
+      return showToast(
+        isAr
+          ? "يرجى تحديد تاريخ البداية والنهاية للإجازة."
+          : "Please specify both start and end dates for the leave.",
+        "warning",
+      );
+    }
+
+    if (endDate < startDate) {
+      return showToast(
+        isAr
+          ? "تاريخ نهاية الإجازة يجب أن يكون مساوياً لتاريخ البداية أو لاحقاً له."
+          : "End date must be on or after start date.",
+        "warning",
+      );
+    }
+
+    // Overlap Check: Prevent submitting overlapping leaves (approved or pending)
+    const effectiveReqStart = startDate;
+    const effectiveReqEnd = durationType === "half" ? startDate : endDate;
+
+    const overlappingLeave = (demoLeaves || []).find((l) => {
+      if (l.userId !== currentUser.id) return false;
+      if (l.status === "rejected") return false;
+      const lStart = l.startDate || l.endDate;
+      const lEnd = l.endDate || l.startDate;
+      if (!lStart || !lEnd) return false;
+      return effectiveReqStart <= lEnd && effectiveReqEnd >= lStart;
+    });
+
+    if (overlappingLeave) {
+      const typeNamesAr = {
+        annual: "اعتيادية",
+        casual: "عارضة",
+        sick: "مرضية",
+        emergency: "عارضة/طارئة",
+        unpaid: "بدون راتب",
+      };
+      const typeNamesEn = {
+        annual: "Annual",
+        casual: "Casual",
+        sick: "Sick",
+        emergency: "Casual",
+        unpaid: "Unpaid",
+      };
+      const statusLabelsAr = {
+        approved: "معتمدة",
+        pending: "قيد الانتظار",
+      };
+      const statusLabelsEn = {
+        approved: "Approved",
+        pending: "Pending Approval",
+      };
+
+      const oType = isAr
+        ? (typeNamesAr[overlappingLeave.type] || overlappingLeave.type)
+        : (typeNamesEn[overlappingLeave.type] || overlappingLeave.type);
+      const oStatus = isAr
+        ? (statusLabelsAr[overlappingLeave.status] || overlappingLeave.status)
+        : (statusLabelsEn[overlappingLeave.status] || overlappingLeave.status);
+
+      const oStart = overlappingLeave.startDate || overlappingLeave.endDate;
+      const oEnd = overlappingLeave.endDate || overlappingLeave.startDate;
+
+      const msg = isAr
+        ? `⚠️ لديك بالفعل طلب إجازة مسجل (${oStatus}: ${oType}) في الفترة من ${oStart} إلى ${oEnd}. لا يمكن تقديم طلبين في نفس الأيام.`
+        : `⚠️ You already have a leave request (${oStatus}: ${oType}) from ${oStart} to ${oEnd}. Cannot submit overlapping requests.`;
+
+      return showToast(msg, "warning");
+    }
+
     const attachmentInput = document.getElementById("leaveAttachment");
     const attachmentName =
       attachmentInput && attachmentInput.files[0]
@@ -298,7 +372,6 @@ function setupEventListeners() {
     }
 
     if (calculatedDays === 0) {
-      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
       return showToast(
         isAr
           ? "التواريخ المختارة هي عطلة رسمية عامة بالفعل ولا تتطلب خصم أي أيام إجازة."
@@ -355,7 +428,9 @@ function setupEventListeners() {
     }
 
     showToast(
-      "Leave request submitted for multi-level approval successfully!",
+      isAr
+        ? "تم إرسال طلب الإجازة بنجاح وهو الآن قيد المراجعة والاعتماد."
+        : "Leave request submitted for multi-level approval successfully!",
       "success",
     );
     e.target.reset();
@@ -809,7 +884,7 @@ function renderPendingApprovals() {
     const isSubordinate =
       typeof window.canApproveFor === "function"
         ? window.canApproveFor(l.userId)
-        : true;
+        : false;
 
     if (!isSubordinate) return false;
 
@@ -965,6 +1040,9 @@ function initHrAllLeavesControl() {
 }
 
 function renderHrAllLeaves() {
+  const role = (currentUser && currentUser.role ? currentUser.role : "").toLowerCase();
+  if (role !== "hr" && role !== "admin") return;
+
   const tbody = document.getElementById("hrAllLeavesTableBody");
   if (!tbody) return;
   tbody.replaceChildren();

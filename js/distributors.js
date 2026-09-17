@@ -992,8 +992,8 @@ function handleExcelUpload(e) {
         const dateRaw = map.date ? row[map.date] : "";
         const product = String(productRaw || "").trim();
 
-        const numericValue = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ""));
-        const numericQuantity = map.quantity
+        const numericValueRaw = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ""));
+        let numericQuantity = map.quantity && quantityRaw !== "" && quantityRaw !== null && quantityRaw !== undefined
           ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ""))
           : null;
 
@@ -1010,13 +1010,32 @@ function handleExcelUpload(e) {
           }
         }
 
-        if (!product || isNaN(numericValue)) {
+        if (!product || isNaN(numericValueRaw)) {
           skippedInvalid++;
           return;
         }
 
-        if (numericValue < 0) {
+        let numericValue = numericValueRaw;
+
+        // A row is definitely a return/credit note if either the quantity is negative OR the value is negative
+        const hasNegativeQuantity = numericQuantity !== null && !isNaN(numericQuantity) && numericQuantity < 0;
+        const hasNegativeValue = numericValue < 0;
+        const isReturn = hasNegativeQuantity || hasNegativeValue;
+
+        if (isReturn) {
           returnsCount++;
+
+          // Enforce consistent negative signs on both dimensions for correct arithmetic deduction
+          numericValue = -Math.abs(numericValue);
+          if (numericQuantity !== null && !isNaN(numericQuantity)) {
+            numericQuantity = -Math.abs(numericQuantity);
+          }
+        } else {
+          // Ensure standard sales rows do not carry accidental negative artifacts
+          numericValue = Math.abs(numericValue);
+          if (numericQuantity !== null && !isNaN(numericQuantity)) {
+            numericQuantity = Math.abs(numericQuantity);
+          }
         }
 
         imported.push({

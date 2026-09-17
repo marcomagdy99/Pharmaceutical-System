@@ -146,6 +146,60 @@
         );
       },
       /**
+       * Returns all areas belonging to a specific product line.
+       * Falls back to all areas if lineId is null/undefined (backward compat).
+       */
+      getByLine(lineId) {
+        if (!lineId) return this.getAll();
+        return (window.DEMO_DATA.areas || []).filter(
+          (a) => a.lineId === lineId || (!a.lineId && lineId === this._defaultLineId()),
+        );
+      },
+      /**
+       * Returns active medical reps belonging to a specific product line.
+       */
+      getRepsByLine(lineId) {
+        const allReps = store.users.getReps();
+        if (!lineId) return allReps;
+        return allReps.filter(
+          (r) => r.lineId === lineId || (r.lineIds && r.lineIds.includes(lineId)),
+        );
+      },
+      /**
+       * Returns the default (first) line ID for backward compatibility
+       * with areas that have no lineId assigned yet.
+       */
+      _defaultLineId() {
+        const lines = (window.DEMO_DATA.productLines || []);
+        return lines.length > 0 ? lines[0].id : null;
+      },
+      /**
+       * Finds an area by alias text, optionally scoped to a specific line.
+       * If lineId is provided, only returns areas belonging to that line.
+       */
+      findByAliasTextForLine(distributorId, rawText, lineId) {
+        if (!rawText) return null;
+        const normalized = String(rawText).trim().toLowerCase();
+        const defaultLine = this._defaultLineId();
+        return (window.DEMO_DATA.areas || []).find(
+          (a) => {
+            // Line filter: match if area belongs to the given line
+            if (lineId) {
+              const areaLine = a.lineId || defaultLine;
+              if (areaLine !== lineId) return false;
+            }
+            return (
+              Array.isArray(a.aliases) &&
+              a.aliases.some(
+                (al) =>
+                  al.distributorId === distributorId &&
+                  String(al.rawText).trim().toLowerCase() === normalized,
+              )
+            );
+          },
+        );
+      },
+      /**
        * Records that `rawText` from `distributorId`'s sheets refers to
        * this area (e.g. "FAYOUM ETSA" from Ibn Sina -> the "Fayoum" area).
        * Matching is case/whitespace-insensitive but exact otherwise; it
@@ -214,9 +268,86 @@
         const currentAreaId = areaObj.id || (idx >= 0 ? areas[idx].id : areas[areas.length - 1].id);
         logTerritoryHistoryChange(currentAreaId, oldRepId, newRepId);
 
+        // Reassign all doctors, pharmacies, and hospitals in this area if rep changed
+        if (oldRepId !== newRepId) {
+          this.reassignAreaCustomers(currentAreaId, newRepId, areaObj.name || (areas[idx] ? areas[idx].name : null));
+        }
+
         store.users.syncAreasFromStore();
         autoSave("areas", idx >= 0 ? "update" : "create", areaObj);
         return areaObj;
+      },
+      reassignAreaCustomers(areaId, newRepId, areaName = null) {
+        if (!areaId) return { updatedDoctors: 0, updatedPharmacies: 0, updatedHospitals: 0 };
+        const area = this.getById(areaId);
+        const effectiveName = areaName || (area ? area.name : null);
+        const nameLower = effectiveName ? effectiveName.toLowerCase().trim() : null;
+
+        let updatedDoctors = 0;
+        let updatedPharmacies = 0;
+        let updatedHospitals = 0;
+
+        // 1. Doctors inheritance
+        const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+        allDocs.forEach((d) => {
+          const matchAreaId = d.areaId === areaId;
+          const matchAreaName = nameLower && d.area && d.area.toLowerCase().trim() === nameLower;
+          const matchAddress = nameLower && (
+            (d.clinicAddress && d.clinicAddress.toLowerCase().includes(nameLower)) ||
+            (d.address && d.address.toLowerCase().includes(nameLower))
+          );
+
+          if (matchAreaId || matchAreaName || matchAddress) {
+            d.repId = newRepId || null;
+            d.areaId = areaId;
+            if (effectiveName) d.area = effectiveName;
+            updatedDoctors++;
+          }
+        });
+
+        // 2. Pharmacies inheritance
+        const allPharms = (window.DEMO_DATA && window.DEMO_DATA.pharmacies) || [];
+        allPharms.forEach((p) => {
+          const matchAreaId = p.areaId === areaId;
+          const matchAreaName = nameLower && p.area && p.area.toLowerCase().trim() === nameLower;
+          const matchAddress = nameLower && p.address && p.address.toLowerCase().includes(nameLower);
+
+          if (matchAreaId || matchAreaName || matchAddress) {
+            p.repId = newRepId || null;
+            p.areaId = areaId;
+            if (effectiveName) p.area = effectiveName;
+            updatedPharmacies++;
+          }
+        });
+
+        // 3. Hospitals inheritance
+        const allHosps = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+        allHosps.forEach((h) => {
+          const matchAreaId = h.areaId === areaId;
+          const matchAreaName = nameLower && h.area && h.area.toLowerCase().trim() === nameLower;
+          const matchAddress = nameLower && h.address && h.address.toLowerCase().includes(nameLower);
+
+          if (matchAreaId || matchAreaName || matchAddress) {
+            h.repId = newRepId || null;
+            h.areaId = areaId;
+            if (effectiveName) h.area = effectiveName;
+            updatedHospitals++;
+          }
+        });
+
+        if (typeof window.saveDataToStorage === "function") {
+          window.saveDataToStorage();
+        }
+        autoSave("areas", "reassignAreaCustomers", {
+          areaId,
+          newRepId,
+          areaName: effectiveName,
+          updatedDoctors,
+          updatedPharmacies,
+          updatedHospitals,
+        });
+
+        return { updatedDoctors, updatedPharmacies, updatedHospitals };
       },
       unassignRep(areaId) {
         const area = this.getById(areaId);
@@ -225,6 +356,7 @@
         area.repId = null;
         area.repName = null;
 
+        this.reassignAreaCustomers(areaId, null, area.name);
         logTerritoryHistoryChange(areaId, oldRepId, null);
         store.users.syncAreasFromStore();
         autoSave("areas", "unassignRep", { areaId });
@@ -687,19 +819,32 @@
        * Attributes every still-unassigned row to a rep wherever its
        * (distributorId, areaRaw) now has a matching alias -- filling in
        * areaId, repId, and (via the rep's own manager chain) dmId/lmId.
-       * lineId is intentionally left null: distributor sheets only give
-       * a product name, and matching that to a product Line is a
-       * separate, not-yet-built step. Returns how many rows it resolved.
+       *
+       * LINE-AWARE MATCHING (Multi-Line Territory):
+       * If the row already has a lineId (from product matching), we find
+       * the area alias scoped to that line's areas using findByAliasTextForLine().
+       * This ensures that a Cardio drug sold in "Nasr City" is attributed to
+       * the Cardio line's rep for Nasr City, not the Neuro line's rep.
+       * If no lineId is set yet, falls back to global alias matching.
        */
-      applyAreaMatching() {
-        const rows = this.getAll().filter((s) => !s.repId && s.areaRaw);
+      applyAreaMatching(forceAll = false) {
+        const rows = this.getAll().filter((s) => (forceAll || !s.repId) && s.areaRaw);
         let matchedCount = 0;
         rows.forEach((row) => {
-          const area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
-          if (!area || !area.repId) return;
+          // Line-aware: if the row's product was already matched to a line,
+          // only look at areas belonging to that same line
+          let area = null;
+          if (row.lineId) {
+            area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, row.lineId);
+          }
+          // Fallback: global alias match (backward compat)
+          if (!area) {
+            area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
+          }
+          if (!area) return;
           row.areaId = area.id;
-          row.repId = area.repId;
-          const rep = store.users.getById(area.repId);
+          row.repId = area.repId || null;
+          const rep = area.repId ? store.users.getById(area.repId) : null;
           const dmId = rep ? rep.managerId || null : null;
           row.dmId = dmId;
           const dm = dmId ? store.users.getById(dmId) : null;
@@ -710,6 +855,31 @@
           autoSave("distributorSales", "applyAreaMatching", { matchedCount });
         }
         return matchedCount;
+      },
+      /**
+       * Re-attributes all sales rows assigned to an area when that area's assigned
+       * medical representative is changed by Admin.
+       */
+      rematchAreaSales(areaId, newRepId) {
+        if (!areaId) return 0;
+        const rep = newRepId ? store.users.getById(newRepId) : null;
+        const dmId = rep ? rep.managerId || null : null;
+        const dm = dmId ? store.users.getById(dmId) : null;
+        const lmId = dm ? dm.managerId || null : null;
+
+        let updatedCount = 0;
+        this.getAll().forEach((row) => {
+          if (row.areaId === areaId) {
+            row.repId = newRepId || null;
+            row.dmId = dmId;
+            row.lmId = lmId;
+            updatedCount++;
+          }
+        });
+        if (updatedCount) {
+          autoSave("distributorSales", "rematchAreaSales", { areaId, newRepId, updatedCount });
+        }
+        return updatedCount;
       },
       /**
        * Distinct (distributorId, product-raw-text) pairs among rows with

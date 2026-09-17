@@ -81,11 +81,23 @@ if (window.translations) {
   window.translations = activityTranslations;
 }
 
-// Persistent Storage Handlers
+// Persistent Storage Handlers (Per-User Isolation)
+function getActivityStorageKey(userId) {
+  const uid = userId || (typeof window.checkAuth === "function" && window.checkAuth()?.id) || "rep1";
+  return `pharma_activities_data_${uid}`;
+}
+
 function loadActivities() {
+  const user = typeof window.checkAuth === "function" ? window.checkAuth() : null;
+  const uid = user ? user.id : "rep1";
   try {
-    const raw = localStorage.getItem("pharma_activities_data");
+    const raw = localStorage.getItem(getActivityStorageKey(uid));
     if (raw) return JSON.parse(raw);
+    // Legacy fallback for rep1
+    if (uid === "rep1") {
+      const legacyRaw = localStorage.getItem("pharma_activities_data");
+      if (legacyRaw) return JSON.parse(legacyRaw);
+    }
   } catch (e) {}
   return {
     "2026-09-02": {
@@ -96,8 +108,10 @@ function loadActivities() {
 }
 
 function saveActivities(data) {
+  const user = typeof window.checkAuth === "function" ? window.checkAuth() : null;
+  const uid = user ? user.id : "rep1";
   try {
-    localStorage.setItem("pharma_activities_data", JSON.stringify(data));
+    localStorage.setItem(getActivityStorageKey(uid), JSON.stringify(data));
   } catch (e) {}
 }
 
