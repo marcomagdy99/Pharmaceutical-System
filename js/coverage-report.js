@@ -89,7 +89,9 @@ function renderCoverageReport() {
   const user = checkAuth();
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = typeof getSharedReportUsers === 'function'
+    ? getSharedReportUsers()
+    : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
   const numMonths = Math.max(
     1,
@@ -152,7 +154,7 @@ function renderCoverageReport() {
       targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
     }
   } else if (role === 'line_manager') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
+    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
     const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
     const repIds = reps.map((r) => r.id);
@@ -160,10 +162,6 @@ function renderCoverageReport() {
 
     if (selectedRep === 'all') {
       targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
-    } else if (selectedRep === 'all_dms') {
-      targetList = targetList.filter((d) => dmIds.includes(d.repId));
-    } else if (selectedRep === 'all_reps') {
-      targetList = targetList.filter((d) => repIds.includes(d.repId));
     } else if (dmIds.includes(selectedRep)) {
       const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
       targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
@@ -180,10 +178,28 @@ function renderCoverageReport() {
     if (selectedRep === 'all') {
       targetList = targetList.filter((d) => d.repId && allowedTeamIds.includes(d.repId));
     } else {
-      targetList = targetList.filter((d) => d.repId === selectedRep && allowedTeamIds.includes(d.repId));
+      const isSelectedLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
+      const isSelectedDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      if (isSelectedLM) {
+        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+        const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
+        targetList = targetList.filter((d) => (lmTeamIds.includes(d.repId)) && allowedTeamIds.includes(d.repId));
+      } else if (isSelectedDM) {
+        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedTeamIds.includes(d.repId));
+      } else {
+        targetList = targetList.filter((d) => d.repId === selectedRep && allowedTeamIds.includes(d.repId));
+      }
     }
   } else if (selectedRep && selectedRep !== 'all') {
-    targetList = targetList.filter((d) => d.repId === selectedRep);
+    const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+    if (isDM) {
+      const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+    } else {
+      targetList = targetList.filter((d) => d.repId === selectedRep);
+    }
   }
 
   // Pre-calculate visit counts for each target within selected date range
@@ -223,7 +239,7 @@ function renderCoverageReport() {
     const selfHasTargets = targetList.some((t) => t.repId === user.id);
     scopedReps = selfHasTargets ? [user, ...teamReps] : teamReps;
   } else if (role === 'line_manager') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
+    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
     const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
 

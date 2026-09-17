@@ -1170,7 +1170,7 @@ window.saveDataToStorage = saveDataToStorage;
 // Section 3: Recursive Hierarchy & Multi-Line Helpers
 // ============================================================================
 function getAllSubordinates(managerId) {
-  const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const manager = users.find((u) => u.id === managerId);
   if (!manager) return [];
 
@@ -1187,6 +1187,148 @@ function getAllSubordinates(managerId) {
 }
 
 window.getAllSubordinates = getAllSubordinates;
+
+// ============================================================================
+// Central SFE Audit Rules & Visit Validation Checks
+// ============================================================================
+const MIN_MINUTES_BETWEEN_VISITS = 10;
+
+function parseTimeToMinutes(timeStr) {
+  if (!timeStr || typeof timeStr !== "string") return null;
+  const clean = timeStr.trim();
+  const match = clean.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (isNaN(hours) || isNaN(minutes)) return null;
+
+  if (/pm/i.test(clean) && hours < 12) hours += 12;
+  if (/am/i.test(clean) && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = null) {
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+  if (!companySettings || !companySettings.requireGpsValidation) {
+    return { hasConflict: false };
+  }
+
+  const targetMinutes = parseTimeToMinutes(visitTime);
+  if (targetMinutes === null) return { hasConflict: false };
+
+  const list = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+
+  for (const v of list) {
+    if (v.id === currentVisitId) continue;
+    if (v.repId !== repId) continue;
+    if (v.date !== visitDate) continue;
+    if (v.status === "rejected") continue;
+
+    const existingMinutes = parseTimeToMinutes(v.time);
+    if (existingMinutes === null) continue;
+
+    const diff = Math.abs(targetMinutes - existingMinutes);
+    if (diff < MIN_MINUTES_BETWEEN_VISITS) {
+      return {
+        hasConflict: true,
+        exactMatch: diff === 0,
+        diffMinutes: diff,
+        conflictingVisit: v,
+        minRequired: MIN_MINUTES_BETWEEN_VISITS,
+      };
+    }
+  }
+
+  return { hasConflict: false };
+}
+
+function checkVisitDateAllowed(dateStr, repId, lang) {
+  if (!dateStr) return { allowed: true };
+  const isAr = lang === "ar";
+
+  // 1. Official public holidays check
+  const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays)
+    ? [...window.DEMO_DATA.publicHolidays]
+    : [];
+  try {
+    const cachedHolidays = localStorage.getItem("pharma_public_holidays");
+    if (cachedHolidays) {
+      const parsed = JSON.parse(cachedHolidays);
+      if (Array.isArray(parsed)) holidays.push(...parsed);
+    }
+  } catch (e) {}
+
+  const holiday = holidays.find((h) => h.date === dateStr);
+  if (holiday) {
+    const hTitle = holiday.title || (isAr ? "عطلة رسمية عامة" : "Public Holiday");
+    const msg = isAr
+      ? `⚠️ التاريخ المحدد (${dateStr}) يوافق عطلة رسمية عامة (${hTitle}). لا يُسمح بتسجيل أو تخطيط زيارات في العطلات الرسمية.`
+      : `⚠️ The selected date (${dateStr}) is an official public holiday (${hTitle}). Recording or planning visits on public holidays is not permitted.`;
+    return { allowed: false, reason: "public_holiday", message: msg };
+  }
+
+  // 2. Employee leaves check
+  const leaves = (window.store && window.store.leaves
+    ? window.store.leaves.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
+
+  const matchedLeave = leaves.find((l) => {
+    if (l.userId !== repId) return false;
+    if (l.status === "rejected") return false;
+    const lStart = l.startDate || l.endDate;
+    const lEnd = l.endDate || l.startDate;
+    if (!lStart || !lEnd) return false;
+    return dateStr >= lStart && dateStr <= lEnd;
+  });
+
+  if (matchedLeave) {
+    const typeNamesAr = {
+      annual: "اعتيادية",
+      casual: "عارضة",
+      sick: "مرضية",
+      unpaid: "بدون راتب",
+      maternity: "وضع",
+    };
+    const typeNamesEn = {
+      annual: "Annual",
+      casual: "Casual",
+      sick: "Sick",
+      unpaid: "Unpaid",
+      maternity: "Maternity",
+    };
+    const statusLabelsAr = {
+      approved: "معتمدة",
+      pending: "قيد الاعتماد",
+    };
+    const statusLabelsEn = {
+      approved: "Approved",
+      pending: "Pending Approval",
+    };
+
+    const lType = isAr
+      ? (typeNamesAr[matchedLeave.type] || matchedLeave.type)
+      : (typeNamesEn[matchedLeave.type] || matchedLeave.type);
+    const lStatus = isAr
+      ? (statusLabelsAr[matchedLeave.status] || matchedLeave.status)
+      : (statusLabelsEn[matchedLeave.status] || matchedLeave.status);
+
+    const msg = isAr
+      ? `⚠️ لديك طلب إجازة مسجل (${lStatus}: ${lType}) في هذا التاريخ (${dateStr}). لا يُسمح بتسجيل أو تخطيط زيارات أثناء الإجازات.`
+      : `⚠️ You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
+
+    return { allowed: false, reason: "employee_leave", message: msg };
+  }
+
+  return { allowed: true };
+}
+
+window.parseTimeToMinutes = parseTimeToMinutes;
+window.checkVisitTimeConflict = checkVisitTimeConflict;
+window.checkVisitDateAllowed = checkVisitDateAllowed;
+window.MIN_MINUTES_BETWEEN_VISITS = MIN_MINUTES_BETWEEN_VISITS;
 
 function getUserLines(userId) {
   const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
@@ -1536,6 +1678,7 @@ const translations = {
     notifTabUnread: "Unread",
     notifNew: "New",
     notifViewDetails: "View Details",
+    teamFilterLabel: "Employee Filter:",
     notifDirectiveLabel: "Directive / Note:",
   },
   ar: {
@@ -1640,6 +1783,7 @@ const translations = {
     notifTabUnread: "غير مقروء",
     notifNew: "جديد",
     notifViewDetails: "عرض التفاصيل",
+    teamFilterLabel: "تصفية الموظف / الفريق:",
     notifDirectiveLabel: "ملاحظة التوجيه:",
   },
 };
@@ -1834,7 +1978,7 @@ function getNavItemsForRole(role) {
       { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
     );
   } else {
-    if (role === "district_manager") {
+    if (role === "district_manager" || role === "line_manager" || role === "business_unit") {
       managementNavItems.push({
         id: "plans-review",
         i18n: "navPlansReview",
@@ -1856,18 +2000,24 @@ function getNavPendingCount(itemId, user) {
   const role = normalizeRole(user.role);
 
   if (itemId === "plans-review") {
-    if (role !== "district_manager" && role !== "admin") return 0;
+    if (role !== "district_manager" && role !== "line_manager" && role !== "business_unit" && role !== "admin") return 0;
     const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
     if (role === "admin") {
       return allVisits.filter((v) => v.status === "pending_approval").length;
     }
     const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const subordinateReps = allUsers.filter(
-      (u) =>
-        normalizeRole(u.role) === "medical_rep" &&
-        (u.dmId === user.id || u.districtManagerId === user.id || u.managerId === user.id),
-    );
-    const subRepIds = subordinateReps.map((r) => r.id);
+    let subRepIds = [];
+    if (role === "line_manager" || role === "business_unit") {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      subRepIds = subs.filter((s) => normalizeRole(s.role) === "medical_rep").map((s) => s.id);
+    } else {
+      const subordinateReps = allUsers.filter(
+        (u) =>
+          normalizeRole(u.role) === "medical_rep" &&
+          (u.dmId === user.id || u.districtManagerId === user.id || u.managerId === user.id),
+      );
+      subRepIds = subordinateReps.map((r) => r.id);
+    }
     return allVisits.filter(
       (v) => v.status === "pending_approval" && subRepIds.includes(v.repId),
     ).length;

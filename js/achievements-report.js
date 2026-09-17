@@ -135,25 +135,52 @@ function populateAchFilters() {
  */
 function getAchievementsScopeRepIds(user) {
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+  const allUsers = typeof getSharedReportUsers === 'function'
+    ? getSharedReportUsers()
+    : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
 
-  if (isRep) return [user.id];
-  if (role === 'district_manager') {
-    return allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
-  }
-  if (role === 'line_manager') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
+  let allowedRepIds = null;
+  if (isRep) {
+    allowedRepIds = [user.id];
+  } else if (role === 'district_manager') {
+    allowedRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
+  } else if (role === 'line_manager') {
+    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
-    return allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
-  }
-  if (role === 'business_unit') {
+    allowedRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+  } else if (role === 'business_unit') {
     const mySubordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
-    return mySubordinates
+    allowedRepIds = mySubordinates
       .filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))
       .map((u) => u.id);
   }
-  return null;
+
+  const repSelect = document.getElementById('achRepSelect');
+  const selectedRep = repSelect ? repSelect.value : 'all';
+
+  if (selectedRep && selectedRep !== 'all') {
+    if (selectedRep === 'all_reps' || selectedRep === 'all_dms') {
+      return allowedRepIds;
+    }
+    const isLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
+    if (isLM) {
+      const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+      return allowedRepIds ? repsUnderLM.filter((id) => allowedRepIds.includes(id)) : repsUnderLM;
+    }
+    const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+    if (isDM) {
+      const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      return allowedRepIds ? repsUnderDM.filter((id) => allowedRepIds.includes(id)) : repsUnderDM;
+    }
+    if (allowedRepIds && !allowedRepIds.includes(selectedRep) && role !== 'admin') {
+      return [];
+    }
+    return [selectedRep];
+  }
+
+  return allowedRepIds;
 }
 
 /**

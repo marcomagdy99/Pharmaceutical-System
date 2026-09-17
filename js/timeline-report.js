@@ -37,29 +37,39 @@ function renderDailyTimeline() {
   const user    = checkAuth();
   const role    = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep   = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = typeof getSharedReportUsers === 'function'
+    ? getSharedReportUsers()
+    : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
   // Filter visits within the date range (only completed or actual visits)
   let visitsInRange = REPORTS_DATA.visits.filter((v) => (v.status === 'completed' || v.isActual === true || v.source === 'actual') && v.date >= fromDate && v.date <= toDate);
 
   if (isRep) {
     visitsInRange = visitsInRange.filter((v) => v.repId === user.id);
+  } else if (role === 'district_manager') {
+    const teamReps = allUsers.filter((u) => u.managerId === user.id);
+    const teamRepIds = teamReps.map((r) => r.id);
+    const allowedTeamIds = [user.id, ...teamRepIds];
+    if (selectedRep === 'all') {
+      visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
+    } else {
+      visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && allowedTeamIds.includes(v.repId));
+    }
   } else if (role === 'line_manager') {
-    const dms    = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
+    const dms    = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds  = dms.map((d) => d.id);
     const reps   = allUsers.filter((u) => dmIds.includes(u.managerId));
     const repIds = reps.map((r) => r.id);
+    const allowedTeamIds = [user.id, ...dmIds, ...repIds];
 
     if (selectedRep === 'all') {
-      visitsInRange = visitsInRange.filter((v) => dmIds.includes(v.repId) || repIds.includes(v.repId) || v.repId === user.id || dmIds.includes(v.doubleWithUserId) || v.doubleWithUserId === user.id);
-    } else if (selectedRep === 'all_dms') {
-      visitsInRange = visitsInRange.filter((v) => dmIds.includes(v.repId) || dmIds.includes(v.doubleWithUserId));
-    } else if (selectedRep === 'all_reps') {
-      visitsInRange = visitsInRange.filter((v) => repIds.includes(v.repId));
+      visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
     } else if (dmIds.includes(selectedRep)) {
-      visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep);
+      const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
+      const dmTeamIds = [selectedRep, ...dmReps];
+      visitsInRange = visitsInRange.filter((v) => (dmTeamIds.includes(v.repId) || dmTeamIds.includes(v.doubleWithUserId)) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
     } else if (selectedRep) {
-      visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep);
+      visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
     }
   } else if (role === 'business_unit') {
     const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
@@ -71,15 +81,29 @@ function renderDailyTimeline() {
     if (selectedRep === 'all') {
       visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
     } else {
-      visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
+      const isSelectedLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
+      const isSelectedDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      if (isSelectedLM) {
+        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+        const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
+        visitsInRange = visitsInRange.filter((v) => (lmTeamIds.includes(v.repId) || lmTeamIds.includes(v.doubleWithUserId)) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
+      } else if (isSelectedDM) {
+        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        const dmTeamIds = [selectedRep, ...dmReps];
+        visitsInRange = visitsInRange.filter((v) => (dmTeamIds.includes(v.repId) || dmTeamIds.includes(v.doubleWithUserId)) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
+      } else {
+        visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
+      }
     }
   } else if (selectedRep && selectedRep !== 'all') {
     const selectedUserObj = allUsers.find((u) => u.id === selectedRep);
-    const isManagerRole = selectedUserObj && ['district_manager', 'line_manager', 'business_unit', 'dm', 'lm', 'bu'].includes(window.normalizeRole ? window.normalizeRole(selectedUserObj.role) : (selectedUserObj.role || '').toLowerCase());
-    if (selectedRep === user.id || isManagerRole) {
-      visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep);
+    const isDM = selectedUserObj && (selectedUserObj.role === 'district_manager' || selectedUserObj.role === 'dm');
+    if (isDM) {
+      const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep || (v.repId && dmReps.includes(v.repId)));
     } else {
-      visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep);
+      visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep);
     }
   }
 

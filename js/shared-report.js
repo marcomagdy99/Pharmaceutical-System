@@ -155,6 +155,8 @@ function syncReportsData() {
         // now falls back to the visit's own repName, or a generic label,
         // instead of silently being mislabeled as one of the two demo reps.
         const repName = rep ? rep.name : (v.repName || 'Unknown Rep');
+        const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === v.doctorId) ||
+                    (window.DEMO_DATA.hospitals || []).find((h) => h.id === v.doctorId);
         const isPharm =
           v.targetType === 'pharmacy' ||
           (v.period && v.period.toLowerCase() === 'pharmacy') ||
@@ -281,7 +283,14 @@ const directoryTranslations = {
     promptShowDoctorsTitle: 'Click Show to View Doctors Directory',
     promptShowDoctorsDesc: 'Choose employee, specialty, class, or search query then click Show to display doctors.',
     promptShowPharmaciesTitle: 'Click Show to View Pharmacies Directory',
-    promptShowPharmaciesDesc: 'Choose employee or search query then click Show to display pharmacies.'
+    promptShowPharmaciesDesc: 'Choose employee or search query then click Show to display pharmacies.',
+    timelineFrom: 'From:',
+    timelineTo: 'To:',
+    allTargets: 'All Targets (A, B & Hospitals)',
+    allDoctorsClassAB: 'All Doctors (Class A & B)',
+    classAOnly: 'Class A Only',
+    classBOnly: 'Class B Only',
+    hospitalsOnly: 'Hospitals Only'
   },
   ar: {
     tabDoctorsList: 'قائمة الأطباء',
@@ -369,7 +378,14 @@ const directoryTranslations = {
     promptShowDoctorsTitle: 'اضغط على زر عرض لإظهار دليل الأطباء',
     promptShowDoctorsDesc: 'حدد الموظف أو التخصص أو الفئة أو كلمات البحث ثم اضغط على زر عرض لإظهار الأطباء.',
     promptShowPharmaciesTitle: 'اضغط على زر عرض لإظهار دليل الصيدليات',
-    promptShowPharmaciesDesc: 'حدد الموظف أو كلمات البحث ثم اضغط على زر عرض لإظهار الصيدليات.'
+    promptShowPharmaciesDesc: 'حدد الموظف أو كلمات البحث ثم اضغط على زر عرض لإظهار الصيدليات.',
+    timelineFrom: 'من:',
+    timelineTo: 'إلى:',
+    allTargets: 'جميع الأهداف (A و B ومستشفيات)',
+    allDoctorsClassAB: 'جميع الأطباء (فئة A و B)',
+    classAOnly: 'فئة A فقط',
+    classBOnly: 'فئة B فقط',
+    hospitalsOnly: 'المستشفيات فقط'
   }
 };
 
@@ -414,6 +430,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const requestedTab = urlParams.get('tab');
   if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'pharmacies'].includes(requestedTab)) {
     switchReportTab(requestedTab);
+  }
+});
+
+document.addEventListener('languageChanged', () => {
+  const user = checkAuth();
+  if (user) {
+    initAllFilters(user);
   }
 });
 
@@ -511,24 +534,30 @@ function initAllFilters(user) {
   if (typeof initPharmSalesFilters === 'function') {
     initPharmSalesFilters(user);
   }
-  populateTimelineAndCoverageFilters(user);
-  populateDirectoryRepFilters(user);
+  populateUnifiedReportEmployeeFilters(user);
   if (typeof populateDoctorSpecialtyFilter === 'function') {
     populateDoctorSpecialtyFilter();
   }
 }
 
-function populateDirectoryRepFilters(user) {
-  const docSelect = document.getElementById('doctorRepSelect');
-  const pharmSelect = document.getElementById('pharmacyRepSelect');
-  if (!docSelect && !pharmSelect) return;
+function populateUnifiedReportEmployeeFilters(user) {
+  const selects = [
+    document.getElementById('pharmSalesRepSelect'),
+    document.getElementById('achRepSelect'),
+    document.getElementById('timelineRepSelect'),
+    document.getElementById('coverageRepSelect'),
+    document.getElementById('doctorRepSelect'),
+    document.getElementById('pharmacyRepSelect')
+  ].filter(Boolean);
+
+  if (selects.length === 0) return;
 
   const lang = getCurrentLang();
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const allUsers = getSharedReportUsers();
 
-  const populateSelect = (selectEl) => {
-    if (!selectEl) return;
+  selects.forEach((selectEl) => {
+    const prevVal = selectEl.value;
     selectEl.replaceChildren();
 
     if (role === 'line_manager') {
@@ -538,114 +567,8 @@ function populateDirectoryRepFilters(user) {
 
       const optAll = document.createElement('option');
       optAll.value = 'all';
-      optAll.textContent = lang === 'ar' ? 'كل الفريق' : 'All Team';
-      selectEl.appendChild(optAll);
-
-      if (dms.length > 0) {
-        const dmGroup = document.createElement('optgroup');
-        dmGroup.label = lang === 'ar' ? 'مديرو المناطق (DMs)' : 'District Managers (DMs)';
-        appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `${dm.name} (${dm.employeeCode || 'DM'})`);
-        selectEl.appendChild(dmGroup);
-      }
-      if (reps.length > 0) {
-        const repGroup = document.createElement('optgroup');
-        repGroup.label = lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Representatives (Reps)';
-        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => {
-          const dm = dms.find((d) => d.id === rep.managerId);
-          return `${rep.name} (${rep.employeeCode || 'Rep'}${dm ? ` - DM: ${dm.name}` : ''})`;
-        });
-        selectEl.appendChild(repGroup);
-      }
-    } else if (role === 'district_manager') {
-      const allLabel = lang === 'ar' ? 'كل مناديب الفريق' : 'All Team Reps';
-      const allOpt = document.createElement('option');
-      allOpt.value = 'all';
-      allOpt.textContent = allLabel;
-      selectEl.appendChild(allOpt);
-
-      const reps = allUsers.filter((u) => u.managerId === user.id);
-      appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
-    } else if (role === 'medical_rep' || role === 'rep') {
-      const opt = document.createElement('option');
-      opt.value = user.id;
-      opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
-      selectEl.appendChild(opt);
-    } else {
-      const isBU = role === 'business_unit';
-      const mySubordinates = isBU && typeof window.getAllSubordinates === 'function'
-        ? window.getAllSubordinates(user.id)
-        : [];
-      const mySubordinateIds = mySubordinates.map((u) => u.id);
-      const myDirectLMs = isBU ? allUsers.filter((u) => u.managerId === user.id) : [];
-      const myDirectLmIds = myDirectLMs.map((u) => u.id);
-      const myAllowedIds = isBU ? [user.id, ...myDirectLmIds, ...mySubordinateIds] : null;
-
-      const allLabel = lang === 'ar' ? 'جميع الموظفين' : 'All Employees';
-      const allOpt = document.createElement('option');
-      allOpt.value = 'all';
-      allOpt.textContent = allLabel;
-      selectEl.appendChild(allOpt);
-
-      const directoryRoles = [
-        { key: 'business_unit', label: lang === 'ar' ? 'وحدة الأعمال (BU)' : 'Business Unit (BU)' },
-        { key: 'line_manager', label: lang === 'ar' ? 'مديرو الخطوط (LM)' : 'Line Managers (LM)' },
-        { key: 'district_manager', label: lang === 'ar' ? 'مديرو المناطق (DM)' : 'District Managers (DM)' },
-        { key: 'medical_rep', label: lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Representatives (Reps)' },
-      ];
-      directoryRoles.forEach(({ key, label }) => {
-        const members = allUsers.filter((u) => {
-          if (myAllowedIds && !myAllowedIds.includes(u.id)) return false;
-          const r = window.normalizeRole ? window.normalizeRole(u.role) : u.role;
-          return r === key || u.role === key || (key === 'medical_rep' && u.role === 'rep');
-        });
-        if (!members.length) return;
-        const group = document.createElement('optgroup');
-        group.label = label;
-        appendSelectOptions(group, members, (u) => u.id, (u) => `${u.name} (${u.employeeCode || key})`);
-        selectEl.appendChild(group);
-      });
-    }
-  };
-
-  populateSelect(docSelect);
-  populateSelect(pharmSelect);
-}
-
-function populateTimelineAndCoverageFilters(user) {
-  const timelineRepSelect = document.getElementById('timelineRepSelect');
-  const coverageRepSelect = document.getElementById('coverageRepSelect');
-  if (!timelineRepSelect && !coverageRepSelect) return;
-  const lang = getCurrentLang();
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const allUsers = getSharedReportUsers();
-
-  const populateSelect = (selectEl) => {
-    if (!selectEl) return;
-    selectEl.replaceChildren();
-    if (role === 'line_manager') {
-      const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
-      const dmIds = dms.map((d) => d.id);
-      const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
-
-      const optAll = document.createElement('option');
-      optAll.value = 'all';
       optAll.textContent = lang === 'ar' ? 'كل الفريق (المديرين والمناديب)' : 'All Team (DMs & Med Reps)';
       selectEl.appendChild(optAll);
-
-      const optSelf = document.createElement('option');
-      optSelf.value = user.id;
-      optSelf.textContent = lang === 'ar' ? `${user.name} (LM - زياراتي)` : `${user.name} (LM - My Visits)`;
-      selectEl.appendChild(optSelf);
-
-      const optAllDMs = document.createElement('option');
-      optAllDMs.value = 'all_dms';
-      optAllDMs.textContent = lang === 'ar' ? 'جميع مديري المناطق (DMs)' : 'All District Managers (DMs)';
-      selectEl.appendChild(optAllDMs);
-
-      const optAllReps = document.createElement('option');
-      optAllReps.value = 'all_reps';
-      optAllReps.textContent = lang === 'ar' ? 'جميع المناديب (Reps)' : 'All Medical Reps (Reps)';
-      selectEl.appendChild(optAllReps);
 
       if (dms.length > 0) {
         const dmGroup = document.createElement('optgroup');
@@ -659,6 +582,7 @@ function populateTimelineAndCoverageFilters(user) {
         appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `${rep.name} (${rep.employeeCode || 'Rep'})`);
         selectEl.appendChild(repGroup);
       }
+      selectEl.disabled = false;
     } else if (role === 'district_manager') {
       const allLabel = lang === 'ar' ? 'كل مناديب الفريق' : 'All Team Reps';
       const allOpt = document.createElement('option');
@@ -666,18 +590,16 @@ function populateTimelineAndCoverageFilters(user) {
       allOpt.textContent = allLabel;
       selectEl.appendChild(allOpt);
 
-      const selfOpt = document.createElement('option');
-      selfOpt.value = user.id;
-      selfOpt.textContent = lang === 'ar' ? `${user.name} (DM - زياراتي)` : `${user.name} (DM - My Visits)`;
-      selectEl.appendChild(selfOpt);
-
       const reps = allUsers.filter((u) => u.managerId === user.id);
       appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+      selectEl.disabled = false;
     } else if (role === 'medical_rep' || role === 'rep') {
       const opt = document.createElement('option');
       opt.value = user.id;
       opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
+      opt.selected = true;
       selectEl.appendChild(opt);
+      selectEl.disabled = true;
     } else {
       const isBU = role === 'business_unit';
       const mySubordinates = isBU && typeof window.getAllSubordinates === 'function'
@@ -688,20 +610,18 @@ function populateTimelineAndCoverageFilters(user) {
       const myDirectLmIds = myDirectLMs.map((u) => u.id);
       const myAllowedIds = isBU ? [user.id, ...myDirectLmIds, ...mySubordinateIds] : null;
 
-      const lang2 = getCurrentLang();
-      const allLabel = lang2 === 'ar' ? 'جميع الفريق' : 'All Team';
+      const allLabel = lang === 'ar' ? 'جميع الفريق (الكل)' : 'All Team';
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
       allOpt.textContent = allLabel;
       selectEl.appendChild(allOpt);
 
-      const visitRoles = [
-        { key: 'business_unit', label: 'Business Unit (BU)' },
-        { key: 'line_manager', label: 'Line Managers (LM)' },
-        { key: 'district_manager', label: 'District Managers (DM)' },
-        { key: 'medical_rep', label: 'Medical Reps' },
+      const rolesList = [
+        { key: 'line_manager', label: lang === 'ar' ? 'مديرو الخطوط (LMs)' : 'Line Managers (LM)' },
+        { key: 'district_manager', label: lang === 'ar' ? 'مديرو المناطق (DMs)' : 'District Managers (DM)' },
+        { key: 'medical_rep', label: lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Reps' },
       ];
-      visitRoles.forEach(({ key, label }) => {
+      rolesList.forEach(({ key, label }) => {
         const members = allUsers.filter((u) => {
           if (myAllowedIds && !myAllowedIds.includes(u.id)) return false;
           const r = window.normalizeRole ? window.normalizeRole(u.role) : u.role;
@@ -713,12 +633,20 @@ function populateTimelineAndCoverageFilters(user) {
         appendSelectOptions(group, members, (u) => u.id, (u) => `${u.name} (${u.employeeCode || key})`);
         selectEl.appendChild(group);
       });
+      selectEl.disabled = false;
     }
-  };
 
-  populateSelect(timelineRepSelect);
-  populateSelect(coverageRepSelect);
+    if (prevVal && Array.from(selectEl.options).some((o) => o.value === prevVal)) {
+      selectEl.value = prevVal;
+    }
+  });
 }
+
+// Aliases for compatibility
+window.populateUnifiedReportEmployeeFilters = populateUnifiedReportEmployeeFilters;
+window.populateDirectoryRepFilters = populateUnifiedReportEmployeeFilters;
+window.populateTimelineAndCoverageFilters = populateUnifiedReportEmployeeFilters;
+window.populateSalesAndAchRepFilters = populateUnifiedReportEmployeeFilters;
 
 function populateLinesFilter(lineSelect, user = null) {
   if (!lineSelect) return;

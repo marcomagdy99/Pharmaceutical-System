@@ -45,15 +45,17 @@ function getScopedDoctors(respectActiveFilters = true) {
 
   let docs = getDoctorsData();
 
-  // Role scoping: Reps get all doctors assigned to their id OR located in any of their assigned areas
+  // Role scoping: Reps get all doctors assigned to their id OR located in any of their assigned areas (only if unassigned)
   if (!isMgr) {
     const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     docs = docs.filter((d) =>
       d.repId === currentUser.id ||
-      (d.areaId && repAreaIds.includes(d.areaId)) ||
-      (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+      (!d.repId && (
+        (d.areaId && repAreaIds.includes(d.areaId)) ||
+        (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+      ))
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -63,7 +65,8 @@ function getScopedDoctors(respectActiveFilters = true) {
       const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...teamRepIds];
     } else if (role === "line_manager") {
-      const dmIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+      const dms = allUsers.filter((u) => u.managerId === currentUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+      const dmIds = dms.map((d) => d.id);
       const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...dmIds, ...repIds];
     } else if (role === "business_unit") {
@@ -75,13 +78,24 @@ function getScopedDoctors(respectActiveFilters = true) {
     }
 
     if (allowedTeamIds) {
-      docs = docs.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
+      docs = docs.filter((d) => d.repId ? allowedTeamIds.includes(d.repId) : (role === "admin" || role === "hr"));
     }
 
     const repFilter = document.getElementById("doctorRepSelect");
     const repId = repFilter ? repFilter.value : "all";
     if (repId !== "all") {
-      docs = docs.filter((d) => d.repId === repId);
+      const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
+      const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
+      if (isLM) {
+        const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
+        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+        docs = docs.filter((d) => d.repId && repsUnderLM.includes(d.repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+      } else if (isDM) {
+        const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
+        docs = docs.filter((d) => d.repId && (repsUnderDM.includes(d.repId) || d.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+      } else {
+        docs = docs.filter((d) => d.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+      }
     }
   }
 

@@ -129,6 +129,16 @@
                  achievements-report.js. -->
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
+                <div class="sales-filter-field col-rep" id="pharmSalesRepFilterContainer">
+                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <select
+                    id="pharmSalesRepSelect"
+                    class="form-control"
+                    onchange="renderSalesReport()"
+                  >
+                    <option value="all">All Employees</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-product">
                   <label data-i18n="labelProduct">Product:</label>
                   <select id="pharmSalesProductSelect" class="form-control">
@@ -319,6 +329,16 @@
             <div class="sales-filter-card">
               <div class="achievements-filter-bar">
                 <div class="achievements-filter-group">
+                  <div class="sales-filter-field col-rep" id="achRepFilterContainer">
+                    <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                    <select
+                      id="achRepSelect"
+                      class="form-control"
+                      onchange="renderAchievementsReport()"
+                    >
+                      <option value="all">All Employees</option>
+                    </select>
+                  </div>
                   <div class="sales-filter-field col-month">
                     <label data-i18n="labelMonth">Month:</label>
                     <div class="multi-select-container" id="achMonthMultiSelectContainer">
@@ -444,99 +464,52 @@
               </div>
             </div>
           </div>
-          <!-- TAB 2: Daily Visits & Activities Timeline -->
+          <!-- TAB 3: Daily Visits & Activities Timeline -->
           <div class="report-content-panel" id="tabPanel-timeline">
-            <!-- Employee filter bar (visits-page style) -->
-            <div
-              id="timelineRepFilterContainer"
-              class="manager-rep-filter-container"
-              style="margin-bottom: 0"
-            >
-              <label class="manager-rep-filter-label">
-                <span>👥</span>
-                <span data-i18n="teamFilterLabel">Employee Filter:</span>
-              </label>
-              <select
-                id="timelineRepSelect"
-                class="filter-input"
-                style="
-                  min-width: min(300px, 100%);
-                  max-width: 100%;
-                  height: 38px;
-                  font-weight: 500;
-                "
-              >
-                <option value="all">All Employees</option>
-              </select>
-            </div>
-            <div class="timeline-filter-card" style="margin-top: 8px">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 12px;
-                  flex-wrap: wrap;
-                "
-              >
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <label
-                    style="
-                      font-weight: 700;
-                      font-size: 0.95rem;
-                      color: var(--gray-800);
-                    "
-                    data-i18n="timelineFrom"
-                    >From:</label
+            <div class="sales-filter-card">
+              <div class="sales-filter-form-grid">
+                <div class="sales-filter-field col-rep" id="timelineRepFilterContainer">
+                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <select
+                    id="timelineRepSelect"
+                    class="form-control"
+                    onchange="renderDailyTimeline()"
                   >
+                    <option value="all">All Employees</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-date">
+                  <label data-i18n="timelineFrom">From:</label>
                   <input
                     type="date"
                     id="timelineDateFrom"
                     class="form-control"
-                    style="width: auto"
                   />
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <label
-                    style="
-                      font-weight: 700;
-                      font-size: 0.95rem;
-                      color: var(--gray-800);
-                    "
-                    data-i18n="timelineTo"
-                    >To:</label
-                  >
+                <div class="sales-filter-field col-date">
+                  <label data-i18n="timelineTo">To:</label>
                   <input
                     type="date"
                     id="timelineDateTo"
                     class="form-control"
-                    style="width: auto"
                   />
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="btnShowTimelineReport"
-                  onclick="renderDailyTimeline()"
-                  style="
-                    padding: 6px 18px;
-                    border-radius: 6px;
-                    font-weight: 600;
-                  "
-                >
-                  🔍 <span data-i18n="btnShow">Show</span>
-                </button>
-                <span
-                  class="badge"
-                  style="
-                    background: var(--primary-light);
-                    color: var(--primary);
-                    padding: 6px 12px;
-                    font-weight: 700;
-                    border-radius: 8px;
-                  "
-                  id="timelineDateBadge"
-                  >Today</span
-                >
+                <div class="sales-filter-field col-btn">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnShowTimelineReport"
+                    onclick="renderDailyTimeline()"
+                  >
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
+                  <span
+                    class="badge"
+                    id="timelineDateBadge"
+                    style="background: var(--primary-light); color: var(--primary);"
+                    >Today</span
+                  >
+                </div>
               </div>
               <div class="legend-box" style="margin-top: 10px">
                 <span class="legend-item"
@@ -566,111 +539,68 @@
               <div class="timeline-container" id="timelineEventsContainer"></div>
             </div>
           </div>
-          <!-- TAB 3: Coverage & Frequency -->
+          <!-- TAB 4: Coverage & Frequency -->
           <div class="report-content-panel" id="tabPanel-coverage">
-            <!-- Employee filter bar (visits-page style) -->
-            <div
-              id="coverageRepFilterContainer"
-              class="manager-rep-filter-container"
-              style="margin-bottom: 0"
-            >
-              <label class="manager-rep-filter-label">
-                <span>👥</span>
-                <span data-i18n="teamFilterLabel">Employee Filter:</span>
-              </label>
-              <select
-                id="coverageRepSelect"
-                class="filter-input"
-                style="
-                  min-width: min(300px, 100%);
-                  max-width: 100%;
-                  height: 38px;
-                  font-weight: 500;
-                "
-              >
-                <option value="all">All Employees</option>
-              </select>
-            </div>
-            <div class="coverage-filter-card" style="margin-top: 8px">
-              <div class="date-range-row" style="align-items: flex-end">
-                <div class="date-input-group">
-                  <label
-                    style="
-                      font-weight: 600;
-                      font-size: 0.85rem;
-                      color: var(--gray-700);
-                    "
-                    >From (Start Date):</label
+            <div class="sales-filter-card">
+              <div class="sales-filter-form-grid">
+                <div class="sales-filter-field col-rep" id="coverageRepFilterContainer">
+                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <select
+                    id="coverageRepSelect"
+                    class="form-control"
+                    onchange="renderCoverageReport()"
                   >
+                    <option value="all">All Employees</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-date">
+                  <label data-i18n="timelineFrom">From:</label>
                   <input
                     type="date"
                     id="coverageStartDate"
                     class="form-control"
                   />
                 </div>
-                <div class="date-input-group">
-                  <label
-                    style="
-                      font-weight: 600;
-                      font-size: 0.85rem;
-                      color: var(--gray-700);
-                    "
-                    >To (End Date):</label
-                  >
+                <div class="sales-filter-field col-date">
+                  <label data-i18n="timelineTo">To:</label>
                   <input
                     type="date"
                     id="coverageEndDate"
                     class="form-control"
                   />
                 </div>
-                <div class="date-input-group">
-                  <label
-                    style="
-                      font-weight: 600;
-                      font-size: 0.85rem;
-                      color: var(--gray-700);
-                    "
-                    >Doctor Class Filter:</label
-                  >
+                <div class="sales-filter-field col-class">
+                  <label data-i18n="doctorClass">Class:</label>
                   <select id="coverageClassFilter" class="form-control">
-                    <option value="all">All Targets (A, B & Hospitals)</option>
-                    <option value="all_doctors">
+                    <option value="all" data-i18n="allTargets">All Targets (A, B & Hospitals)</option>
+                    <option value="all_doctors" data-i18n="allDoctorsClassAB">
                       All Doctors (Class A & B)
                     </option>
-                    <option value="A">Class A Only</option>
-                    <option value="B">Class B Only</option>
-                    <option value="hospital">
+                    <option value="A" data-i18n="classAOnly">Class A Only</option>
+                    <option value="B" data-i18n="classBOnly">Class B Only</option>
+                    <option value="hospital" data-i18n="hospitalsOnly">
                       Hospitals Only
                     </option>
                   </select>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  id="btnShowCoverageReport"
-                  onclick="renderCoverageReport()"
-                  style="
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    font-weight: 700;
-                    height: 42px;
-                  "
-                >
-                  🔍 <span data-i18n="btnShow">Show</span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline"
-                  onclick="exportCoverageReport()"
-                  style="
-                    padding: 10px 16px;
-                    border-radius: 8px;
-                    font-weight: 700;
-                    height: 42px;
-                  "
-                >
-                  📥 <span data-i18n="btnExportCSV">Export CSV</span>
-                </button>
+                <div class="sales-filter-field col-btn">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnShowCoverageReport"
+                    onclick="renderCoverageReport()"
+                  >
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline"
+                    id="exportCoverageReport"
+                    onclick="exportCoverageReport()"
+                  >
+                    <span>📥</span> <span data-i18n="btnExportCSV">Export CSV</span>
+                  </button>
+                </div>
               </div>
               <div class="coverage-rules-box" id="coverageRulesBox">
                 <!-- Dynamically populated based on active product line -->
@@ -772,32 +702,9 @@
               </div>
             </div>
           </div>
-          <!-- TAB 4: Doctors List -->
+          <!-- TAB 5: Doctors List -->
           <div class="report-content-panel" id="tabPanel-doctors">
-            <!-- Employee filter bar (visits-page style) -->
-            <div
-              id="doctorRepFilterContainer"
-              class="manager-rep-filter-container"
-              style="margin-bottom: 0"
-            >
-              <label class="manager-rep-filter-label">
-                <span>👥</span>
-                <span data-i18n="teamFilterLabel">Employee Filter:</span>
-              </label>
-              <select
-                id="doctorRepSelect"
-                class="filter-input"
-                style="
-                  min-width: min(300px, 100%);
-                  max-width: 100%;
-                  height: 38px;
-                  font-weight: 500;
-                "
-              >
-                <option value="all" data-i18n="allReps">All Employees</option>
-              </select>
-            </div>
-            <div class="sales-filter-card" style="margin-top: 8px">
+            <div class="sales-filter-card">
               <div
                 class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
                 style="
@@ -843,15 +750,8 @@
                 >
                   <span
                     class="badge"
-                    style="
-                      background: var(--primary-light);
-                      color: var(--primary);
-                      font-weight: 700;
-                      padding: 6px 12px;
-                      border-radius: 8px;
-                      display: none;
-                    "
                     id="totalDoctorsCountBadge"
+                    style="background: var(--primary-light); color: var(--primary); display: none;"
                     >0 Doctors</span
                   >
                   <button
@@ -887,14 +787,20 @@
                 </div>
               </div>
               <!-- Filters Grid -->
-              <div
-                class="sales-filter-form-grid"
-                style="
-                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                "
-              >
+              <div class="sales-filter-form-grid">
+                <!-- Employee Filter -->
+                <div class="sales-filter-field col-rep" id="doctorRepFilterContainer">
+                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <select
+                    id="doctorRepSelect"
+                    class="form-control"
+                    onchange="renderDoctorsReport()"
+                  >
+                    <option value="all" data-i18n="allReps">All Employees</option>
+                  </select>
+                </div>
                 <!-- Search -->
-                <div class="sales-filter-field">
+                <div class="sales-filter-field col-search">
                   <label data-i18n="searchDoctors">Search:</label>
                   <input
                     type="text"
@@ -906,7 +812,7 @@
                   />
                 </div>
                 <!-- Specialty Filter -->
-                <div class="sales-filter-field">
+                <div class="sales-filter-field col-specialty">
                   <label data-i18n="specialty">Specialty:</label>
                   <select
                     id="doctorSpecialtyFilter"
@@ -918,7 +824,7 @@
                   </select>
                 </div>
                 <!-- Class Filter -->
-                <div class="sales-filter-field">
+                <div class="sales-filter-field col-class">
                   <label data-i18n="doctorClass">Class:</label>
                   <select
                     id="doctorClassFilter"
@@ -937,7 +843,6 @@
                     class="btn btn-primary"
                     id="btnShowDoctorsReport"
                     onclick="renderDoctorsReport()"
-                    style="padding: 8px 20px; font-weight: 700; height: 38px;"
                   >
                     <span>🔍</span> <span data-i18n="btnShow">Show</span>
                   </button>
@@ -999,32 +904,9 @@
               </div>
             </div>
           </div>
-          <!-- TAB 5: Pharmacies List -->
+          <!-- TAB 6: Pharmacies List -->
           <div class="report-content-panel" id="tabPanel-pharmacies">
-            <!-- Employee filter bar (visits-page style) -->
-            <div
-              id="pharmacyRepFilterContainer"
-              class="manager-rep-filter-container"
-              style="margin-bottom: 0"
-            >
-              <label class="manager-rep-filter-label">
-                <span>👥</span>
-                <span data-i18n="teamFilterLabel">Employee Filter:</span>
-              </label>
-              <select
-                id="pharmacyRepSelect"
-                class="filter-input"
-                style="
-                  min-width: min(300px, 100%);
-                  max-width: 100%;
-                  height: 38px;
-                  font-weight: 500;
-                "
-              >
-                <option value="all" data-i18n="allReps">All Employees</option>
-              </select>
-            </div>
-            <div class="sales-filter-card" style="margin-top: 8px">
+            <div class="sales-filter-card">
               <div
                 class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
                 style="
@@ -1070,15 +952,8 @@
                 >
                   <span
                     class="badge"
-                    style="
-                      background: var(--success-light);
-                      color: var(--success);
-                      font-weight: 700;
-                      padding: 6px 12px;
-                      border-radius: 8px;
-                      display: none;
-                    "
                     id="totalPharmaciesCountBadge"
+                    style="background: var(--success-light); color: var(--success); display: none;"
                     >0 Pharmacies</span
                   >
                   <button
@@ -1114,14 +989,20 @@
                 </div>
               </div>
               <!-- Filters Grid -->
-              <div
-                class="sales-filter-form-grid"
-                style="
-                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                "
-              >
+              <div class="sales-filter-form-grid">
+                <!-- Employee Filter -->
+                <div class="sales-filter-field col-rep" id="pharmacyRepFilterContainer">
+                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <select
+                    id="pharmacyRepSelect"
+                    class="form-control"
+                    onchange="renderPharmaciesReport()"
+                  >
+                    <option value="all" data-i18n="allReps">All Employees</option>
+                  </select>
+                </div>
                 <!-- Search -->
-                <div class="sales-filter-field">
+                <div class="sales-filter-field col-search">
                   <label data-i18n="searchPharmacies">Search:</label>
                   <input
                     type="text"
@@ -1138,7 +1019,6 @@
                     class="btn btn-primary"
                     id="btnShowPharmaciesReport"
                     onclick="renderPharmaciesReport()"
-                    style="padding: 8px 20px; font-weight: 700; height: 38px;"
                   >
                     <span>🔍</span> <span data-i18n="btnShow">Show</span>
                   </button>

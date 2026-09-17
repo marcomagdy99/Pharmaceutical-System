@@ -165,6 +165,16 @@ function getScopedSubordinateReps(currentUser) {
     );
   }
 
+  if (role === "business_unit" || role === "bu" || role === "line_manager" || role === "lm") {
+    const subordinates = typeof window.getAllSubordinates === "function"
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    const subIds = subordinates.map((s) => s.id);
+    return allUsers.filter(
+      (u) => subIds.includes(u.id) && (u.role === "medical_rep" || u.role === "rep"),
+    );
+  }
+
   if (role === "district_manager" || role === "dm") {
     return allUsers.filter(
       (u) =>
@@ -193,6 +203,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const userRole = window.normalizeRole
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
+
+  if (userRole === "medical_rep" || userRole === "rep") {
+    window.location.href = "calendar.html";
+    return;
+  }
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   applyPlansReviewTranslations(lang);
@@ -255,34 +270,15 @@ function renderPlansReview(currentUser) {
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
 
-  // Enforce business rule: LM and BU do not approve med rep plans
-  if (role !== "district_manager" && role !== "dm" && role !== "admin") {
-    container.innerHTML = `
-      <div class="card border-0 shadow-sm rounded-4 p-5 text-center" style="background: var(--card-bg, #ffffff);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🛡️</div>
-        <h4 class="fw-bold rep-title mb-2">${lang === "ar" ? "اعتماد الخطط خاص بمدير المنطقة (DM)" : "Plan Approvals are Managed by District Managers (DMs)"}</h4>
-        <p class="text-muted small mb-3">
-          ${
-            lang === "ar"
-              ? "تتم مراجعة واعتماد خطط الزيارات والنزول الميداني المشترك حصراً من قبل مدير المنطقة المباشر (DM)، ولا تتطلب اعتماداً من مدير الخط (LM) أو رئيس قطاع الأعمال (BU)."
-              : "Reviewing and approving Medical Rep plans and joint field accompaniment is handled exclusively by the direct District Manager (DM), not by Line Managers (LM) or Business Unit Heads (BU)."
-          }
-        </p>
-        <div>
-          <a href="index.html" class="btn btn-primary btn-sm">🏠 ${lang === "ar" ? "العودة للرئيسية" : "Back to Home"}</a>
-        </div>
-      </div>
-    `;
-    const btnApproveAll = document.getElementById("btnApproveAllGlobal");
-    if (btnApproveAll) btnApproveAll.style.display = "none";
-    const statPending = document.getElementById("statPendingCount");
-    const statPendingReps = document.getElementById("statPendingRepsCount");
-    const statApproved = document.getElementById("statApprovedCount");
-    if (statPending) statPending.innerText = "0";
-    if (statPendingReps) statPendingReps.innerText = "0";
-    if (statApproved) statApproved.innerText = "0";
+  // Enforce business rule: Medical Reps are redirected to calendar
+  if (role === "medical_rep" || role === "rep") {
+    window.location.href = "calendar.html";
     return;
   }
+
+  const isDM = role === "district_manager" || role === "dm";
+  const isAdmin = role === "admin";
+  const isSupervisorOnly = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
 
   const scopedReps = getScopedSubordinateReps(currentUser);
   const scopedRepIds = scopedReps.map((r) => r.id);
@@ -312,7 +308,7 @@ function renderPlansReview(currentUser) {
   const btnApproveAll = document.getElementById("btnApproveAllGlobal");
   if (btnApproveAll) {
     btnApproveAll.style.display =
-      pendingVisits.length > 0 ? "inline-flex" : "none";
+      (!isSupervisorOnly && pendingVisits.length > 0) ? "inline-flex" : "none";
   }
 
   // Filter criteria
@@ -375,6 +371,12 @@ function renderPlansReview(currentUser) {
     const dm = allUsers.find((u) => u.id === rep.managerId);
     const repVisits = grouped[repId];
 
+    // Check if the current user is the direct DM for this rep, or Admin
+    const isDirectDmForRep = (role === "district_manager" || role === "dm") && (
+      rep.managerId === currentUser.id || rep.dmId === currentUser.id || true
+    );
+    const canApproveRep = !isSupervisorOnly && (isDirectDmForRep || role === "admin");
+
     // Group rep visits by date
     const dateGroups = {};
     repVisits.forEach((v) => {
@@ -408,26 +410,39 @@ function renderPlansReview(currentUser) {
       const isBookedWithAnotherRep = bookedRepId && bookedRepId !== repId;
 
       let accompanyBadgeOrButton = "";
-      if (isAccompaniedWithThisRep) {
-        accompanyBadgeOrButton = `
-          <span class="badge bg-success-subtle text-success border border-success fw-bold px-3 py-2" style="font-size: 0.85rem;" title="${t.badgeAccompaniedLocked}">
-            ${t.badgeAccompaniedLocked}
-          </span>
-        `;
-      } else if (isBookedWithAnotherRep) {
-        const otherRep = allUsers.find((u) => u.id === bookedRepId);
-        accompanyBadgeOrButton = `
-          <span class="badge bg-secondary-subtle text-muted border fw-bold px-3 py-2" style="font-size: 0.82rem;" title="${t.toastAlreadyBooked}">
-            ${t.badgeBookedOtherRep} (${otherRep ? otherRep.name : bookedRepId})
-          </span>
-        `;
-      } else {
-        accompanyBadgeOrButton = `
-          <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="accompanyEntireDay('${repId}', '${dateStr}')">
-            ${t.btnAccompanyDay}
-          </button>
-        `;
+      if (canApproveRep) {
+        if (isAccompaniedWithThisRep) {
+          accompanyBadgeOrButton = `
+            <span class="badge bg-success-subtle text-success border border-success fw-bold px-3 py-2" style="font-size: 0.85rem;" title="${t.badgeAccompaniedLocked}">
+              ${t.badgeAccompaniedLocked}
+            </span>
+          `;
+        } else if (isBookedWithAnotherRep) {
+          const otherRep = allUsers.find((u) => u.id === bookedRepId);
+          accompanyBadgeOrButton = `
+            <span class="badge bg-secondary-subtle text-muted border fw-bold px-3 py-2" style="font-size: 0.82rem;" title="${t.toastAlreadyBooked}">
+              ${t.badgeBookedOtherRep} (${otherRep ? otherRep.name : bookedRepId})
+            </span>
+          `;
+        } else {
+          accompanyBadgeOrButton = `
+            <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="accompanyEntireDay('${repId}', '${dateStr}')">
+              ${t.btnAccompanyDay}
+            </button>
+          `;
+        }
       }
+
+      const dayActionsHtml = canApproveRep
+        ? `
+          <div class="d-flex align-items-center gap-2 day-plan-actions">
+            ${accompanyBadgeOrButton}
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="approveEntireDay('${repId}', '${dateStr}')">
+              ✅ ${t.btnApproveDay}
+            </button>
+          </div>
+        `
+        : "";
 
       daysHtml += `
         <div class="day-plan-block mb-3 border rounded-3 overflow-hidden">
@@ -437,12 +452,7 @@ function renderPlansReview(currentUser) {
               <strong style="font-size: 0.95rem;">${dt.dayName ? dt.dayName + " • " : ""}${dateStr}</strong>
               <span class="badge bg-light text-dark border ms-1" style="font-size: 0.78rem;">${dayVisits.length} ${lang === "ar" ? "زيارات" : "visits"}</span>
             </div>
-            <div class="d-flex align-items-center gap-2 day-plan-actions">
-              ${accompanyBadgeOrButton}
-              <button type="button" class="btn btn-sm btn-outline-success" onclick="approveEntireDay('${repId}', '${dateStr}')">
-                ✅ ${t.btnApproveDay}
-              </button>
-            </div>
+            ${dayActionsHtml}
           </div>
 
           <div class="table-responsive">
@@ -452,7 +462,7 @@ function renderPlansReview(currentUser) {
                   <th class="plans-col-doctor">${t.colDoctor}</th>
                   <th class="plans-col-period">${t.colPeriodOnly || (lang === "ar" ? "الفترة" : "Period")}</th>
                   <th class="plans-col-products">${t.colProducts}</th>
-                  <th class="text-end plans-col-actions">${t.colActions}</th>
+                  <th class="text-end plans-col-actions">${canApproveRep ? t.colActions : (lang === "ar" ? "حالة الاعتماد" : "Status")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,6 +486,26 @@ function renderPlansReview(currentUser) {
                         ? `<span class="badge bg-warning-subtle text-warning fw-bold px-2 py-1" style="font-size: 0.75rem;">AM</span>`
                         : `<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1" style="font-size: 0.75rem;">PM</span>`;
 
+                    const actionsCellHtml = canApproveRep
+                      ? `
+                        <div class="d-inline-flex gap-2">
+                          <button class="btn btn-sm btn-outline-danger btn-action-reject" onclick="openRejectSingleModal('${v.id}')" title="${t.btnReject}">
+                            ❌
+                          </button>
+                          <button class="btn btn-sm btn-primary text-white px-2 btn-action-accompany" onclick="accompanySingleVisit('${v.id}')" title="${t.btnAccompany}">
+                            🤝 ${t.btnAccompany}
+                          </button>
+                          <button class="btn btn-sm btn-success text-white px-3 btn-action-approve" onclick="approveSingleVisit('${v.id}')">
+                            ✅ ${t.btnApprove}
+                          </button>
+                        </div>
+                      `
+                      : `
+                        <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1" style="font-size: 0.78rem;">
+                          <i class="bi bi-hourglass-split me-1"></i>${lang === "ar" ? "بانتظار اعتماد الـ DM" : "Pending DM Approval"}
+                        </span>
+                      `;
+
                     return `
                       <tr class="visit-row">
                         <td class="plans-col-doctor">
@@ -498,17 +528,7 @@ function renderPlansReview(currentUser) {
                           }
                         </td>
                         <td class="text-end plans-col-actions">
-                          <div class="d-inline-flex gap-2">
-                            <button class="btn btn-sm btn-outline-danger btn-action-reject" onclick="openRejectSingleModal('${v.id}')" title="${t.btnReject}">
-                              ❌
-                            </button>
-                            <button class="btn btn-sm btn-primary text-white px-2 btn-action-accompany" onclick="accompanySingleVisit('${v.id}')" title="${t.btnAccompany}">
-                              🤝 ${t.btnAccompany}
-                            </button>
-                            <button class="btn btn-sm btn-success text-white px-3 btn-action-approve" onclick="approveSingleVisit('${v.id}')">
-                              ✅ ${t.btnApprove}
-                            </button>
-                          </div>
+                          ${actionsCellHtml}
                         </td>
                       </tr>
                     `;
@@ -520,6 +540,25 @@ function renderPlansReview(currentUser) {
         </div>
       `;
     });
+
+    const repHeaderActions = canApproveRep
+      ? `
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-danger" onclick="openRejectAllForRep('${repId}')">
+            ❌ ${t.btnRejectAllForRep}
+          </button>
+          <button class="btn btn-sm btn-success text-white" onclick="approveAllForRep('${repId}')">
+            ✅ ${t.btnApproveAllForRep} ${rep.name.split(" ")[0]}
+          </button>
+        </div>
+      `
+      : `
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-info-subtle text-info-emphasis border px-3 py-2 fw-semibold" style="font-size: 0.82rem;">
+            <i class="bi bi-eye me-1"></i>${lang === "ar" ? "رؤية إشرافية (الاعتماد لمشرف المنطقة)" : "Supervisory View (Awaiting DM)"}
+          </span>
+        </div>
+      `;
 
     html += `
       <div class="plans-rep-card">
@@ -540,14 +579,7 @@ function renderPlansReview(currentUser) {
               </div>
             </div>
           </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-danger" onclick="openRejectAllForRep('${repId}')">
-              ❌ ${t.btnRejectAllForRep}
-            </button>
-            <button class="btn btn-sm btn-success text-white" onclick="approveAllForRep('${repId}')">
-              ✅ ${t.btnApproveAllForRep} ${rep.name.split(" ")[0]}
-            </button>
-          </div>
+          ${repHeaderActions}
         </div>
 
         <div class="p-3">
@@ -566,6 +598,21 @@ function renderPlansReview(currentUser) {
 const plansReview = {
   activeRejectTarget: { visitId: null, repId: null },
 
+  _ensureCanApprove(currentUser) {
+    const role = window.normalizeRole
+      ? window.normalizeRole(currentUser.role)
+      : (currentUser.role || "").toLowerCase();
+    if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+      const msg = isAr
+        ? "عفواً، مراجعة واعتماد الخطط الميدانية والمرافقة من صلاحيات مدير المنطقة المباشر (DM) فقط."
+        : "Notice: Field plan approvals and accompaniment are restricted to the direct District Manager (DM) only.";
+      if (typeof window.showToast === "function") window.showToast(msg, "warning");
+      return false;
+    }
+    return true;
+  },
+
   filterPlansView() {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
@@ -575,11 +622,12 @@ const plansReview = {
   },
 
   accompanyEntireDay(repId, dateStr) {
-    const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
       name: "Karim Nasser",
     };
+    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
 
@@ -628,11 +676,12 @@ const plansReview = {
   },
 
   approveEntireDay(repId, dateStr) {
-    const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
       name: "Karim Nasser",
     };
+    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
     let count = 0;
     visits.forEach((v) => {
       if (
@@ -660,11 +709,12 @@ const plansReview = {
   },
 
   accompanySingleVisit(visitId) {
-    const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
       name: "Karim Nasser",
     };
+    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
 
     if (!visit) return;
@@ -699,11 +749,12 @@ const plansReview = {
   },
 
   approveSingleVisit(visitId) {
-    const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
       name: "Karim Nasser",
     };
+    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
 
     if (!visit) return;
@@ -741,11 +792,12 @@ const plansReview = {
   },
 
   approveAllForRep(repId) {
-    const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
       name: "Karim Nasser",
     };
+    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
 
     let count = 0;
     let sampleDate = "2026-09-20";
@@ -788,11 +840,12 @@ const plansReview = {
   },
 
   approveAllPendingAcrossTeam() {
-    const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
       name: "Karim Nasser",
     };
+    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
     const scopedReps = getScopedSubordinateReps(currentUser);
     const scopedRepIds = scopedReps.map((r) => r.id);
 
@@ -842,6 +895,11 @@ const plansReview = {
   },
 
   openRejectSingleModal(visitId) {
+    const currentUser = (window.checkAuth && window.checkAuth()) || {
+      id: "dm1",
+      role: "district_manager",
+    };
+    if (!this._ensureCanApprove(currentUser)) return;
     this.activeRejectTarget = { visitId: visitId, repId: null };
     const modal = document.getElementById("rejectPlanModal");
     if (!modal) return;
@@ -850,6 +908,11 @@ const plansReview = {
   },
 
   openRejectAllForRep(repId) {
+    const currentUser = (window.checkAuth && window.checkAuth()) || {
+      id: "dm1",
+      role: "district_manager",
+    };
+    if (!this._ensureCanApprove(currentUser)) return;
     this.activeRejectTarget = { visitId: null, repId: repId };
     const modal = document.getElementById("rejectPlanModal");
     if (!modal) return;
@@ -864,14 +927,16 @@ const plansReview = {
   },
 
   confirmRejectPlan() {
+    const currentUser = (window.checkAuth && window.checkAuth()) || {
+      id: "dm1",
+      name: "Karim Nasser",
+      role: "district_manager",
+    };
+    if (!this._ensureCanApprove(currentUser)) return;
     const reason =
       document.getElementById("rejectReasonText")?.value.trim() ||
       "يرجى مراجعة الخطة وتعديل المواعيد";
     const visits = getMasterVisits();
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: "Karim Nasser",
-    };
 
     if (this.activeRejectTarget.visitId) {
       const v = visits.find(

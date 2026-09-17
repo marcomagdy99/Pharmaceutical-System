@@ -2586,6 +2586,43 @@ window.handleDashCompleteSubmit = function (e) {
   const visits =
     window.DEMO_DATA && window.DEMO_DATA.visits ? window.DEMO_DATA.visits : [];
   const target = visits.find((v) => v.id === targetVisitToCompleteId);
+  if (!target) return;
+
+  const authUser =
+    (window.checkAuth && window.checkAuth()) ||
+    (window.DEMO_DATA && window.DEMO_DATA.currentUser) ||
+    {};
+  const targetRepId = target.repId || authUser.id || "rep1";
+
+  // SFE Audit Check: Validate public holiday and leave
+  if (typeof window.checkVisitDateAllowed === "function") {
+    const dateCheck = window.checkVisitDateAllowed(dateVal, targetRepId, lang);
+    if (!dateCheck.allowed) {
+      if (typeof showToast === "function") showToast(dateCheck.message, "warning");
+      else alert(dateCheck.message);
+      return;
+    }
+  }
+
+  // SFE Audit Check: Validate minimum 10-minute buffer and no overlapping visits
+  if (typeof window.checkVisitTimeConflict === "function") {
+    const timeConflict = window.checkVisitTimeConflict(targetRepId, dateVal, timeVal, target.id);
+    if (timeConflict.hasConflict) {
+      const conflictingTarget = timeConflict.conflictingVisit.doctorName || timeConflict.conflictingVisit.doctorId || "";
+      const conflictingTime = timeConflict.conflictingVisit.time || timeVal;
+      const msg = timeConflict.exactMatch
+        ? (lang === "ar"
+            ? `⚠️ توجد زيارة مسجلة بالفعل في نفس هذا التوقيت تماماً (${conflictingTime}) لـ (${conflictingTarget}).`
+            : `⚠️ Another visit is already recorded at the exact same time (${conflictingTime}) for (${conflictingTarget}).`)
+        : (lang === "ar"
+            ? `⚠️ الفارق الزمني بين الزيارات يجب ألا يقل عن ${timeConflict.minRequired} دقائق عند تفعيل تسجيل الزيارات بالموقع (GPS). توجد زيارة أخرى في (${conflictingTime}) لـ (${conflictingTarget}).`
+            : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`);
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
+  }
+
   if (target) {
     target.status = "completed";
     target.date = dateVal;

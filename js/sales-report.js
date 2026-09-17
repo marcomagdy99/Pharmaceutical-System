@@ -300,7 +300,9 @@ function getFilteredPharmSalesRows() {
 
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
-  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+  const allUsers = typeof getSharedReportUsers === 'function'
+    ? getSharedReportUsers()
+    : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
   if (isRep) {
     rows = rows.filter((r) => r.repId === user.id);
@@ -308,10 +310,42 @@ function getFilteredPharmSalesRows() {
     const teamRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
     rows = rows.filter((r) => r.dmId === user.id || (r.repId && teamRepIds.includes(r.repId)));
   } else if (role === 'line_manager') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && u.role === 'district_manager');
+    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
     const teamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
     rows = rows.filter((r) => r.lmId === user.id || (r.dmId && dmIds.includes(r.dmId)) || (r.repId && teamRepIds.includes(r.repId)));
+  } else if (role === 'business_unit') {
+    const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    const subIds = subs.map((s) => s.id);
+    const directLMs = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
+    const allowedBuUserIds = [user.id, ...directLMs, ...subIds];
+    rows = rows.filter((r) => (r.repId && allowedBuUserIds.includes(r.repId)) || (r.dmId && allowedBuUserIds.includes(r.dmId)) || (r.lmId && allowedBuUserIds.includes(r.lmId)));
+  }
+
+  const repSelect = document.getElementById('pharmSalesRepSelect');
+  const selectedRep = repSelect ? repSelect.value : 'all';
+
+  if (selectedRep && selectedRep !== 'all') {
+    if (selectedRep === 'all_dms') {
+      const dms = allUsers.filter((u) => u.role === 'district_manager' || u.role === 'dm').map((u) => u.id);
+      rows = rows.filter((r) => (r.dmId && dms.includes(r.dmId)) || (r.repId && dms.some((dId) => allUsers.some((u) => u.id === r.repId && u.managerId === dId))));
+    } else if (selectedRep === 'all_reps') {
+      const reps = allUsers.filter((u) => u.role === 'medical_rep' || u.role === 'rep').map((u) => u.id);
+      rows = rows.filter((r) => r.repId && reps.includes(r.repId));
+    } else {
+      const isLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
+      const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      if (isLM) {
+        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+        rows = rows.filter((r) => r.lmId === selectedRep || (r.dmId && dmsUnderLM.includes(r.dmId)) || (r.repId && repsUnderLM.includes(r.repId)));
+      } else if (isDM) {
+        const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        rows = rows.filter((r) => r.dmId === selectedRep || (r.repId && repsUnderDM.includes(r.repId)));
+      } else {
+        rows = rows.filter((r) => r.repId === selectedRep || r.dmId === selectedRep);
+      }
+    }
   }
 
   return rows;
