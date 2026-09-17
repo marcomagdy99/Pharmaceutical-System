@@ -318,6 +318,11 @@ function getFilteredPharmSalesRows() {
 }
 
 function renderSalesReport() {
+  const prompt = document.getElementById('salesPromptContainer');
+  const results = document.getElementById('salesResultsContainer');
+  if (prompt) prompt.style.display = 'none';
+  if (results) results.style.display = 'block';
+
   const tbody = document.getElementById('salesReportTbody');
   if (!tbody) return;
   tbody.replaceChildren();
@@ -789,7 +794,10 @@ function closeTargetsModal() {
     targetsModalEl.style.display = 'none';
     targetsModalEl.classList.remove('active');
   }
-  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
+  const achResults = document.getElementById('achievementsResultsContainer');
+  if (achResults && achResults.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
+    renderAchievementsReport();
+  }
 }
 
 function resetTargetForm() {
@@ -872,7 +880,10 @@ function saveTarget() {
 
   resetTargetForm();
   renderTargetsTable();
-  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
+  const achResults = document.getElementById('achievementsResultsContainer');
+  if (achResults && achResults.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
+    renderAchievementsReport();
+  }
   if (typeof showToast === 'function') showToast('Target saved.', 'success');
 }
 
@@ -882,6 +893,9 @@ function deleteTarget(id) {
     window.store.targets.delete(id);
   }
   renderTargetsTable();
-  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
+  const achResults = document.getElementById('achievementsResultsContainer');
+  if (achResults && achResults.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
+    renderAchievementsReport();
+  }
   if (typeof showToast === 'function') showToast('Target deleted.', 'info');
 }

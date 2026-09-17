@@ -11,9 +11,15 @@ function getDoctorsData() {
 }
 
 function renderDoctorsReport() {
+  const prompt = document.getElementById("doctorsPromptContainer");
+  const results = document.getElementById("doctorsResultsContainer");
+  if (prompt) prompt.style.display = "none";
+  if (results) results.style.display = "block";
+
   const grid = document.getElementById("doctorsDirectoryGrid");
   const emptyState = document.getElementById("doctorsEmptyState");
   const countBadge = document.getElementById("totalDoctorsCountBadge");
+  if (countBadge) countBadge.style.display = "inline-flex";
   if (!grid) return;
 
   const searchInput = document.getElementById("doctorSearchInput");
@@ -331,7 +337,7 @@ function onDoctorLmChange() {}
 function onDoctorDmChange() {}
 
 function initDoctorsDirectory(user) {
-  renderDoctorsReport();
+  // Directories only render when user clicks Show
 }
 
 window.renderDoctorsReport = renderDoctorsReport;

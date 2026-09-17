@@ -521,11 +521,25 @@ function initDashboardCharts(user) {
   let scopedRepIds = null;
   if (role === "medical_rep" || role === "rep") {
     scopedRepIds = [currentUserId];
-  } else if (role === "district_manager" || role === "dm") {
-    scopedRepIds = allUsers.filter((u) => u.managerId === currentUserId).map((u) => u.id);
-  } else if (role === "line_manager" || role === "lm") {
-    const dms = allUsers.filter((u) => u.managerId === currentUserId && u.role === "district_manager").map((d) => d.id);
-    scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+  } else if (role === "district_manager" || role === "dm" || role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+    if (typeof window.getAllSubordinates === "function") {
+      const allDownstreamUsers = window.getAllSubordinates(currentUserId);
+      scopedRepIds = allDownstreamUsers
+        .filter((u) => u.role === "medical_rep" || u.role === "rep")
+        .map((u) => u.id);
+    } else {
+      // Fallback manual resolution
+      if (role === "district_manager" || role === "dm") {
+        scopedRepIds = allUsers.filter((u) => u.managerId === currentUserId).map((u) => u.id);
+      } else if (role === "line_manager" || role === "lm") {
+        const dms = allUsers.filter((u) => u.managerId === currentUserId).map((d) => d.id);
+        scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+      } else if (role === "business_unit" || role === "bu") {
+        const lms = allUsers.filter((u) => u.managerId === currentUserId).map((l) => l.id);
+        const dms = allUsers.filter((u) => lms.includes(u.managerId)).map((d) => d.id);
+        scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+      }
+    }
   }
 
   // Determine active calendar year (auto-resets every year on January 1st)
@@ -610,8 +624,11 @@ function initDashboardCharts(user) {
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
 
-      // Filter sales for this specific line in the active year
-      const lineSales = allSales.filter(function (s) { return s.lineId === line.id && s.month && s.month.startsWith(activeYear); });
+      // Filter sales for this specific line in the active year, scoped to this manager's team
+      const lineSales = allSales.filter(function (s) {
+        const matchesRep = !scopedRepIds || (s.repId && scopedRepIds.includes(s.repId));
+        return s.lineId === line.id && matchesRep && s.month && s.month.startsWith(activeYear);
+      });
       const lineMonthsMap = {};
       lineSales.forEach(function (s) {
         var m = s.month || (activeYear + "-01");
@@ -1705,27 +1722,45 @@ function renderLMDashboard(userName, user) {
         const linesToShow = myUserLines.length > 0 ? myUserLines : allLines.filter(l => l.lineManagerId === user.id);
         if (linesToShow.length === 0) return "";
         const isAr = lang === "ar";
+        const currentYear = new Date().getFullYear().toString();
+        const allSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
+          ? window.DEMO_DATA.sales
+          : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+
         return `
       <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
         <div style="margin-bottom: 1.25rem;">
           <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
-            📈 ${isAr ? "منحنى المبيعات شهرياً حسب الخط" : "Monthly Sales vs Target Trend (Per Line)"}
+            📈 ${isAr ? "منحنى ومستهدف المبيعات لكل خط مستقل" : "Monthly Sales & Target Trend (Per Line)"}
           </h3>
           <small style="color: var(--gray-500); font-size: 0.82rem;">
-            ${isAr ? "مقارنة المبيعات الفعلية بالمستهدف لكل خط إنتاج" : "Actual vs Target comparison for each product line under your management"}
+            ${isAr ? "كل خط إنتاج له تارجت ومبيعات ونسبة تحقيق مستقلة تماماً" : "Each product line has independent target, sales, and achievement %"}
           </small>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-          ${linesToShow.map(line => `
+          ${linesToShow.map(line => {
+            const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear));
+            const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
+            const lTarget = lSales.reduce((sum, s) => sum + (parseFloat(s.target) || 0), 0);
+            const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
+            const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#f59e0b";
+
+            return `
           <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
-            <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
-              📦 ${line.name}
-            </h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+              <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+                📦 ${line.name}
+              </h4>
+              <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
+                ${isAr ? "تحقيق:" : "Ach:"} ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
+              </span>
+            </div>
             <div style="position: relative; height: 250px; width: 100%;">
               <canvas id="dashLineTrend_${line.id}"></canvas>
             </div>
           </div>
-          `).join("")}
+          `;
+          }).join("")}
         </div>
       </div>`;
       })()}
@@ -1877,27 +1912,45 @@ function renderBUDashboard(userName, user) {
         const linesToShow = buUserLines.length > 0 ? buUserLines : allLinesLocal;
         if (linesToShow.length === 0) return "";
         const isAr = lang === "ar";
+        const currentYear = new Date().getFullYear().toString();
+        const allSales = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.sales) && window.DEMO_DATA.sales.length > 0)
+          ? window.DEMO_DATA.sales
+          : (window.REPORTS_DATA && window.REPORTS_DATA.sales) || [];
+
         return `
       <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
         <div style="margin-bottom: 1.25rem;">
           <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
-            📈 ${isAr ? "منحنى المبيعات شهرياً حسب الخط" : "Monthly Sales vs Target Trend (Per Line)"}
+            📈 ${isAr ? "منحنى ومستهدف المبيعات لكل خط في وحدة الأعمال" : "Monthly Sales & Target Trend (Per Line)"}
           </h3>
           <small style="color: var(--gray-500); font-size: 0.82rem;">
-            ${isAr ? "مقارنة المبيعات الفعلية بالمستهدف لكل خط إنتاج تحت إدارتك" : "Actual vs Target comparison for each product line under your business unit"}
+            ${isAr ? "مقارنة المبيعات الفعلية بالمستهدف لكل خط إنتاج مستقل في وحدة الأعمال" : "Actual vs Target comparison for each independent product line under your business unit"}
           </small>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-          ${linesToShow.map(line => `
+          ${linesToShow.map(line => {
+            const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear));
+            const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
+            const lTarget = lSales.reduce((sum, s) => sum + (parseFloat(s.target) || 0), 0);
+            const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
+            const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#f59e0b";
+
+            return `
           <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
-            <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
-              📦 ${line.name}
-            </h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+              <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+                📦 ${line.name}
+              </h4>
+              <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
+                ${isAr ? "تحقيق:" : "Ach:"} ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
+              </span>
+            </div>
             <div style="position: relative; height: 250px; width: 100%;">
               <canvas id="dashLineTrend_${line.id}"></canvas>
             </div>
           </div>
-          `).join("")}
+          `;
+          }).join("")}
         </div>
       </div>`;
       })()}

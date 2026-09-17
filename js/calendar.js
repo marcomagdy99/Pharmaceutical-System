@@ -137,6 +137,7 @@ function getDynamicCalendarEvents() {
       status: v.status || "planned",
       repId: v.repId,
       visitType: v.visitType,
+      doubleWithUserId: v.doubleWithUserId,
       doubleWithUserName: v.doubleWithUserName,
     });
   });
@@ -370,7 +371,7 @@ function renderCalendar() {
           if (sub.status !== "Inactive") targetUserIds.add(sub.id);
         });
       }
-      dayEvents = dayEvents.filter((e) => targetUserIds.has(e.repId));
+      dayEvents = dayEvents.filter((e) => targetUserIds.has(e.repId) || (e.doubleWithUserId && targetUserIds.has(e.doubleWithUserId)));
     } else {
       const hasFullOrgAccess =
         currentUser.role === "admin" || currentUser.role === "hr";
@@ -381,7 +382,7 @@ function renderCalendar() {
             if (sub.status !== "Inactive") mySubIds.add(sub.id);
           });
         }
-        dayEvents = dayEvents.filter((e) => mySubIds.has(e.repId));
+        dayEvents = dayEvents.filter((e) => mySubIds.has(e.repId) || (e.doubleWithUserId && mySubIds.has(e.doubleWithUserId)));
       }
     }
 

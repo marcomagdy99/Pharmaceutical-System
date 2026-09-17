@@ -1,0 +1,22 @@
+﻿{
+  hosting: {
+    public: .,
+    ignore: [
+      firebase.json,
+      **/.*,
+      **/node_modules/**
+    ],
+    redirects: [
+      {
+        source: /doctors.html,
+        destination: /reports.html?tab=doctors,
+        type: 301
+      },
+      {
+        source: /pharmacies.html,
+        destination: /reports.html?tab=pharmacies,
+        type: 301
+      }
+    ]
+  }
+}

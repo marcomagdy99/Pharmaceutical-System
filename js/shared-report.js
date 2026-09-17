@@ -261,7 +261,19 @@ const directoryTranslations = {
     btnConfirmImport: 'Confirm & Import',
     salesTrendTitle: 'Monthly Sales vs Target Trend',
     coverageGaugeTitle: 'Doctor Coverage Speedometer Gauge',
-    doctorClassesTitle: 'Doctor Classes & Hospitals Distribution'
+    doctorClassesTitle: 'Doctor Classes & Hospitals Distribution',
+    promptShowSalesTitle: 'Click Show to View Sales Report',
+    promptShowSalesDesc: 'Select product, month, year, distributor, or line, then click Show to display sales data.',
+    promptShowAchTitle: 'Click Show to View Achievements Report',
+    promptShowAchDesc: 'Select month and year then click Show to view targets, actuals, and achievement rates.',
+    promptShowTimelineTitle: 'Click Show to View Daily Timeline',
+    promptShowTimelineDesc: 'Choose employee and date range then click Show to display visits and activities timeline.',
+    promptShowCoverageTitle: 'Click Show to View Coverage Report',
+    promptShowCoverageDesc: 'Choose employee, date range, and class filter then click Show to calculate coverage and frequency.',
+    promptShowDoctorsTitle: 'Click Show to View Doctors Directory',
+    promptShowDoctorsDesc: 'Choose employee, specialty, class, or search query then click Show to display doctors.',
+    promptShowPharmaciesTitle: 'Click Show to View Pharmacies Directory',
+    promptShowPharmaciesDesc: 'Choose employee or search query then click Show to display pharmacies.'
   },
   ar: {
     tabDoctorsList: 'قائمة الأطباء',
@@ -334,7 +346,19 @@ const directoryTranslations = {
     btnConfirmImport: 'تأكيد واستيراد',
     salesTrendTitle: 'منحنى تحقيق المبيعات شهرياً',
     coverageGaugeTitle: 'مؤشر قياس التغطية',
-    doctorClassesTitle: 'توزيع فئات الأطباء والمستشفيات'
+    doctorClassesTitle: 'توزيع فئات الأطباء والمستشفيات',
+    promptShowSalesTitle: 'اضغط على زر عرض لإظهار تقرير المبيعات',
+    promptShowSalesDesc: 'حدد المنتج والشهر والسنة والموزع أو الخط البيعي ثم اضغط على زر عرض لعرض بيانات المبيعات.',
+    promptShowAchTitle: 'اضغط على زر عرض لإظهار تقرير الإنجازات',
+    promptShowAchDesc: 'حدد الشهر والسنة ثم اضغط على زر عرض لعرض الأهداف ونسب التحقيق.',
+    promptShowTimelineTitle: 'اضغط على زر عرض لإظهار التايم لاين اليومي',
+    promptShowTimelineDesc: 'اختر الموظف والفترة الزمنية ثم اضغط على زر عرض لعرض جدول الزيارات والأنشطة.',
+    promptShowCoverageTitle: 'اضغط على زر عرض لإظهار تقرير التغطية',
+    promptShowCoverageDesc: 'اختر الموظف والفترة وفئة الأطباء ثم اضغط على زر عرض لحساب نسب التغطية والتكرار.',
+    promptShowDoctorsTitle: 'اضغط على زر عرض لإظهار دليل الأطباء',
+    promptShowDoctorsDesc: 'حدد الموظف أو التخصص أو الفئة أو كلمات البحث ثم اضغط على زر عرض لإظهار الأطباء.',
+    promptShowPharmaciesTitle: 'اضغط على زر عرض لإظهار دليل الصيدليات',
+    promptShowPharmaciesDesc: 'حدد الموظف أو كلمات البحث ثم اضغط على زر عرض لإظهار الصيدليات.'
   }
 };
 
@@ -370,14 +394,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const endDate = document.getElementById('coverageEndDate');
   if (startDate) startDate.value = firstOfMonth;
   if (endDate) endDate.value = lastOfMonthStr;
-  renderSalesReport();
+
+  // Prepare filter dropdowns without auto-rendering results
   if (typeof populateAchievementsFilters === 'function') populateAchievementsFilters();
-  if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
-  renderDailyTimeline();
-  renderCoverageReport();
-  // Initialize Doctors and Pharmacies directories
-  if (typeof initDoctorsDirectory === 'function') initDoctorsDirectory(user);
-  if (typeof initPharmaciesDirectory === 'function') initPharmaciesDirectory(user);
+
   // Check URL query parameter for active tab
   const urlParams = new URLSearchParams(window.location.search);
   const requestedTab = urlParams.get('tab');
@@ -450,18 +470,8 @@ function switchReportTab(tabKey) {
   document.querySelectorAll('.report-content-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tabPanel-${tabKey}`);
   });
-  if (tabKey === 'doctors' && typeof renderDoctorsReport === 'function') {
-    renderDoctorsReport();
-  }
-  if (tabKey === 'pharmacies' && typeof renderPharmaciesReport === 'function') {
-    renderPharmaciesReport();
-  }
   if (tabKey === 'achievements') {
     if (typeof populateAchFilters === 'function') populateAchFilters();
-    if (typeof renderAchievementsReport === 'function') renderAchievementsReport();
-  }
-  if (tabKey === 'coverage' && typeof renderCoverageReport === 'function') {
-    renderCoverageReport();
   }
 }
 
@@ -988,6 +998,70 @@ function downloadBase64Excel(base64Data, filename) {
     document.body.removeChild(link);
   }
 }
+
+/**
+ * Official Template Download Handlers
+ */
+function downloadDoctorsTemplate() {
+  if (window.EXCEL_TEMPLATES && window.EXCEL_TEMPLATES.doctors) {
+    downloadBase64Excel(window.EXCEL_TEMPLATES.doctors, 'PharmaCare_Doctors_Template.xlsx');
+  } else {
+    const link = document.createElement('a');
+    link.href = 'templates/PharmaCare_Doctors_Template.xlsx';
+    link.download = 'PharmaCare_Doctors_Template.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+window.downloadDoctorsTemplate = downloadDoctorsTemplate;
+
+function downloadPharmaciesTemplate() {
+  if (window.EXCEL_TEMPLATES && window.EXCEL_TEMPLATES.pharmacies) {
+    downloadBase64Excel(window.EXCEL_TEMPLATES.pharmacies, 'PharmaCare_Pharmacies_Template.xlsx');
+  } else {
+    const link = document.createElement('a');
+    link.href = 'templates/PharmaCare_Pharmacies_Template.xlsx';
+    link.download = 'PharmaCare_Pharmacies_Template.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+window.downloadPharmaciesTemplate = downloadPharmaciesTemplate;
+
+/**
+ * Import Modal Controls
+ */
+function openImportDoctorsModal() {
+  const modal = document.getElementById('importDoctorsModal');
+  if (modal) modal.style.display = 'flex';
+}
+window.openImportDoctorsModal = openImportDoctorsModal;
+
+function closeImportDoctorsModal() {
+  const modal = document.getElementById('importDoctorsModal');
+  if (modal) modal.style.display = 'none';
+}
+window.closeImportDoctorsModal = closeImportDoctorsModal;
+
+function openImportPharmaciesModal() {
+  const modal = document.getElementById('importPharmaciesModal');
+  if (modal) modal.style.display = 'flex';
+}
+window.openImportPharmaciesModal = openImportPharmaciesModal;
+
+function closeImportPharmaciesModal() {
+  const modal = document.getElementById('importPharmaciesModal');
+  if (modal) modal.style.display = 'none';
+}
+window.closeImportPharmaciesModal = closeImportPharmaciesModal;
+
+function onDoctorsImportLmChange() {}
+window.onDoctorsImportLmChange = onDoctorsImportLmChange;
+
+function onPharmaciesImportLmChange() {}
+window.onPharmaciesImportLmChange = onPharmaciesImportLmChange;
 
 /**
  * Parse an Excel file (.xlsx, .xls) using SheetJS into normalized objects

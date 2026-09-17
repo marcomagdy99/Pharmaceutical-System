@@ -1588,8 +1588,6 @@ function resolveActivePage() {
     "reports.html": "reports",
     "profile.html": "profile",
     "users.html": "users",
-    "doctors.html": "doctors",
-    "pharmacies.html": "pharmacies",
     "products.html": "products",
     "quizzes.html": "quizzes",
     "areas.html": "areas",

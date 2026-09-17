@@ -11,9 +11,15 @@ function getPharmaciesData() {
 }
 
 function renderPharmaciesReport() {
+  const prompt = document.getElementById("pharmaciesPromptContainer");
+  const results = document.getElementById("pharmaciesResultsContainer");
+  if (prompt) prompt.style.display = "none";
+  if (results) results.style.display = "block";
+
   const grid = document.getElementById("pharmaciesDirectoryGrid");
   const emptyState = document.getElementById("pharmaciesEmptyState");
   const countBadge = document.getElementById("totalPharmaciesCountBadge");
+  if (countBadge) countBadge.style.display = "inline-flex";
   if (!grid) return;
 
   const searchInput = document.getElementById("pharmacySearchInput");
@@ -279,7 +285,7 @@ function onPharmacyLmChange() {}
 function onPharmacyDmChange() {}
 
 function initPharmaciesDirectory(user) {
-  renderPharmaciesReport();
+  // Directories only render when user clicks Show
 }
 
 window.renderPharmaciesReport = renderPharmaciesReport;

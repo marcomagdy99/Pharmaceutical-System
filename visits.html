@@ -207,8 +207,33 @@
             </div>
             <div class="form-group">
                 <label class="form-label" id="visitTargetLabel" data-i18n="modalTarget">Doctor/Hospital</label>
-                <select id="visitTarget" class="form-control"></select>
+                <select id="visitTarget" class="form-control" onchange="onVisitTargetChange()"></select>
             </div>
+
+            <!-- GPS Geofencing Verification Card (Controlled by Admin Policy) -->
+            <div class="form-group" id="visitGpsSection" style="display: none; margin-bottom: 14px;">
+                <div style="background: var(--surface-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 12px 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                        <label style="margin: 0; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; color: var(--gray-800);">
+                            <span>📍</span>
+                            <span id="lblVisitGpsTitle" data-i18n="modalGpsTitle">GPS Geofencing Verification</span>
+                        </label>
+                        <span id="visitGpsBadge" class="badge" data-i18n="gpsBadgePending" style="background: #e2e8f0; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; font-weight: 700;">
+                            Pending Check
+                        </span>
+                    </div>
+                    <div id="visitGpsInfoText" data-i18n="gpsInfoDefault" style="font-size: 0.8rem; color: var(--gray-600); margin-bottom: 8px;">
+                        Verifying your presence within the clinic geofence radius (200m).
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline" id="btnCheckMyGps" onclick="triggerManualGpsCheck()" style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px;">
+                            <span data-i18n="btnCheckGps">📡 Check Location Now</span>
+                        </button>
+                        <span id="visitGpsDistanceText" style="font-size: 0.82rem; font-weight: 700; color: var(--primary);"></span>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group" id="visitTypeSection">
                 <label class="form-label" data-i18n="modalType">Visit Type</label>
                 <div class="radio-group">

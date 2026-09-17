@@ -168,7 +168,6 @@
                   <select
                     id="pharmSalesYearSelect"
                     class="form-control"
-                    onchange="renderSalesReport()"
                   ></select>
                 </div>
                 <div class="sales-filter-field col-distributor">
@@ -204,96 +203,110 @@
                 Period: September 2026 | All Products
               </div>
             </div>
-            <!-- Dynamic KPI Cards Row -->
-            <div class="kpi-grid">
-              <div class="kpi-card primary">
-                <span class="kpi-label" data-i18n="kpiTotalRows">Rows</span>
-                <span class="kpi-value" id="kpiTotalActual">0</span>
-                <span class="kpi-subtext" id="kpiActualSubtext"
-                  >Selected Scope</span
-                >
-              </div>
-              <div class="kpi-card info">
-                <span class="kpi-label" data-i18n="kpiTotalQuantity"
-                  >Total Quantity</span
-                >
-                <span class="kpi-value" id="kpiTotalTarget">0</span>
-                <span class="kpi-subtext" id="kpiTargetSubtext"
-                  >Units Pulled</span
-                >
-              </div>
-              <div class="kpi-card success">
-                <span class="kpi-label" data-i18n="kpiTotalValue"
-                  >Total Value</span
-                >
-                <span class="kpi-value" id="kpiAchievement">0</span>
-                <span class="kpi-subtext" id="kpiAchievementSubtext"
-                  >Net of Returns</span
-                >
-              </div>
-              <div class="kpi-card warning">
-                <span class="kpi-label" data-i18n="kpiDistinctPharmacies"
-                  >Pharmacies</span
-                >
-                <span class="kpi-value" id="kpiActiveReps">0</span>
-                <span class="kpi-subtext" id="kpiProductsSubtext"
-                  >Distinct in scope</span
-                >
-              </div>
+
+            <!-- Tab 1 Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="salesPromptContainer">
+              <div class="report-show-prompt-icon">💊</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowSalesTitle">Click Show to View Sales Report</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowSalesDesc">Select product, month, year, distributor, or line, then click Show to display sales data.</p>
+              <button type="button" class="btn btn-primary" onclick="renderSalesReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
+              </button>
             </div>
-            <!-- Sales Actions Bar -->
-            <div class="sales-actions-card">
-              <div class="sales-actions-left">
-                <h3
-                  style="margin: 0; font-size: 1.1rem; color: var(--gray-800)"
-                >
-                  Sales Performance by Product & Team
-                </h3>
-                <p
-                  style="
-                    margin: 4px 0 0;
-                    font-size: 0.82rem;
-                    color: var(--gray-500);
-                  "
-                >
-                  Monthly records synchronized via distributor sales sheets.
-                </p>
+
+            <!-- Tab 1 Results Container (Hidden until Show is clicked) -->
+            <div id="salesResultsContainer" style="display: none;">
+              <!-- Dynamic KPI Cards Row -->
+              <div class="kpi-grid">
+                <div class="kpi-card primary">
+                  <span class="kpi-label" data-i18n="kpiTotalRows">Rows</span>
+                  <span class="kpi-value" id="kpiTotalActual">0</span>
+                  <span class="kpi-subtext" id="kpiActualSubtext"
+                    >Selected Scope</span
+                  >
+                </div>
+                <div class="kpi-card info">
+                  <span class="kpi-label" data-i18n="kpiTotalQuantity"
+                    >Total Quantity</span
+                  >
+                  <span class="kpi-value" id="kpiTotalTarget">0</span>
+                  <span class="kpi-subtext" id="kpiTargetSubtext"
+                    >Units Pulled</span
+                  >
+                </div>
+                <div class="kpi-card success">
+                  <span class="kpi-label" data-i18n="kpiTotalValue"
+                    >Total Value</span
+                  >
+                  <span class="kpi-value" id="kpiAchievement">0</span>
+                  <span class="kpi-subtext" id="kpiAchievementSubtext"
+                    >Net of Returns</span
+                  >
+                </div>
+                <div class="kpi-card warning">
+                  <span class="kpi-label" data-i18n="kpiDistinctPharmacies"
+                    >Pharmacies</span
+                  >
+                  <span class="kpi-value" id="kpiActiveReps">0</span>
+                  <span class="kpi-subtext" id="kpiProductsSubtext"
+                    >Distinct in scope</span
+                  >
+                </div>
               </div>
-              <div class="sales-actions-right">
-                <button
-                  class="btn btn-outline"
-                  id="exportSalesBtn"
-                  onclick="exportSalesReport()"
-                >
-                  📥 Export CSV
-                </button>
-                <a
-                  href="distributors.html?tab=import"
-                  class="btn btn-outline text-primary"
-                  id="linkUploadDistributorSales"
-                  style="display: none; font-weight: 600; text-decoration: none;"
-                >
-                  📤 Upload Sheets ↗
-                </a>
+              <!-- Sales Actions Bar -->
+              <div class="sales-actions-card">
+                <div class="sales-actions-left">
+                  <h3
+                    style="margin: 0; font-size: 1.1rem; color: var(--gray-800)"
+                  >
+                    Sales Performance by Product & Team
+                  </h3>
+                  <p
+                    style="
+                      margin: 4px 0 0;
+                      font-size: 0.82rem;
+                      color: var(--gray-500);
+                    "
+                  >
+                    Monthly records synchronized via distributor sales sheets.
+                  </p>
+                </div>
+                <div class="sales-actions-right">
+                  <button
+                    class="btn btn-outline"
+                    id="exportSalesBtn"
+                    onclick="exportSalesReport()"
+                  >
+                    📥 Export CSV
+                  </button>
+                  <a
+                    href="distributors.html?tab=import"
+                    class="btn btn-outline text-primary"
+                    id="linkUploadDistributorSales"
+                    style="display: none; font-weight: 600; text-decoration: none;"
+                  >
+                    📤 Upload Sheets ↗
+                  </a>
+                </div>
               </div>
-            </div>
-            <!-- Pharmacy Sales Table (raw rows) -->
-            <div class="table-container">
-              <table class="report-table">
-                <thead>
-                  <tr>
-                    <th data-i18n="colDate">Date</th>
-                    <th data-i18n="colPharmacy">Pharmacy</th>
-                    <th>Product / Medicine</th>
-                    <th data-i18n="colDistributor">Distributor</th>
-                    <th data-i18n="colArea">Area / Territory</th>
-                    <th data-i18n="colRep">Rep</th>
-                    <th data-i18n="colQuantity">Quantity</th>
-                    <th data-i18n="colValue">Value</th>
-                  </tr>
-                </thead>
-                <tbody id="salesReportTbody"></tbody>
-              </table>
+              <!-- Pharmacy Sales Table (raw rows) -->
+              <div class="table-container">
+                <table class="report-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="colDate">Date</th>
+                      <th data-i18n="colPharmacy">Pharmacy</th>
+                      <th>Product / Medicine</th>
+                      <th data-i18n="colDistributor">Distributor</th>
+                      <th data-i18n="colArea">Area / Territory</th>
+                      <th data-i18n="colRep">Rep</th>
+                      <th data-i18n="colQuantity">Quantity</th>
+                      <th data-i18n="colValue">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salesReportTbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
           <!-- TAB (Achievements): Territory/Rep achievement, product breakdown,
@@ -334,7 +347,7 @@
                   </div>
                   <div class="sales-filter-field col-year">
                     <label data-i18n="labelYear">Year:</label>
-                    <select id="achYearSelect" class="form-control" onchange="renderAchievementsReport()">
+                    <select id="achYearSelect" class="form-control">
                       <option value="2025">2025</option>
                       <option value="2026" selected>2026</option>
                       <option value="2027">2027</option>
@@ -344,6 +357,7 @@
                     <button
                       type="button"
                       class="btn btn-primary"
+                      id="btnShowAchievementsReport"
                       onclick="renderAchievementsReport()"
                     >
                       <span>🔍</span> <span data-i18n="btnShow">Show</span>
@@ -363,48 +377,62 @@
                 </div>
               </div>
             </div>
-            <div class="kpi-grid">
-              <div class="kpi-card primary">
-                <span class="kpi-label">Total Target Value</span>
-                <span class="kpi-value" id="kpiAchTotalTarget">0</span>
-              </div>
-              <div class="kpi-card success">
-                <span class="kpi-label">Total Actual Value</span>
-                <span class="kpi-value" id="kpiAchTotalActual">0</span>
-              </div>
-              <div class="kpi-card info">
-                <span class="kpi-label">Overall Achievement</span>
-                <span class="kpi-value" id="kpiAchOverallPct">0%</span>
-              </div>
-              <div class="kpi-card warning">
-                <span class="kpi-label">Reps Covered</span>
-                <span class="kpi-value" id="kpiAchRepsCount">0</span>
-              </div>
+
+            <!-- Tab 2 Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="achievementsPromptContainer">
+              <div class="report-show-prompt-icon">🏆</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowAchTitle">Click Show to View Achievements Report</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowAchDesc">Select month and year then click Show to view targets, actuals, and achievement rates.</p>
+              <button type="button" class="btn btn-primary" onclick="renderAchievementsReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
+              </button>
             </div>
-            <!-- Interactive Sales vs Target Trend Chart -->
-            <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
-                <h4 style="margin: 0; font-weight: 700; color: var(--gray-800);">📈 <span data-i18n="salesTrendTitle">Monthly Sales vs Target Trend</span></h4>
+
+            <!-- Tab 2 Results Container (Hidden until Show is clicked) -->
+            <div id="achievementsResultsContainer" style="display: none;">
+              <div class="kpi-grid">
+                <div class="kpi-card primary">
+                  <span class="kpi-label">Total Target Value</span>
+                  <span class="kpi-value" id="kpiAchTotalTarget">0</span>
+                </div>
+                <div class="kpi-card success">
+                  <span class="kpi-label">Total Actual Value</span>
+                  <span class="kpi-value" id="kpiAchTotalActual">0</span>
+                </div>
+                <div class="kpi-card info">
+                  <span class="kpi-label">Overall Achievement</span>
+                  <span class="kpi-value" id="kpiAchOverallPct">0%</span>
+                </div>
+                <div class="kpi-card warning">
+                  <span class="kpi-label">Reps Covered</span>
+                  <span class="kpi-value" id="kpiAchRepsCount">0</span>
+                </div>
               </div>
-              <div style="position: relative; height: 300px; width: 100%;">
-                <canvas id="achSalesTrendChart"></canvas>
+              <!-- Interactive Sales vs Target Trend Chart -->
+              <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+                  <h4 style="margin: 0; font-weight: 700; color: var(--gray-800);">📈 <span data-i18n="salesTrendTitle">Monthly Sales vs Target Trend</span></h4>
+                </div>
+                <div style="position: relative; height: 300px; width: 100%;">
+                  <canvas id="achSalesTrendChart"></canvas>
+                </div>
               </div>
-            </div>
-            <div class="table-container">
-              <table class="report-table">
-                <thead>
-                  <tr>
-                    <th>Rep / Territory</th>
-                    <th>Product</th>
-                    <th>Target Units</th>
-                    <th>Actual Units</th>
-                    <th>Target Value</th>
-                    <th>Actual Value</th>
-                    <th>Achievement</th>
-                  </tr>
-                </thead>
-                <tbody id="achievementsReportTbody"></tbody>
-              </table>
+              <div class="table-container">
+                <table class="report-table">
+                  <thead>
+                    <tr>
+                      <th>Rep / Territory</th>
+                      <th>Product</th>
+                      <th>Target Units</th>
+                      <th>Actual Units</th>
+                      <th>Target Value</th>
+                      <th>Actual Value</th>
+                      <th>Achievement</th>
+                    </tr>
+                  </thead>
+                  <tbody id="achievementsReportTbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
           <!-- TAB 2: Daily Visits & Activities Timeline -->
@@ -478,6 +506,7 @@
                 <button
                   type="button"
                   class="btn btn-primary"
+                  id="btnShowTimelineReport"
                   onclick="renderDailyTimeline()"
                   style="
                     padding: 6px 18px;
@@ -511,8 +540,22 @@
                 >
               </div>
             </div>
-            <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
-            <div class="timeline-container" id="timelineEventsContainer"></div>
+
+            <!-- Tab 3 Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="timelinePromptContainer">
+              <div class="report-show-prompt-icon">⏰</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowTimelineTitle">Click Show to View Daily Timeline</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowTimelineDesc">Choose employee and date range then click Show to display visits and activities timeline.</p>
+              <button type="button" class="btn btn-primary" onclick="renderDailyTimeline()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
+              </button>
+            </div>
+
+            <!-- Tab 3 Results Container (Hidden until Show is clicked) -->
+            <div id="timelineResultsContainer" style="display: none;">
+              <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
+              <div class="timeline-container" id="timelineEventsContainer"></div>
+            </div>
           </div>
           <!-- TAB 3: Coverage & Frequency -->
           <div class="report-content-panel" id="tabPanel-coverage">
@@ -529,7 +572,6 @@
               <select
                 id="coverageRepSelect"
                 class="filter-input"
-                onchange="renderCoverageReport()"
                 style="
                   min-width: min(300px, 100%);
                   max-width: 100%;
@@ -581,7 +623,7 @@
                     "
                     >Doctor Class Filter:</label
                   >
-                  <select id="coverageClassFilter" class="form-control" onchange="renderCoverageReport()">
+                  <select id="coverageClassFilter" class="form-control">
                     <option value="all">All Targets (A, B & Hospitals)</option>
                     <option value="all_doctors">
                       All Doctors (Class A & B)
@@ -596,6 +638,7 @@
                 <button
                   type="button"
                   class="btn btn-primary"
+                  id="btnShowCoverageReport"
                   onclick="renderCoverageReport()"
                   style="
                     padding: 10px 20px;
@@ -624,86 +667,100 @@
                 <!-- Dynamically populated based on active product line -->
               </div>
             </div>
-            <!-- Overall Coverage Summary KPI Cards for Selected Period -->
-            <div class="kpi-grid mb-3" style="margin-bottom: 16px">
-              <div class="kpi-card primary">
-                <span class="kpi-label">Total Coverage</span>
-                <span class="kpi-value" id="kpiCoverageOverall">0%</span>
-                <span class="kpi-subtext" id="kpiCoveragePeriodSubtext"
-                  >Selected Period</span
-                >
-              </div>
-              <div class="kpi-card success">
-                <span class="kpi-label">Executed Visits</span>
-                <span class="kpi-value" id="kpiCoverageExecutedVisits">0</span>
-                <span class="kpi-subtext">Completed in Period</span>
-              </div>
-              <div class="kpi-card info">
-                <span class="kpi-label">Target Visits</span>
-                <span class="kpi-value" id="kpiCoverageTargetVisits">0</span>
-                <span class="kpi-subtext">Required Frequency</span>
-              </div>
-              <div class="kpi-card warning">
-                <span class="kpi-label">Targets Covered</span>
-                <span class="kpi-value" id="kpiCoverageTargetsCount">0</span>
-                <span class="kpi-subtext" id="kpiCoverageTargetsSubtext"
-                  >Doctors & Hospitals</span
-                >
-              </div>
-            </div>
-            <!-- Interactive Doctor Coverage Radial Gauge -->
-            <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb); text-align: center;">
-              <h4 style="margin: 0 0 12px; font-weight: 700; color: var(--gray-800);">🎯 <span data-i18n="coverageGaugeTitle">Doctor Coverage Speedometer Gauge</span></h4>
-              <div style="position: relative; height: 230px; max-width: 320px; margin: 0 auto;">
-                <canvas id="repCoverageGaugeChart"></canvas>
-              </div>
-              <div id="repCoverageGaugeLabel" style="font-weight: 800; font-size: 1.3rem; color: var(--primary); margin-top: -12px;"></div>
-            </div>
-            <!-- Employee Coverage & Frequency Summary Table -->
-            <div class="coverage-summary-card" id="coverageSummaryCard" style="margin-bottom: 20px;">
-              <div class="table-container">
-                <table class="report-table" id="coverageSummaryTable">
-                  <thead>
-                    <tr>
-                      <th id="covColEmployee">Employee</th>
-                      <th id="covColTerritory">Territory / Area</th>
-                      <th id="covColDoctors">Doctors</th>
-                      <th id="covColVisited">Visited Doctors</th>
-                      <th id="covColUnvisited">Unvisited Doctors</th>
-                      <th id="covColActual">Actual Visits</th>
-                      <th id="covColAvgFreq">Average Frequency</th>
-                    </tr>
-                  </thead>
-                  <tbody id="coverageSummaryTbody"></tbody>
-                </table>
-              </div>
-            </div>
 
-            <!-- Active Drilldown Filter Indicator & Reset -->
-            <div id="coverageActiveDrilldownBar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 10px 16px; background: var(--primary-light, #e0f2fe); border-radius: 8px; border: 1px solid var(--primary, #0284c7);">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span>🔍</span>
-                <span id="coverageActiveDrilldownText" style="font-weight: 600; color: var(--primary-dark, #0369a1); font-size: 0.9rem;"></span>
-              </div>
-              <button type="button" class="btn btn-sm btn-outline" onclick="resetCoverageDrilldown()" style="font-size: 0.8rem; padding: 4px 12px; background: white;">
-                ✖ Show All
+            <!-- Tab 4 Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="coveragePromptContainer">
+              <div class="report-show-prompt-icon">🎯</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowCoverageTitle">Click Show to View Coverage Report</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowCoverageDesc">Choose employee, date range, and class filter then click Show to calculate coverage and frequency.</p>
+              <button type="button" class="btn btn-primary" onclick="renderCoverageReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
               </button>
             </div>
 
-            <div class="table-container">
-              <table class="report-table">
-                <thead>
-                  <tr>
-                    <th>Target Name</th>
-                    <th>Class / Type</th>
-                    <th>Specialty</th>
-                    <th>Target Frequency</th>
-                    <th>Visits Executed</th>
-                    <th>Exact Visit Dates & Times</th>
-                  </tr>
-                </thead>
-                <tbody id="coverageReportTbody"></tbody>
-              </table>
+            <!-- Tab 4 Results Container (Hidden until Show is clicked) -->
+            <div id="coverageResultsContainer" style="display: none;">
+              <!-- Overall Coverage Summary KPI Cards for Selected Period -->
+              <div class="kpi-grid mb-3" style="margin-bottom: 16px">
+                <div class="kpi-card primary">
+                  <span class="kpi-label">Total Coverage</span>
+                  <span class="kpi-value" id="kpiCoverageOverall">0%</span>
+                  <span class="kpi-subtext" id="kpiCoveragePeriodSubtext"
+                    >Selected Period</span
+                  >
+                </div>
+                <div class="kpi-card success">
+                  <span class="kpi-label">Executed Visits</span>
+                  <span class="kpi-value" id="kpiCoverageExecutedVisits">0</span>
+                  <span class="kpi-subtext">Completed in Period</span>
+                </div>
+                <div class="kpi-card info">
+                  <span class="kpi-label">Target Visits</span>
+                  <span class="kpi-value" id="kpiCoverageTargetVisits">0</span>
+                  <span class="kpi-subtext">Required Frequency</span>
+                </div>
+                <div class="kpi-card warning">
+                  <span class="kpi-label">Targets Covered</span>
+                  <span class="kpi-value" id="kpiCoverageTargetsCount">0</span>
+                  <span class="kpi-subtext" id="kpiCoverageTargetsSubtext"
+                    >Doctors & Hospitals</span
+                  >
+                </div>
+              </div>
+              <!-- Interactive Doctor Coverage Radial Gauge -->
+              <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb); text-align: center;">
+                <h4 style="margin: 0 0 12px; font-weight: 700; color: var(--gray-800);">🎯 <span data-i18n="coverageGaugeTitle">Doctor Coverage Speedometer Gauge</span></h4>
+                <div style="position: relative; height: 230px; max-width: 320px; margin: 0 auto;">
+                  <canvas id="repCoverageGaugeChart"></canvas>
+                </div>
+                <div id="repCoverageGaugeLabel" style="font-weight: 800; font-size: 1.3rem; color: var(--primary); margin-top: -12px;"></div>
+              </div>
+              <!-- Employee Coverage & Frequency Summary Table -->
+              <div class="coverage-summary-card" id="coverageSummaryCard" style="margin-bottom: 20px;">
+                <div class="table-container">
+                  <table class="report-table" id="coverageSummaryTable">
+                    <thead>
+                      <tr>
+                        <th id="covColEmployee">Employee</th>
+                        <th id="covColTerritory">Territory / Area</th>
+                        <th id="covColDoctors">Doctors</th>
+                        <th id="covColVisited">Visited Doctors</th>
+                        <th id="covColUnvisited">Unvisited Doctors</th>
+                        <th id="covColActual">Actual Visits</th>
+                        <th id="covColAvgFreq">Average Frequency</th>
+                      </tr>
+                    </thead>
+                    <tbody id="coverageSummaryTbody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Active Drilldown Filter Indicator & Reset -->
+              <div id="coverageActiveDrilldownBar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 10px 16px; background: var(--primary-light, #e0f2fe); border-radius: 8px; border: 1px solid var(--primary, #0284c7);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span>🔍</span>
+                  <span id="coverageActiveDrilldownText" style="font-weight: 600; color: var(--primary-dark, #0369a1); font-size: 0.9rem;"></span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline" onclick="resetCoverageDrilldown()" style="font-size: 0.8rem; padding: 4px 12px; background: white;">
+                  ✖ Show All
+                </button>
+              </div>
+
+              <div class="table-container">
+                <table class="report-table">
+                  <thead>
+                    <tr>
+                      <th>Target Name</th>
+                      <th>Class / Type</th>
+                      <th>Specialty</th>
+                      <th>Target Frequency</th>
+                      <th>Visits Executed</th>
+                      <th>Exact Visit Dates & Times</th>
+                    </tr>
+                  </thead>
+                  <tbody id="coverageReportTbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
           <!-- TAB 4: Doctors List -->
@@ -727,7 +784,6 @@
                   height: 38px;
                   font-weight: 500;
                 "
-                onchange="onDoctorFilterChange()"
               >
                 <option value="all" data-i18n="allReps">All Employees</option>
               </select>
@@ -784,6 +840,7 @@
                       font-weight: 700;
                       padding: 6px 12px;
                       border-radius: 8px;
+                      display: none;
                     "
                     id="totalDoctorsCountBadge"
                     >0 Doctors</span
@@ -826,7 +883,7 @@
                     class="form-control"
                     data-i18n-placeholder="searchDoctorsPlaceholder"
                     placeholder="Search by name, clinic, phone..."
-                    oninput="onDoctorFilterChange()"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault(); renderDoctorsReport();}"
                   />
                 </div>
                 <!-- Specialty Filter -->
@@ -835,7 +892,6 @@
                   <select
                     id="doctorSpecialtyFilter"
                     class="form-control"
-                    onchange="onDoctorFilterChange()"
                   >
                     <option value="all" data-i18n="allSpecialties">
                       All Specialties
@@ -859,7 +915,6 @@
                   <select
                     id="doctorClassFilter"
                     class="form-control"
-                    onchange="onDoctorFilterChange()"
                   >
                     <option value="all" data-i18n="allClasses">
                       All Classes (A &amp; B)
@@ -867,6 +922,17 @@
                     <option value="A">Class A</option>
                     <option value="B">Class B</option>
                   </select>
+                </div>
+                <div class="sales-filter-field col-btn">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnShowDoctorsReport"
+                    onclick="renderDoctorsReport()"
+                    style="padding: 8px 20px; font-weight: 700; height: 38px;"
+                  >
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
                 </div>
                 <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
                 <div style="display: none" id="doctorLmFilterGroup">
@@ -889,26 +955,40 @@
                 </div>
               </div>
             </div>
-            <!-- Interactive Doctor Classes & Hospitals Donut Chart -->
-            <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb); text-align: center;">
-              <h4 style="margin: 0 0 12px; font-weight: 700; color: var(--gray-800);">🥧 <span data-i18n="doctorClassesTitle">Doctor Classes & Hospitals Distribution</span></h4>
-              <div style="position: relative; height: 230px; max-width: 320px; margin: 0 auto;">
-                <canvas id="repDoctorClassesChart"></canvas>
-              </div>
+
+            <!-- Tab 5 Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="doctorsPromptContainer">
+              <div class="report-show-prompt-icon">👨‍⚕️</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowDoctorsTitle">Click Show to View Doctors Directory</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowDoctorsDesc">Choose employee, specialty, class, or search query then click Show to display doctors.</p>
+              <button type="button" class="btn btn-primary" onclick="renderDoctorsReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
+              </button>
             </div>
-            <!-- Doctors Cards Grid -->
-            <div id="doctorsDirectoryGrid" class="directory-cards-grid"></div>
-            <!-- Doctors Empty State -->
-            <div
-              id="doctorsEmptyState"
-              class="directory-empty-state"
-              style="display: none"
-            >
-              <div class="empty-state-icon">👨‍⚕️</div>
-              <h4 data-i18n="noDoctorsFound">No Doctors Found</h4>
-              <p class="text-muted" data-i18n="noDoctorsDesc">
-                Try adjusting search query or filters.
-              </p>
+
+            <!-- Tab 5 Results Container (Hidden until Show is clicked) -->
+            <div id="doctorsResultsContainer" style="display: none;">
+              <!-- Interactive Doctor Classes & Hospitals Donut Chart -->
+              <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb); text-align: center;">
+                <h4 style="margin: 0 0 12px; font-weight: 700; color: var(--gray-800);">🥧 <span data-i18n="doctorClassesTitle">Doctor Classes & Hospitals Distribution</span></h4>
+                <div style="position: relative; height: 230px; max-width: 320px; margin: 0 auto;">
+                  <canvas id="repDoctorClassesChart"></canvas>
+                </div>
+              </div>
+              <!-- Doctors Cards Grid -->
+              <div id="doctorsDirectoryGrid" class="directory-cards-grid"></div>
+              <!-- Doctors Empty State -->
+              <div
+                id="doctorsEmptyState"
+                class="directory-empty-state"
+                style="display: none"
+              >
+                <div class="empty-state-icon">👨‍⚕️</div>
+                <h4 data-i18n="noDoctorsFound">No Doctors Found</h4>
+                <p class="text-muted" data-i18n="noDoctorsDesc">
+                  Try adjusting search query or filters.
+                </p>
+              </div>
             </div>
           </div>
           <!-- TAB 5: Pharmacies List -->
@@ -932,7 +1012,6 @@
                   height: 38px;
                   font-weight: 500;
                 "
-                onchange="onPharmacyFilterChange()"
               >
                 <option value="all" data-i18n="allReps">All Employees</option>
               </select>
@@ -989,6 +1068,7 @@
                       font-weight: 700;
                       padding: 6px 12px;
                       border-radius: 8px;
+                      display: none;
                     "
                     id="totalPharmaciesCountBadge"
                     >0 Pharmacies</span
@@ -1031,8 +1111,19 @@
                     class="form-control"
                     data-i18n-placeholder="searchPharmaciesPlaceholder"
                     placeholder="Search by pharmacy name, address, contact..."
-                    oninput="onPharmacyFilterChange()"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault(); renderPharmaciesReport();}"
                   />
+                </div>
+                <div class="sales-filter-field col-btn">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnShowPharmaciesReport"
+                    onclick="renderPharmaciesReport()"
+                    style="padding: 8px 20px; font-weight: 700; height: 38px;"
+                  >
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
                 </div>
                 <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
                 <div style="display: none" id="pharmacyLmFilterGroup">
@@ -1055,22 +1146,36 @@
                 </div>
               </div>
             </div>
-            <!-- Pharmacies Cards Grid -->
-            <div
-              id="pharmaciesDirectoryGrid"
-              class="directory-cards-grid"
-            ></div>
-            <!-- Pharmacies Empty State -->
-            <div
-              id="pharmaciesEmptyState"
-              class="directory-empty-state"
-              style="display: none"
-            >
-              <div class="empty-state-icon">💊</div>
-              <h4 data-i18n="noPharmaciesFound">No Pharmacies Found</h4>
-              <p class="text-muted" data-i18n="noPharmaciesDesc">
-                Try adjusting search query or filters.
-              </p>
+
+            <!-- Tab 6 Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="pharmaciesPromptContainer">
+              <div class="report-show-prompt-icon">💊</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowPharmaciesTitle">Click Show to View Pharmacies Directory</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowPharmaciesDesc">Choose employee or search query then click Show to display pharmacies.</p>
+              <button type="button" class="btn btn-primary" onclick="renderPharmaciesReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
+              </button>
+            </div>
+
+            <!-- Tab 6 Results Container (Hidden until Show is clicked) -->
+            <div id="pharmaciesResultsContainer" style="display: none;">
+              <!-- Pharmacies Cards Grid -->
+              <div
+                id="pharmaciesDirectoryGrid"
+                class="directory-cards-grid"
+              ></div>
+              <!-- Pharmacies Empty State -->
+              <div
+                id="pharmaciesEmptyState"
+                class="directory-empty-state"
+                style="display: none"
+              >
+                <div class="empty-state-icon">💊</div>
+                <h4 data-i18n="noPharmaciesFound">No Pharmacies Found</h4>
+                <p class="text-muted" data-i18n="noPharmaciesDesc">
+                  Try adjusting search query or filters.
+                </p>
+              </div>
             </div>
           </div>
         </div>

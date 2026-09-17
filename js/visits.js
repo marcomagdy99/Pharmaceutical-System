@@ -54,6 +54,17 @@ const visitTranslations = {
     modalProducts: "Products Discussed",
     modalGiveawaySamples: "Giveaway Samples",
     modalComment: "Comment",
+    modalGpsTitle: "GPS Geofencing Verification",
+    gpsBadgePending: "Pending Check",
+    gpsBadgeChecking: "Checking GPS... 🛰️",
+    gpsBadgeInRange: "✅ In Range",
+    gpsBadgeOutOfRange: "⚠️ Out of Range",
+    gpsBadgeDenied: "⚠️ GPS Denied",
+    gpsInfoDefault: "Verifying your presence within the clinic geofence radius (200m).",
+    gpsInfoInRange: "You are verified within the clinic radius (less than 200m).",
+    gpsInfoOutOfRange: "You are outside the clinic radius. Visit will be recorded with an audit flag.",
+    gpsInfoDenied: "Location permission denied. Visit will be recorded with an audit flag for your manager.",
+    btnCheckGps: "📡 Check Location Now",
     btnCancel: "Cancel",
     btnSaveVisit: "Save Visit",
     btnComplete: "Complete Visit",
@@ -144,6 +155,17 @@ const visitTranslations = {
     modalProducts: "المنتجات التي تمت مناقشتها",
     modalGiveawaySamples: "عينات ومواد دعائية (Giveaway Samples)",
     modalComment: "تعليق",
+    modalGpsTitle: "التحقق الجغرافي (GPS Geofencing)",
+    gpsBadgePending: "بانتظار الفحص",
+    gpsBadgeChecking: "جاري الفحص... 🛰️",
+    gpsBadgeInRange: "✅ داخل النطاق",
+    gpsBadgeOutOfRange: "⚠️ خارج النطاق",
+    gpsBadgeDenied: "⚠️ GPS معطل",
+    gpsInfoDefault: "يتم التحقق من تواجدك داخل نطاق العيادة المسموح به (200 متر).",
+    gpsInfoInRange: "أنت متواجد داخل نطاق العيادة المعتمد (أقل من 200 متر).",
+    gpsInfoOutOfRange: "أنت خارج نطاق العيادة المعتمد. سيتم تسجيل الزيارة مع تنبيه تدقيق للمدير.",
+    gpsInfoDenied: "تم تعطيل إذن الموقع أو إيقاف الـ GPS. سيتم تسجيل الزيارة مع وضع علامة تدقيق للإدارة.",
+    btnCheckGps: "📡 فحص موقعي الآن",
     btnCancel: "إلغاء",
     btnSaveVisit: "حفظ الزيارة",
     btnComplete: "إكمال الزيارة",
@@ -356,6 +378,120 @@ function renderGpsBadge(v, lang) {
   }
   return "";
 }
+
+let lastCapturedGpsResult = null;
+
+function triggerManualGpsCheck() {
+  const badge = document.getElementById("visitGpsBadge");
+  const infoText = document.getElementById("visitGpsInfoText");
+  const distText = document.getElementById("visitGpsDistanceText");
+  const btn = document.getElementById("btnCheckMyGps");
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+  if (!companySettings.requireGpsValidation) {
+    const gpsSec = document.getElementById("visitGpsSection");
+    if (gpsSec) gpsSec.style.display = "none";
+    return;
+  }
+
+  if (badge) {
+    badge.textContent = isAr ? "جاري الفحص... 🛰️" : "Checking GPS... 🛰️";
+    badge.style.background = "#e0f2fe";
+    badge.style.color = "#0369a1";
+  }
+  if (btn) btn.disabled = true;
+
+  captureVisitLocation((loc) => {
+    if (btn) btn.disabled = false;
+    lastCapturedGpsResult = loc;
+
+    const companySettings = (window.store && window.store.companySettings)
+      ? window.store.companySettings.get()
+      : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+    const maxDist = companySettings.gpsMaxDistanceMeters || 200;
+
+    if (loc.status === "permission_denied") {
+      if (badge) {
+        badge.textContent = isAr ? "⚠️ GPS معطل" : "⚠️ GPS Denied";
+        badge.style.background = "#fef3c7";
+        badge.style.color = "#92400e";
+      }
+      if (infoText) {
+        infoText.textContent = isAr
+          ? "⚠️ تم تعطيل إذن الموقع أو إيقاف الـ GPS. سيتم تسجيل الزيارة مع وضع علامة تدقيق للإدارة."
+          : "⚠️ Location permission denied. Visit will be recorded with an audit flag for your manager.";
+      }
+      if (distText) distText.textContent = "";
+      return;
+    }
+
+    if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
+      const targetSelect = document.getElementById("visitTarget");
+      const targetId = targetSelect ? targetSelect.value : null;
+      const allDocs = getMockDoctors();
+      const allHosps = getMockHospitals();
+      const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+
+      let distance = 0;
+      if (targetItem && targetItem.lat != null && targetItem.lng != null) {
+        distance = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
+      } else {
+        distance = 25; // Default within clinic bounds for demo targets
+      }
+
+      if (distance <= maxDist) {
+        if (badge) {
+          badge.textContent = isAr ? "✅ داخل النطاق" : "✅ In Range";
+          badge.style.background = "#dcfce7";
+          badge.style.color = "#166534";
+        }
+        if (infoText) {
+          infoText.textContent = isAr
+            ? `أنت متواجد داخل نطاق العيادة المعتمد (أقل من ${maxDist} متر).`
+            : `You are verified within the clinic radius (less than ${maxDist}m).`;
+        }
+        if (distText) {
+          distText.textContent = isAr ? `المسافة الحالية: ${distance} متر` : `Current Distance: ${distance}m`;
+          distText.style.color = "#10b981";
+        }
+      } else {
+        if (badge) {
+          badge.textContent = isAr ? `⚠️ خارج النطاق (${distance}m)` : `⚠️ Out of Range (${distance}m)`;
+          badge.style.background = "#fee2e2";
+          badge.style.color = "#991b1b";
+        }
+        if (infoText) {
+          infoText.textContent = isAr
+            ? `⚠️ أنت تبعد ${distance} متر عن العيادة (الحد المسموح ${maxDist}م). يمكنك المتابعة وسيتم تنبيه المدير.`
+            : `⚠️ You are ${distance}m away from clinic (max allowed ${maxDist}m). Manager will be notified.`;
+        }
+        if (distText) {
+          distText.textContent = isAr ? `المسافة الحالية: ${distance} متر` : `Current Distance: ${distance}m`;
+          distText.style.color = "#ef4444";
+        }
+      }
+    }
+  });
+}
+
+function onVisitTargetChange() {
+  const modal = document.getElementById("visitModal");
+  if (modal && modal.style.display !== "none") {
+    const source = modal.dataset.source || "actual";
+    if (source === "actual" || currentEditVisitId) {
+      triggerManualGpsCheck();
+    }
+  }
+}
+
+window.triggerManualGpsCheck = triggerManualGpsCheck;
+window.onVisitTargetChange = onVisitTargetChange;
+
 
 function toggleCompanyGpsPolicy() {
   if (currentUserRole !== "admin") return;
@@ -790,7 +926,12 @@ function getScopedVisits() {
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
   if (!isManager) {
-    list = list.filter((v) => v.repId === currentUser.id);
+    list = list.filter(
+      (v) =>
+        v.repId === currentUser.id ||
+        v.doubleWithUserId === currentUser.id ||
+        (v.doubleWithUserName && v.doubleWithUserName.includes(currentUser.name)),
+    );
   } else if (currentUserRole === "admin" || currentUserRole === "hr") {
     const selectedRepFilter =
       document.getElementById("filterRep")?.value || "all";
@@ -1359,293 +1500,6 @@ function renderVisits(triggeredByShow = false) {
   renderVisitsTimeline(triggeredByShow);
 }
 
-function renderStats() {
-  const scoped = getScopedVisits();
-
-  const elTotal = document.getElementById("statTotal");
-  const elComp = document.getElementById("statCompleted");
-  const elPend = document.getElementById("statPending");
-
-  if (elTotal) elTotal.innerText = scoped.length;
-  if (elComp)
-    elComp.innerText = scoped.filter((v) => v.status === "completed").length;
-  if (elPend)
-    elPend.innerText = scoped.filter(
-      (v) => v.status === "planned" || v.status === "pending_approval",
-    ).length;
-}
-
-function renderTodayVisits() {
-  const amContainer = document.getElementById("am-visits-container");
-  const pmContainer = document.getElementById("pm-visits-container");
-
-  if (!amContainer || !pmContainer) return;
-  amContainer.replaceChildren();
-  pmContainer.replaceChildren();
-
-  const scoped = getScopedVisits();
-  const todayVisits = scoped.filter((v) => v.date === todayStr);
-
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const trans = visitTranslations[lang] || visitTranslations.en;
-
-  todayVisits.forEach((v) => {
-    const card = document.createElement("div");
-    card.className = `visit-card ${v.status}`;
-
-    const statusKey =
-      "status" + v.status.charAt(0).toUpperCase() + v.status.slice(1);
-    const statusText = trans[statusKey] || v.status;
-
-    const sourceBadge =
-      v.source === "actual"
-        ? `<span style="background: #fff3cd; color: #664d03; border: 1px solid #ffecb5; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: bold; margin-left: 6px;">${trans.directActual}</span>`
-        : `<span style="background: #e7f1ff; color: #0d6efd; border: 1px solid #cfe2ff; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: bold; margin-left: 6px;">${trans.fromPlan}</span>`;
-
-    const currentUser =
-      (window.checkAuth && window.checkAuth()) ||
-      (window.DEMO_DATA && window.DEMO_DATA.currentUser);
-    const userRole = (
-      currentUser && currentUser.role ? currentUser.role : ""
-    ).toLowerCase();
-    const isOwnerRep =
-      (userRole === "medical_rep" || userRole === "rep") &&
-      currentUser &&
-      currentUser.id === v.repId;
-
-    let actionsHtml = "";
-    const actionButtons = [];
-    if (v.status === "planned" && isOwnerRep) {
-      actionButtons.push(
-        `<button class="btn btn-primary btn-sm" onclick="openCompleteModal('${v.id}')">${trans.btnComplete}</button>`,
-      );
-    }
-    if (canDeleteVisit(v)) {
-      actionButtons.push(
-        `<button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteVisit('${v.id}')" title="${trans.btnDelete}">🗑️ ${trans.btnDelete}</button>`,
-      );
-    }
-    if (actionButtons.length > 0) {
-      actionsHtml = `
-        <div class="visit-actions" style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          ${actionButtons.join("")}
-        </div>
-      `;
-    }
-
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const repUser = allUsers.find((u) => u.id === v.repId);
-    const repDisplayName = repUser
-      ? `${repUser.name} (${repUser.employeeCode || (repUser.role === "line_manager" ? "LM" : repUser.role === "district_manager" ? "DM" : "Rep")})`
-      : v.repId;
-
-    const dt = formatVisitDateTime(v.date, v.time, lang);
-
-    const isPharmacy =
-      v.targetType === "pharmacy" ||
-      (v.doctorId && v.doctorId.toString().startsWith("pharm"));
-    const isHospital =
-      (v.period || "").toLowerCase() === "am" ||
-      (v.doctorId && v.doctorId.toString().startsWith("h"));
-    const targetBadge = isPharmacy
-      ? `<span class="badge" style="background: #e8f5e9; color: #1b5e20; font-size: 0.72rem; font-weight: bold; margin-inline-start: 6px;">💊 ${trans.targetPharmacy}</span>`
-      : isHospital
-        ? `<span class="badge" style="background: #cff4fc; color: #055160; font-size: 0.72rem; font-weight: bold; margin-inline-start: 6px;">🏥 ${trans.targetHospital}</span>`
-        : `<span class="badge" style="background: #e7f1ff; color: #0d6efd; font-size: 0.72rem; font-weight: bold; margin-inline-start: 6px;">👨‍⚕️ ${trans.targetDoctor}</span>`;
-
-    card.innerHTML = `
-      <div class="visit-info">
-        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-          <span class="visit-name" style="font-weight: 700; font-size: 1.05rem;">${window.escapeHtml(v.doctorName)}</span>
-          ${targetBadge}
-        </div>
-        <span class="visit-time" style="font-weight: 600; color: var(--gray-700); font-size: 0.85rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
-          <span style="color: var(--primary); font-weight: 700;">📅 ${dt.dayName}</span>
-          <span>${v.date}</span>
-          <span style="background: var(--gray-100); padding: 2px 6px; border-radius: 4px; color: var(--gray-800); font-weight: 700;">⏰ ${dt.time}</span>
-          <span style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">(${(v.period || "").toUpperCase()})</span>
-        </span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 6px; margin: 6px 0; flex-wrap: wrap;">
-        <span class="visit-status-badge ${v.status}">${statusText}</span>
-        ${sourceBadge}
-        ${isManager ? `<span style="font-size: 0.75rem; color: var(--gray-600); font-weight: bold;">(By: ${window.escapeHtml(repDisplayName)})</span>` : ""}
-        ${v.visitType === "double" ? `<span style="font-size: 0.75rem; color: var(--purple, #6f42c1); font-weight: 600;">[Double: ${window.escapeHtml(v.doubleWithUserName || "Manager")}]</span>` : ""}
-      </div>
-      <div class="visit-comment-box" style="display: none; font-size: 0.82rem; color: var(--gray-600); margin-top: 4px;"></div>
-      ${actionsHtml}
-    `;
-
-    if (v.comment) {
-      const commentEl = card.querySelector(".visit-comment-box");
-      if (commentEl) {
-        commentEl.textContent = "💬 " + v.comment;
-        commentEl.style.display = "block";
-      }
-    }
-
-    if (v.status === "rejected" && v.rejectionReason) {
-      const reasonEl = document.createElement("div");
-      reasonEl.style.cssText =
-        "font-size: 0.82rem; color: var(--danger, #dc3545); margin-top: 4px; font-weight: 600;";
-      reasonEl.textContent = "⚠️ " + v.rejectionReason;
-      card.appendChild(reasonEl);
-    }
-
-    if (v.period === "am" || v.period === "AM") amContainer.appendChild(card);
-    else pmContainer.appendChild(card);
-  });
-
-  if (amContainer.children.length === 0)
-    amContainer.innerHTML = `<p class="text-muted" style="padding: 10px; font-style: italic;">No hospital visits scheduled.</p>`;
-  if (pmContainer.children.length === 0)
-    pmContainer.innerHTML = `<p class="text-muted" style="padding: 10px; font-style: italic;">No doctor/pharmacy visits scheduled.</p>`;
-}
-
-function renderAllVisits() {
-  const tbody = document.getElementById("all-visits-tbody");
-  if (!tbody) return;
-  tbody.replaceChildren();
-
-  const fDate = document.getElementById("filterDate")?.value;
-  const fStatus = document.getElementById("filterStatus")?.value;
-  const fPeriod = document.getElementById("filterPeriod")?.value;
-  const fClass = document.getElementById("filterClass")?.value;
-
-  let filtered = getScopedVisits();
-
-  if (fDate) filtered = filtered.filter((v) => v.date === fDate);
-  if (fStatus && fStatus !== "all")
-    filtered = filtered.filter((v) => v.status === fStatus);
-  if (fPeriod && fPeriod !== "all")
-    filtered = filtered.filter(
-      (v) => v.period.toLowerCase() === fPeriod.toLowerCase(),
-    );
-  if (fClass && fClass !== "all") {
-    filtered = filtered.filter((v) => {
-      const allDocs = getMockDoctors();
-      const allHosps = getMockHospitals();
-      const doc = allDocs.find(
-        (d) => d.name === v.doctorName || d.id === v.doctorId,
-      );
-      const hosp = allHosps.find(
-        (h) => h.name === v.doctorName || h.id === v.doctorId,
-      );
-      if (fClass === "all_doctors") {
-        return !!doc && (doc.class === "A" || doc.class === "B");
-      }
-      if (fClass === "hospital") {
-        return (
-          !!hosp ||
-          (v.period && v.period.toLowerCase() === "am") ||
-          (v.doctorId && v.doctorId.toString().startsWith("h"))
-        );
-      }
-      if (fClass === "pharmacy") {
-        return (
-          v.targetType === "pharmacy" ||
-          (v.doctorId && v.doctorId.toString().startsWith("pharm"))
-        );
-      }
-      return doc && doc.class === fClass;
-    });
-  }
-
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const trans = visitTranslations[lang] || visitTranslations.en;
-
-  filtered.forEach((v) => {
-    const tr = document.createElement("tr");
-
-    const statusKey =
-      "status" + v.status.charAt(0).toUpperCase() + v.status.slice(1);
-    const statusText = trans[statusKey] || v.status;
-
-    const typeKey =
-      "type" +
-      (v.visitType
-        ? v.visitType.charAt(0).toUpperCase() + v.visitType.slice(1)
-        : "Single");
-    const typeText = trans[typeKey] || v.visitType || "Single";
-
-    const sourceBadge =
-      v.source === "actual"
-        ? `<span style="background: #fff3cd; color: #664d03; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; border: 1px solid #ffecb5;">${trans.directActual}</span>`
-        : `<span style="background: #e7f1ff; color: #0d6efd; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; border: 1px solid #cfe2ff;" ${v.planId ? `title="Plan ID: ${window.escapeHtml(v.planId)}"` : ""}>${trans.fromPlan}${v.planId ? ` <span style="font-size:0.68rem; opacity:0.8;">#✓</span>` : ""}</span>`;
-
-    const currentUser =
-      (window.checkAuth && window.checkAuth()) ||
-      (window.DEMO_DATA && window.DEMO_DATA.currentUser);
-    const userRole = (
-      currentUser && currentUser.role ? currentUser.role : ""
-    ).toLowerCase();
-    const isOwnerRep =
-      (userRole === "medical_rep" || userRole === "rep") &&
-      currentUser &&
-      currentUser.id === v.repId;
-
-    let actions = "";
-    if (v.status === "planned" && isOwnerRep) {
-      actions = `<button class="btn btn-primary btn-sm" onclick="openCompleteModal('${v.id}')">${trans.btnComplete}</button>`;
-    }
-
-    if (canDeleteVisit(v)) {
-      actions += `
-        <button class="btn btn-outline-danger btn-sm ms-1" onclick="confirmDeleteVisit('${v.id}')" title="${trans.btnDelete}" style="margin-inline-start: 6px;">
-          🗑️ ${trans.btnDelete}
-        </button>
-      `;
-    }
-
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const repUser = allUsers.find((u) => u.id === v.repId);
-    const repDisplayName = repUser
-      ? `${repUser.name} (${repUser.employeeCode || (repUser.role === "line_manager" ? "LM" : repUser.role === "district_manager" ? "DM" : "Rep")})`
-      : v.repId;
-
-    const dt = formatVisitDateTime(v.date, v.time, lang);
-
-    const isPharmacy =
-      v.targetType === "pharmacy" ||
-      (v.doctorId && v.doctorId.toString().startsWith("pharm"));
-    const isHospital =
-      (v.period || "").toLowerCase() === "am" ||
-      (v.doctorId && v.doctorId.toString().startsWith("h"));
-    const targetBadge = isPharmacy
-      ? `<span class="badge" style="background: #e8f5e9; color: #1b5e20; font-size: 0.72rem; font-weight: bold; margin-inline-start: 6px;">💊 ${trans.targetPharmacy}</span>`
-      : isHospital
-        ? `<span class="badge" style="background: #cff4fc; color: #055160; font-size: 0.72rem; font-weight: bold; margin-inline-start: 6px;">🏥 ${trans.targetHospital}</span>`
-        : `<span class="badge" style="background: #e7f1ff; color: #0d6efd; font-size: 0.72rem; font-weight: bold; margin-inline-start: 6px;">👨‍⚕️ ${trans.targetDoctor}</span>`;
-
-    tr.innerHTML = `
-      <td>
-        <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
-          <strong>${window.escapeHtml(v.doctorName)}</strong>
-          ${targetBadge}
-        </div>
-        ${isManager ? `<small style="color: var(--gray-500); font-weight: bold;">By: ${window.escapeHtml(repDisplayName)}</small>` : ""}
-      </td>
-      <td>
-        <div style="font-weight: 700; color: var(--primary); font-size: 0.85rem;">${dt.dayName}</div>
-        <div style="font-weight: 600; color: var(--gray-800); font-size: 0.82rem;">${v.date}</div>
-        <div style="color: var(--gray-600); font-weight: 600; font-size: 0.78rem;">⏰ ${dt.time}</div>
-      </td>
-      <td><span class="period-badge ${v.period}">${(v.period || "").toUpperCase()}</span></td>
-      <td>
-        ${typeText} ${v.visitType === "double" && v.doubleWithUserName ? `<br><small style="color: var(--purple, #6f42c1);">[${window.escapeHtml(v.doubleWithUserName)}]</small>` : ""}
-        <div style="margin-top: 4px;">${sourceBadge}</div>
-      </td>
-      <td>
-        <span class="visit-status-badge ${v.status}">${statusText}</span>
-        ${v.status === "rejected" && v.rejectionReason ? `<div style="font-size: 0.75rem; color: var(--danger, #dc3545); margin-top: 4px; font-weight: 600;">⚠️ ${window.escapeHtml(v.rejectionReason)}</div>` : ""}
-      </td>
-      <td>${(window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join(", ") || "-"}</td>
-      <td>${actions || "-"}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
 function renderVisitsTimeline(triggeredByShow = false) {
   const container = document.getElementById("timelineEventsContainer");
   const summaryBar = document.getElementById("timelineSummaryBar");
@@ -2088,6 +1942,8 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
       (u, idx, arr) =>
         u.id !== currentUser.id &&
         u.status !== "Inactive" &&
+        u.role !== "admin" &&
+        u.role !== "hr" &&
         arr.findIndex((x) => x.id === u.id) === idx,
     );
   } else {
@@ -2105,7 +1961,9 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
       (u) =>
         u.status !== "Inactive" &&
         u.id !== effectiveId &&
-        u.id !== currentUser.id,
+        u.id !== currentUser.id &&
+        u.role !== "admin" &&
+        u.role !== "hr",
     );
   }
 
@@ -2202,6 +2060,17 @@ function openVisitModal(isActual = false) {
     modal.dataset.source = isActual ? "actual" : "plan";
     modal.classList.add("active");
     modal.style.display = "flex";
+  }
+
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+  const isGpsActive = !!companySettings.requireGpsValidation;
+
+  const gpsSec = document.getElementById("visitGpsSection");
+  if (gpsSec) {
+    gpsSec.style.display = (isActual && isGpsActive) ? "block" : "none";
+    if (isActual && isGpsActive) triggerManualGpsCheck();
   }
 }
 
@@ -2671,6 +2540,17 @@ function openCompleteModal(visitId) {
     modal.dataset.source = "plan";
     modal.classList.add("active");
     modal.style.display = "flex";
+  }
+
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+  const isGpsActive = !!companySettings.requireGpsValidation;
+
+  const gpsSec = document.getElementById("visitGpsSection");
+  if (gpsSec) {
+    gpsSec.style.display = isGpsActive ? "block" : "none";
+    if (isGpsActive) triggerManualGpsCheck();
   }
 }
 

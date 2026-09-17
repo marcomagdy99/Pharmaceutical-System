@@ -234,6 +234,11 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 }
 
 function renderAchievementsReport() {
+  const prompt = document.getElementById('achievementsPromptContainer');
+  const results = document.getElementById('achievementsResultsContainer');
+  if (prompt) prompt.style.display = 'none';
+  if (results) results.style.display = 'block';
+
   populateAchFilters();
   const yearSelect = document.getElementById('achYearSelect');
   const tbody = document.getElementById('achievementsReportTbody');

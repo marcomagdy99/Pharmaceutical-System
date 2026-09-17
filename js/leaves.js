@@ -603,17 +603,6 @@ function calculateBalances() {
   });
 }
 
-function getStatusBadge(status) {
-  const mapping = {
-    pending: { color: "bg-warning text-dark", icon: "bi-hourglass-split" },
-    approved: { color: "bg-success", icon: "bi-check-circle" },
-    rejected: { color: "bg-danger", icon: "bi-x-circle" },
-  };
-  const m = mapping[status] || mapping.pending;
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const label = leaveTranslations[lang]?.[status] || status;
-  return `<span class="badge ${m.color} status-badge"><i class="bi ${m.icon} me-1"></i>${label}</span>`;
-}
 
 /**
  * Resolves the actual manager/approver display name for a specific approval tier.

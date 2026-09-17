@@ -1,0 +1,6 @@
+﻿{
+  redirects: [
+    { source: /doctors.html, destination: /reports.html?tab=doctors, permanent: true },
+    { source: /pharmacies.html, destination: /reports.html?tab=pharmacies, permanent: true }
+  ]
+}

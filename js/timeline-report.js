@@ -8,6 +8,11 @@
 // Section 8: Tab 2 - Daily Visits & Logged Activities Timeline
 // ============================================================================
 function renderDailyTimeline() {
+  const prompt = document.getElementById('timelinePromptContainer');
+  const results = document.getElementById('timelineResultsContainer');
+  if (prompt) prompt.style.display = 'none';
+  if (results) results.style.display = 'block';
+
   syncReportsData();
 
   const _now = new Date();

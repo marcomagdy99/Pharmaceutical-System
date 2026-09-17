@@ -69,6 +69,11 @@ function escapeJsString(str) {
 // Section 9: Tab 3 - Coverage & Frequency Report
 // ============================================================================
 function renderCoverageReport() {
+  const prompt = document.getElementById('coveragePromptContainer');
+  const results = document.getElementById('coverageResultsContainer');
+  if (prompt) prompt.style.display = 'none';
+  if (results) results.style.display = 'block';
+
   syncReportsData();
 
   const startDate = document.getElementById('coverageStartDate')?.value || _coverageStart();
