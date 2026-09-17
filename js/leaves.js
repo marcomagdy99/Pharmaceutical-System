@@ -117,6 +117,11 @@ const leaveTranslations = {
     pendingApprovals: "Pending Approvals Inbox",
     approve: "Approve",
     reject: "Reject",
+    modalRejectLeaveTitle: "Reject Leave Request",
+    modalRejectLeaveSubtitle: "You can provide an optional rejection reason or guidance for the employee.",
+    modalRejectLeaveReasonLabel: "Rejection Reason / Guidance (Optional):",
+    btnConfirmRejectLeave: "Confirm Rejection",
+    rejectionReasonLabel: "Reason:",
     noPending: "No pending leave requests.",
     noHistory: "No leave history recorded.",
     hrGovernanceTitle: "🏛️ HR Governance: Leave Balances & Public Holidays",
@@ -187,6 +192,11 @@ const leaveTranslations = {
     pendingApprovals: "طلبات قيد الانتظار",
     approve: "قبول",
     reject: "رفض",
+    modalRejectLeaveTitle: "رفض طلب الإجازة",
+    modalRejectLeaveSubtitle: "يمكنك كتابة سبب الرفض أو توجيهات للموظف (اختياري).",
+    modalRejectLeaveReasonLabel: "سبب الرفض / التوجيهات (اختياري):",
+    btnConfirmRejectLeave: "تأكيد الرفض",
+    rejectionReasonLabel: "سبب الرفض:",
     noPending: "لا توجد طلبات قيد الانتظار.",
     noHistory: "لا يوجد سجل إجازات مسجل.",
     hrGovernanceTitle:
@@ -239,6 +249,39 @@ let currentUser = (window.checkAuth && window.checkAuth()) || {
   role: "medical_rep",
   name: "Ahmed Mostafa",
 };
+
+let activeRejectLeaveId = null;
+
+function openRejectLeaveModal(leaveId) {
+  activeRejectLeaveId = leaveId;
+  const modal = document.getElementById("rejectLeaveModal");
+  if (modal) {
+    const reasonInput = document.getElementById("rejectLeaveReasonText");
+    if (reasonInput) reasonInput.value = "";
+    modal.style.display = "flex";
+  }
+}
+
+function closeRejectLeaveModal() {
+  activeRejectLeaveId = null;
+  const modal = document.getElementById("rejectLeaveModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+function confirmRejectLeave() {
+  if (!activeRejectLeaveId) return;
+  const reasonInput = document.getElementById("rejectLeaveReasonText");
+  const rejectionReason = reasonInput ? reasonInput.value.trim() : "";
+  const leaveIdToReject = activeRejectLeaveId;
+  closeRejectLeaveModal();
+  handleDecisionStep(leaveIdToReject, "rejected", rejectionReason);
+}
+
+window.openRejectLeaveModal = openRejectLeaveModal;
+window.closeRejectLeaveModal = closeRejectLeaveModal;
+window.confirmRejectLeave = confirmRejectLeave;
 
 function initLeaves() {
   if (window.translations) {
@@ -380,6 +423,95 @@ function setupEventListeners() {
       );
     }
 
+    // Balance Check: Verify that requested days do not exceed remaining leave balance for (Annual / Sick / Casual)
+    const trackedBalanceTypes = ["annual", "casual", "sick", "emergency"];
+    if (trackedBalanceTypes.includes(type)) {
+      const allUsers =
+        window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)
+          ? window.DEMO_DATA.users
+          : [];
+      const userObj = allUsers.find((u) => u.id === currentUser.id) || currentUser;
+      const userBalance = userObj.leaveBalance || currentUser.leaveBalance || {};
+
+      let balKey = type;
+      if (type === "casual" || type === "emergency") {
+        balKey = "emergency";
+      }
+
+      const total =
+        balKey === "annual"
+          ? (userBalance.annual !== undefined ? Number(userBalance.annual) : 21)
+          : balKey === "sick"
+            ? (userBalance.sick !== undefined ? Number(userBalance.sick) : 7)
+            : userBalance.emergency !== undefined
+              ? Number(userBalance.emergency)
+              : userBalance.casual !== undefined
+                ? Number(userBalance.casual)
+                : 6;
+
+      let approvedUsed = 0;
+      let pendingUsed = 0;
+
+      (demoLeaves || []).forEach((l) => {
+        if (l.userId === currentUser.id && l.status !== "rejected") {
+          const d = parseFloat(l.days) || 1;
+          const isMatch =
+            (balKey === "annual" && l.type === "annual") ||
+            (balKey === "sick" && l.type === "sick") ||
+            (balKey === "emergency" && (l.type === "casual" || l.type === "emergency"));
+
+          if (isMatch) {
+            if (l.status === "approved") {
+              approvedUsed += d;
+            } else if (l.status === "pending") {
+              pendingUsed += d;
+            }
+          }
+        }
+      });
+
+      const remainingBalance = Math.max(0, total - approvedUsed);
+      const availableBalance = Math.max(0, remainingBalance - pendingUsed);
+
+      const typeDisplayNamesAr = {
+        annual: "الاعتيادية",
+        casual: "العارضة",
+        emergency: "العارضة",
+        sick: "المرضية",
+      };
+      const typeDisplayNamesEn = {
+        annual: "Annual Leave",
+        casual: "Casual Vacation",
+        emergency: "Casual Vacation",
+        sick: "Sick Leave",
+      };
+
+      const typeName = isAr
+        ? (typeDisplayNamesAr[type] || type)
+        : (typeDisplayNamesEn[type] || type);
+
+      const formatDays = (num) => {
+        if (isAr) {
+          return num === 1 ? "1 يوم" : num === 2 ? "2 يوم" : num <= 10 ? `${num} أيام` : `${num} يوماً`;
+        }
+        return num === 1 ? "1 day" : `${num} days`;
+      };
+
+      if (calculatedDays > remainingBalance) {
+        const msg = isAr
+          ? `⚠️ عفواً، رصيدك المتبقي من الإجازة ${typeName} (${formatDays(remainingBalance)}) لا يكفي لطلب (${formatDays(calculatedDays)}).`
+          : `⚠️ Sorry, your remaining balance for ${typeName} (${formatDays(remainingBalance)}) is not enough for (${formatDays(calculatedDays)}).`;
+        return showToast(msg, "warning");
+      }
+
+      if (calculatedDays > availableBalance) {
+        const msg = isAr
+          ? `⚠️ عفواً، رصيدك المتبقي من الإجازة ${typeName} (${formatDays(remainingBalance)}) لا يكفي، نظراً لوجود طلبات سابقة قيد الانتظار بـ (${formatDays(pendingUsed)}). المتاح حالياً هو (${formatDays(availableBalance)}).`
+          : `⚠️ Sorry, your available balance for ${typeName} is (${formatDays(availableBalance)}) due to (${formatDays(pendingUsed)}) in pending requests. Cannot request (${formatDays(calculatedDays)}).`;
+        return showToast(msg, "warning");
+      }
+    }
+
     const userRole = (currentUser.role || "medical_rep").toLowerCase();
     let initialApprovals = {};
 
@@ -425,6 +557,23 @@ function setupEventListeners() {
     if (window.DEMO_DATA) {
       window.DEMO_DATA.leaves = demoLeaves;
       if (window.saveDataToStorage) window.saveDataToStorage();
+    }
+
+    if (typeof window.addWorkflowNotification === "function" && currentUser.managerId) {
+      window.addWorkflowNotification({
+        userId: currentUser.managerId,
+        type: "leave_submission",
+        title: isAr ? "طلب إجازة جديد للمراجعة" : "New Leave Request for Review",
+        titleEn: "New Leave Request for Review",
+        message: isAr
+          ? `قدم ${currentUser.name} طلب إجازة (${type}) لمدة ${calculatedDays} يوم.`
+          : `${currentUser.name} submitted a leave request (${type}) for ${calculatedDays} days.`,
+        link: "leaves.html",
+        icon: "🏖️",
+        badgeClass: "bg-warning",
+        actorName: currentUser.name,
+        action: "submitted",
+      });
     }
 
     showToast(
@@ -854,6 +1003,13 @@ function renderHistory() {
         <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
           ${l.status.toUpperCase()}
         </span>
+        ${
+          l.status === "rejected" && l.rejectionReason
+            ? `<div class="mt-1 small text-danger" style="font-size: 0.76rem; max-width: 220px; line-height: 1.3;" title="${window.escapeHtml(l.rejectionReason)}">
+                 <i class="bi bi-chat-left-text me-1"></i><strong>${lang === "ar" ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
+               </div>`
+            : ""
+        }
       </td>
     `;
     tbody.appendChild(tr);
@@ -901,29 +1057,24 @@ function renderPendingApprovals() {
     return false;
   });
 
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+
   if (pending.length === 0) {
-    container.innerHTML = `<p class="text-muted mb-0">No leave requests currently pending your approval level.</p>`;
+    container.innerHTML = `<p class="text-muted">${leaveTranslations[lang].noPending}</p>`;
     return;
   }
 
   pending.forEach((l) => {
-    const typeKey = l.type + "Leave";
-    const typeLabel = leaveTranslations["en"]?.[typeKey] || l.type;
-
     const card = document.createElement("div");
-    card.className = "card mb-3 border";
-    card.style.backgroundColor = "#232731";
+    card.className = "card border-0 mb-3";
+    card.style.background = "#1e293b";
+    card.style.borderRadius = "12px";
     card.innerHTML = `
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-          <div class="d-flex align-items-center">
-            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width:40px;height:40px; font-weight:bold;">
-              ${(l.userName || "U").charAt(0)}
-            </div>
-            <div>
-              <h6 class="m-0 fw-bold" style="color:#ffffff;">${window.escapeHtml(l.userName)} (${window.escapeHtml(l.userRole || "Rep")})</h6>
-              <small style="color:#cbd5e1;">${typeLabel} • ${l.days} Day(s) (${l.dayDuration || "full"})</small>
-            </div>
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <h6 class="fw-bold mb-0 text-white">${window.escapeHtml(l.userName || "Medical Rep")}</h6>
+            <small style="color:#94a3b8;">${l.type ? l.type.toUpperCase() : "ANNUAL"} LEAVE (${l.dayDuration === "half" ? "Half Day" : l.days + " Days"})</small>
           </div>
           <span style="color:#9da5b1;" class="small">${l.startDate} to ${l.endDate}</span>
         </div>
@@ -937,7 +1088,7 @@ function renderPendingApprovals() {
           <button class="btn btn-sm btn-success px-3 fw-bold" onclick="window.handleDecisionStep('${l.id}', 'approved')">
             <i class="bi bi-check-lg me-1"></i>Approve Request
           </button>
-          <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="window.handleDecisionStep('${l.id}', 'rejected')">
+          <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="window.openRejectLeaveModal('${l.id}')">
             <i class="bi bi-x-lg me-1"></i>Reject Request
           </button>
         </div>
@@ -953,8 +1104,8 @@ function renderPendingApprovals() {
   });
 }
 
-function handleDecisionStep(leaveId, decision) {
-  leavesApp.handleDecisionStep(leaveId, decision);
+function handleDecisionStep(leaveId, decision, rejectionReason = "") {
+  leavesApp.handleDecisionStep(leaveId, decision, rejectionReason);
 }
 
 function renderDeclaredHolidaysList() {
@@ -1192,6 +1343,13 @@ function renderHrAllLeaves() {
         <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
           ${l.status.toUpperCase()}
         </span>
+        ${
+          l.status === "rejected" && l.rejectionReason
+            ? `<div class="mt-1 small text-danger" style="font-size: 0.76rem; max-width: 220px; line-height: 1.3;" title="${window.escapeHtml(l.rejectionReason)}">
+                 <i class="bi bi-chat-left-text me-1"></i><strong>${isAr ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
+               </div>`
+            : ""
+        }
       </td>
     `;
     tbody.appendChild(tr);
@@ -1279,7 +1437,7 @@ Object.assign(leavesApp, {
     return resolveApproverDisplayName(leave, level, lang);
   },
 
-  handleDecisionStep(leaveId, decision) {
+  handleDecisionStep(leaveId, decision, rejectionReason = "") {
     try {
       const leave = demoLeaves.find((l) => l.id === leaveId);
       if (!leave) return;
@@ -1312,25 +1470,55 @@ Object.assign(leavesApp, {
 
       if (decision === "rejected") {
         leave.status = "rejected";
+        leave.rejectionReason = rejectionReason || null;
+        leave.rejectedBy = currentUser.name;
+        leave.rejectedAt = timestampStr;
+
         if (isDM) {
           leave.approvals.dm.status = "rejected";
           leave.approvals.dm.approverName = currentUser.name;
           leave.approvals.dm.updatedAt = timestampStr;
+          leave.approvals.dm.rejectionReason = rejectionReason || null;
         }
         if (isLM) {
           leave.approvals.lm.status = "rejected";
           leave.approvals.lm.approverName = currentUser.name;
           leave.approvals.lm.updatedAt = timestampStr;
+          leave.approvals.lm.rejectionReason = rejectionReason || null;
         }
         if (isHR || isAdmin) {
           if (leave.approvals.hr) {
             leave.approvals.hr.status = "rejected";
             leave.approvals.hr.approverName = currentUser.name;
             leave.approvals.hr.updatedAt = timestampStr;
+            leave.approvals.hr.rejectionReason = rejectionReason || null;
           }
         }
-        const rejMsg =
-          lang === "ar" ? "تم رفض طلب الإجازة." : "Leave request rejected.";
+
+        if (typeof window.addWorkflowNotification === "function") {
+          window.addWorkflowNotification({
+            userId: leave.userId,
+            type: "leave_rejection",
+            title: "رفض طلب الإجازة",
+            titleEn: "Leave Request Rejected",
+            message: rejectionReason
+              ? `تم رفض طلب إجازتك (${leave.type}) بواسطة (${currentUser.name}) مع ملاحظة: ${rejectionReason}`
+              : `تم رفض طلب إجازتك (${leave.type}) بواسطة (${currentUser.name}).`,
+            messageEn: rejectionReason
+              ? `Your leave request (${leave.type}) was rejected by (${currentUser.name}) with note: ${rejectionReason}`
+              : `Your leave request (${leave.type}) was rejected by (${currentUser.name}).`,
+            note: rejectionReason || null,
+            link: "leaves.html",
+            icon: "🏖️",
+            badgeClass: "bg-danger",
+            actorName: currentUser.name,
+            action: "rejected",
+          });
+        }
+
+        const rejMsg = rejectionReason
+          ? (lang === "ar" ? `تم رفض طلب الإجازة مع تسجيل السبب: "${rejectionReason}"` : `Leave request rejected with note: "${rejectionReason}"`)
+          : (lang === "ar" ? "تم رفض طلب الإجازة." : "Leave request rejected.");
         if (typeof showToast === "function") showToast(rejMsg, "warning");
         else if (typeof window.showToast === "function")
           window.showToast(rejMsg, "warning");
@@ -1339,6 +1527,23 @@ Object.assign(leavesApp, {
           leave.approvals.dm.status = "approved";
           leave.approvals.dm.approverName = currentUser.name;
           leave.approvals.dm.updatedAt = timestampStr;
+
+          if (typeof window.addWorkflowNotification === "function") {
+            window.addWorkflowNotification({
+              userId: leave.userId,
+              type: "leave_approval",
+              title: "اعتماد أولي للإجازة",
+              titleEn: "Leave Endorsed by DM",
+              message: `اعتمد مدير المنطقة (${currentUser.name}) طلب إجازتك وتم تحويله لمدير الخط.`,
+              messageEn: `District Manager (${currentUser.name}) endorsed your leave request.`,
+              link: "leaves.html",
+              icon: "🏖️",
+              badgeClass: "bg-info",
+              actorName: currentUser.name,
+              action: "endorsed",
+            });
+          }
+
           const msg =
             lang === "ar"
               ? "تم اعتماد الإجازة من مدير المنطقة وتحويلها لمدير الخط."
@@ -1350,6 +1555,23 @@ Object.assign(leavesApp, {
           leave.approvals.lm.status = "approved";
           leave.approvals.lm.approverName = currentUser.name;
           leave.approvals.lm.updatedAt = timestampStr;
+
+          if (typeof window.addWorkflowNotification === "function") {
+            window.addWorkflowNotification({
+              userId: leave.userId,
+              type: "leave_approval",
+              title: "اعتماد طلب الإجازة",
+              titleEn: "Leave Endorsed by LM",
+              message: `اعتمد مدير الخط (${currentUser.name}) طلب إجازتك وتم تحويله للموارد البشرية.`,
+              messageEn: `Line Manager (${currentUser.name}) endorsed your leave request.`,
+              link: "leaves.html",
+              icon: "🏖️",
+              badgeClass: "bg-info",
+              actorName: currentUser.name,
+              action: "endorsed",
+            });
+          }
+
           const msg =
             lang === "ar"
               ? "تم اعتماد الإجازة من مدير الخط وتحويلها لقسم الموارد البشرية."
@@ -1364,6 +1586,23 @@ Object.assign(leavesApp, {
             leave.approvals.hr.updatedAt = timestampStr;
           }
           leave.status = "approved";
+
+          if (typeof window.addWorkflowNotification === "function") {
+            window.addWorkflowNotification({
+              userId: leave.userId,
+              type: "leave_approval",
+              title: "موافقة على طلب الإجازة",
+              titleEn: "Leave Request Approved",
+              message: "وافق قسم الموارد البشرية على طلب إجازتك الاعتيادية.",
+              messageEn: "HR Department approved your annual leave request.",
+              link: "leaves.html",
+              icon: "🏖️",
+              badgeClass: "bg-success",
+              actorName: "الموارد البشرية (HR)",
+              action: "approved",
+            });
+          }
+
           const msg =
             lang === "ar"
               ? "تم الاعتماد النهائي للإجازة وخصمها من الرصيد."
@@ -1635,8 +1874,8 @@ window.leavesApp = leavesApp;
 
 // Backward-compatible bindings for inline HTML event handlers & legacy callers
 window.getApproverDisplayName = resolveApproverDisplayName;
-window.handleDecisionStep = function (leaveId, decision) {
-  leavesApp.handleDecisionStep(leaveId, decision);
+window.handleDecisionStep = function (leaveId, decision, rejectionReason = "") {
+  leavesApp.handleDecisionStep(leaveId, decision, rejectionReason);
 };
 window.removeDeclaredHoliday = function (idx) {
   leavesApp.removeDeclaredHoliday(idx);

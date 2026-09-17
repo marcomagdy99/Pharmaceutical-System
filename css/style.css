@@ -312,6 +312,337 @@ input, select, textarea {
   border-color: var(--danger);
 }
 
+/* ==========================================================================
+   Live Workflow Notification Center
+   ========================================================================== */
+.pharma-notif-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.pharma-notif-bell-btn {
+  position: relative;
+  padding: 6px 10px;
+}
+
+.notif-unread-count-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 0.65rem;
+  padding: 2px 5px;
+  min-width: 17px;
+  line-height: 1.1;
+  border: 1.5px solid var(--white);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  animation: notifPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes notifPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.pharma-notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  width: 380px;
+  max-width: 92vw;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.16);
+  z-index: 2500;
+  cursor: default;
+  text-align: start;
+  overflow: hidden;
+  animation: notifFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[dir="rtl"] .pharma-notif-dropdown {
+  right: auto;
+  left: 0;
+}
+
+html[dir="ltr"] .pharma-notif-dropdown {
+  left: auto;
+  right: 0;
+}
+
+@media (max-width: 576px) {
+  .pharma-notif-dropdown {
+    position: fixed;
+    top: 64px;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+@keyframes notifFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header & Controls */
+.notif-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #edf2f7;
+  background: #f8fafc;
+}
+
+.notif-dropdown-header h5 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-filter-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.notif-filter-btn {
+  border: none;
+  background: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notif-filter-btn.active {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* List Items */
+.notif-list-container {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.notif-item:hover {
+  background: #f8fafc;
+}
+
+.notif-item.unread {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.notif-item.unread:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.notif-item-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.notif-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notif-item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-unread-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.notif-item-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.notif-item-msg {
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.45;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.notif-note-callout {
+  background: #fff8eb;
+  border-inline-start: 3px solid #f59e0b;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #92400e;
+  margin-top: 5px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.notif-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.notif-btn-open {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.notif-btn-open:hover {
+  text-decoration: underline;
+}
+
+.notif-btn-delete {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.notif-btn-delete:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* Empty State */
+.notif-empty-state {
+  padding: 36px 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+/* Footer */
+.notif-dropdown-footer {
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-top: 1px solid #edf2f7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .pharma-notif-dropdown {
+  background: #1e2229 !important;
+  border-color: #2d3340 !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.65) !important;
+}
+
+[data-theme="dark"] .notif-dropdown-header,
+[data-theme="dark"] .notif-dropdown-footer {
+  background: #181b20 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .notif-filter-tabs {
+  background: #1e2229 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .notif-filter-btn {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .notif-filter-btn.active {
+  background: rgba(37, 99, 235, 0.25) !important;
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .notif-item {
+  border-bottom-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .notif-item:hover {
+  background: #252b34 !important;
+}
+
+[data-theme="dark"] .notif-item.unread {
+  background: rgba(37, 99, 235, 0.12) !important;
+}
+
+[data-theme="dark"] .notif-item.unread:hover {
+  background: rgba(37, 99, 235, 0.18) !important;
+}
+
+[data-theme="dark"] .notif-item-title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .notif-item-msg {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .notif-note-callout {
+  background: #2b2515 !important;
+  color: #fef08a !important;
+  border-inline-start-color: #f59e0b !important;
+}
+
 /* Center Horizontal Navbar Strip */
 .pharma-nav-center {
   display: flex;

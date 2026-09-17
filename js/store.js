@@ -221,6 +221,48 @@
         autoSave("areas", "addAlias", { areaId, distributorId, rawText });
       },
       /**
+       * Removes an alias mapping from an area and clears sales row attribution for that raw text.
+       */
+      removeAlias(areaId, distributorId, rawText) {
+        const area = this.getById(areaId);
+        if (!area || !rawText || !Array.isArray(area.aliases)) return false;
+        const normalized = String(rawText).trim().toLowerCase();
+        const initialLen = area.aliases.length;
+        area.aliases = area.aliases.filter(
+          (al) =>
+            !(al.distributorId === distributorId && String(al.rawText).trim().toLowerCase() === normalized)
+        );
+        const removed = area.aliases.length < initialLen;
+        if (removed) {
+          if (store.distributorSales && typeof store.distributorSales.unmatchAliasRows === "function") {
+            store.distributorSales.unmatchAliasRows(distributorId, rawText);
+          }
+          autoSave("areas", "removeAlias", { areaId, distributorId, rawText });
+        }
+        return removed;
+      },
+      /**
+       * Returns all active mapped area aliases across all areas.
+       */
+      getAllAliases() {
+        const result = [];
+        (window.DEMO_DATA.areas || []).forEach((a) => {
+          if (Array.isArray(a.aliases)) {
+            a.aliases.forEach((al) => {
+              result.push({
+                areaId: a.id,
+                areaName: a.name,
+                areaCode: a.code || "",
+                lineId: a.lineId || null,
+                distributorId: al.distributorId,
+                rawText: al.rawText,
+              });
+            });
+          }
+        });
+        return result;
+      },
+      /**
        * Finds the Area (if any) whose alias list has this exact raw text
        * for this distributor.
        */
@@ -252,6 +294,7 @@
             ...areas[idx], 
             ...areaObj, 
             id: areaId,
+            lineId: areaObj.lineId || areas[idx].lineId || this._defaultLineId(),
             repId: newRepId,
             repName: newRepId ? (areaObj.repName || null) : null
           };
@@ -260,6 +303,7 @@
           areas.push({ 
             ...areaObj, 
             id: newId,
+            lineId: areaObj.lineId || this._defaultLineId(),
             repId: newRepId,
             repName: newRepId ? (areaObj.repName || null) : null
           });
@@ -525,6 +569,54 @@
           prod.aliases.push({ distributorId, rawText: String(rawText).trim() });
         }
         autoSave("productLines", "addProductAlias", { lineId, productId, distributorId, rawText });
+      },
+      /**
+       * Removes a product alias mapping and unassigns sales rows matched with it.
+       */
+      removeProductAlias(lineId, productId, distributorId, rawText) {
+        const line = this.getById(lineId);
+        if (!line || !Array.isArray(line.products) || !rawText) return false;
+        const prod = line.products.find((p) => p.id === productId);
+        if (!prod || !Array.isArray(prod.aliases)) return false;
+        const normalized = String(rawText).trim().toLowerCase();
+        const initialLen = prod.aliases.length;
+        prod.aliases = prod.aliases.filter(
+          (al) =>
+            !(al.distributorId === distributorId && String(al.rawText).trim().toLowerCase() === normalized)
+        );
+        const removed = prod.aliases.length < initialLen;
+        if (removed) {
+          if (store.distributorSales && typeof store.distributorSales.unmatchProductAliasRows === "function") {
+            store.distributorSales.unmatchProductAliasRows(distributorId, rawText);
+          }
+          autoSave("productLines", "removeProductAlias", { lineId, productId, distributorId, rawText });
+        }
+        return removed;
+      },
+      /**
+       * Returns all active mapped product aliases across all lines.
+       */
+      getAllProductAliases() {
+        const result = [];
+        (window.DEMO_DATA.productLines || []).forEach((line) => {
+          if (Array.isArray(line.products)) {
+            line.products.forEach((prod) => {
+              if (Array.isArray(prod.aliases)) {
+                prod.aliases.forEach((al) => {
+                  result.push({
+                    lineId: line.id,
+                    lineName: line.name,
+                    productId: prod.id,
+                    productName: prod.name,
+                    distributorId: al.distributorId,
+                    rawText: al.rawText,
+                  });
+                });
+              }
+            });
+          }
+        });
+        return result;
       },
       /**
        * Finds the { line, product } pair (if any) whose product alias
@@ -882,6 +974,54 @@
         return updatedCount;
       },
       /**
+       * Clears areaId, repId, dmId, lmId on sales rows matched with this distributor
+       * and raw territory text when an alias is removed.
+       */
+      unmatchAliasRows(distributorId, rawText) {
+        if (!distributorId || !rawText) return 0;
+        const normalized = String(rawText).trim().toLowerCase();
+        let unlinkedCount = 0;
+        this.getAll().forEach((row) => {
+          if (
+            row.distributorId === distributorId &&
+            String(row.areaRaw || "").trim().toLowerCase() === normalized
+          ) {
+            row.areaId = null;
+            row.repId = null;
+            row.dmId = null;
+            row.lmId = null;
+            unlinkedCount++;
+          }
+        });
+        if (unlinkedCount) {
+          autoSave("distributorSales", "unmatchAliasRows", { distributorId, rawText, unlinkedCount });
+        }
+        return unlinkedCount;
+      },
+      /**
+       * Clears lineId and productId on sales rows matched with this distributor
+       * and raw product text when a product alias is removed.
+       */
+      unmatchProductAliasRows(distributorId, rawText) {
+        if (!distributorId || !rawText) return 0;
+        const normalized = String(rawText).trim().toLowerCase();
+        let unlinkedCount = 0;
+        this.getAll().forEach((row) => {
+          if (
+            row.distributorId === distributorId &&
+            String(row.productRaw || "").trim().toLowerCase() === normalized
+          ) {
+            row.lineId = null;
+            row.productId = null;
+            unlinkedCount++;
+          }
+        });
+        if (unlinkedCount) {
+          autoSave("distributorSales", "unmatchProductAliasRows", { distributorId, rawText, unlinkedCount });
+        }
+        return unlinkedCount;
+      },
+      /**
        * Distinct (distributorId, product-raw-text) pairs among rows with
        * no resolved Line yet and no product alias -- these need an admin
        * to pick the real product for them once, via
@@ -985,6 +1125,101 @@
         } catch (e) {}
         autoSave("companySettings", "update", current);
         return current;
+      },
+    },
+
+    // ==========================================
+    // Section: Workflow Notifications Module
+    // ==========================================
+    notifications: {
+      getAll() {
+        return window.DEMO_DATA.notifications || [];
+      },
+      getForUser(userId) {
+        if (!window.DEMO_DATA.notifications) window.DEMO_DATA.notifications = [];
+        return window.DEMO_DATA.notifications.filter(
+          (n) => n.userId === userId || n.userId === "all"
+        );
+      },
+      getUnreadCount(userId) {
+        return this.getForUser(userId).filter((n) => !n.read).length;
+      },
+      add(notif) {
+        if (!window.DEMO_DATA.notifications) window.DEMO_DATA.notifications = [];
+        const fullNotif = {
+          id: notif.id || ("notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
+          userId: notif.userId || "rep1",
+          type: notif.type || "system",
+          title: notif.title || "إشعار جديد",
+          titleEn: notif.titleEn || notif.title || "Notification",
+          message: notif.message || "",
+          messageEn: notif.messageEn || notif.message || "",
+          note: notif.note || null,
+          link: notif.link || "#",
+          read: false,
+          createdAt: notif.createdAt || new Date().toISOString(),
+          icon: notif.icon || "🔔",
+          badgeClass: notif.badgeClass || "bg-primary",
+          actorName: notif.actorName || null,
+          action: notif.action || null,
+        };
+        window.DEMO_DATA.notifications.unshift(fullNotif);
+        autoSave("notifications", "create", fullNotif);
+        if (typeof window.updateWorkflowNotifUI === "function") {
+          window.updateWorkflowNotifUI();
+        }
+        return fullNotif;
+      },
+      markAsRead(notifId) {
+        const notif = (window.DEMO_DATA.notifications || []).find((n) => n.id === notifId);
+        if (notif) {
+          notif.read = true;
+          autoSave("notifications", "update", notif);
+          if (typeof window.updateWorkflowNotifUI === "function") {
+            window.updateWorkflowNotifUI();
+          }
+        }
+        return notif;
+      },
+      markAllAsRead(userId) {
+        let modified = false;
+        (window.DEMO_DATA.notifications || []).forEach((n) => {
+          if ((n.userId === userId || n.userId === "all") && !n.read) {
+            n.read = true;
+            modified = true;
+          }
+        });
+        if (modified) {
+          autoSave("notifications", "markAllRead", { userId });
+          if (typeof window.updateWorkflowNotifUI === "function") {
+            window.updateWorkflowNotifUI();
+          }
+        }
+      },
+      remove(notifId) {
+        if (!window.DEMO_DATA.notifications) return false;
+        const initialLen = window.DEMO_DATA.notifications.length;
+        window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
+          (n) => n.id !== notifId
+        );
+        if (window.DEMO_DATA.notifications.length < initialLen) {
+          autoSave("notifications", "delete", { id: notifId });
+          if (typeof window.updateWorkflowNotifUI === "function") {
+            window.updateWorkflowNotifUI();
+          }
+          return true;
+        }
+        return false;
+      },
+      clearAll(userId) {
+        if (!window.DEMO_DATA.notifications) return;
+        window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
+          (n) => n.userId !== userId && n.userId !== "all"
+        );
+        autoSave("notifications", "clearAll", { userId });
+        if (typeof window.updateWorkflowNotifUI === "function") {
+          window.updateWorkflowNotifUI();
+        }
       },
     },
   };

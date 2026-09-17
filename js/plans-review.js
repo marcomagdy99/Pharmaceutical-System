@@ -714,6 +714,24 @@ const plansReview = {
 
     saveMasterVisits(visits);
 
+    const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === visit.doctorId);
+    const docName = doc ? (doc.nameAr || doc.name) : (visit.doctorName || "زيارة طبية");
+    if (typeof window.addWorkflowNotification === "function") {
+      window.addWorkflowNotification({
+        userId: visit.repId,
+        type: "plan_approval",
+        title: "اعتماد زيارة مخططة",
+        titleEn: "Planned Visit Approved",
+        message: `اعتمد مدير المنطقة (${currentUser.name}) زيارتك لـ (${docName}) لتاريخ ${visit.date}.`,
+        messageEn: `District Manager (${currentUser.name}) approved your visit to (${doc ? doc.name : docName}) on ${visit.date}.`,
+        link: "calendar.html",
+        icon: "🗓️",
+        badgeClass: "bg-success",
+        actorName: currentUser.name,
+        action: "approved",
+      });
+    }
+
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
@@ -730,18 +748,36 @@ const plansReview = {
     };
 
     let count = 0;
+    let sampleDate = "2026-09-20";
     visits.forEach((v) => {
       if (v.repId === repId && v.status === "pending_approval") {
         v.status = "planned";
         v.approvedBy = currentUser.id;
         v.approvedByName = currentUser.name;
         v.approvedAt = new Date().toISOString();
+        if (v.date) sampleDate = v.date;
         count++;
       }
     });
 
     if (count === 0) return;
     saveMasterVisits(visits);
+
+    if (typeof window.addWorkflowNotification === "function") {
+      window.addWorkflowNotification({
+        userId: repId,
+        type: "plan_approval",
+        title: "اعتماد الخطة الميدانية",
+        titleEn: "Field Plan Approved",
+        message: `اعتمد مدير المنطقة (${currentUser.name}) خطتك الميدانية لتاريخ ${sampleDate}.`,
+        messageEn: `District Manager (${currentUser.name}) approved your field plan for ${sampleDate}.`,
+        link: "calendar.html",
+        icon: "🗓️",
+        badgeClass: "bg-success",
+        actorName: currentUser.name,
+        action: "approved",
+      });
+    }
 
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
@@ -761,18 +797,38 @@ const plansReview = {
     const scopedRepIds = scopedReps.map((r) => r.id);
 
     let count = 0;
+    const repCounts = {};
     visits.forEach((v) => {
       if (scopedRepIds.includes(v.repId) && v.status === "pending_approval") {
         v.status = "planned";
         v.approvedBy = currentUser.id;
         v.approvedByName = currentUser.name;
         v.approvedAt = new Date().toISOString();
+        repCounts[v.repId] = (repCounts[v.repId] || 0) + 1;
         count++;
       }
     });
 
     if (count === 0) return;
     saveMasterVisits(visits);
+
+    if (typeof window.addWorkflowNotification === "function") {
+      Object.keys(repCounts).forEach((rId) => {
+        window.addWorkflowNotification({
+          userId: rId,
+          type: "plan_approval",
+          title: "اعتماد الخطة الميدانية",
+          titleEn: "Field Plan Approved",
+          message: `اعتمد مدير المنطقة (${currentUser.name}) خطتك الميدانية بالكامل (${repCounts[rId]} زيارة).`,
+          messageEn: `District Manager (${currentUser.name}) approved your full field plan (${repCounts[rId]} visits).`,
+          link: "calendar.html",
+          icon: "🗓️",
+          badgeClass: "bg-success",
+          actorName: currentUser.name,
+          action: "approved",
+        });
+      });
+    }
 
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
@@ -810,7 +866,7 @@ const plansReview = {
   confirmRejectPlan() {
     const reason =
       document.getElementById("rejectReasonText")?.value.trim() ||
-      "Modifications required by manager";
+      "يرجى مراجعة الخطة وتعديل المواعيد";
     const visits = getMasterVisits();
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
@@ -825,6 +881,25 @@ const plansReview = {
         v.status = "rejected";
         v.rejectionReason = reason;
         v.rejectedBy = currentUser.id;
+
+        const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === v.doctorId);
+        const docName = doc ? (doc.nameAr || doc.name) : (v.doctorName || "د. أحمد مصطفى");
+        if (typeof window.addWorkflowNotification === "function") {
+          window.addWorkflowNotification({
+            userId: v.repId,
+            type: "visit_rejection",
+            title: "رفض وتوجيه زيارة",
+            titleEn: "Visit Directive / Rejection",
+            message: `تم رفض زيارة ${docName} مع ملاحظة: ${reason}`,
+            messageEn: `Visit for ${doc ? doc.name : docName} rejected with note: ${reason}`,
+            note: reason,
+            link: "visits.html",
+            icon: "❌",
+            badgeClass: "bg-danger",
+            actorName: currentUser.name,
+            action: "rejected",
+          });
+        }
       }
     } else if (this.activeRejectTarget.repId) {
       visits.forEach((v) => {
@@ -837,6 +912,23 @@ const plansReview = {
           v.rejectedBy = currentUser.id;
         }
       });
+
+      if (typeof window.addWorkflowNotification === "function") {
+        window.addWorkflowNotification({
+          userId: this.activeRejectTarget.repId,
+          type: "plan_rejection",
+          title: "ملاحظات على الخطة الميدانية",
+          titleEn: "Field Plan Returned with Notes",
+          message: `طلب المدير (${currentUser.name}) تعديلات على الخطة مع ملاحظة: ${reason}`,
+          messageEn: `Manager (${currentUser.name}) requested plan modifications: ${reason}`,
+          note: reason,
+          link: "calendar.html",
+          icon: "❌",
+          badgeClass: "bg-danger",
+          actorName: currentUser.name,
+          action: "rejected",
+        });
+      }
     }
 
     saveMasterVisits(visits);

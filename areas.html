@@ -262,6 +262,14 @@
             <form id="areaForm">
               <input type="hidden" id="areaId" />
 
+              <div class="mb-3" id="modalLineContainer">
+                <label class="form-label fw-semibold" data-i18n="select_line">Product Line:</label>
+                <div class="d-flex align-items-center gap-2 p-2 rounded-3 border bg-light">
+                  <i class="fas fa-layer-group text-primary"></i>
+                  <span id="modalLineName" class="fw-bold text-primary">--</span>
+                </div>
+              </div>
+
               <div class="mb-3">
                 <label class="form-label fw-semibold" data-i18n="area_name"
                   >Area Name <span class="text-danger">*</span></label
@@ -270,8 +278,13 @@
                   type="text"
                   class="form-control"
                   id="areaName"
+                  list="existingAreaNamesList"
+                  oninput="onAreaNameInput()"
                   required
                 />
+                <datalist id="existingAreaNamesList">
+                  <!-- Populated dynamically with unique existing area names -->
+                </datalist>
               </div>
 
               <div class="mb-3">

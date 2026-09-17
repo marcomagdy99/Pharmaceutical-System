@@ -224,6 +224,8 @@ const DEFAULT_DEMO_DATA = {
   areas: [
     { id: "area1", name: "Nasr City", code: "CAI-N01", repId: "rep1", lineId: "line1" },
     { id: "area2", name: "Heliopolis", code: "CAI-H01", repId: "rep2", lineId: "line1" },
+    { id: "area3", name: "Nasr City", code: "CAI-N01", repId: "rep4", lineId: "line2" },
+    { id: "area4", name: "Maadi", code: "CAI-M01", repId: null, lineId: "line2" },
   ],
   productLines: [
     {
@@ -902,6 +904,105 @@ const DEFAULT_DEMO_DATA = {
       read: false,
     },
   ],
+  notifications: [
+    {
+      id: "notif_rep_1",
+      userId: "rep1",
+      type: "plan_approval",
+      title: "اعتماد الخطة الميدانية",
+      titleEn: "Field Plan Approved",
+      message: "اعتمد مدير المنطقة (كريم ناصر) خطتك الميدانية لتاريخ 2026-09-20.",
+      messageEn: "District Manager (Karim Nasser) approved your field plan for 2026-09-20.",
+      link: "calendar.html",
+      read: false,
+      createdAt: "2026-09-17T15:30:00Z",
+      icon: "🗓️",
+      badgeClass: "bg-success",
+      actorName: "كريم ناصر",
+      action: "approved",
+    },
+    {
+      id: "notif_rep_2",
+      userId: "rep1",
+      type: "leave_approval",
+      title: "موافقة على طلب الإجازة",
+      titleEn: "Leave Request Approved",
+      message: "وافق قسم الموارد البشرية على طلب إجازتك الاعتيادية.",
+      messageEn: "HR Department approved your annual leave request.",
+      link: "leaves.html",
+      read: false,
+      createdAt: "2026-09-17T14:15:00Z",
+      icon: "🏖️",
+      badgeClass: "bg-success",
+      actorName: "الموارد البشرية (HR)",
+      action: "approved",
+    },
+    {
+      id: "notif_rep_3",
+      userId: "rep1",
+      type: "visit_rejection",
+      title: "رفض وتوجيه زيارة",
+      titleEn: "Visit Directive / Rejection",
+      message: "تم رفض زيارة د. أحمد مصطفى مع ملاحظة: يرجى تغيير موعد الزيارة للفترة الصباحية.",
+      messageEn: "Visit for Dr. Ahmed Mostafa rejected with note: Please reschedule to morning period.",
+      note: "يرجى تغيير موعد الزيارة للفترة الصباحية",
+      link: "visits.html",
+      read: false,
+      createdAt: "2026-09-17T11:00:00Z",
+      icon: "❌",
+      badgeClass: "bg-danger",
+      actorName: "كريم ناصر",
+      action: "rejected",
+    },
+    {
+      id: "notif_dm_1",
+      userId: "dm1",
+      type: "plan_submission",
+      title: "خطة زيارات معلقة للاعتماد",
+      titleEn: "Field Plan for Review",
+      message: "قدم المندوب أحمد مصطفى خطته الميدانية لشهر سبتمبر للمراجعة والاعتماد.",
+      messageEn: "Medical Rep Ahmed Mostafa submitted a new field plan for your review.",
+      link: "plans-review.html",
+      read: false,
+      createdAt: "2026-09-17T13:00:00Z",
+      icon: "📋",
+      badgeClass: "bg-primary",
+      actorName: "أحمد مصطفى",
+      action: "submitted",
+    },
+    {
+      id: "notif_dm_2",
+      userId: "dm1",
+      type: "leave_submission",
+      title: "طلب إجازة جديد",
+      titleEn: "New Leave Request",
+      message: "طلب إجازة اعتيادية مقدم من المندوب أحمد مصطفى (يومان) بانتظار موافقتك.",
+      messageEn: "Annual leave request submitted by Ahmed Mostafa (2 days) awaiting your approval.",
+      link: "leaves.html",
+      read: false,
+      createdAt: "2026-09-17T10:00:00Z",
+      icon: "🏖️",
+      badgeClass: "bg-warning",
+      actorName: "أحمد مصطفى",
+      action: "submitted",
+    },
+    {
+      id: "notif_hr_1",
+      userId: "hr1",
+      type: "leave_submission",
+      title: "طلب إجازة للاعتماد النهائي",
+      titleEn: "Leave Request Final Approval",
+      message: "اعتمد مدير الخط طلب إجازة أحمد مصطفى وبانتظار اعتماد الموارد البشرية النهائي.",
+      messageEn: "Line Manager approved leave for Ahmed Mostafa, awaiting HR final confirmation.",
+      link: "leaves.html",
+      read: false,
+      createdAt: "2026-09-17T12:30:00Z",
+      icon: "🏖️",
+      badgeClass: "bg-info",
+      actorName: "حسن علي",
+      action: "endorsed",
+    },
+  ],
   publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day" }],
 };
 
@@ -923,6 +1024,18 @@ function loadDataFromStorage() {
         }
         if (!Array.isArray(data.specialties) || data.specialties.length === 0) {
           data.specialties = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.specialties));
+        }
+        if (Array.isArray(data.areas)) {
+          data.areas.forEach((a) => {
+            if (!a.lineId) a.lineId = "line1";
+          });
+          DEFAULT_DEMO_DATA.areas.forEach((da) => {
+            if (!data.areas.some((existing) => existing.id === da.id)) {
+              data.areas.push(da);
+            }
+          });
+        } else {
+          data.areas = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.areas));
         }
         if (Array.isArray(data.productLines)) {
           data.productLines.forEach((pl) => {
@@ -1020,6 +1133,17 @@ function loadDataFromStorage() {
         // Ensure synchronized sales seed
         if (!Array.isArray(data.sales) || data.sales.length === 0) {
           data.sales = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.sales));
+        }
+        // Ensure synchronized live workflow notifications seed
+        if (!Array.isArray(data.notifications) || data.notifications.length === 0) {
+          data.notifications = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.notifications));
+        } else {
+          const hasRepNotifs = data.notifications.some((n) => n.userId === "rep1");
+          if (!hasRepNotifs) {
+            DEFAULT_DEMO_DATA.notifications.forEach((dn) => {
+              if (dn.userId === "rep1") data.notifications.unshift(dn);
+            });
+          }
         }
       }
       return data;
@@ -1403,6 +1527,16 @@ const translations = {
     addHolidayBtn: "Add Official Public Holiday",
     currentHolidays: "Currently Declared Public Holidays:",
     totalDays: "Total",
+    notifCenterTitle: "Notifications",
+    notifMarkAllRead: "Mark all as read",
+    notifClearAll: "Clear all",
+    notifEmptyTitle: "No notifications",
+    notifEmptyDesc: "Workflow approvals, rejections, and directives will appear here live.",
+    notifTabAll: "All",
+    notifTabUnread: "Unread",
+    notifNew: "New",
+    notifViewDetails: "View Details",
+    notifDirectiveLabel: "Directive / Note:",
   },
   ar: {
     brandName: "فارماكير",
@@ -1497,6 +1631,16 @@ const translations = {
     addHolidayBtn: "إضافة إجازة رسمية",
     currentHolidays: "الإجازات الرسمية المسجلة حالياً:",
     totalDays: "الإجمالي",
+    notifCenterTitle: "مركز الإشعارات",
+    notifMarkAllRead: "تحديد الكل كمقروء",
+    notifClearAll: "مسح الكل",
+    notifEmptyTitle: "لا توجد إشعارات جديدة",
+    notifEmptyDesc: "ستظهر هنا إشعارات الاعتمادات، الرفض، والتوجيهات الميدانية فور حدوثها.",
+    notifTabAll: "الكل",
+    notifTabUnread: "غير مقروء",
+    notifNew: "جديد",
+    notifViewDetails: "عرض التفاصيل",
+    notifDirectiveLabel: "ملاحظة التوجيه:",
   },
 };
 
@@ -1898,6 +2042,12 @@ function renderTopbar() {
   const { primaryNavItems, managementNavItems } = getNavItemsForRole(user.role);
   const allTopNavItems = primaryNavItems.concat(managementNavItems);
 
+  const unreadNotifCount = (window.store && window.store.notifications)
+    ? window.store.notifications.getUnreadCount(user.id)
+    : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
+        (n) => (n.userId === user.id || n.userId === "all") && !n.read
+      ).length;
+
   const topRow = topbarEl.querySelector(".pharma-topbar-top-row");
   const navStrip = topbarEl.querySelector(".pharma-navbar-strip");
 
@@ -1930,6 +2080,27 @@ function renderTopbar() {
       themeTextEl.textContent = theme === "dark" 
         ? (translations[lang]?.lightMode || "Light") 
         : (translations[lang]?.darkMode || "Dark");
+    }
+
+    // Ensure notification bell container exists in incremental update
+    if (!topbarEl.querySelector("#pharmaNotifWrapper")) {
+      const actionsGroup = topbarEl.querySelector(".pharma-actions-group");
+      if (actionsGroup) {
+        const notifWrapper = document.createElement("div");
+        notifWrapper.className = "pharma-notif-wrapper";
+        notifWrapper.id = "pharmaNotifWrapper";
+        notifWrapper.innerHTML = `
+          <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="${translations[lang]?.notifCenterTitle || (lang === 'ar' ? 'مركز الإشعارات' : 'Notifications')}" aria-label="Notifications">
+            <span class="notif-bell-icon">🔔</span>
+            <span class="badge rounded-pill bg-danger notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+          </button>
+          <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
+        `;
+        actionsGroup.insertBefore(notifWrapper, actionsGroup.firstChild);
+      }
+    }
+    if (typeof window.updateWorkflowNotifUI === "function") {
+      window.updateWorkflowNotifUI();
     }
 
     const currentNavLinks = navStrip.querySelectorAll(".pharma-nav-item");
@@ -2003,6 +2174,16 @@ function renderTopbar() {
       </div>
 
       <div class="pharma-actions-group">
+        <!-- Live Workflow Notification Center Bell & Dropdown -->
+        <div class="pharma-notif-wrapper" id="pharmaNotifWrapper">
+          <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="${translations[lang]?.notifCenterTitle || (lang === 'ar' ? 'مركز الإشعارات' : 'Notifications')}" aria-label="Notifications">
+            <span class="notif-bell-icon">🔔</span>
+            <span class="badge rounded-pill bg-danger notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+          </button>
+          
+          <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
+        </div>
+
         <button class="pharma-action-btn" onclick="switchLanguage('${lang === "ar" ? "en" : "ar"}')" title="Language">
           &#127760; <span id="langLabel">${lang === "ar" ? "English" : "عربي"}</span>
         </button>
@@ -2076,6 +2257,396 @@ window.initTheme = function () {
   if (document.body) document.body.setAttribute("data-theme", savedTheme);
   window.updateThemeUI(savedTheme);
 };
+
+// ============================================================================
+// Section 8.5: Live Workflow Notification Center
+// ============================================================================
+window.formatWorkflowNotifTime = function (isoString, lang) {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    const now = new Date();
+    const diffMs = Math.max(0, now - d);
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (lang === "ar") {
+      if (diffMins < 1) return "الآن";
+      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+      if (diffDays === 1) return "أمس";
+      if (diffDays < 7) return `منذ ${diffDays} أيام`;
+      return d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" });
+    } else {
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays === 1) return "Yesterday";
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+  } catch (e) {
+    return "";
+  }
+};
+
+window.currentNotifFilter = "all";
+
+window.updateWorkflowNotifUI = function () {
+  let user = window.checkAuth ? window.checkAuth() : null;
+  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
+  const userId = user ? user.id : "rep1";
+
+  const unread = (window.store && window.store.notifications)
+    ? window.store.notifications.getUnreadCount(userId)
+    : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
+        (n) => (n.userId === userId || n.userId === "all") && !n.read
+      ).length;
+
+  document.querySelectorAll("#topbarNotifBadge").forEach((badgeEl) => {
+    badgeEl.textContent = unread > 99 ? "99+" : unread;
+    badgeEl.style.display = unread > 0 ? "inline-flex" : "none";
+  });
+
+  const dropdown = document.getElementById("workflowNotifDropdown");
+  if (dropdown && dropdown.style.display === "block") {
+    window.renderWorkflowNotifContent(window.currentNotifFilter || "all");
+  }
+};
+
+window.toggleWorkflowNotifDropdown = function (event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  const dropdown = document.getElementById("workflowNotifDropdown");
+  if (!dropdown) return;
+
+  const isHidden = dropdown.style.display === "none" || !dropdown.style.display;
+  if (isHidden) {
+    window.renderWorkflowNotifContent(window.currentNotifFilter || "all");
+    dropdown.style.display = "block";
+  } else {
+    dropdown.style.display = "none";
+  }
+};
+
+window.renderWorkflowNotifContent = function (filter = "all") {
+  window.currentNotifFilter = filter;
+  const container = document.getElementById("workflowNotifDropdown");
+  if (!container) return;
+
+  const lang = window.getCurrentLang ? window.getCurrentLang() : "ar";
+  const isAr = lang === "ar";
+  let user = window.checkAuth ? window.checkAuth() : null;
+  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
+  const userId = user ? user.id : "rep1";
+
+  const allNotifs = (window.store && window.store.notifications)
+    ? window.store.notifications.getForUser(userId)
+    : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
+        (n) => n.userId === userId || n.userId === "all"
+      );
+
+  const unreadNotifs = allNotifs.filter((n) => !n.read);
+  const unreadCount = unreadNotifs.length;
+  const totalCount = allNotifs.length;
+
+  const displayList = filter === "unread" ? unreadNotifs : allNotifs;
+
+  let itemsHtml = "";
+  if (displayList.length === 0) {
+    itemsHtml = `
+      <div class="notif-empty-state">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">🔕</div>
+        <div class="fw-bold fs-6 mb-1">${isAr ? "لا توجد إشعارات جديدة" : "No notifications"}</div>
+        <div class="text-muted small" style="max-width: 260px; margin: 0 auto; line-height: 1.45;">
+          ${isAr ? "ستظهر هنا إشعارات الاعتمادات، الرفض، والتوجيهات الميدانية فور حدوثها." : "Workflow approvals, rejections, and directives will appear here live."}
+        </div>
+      </div>
+    `;
+  } else {
+    itemsHtml = displayList
+      .map((item) => {
+        const isUnread = !item.read;
+        const title = isAr
+          ? item.title || item.titleEn || "إشعار"
+          : item.titleEn || item.title || "Notification";
+        const msg = isAr
+          ? item.message || item.messageEn || ""
+          : item.messageEn || item.message || "";
+        const timeStr = window.formatWorkflowNotifTime(item.createdAt, lang);
+
+        let icon = item.icon || "🔔";
+        let iconBg = "rgba(13, 110, 253, 0.12)";
+        let iconColor = "#0d6efd";
+
+        if (item.type && item.type.includes("approval")) {
+          iconBg = "rgba(25, 135, 84, 0.14)";
+          iconColor = "#198754";
+          if (!item.icon) icon = "✅";
+        } else if (
+          item.type &&
+          (item.type.includes("rejection") || item.type.includes("reject"))
+        ) {
+          iconBg = "rgba(220, 53, 69, 0.14)";
+          iconColor = "#dc3545";
+          if (!item.icon) icon = "❌";
+        } else if (item.type && item.type.includes("leave")) {
+          iconBg = "rgba(13, 202, 240, 0.14)";
+          iconColor = "#0891b2";
+          if (!item.icon) icon = "🏖️";
+        } else if (item.type && item.type.includes("plan")) {
+          iconBg = "rgba(111, 66, 193, 0.14)";
+          iconColor = "#6f42c1";
+          if (!item.icon) icon = "🗓️";
+        }
+
+        const safeTitle = window.escapeHtml ? window.escapeHtml(title) : title;
+        const safeMsg = window.escapeHtml ? window.escapeHtml(msg) : msg;
+        const noteHtml = item.note
+          ? `
+          <div class="notif-note-callout">
+            <strong>💬 ${isAr ? "ملاحظة التوجيه:" : "Directive Note:"}</strong> "${window.escapeHtml ? window.escapeHtml(item.note) : item.note}"
+          </div>
+        `
+          : "";
+
+        const linkTarget = item.link || "#";
+
+        return `
+          <div class="notif-item ${isUnread ? "unread" : "read"}" onclick="window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
+            <div class="notif-item-icon" style="background: ${iconBg}; color: ${iconColor};">
+              ${icon}
+            </div>
+            <div class="notif-item-body">
+              <div class="notif-item-top">
+                <span class="notif-item-title">
+                  ${isUnread ? '<span class="notif-unread-dot"></span>' : ""}
+                  ${safeTitle}
+                </span>
+                <span class="notif-item-time">${timeStr}</span>
+              </div>
+              <div class="notif-item-msg">${safeMsg}</div>
+              ${noteHtml}
+              <div class="notif-item-actions">
+                ${
+                  linkTarget !== "#"
+                    ? `
+                  <button type="button" class="notif-btn-open" onclick="event.stopPropagation(); window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
+                    ${isAr ? "فتح الصفحة" : "View"} ↗
+                  </button>
+                `
+                    : "<span></span>"
+                }
+                <button type="button" class="notif-btn-delete" title="${isAr ? "حذف الإشعار" : "Delete"}" onclick="window.deleteWorkflowNotif(event, '${item.id}')">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  container.innerHTML = `
+    <div class="notif-dropdown-header">
+      <h5>
+        <span>🔔</span>
+        <span>${isAr ? "مركز الإشعارات" : "Notifications"}</span>
+        <span class="badge ${unreadCount > 0 ? "bg-danger" : "bg-secondary"} rounded-pill" style="font-size: 0.72rem; padding: 2px 7px;">
+          ${unreadCount} ${isAr ? "جديد" : "New"}
+        </span>
+      </h5>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        ${
+          unreadCount > 0
+            ? `
+          <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" style="font-size: 0.78rem; font-weight: 600; color: #2563eb;" onclick="window.markAllWorkflowNotifsRead(event)">
+            ✓ ${isAr ? "تحديد الكل كمقروء" : "Mark all read"}
+          </button>
+        `
+            : ""
+        }
+      </div>
+    </div>
+
+    <div class="notif-filter-tabs">
+      <button type="button" class="notif-filter-btn ${filter === "all" ? "active" : ""}" onclick="window.renderWorkflowNotifContent('all')">
+        ${isAr ? "الكل" : "All"} (${totalCount})
+      </button>
+      <button type="button" class="notif-filter-btn ${filter === "unread" ? "active" : ""}" onclick="window.renderWorkflowNotifContent('unread')">
+        ${isAr ? "غير مقروء" : "Unread"} (${unreadCount})
+      </button>
+    </div>
+
+    <div class="notif-list-container">
+      ${itemsHtml}
+    </div>
+
+    ${
+      totalCount > 0
+        ? `
+      <div class="notif-dropdown-footer">
+        <span class="small text-muted">${totalCount} ${isAr ? "إشعار إجمالي" : "total"}</span>
+        <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 small" style="font-size: 0.75rem;" onclick="window.clearAllWorkflowNotifs(event)">
+          🗑️ ${isAr ? "مسح الكل" : "Clear all"}
+        </button>
+      </div>
+    `
+        : ""
+    }
+  `;
+};
+
+window.handleWorkflowNotifClick = function (notifId, link) {
+  if (window.store && window.store.notifications) {
+    window.store.notifications.markAsRead(notifId);
+  } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
+    const n = window.DEMO_DATA.notifications.find((item) => item.id === notifId);
+    if (n) {
+      n.read = true;
+      if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+    }
+  }
+  window.updateWorkflowNotifUI();
+
+  if (link && link !== "#") {
+    const currentPath = window.location.pathname.split("/").pop() || "index.html";
+    if (currentPath !== link) {
+      window.location.href = link;
+    } else {
+      const dd = document.getElementById("workflowNotifDropdown");
+      if (dd) dd.style.display = "none";
+    }
+  }
+};
+
+window.deleteWorkflowNotif = function (event, notifId) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  if (window.store && window.store.notifications) {
+    window.store.notifications.remove(notifId);
+  } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
+    window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
+      (n) => n.id !== notifId
+    );
+    if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+    window.updateWorkflowNotifUI();
+  }
+};
+
+window.markAllWorkflowNotifsRead = function (event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  let user = window.checkAuth ? window.checkAuth() : null;
+  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
+  const userId = user ? user.id : "rep1";
+
+  if (window.store && window.store.notifications) {
+    window.store.notifications.markAllAsRead(userId);
+  } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
+    window.DEMO_DATA.notifications.forEach((n) => {
+      if (n.userId === userId || n.userId === "all") n.read = true;
+    });
+    if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+    window.updateWorkflowNotifUI();
+  }
+};
+
+window.clearAllWorkflowNotifs = function (event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  let user = window.checkAuth ? window.checkAuth() : null;
+  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
+  const userId = user ? user.id : "rep1";
+
+  if (window.store && window.store.notifications) {
+    window.store.notifications.clearAll(userId);
+  } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
+    window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
+      (n) => n.userId !== userId && n.userId !== "all"
+    );
+    if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+    window.updateWorkflowNotifUI();
+  }
+};
+
+window.addWorkflowNotification = function (notif) {
+  let created = null;
+  if (window.store && window.store.notifications) {
+    created = window.store.notifications.add(notif);
+  } else if (window.DEMO_DATA) {
+    if (!window.DEMO_DATA.notifications) window.DEMO_DATA.notifications = [];
+    created = {
+      id: "notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString(),
+      read: false,
+      userId: notif.userId || "rep1",
+      type: notif.type || "system",
+      title: notif.title || "إشعار جديد",
+      titleEn: notif.titleEn || notif.title || "Notification",
+      message: notif.message || "",
+      messageEn: notif.messageEn || notif.message || "",
+      note: notif.note || null,
+      link: notif.link || "#",
+      icon: notif.icon || "🔔",
+      badgeClass: notif.badgeClass || "bg-primary",
+      actorName: notif.actorName || null,
+      action: notif.action || null,
+    };
+    window.DEMO_DATA.notifications.unshift(created);
+    if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+  }
+
+  if (typeof window.updateWorkflowNotifUI === "function") {
+    window.updateWorkflowNotifUI();
+  }
+
+  // Live Toast feedback if recipient matches current active user
+  let user = window.checkAuth ? window.checkAuth() : null;
+  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
+  if (user && (notif.userId === user.id || notif.userId === "all")) {
+    const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
+    const toastMsg = isAr ? (notif.title || notif.message) : (notif.titleEn || notif.messageEn || notif.title);
+    if (typeof window.showToast === "function") {
+      window.showToast(`🔔 ${toastMsg}`, "info");
+    }
+  }
+
+  return created;
+};
+
+// Global click outside and ESC listeners for notification dropdown
+if (!window._workflowNotifListenersAttached) {
+  window._workflowNotifListenersAttached = true;
+  document.addEventListener("click", function (event) {
+    const dropdown = document.getElementById("workflowNotifDropdown");
+    const bellBtn = document.getElementById("notifBellBtn");
+    if (dropdown && dropdown.style.display === "block") {
+      if (!dropdown.contains(event.target) && (!bellBtn || !bellBtn.contains(event.target))) {
+        dropdown.style.display = "none";
+      }
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      const dropdown = document.getElementById("workflowNotifDropdown");
+      if (dropdown && dropdown.style.display === "block") {
+        dropdown.style.display = "none";
+      }
+    }
+  });
+}
 
 // ============================================================================
 // Section 9: Authentication & Session

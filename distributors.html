@@ -352,6 +352,71 @@
               </div>
             </div>
 
+            <!-- Active Mapped Aliases (Areas & Products) -->
+            <div
+              id="mappedAliasesSection"
+              class="card border-0 shadow-sm rounded-4 mb-4"
+            >
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                  <div>
+                    <h5 class="fw-bold mb-1" data-i18n="active_aliases_title">
+                      <i class="fas fa-link text-primary me-2"></i>Active Mapped Aliases
+                    </h5>
+                    <p class="text-muted small mb-0" data-i18n="active_aliases_desc">
+                      View and manage territory and product aliases mapped to distributors. Unlink any accidental mapping with one click.
+                    </p>
+                  </div>
+                  <ul class="nav nav-pills" id="aliasTabs">
+                    <li class="nav-item">
+                      <button class="nav-link active py-1 px-3 fw-semibold" id="aliasTabAreas" onclick="switchAliasTab('areas')" data-i18n="tab_mapped_territories">
+                        <i class="fas fa-map-marker-alt me-1"></i>Territories (<span id="countMappedAreas">0</span>)
+                      </button>
+                    </li>
+                    <li class="nav-item">
+                      <button class="nav-link py-1 px-3 fw-semibold" id="aliasTabProducts" onclick="switchAliasTab('products')" data-i18n="tab_mapped_products">
+                        <i class="fas fa-pills me-1"></i>Products (<span id="countMappedProducts">0</span>)
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Mapped Areas Table View -->
+                <div id="mappedAreasContainer">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                      <thead class="bg-light">
+                        <tr>
+                          <th class="border-0 px-3 py-2" data-i18n="distributor_name">Distributor</th>
+                          <th class="border-0 px-3 py-2" data-i18n="raw_territory_text">Raw Sheet Text</th>
+                          <th class="border-0 px-3 py-2" data-i18n="mapped_to_area">Mapped Area</th>
+                          <th class="border-0 px-3 py-2" data-i18n="colActions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="mappedAreasTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Mapped Products Table View -->
+                <div id="mappedProductsContainer" style="display: none;">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                      <thead class="bg-light">
+                        <tr>
+                          <th class="border-0 px-3 py-2" data-i18n="distributor_name">Distributor</th>
+                          <th class="border-0 px-3 py-2" data-i18n="raw_product_text">Raw Sheet Text</th>
+                          <th class="border-0 px-3 py-2" data-i18n="mapped_to_product">Mapped Product (Line)</th>
+                          <th class="border-0 px-3 py-2" data-i18n="colActions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="mappedProductsTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Import History -->
             <div
               id="importBatchesSection"
@@ -593,6 +658,57 @@
               data-i18n="save_mapping"
             >
               Save Mapping
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Alias Mapping Modal -->
+    <div class="modal fade" id="editAliasModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+          <div class="modal-header border-bottom py-3">
+            <h5 class="modal-title fw-bold" id="editAliasModalTitle">
+              <i class="fas fa-edit text-primary me-2"></i><span id="editAliasModalHeading">Edit Mapping</span>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <input type="hidden" id="editAliasType" value="" />
+            <input type="hidden" id="editAliasDistId" value="" />
+            <input type="hidden" id="editAliasRawText" value="" />
+            <input type="hidden" id="editAliasCurrentTargetId" value="" />
+            <input type="hidden" id="editAliasCurrentLineId" value="" />
+
+            <div class="mb-3">
+              <label class="form-label text-muted small mb-1" data-i18n="distributor_name">Distributor</label>
+              <div class="fw-semibold fs-6 text-dark" id="editAliasDistName">-</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted small mb-1" data-i18n="raw_sheet_text">Raw Sheet Text</label>
+              <div>
+                <span class="badge bg-light text-dark border p-2 fs-6 font-monospace" id="editAliasRawBadge">-</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted small mb-1" data-i18n="currently_mapped_to">Currently Mapped To</label>
+              <div class="fw-semibold text-primary" id="editAliasCurrentName">-</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small" id="editAliasTargetLabel">Select New Target</label>
+              <select class="form-select" id="editAliasTargetSelect">
+                <!-- Options populated dynamically based on type (area or product) -->
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer border-top py-3">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+            <button type="button" class="btn btn-primary px-4" onclick="saveEditedAlias()" data-i18n="save_changes">
+              <i class="fas fa-save me-1"></i>Save Changes
             </button>
           </div>
         </div>

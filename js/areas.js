@@ -97,7 +97,7 @@ function getAreasList() {
   });
 }
 
-function populateRepDropdown(selectedRepId = "") {
+function populateRepDropdown(selectedRepId = "", targetLineId = null) {
   const repSelect = document.getElementById("assignRep");
   if (!repSelect) return;
   const isAr = document.documentElement.dir === "rtl";
@@ -105,10 +105,11 @@ function populateRepDropdown(selectedRepId = "") {
     ? "-- غير معيّنة (شاغرة) --"
     : "-- Unassigned (Vacant) --";
 
-  // Filter reps by selected line
+  // Filter reps by specified or selected line
+  const effectiveLineId = targetLineId || currentSelectedLineId;
   let activeReps;
-  if (currentSelectedLineId && window.store && window.store.areas) {
-    activeReps = window.store.areas.getRepsByLine(currentSelectedLineId);
+  if (effectiveLineId && window.store && window.store.areas) {
+    activeReps = window.store.areas.getRepsByLine(effectiveLineId);
   } else {
     activeReps = (window.store && window.store.users.getReps()) || [];
   }
@@ -311,31 +312,107 @@ function toggleView(view) {
     view === "cards" ? "flex" : "none";
 }
 
+/**
+ * Populates the datalist for the area name input with all unique area names
+ * currently registered in any product line, along with their assigned code.
+ */
+function populateAreaNamesDatalist() {
+  const datalist = document.getElementById("existingAreaNamesList");
+  if (!datalist) return;
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+
+  const uniqueNames = new Map();
+  allAreas.forEach((a) => {
+    if (a.name) {
+      const key = a.name.trim().toLowerCase();
+      if (!uniqueNames.has(key)) {
+        uniqueNames.set(key, { name: a.name.trim(), code: a.code || "" });
+      }
+    }
+  });
+
+  let html = "";
+  uniqueNames.forEach(({ name, code }) => {
+    html += `<option value="${window.escapeHtml(name)}">${code ? `(${window.escapeHtml(code)})` : ""}</option>`;
+  });
+  datalist.innerHTML = html;
+}
+
+/**
+ * Triggered when the user enters or selects an area name in the modal.
+ * Automatically looks up if this area name exists in any other line,
+ * and if so, auto-fills the Area Code with the same standard code!
+ */
+function onAreaNameInput() {
+  const nameInput = document.getElementById("areaName");
+  const codeInput = document.getElementById("areaCode");
+  if (!nameInput || !codeInput) return;
+
+  const entered = nameInput.value.trim().toLowerCase();
+  if (!entered) return;
+
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+
+  const matched = allAreas.find(
+    (a) => a.name && a.name.trim().toLowerCase() === entered && a.code
+  );
+
+  if (matched && matched.code) {
+    // Automatically fill with the same code across all lines!
+    codeInput.value = matched.code.toUpperCase();
+  }
+}
+window.onAreaNameInput = onAreaNameInput;
+
 function openAddModal() {
   document.getElementById("areaForm").reset();
   document.getElementById("areaId").value = "";
-  populateRepDropdown("");
+  populateRepDropdown("", currentSelectedLineId);
+  populateAreaNamesDatalist();
+
+  const isAr = document.documentElement.dir === "rtl";
   document.getElementById("areaModalTitle").textContent =
-    document.documentElement.dir === "rtl"
-      ? areaTranslations.ar.add_area
-      : areaTranslations.en.add_area;
+    isAr ? areaTranslations.ar.add_area : areaTranslations.en.add_area;
+
+  // Update line label in modal
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const lineObj = allLines.find((l) => l.id === currentSelectedLineId);
+  const lineLabel = lineObj ? ((isAr && lineObj.nameAr) ? lineObj.nameAr : lineObj.name) : (currentSelectedLineId || "");
+  const modalLineEl = document.getElementById("modalLineName");
+  if (modalLineEl) modalLineEl.textContent = lineLabel;
 
   // Show the modal
   areaModal.show();
 }
 
 function openEditModal(id) {
-  const currentAreas = getAreasList();
-  const area = currentAreas.find((a) => a.id === id);
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+  const area = allAreas.find((a) => a.id === id);
   if (area) {
     document.getElementById("areaId").value = area.id;
     document.getElementById("areaName").value = area.name;
     document.getElementById("areaCode").value = area.code;
-    populateRepDropdown(area.repId || "");
+
+    const areaLineId = area.lineId || currentSelectedLineId;
+    populateRepDropdown(area.repId || "", areaLineId);
+    populateAreaNamesDatalist();
+
+    const isAr = document.documentElement.dir === "rtl";
     document.getElementById("areaModalTitle").textContent =
-      document.documentElement.dir === "rtl"
-        ? areaTranslations.ar.edit
-        : areaTranslations.en.edit;
+      isAr ? areaTranslations.ar.edit : areaTranslations.en.edit;
+
+    // Update line label in modal
+    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
+      || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+    const lineObj = allLines.find((l) => l.id === areaLineId);
+    const lineLabel = lineObj ? ((isAr && lineObj.nameAr) ? lineObj.nameAr : lineObj.name) : (areaLineId || "");
+    const modalLineEl = document.getElementById("modalLineName");
+    if (modalLineEl) modalLineEl.textContent = lineLabel;
+
     areaModal.show();
   }
 }
@@ -363,17 +440,24 @@ function saveArea() {
   }
 
   const currentAreas = getAreasList();
-  const targetId = id || "area_" + Date.now();
+  const existingArea = id ? (window.store && window.store.areas ? window.store.areas.getById(id) : null) : null;
+  const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line1");
+  const targetId = id || `area_${effectiveLineId}_${Date.now()}`;
 
-  // Validate unique Area Code globally (case-insensitive) across all lines
+  // Validate unique Area Code within the same product line (case-insensitive)
+  // Allows the same area code (e.g. CAI-N01 for Nasr City) across different lines,
+  // but prevents duplicate codes within the same line.
   const allAreasGlobal = (window.store && window.store.areas) ? window.store.areas.getAll() : [];
-  const isDuplicateCode = allAreasGlobal.some(
-    (a) => a.id !== targetId && a.code && a.code.trim().toUpperCase() === code.toUpperCase()
-  );
+  const isDuplicateCode = allAreasGlobal.some((a) => {
+    if (a.id === targetId) return false;
+    const aLine = a.lineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line1");
+    if (aLine !== effectiveLineId) return false;
+    return a.code && a.code.trim().toUpperCase() === code.toUpperCase();
+  });
   if (isDuplicateCode) {
     const msg = isAr
-      ? `رمز المنطقة "${code.toUpperCase()}" مستخدم مسبقاً لمنطقة أخرى.`
-      : `Area code "${code.toUpperCase()}" is already in use by another area.`;
+      ? `رمز المنطقة "${code.toUpperCase()}" مستخدم مسبقاً لمنطقة أخرى في نفس الخط الإنتاجي.`
+      : `Area code "${code.toUpperCase()}" is already in use by another area in this product line.`;
     if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
@@ -386,7 +470,7 @@ function saveArea() {
       code: code.toUpperCase(),
       repId,
       repName,
-      lineId: currentSelectedLineId || null,
+      lineId: effectiveLineId,
     });
     if (typeof window.store.areas.reassignAreaCustomers === "function") {
       reassignResult = window.store.areas.reassignAreaCustomers(targetId, repId, name);

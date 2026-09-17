@@ -93,6 +93,23 @@ const distributorTranslations = {
     label_month: "Month",
     label_year: "Year",
     upload_excel_btn: "Upload Excel Sheet",
+    active_aliases_title: "Active Mapped Aliases",
+    active_aliases_desc: "View and manage territory and product aliases mapped to distributors. Unlink any accidental mapping with one click.",
+    tab_mapped_territories: "Territories",
+    tab_mapped_products: "Products",
+    mapped_to_area: "Mapped Area",
+    mapped_to_product: "Mapped Product (Line)",
+    unlink: "Unlink",
+    no_mapped_territories: "No territory aliases mapped yet.",
+    no_mapped_products: "No product aliases mapped yet.",
+    edit_alias: "Edit Mapping",
+    edit_territory_mapping: "Edit Territory Mapping",
+    edit_product_mapping: "Edit Product Mapping",
+    currently_mapped_to: "Currently Mapped To",
+    select_new_target: "Select New Target",
+    alias_updated_successfully: "Mapping updated and sales re-attributed successfully.",
+    raw_sheet_text: "Raw Sheet Text",
+    save_changes: "Save Changes",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -172,6 +189,23 @@ const distributorTranslations = {
     label_month: "الشهر",
     label_year: "السنة",
     upload_excel_btn: "رفع شيت إكسيل",
+    active_aliases_title: "الأسماء المربوطة حالياً (Active Aliases)",
+    active_aliases_desc: "عرض وإدارة أسماء المناطق والمنتجات المربوطة بالموزعين. يمكنك إلغاء أي ربط خاطئ بضغطة زر واحدة.",
+    tab_mapped_territories: "المناطق",
+    tab_mapped_products: "المنتجات",
+    mapped_to_area: "المنطقة المربوط بها",
+    mapped_to_product: "المنتج المربوط به (اللاين)",
+    unlink: "إلغاء الربط",
+    no_mapped_territories: "لا توجد مناطق مربوطة حالياً.",
+    no_mapped_products: "لا توجد منتجات مربوطة حالياً.",
+    edit_alias: "تعديل الربط",
+    edit_territory_mapping: "تعديل ربط المنطقة",
+    edit_product_mapping: "تعديل ربط المنتج",
+    currently_mapped_to: "مربوط حالياً بـ",
+    select_new_target: "اختر الهدف الجديد",
+    alias_updated_successfully: "تم تعديل الربط وإعادة توجيه المبيعات بنجاح.",
+    raw_sheet_text: "النص الخام بالشيت",
+    save_changes: "حفظ التعديلات",
   },
 };
 
@@ -212,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStats();
   renderPendingAreas();
   renderPendingProducts();
+  renderMappedAliases();
   renderImportBatches();
   populateUploadControls();
 
@@ -641,6 +676,7 @@ function linkAreaAlias(distributorId, areaRaw, selectId) {
   }
 
   renderPendingAreas();
+  renderMappedAliases();
   if (typeof showToast === "function") showToast(t.linked_successfully, "success");
 }
 
@@ -729,8 +765,330 @@ function linkProductAlias(distributorId, productRaw, selectId) {
   }
 
   renderPendingProducts();
+  renderMappedAliases();
   if (typeof showToast === "function") showToast(t.product_linked_successfully, "success");
 }
+
+// ==========================================
+// Section: Active Mapped Aliases (View & Unlink)
+// ==========================================
+let currentAliasTab = "areas";
+
+function switchAliasTab(tabName) {
+  currentAliasTab = tabName;
+  const tabAreas = document.getElementById("aliasTabAreas");
+  const tabProducts = document.getElementById("aliasTabProducts");
+  const areasContainer = document.getElementById("mappedAreasContainer");
+  const productsContainer = document.getElementById("mappedProductsContainer");
+
+  if (tabName === "areas") {
+    tabAreas?.classList.add("active");
+    tabProducts?.classList.remove("active");
+    if (areasContainer) areasContainer.style.display = "block";
+    if (productsContainer) productsContainer.style.display = "none";
+  } else {
+    tabProducts?.classList.add("active");
+    tabAreas?.classList.remove("active");
+    if (areasContainer) areasContainer.style.display = "none";
+    if (productsContainer) productsContainer.style.display = "block";
+  }
+}
+window.switchAliasTab = switchAliasTab;
+
+function renderMappedAliases() {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const distributors = getDistributorsList();
+
+  // 1. Render Mapped Areas
+  const areasTbody = document.getElementById("mappedAreasTableBody");
+  const countAreasEl = document.getElementById("countMappedAreas");
+  if (areasTbody && window.store && window.store.areas) {
+    const areaAliases = typeof window.store.areas.getAllAliases === "function"
+      ? window.store.areas.getAllAliases()
+      : [];
+    if (countAreasEl) countAreasEl.textContent = areaAliases.length;
+
+    if (areaAliases.length === 0) {
+      areasTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${t.no_mapped_territories}</td></tr>`;
+    } else {
+      areasTbody.innerHTML = "";
+      areaAliases.forEach((entry) => {
+        const dist = distributors.find((d) => d.id === entry.distributorId);
+        const distName = dist ? dist.name : entry.distributorId;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2 fw-medium">${window.escapeHtml(distName)}</td>
+          <td class="px-3 py-2"><span class="badge bg-light text-dark border">${window.escapeHtml(entry.rawText)}</span></td>
+          <td class="px-3 py-2 fw-semibold text-primary">
+            <i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(entry.areaName)} ${entry.areaCode ? `(${window.escapeHtml(entry.areaCode)})` : ""}
+          </td>
+          <td class="px-3 py-2">
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-primary" onclick="openEditAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+                <i class="fas fa-edit me-1"></i>${t.edit}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="unlinkAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+                <i class="fas fa-unlink me-1"></i>${t.unlink}
+              </button>
+            </div>
+          </td>
+        `;
+        areasTbody.appendChild(tr);
+      });
+    }
+  }
+
+  // 2. Render Mapped Products
+  const prodsTbody = document.getElementById("mappedProductsTableBody");
+  const countProdsEl = document.getElementById("countMappedProducts");
+  if (prodsTbody && window.store && window.store.productLines) {
+    const prodAliases = typeof window.store.productLines.getAllProductAliases === "function"
+      ? window.store.productLines.getAllProductAliases()
+      : [];
+    if (countProdsEl) countProdsEl.textContent = prodAliases.length;
+
+    if (prodAliases.length === 0) {
+      prodsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${t.no_mapped_products}</td></tr>`;
+    } else {
+      prodsTbody.innerHTML = "";
+      prodAliases.forEach((entry) => {
+        const dist = distributors.find((d) => d.id === entry.distributorId);
+        const distName = dist ? dist.name : entry.distributorId;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2 fw-medium">${window.escapeHtml(distName)}</td>
+          <td class="px-3 py-2"><span class="badge bg-light text-dark border">${window.escapeHtml(entry.rawText)}</span></td>
+          <td class="px-3 py-2 fw-semibold text-success">
+            <i class="fas fa-pills me-1 text-success"></i>${window.escapeHtml(entry.productName)} <small class="text-muted">(${window.escapeHtml(entry.lineName)})</small>
+          </td>
+          <td class="px-3 py-2">
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-primary" onclick="openEditProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+                <i class="fas fa-edit me-1"></i>${t.edit}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="unlinkProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+                <i class="fas fa-unlink me-1"></i>${t.unlink}
+              </button>
+            </div>
+          </td>
+        `;
+        prodsTbody.appendChild(tr);
+      });
+    }
+  }
+}
+window.renderMappedAliases = renderMappedAliases;
+
+function unlinkAreaAlias(areaId, distributorId, rawText) {
+  const isAr = document.documentElement.dir === "rtl";
+  const confirmMsg = isAr
+    ? `هل أنت متأكد من إلغاء ربط "${rawText}"؟ ستعود المنطقة للمناطق المعلقة وسيتم إلغاء نسب المبيعات المرتبطة بها لحين إعادة ربطها.`
+    : `Are you sure you want to unlink "${rawText}"? It will return to pending and its sales rows will be unlinked until re-mapped.`;
+  if (!confirm(confirmMsg)) return;
+
+  if (window.store && window.store.areas) {
+    window.store.areas.removeAlias(areaId, distributorId, rawText);
+  }
+  renderPendingAreas();
+  renderMappedAliases();
+  const successMsg = isAr ? `تم إلغاء ربط "${rawText}" بنجاح.` : `Alias "${rawText}" unlinked successfully.`;
+  if (typeof showToast === "function") showToast(successMsg, "success");
+}
+window.unlinkAreaAlias = unlinkAreaAlias;
+
+function unlinkProductAlias(lineId, productId, distributorId, rawText) {
+  const isAr = document.documentElement.dir === "rtl";
+  const confirmMsg = isAr
+    ? `هل أنت متأكد من إلغاء ربط الصنف "${rawText}"؟ سيعود للأصناف المعلقة وسيتم إلغاء نسب مبيعاته للخط الإنتاجي.`
+    : `Are you sure you want to unlink product "${rawText}"? It will return to pending and sales rows will be unlinked.`;
+  if (!confirm(confirmMsg)) return;
+
+  if (window.store && window.store.productLines) {
+    window.store.productLines.removeProductAlias(lineId, productId, distributorId, rawText);
+  }
+  renderPendingProducts();
+  renderMappedAliases();
+  const successMsg = isAr ? `تم إلغاء ربط الصنف "${rawText}" بنجاح.` : `Product alias "${rawText}" unlinked successfully.`;
+  if (typeof showToast === "function") showToast(successMsg, "success");
+}
+window.unlinkProductAlias = unlinkProductAlias;
+
+// ==========================================
+// Section: Edit Mapped Aliases Modal Handlers
+// ==========================================
+let editAliasModalInstance = null;
+
+function getEditAliasModal() {
+  if (!editAliasModalInstance) {
+    const el = document.getElementById("editAliasModal");
+    if (el && typeof bootstrap !== "undefined") {
+      editAliasModalInstance = new bootstrap.Modal(el);
+    }
+  }
+  return editAliasModalInstance;
+}
+
+function openEditAreaAlias(areaId, distributorId, rawText) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const dist = (window.store && window.store.distributors ? window.store.distributors.getById(distributorId) : null) || {};
+  const currentArea = (window.store && window.store.areas ? window.store.areas.getById(areaId) : null) || {};
+
+  document.getElementById("editAliasType").value = "area";
+  document.getElementById("editAliasDistId").value = distributorId;
+  document.getElementById("editAliasRawText").value = rawText;
+  document.getElementById("editAliasCurrentTargetId").value = areaId;
+  document.getElementById("editAliasCurrentLineId").value = currentArea.lineId || "";
+
+  document.getElementById("editAliasModalHeading").textContent = t.edit_territory_mapping;
+  document.getElementById("editAliasDistName").textContent = dist.name || distributorId;
+  document.getElementById("editAliasRawBadge").textContent = rawText;
+  document.getElementById("editAliasCurrentName").textContent = `${currentArea.name || areaId} ${currentArea.code ? '(' + currentArea.code + ')' : ''}`;
+  document.getElementById("editAliasTargetLabel").textContent = t.select_new_target;
+
+  const select = document.getElementById("editAliasTargetSelect");
+  select.innerHTML = `<option value="">${t.select_area}</option>`;
+
+  const areas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+
+  if (lines.length > 0) {
+    lines.forEach((line) => {
+      const lineAreas = areas.filter((a) => a.lineId === line.id);
+      if (lineAreas.length > 0) {
+        const group = document.createElement("optgroup");
+        group.label = line.name;
+        lineAreas.forEach((a) => {
+          const opt = document.createElement("option");
+          opt.value = a.id;
+          opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${a.repName ? ' - ' + a.repName : ''}`;
+          if (a.id === areaId) opt.selected = true;
+          group.appendChild(opt);
+        });
+        select.appendChild(group);
+      }
+    });
+  } else {
+    areas.forEach((a) => {
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+      if (a.id === areaId) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+
+  const modal = getEditAliasModal();
+  if (modal) modal.show();
+}
+
+function openEditProductAlias(lineId, productId, distributorId, rawText) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const dist = (window.store && window.store.distributors ? window.store.distributors.getById(distributorId) : null) || {};
+  const currentLine = (window.store && window.store.productLines ? window.store.productLines.getById(lineId) : null) || {};
+  const currentProd = Array.isArray(currentLine.products) ? currentLine.products.find((p) => p.id === productId) : null;
+
+  document.getElementById("editAliasType").value = "product";
+  document.getElementById("editAliasDistId").value = distributorId;
+  document.getElementById("editAliasRawText").value = rawText;
+  document.getElementById("editAliasCurrentTargetId").value = productId;
+  document.getElementById("editAliasCurrentLineId").value = lineId;
+
+  document.getElementById("editAliasModalHeading").textContent = t.edit_product_mapping;
+  document.getElementById("editAliasDistName").textContent = dist.name || distributorId;
+  document.getElementById("editAliasRawBadge").textContent = rawText;
+  document.getElementById("editAliasCurrentName").textContent = `${currentProd ? currentProd.name : productId} (${currentLine.name || lineId})`;
+  document.getElementById("editAliasTargetLabel").textContent = t.select_new_target;
+
+  const select = document.getElementById("editAliasTargetSelect");
+  select.innerHTML = `<option value="">${t.select_product}</option>`;
+
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  lines.forEach((line) => {
+    const products = Array.isArray(line.products) ? line.products : [];
+    if (products.length > 0) {
+      const group = document.createElement("optgroup");
+      group.label = line.name;
+      products.forEach((p) => {
+        const opt = document.createElement("option");
+        opt.value = `${line.id}::${p.id}`;
+        opt.textContent = `${p.name}${p.dosage ? ' ' + p.dosage : ''}`;
+        if (line.id === lineId && p.id === productId) opt.selected = true;
+        group.appendChild(opt);
+      });
+      select.appendChild(group);
+    }
+  });
+
+  const modal = getEditAliasModal();
+  if (modal) modal.show();
+}
+
+function saveEditedAlias() {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const type = document.getElementById("editAliasType").value;
+  const distId = document.getElementById("editAliasDistId").value;
+  const rawText = document.getElementById("editAliasRawText").value;
+  const oldTargetId = document.getElementById("editAliasCurrentTargetId").value;
+  const oldLineId = document.getElementById("editAliasCurrentLineId").value;
+  const select = document.getElementById("editAliasTargetSelect");
+  const selectedVal = select ? select.value : "";
+
+  if (!selectedVal) {
+    if (typeof showToast === "function") {
+      showToast(type === "area" ? t.select_area_first : t.select_product_first, "warning");
+    }
+    return;
+  }
+
+  if (type === "area") {
+    const newAreaId = selectedVal;
+    if (newAreaId === oldTargetId) {
+      const modal = getEditAliasModal();
+      if (modal) modal.hide();
+      return;
+    }
+    if (window.store && window.store.areas) {
+      window.store.areas.removeAlias(oldTargetId, distId, rawText);
+      window.store.areas.addAlias(newAreaId, distId, rawText);
+    }
+    if (window.store && window.store.distributorSales) {
+      window.store.distributorSales.applyAreaMatching(true);
+    }
+    renderPendingAreas();
+    renderMappedAliases();
+  } else if (type === "product") {
+    const [newLineId, newProductId] = selectedVal.split("::");
+    if (newLineId === oldLineId && newProductId === oldTargetId) {
+      const modal = getEditAliasModal();
+      if (modal) modal.hide();
+      return;
+    }
+    if (window.store && window.store.productLines) {
+      window.store.productLines.removeProductAlias(oldLineId, oldTargetId, distId, rawText);
+      window.store.productLines.addProductAlias(newLineId, newProductId, distId, rawText);
+    }
+    if (window.store && window.store.distributorSales) {
+      window.store.distributorSales.applyProductMatching();
+      window.store.distributorSales.applyAreaMatching(true);
+    }
+    renderPendingProducts();
+    renderMappedAliases();
+  }
+
+  const modal = getEditAliasModal();
+  if (modal) modal.hide();
+
+  if (typeof showToast === "function") {
+    showToast(t.alias_updated_successfully, "success");
+  }
+}
+window.openEditAreaAlias = openEditAreaAlias;
+window.openEditProductAlias = openEditProductAlias;
+window.saveEditedAlias = saveEditedAlias;
 
 // ==========================================
 // Section: Import History
@@ -801,6 +1159,7 @@ function deleteImportBatch(batchId) {
   renderImportBatches();
   renderPendingAreas();
   renderPendingProducts();
+  renderMappedAliases();
   if (typeof showToast === "function") showToast(t.batch_deleted, "info");
 }
 
@@ -823,6 +1182,7 @@ function switchDistTab(tabKey) {
     populateUploadControls();
     renderPendingAreas();
     renderPendingProducts();
+    renderMappedAliases();
     renderImportBatches();
   } else {
     if (btnDist) btnDist.classList.add("active");
@@ -1091,6 +1451,7 @@ function handleExcelUpload(e) {
       renderImportBatches();
       renderPendingAreas();
       renderPendingProducts();
+      renderMappedAliases();
 
       if (typeof showToast === "function") {
         showToast(
@@ -1120,3 +1481,7 @@ window.switchDistTab = switchDistTab;
 window.triggerExcelUpload = triggerExcelUpload;
 window.handleExcelUpload = handleExcelUpload;
 window.deleteImportBatch = deleteImportBatch;
+window.switchAliasTab = switchAliasTab;
+window.renderMappedAliases = renderMappedAliases;
+window.unlinkAreaAlias = unlinkAreaAlias;
+window.unlinkProductAlias = unlinkProductAlias;
