@@ -220,9 +220,7 @@ function renderDailyTimeline() {
       <div class="timeline-time-col">
         <span style="font-size:0.8rem; color:var(--gray-500); font-weight:600; white-space:nowrap;">${v.date}</span>
         <span class="timeline-period-pill ${periodClass}">${period}</span>
-        <div class="timeline-icon-dot ${dotClass}" style="font-size:1.1rem; display:flex; align-items:center; justify-content:center;">
-          ${isActivity ? '📝' : isPharm ? '💊' : (v.type === 'hospital' ? '🏥' : '👨‍⚕️')}
-        </div>
+        <div class="timeline-icon-dot ${dotClass}"></div>
       </div>
       <div class="timeline-content-box ${borderClass}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
@@ -232,18 +230,18 @@ function renderDailyTimeline() {
         ${isActivity ? `
           <div style="font-size: 0.88rem; color: var(--gray-700); margin-bottom: 6px; line-height: 1.5;">
             <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #6b21a8;">
-              💼 ${lang === 'ar' ? 'نوع النشاط:' : 'Activity Type:'} <strong>${v.activityType || v.targetName}</strong>
+              ${lang === 'ar' ? 'نوع النشاط:' : 'Activity Type:'} <strong>${v.activityType || v.targetName}</strong>
             </span>
-            ${v.specialty ? `• <span style="color: var(--gray-600);">📋 ${lang === 'ar' ? 'ملاحظات:' : 'Notes:'} <em>"${v.specialty}"</em></span>` : ''}
-            • <span style="font-weight: 500;">👤 ${lang === 'ar' ? 'الموظف:' : 'Employee:'} <strong>${v.repName}</strong></span>
+            ${v.specialty ? `• <span style="color: var(--gray-600);">${lang === 'ar' ? 'ملاحظات:' : 'Notes:'} <em>"${v.specialty}"</em></span>` : ''}
+            • <span style="font-weight: 500;">${lang === 'ar' ? 'الموظف:' : 'Employee:'} <strong>${v.repName}</strong></span>
           </div>
         ` : `
           <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 6px;">
-            <span>${isPharm ? '💊' : '🩺'} ${v.specialty || ''}</span> • <span>Class: <strong>${v.class || 'A'}</strong></span> • <span>Rep: <strong>${v.repName}</strong></span>
+            <span>${v.specialty || ''}</span> • <span>Class: <strong>${v.class || 'A'}</strong></span> • <span>Rep: <strong>${v.repName}</strong></span>
           </div>
         `}
         <div class="timeline-entry-timestamp" style="font-size: 0.78rem; padding: 6px 10px; border-radius: 6px; display: inline-block;">
-          ⏰ <strong>${lang === 'ar' ? 'توقيت التسجيل:' : 'Entry Timestamp:'}</strong> ${v.date} at ${v.time || '10:00'} ${period}
+          <strong>${lang === 'ar' ? 'توقيت التسجيل:' : 'Entry Timestamp:'}</strong> ${v.date} at ${v.time || '10:00'} ${period}
         </div>
       </div>
     `;

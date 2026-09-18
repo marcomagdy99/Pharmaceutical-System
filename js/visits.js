@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file visits.js
  * @description Visits Management Module supporting Multi-Doctor Bulk Planning, Direct Actual Logging, Co-Visiting (Double Visits), and 7-Day Auto-Expiry.
  */
@@ -2211,9 +2211,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
       <div class="timeline-time-col">
         <span>${v.time || "10:00"}</span>
         <span style="font-size: 0.72rem; color: var(--gray-400);">${periodDisplay}</span>
-        <div class="timeline-icon-dot ${dotClass}">
-          ${icon}
-        </div>
+        <div class="timeline-icon-dot ${dotClass}"></div>
       </div>
       <div class="timeline-content-box ${borderClass}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
@@ -2224,38 +2222,38 @@ function renderVisitsTimeline(triggeredByShow = false) {
           </div>
         </div>
         <div class="timeline-meta-row">
-          <span>🩺 ${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span>${targetArea ? ` • <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-weight: 600; padding: 2px 8px; border-radius: 6px;">📍 ${window.escapeHtml(targetArea)}</span>` : ""} • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
+          <span>${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span>${targetArea ? ` • <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-weight: 600; padding: 2px 8px; border-radius: 6px;">${window.escapeHtml(targetArea)}</span>` : ""} • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
         </div>
         ${
           (() => {
             const cardProds = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
             return cardProds.length > 0
-              ? `<div style="font-size: 0.8rem; color: var(--primary); margin-bottom: 6px;">📦 <strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
+              ? `<div style="font-size: 0.8rem; color: var(--primary); margin-bottom: 6px;"><strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
               : "";
           })()
         }
         ${
           v.giveawaySamples
-            ? `<div style="font-size: 0.8rem; color: #d97706; margin-bottom: 6px;">🎁 <strong>${lang === "ar" ? "عينات ومواد دعائية:" : "Giveaway Samples:"}</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
+            ? `<div style="font-size: 0.8rem; color: #d97706; margin-bottom: 6px;"><strong>${lang === "ar" ? "عينات ومواد دعائية:" : "Giveaway Samples:"}</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
             : ""
         }
         ${
           v.comment
-            ? `<div class="timeline-comment-text" style="font-size: 0.8rem; margin-bottom: 6px; font-style: italic;">💬 "${window.escapeHtml(v.comment)}"</div>`
+            ? `<div class="timeline-comment-text" style="font-size: 0.8rem; margin-bottom: 6px; font-style: italic;">"${window.escapeHtml(v.comment)}"</div>`
             : ""
         }
         ${
           v.status === "missed" && v.missedReason
-            ? `<div style="font-size: 0.82rem; color: #dc3545; margin-bottom: 6px; font-weight: 600;">🚫 <strong>${lang === "ar" ? "سبب تعذر المقابلة:" : "Missed Reason:"}</strong> "${window.escapeHtml(v.missedReason)}"</div>`
+            ? `<div style="font-size: 0.82rem; color: #dc3545; margin-bottom: 6px; font-weight: 600;"><strong>${lang === "ar" ? "سبب تعذر المقابلة:" : "Missed Reason:"}</strong> "${window.escapeHtml(v.missedReason)}"</div>`
             : ""
         }
         ${
           v.lastRescheduleReason
-            ? `<div style="font-size: 0.8rem; color: #b45309; margin-bottom: 6px;">🗓️ <strong>${lang === "ar" ? "مؤجلة سابقاً بسبب:" : "Rescheduled Reason:"}</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
+            ? `<div style="font-size: 0.8rem; color: #b45309; margin-bottom: 6px;"><strong>${lang === "ar" ? "مؤجلة سابقاً بسبب:" : "Rescheduled Reason:"}</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
             : ""
         }
         <div class="timeline-timestamp-chip">
-          ⏰ <strong>${trans.entryTimestamp}</strong> ${v.date} at ${v.time || "10:00"} ${periodDisplay}
+          <strong>${trans.entryTimestamp}</strong> ${v.date} at ${v.time || "10:00"} ${periodDisplay}
         </div>
         ${
           !isActivity &&
