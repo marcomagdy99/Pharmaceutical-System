@@ -254,18 +254,22 @@ function isPlannedVisitExpired(dateStr) {
 // ============================================================================
 function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId = null) {
   if (!doctorId || !visitDate) return false;
-  const list = typeof demoVisits !== "undefined" && Array.isArray(demoVisits)
-    ? demoVisits
-    : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const list = (window.store && window.store.visits)
+    ? window.store.visits.getAll()
+    : (typeof demoVisits !== "undefined" && Array.isArray(demoVisits))
+      ? demoVisits
+      : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
   return list.some((v) =>
-    v.id !== currentVisitId &&
+    String(v.id) !== String(currentVisitId) &&
     v.repId === repId &&
-    v.doctorId === doctorId &&
+    (v.doctorId === doctorId || v.targetId === doctorId) &&
     v.date === visitDate &&
-    v.status !== "rejected"
+    v.status !== "rejected" &&
+    v.status !== "missed"
   );
 }
+window.isDoctorAlreadyVisitedToday = isDoctorAlreadyVisitedToday;
 
 // ============================================================================
 // Time Conflict Check Configuration (SFE Audit Rule)
@@ -317,7 +321,7 @@ function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = nu
     if (v.id === currentVisitId) continue;
     if (v.repId !== repId) continue;
     if (v.date !== visitDate) continue;
-    if (v.status === "rejected") continue;
+    if (v.status === "rejected" || v.status === "missed") continue;
 
     const existingMinutes = parseTimeToMinutes(v.time);
     if (existingMinutes === null) continue;
@@ -3896,6 +3900,28 @@ function handleRescheduleSubmit(e) {
 
     if (!newDate) {
       if (typeof showToast === "function") showToast(isAr ? "يرجى تحديد التاريخ الجديد." : "Please select new date.", "warning");
+      return;
+    }
+
+    // 1. Verify that newDate is not a public holiday or employee leave
+    const targetRepId = visit.repId || user.id;
+    const checkDateFn = window.checkVisitDateAllowed || (typeof checkVisitDateAllowed === "function" ? checkVisitDateAllowed : null);
+    if (checkDateFn) {
+      const dateCheck = checkDateFn(newDate, targetRepId, lang);
+      if (!dateCheck.allowed) {
+        if (typeof showToast === "function") showToast(dateCheck.message, "warning");
+        return;
+      }
+    }
+
+    // 2. Verify that doctor is not already scheduled on newDate for this rep
+    const docId = visit.doctorId || visit.targetId;
+    const checkDupFn = window.isDoctorAlreadyVisitedToday || (typeof isDoctorAlreadyVisitedToday === "function" ? isDoctorAlreadyVisitedToday : null);
+    if (docId && checkDupFn && checkDupFn(docId, newDate, targetRepId, visit.id)) {
+      const dupMsg = isAr
+        ? "⚠️ يوجد زيارة مسجلة بالفعل لهذا الطبيب في التاريخ الجديد المحدد. يرجى اختيار تاريخ آخر."
+        : "⚠️ A visit is already scheduled for this doctor on the new date. Please choose another date.";
+      if (typeof showToast === "function") showToast(dupMsg, "warning");
       return;
     }
 

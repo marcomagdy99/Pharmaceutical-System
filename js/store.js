@@ -410,6 +410,9 @@
         if (area && area.repId) {
           logTerritoryHistoryChange(areaId, area.repId, null);
         }
+        if (area) {
+          this.reassignAreaCustomers(areaId, null, area.name);
+        }
         window.DEMO_DATA.areas = (window.DEMO_DATA.areas || []).filter(
           (a) => a.id !== areaId,
         );

@@ -1225,7 +1225,7 @@ function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = nu
     if (v.id === currentVisitId) continue;
     if (v.repId !== repId) continue;
     if (v.date !== visitDate) continue;
-    if (v.status === "rejected") continue;
+    if (v.status === "rejected" || v.status === "missed") continue;
 
     const existingMinutes = parseTimeToMinutes(v.time);
     if (existingMinutes === null) continue;
@@ -1243,6 +1243,24 @@ function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = nu
   }
 
   return { hasConflict: false };
+}
+
+function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId = null) {
+  if (!doctorId || !visitDate) return false;
+  const list = (window.store && window.store.visits)
+    ? window.store.visits.getAll()
+    : (typeof demoVisits !== "undefined" && Array.isArray(demoVisits))
+      ? demoVisits
+      : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+
+  return list.some((v) =>
+    String(v.id) !== String(currentVisitId) &&
+    v.repId === repId &&
+    (v.doctorId === doctorId || v.targetId === doctorId) &&
+    v.date === visitDate &&
+    v.status !== "rejected" &&
+    v.status !== "missed"
+  );
 }
 
 function checkVisitDateAllowed(dateStr, repId, lang) {
@@ -1328,6 +1346,7 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
 window.parseTimeToMinutes = parseTimeToMinutes;
 window.checkVisitTimeConflict = checkVisitTimeConflict;
 window.checkVisitDateAllowed = checkVisitDateAllowed;
+window.isDoctorAlreadyVisitedToday = isDoctorAlreadyVisitedToday;
 window.MIN_MINUTES_BETWEEN_VISITS = MIN_MINUTES_BETWEEN_VISITS;
 
 function getUserLines(userId) {

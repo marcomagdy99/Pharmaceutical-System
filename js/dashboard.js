@@ -2976,6 +2976,28 @@ function handleRescheduleSubmit(e) {
       return;
     }
 
+    // 1. Verify that newDate is not a public holiday or employee leave
+    const targetRepId = visit.repId || user.id;
+    const checkDateFn = window.checkVisitDateAllowed || (typeof checkVisitDateAllowed === "function" ? checkVisitDateAllowed : null);
+    if (checkDateFn) {
+      const dateCheck = checkDateFn(newDate, targetRepId, lang);
+      if (!dateCheck.allowed) {
+        if (typeof showToast === "function") showToast(dateCheck.message, "warning");
+        return;
+      }
+    }
+
+    // 2. Verify that doctor is not already scheduled on newDate for this rep
+    const docId = visit.doctorId || visit.targetId;
+    const checkDupFn = window.isDoctorAlreadyVisitedToday || (typeof isDoctorAlreadyVisitedToday === "function" ? isDoctorAlreadyVisitedToday : null);
+    if (docId && checkDupFn && checkDupFn(docId, newDate, targetRepId, visit.id)) {
+      const dupMsg = isAr
+        ? "⚠️ يوجد زيارة مسجلة بالفعل لهذا الطبيب في التاريخ الجديد المحدد. يرجى اختيار تاريخ آخر."
+        : "⚠️ A visit is already scheduled for this doctor on the new date. Please choose another date.";
+      if (typeof showToast === "function") showToast(dupMsg, "warning");
+      return;
+    }
+
     const oldDate = visit.date;
     visit.date = newDate;
     visit.period = newPeriod;
