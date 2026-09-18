@@ -1449,6 +1449,11 @@ Object.assign(leavesApp, {
       const isHR = rawRole === "hr";
       const isAdmin = rawRole === "admin";
 
+      if (!isDM && !isLM && !isHR && !isAdmin) {
+        if (typeof showToast === "function") showToast("Access Denied: Approvers only.", "error");
+        return;
+      }
+
       const timestampStr = `${new Date().toISOString().split("T")[0]} ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
       if (!leave.approvals) {
@@ -1630,6 +1635,12 @@ Object.assign(leavesApp, {
   },
 
   removeDeclaredHoliday(idx) {
+    const user = (window.checkAuth && window.checkAuth()) || currentUser;
+    const role = (user.role || "").toLowerCase();
+    if (role !== "hr" && role !== "admin") {
+      if (typeof showToast === "function") showToast("Access Denied: HR and Admin only.", "error");
+      return;
+    }
     if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.publicHolidays)) {
       const removed = window.DEMO_DATA.publicHolidays.splice(idx, 1);
       if (window.saveDataToStorage) window.saveDataToStorage();
@@ -1641,7 +1652,13 @@ Object.assign(leavesApp, {
   },
 
   handleDeclareHoliday(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    const user = (window.checkAuth && window.checkAuth()) || currentUser;
+    const role = (user.role || "").toLowerCase();
+    if (role !== "hr" && role !== "admin") {
+      if (typeof showToast === "function") showToast("Access Denied: HR and Admin only.", "error");
+      return;
+    }
     const dateVal = document.getElementById("holidayDate").value;
     const nameVal = document.getElementById("holidayName").value.trim();
     const durationVal =
@@ -1684,7 +1701,7 @@ Object.assign(leavesApp, {
       `Official Public Holiday "${nameVal}" (${durationLabel}) declared! Visible in company calendar.`,
       "success",
     );
-    e.target.reset();
+    if (e && e.target && typeof e.target.reset === "function") e.target.reset();
     const fullRadio = document.querySelector(
       'input[name="hrHolidayDuration"][value="full"]',
     );
@@ -1780,7 +1797,13 @@ Object.assign(leavesApp, {
   },
 
   handleSaveEmployeeBalance(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    const user = (window.checkAuth && window.checkAuth()) || currentUser;
+    const role = (user.role || "").toLowerCase();
+    if (role !== "hr" && role !== "admin") {
+      if (typeof showToast === "function") showToast("Access Denied: HR and Admin only.", "error");
+      return;
+    }
     const select = document.getElementById("hrEmployeeSelect");
     if (!select || !select.value) {
       const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";

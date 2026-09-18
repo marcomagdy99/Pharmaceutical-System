@@ -115,7 +115,7 @@ function saveActivities(data) {
   } catch (e) {}
 }
 
-const demoActivities = loadActivities();
+let demoActivities = loadActivities();
 let currentDate = new Date(2026, 8, 2); // Default to demo date September 2, 2026
 
 function formatDate(date) {
@@ -286,6 +286,7 @@ window.handleActivitySubmit = function (e) {
 };
 
 function initActivities() {
+  demoActivities = loadActivities();
   document.getElementById("prevDayBtn")?.addEventListener("click", () => {
     currentDate.setDate(currentDate.getDate() - 1);
     updateView();

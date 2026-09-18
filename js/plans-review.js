@@ -56,6 +56,11 @@ const plansReviewTranslations = {
     badgePending: "Pending Approval",
     badgeHospital: "Hospital",
     badgeDoctor: "Doctor",
+    badgeActingDm: "⚡ Acting DM (DM Vacant/Inactive)",
+    badgeSupervisory: "Supervisory View (Awaiting DM)",
+    actorTitleActingDm: "Line Manager (Acting DM)",
+    actorTitleAdmin: "Administrator",
+    actorTitleDm: "District Manager",
   },
   ar: {
     pageTitle: "مراجعة الخطط - فارماكير",
@@ -104,6 +109,11 @@ const plansReviewTranslations = {
     badgePending: "قيد المراجعة",
     badgeHospital: "مستشفى",
     badgeDoctor: "طبيب",
+    badgeActingDm: "⚡ قائم بأعمال مدير المنطقة (الـ DM شاغر/معطل)",
+    badgeSupervisory: "رؤية إشرافية (الاعتماد لمشرف المنطقة)",
+    actorTitleActingDm: "مدير الخط (القائم بأعمال مدير المنطقة)",
+    actorTitleAdmin: "مدير النظام",
+    actorTitleDm: "مدير المنطقة",
   },
 };
 
@@ -169,21 +179,79 @@ function getScopedSubordinateReps(currentUser) {
     const subordinates = typeof window.getAllSubordinates === "function"
       ? window.getAllSubordinates(currentUser.id)
       : [];
-    const subIds = subordinates.map((s) => s.id);
-    return allUsers.filter(
-      (u) => subIds.includes(u.id) && (u.role === "medical_rep" || u.role === "rep"),
-    );
+    const subIds = new Set(subordinates.map((s) => s.id));
+
+    // Also include reps matching the Line Manager's product line(s)
+    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+    const myLines = allLines.filter((l) => l.lineManagerId === currentUser.id).map((l) => l.id);
+
+    return allUsers.filter((u) => {
+      if (u.role !== "medical_rep" && u.role !== "rep") return false;
+      if (subIds.has(u.id)) return true;
+      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+      if (uLines.some((lId) => myLines.includes(lId))) return true;
+      return false;
+    });
   }
 
   if (role === "district_manager" || role === "dm") {
     return allUsers.filter(
       (u) =>
-        u.managerId === currentUser.id &&
+        (u.managerId === currentUser.id || u.dmId === currentUser.id) &&
         (u.role === "medical_rep" || u.role === "rep"),
     );
   }
 
   return [];
+}
+
+function getRepDirectDm(rep, allUsers) {
+  if (!rep) return null;
+  const users = allUsers || (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const dmId = rep.managerId || rep.dmId;
+  if (!dmId) return null;
+  return users.find((u) => u.id === dmId) || null;
+}
+
+function isRepDmActive(rep, allUsers) {
+  const dm = getRepDirectDm(rep, allUsers);
+  if (!dm) return false;
+  const status = (dm.status || "Active").toLowerCase();
+  return status === "active";
+}
+
+function canUserApproveForRep(currentUser, rep, allUsers) {
+  if (!currentUser || !rep) return false;
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser.role)
+    : (currentUser.role || "").toLowerCase();
+
+  // 1. Admin always has full approval authority across the organization
+  if (role === "admin") return true;
+
+  // 2. Medical Reps never have approval authority
+  if (role === "medical_rep" || role === "rep") return false;
+
+  const users = allUsers || (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+
+  // 3. District Manager: allowed only for reps directly reporting to them
+  if (role === "district_manager" || role === "dm") {
+    return rep.managerId === currentUser.id || rep.dmId === currentUser.id;
+  }
+
+  // 4. Line Manager / Business Unit: granted Acting DM authority ONLY when rep has no active DM
+  if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+    const dmActive = isRepDmActive(rep, users);
+    if (!dmActive) {
+      // Rep has no active DM. Ensure rep is within this manager's organizational scope
+      const scopedReps = getScopedSubordinateReps(currentUser);
+      return scopedReps.some((r) => r.id === rep.id);
+    }
+    // Direct DM is Active -> Line Manager has supervisory view only
+    return false;
+  }
+
+  return false;
 }
 
 // ============================================================================
@@ -307,8 +375,13 @@ function renderPlansReview(currentUser) {
 
   const btnApproveAll = document.getElementById("btnApproveAllGlobal");
   if (btnApproveAll) {
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const canApproveAny = pendingVisits.some((v) => {
+      const rep = scopedReps.find((r) => r.id === v.repId);
+      return rep && canUserApproveForRep(currentUser, rep, allUsers);
+    });
     btnApproveAll.style.display =
-      (!isSupervisorOnly && pendingVisits.length > 0) ? "inline-flex" : "none";
+      (canApproveAny && pendingVisits.length > 0) ? "inline-flex" : "none";
   }
 
   // Filter criteria
@@ -371,11 +444,9 @@ function renderPlansReview(currentUser) {
     const dm = allUsers.find((u) => u.id === rep.managerId);
     const repVisits = grouped[repId];
 
-    // Check if the current user is the direct DM for this rep, or Admin
-    const isDirectDmForRep = (role === "district_manager" || role === "dm") && (
-      rep.managerId === currentUser.id || rep.dmId === currentUser.id || true
-    );
-    const canApproveRep = !isSupervisorOnly && (isDirectDmForRep || role === "admin");
+    // Check if the current user can approve for this specific rep (including Acting DM logic)
+    const canApproveRep = canUserApproveForRep(currentUser, rep, allUsers);
+    const isActingAsDm = canApproveRep && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
 
     // Group rep visits by date
     const dateGroups = {};
@@ -543,7 +614,12 @@ function renderPlansReview(currentUser) {
 
     const repHeaderActions = canApproveRep
       ? `
-        <div class="d-flex gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          ${
+            isActingAsDm
+              ? `<span class="badge bg-warning text-dark border border-warning px-2 py-1 fw-semibold" style="font-size: 0.78rem;"><i class="bi bi-shield-check me-1"></i>${t.badgeActingDm}</span>`
+              : ""
+          }
           <button class="btn btn-sm btn-outline-danger" onclick="openRejectAllForRep('${repId}')">
             ❌ ${t.btnRejectAllForRep}
           </button>
@@ -555,7 +631,7 @@ function renderPlansReview(currentUser) {
       : `
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-info-subtle text-info-emphasis border px-3 py-2 fw-semibold" style="font-size: 0.82rem;">
-            <i class="bi bi-eye me-1"></i>${lang === "ar" ? "رؤية إشرافية (الاعتماد لمشرف المنطقة)" : "Supervisory View (Awaiting DM)"}
+            <i class="bi bi-eye me-1"></i>${t.badgeSupervisory}
           </span>
         </div>
       `;
@@ -575,7 +651,13 @@ function renderPlansReview(currentUser) {
               <div class="text-muted small rep-meta-text" style="margin-top: 2px;">
                 Code: <strong>${rep.employeeCode || "EMP-001"}</strong> 
                 ${area ? ` • Area: <strong>${area.name}</strong>` : ""}
-                ${dm ? ` • DM: <strong>${dm.name}</strong>` : ""}
+                • DM: <strong>${
+                  !dm
+                    ? `<span class="badge bg-warning text-dark">Vacant</span>`
+                    : (dm.status === "Inactive"
+                        ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Former: ${dm.name})</span>`
+                        : dm.name)
+                }</strong>
               </div>
             </div>
           </div>
@@ -598,19 +680,69 @@ function renderPlansReview(currentUser) {
 const plansReview = {
   activeRejectTarget: { visitId: null, repId: null },
 
-  _ensureCanApprove(currentUser) {
+  _ensureCanApprove(currentUser, targetRepId = null) {
     const role = window.normalizeRole
       ? window.normalizeRole(currentUser.role)
       : (currentUser.role || "").toLowerCase();
-    if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+
+    // 1. Reps can never approve
+    if (role === "medical_rep" || role === "rep") {
       const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
       const msg = isAr
-        ? "عفواً، مراجعة واعتماد الخطط الميدانية والمرافقة من صلاحيات مدير المنطقة المباشر (DM) فقط."
-        : "Notice: Field plan approvals and accompaniment are restricted to the direct District Manager (DM) only.";
+        ? "عفواً، لا يمتلك المندوب الطبي صلاحية اعتماد الخطط."
+        : "Notice: Medical Representatives do not have plan approval permissions.";
       if (typeof window.showToast === "function") window.showToast(msg, "warning");
       return false;
     }
-    return true;
+
+    // 2. Admin always has full approval authority
+    if (role === "admin") return true;
+
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+
+    // 3. District Manager: allowed for direct reports
+    if (role === "district_manager" || role === "dm") {
+      if (targetRepId) {
+        const rep = allUsers.find((u) => u.id === targetRepId);
+        if (rep && rep.managerId !== currentUser.id && rep.dmId !== currentUser.id) {
+          const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+          const msg = isAr
+            ? "عفواً، يمكنك فقط اعتماد خطط مناديب منطقتك المباشرة."
+            : "Notice: You can only approve plans for representatives in your direct district.";
+          if (typeof window.showToast === "function") window.showToast(msg, "warning");
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // 4. Line Manager / Business Unit: allowed as Acting DM ONLY if rep has no active DM
+    if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+      if (targetRepId) {
+        const rep = allUsers.find((u) => u.id === targetRepId);
+        if (rep && canUserApproveForRep(currentUser, rep, allUsers)) {
+          return true;
+        }
+        const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+        const msg = isAr
+          ? "عفواً، مراجعة واعتماد الخطط الميدانية والمرافقة من اختصاص مدير المنطقة المباشر (DM)."
+          : "Notice: Field plan approvals are restricted to the direct District Manager (DM).";
+        if (typeof window.showToast === "function") window.showToast(msg, "warning");
+        return false;
+      }
+      const scopedReps = getScopedSubordinateReps(currentUser);
+      const canApproveAny = scopedReps.some((r) => canUserApproveForRep(currentUser, r, allUsers));
+      if (canApproveAny) return true;
+
+      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+      const msg = isAr
+        ? "عفواً، مراجعة واعتماد الخطط الميدانية والمرافقة من اختصاص مدير المنطقة المباشر (DM)."
+        : "Notice: Field plan approvals are restricted to the direct District Manager (DM).";
+      if (typeof window.showToast === "function") window.showToast(msg, "warning");
+      return false;
+    }
+
+    return false;
   },
 
   filterPlansView() {
@@ -626,7 +758,7 @@ const plansReview = {
       id: "dm1",
       name: "Karim Nasser",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
+    if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
@@ -651,7 +783,7 @@ const plansReview = {
     cachedSchedule[currentUser.id][dateStr] = repId;
     localStorage.setItem(storageKey, JSON.stringify(cachedSchedule));
 
-    // Adopt rep planned visits as DM accompaniment planned itinerary
+    // Adopt rep planned visits as accompaniment planned itinerary
     let count = 0;
     visits.forEach((v) => {
       if (v.repId === repId && v.date === dateStr) {
@@ -680,7 +812,7 @@ const plansReview = {
       id: "dm1",
       name: "Karim Nasser",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
+    if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
     let count = 0;
     visits.forEach((v) => {
@@ -713,11 +845,11 @@ const plansReview = {
       id: "dm1",
       name: "Karim Nasser",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
-
     if (!visit) return;
+    if (!this._ensureCanApprove(currentUser, visit.repId)) return;
+
     visit.status = "planned";
     visit.visitType = "double";
     visit.doubleWithUserId = currentUser.id;
@@ -726,7 +858,7 @@ const plansReview = {
     visit.approvedByName = currentUser.name;
     visit.approvedAt = new Date().toISOString();
 
-    // Register DM accompaniment schedule for this date and rep
+    // Register accompaniment schedule for this date and rep
     try {
       const storageKey = "pharma_dm_accompaniments";
       const cached = localStorage.getItem(storageKey);
@@ -735,7 +867,7 @@ const plansReview = {
       data[currentUser.id][visit.date] = visit.repId;
       localStorage.setItem(storageKey, JSON.stringify(data));
     } catch (e) {
-      console.error("Error saving DM accompaniment schedule:", e);
+      console.error("Error saving accompaniment schedule:", e);
     }
 
     saveMasterVisits(visits);
@@ -753,11 +885,11 @@ const plansReview = {
       id: "dm1",
       name: "Karim Nasser",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
-
     if (!visit) return;
+    if (!this._ensureCanApprove(currentUser, visit.repId)) return;
+
     visit.status = "planned";
     visit.approvedBy = currentUser.id;
     visit.approvedByName = currentUser.name;
@@ -767,14 +899,20 @@ const plansReview = {
 
     const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === visit.doctorId);
     const docName = doc ? (doc.nameAr || doc.name) : (visit.doctorName || "زيارة طبية");
+    const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+    const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
+    const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
+
     if (typeof window.addWorkflowNotification === "function") {
       window.addWorkflowNotification({
         userId: visit.repId,
         type: "plan_approval",
         title: "اعتماد زيارة مخططة",
         titleEn: "Planned Visit Approved",
-        message: `اعتمد مدير المنطقة (${currentUser.name}) زيارتك لـ (${docName}) لتاريخ ${visit.date}.`,
-        messageEn: `District Manager (${currentUser.name}) approved your visit to (${doc ? doc.name : docName}) on ${visit.date}.`,
+        message: `اعتمد ${actorTitle} (${currentUser.name}) زيارتك لـ (${docName}) لتاريخ ${visit.date}.`,
+        messageEn: `${actorTitle} (${currentUser.name}) approved your visit to (${doc ? doc.name : docName}) on ${visit.date}.`,
         link: "calendar.html",
         icon: "🗓️",
         badgeClass: "bg-success",
@@ -783,8 +921,6 @@ const plansReview = {
       });
     }
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
       window.showToast(t.toastApprovedSingle, "success");
 
@@ -796,7 +932,7 @@ const plansReview = {
       id: "dm1",
       name: "Karim Nasser",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
+    if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
 
     let count = 0;
@@ -815,14 +951,20 @@ const plansReview = {
     if (count === 0) return;
     saveMasterVisits(visits);
 
+    const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+    const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
+    const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
+
     if (typeof window.addWorkflowNotification === "function") {
       window.addWorkflowNotification({
         userId: repId,
         type: "plan_approval",
         title: "اعتماد الخطة الميدانية",
         titleEn: "Field Plan Approved",
-        message: `اعتمد مدير المنطقة (${currentUser.name}) خطتك الميدانية لتاريخ ${sampleDate}.`,
-        messageEn: `District Manager (${currentUser.name}) approved your field plan for ${sampleDate}.`,
+        message: `اعتمد ${actorTitle} (${currentUser.name}) خطتك الميدانية لتاريخ ${sampleDate}.`,
+        messageEn: `${actorTitle} (${currentUser.name}) approved your field plan for ${sampleDate}.`,
         link: "calendar.html",
         icon: "🗓️",
         badgeClass: "bg-success",
@@ -831,8 +973,6 @@ const plansReview = {
       });
     }
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
       window.showToast(`${t.toastApprovedAllRep} (${count} visits)`, "success");
 
@@ -847,12 +987,13 @@ const plansReview = {
     if (!this._ensureCanApprove(currentUser)) return;
     const visits = getMasterVisits();
     const scopedReps = getScopedSubordinateReps(currentUser);
-    const scopedRepIds = scopedReps.map((r) => r.id);
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
     let count = 0;
     const repCounts = {};
     visits.forEach((v) => {
-      if (scopedRepIds.includes(v.repId) && v.status === "pending_approval") {
+      const rep = scopedReps.find((r) => r.id === v.repId);
+      if (rep && canUserApproveForRep(currentUser, rep, allUsers) && v.status === "pending_approval") {
         v.status = "planned";
         v.approvedBy = currentUser.id;
         v.approvedByName = currentUser.name;
@@ -865,6 +1006,12 @@ const plansReview = {
     if (count === 0) return;
     saveMasterVisits(visits);
 
+    const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+    const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
+    const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
+
     if (typeof window.addWorkflowNotification === "function") {
       Object.keys(repCounts).forEach((rId) => {
         window.addWorkflowNotification({
@@ -872,8 +1019,8 @@ const plansReview = {
           type: "plan_approval",
           title: "اعتماد الخطة الميدانية",
           titleEn: "Field Plan Approved",
-          message: `اعتمد مدير المنطقة (${currentUser.name}) خطتك الميدانية بالكامل (${repCounts[rId]} زيارة).`,
-          messageEn: `District Manager (${currentUser.name}) approved your full field plan (${repCounts[rId]} visits).`,
+          message: `اعتمد ${actorTitle} (${currentUser.name}) خطتك الميدانية بالكامل (${repCounts[rId]} زيارة).`,
+          messageEn: `${actorTitle} (${currentUser.name}) approved your full field plan (${repCounts[rId]} visits).`,
           link: "calendar.html",
           icon: "🗓️",
           badgeClass: "bg-success",
@@ -883,8 +1030,6 @@ const plansReview = {
       });
     }
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
       window.showToast(
         `${t.toastApprovedAllGlobal} (${count} visits)`,
@@ -899,8 +1044,11 @@ const plansReview = {
       id: "dm1",
       role: "district_manager",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
-    this.activeRejectTarget = { visitId: visitId, repId: null };
+    const visits = getMasterVisits();
+    const visit = visits.find((v) => v.id === visitId);
+    if (!visit) return;
+    if (!this._ensureCanApprove(currentUser, visit.repId)) return;
+    this.activeRejectTarget = { visitId: visitId, repId: visit.repId };
     const modal = document.getElementById("rejectPlanModal");
     if (!modal) return;
     document.getElementById("rejectReasonText").value = "";
@@ -912,7 +1060,7 @@ const plansReview = {
       id: "dm1",
       role: "district_manager",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
+    if (!this._ensureCanApprove(currentUser, repId)) return;
     this.activeRejectTarget = { visitId: null, repId: repId };
     const modal = document.getElementById("rejectPlanModal");
     if (!modal) return;
@@ -932,11 +1080,18 @@ const plansReview = {
       name: "Karim Nasser",
       role: "district_manager",
     };
-    if (!this._ensureCanApprove(currentUser)) return;
+    const visits = getMasterVisits();
+    const targetRepId = this.activeRejectTarget.repId || (this.activeRejectTarget.visitId ? visits.find((v) => v.id === this.activeRejectTarget.visitId)?.repId : null);
+    if (!this._ensureCanApprove(currentUser, targetRepId)) return;
     const reason =
       document.getElementById("rejectReasonText")?.value.trim() ||
       "يرجى مراجعة الخطة وتعديل المواعيد";
-    const visits = getMasterVisits();
+
+    const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+    const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
+    const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
 
     if (this.activeRejectTarget.visitId) {
       const v = visits.find(
@@ -955,8 +1110,8 @@ const plansReview = {
             type: "visit_rejection",
             title: "رفض وتوجيه زيارة",
             titleEn: "Visit Directive / Rejection",
-            message: `تم رفض زيارة ${docName} مع ملاحظة: ${reason}`,
-            messageEn: `Visit for ${doc ? doc.name : docName} rejected with note: ${reason}`,
+            message: `تم رفض زيارة ${docName} من قبل ${actorTitle} مع ملاحظة: ${reason}`,
+            messageEn: `Visit for ${doc ? doc.name : docName} rejected by ${actorTitle} with note: ${reason}`,
             note: reason,
             link: "visits.html",
             icon: "❌",
@@ -984,8 +1139,8 @@ const plansReview = {
           type: "plan_rejection",
           title: "ملاحظات على الخطة الميدانية",
           titleEn: "Field Plan Returned with Notes",
-          message: `طلب المدير (${currentUser.name}) تعديلات على الخطة مع ملاحظة: ${reason}`,
-          messageEn: `Manager (${currentUser.name}) requested plan modifications: ${reason}`,
+          message: `طلب ${actorTitle} (${currentUser.name}) تعديلات على الخطة مع ملاحظة: ${reason}`,
+          messageEn: `${actorTitle} (${currentUser.name}) requested plan modifications: ${reason}`,
           note: reason,
           link: "calendar.html",
           icon: "❌",
@@ -999,8 +1154,6 @@ const plansReview = {
     saveMasterVisits(visits);
     this.closeRejectModal();
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
       window.showToast(t.toastRejected, "warning");
 

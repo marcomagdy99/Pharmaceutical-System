@@ -370,6 +370,11 @@ function openEditModal(id) {
 }
 
 function saveDistributor() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
   const id = document.getElementById("distributorId").value;
   const name = document.getElementById("distributorName").value.trim();
   const type = document.getElementById("distributorType").value === "tender"
@@ -412,6 +417,11 @@ function openDeleteModal(id) {
 }
 
 function confirmDelete() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
   const id = document.getElementById("deleteDistributorId").value;
 
   if (window.store && window.store.distributors) {

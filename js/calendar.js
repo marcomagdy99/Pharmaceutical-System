@@ -183,29 +183,39 @@ function getDynamicCalendarEvents() {
 
   // 3. Synchronize logged daily activities from localStorage (Per-User Isolation)
   try {
-    const userActKey = `pharma_activities_data_${currentCalendarUser.id}`;
-    const raw =
-      localStorage.getItem(userActKey) ||
-      (currentCalendarUser.id === "rep1" ? localStorage.getItem("pharma_activities_data") : null);
-    if (raw) {
-      const activities = JSON.parse(raw);
-      Object.keys(activities).forEach((dateStr) => {
-        const dayActs = activities[dateStr] || {};
-        ["AM", "PM"].forEach((period) => {
-          const act = dayActs[period];
-          if (act && act.type) {
-            events.push({
-              date: dateStr,
-              type: act.type.toLowerCase().replace(/\s+/g, "_"),
-              period: period.toLowerCase(),
-              title: `${act.type}: ${act.notes || "Activity"}`,
-              status: "completed",
-              repId: currentCalendarUser.id || "rep1",
-            });
-          }
-        });
-      });
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : window.DEMO_DATA?.users) || [];
+    const userList = [...allUsers];
+    if (currentCalendarUser && !userList.some((u) => u.id === currentCalendarUser.id)) {
+      userList.push(currentCalendarUser);
     }
+
+    userList.forEach((u) => {
+      const userActKey = `pharma_activities_data_${u.id}`;
+      const raw =
+        localStorage.getItem(userActKey) ||
+        (u.id === "rep1" ? localStorage.getItem("pharma_activities_data") : null);
+      if (raw) {
+        try {
+          const activities = JSON.parse(raw);
+          Object.keys(activities).forEach((dateStr) => {
+            const dayActs = activities[dateStr] || {};
+            ["AM", "PM"].forEach((period) => {
+              const act = dayActs[period];
+              if (act && act.type) {
+                events.push({
+                  date: dateStr,
+                  type: act.type.toLowerCase().replace(/\s+/g, "_"),
+                  period: period.toLowerCase(),
+                  title: `${act.type}: ${act.notes || "Activity"}`,
+                  status: "completed",
+                  repId: u.id,
+                });
+              }
+            });
+          });
+        } catch (err) {}
+      }
+    });
   } catch (e) {
     console.warn("Failed to load activities for calendar:", e);
   }

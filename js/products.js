@@ -205,6 +205,23 @@ let currentLang = localStorage.getItem("pharmaLang") || "en";
 let lineModal, productModal, deleteModal, transferProductModal;
 
 document.addEventListener("DOMContentLoaded", () => {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (
+    window.hasAnyRole &&
+    !window.hasAnyRole(["admin"], user)
+  ) {
+    if (typeof showToast === "function") {
+      showToast(
+        (window.getCurrentLang && window.getCurrentLang() === "ar")
+          ? "غير مصرح: إدارة المنتجات وخطوط الإنتاج للأدمن فقط."
+          : "Access Denied: Admins only.",
+        "error"
+      );
+    }
+    window.location.replace("index.html");
+    return;
+  }
+
   lineModal = new bootstrap.Modal(document.getElementById("lineModal"));
   productModal = new bootstrap.Modal(document.getElementById("productModal"));
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
@@ -414,6 +431,11 @@ function renderProductLines(activeLineId) {
 }
 
 function saveLine() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const id = document.getElementById("lineId").value;
   const name = (document.getElementById("lineName").value || "").trim();
   const managerId = document.getElementById("lineManager").value;
@@ -545,6 +567,11 @@ function openEditProduct(lineId, prodId) {
 }
 
 function saveProduct() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const targetLineId = document.getElementById("targetLineId").value;
   const prodId = document.getElementById("productId").value;
   const name = (document.getElementById("productName").value || "").trim();
@@ -621,6 +648,11 @@ function openDeleteModal(type, targetId, lineId = null) {
 }
 
 function confirmDelete() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const type = document.getElementById("deleteTargetType").value;
   const targetId = document.getElementById("deleteTargetId").value;
   const lineId = document.getElementById("deleteTargetLineId").value;

@@ -170,17 +170,22 @@ function renderDoctorsReport() {
     countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? "Doctor" : "Doctors"}`;
   }
 
-  if (typeof window.renderDoctorClassesChart === "function") {
-    const classACount = docs.filter((d) => d.class === "A").length;
-    const classBCount = docs.filter((d) => d.class === "B").length;
-    const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
-    const repVal = repFilter ? repFilter.value : "all";
-    let hospitalsCount = allHospitals.length;
-    if (repVal && repVal !== "all") {
-      hospitalsCount = allHospitals.filter((h) => !h.repId || h.repId === repVal).length;
+  try {
+    if (typeof window.renderDoctorClassesChart === "function") {
+      const classACount = docs.filter((d) => d.class === "A").length;
+      const classBCount = docs.filter((d) => d.class === "B").length;
+      const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+      const repFilter = document.getElementById("doctorRepSelect");
+      const repVal = (repFilter && repFilter.value) ? repFilter.value : "all";
+      let hospitalsCount = allHospitals.length;
+      if (repVal && repVal !== "all") {
+        hospitalsCount = allHospitals.filter((h) => !h.repId || h.repId === repVal).length;
+      }
+      hospitalsCount += docs.filter((d) => d.type === "hospital" || d.class === "hospital").length;
+      window.renderDoctorClassesChart("repDoctorClassesChart", classACount, classBCount, hospitalsCount);
     }
-    hospitalsCount += docs.filter((d) => d.type === "hospital" || d.class === "hospital").length;
-    window.renderDoctorClassesChart("repDoctorClassesChart", classACount, classBCount, hospitalsCount);
+  } catch (chartErr) {
+    console.warn("Doctor classes chart render warning:", chartErr);
   }
 
   if (filtered.length === 0) {
@@ -192,6 +197,9 @@ function renderDoctorsReport() {
   grid.style.display = "grid";
   if (emptyState) emptyState.style.display = "none";
 
+  const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
+  const normalizedRole = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase()) : '';
+  const isAdmin = normalizedRole === 'admin';
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
@@ -227,14 +235,16 @@ function renderDoctorsReport() {
             <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
+        ${isAdmin ? `
         <div class="directory-card-footer">
           <button class="btn btn-sm btn-outline-primary" onclick="openDoctorModal('${d.id}')">
-            ✏️ Edit
+            ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="openDeleteDoctorModal('${d.id}')">
-            🗑️ Delete
+            🗑️ ${lang === 'ar' ? 'حذف' : 'Delete'}
           </button>
         </div>
+        ` : ''}
       </div>
     `;
     })
@@ -242,6 +252,15 @@ function renderDoctorsReport() {
 }
 
 function openDoctorModal(docId = null) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: إدارة وتعديل الأطباء للأدمن فقط." : "Permission Denied: Only Admin can manage doctors.", "error");
+    }
+    return;
+  }
+
   const modal = document.getElementById("doctorModal");
   if (!modal) return;
 
@@ -253,7 +272,6 @@ function openDoctorModal(docId = null) {
   const phoneInput = document.getElementById("doctorPhoneInput");
   const repInput = document.getElementById("doctorRepInput");
 
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
   const existingRepId = docId ? (getDoctorsData().find((d) => d.id === docId) || {}).repId : null;
 
   // Populates doctorModalLmSelect -> doctorModalDmSelect -> doctorRepInput
@@ -315,6 +333,15 @@ function closeDoctorModal() {
 }
 
 function saveDoctor() {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: إضافة وتعديل الأطباء للأدمن فقط." : "Permission Denied: Only Admin can add/edit doctors.", "error");
+    }
+    return;
+  }
+
   const idInput = document.getElementById("doctorId");
   const nameInput = document.getElementById("doctorNameInput");
   const specialtyInput = document.getElementById("doctorSpecialtyInput");
@@ -340,7 +367,6 @@ function saveDoctor() {
   const phone = phoneInput ? phoneInput.value.trim() : "";
 
   // Automatic repId binding to active user if unselected
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
   const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : currentUser.id;
 
   if (!name || !address) {
@@ -378,12 +404,21 @@ function saveDoctor() {
 
   closeDoctorModal();
   renderDoctorsReport();
-  if (typeof showToast === "function") showToast("Doctor saved successfully.", "success");
+  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حفظ الطبيب بنجاح." : "Doctor saved successfully.", "success");
 }
 
 let doctorToDeleteId = null;
 
 function openDeleteDoctorModal(docId) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الأطباء للأدمن فقط." : "Permission Denied: Only Admin can delete doctors.", "error");
+    }
+    return;
+  }
+
   doctorToDeleteId = docId;
   const modal = document.getElementById("deleteDoctorModal");
   if (modal) {
@@ -402,6 +437,15 @@ function closeDeleteDoctorModal() {
 }
 
 function confirmDeleteDoctor() {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الأطباء للأدمن فقط." : "Permission Denied: Only Admin can delete doctors.", "error");
+    }
+    return;
+  }
+
   if (!doctorToDeleteId) return;
 
   if (window.store && window.store.doctors) {
@@ -413,7 +457,7 @@ function confirmDeleteDoctor() {
 
   closeDeleteDoctorModal();
   renderDoctorsReport();
-  if (typeof showToast === "function") showToast("Doctor deleted successfully.", "info");
+  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حذف الطبيب بنجاح." : "Doctor deleted successfully.", "info");
 }
 
 function onDoctorFilterChange() {

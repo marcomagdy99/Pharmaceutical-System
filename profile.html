@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -181,6 +181,14 @@
                                     <input type="number" class="form-control" id="gpsMaxRadiusInput" value="200" min="50" max="2000" step="50" required>
                                     <span style="font-weight: 700; color: var(--gray-600);">m</span>
                                 </div>
+                            </div>
+                            <div class="form-group" style="max-width: 320px; margin-bottom: 16px;">
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="minPmVisitsLabel">Minimum Evening Visits (PM Visits/Day)</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" class="form-control" id="minPmVisitsInput" value="4" min="1" max="20" step="1" required>
+                                    <span style="font-weight: 700; color: var(--gray-600);" data-i18n="days">visits</span>
+                                </div>
+                                <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="minPmVisitsHint">Daily minimum required clinic visits during evening shift.</small>
                             </div>
                             <button type="submit" class="btn-primary" data-i18n="saveCompanyPolicies">Save Company Policies</button>
                         </form>

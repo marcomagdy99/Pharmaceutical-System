@@ -1598,10 +1598,15 @@ const visitsApp = {
       return;
     }
 
-    // 2. Minimum PM visits check: 4 visits per day (unless exempt)
+    // 2. Minimum PM visits check: dynamically read from company settings (default 4, unless exempt)
     if (period.toLowerCase() === "pm") {
       const exemption = isWorkdayExemptFromMinVisits(planDate, currentUser.id || "rep1");
       if (!exemption.exempt) {
+        const companySettings = (window.store && window.store.companySettings)
+          ? window.store.companySettings.get()
+          : { minPmVisitsPerDay: 4 };
+        const minPmRequired = (companySettings && companySettings.minPmVisitsPerDay) || 4;
+
         const existingPmCount = demoVisits.filter(
           (v) =>
             v.repId === (currentUser.id || "rep1") &&
@@ -1612,11 +1617,11 @@ const visitsApp = {
             v.status !== "rejected",
         ).length;
         const totalPm = existingPmCount + validBoxes.length;
-        if (totalPm < 4) {
-          const needed = 4 - totalPm;
+        if (totalPm < minPmRequired) {
+          const needed = minPmRequired - totalPm;
           const msg = lang === "ar"
-            ? `الحد الأدنى لزيارات الفترة المسائية (PM) هو 4 زيارات يومياً. إجمالي زيارات هذا اليوم (${totalPm}) فقط. يرجى اختيار ${needed} أطباء إضافيين لاستكمال خطة اليوم.`
-            : `Minimum PM visits requirement is 4 visits per day. Total for this day is (${totalPm}). Please select ${needed} more target(s) to complete today's plan.`;
+            ? `الحد الأدنى لزيارات الفترة المسائية (PM) هو ${minPmRequired} زيارات يومياً. إجمالي زيارات هذا اليوم (${totalPm}) فقط. يرجى اختيار ${needed} أطباء إضافيين لاستكمال خطة اليوم.`
+            : `Minimum PM visits requirement is ${minPmRequired} visits per day. Total for this day is (${totalPm}). Please select ${needed} more target(s) to complete today's plan.`;
           if (typeof showToast === "function") showToast(msg, "warning");
           else alert(msg);
           return;
@@ -1946,69 +1951,74 @@ function renderVisitsTimeline(triggeredByShow = false) {
     (v) => visitMatchesArea(v) && visitMatchesPeriod(v) && visitMatchesStatus(v),
   );
 
-  let storedActivities = {};
-  try {
-    const raw = localStorage.getItem("pharma_activities_data");
-    if (raw) storedActivities = JSON.parse(raw);
-  } catch (e) {
-    console.error("Error parsing pharma_activities_data:", e);
-  }
-
-  const dayActivities = storedActivities[selectedDate] || {};
   const activityEvents = [];
-
   const shouldIncludeActivities =
-    (!isManager ||
-      selectedRepFilter === "all" ||
-      selectedRepFilter === currentUser.id) &&
     selectedAreaFilter === "all" &&
     selectedStatusFilter !== "plan" &&
     selectedPeriodFilter !== "pharmacy";
 
   if (shouldIncludeActivities) {
-    if ((selectedPeriodFilter === "all" || selectedPeriodFilter === "am") && dayActivities.AM && dayActivities.AM.type) {
-      activityEvents.push({
-        doctorName: `${dayActivities.AM.type} (AM Activity)`,
-        class: "Activity",
-        specialty: dayActivities.AM.notes || "Routine Activity",
-        type: "activity",
-        date: selectedDate,
-        time: "09:00",
-        period: "AM",
-        repName: (() => {
-          if (selectedRepFilter && selectedRepFilter !== "all") {
-            const foundRep = allUsers.find((u) => u.id === selectedRepFilter);
-            if (foundRep) return foundRep.name;
-          }
-          return currentUser.name || "Medical Rep";
-        })(),
-        isActual: true,
-        source: "actual",
-        status: "completed",
-      });
+    let targetActUserIds = [];
+    if (!isManager) {
+      targetActUserIds = [currentUser.id];
+    } else if (selectedRepFilter && selectedRepFilter !== "all") {
+      targetActUserIds = [selectedRepFilter];
+    } else {
+      targetActUserIds = (typeof reportingReps !== "undefined" && reportingReps.length > 0)
+        ? reportingReps.map((r) => r.id)
+        : allUsers.map((u) => u.id);
+      if (!targetActUserIds.includes(currentUser.id)) targetActUserIds.push(currentUser.id);
     }
 
-    if ((selectedPeriodFilter === "all" || selectedPeriodFilter === "pm") && dayActivities.PM && dayActivities.PM.type) {
-      activityEvents.push({
-        doctorName: `${dayActivities.PM.type} (PM Activity)`,
-        class: "Activity",
-        specialty: dayActivities.PM.notes || "Routine Activity",
-        type: "activity",
-        date: selectedDate,
-        time: "14:00",
-        period: "PM",
-        repName: (() => {
-          if (selectedRepFilter && selectedRepFilter !== "all") {
-            const foundRep = allUsers.find((u) => u.id === selectedRepFilter);
-            if (foundRep) return foundRep.name;
-          }
-          return currentUser.name || "Medical Rep";
-        })(),
-        isActual: true,
-        source: "actual",
-        status: "completed",
-      });
-    }
+    targetActUserIds.forEach((uId) => {
+      let userActs = {};
+      try {
+        const raw = localStorage.getItem(`pharma_activities_data_${uId}`) ||
+          (uId === "rep1" ? localStorage.getItem("pharma_activities_data") : null);
+        if (raw) userActs = JSON.parse(raw);
+      } catch (e) {}
+
+      const dayActs = userActs[selectedDate] || {};
+      const uObj = allUsers.find((u) => u.id === uId) || { id: uId, name: uId };
+
+      if ((selectedPeriodFilter === "all" || selectedPeriodFilter === "am") && dayActs.AM && dayActs.AM.type) {
+        activityEvents.push({
+          id: `act_${uId}_${selectedDate}_am`,
+          doctorName: `${dayActs.AM.type} (AM Activity)`,
+          activityType: dayActs.AM.type,
+          class: "Activity",
+          specialty: dayActs.AM.notes || "Routine Activity",
+          type: "activity",
+          date: selectedDate,
+          time: "09:00",
+          period: "AM",
+          repId: uId,
+          repName: uObj.name || uId,
+          isActual: true,
+          source: "actual",
+          status: "completed",
+        });
+      }
+
+      if ((selectedPeriodFilter === "all" || selectedPeriodFilter === "pm") && dayActs.PM && dayActs.PM.type) {
+        activityEvents.push({
+          id: `act_${uId}_${selectedDate}_pm`,
+          doctorName: `${dayActs.PM.type} (PM Activity)`,
+          activityType: dayActs.PM.type,
+          class: "Activity",
+          specialty: dayActs.PM.notes || "Routine Activity",
+          type: "activity",
+          date: selectedDate,
+          time: "14:00",
+          period: "PM",
+          repId: uId,
+          repName: uObj.name || uId,
+          isActual: true,
+          source: "actual",
+          status: "completed",
+        });
+      }
+    });
   }
 
   const combined = [...scopedVisits, ...activityEvents];
@@ -3033,19 +3043,40 @@ function closeVisitModal() {
     modal.classList.remove("active");
     modal.style.display = "none";
   }
+  const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    saveBtn.innerText = lang === "ar" ? "حفظ الزيارة" : "Save Visit";
+  }
 }
 
 function saveVisit() {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
+  if (saveBtn) {
+    if (saveBtn.disabled) return;
+    saveBtn.disabled = true;
+    saveBtn.innerText = lang === "ar" ? "جاري التحقق والحفظ... ⏳" : "Saving... ⏳";
+  }
+
+  const resetSaveBtn = () => {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = lang === "ar" ? "حفظ الزيارة" : "Save Visit";
+    }
+  };
+
   const timeInput = document.getElementById("visitTime");
   const visitTime = timeInput && timeInput.value ? timeInput.value : "11:00";
   const dateInput = document.getElementById("visitDate");
   const visitDate = dateInput && dateInput.value ? dateInput.value : todayStr;
   const modalSource =
     document.getElementById("visitModal").dataset.source || "actual";
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
   if (modalSource === "plan") {
     if (visitDate < todayStr) {
+      resetSaveBtn();
       const msg = lang === "ar"
         ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
         : "Cannot plan visits in the past. Please select today or a future date.";
@@ -3056,6 +3087,7 @@ function saveVisit() {
   } else {
     const twoDaysAgoStr = getTwoDaysAgoStr();
     if (visitDate > todayStr) {
+      resetSaveBtn();
       const msg = lang === "ar"
         ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
         : "Cannot log an actual visit in a future date.";
@@ -3064,6 +3096,7 @@ function saveVisit() {
       return;
     }
     if (visitDate < twoDaysAgoStr) {
+      resetSaveBtn();
       const msg = lang === "ar"
         ? "لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من يومين على تاريخها."
         : "Cannot log an actual visit older than 2 days.";
@@ -3079,6 +3112,7 @@ function saveVisit() {
 
   const dateCheck = checkVisitDateAllowed(visitDate, targetRepId, lang);
   if (!dateCheck.allowed) {
+    resetSaveBtn();
     if (typeof showToast === "function") showToast(dateCheck.message, "warning");
     else alert(dateCheck.message);
     return;
@@ -3087,6 +3121,7 @@ function saveVisit() {
   // SFE Audit Check: Prevent time conflicts / enforce minimum buffer between visits when GPS is active
   const timeConflict = checkVisitTimeConflict(targetRepId, visitDate, visitTime, currentEditVisitId);
   if (timeConflict.hasConflict) {
+    resetSaveBtn();
     const conflictingTarget = timeConflict.conflictingVisit.doctorName || timeConflict.conflictingVisit.doctorId || "";
     const conflictingTime = timeConflict.conflictingVisit.time || visitTime;
     let conflictMsg;
@@ -3128,6 +3163,7 @@ function saveVisit() {
     if (doubleWithUserId) {
       const compCheck = checkVisitDateAllowed(visitDate, doubleWithUserId, lang);
       if (!compCheck.allowed) {
+        resetSaveBtn();
         const cMsg = lang === "ar"
           ? `⚠️ المرافق المحدد في الزيارة المشتركة لديه إجازة مسجلة أو عطلة في هذا التاريخ (${visitDate}).`
           : `⚠️ The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
@@ -3182,6 +3218,7 @@ function saveVisit() {
         : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
 
       const finalizeEdit = (gpsPayload) => {
+        resetSaveBtn();
         if (gpsPayload) {
           visit.gpsStatus = gpsPayload.status;
           if (gpsPayload.distanceMeters != null) visit.distanceMeters = gpsPayload.distanceMeters;
@@ -3227,6 +3264,7 @@ function saveVisit() {
     const targetSelect = document.getElementById("visitTarget");
     const targetId = targetSelect ? targetSelect.value : "";
     if (!targetId) {
+      resetSaveBtn();
       const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
       alert(isAr ? "يرجى اختيار الهدف أولاً" : "Please select a target first");
       return;
@@ -3234,6 +3272,7 @@ function saveVisit() {
 
     // Duplicate check on same date for same rep (excluding rejected visits)
     if (isDoctorAlreadyVisitedToday(targetId, visitDate, currentUser.id, currentEditVisitId)) {
+      resetSaveBtn();
       const msg = lang === "ar"
         ? "تم تسجيل أو جدولة زيارة لهذا الطبيب بالفعل في هذا اليوم. لا يمكن تكرار زيارة نفس الطبيب مرتين في نفس اليوم."
         : "A visit for this target is already logged or scheduled today. Duplicate visits to the same target on the same day are not allowed.";
@@ -3284,6 +3323,7 @@ function saveVisit() {
     };
 
     const finalizeNewSave = (gpsPayload) => {
+      resetSaveBtn();
       if (gpsPayload) {
         newVisit.gpsStatus = gpsPayload.status;
         if (gpsPayload.distanceMeters != null) newVisit.distanceMeters = gpsPayload.distanceMeters;

@@ -137,10 +137,16 @@ function syncReportsData() {
         }
       });
     }
-    // 2. Sync Visits from visits module (only completed or actual visits)
-    if (Array.isArray(window.DEMO_DATA.visits) && window.DEMO_DATA.visits.length > 0) {
-      window.DEMO_DATA.visits.forEach((v) => {
-        const isCompleted = v.status === 'completed' || v.isActual === true || v.source === 'actual';
+    // 2. Sync Visits from visits module or store.visits (only completed or actual visits)
+    const sourceVisits = (window.store && window.store.visits ? window.store.visits.getAll() : null) ||
+                         (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+    if (Array.isArray(sourceVisits) && sourceVisits.length > 0) {
+      const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
+      const allDoctors = (window.store && window.store.doctors ? window.store.doctors.getAll() : (window.DEMO_DATA && window.DEMO_DATA.doctors)) || [];
+      const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+
+      sourceVisits.forEach((v) => {
+        const isCompleted = v.status === 'completed' || Boolean(v.isActual) || v.source === 'actual';
         const existingIdx = REPORTS_DATA.visits.findIndex((rv) => rv.id === v.id);
         if (!isCompleted) {
           if (existingIdx >= 0) {
@@ -149,14 +155,10 @@ function syncReportsData() {
           return;
         }
 
-        const rep = (window.DEMO_DATA.users || []).find((u) => u.id === v.repId);
-        // Was previously hardcoded to rep1/rep2 -> 'Ahmed Mostafa'/'Omar Youssef'.
-        // A rep that isn't in window.DEMO_DATA.users (or a future rep3, rep4...)
-        // now falls back to the visit's own repName, or a generic label,
-        // instead of silently being mislabeled as one of the two demo reps.
+        const rep = allUsers.find((u) => u.id === v.repId);
         const repName = rep ? rep.name : (v.repName || 'Unknown Rep');
-        const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === v.doctorId) ||
-                    (window.DEMO_DATA.hospitals || []).find((h) => h.id === v.doctorId);
+        const doc = allDoctors.find((d) => d.id === v.doctorId) ||
+                    allHospitals.find((h) => h.id === v.doctorId);
         const isPharm =
           v.targetType === 'pharmacy' ||
           (v.period && v.period.toLowerCase() === 'pharmacy') ||
@@ -165,7 +167,7 @@ function syncReportsData() {
         const mappedVisit = {
           id: v.id,
           doctorId: v.doctorId || (doc ? doc.id : undefined),
-          targetName: v.doctorName || (doc ? doc.name : 'Unknown Target'),
+          targetName: v.doctorName || (doc ? doc.name : (v.targetName || 'Unknown Target')),
           class: isPharm ? 'Pharmacy' : doc ? doc.class : (isHosp ? 'Hospital' : 'B'),
           specialty: isPharm ? 'Pharmacy' : doc ? doc.specialty : (isHosp ? 'Hospital' : 'General'),
           type: isPharm ? 'pharmacy' : (isHosp ? 'hospital' : 'doctor'),
@@ -174,7 +176,7 @@ function syncReportsData() {
           time: v.time || '10:00',
           period: isPharm ? 'PHARM' : (v.period || 'PM').toUpperCase(),
           status: 'completed',
-          isActual: v.source === 'actual' || v.isActual === true,
+          isActual: v.source === 'actual' || Boolean(v.isActual),
           repId: v.repId || 'rep1',
           repName: repName,
           comment: v.comment || '',
@@ -188,8 +190,55 @@ function syncReportsData() {
         }
       });
     }
+
+    // Ensure sample visits exist for today's date so today searches are populated
+    const _now = new Date();
+    const _pad = (n) => String(n).padStart(2, '0');
+    const _todayDate = `${_now.getFullYear()}-${_pad(_now.getMonth() + 1)}-${_pad(_now.getDate())}`;
+    const hasTodayVisits = REPORTS_DATA.visits.some((v) => v.date === _todayDate);
+    if (!hasTodayVisits) {
+      REPORTS_DATA.visits.push(
+        { id: 'today_v1', targetName: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', type: 'doctor', date: _todayDate, time: '10:30', period: 'AM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1'], products: ['Amoxicillin 500mg'] },
+        { id: 'today_v2', targetName: 'Sara Abdullah', class: 'A', specialty: 'Pediatrics', type: 'doctor', date: _todayDate, time: '13:15', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod2'], products: ['Vitamin D Drops 1000IU'] },
+        { id: 'today_v3', targetName: 'Al-Ezaby Pharmacy', class: 'Pharmacy', specialty: 'Pharmacy', type: 'pharmacy', date: _todayDate, time: '15:00', period: 'PHARM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1', 'prod3'], products: ['Amoxicillin 500mg', 'Omeprazole 20mg'] }
+      );
+    }
+
     // Guarantee REPORTS_DATA.visits contains only completed or actual visits
     REPORTS_DATA.visits = REPORTS_DATA.visits.filter((rv) => rv.status === 'completed' || rv.isActual === true || rv.source === 'actual');
+
+    // 3. Sync Targets and Distributor Sales from REPORTS_DATA.sales if missing in DEMO_DATA
+    if (!window.DEMO_DATA.targets || window.DEMO_DATA.targets.length === 0) {
+      window.DEMO_DATA.targets = REPORTS_DATA.sales.map((s) => ({
+        id: 'target_' + s.id,
+        repId: s.repId,
+        productId: s.productId,
+        month: s.month,
+        target: s.target,
+        targetUnits: Math.round(s.target / 100),
+        unitPrice: 100
+      }));
+    }
+    if (!window.DEMO_DATA.distributorSales || window.DEMO_DATA.distributorSales.length === 0) {
+      window.DEMO_DATA.distributorSales = REPORTS_DATA.sales.map((s) => ({
+        id: 'ds_' + s.id,
+        month: s.month,
+        date: s.month + '-15',
+        repId: s.repId,
+        repName: s.repName,
+        dmId: s.dmId,
+        lmId: s.lmId,
+        lineId: s.lineId,
+        productId: s.productId,
+        product: s.product,
+        quantity: Math.round(s.actual / 100),
+        value: s.actual,
+        distributorId: 'dist1',
+        distributor: 'Ibn Sina',
+        pharmacyName: 'Al-Ezaby Pharmacy',
+        area: s.area
+      }));
+    }
   }
 }
 
@@ -392,7 +441,7 @@ const directoryTranslations = {
 // ============================================================================
 // Section 2: Page Lifecycle Initialization
 // ============================================================================
-document.addEventListener('DOMContentLoaded', () => {
+function initializeReportsPage() {
   // Merge directory translations
   if (window.translations) {
     window.translations.en = { ...window.translations.en, ...directoryTranslations.en };
@@ -415,12 +464,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const lastOfMonthStr = `${lastOfMonth.getFullYear()}-${pad(lastOfMonth.getMonth() + 1)}-${pad(lastOfMonth.getDate())}`;
   const dateFrom = document.getElementById('timelineDateFrom');
   const dateTo = document.getElementById('timelineDateTo');
-  if (dateFrom) dateFrom.value = todayStr;
-  if (dateTo) dateTo.value = todayStr;
+  if (dateFrom && !dateFrom.value) dateFrom.value = firstOfMonth;
+  if (dateTo && !dateTo.value) dateTo.value = todayStr;
   const startDate = document.getElementById('coverageStartDate');
   const endDate = document.getElementById('coverageEndDate');
-  if (startDate) startDate.value = firstOfMonth;
-  if (endDate) endDate.value = lastOfMonthStr;
+  if (startDate && !startDate.value) startDate.value = firstOfMonth;
+  if (endDate && !endDate.value) endDate.value = lastOfMonthStr;
 
   // Prepare filter dropdowns without auto-rendering results
   if (typeof populateAchievementsFilters === 'function') populateAchievementsFilters();
@@ -431,11 +480,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'pharmacies'].includes(requestedTab)) {
     switchReportTab(requestedTab);
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeReportsPage);
+} else {
+  initializeReportsPage();
+}
 
 document.addEventListener('languageChanged', () => {
   const user = checkAuth();
   if (user) {
+    setupRolePermissions(user);
     initAllFilters(user);
   }
 });
@@ -463,34 +519,48 @@ document.addEventListener('click', (e) => {
 // Section 3: Role Permissions & Mode Indicators
 // ============================================================================
 function setupRolePermissions(user) {
-  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
+  const normalizedRole = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase()) : '';
+  const isAdmin = normalizedRole === 'admin';
+  
+  if (isAdmin) {
+    document.body.classList.add('is-admin');
+  } else {
+    document.body.classList.remove('is-admin');
+  }
+
+  const adminSelectors = [
+    '#manageTargetsBtn',
+    '#linkUploadDistributorSales',
+    '#btnAddDoctor',
+    '#btnImportDoctors',
+    '#btnAddPharmacy',
+    '#btnImportPharmacies',
+    '.admin-only-action'
+  ];
+
+  adminSelectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el) => {
+      el.style.display = isAdmin ? 'inline-flex' : 'none';
+    });
+  });
+
   const noticeBadge = document.getElementById('adminBadgeNotice');
   const noticeText = document.getElementById('roleNoticeText');
-  const linkUpload = document.getElementById('linkUploadDistributorSales');
-  const manageTargetsBtn = document.getElementById('manageTargetsBtn');
-  const btnAddDoctor = document.getElementById('btnAddDoctor');
-  const btnAddPharmacy = document.getElementById('btnAddPharmacy');
-  const btnImportDoctors = document.getElementById('btnImportDoctors');
-  const btnImportPharmacies = document.getElementById('btnImportPharmacies');
-  const lang = getCurrentLang();
-  if (isAdmin) {
-    if (noticeBadge) noticeBadge.className = 'admin-notice-pill admin-mode';
-    if (noticeText) noticeText.textContent = lang === 'ar' ? 'صلاحية الإدارة: متاح إدارة الأهداف والتقارير والأطباء والصيدليات' : 'Admin Role: Full Targets Management, Doctors & Pharmacies Management';
-    if (manageTargetsBtn) manageTargetsBtn.style.display = 'inline-flex';
-    if (linkUpload) linkUpload.style.display = 'inline-flex';
-    if (btnAddDoctor) btnAddDoctor.style.display = 'inline-flex';
-    if (btnAddPharmacy) btnAddPharmacy.style.display = 'inline-flex';
-    if (btnImportDoctors) btnImportDoctors.style.display = 'inline-flex';
-    if (btnImportPharmacies) btnImportPharmacies.style.display = 'inline-flex';
-  } else {
-    if (noticeBadge) noticeBadge.className = 'admin-notice-pill';
-    if (noticeText) noticeText.textContent = lang === 'ar' ? 'عرض فقط: تعديل التارجت والأطباء والصيدليات مقتصر على الإدارة' : 'View-Only: Targets and Directories managed by Admin';
-    if (manageTargetsBtn) manageTargetsBtn.style.display = 'none';
-    if (linkUpload) linkUpload.style.display = 'none';
-    if (btnAddDoctor) btnAddDoctor.style.display = 'none';
-    if (btnAddPharmacy) btnAddPharmacy.style.display = 'none';
-    if (btnImportDoctors) btnImportDoctors.style.display = 'none';
-    if (btnImportPharmacies) btnImportPharmacies.style.display = 'none';
+  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+
+  if (noticeBadge && noticeText) {
+    if (isAdmin) {
+      noticeBadge.className = 'admin-notice-pill admin-mode';
+      noticeText.textContent = lang === 'ar' 
+        ? 'صلاحية الإدارة: متاح إدارة الأهداف والتقارير والأطباء والصيدليات' 
+        : 'Admin Role: Full Targets Management, Doctors & Pharmacies Management';
+    } else {
+      noticeBadge.className = 'admin-notice-pill';
+      noticeText.textContent = lang === 'ar' 
+        ? 'عرض فقط: تعديل التارجت والأطباء والصيدليات مقتصر على الإدارة' 
+        : 'View-Only: Targets and Directories managed by Admin';
+    }
   }
 }
 
@@ -504,6 +574,7 @@ function switchReportTab(tabKey) {
   document.querySelectorAll('.report-content-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tabPanel-${tabKey}`);
   });
+  setupRolePermissions(typeof checkAuth === 'function' ? checkAuth() : null);
   if (tabKey === 'achievements') {
     if (typeof populateAchFilters === 'function') populateAchFilters();
   }
@@ -979,6 +1050,14 @@ window.downloadPharmaciesTemplate = downloadPharmaciesTemplate;
  * Import Modal Controls
  */
 function openImportDoctorsModal() {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') {
+      showToast(getCurrentLang() === 'ar' ? 'غير مصرح: استيراد بيانات الأطباء للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    }
+    return;
+  }
   const modal = document.getElementById('importDoctorsModal');
   if (modal) modal.style.display = 'flex';
 }
@@ -991,6 +1070,14 @@ function closeImportDoctorsModal() {
 window.closeImportDoctorsModal = closeImportDoctorsModal;
 
 function openImportPharmaciesModal() {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') {
+      showToast(getCurrentLang() === 'ar' ? 'غير مصرح: استيراد بيانات الصيدليات للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    }
+    return;
+  }
   const modal = document.getElementById('importPharmaciesModal');
   if (modal) modal.style.display = 'flex';
 }

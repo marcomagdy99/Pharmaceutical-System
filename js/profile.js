@@ -43,6 +43,8 @@ const profileTranslations = {
     toggleGpsLabel: "Enforce GPS Location Verification for Visits",
     toggleGpsHint: "When enabled, reps must record visits within the clinic geofence. If rep disables GPS, an audit flag is reported to the manager.",
     gpsRadiusLabel: "Geofencing Validation Radius (Meters)",
+    minPmVisitsLabel: "Minimum Evening Visits (PM Visits/Day)",
+    minPmVisitsHint: "Daily minimum required clinic visits during the evening shift for medical representatives.",
     saveCompanyPolicies: "Save Company Policies",
     companyPoliciesSaved: "Company field policies updated successfully!",
   },
@@ -85,6 +87,8 @@ const profileTranslations = {
     toggleGpsLabel: "إلزام التحقق الجغرافي بالـ GPS للزيارات الميدانية",
     toggleGpsHint: "عند التفعيل، يتم فحص تواجد المندوب داخل نطاق العيادة/المستشفى (200 متر). وفي حال تعطيل المندوب للـ GPS يتم تسجيل شارة تدقيق للمدير.",
     gpsRadiusLabel: "نصف قطر نطاق العيادة المسموح به (بالأمتار)",
+    minPmVisitsLabel: "الحد الأدنى لزيارات العيادات المسائية (PM Visits)",
+    minPmVisitsHint: "الحد الأدنى الإلزامي لعدد زيارات العيادات خلال الفترة المسائية يومياً لكل مندوب طبي.",
     saveCompanyPolicies: "حفظ سياسات الشركة",
     companyPoliciesSaved: "تم حفظ وتطبيق سياسات الشركة بنجاح على جميع المستخدمين!",
   },
@@ -360,16 +364,19 @@ function loadUserProfile() {
 
   const adminCompanyCard = document.getElementById("adminCompanySettingsCard");
   if (adminCompanyCard) {
-    if (user.role === "admin") {
+    const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+    if (isUserAdmin) {
       adminCompanyCard.style.display = "block";
       const currentSettings = (window.store && window.store.companySettings)
         ? window.store.companySettings.get()
-        : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+        : { requireGpsValidation: true, gpsMaxDistanceMeters: 200, minPmVisitsPerDay: 4 };
 
       const toggleInput = document.getElementById("toggleGpsValidation");
       const radiusInput = document.getElementById("gpsMaxRadiusInput");
+      const minPmInput = document.getElementById("minPmVisitsInput");
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
       if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
+      if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
     } else {
       adminCompanyCard.style.display = "none";
     }
@@ -378,21 +385,25 @@ function loadUserProfile() {
 
 function handleSaveCompanySettings(e) {
   if (e) e.preventDefault();
-  const user = (window.checkAuth && window.checkAuth());
-  if (!user || user.role !== "admin") {
-    if (typeof showToast === "function") showToast("Access Denied: Admin only.", "error");
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+  if (!isUserAdmin) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
     return;
   }
   const toggleInput = document.getElementById("toggleGpsValidation");
   const radiusInput = document.getElementById("gpsMaxRadiusInput");
+  const minPmInput = document.getElementById("minPmVisitsInput");
 
   const requireGpsValidation = toggleInput ? toggleInput.checked : true;
   const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
+  const minPmVisitsPerDay = minPmInput ? (parseInt(minPmInput.value, 10) || 4) : 4;
 
   if (window.store && window.store.companySettings) {
     window.store.companySettings.update({
       requireGpsValidation,
       gpsMaxDistanceMeters,
+      minPmVisitsPerDay,
     });
   }
 

@@ -396,7 +396,7 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-outline"
+                    class="btn btn-outline admin-only-action"
                     id="manageTargetsBtn"
                     onclick="openTargetsModal()"
                     style="display: none;"
@@ -438,9 +438,9 @@
                 </div>
               </div>
               <!-- Interactive Sales vs Target Trend Chart -->
-              <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb);">
+              <div class="chart-card mb-4">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
-                  <h4 style="margin: 0; font-weight: 700; color: var(--gray-800);">📈 <span data-i18n="salesTrendTitle">Monthly Sales vs Target Trend</span></h4>
+                  <h4 class="chart-card-title">📈 <span data-i18n="salesTrendTitle">Monthly Sales vs Target Trend</span></h4>
                 </div>
                 <div style="position: relative; height: 300px; width: 100%;">
                   <canvas id="achSalesTrendChart"></canvas>
@@ -520,6 +520,9 @@
                   ><span class="legend-dot planned"></span> Planned &amp;
                   Executed</span
                 >
+                <span class="legend-item"
+                  ><span class="legend-dot activity" style="background: #9333ea;"></span> Logged Activity</span
+                >
               </div>
             </div>
 
@@ -595,7 +598,7 @@
                   <button
                     type="button"
                     class="btn btn-outline"
-                    id="exportCoverageReport"
+                    id="btnExportCoverageReport"
                     onclick="exportCoverageReport()"
                   >
                     <span>📥</span> <span data-i18n="btnExportCSV">Export CSV</span>
@@ -882,8 +885,8 @@
             <!-- Tab 5 Results Container (Hidden until Show is clicked) -->
             <div id="doctorsResultsContainer" style="display: none;">
               <!-- Interactive Doctor Classes & Hospitals Donut Chart -->
-              <div class="chart-card mb-4" style="background: var(--surface, #fff); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1)); margin-bottom: 20px; border: 1px solid var(--border-color, #e5e7eb); text-align: center;">
-                <h4 style="margin: 0 0 12px; font-weight: 700; color: var(--gray-800);">🥧 <span data-i18n="doctorClassesTitle">Doctor Classes & Hospitals Distribution</span></h4>
+              <div class="chart-card mb-4 text-center">
+                <h4 class="chart-card-title mb-3">🥧 <span data-i18n="doctorClassesTitle">Doctor Classes & Hospitals Distribution</span></h4>
                 <div style="position: relative; height: 230px; max-width: 320px; margin: 0 auto;">
                   <canvas id="repDoctorClassesChart"></canvas>
                 </div>

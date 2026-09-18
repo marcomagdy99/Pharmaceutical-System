@@ -326,8 +326,8 @@ function renderAchievementsReport() {
       const totalPctColor = g.totalPct !== null && g.totalPct >= 100 ? 'var(--success)' : 'var(--warning)';
 
       const totalRow = document.createElement('tr');
+      totalRow.className = 'ach-total-row';
       totalRow.style.fontWeight = '800';
-      totalRow.style.background = 'var(--gray-50, #f8f9fa)';
       totalRow.innerHTML = `
         <td>
           ${window.escapeHtml(g.repName)}

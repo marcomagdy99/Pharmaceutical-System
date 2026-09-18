@@ -41,62 +41,35 @@ function renderDailyTimeline() {
     ? getSharedReportUsers()
     : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
+  // Determine allowed team IDs based on role
+  let allowedTeamIds = [];
+  if (isRep) {
+    allowedTeamIds = [user.id];
+  } else if (role === 'district_manager') {
+    const teamReps = allUsers.filter((u) => u.managerId === user.id);
+    allowedTeamIds = [user.id, ...teamReps.map((r) => r.id)];
+  } else if (role === 'line_manager') {
+    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+    const dmIds = dms.map((d) => d.id);
+    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
+    allowedTeamIds = [user.id, ...dmIds, ...reps.map((r) => r.id)];
+  } else if (role === 'business_unit') {
+    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
+    const lmIds = myLMs.map((u) => u.id);
+    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    allowedTeamIds = [user.id, ...lmIds, ...myDownstream.map((u) => u.id)];
+  } else {
+    allowedTeamIds = allUsers.map((u) => u.id);
+  }
+
   // Filter visits within the date range (only completed or actual visits)
   let visitsInRange = REPORTS_DATA.visits.filter((v) => (v.status === 'completed' || v.isActual === true || v.source === 'actual') && v.date >= fromDate && v.date <= toDate);
 
   if (isRep) {
     visitsInRange = visitsInRange.filter((v) => v.repId === user.id);
-  } else if (role === 'district_manager') {
-    const teamReps = allUsers.filter((u) => u.managerId === user.id);
-    const teamRepIds = teamReps.map((r) => r.id);
-    const allowedTeamIds = [user.id, ...teamRepIds];
-    if (selectedRep === 'all') {
-      visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
-    } else {
-      visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && allowedTeamIds.includes(v.repId));
-    }
-  } else if (role === 'line_manager') {
-    const dms    = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
-    const dmIds  = dms.map((d) => d.id);
-    const reps   = allUsers.filter((u) => dmIds.includes(u.managerId));
-    const repIds = reps.map((r) => r.id);
-    const allowedTeamIds = [user.id, ...dmIds, ...repIds];
-
-    if (selectedRep === 'all') {
-      visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
-    } else if (dmIds.includes(selectedRep)) {
-      const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
-      const dmTeamIds = [selectedRep, ...dmReps];
-      visitsInRange = visitsInRange.filter((v) => (dmTeamIds.includes(v.repId) || dmTeamIds.includes(v.doubleWithUserId)) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
-    } else if (selectedRep) {
-      visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
-    }
-  } else if (role === 'business_unit') {
-    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
-    const lmIds = myLMs.map((u) => u.id);
-    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
-    const myDownstreamIds = myDownstream.map((u) => u.id);
-    const allowedTeamIds = [user.id, ...lmIds, ...myDownstreamIds];
-
-    if (selectedRep === 'all') {
-      visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
-    } else {
-      const isSelectedLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
-      const isSelectedDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-      if (isSelectedLM) {
-        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
-        visitsInRange = visitsInRange.filter((v) => (lmTeamIds.includes(v.repId) || lmTeamIds.includes(v.doubleWithUserId)) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
-      } else if (isSelectedDM) {
-        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        const dmTeamIds = [selectedRep, ...dmReps];
-        visitsInRange = visitsInRange.filter((v) => (dmTeamIds.includes(v.repId) || dmTeamIds.includes(v.doubleWithUserId)) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
-      } else {
-        visitsInRange = visitsInRange.filter((v) => (v.repId === selectedRep || v.doubleWithUserId === selectedRep) && (allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId)));
-      }
-    }
-  } else if (selectedRep && selectedRep !== 'all') {
+  } else if (selectedRep === 'all') {
+    visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
+  } else if (selectedRep) {
     const selectedUserObj = allUsers.find((u) => u.id === selectedRep);
     const isDM = selectedUserObj && (selectedUserObj.role === 'district_manager' || selectedUserObj.role === 'dm');
     if (isDM) {
@@ -107,38 +80,68 @@ function renderDailyTimeline() {
     }
   }
 
-  // Load stored activities across the range for the target rep
-  const targetRepId = isRep ? user.id : (selectedRep !== 'all' ? selectedRep : user.id);
-  const targetUserObj = allUsers.find((u) => u.id === targetRepId) || user;
-  let storedActivities = {};
-  try {
-    const userKey = `pharma_activities_data_${targetRepId}`;
-    let raw = localStorage.getItem(userKey);
-    if (!raw && targetRepId === 'rep1') {
-      raw = localStorage.getItem('pharma_activities_data');
-    }
-    if (raw) storedActivities = JSON.parse(raw);
-  } catch (e) {}
-
-  const activityEvents = [];
-  const showOwnActivities = isRep || selectedRep !== 'all';
-  if (showOwnActivities) {
-    Object.keys(storedActivities).forEach((dateKey) => {
-      if (dateKey < fromDate || dateKey > toDate) return;
-      const dayActivities = storedActivities[dateKey] || {};
-      if (dayActivities.AM && dayActivities.AM.type) {
-        activityEvents.push({ targetName: `${dayActivities.AM.type} (AM Activity)`, class: 'Activity', specialty: dayActivities.AM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '09:00', period: 'AM', repName: targetUserObj.name || user.name, isActual: true });
-      }
-      if (dayActivities.PM && dayActivities.PM.type) {
-        activityEvents.push({ targetName: `${dayActivities.PM.type} (PM Activity)`, class: 'Activity', specialty: dayActivities.PM.notes || 'Routine Activity', type: 'activity', date: dateKey, time: '14:00', period: 'PM', repName: targetUserObj.name || user.name, isActual: true });
-      }
-    });
+  // Load stored activities across the range for all relevant users
+  let activityTargetIds = [];
+  if (isRep) {
+    activityTargetIds = [user.id];
+  } else if (selectedRep && selectedRep !== 'all') {
+    activityTargetIds = [selectedRep];
+  } else {
+    activityTargetIds = allowedTeamIds.length > 0 ? allowedTeamIds : allUsers.map((u) => u.id);
   }
 
+  const activityEvents = [];
+  activityTargetIds.forEach((targetId) => {
+    let repStoredActivities = {};
+    try {
+      const userKey = `pharma_activities_data_${targetId}`;
+      let raw = localStorage.getItem(userKey);
+      if (!raw && targetId === 'rep1') {
+        raw = localStorage.getItem('pharma_activities_data');
+      }
+      if (raw) repStoredActivities = JSON.parse(raw);
+    } catch (e) {}
+
+    const targetRepObj = allUsers.find((u) => u.id === targetId) || { id: targetId, name: targetId };
+
+    Object.keys(repStoredActivities).forEach((dateKey) => {
+      if (dateKey < fromDate || dateKey > toDate) return;
+      const dayActs = repStoredActivities[dateKey] || {};
+      ['AM', 'PM'].forEach((period) => {
+        const act = dayActs[period];
+        if (act && act.type) {
+          const actTypeTrans = (window.translations && window.translations[lang] && window.translations[lang][`type${act.type}`]) || act.type;
+          activityEvents.push({
+            id: `act_${targetId}_${dateKey}_${period}`,
+            targetName: `${actTypeTrans} (${period} Activity)`,
+            activityType: actTypeTrans,
+            class: 'Activity',
+            specialty: act.notes || (lang === 'ar' ? 'نشاط يومي مسجل' : 'Logged Daily Activity'),
+            type: 'activity',
+            date: dateKey,
+            time: period === 'AM' ? '09:00' : '14:00',
+            period: period,
+            repId: targetId,
+            repName: targetRepObj.name || targetId,
+            isActual: true,
+            source: 'activity',
+            status: 'completed',
+          });
+        }
+      });
+    });
+  });
+
   const combinedTimeline = [...visitsInRange, ...activityEvents];
-  const totalItems   = combinedTimeline.length;
-  const actualCount  = combinedTimeline.filter((v) => v.isActual).length;
-  const plannedCount = combinedTimeline.filter((v) => !v.isActual).length;
+  const totalItems       = combinedTimeline.length;
+  const activityCount    = combinedTimeline.filter((v) => v.type === 'activity').length;
+  const actualVisitCount = combinedTimeline.filter((v) => v.type !== 'activity' && (v.source === 'actual' || v.isActual)).length;
+  const plannedVisitCount= combinedTimeline.filter((v) => v.type !== 'activity' && !v.isActual && v.source !== 'actual').length;
+
+  const dateBadge = document.getElementById('timelineDateBadge');
+  if (dateBadge) {
+    dateBadge.textContent = fromDate === toDate ? (fromDate === _todayStr ? (lang === 'ar' ? 'اليوم' : 'Today') : fromDate) : `${fromDate} → ${toDate}`;
+  }
 
   if (summaryBar) {
     const rangeLabel = fromDate === toDate ? fromDate : `${fromDate} → ${toDate}`;
@@ -153,20 +156,25 @@ function renderDailyTimeline() {
       </div>
       <div class="timeline-stat-chip">
         <span class="legend-dot actual" style="display:inline-block; vertical-align:middle;"></span>
-        <span>${lang === 'ar' ? 'فعلية / أنشطة:' : 'Actual / Activities:'}</span>
-        <strong style="color: #b45309; font-size: 1.1rem; margin: 0 6px;">${actualCount}</strong>
+        <span>${lang === 'ar' ? 'زيارات فعلية:' : 'Actual Visits:'}</span>
+        <strong style="color: #b45309; font-size: 1.1rem; margin: 0 6px;">${actualVisitCount}</strong>
       </div>
       <div class="timeline-stat-chip">
         <span class="legend-dot planned" style="display:inline-block; vertical-align:middle;"></span>
         <span>${lang === 'ar' ? 'من الخطة:' : 'From Plan:'}</span>
-        <strong style="color: #0284c7; font-size: 1.1rem; margin: 0 6px;">${plannedCount}</strong>
+        <strong style="color: #0284c7; font-size: 1.1rem; margin: 0 6px;">${plannedVisitCount}</strong>
+      </div>
+      <div class="timeline-stat-chip">
+        <span class="legend-dot activity" style="background:#9333ea; display:inline-block; vertical-align:middle;"></span>
+        <span>${lang === 'ar' ? 'أنشطة مسجلة:' : 'Logged Activities:'}</span>
+        <strong style="color: #6b21a8; font-size: 1.1rem; margin: 0 6px;">${activityCount}</strong>
       </div>
     `;
   }
 
   if (combinedTimeline.length === 0) {
     container.innerHTML = `
-      <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: var(--shadow-sm);">
+      <div class="timeline-empty-card" style="text-align: center; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color, #dee2e6);">
         <span style="font-size: 2.5rem;">📅</span>
         <h4 style="margin: 10px 0 4px; color: var(--gray-700);">${lang === 'ar' ? 'لا توجد زيارات أو أنشطة مسجلة في هذه الفترة' : 'No visits or activities recorded in this period'}</h4>
         <p style="color: var(--gray-500); font-size: 0.85rem;">${lang === 'ar' ? 'جرّب تاريخاً أو فترة زمنية مختلفة' : 'Try a different date or date range'}</p>
@@ -187,46 +195,54 @@ function renderDailyTimeline() {
   sortedTimeline.forEach((v) => {
     const isActivity = v.type === 'activity';
     const isActual   = !!v.isActual;
-    const borderClass = isActual ? 'actual-border' : 'planned-border';
-    const dotClass    = isActual ? 'actual' : 'planned';
+    const borderClass = isActivity ? 'activity-border' : (isActual ? 'actual-border' : 'planned-border');
+    const dotClass    = isActivity ? 'activity' : (isActual ? 'actual' : 'planned');
     const isPharm     = v.targetType === 'pharmacy' || (v.period || '').toLowerCase() === 'pharmacy' || (v.doctorId && String(v.doctorId).startsWith('pharm'));
     const period      = isPharm ? (lang === 'ar' ? 'صيدلية' : 'PHARM') : (v.period || 'PM').toUpperCase();
+    const periodClass = isPharm ? 'pharm' : period.toLowerCase();
 
     let badgeLabel = '';
+    let badgeClass = 'planned';
     if (isActivity) {
-      badgeLabel = lang === 'ar' ? 'نشاط مسجل (Logged Activity)' : 'Logged Activity';
+      badgeClass = 'activity';
+      badgeLabel = lang === 'ar' ? 'نشاط رسمي مسجل (Logged Activity)' : 'Logged Activity';
     } else if (isActual) {
+      badgeClass = 'actual';
       badgeLabel = lang === 'ar' ? 'زيارة فعلية مباشرة (Actual Visit)' : 'Direct Actual Visit';
     } else {
+      badgeClass = 'planned';
       badgeLabel = lang === 'ar' ? 'زيارة من الخطة (Planned Visit)' : 'Planned & Executed';
     }
-
-    // Colored AM/PM/PHARM pill replaces the old time display
-    const periodPillStyle = isPharm
-      ? 'background:#fef3c7; color:#92400e;'
-      : period === 'AM'
-        ? 'background:#d1fae5; color:#065f46;'
-        : 'background:#dbeafe; color:#1e40af;';
 
     const card = document.createElement('div');
     card.className = 'timeline-event-card';
     card.innerHTML = `
       <div class="timeline-time-col">
         <span style="font-size:0.8rem; color:var(--gray-500); font-weight:600; white-space:nowrap;">${v.date}</span>
-        <span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.78rem; font-weight:700; ${periodPillStyle}">${period}</span>
+        <span class="timeline-period-pill ${periodClass}">${period}</span>
         <div class="timeline-icon-dot ${dotClass}" style="font-size:1.1rem; display:flex; align-items:center; justify-content:center;">
           ${isActivity ? '📝' : isPharm ? '💊' : (v.type === 'hospital' ? '🏥' : '👨‍⚕️')}
         </div>
       </div>
       <div class="timeline-content-box ${borderClass}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-          <strong style="font-size: 1.05rem; color: var(--gray-800);">${v.targetName}</strong>
+          <strong class="timeline-target-title" style="font-size: 1.05rem; ${isActivity ? 'color: #6b21a8;' : ''}">${v.targetName}</strong>
           <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
         </div>
-        <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 6px;">
-          <span>🩺 ${v.specialty}</span> • <span>Class: <strong>${v.class}</strong></span> • <span>Rep: ${v.repName}</span>
-        </div>
-        <div style="font-size: 0.78rem; color: var(--gray-500); background: var(--gray-50); padding: 6px 10px; border-radius: 6px; display: inline-block;">
+        ${isActivity ? `
+          <div style="font-size: 0.88rem; color: var(--gray-700); margin-bottom: 6px; line-height: 1.5;">
+            <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #6b21a8;">
+              💼 ${lang === 'ar' ? 'نوع النشاط:' : 'Activity Type:'} <strong>${v.activityType || v.targetName}</strong>
+            </span>
+            ${v.specialty ? `• <span style="color: var(--gray-600);">📋 ${lang === 'ar' ? 'ملاحظات:' : 'Notes:'} <em>"${v.specialty}"</em></span>` : ''}
+            • <span style="font-weight: 500;">👤 ${lang === 'ar' ? 'الموظف:' : 'Employee:'} <strong>${v.repName}</strong></span>
+          </div>
+        ` : `
+          <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 6px;">
+            <span>${isPharm ? '💊' : '🩺'} ${v.specialty || ''}</span> • <span>Class: <strong>${v.class || 'A'}</strong></span> • <span>Rep: <strong>${v.repName}</strong></span>
+          </div>
+        `}
+        <div class="timeline-entry-timestamp" style="font-size: 0.78rem; padding: 6px 10px; border-radius: 6px; display: inline-block;">
           ⏰ <strong>${lang === 'ar' ? 'توقيت التسجيل:' : 'Entry Timestamp:'}</strong> ${v.date} at ${v.time || '10:00'} ${period}
         </div>
       </div>

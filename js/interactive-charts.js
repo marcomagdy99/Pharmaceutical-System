@@ -386,4 +386,21 @@
   window.renderDoctorClassesChart = renderDoctorClassesChart;
   window.renderCoverageGaugeChart = renderCoverageGaugeChart;
   window.destroyPharmaChart = destroyExistingChart;
+
+  // Auto-refresh charts on Theme (Dark/Light) or Language changes
+  function refreshActiveCharts() {
+    const user = typeof window.checkAuth === "function" ? window.checkAuth() : null;
+    if (typeof window.initDashboardCharts === "function" && document.getElementById("dashSalesTrendChart")) {
+      window.initDashboardCharts(user);
+    }
+    if (typeof window.renderDoctorsReport === "function" && document.getElementById("repDoctorClassesChart")) {
+      window.renderDoctorsReport();
+    }
+    if (typeof window.renderSalesReport === "function" && document.getElementById("salesReportTrendChart")) {
+      window.renderSalesReport();
+    }
+  }
+
+  document.addEventListener("themeChanged", refreshActiveCharts);
+  document.addEventListener("languageChanged", refreshActiveCharts);
 })();

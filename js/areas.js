@@ -418,6 +418,11 @@ function openEditModal(id) {
 }
 
 function saveArea() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
   const id = document.getElementById("areaId").value;
   const name = document.getElementById("areaName").value.trim();
   const code = document.getElementById("areaCode").value.trim();
@@ -575,6 +580,11 @@ function openDeleteModal(id) {
 }
 
 function confirmDelete() {
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
   const id = document.getElementById("deleteAreaId").value;
   const currentAreas = getAreasList();
   const area = currentAreas.find((a) => a.id === id);

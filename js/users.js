@@ -197,6 +197,23 @@ const userMgmt = {
   editingLineId: null,
 
   init() {
+    const user = (window.checkAuth && window.checkAuth()) || {};
+    if (
+      window.hasAnyRole &&
+      !window.hasAnyRole(["admin", "hr"], user)
+    ) {
+      if (typeof showToast === "function") {
+        showToast(
+          (window.getCurrentLang && window.getCurrentLang() === "ar")
+            ? "غير مصرح: صفحة المستخدمين مخصصة للإدارة والموارد البشرية فقط."
+            : "Access Denied: Admins & HR only.",
+          "error"
+        );
+      }
+      window.location.replace("index.html");
+      return;
+    }
+
     if (window.translations) {
       window.translations.en = {
         ...(window.translations.en || {}),
@@ -911,6 +928,11 @@ const userMgmt = {
   },
 
   async saveUser() {
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    if (window.hasAnyRole && !window.hasAnyRole(["admin", "hr"], authUser)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
+      return;
+    }
     const id = document.getElementById("userId").value;
     const name = document.getElementById("uName").value.trim();
     const email = document.getElementById("uEmail").value.trim().toLowerCase();
@@ -1072,6 +1094,11 @@ const userMgmt = {
   },
 
   confirmDeactivate() {
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    if (window.hasAnyRole && !window.hasAnyRole(["admin", "hr"], authUser)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
+      return;
+    }
     if (!this.selectedUserId) return;
     const rawUser = window.store.users.getById(this.selectedUserId);
     if (rawUser) {

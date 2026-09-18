@@ -54,7 +54,7 @@ function getScopedPharmacies(respectActiveFilters = true) {
     }
 
     const repFilter = document.getElementById("pharmacyRepSelect");
-    const repId = repFilter ? repFilter.value : "all";
+    const repId = (repFilter && repFilter.value) ? repFilter.value : "all";
     if (repId !== "all") {
       const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
       const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
@@ -117,6 +117,9 @@ function renderPharmaciesReport() {
   grid.style.display = "grid";
   if (emptyState) emptyState.style.display = "none";
 
+  const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
+  const normalizedRole = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase()) : '';
+  const isAdmin = normalizedRole === 'admin';
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
@@ -152,14 +155,16 @@ function renderPharmaciesReport() {
             <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
+        ${isAdmin ? `
         <div class="directory-card-footer">
           <button class="btn btn-sm btn-outline-primary" onclick="openPharmacyModal('${p.id}')">
-            ✏️ Edit
+            ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="openDeletePharmacyModal('${p.id}')">
-            🗑️ Delete
+            🗑️ ${lang === 'ar' ? 'حذف' : 'Delete'}
           </button>
         </div>
+        ` : ''}
       </div>
     `;
     })
@@ -167,6 +172,15 @@ function renderPharmaciesReport() {
 }
 
 function openPharmacyModal(pharmId = null) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: إدارة وتعديل الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can manage pharmacies.", "error");
+    }
+    return;
+  }
+
   const modal = document.getElementById("pharmacyModal");
   if (!modal) return;
 
@@ -177,7 +191,6 @@ function openPharmacyModal(pharmId = null) {
   const phoneInput = document.getElementById("pharmacyPhoneInput");
   const repInput = document.getElementById("pharmacyRepInput");
 
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
   const existingRepId = pharmId ? (getPharmaciesData().find((p) => p.id === pharmId) || {}).repId : null;
 
   // Populates pharmacyModalLmSelect -> pharmacyModalDmSelect -> pharmacyRepInput
@@ -223,6 +236,15 @@ function closePharmacyModal() {
 }
 
 function savePharmacy() {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: إضافة وتعديل الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can add/edit pharmacies.", "error");
+    }
+    return;
+  }
+
   const idInput = document.getElementById("pharmacyId");
   const nameInput = document.getElementById("pharmacyNameInput");
   const addressInput = document.getElementById("pharmacyAddressInput");
@@ -239,7 +261,6 @@ function savePharmacy() {
   const phone = phoneInput ? phoneInput.value.trim() : "";
 
   // Automatic repId binding to active user if unselected
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
   const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : currentUser.id;
 
   if (!name || !address) {
@@ -272,12 +293,21 @@ function savePharmacy() {
 
   closePharmacyModal();
   renderPharmaciesReport();
-  if (typeof showToast === "function") showToast("Pharmacy saved successfully.", "success");
+  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حفظ الصيدلية بنجاح." : "Pharmacy saved successfully.", "success");
 }
 
 let pharmacyToDeleteId = null;
 
 function openDeletePharmacyModal(pharmId) {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can delete pharmacies.", "error");
+    }
+    return;
+  }
+
   pharmacyToDeleteId = pharmId;
   const modal = document.getElementById("deletePharmacyModal");
   if (modal) {
@@ -296,6 +326,15 @@ function closeDeletePharmacyModal() {
 }
 
 function confirmDeletePharmacy() {
+  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
+  if (!isAdmin) {
+    if (typeof showToast === "function") {
+      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can delete pharmacies.", "error");
+    }
+    return;
+  }
+
   if (!pharmacyToDeleteId) return;
 
   if (window.store && window.store.pharmacies) {
@@ -307,7 +346,7 @@ function confirmDeletePharmacy() {
 
   closeDeletePharmacyModal();
   renderPharmaciesReport();
-  if (typeof showToast === "function") showToast("Pharmacy deleted successfully.", "info");
+  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حذف الصيدلية بنجاح." : "Pharmacy deleted successfully.", "info");
 }
 
 function onPharmacyFilterChange() {

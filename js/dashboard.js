@@ -692,6 +692,7 @@ function initDashboardCharts(user) {
     });
   }
 }
+window.initDashboardCharts = initDashboardCharts;
 
 function renderDashboard() {
   const container = document.getElementById("pageContent");
