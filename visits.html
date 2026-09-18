@@ -76,7 +76,7 @@
                     <label for="filterRep" class="manager-rep-filter-label">
                         <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
                     </label>
-                    <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="renderVisitsTimeline(true); if(typeof populateAreaFilters==='function') populateAreaFilters();">
+                    <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="if(typeof populateAreaFilters==='function') populateAreaFilters();">
                         <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
                     </select>
                 </div>
@@ -93,7 +93,7 @@
                                 <label class="timeline-area-label" for="timelineAreaFilter">
                                     <span>📍</span> <span data-i18n="filterArea">Area:</span>
                                 </label>
-                                <select id="timelineAreaFilter" class="form-control filter-input" style="min-width: 140px; width: auto;" onchange="renderVisitsTimeline(true)">
+                                <select id="timelineAreaFilter" class="form-control filter-input" style="min-width: 140px; width: auto;">
                                     <option value="all" data-i18n="allAreas">All Areas</option>
                                 </select>
                             </div>
@@ -101,7 +101,7 @@
                                 <label class="timeline-period-label" for="timelinePeriodFilter">
                                     <span>⏰</span> <span data-i18n="filterPeriod">Period:</span>
                                 </label>
-                                <select id="timelinePeriodFilter" class="form-control filter-input" style="min-width: 130px; width: auto;" onchange="renderVisitsTimeline(true)">
+                                <select id="timelinePeriodFilter" class="form-control filter-input" style="min-width: 130px; width: auto;">
                                     <option value="all" data-i18n="allPeriods">All Periods</option>
                                     <option value="am" data-i18n="periodAM">AM (Hospitals)</option>
                                     <option value="pm" data-i18n="periodPM">PM (Doctors)</option>
@@ -112,7 +112,7 @@
                                 <label class="timeline-status-label" for="timelineStatusFilter">
                                     <span>📊</span> <span data-i18n="filterStatus">Status:</span>
                                 </label>
-                                <select id="timelineStatusFilter" class="form-control filter-input" style="min-width: 130px; width: auto;" onchange="renderVisitsTimeline(true)">
+                                <select id="timelineStatusFilter" class="form-control filter-input" style="min-width: 130px; width: auto;">
                                     <option value="all" data-i18n="allStatuses">All Statuses</option>
                                     <option value="actual" data-i18n="statusExecuted">Executed / Actual</option>
                                     <option value="plan" data-i18n="statusPlannedOnly">Planned</option>

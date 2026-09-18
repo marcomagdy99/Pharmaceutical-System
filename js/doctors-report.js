@@ -461,7 +461,10 @@ function confirmDeleteDoctor() {
 }
 
 function onDoctorFilterChange() {
-  renderDoctorsReport();
+  const results = document.getElementById("doctorsResultsContainer");
+  if (results && results.style.display !== "none") {
+    renderDoctorsReport();
+  }
 }
 
 function onDoctorLmChange() {}

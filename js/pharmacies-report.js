@@ -350,7 +350,10 @@ function confirmDeletePharmacy() {
 }
 
 function onPharmacyFilterChange() {
-  renderPharmaciesReport();
+  const results = document.getElementById("pharmaciesResultsContainer");
+  if (results && results.style.display !== "none") {
+    renderPharmaciesReport();
+  }
 }
 
 function onPharmacyLmChange() {}

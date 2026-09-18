@@ -1833,20 +1833,20 @@ Object.assign(leavesApp, {
       window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)
         ? window.DEMO_DATA.users
         : [];
-    const user = users.find((u) => u.id === userId);
-    if (!user) return;
+    const targetUser = users.find((u) => u.id === userId);
+    if (!targetUser) return;
 
-    user.leaveBalance = {
+    targetUser.leaveBalance = {
       annual,
       casual,
       emergency: casual,
       sick,
-      unpaid: (user.leaveBalance && user.leaveBalance.unpaid) || 0,
-      maternity: (user.leaveBalance && user.leaveBalance.maternity) || 90,
+      unpaid: (targetUser.leaveBalance && targetUser.leaveBalance.unpaid) || 0,
+      maternity: (targetUser.leaveBalance && targetUser.leaveBalance.maternity) || 90,
     };
 
     if (currentUser && currentUser.id === userId) {
-      currentUser.leaveBalance = { ...user.leaveBalance };
+      currentUser.leaveBalance = { ...targetUser.leaveBalance };
       calculateBalances();
     }
 
@@ -1855,7 +1855,7 @@ Object.assign(leavesApp, {
       if (activeUserStr) {
         const activeUser = JSON.parse(activeUserStr);
         if (activeUser && activeUser.id === userId) {
-          activeUser.leaveBalance = { ...user.leaveBalance };
+          activeUser.leaveBalance = { ...targetUser.leaveBalance };
           sessionStorage.setItem("pharmaUser", JSON.stringify(activeUser));
         }
       }

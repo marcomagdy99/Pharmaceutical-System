@@ -271,8 +271,7 @@ function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId 
 // Time Conflict Check Configuration (SFE Audit Rule)
 // ============================================================================
 // MIN_MINUTES_BETWEEN_VISITS: Minimum buffer (in minutes) required between visits
-// when Location/GPS validation is enabled. Change this value to adjust the time limit.
-const MIN_MINUTES_BETWEEN_VISITS = 10;
+// when Location/GPS validation is enabled (declared in app.js / exposed on window).
 
 /**
  * Converts a time string (e.g. "14:00", "02:30 PM", "9:15") to total minutes from midnight.
@@ -309,6 +308,7 @@ function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = nu
   const targetMinutes = parseTimeToMinutes(visitTime);
   if (targetMinutes === null) return { hasConflict: false };
 
+  const minGapMinutes = window.MIN_MINUTES_BETWEEN_VISITS || 10;
   const list = typeof demoVisits !== "undefined" && Array.isArray(demoVisits)
     ? demoVisits
     : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
@@ -323,13 +323,13 @@ function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = nu
     if (existingMinutes === null) continue;
 
     const diff = Math.abs(targetMinutes - existingMinutes);
-    if (diff < MIN_MINUTES_BETWEEN_VISITS) {
+    if (diff < minGapMinutes) {
       return {
         hasConflict: true,
         exactMatch: diff === 0,
         diffMinutes: diff,
         conflictingVisit: v,
-        minRequired: MIN_MINUTES_BETWEEN_VISITS,
+        minRequired: minGapMinutes,
       };
     }
   }
@@ -337,7 +337,6 @@ function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = nu
   return { hasConflict: false };
 }
 window.checkVisitTimeConflict = checkVisitTimeConflict;
-window.MIN_MINUTES_BETWEEN_VISITS = MIN_MINUTES_BETWEEN_VISITS;
 
 function checkVisitDateAllowed(dateStr, repId, lang) {
   if (!dateStr) return { allowed: true };
@@ -851,6 +850,8 @@ function setupRoleBasedView() {
       lang === "ar" ? "الخط الزمني للزيارات اليومية" : "Daily Visits Timeline";
   }
 
+  updateAdminGpsButton();
+
   if (isManager) {
     if (filterContainer) filterContainer.style.display = "flex";
     if (filterRep) {
@@ -859,6 +860,7 @@ function setupRoleBasedView() {
     }
     populateAreaFilters();
     const canLogVisits =
+      currentUserRole === "admin" ||
       currentUserRole === "district_manager" ||
       currentUserRole === "line_manager" ||
       currentUserRole === "business_unit";
@@ -2461,6 +2463,16 @@ function openVisitModal(isActual = false) {
     titleEl.innerText = isActual ? trans.logActualVisit : trans.modalAddVisit;
   }
 
+  const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerText = isActual
+      ? (lang === "ar" ? "تسجيل وحفظ الزيارة" : "Log & Save Visit")
+      : (lang === "ar" ? "حفظ الزيارة" : "Save Visit");
+  }
+  const checkGpsBtn = document.getElementById("btnCheckMyGps");
+  if (checkGpsBtn) checkGpsBtn.disabled = false;
+
   const dateInput = document.getElementById("visitDate");
   const twoDaysAgoStr = getTwoDaysAgoStr();
   if (dateInput) {
@@ -2965,6 +2977,14 @@ function openCompleteModal(visitId) {
   document.getElementById("visitModalTitle").innerText =
     trans.modalCompleteVisit;
 
+  const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerText = lang === "ar" ? "اعتماد وإتمام الزيارة" : "Complete Visit";
+  }
+  const checkGpsBtn = document.getElementById("btnCheckMyGps");
+  if (checkGpsBtn) checkGpsBtn.disabled = false;
+
   const dateInput = document.getElementById("visitDate");
   const twoDaysAgoStr = getTwoDaysAgoStr();
   if (dateInput) {
@@ -3074,7 +3094,7 @@ function saveVisit() {
   const modalSource =
     document.getElementById("visitModal").dataset.source || "actual";
 
-  if (modalSource === "plan") {
+  if (modalSource === "plan" && !currentEditVisitId) {
     if (visitDate < todayStr) {
       resetSaveBtn();
       const msg = lang === "ar"

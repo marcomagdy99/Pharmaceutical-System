@@ -1047,7 +1047,7 @@ function downloadPharmaciesTemplate() {
 window.downloadPharmaciesTemplate = downloadPharmaciesTemplate;
 
 /**
- * Import Modal Controls
+ * Import Modal Controls & Handlers
  */
 function openImportDoctorsModal() {
   const user = checkAuth();
@@ -1060,14 +1060,233 @@ function openImportDoctorsModal() {
   }
   const modal = document.getElementById('importDoctorsModal');
   if (modal) modal.style.display = 'flex';
+
+  pendingDoctorsImport = [];
+  const fileInput = document.getElementById('doctorsFileInput');
+  if (fileInput) fileInput.value = '';
+  const fileNameDisplay = document.getElementById('doctorsSelectedFileName');
+  if (fileNameDisplay) {
+    fileNameDisplay.style.display = 'none';
+    fileNameDisplay.textContent = '';
+  }
+  const previewContainer = document.getElementById('doctorsPreviewContainer');
+  if (previewContainer) previewContainer.style.display = 'none';
+  const tableBody = document.getElementById('doctorsPreviewTableBody');
+  if (tableBody) tableBody.innerHTML = '';
+  const badges = document.getElementById('doctorsValidationBadges');
+  if (badges) badges.innerHTML = '';
+  const confirmBtn = document.getElementById('btnConfirmImportDoctors');
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  populateModalHierarchy('importDoctorsLmSelect', 'importDoctorsDmSelect', 'importDoctorsRepSelect');
 }
 window.openImportDoctorsModal = openImportDoctorsModal;
 
 function closeImportDoctorsModal() {
   const modal = document.getElementById('importDoctorsModal');
   if (modal) modal.style.display = 'none';
+  pendingDoctorsImport = [];
 }
 window.closeImportDoctorsModal = closeImportDoctorsModal;
+
+function onDoctorsImportLmChange() {
+  updateModalDMs('importDoctorsLmSelect', 'importDoctorsDmSelect', 'importDoctorsRepSelect');
+}
+window.onDoctorsImportLmChange = onDoctorsImportLmChange;
+
+function onDoctorsImportDmChange() {
+  updateModalReps('importDoctorsDmSelect', 'importDoctorsRepSelect');
+}
+window.onDoctorsImportDmChange = onDoctorsImportDmChange;
+
+function onDoctorsImportRepChange() {}
+window.onDoctorsImportRepChange = onDoctorsImportRepChange;
+
+function handleDoctorsFileSelected(event) {
+  const file = event && event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const fileNameDisplay = document.getElementById('doctorsSelectedFileName');
+  if (fileNameDisplay) {
+    fileNameDisplay.style.display = 'block';
+    fileNameDisplay.textContent = file.name;
+  }
+
+  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  const safeHtml = window.escapeHtml || ((str) => String(str || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])));
+
+  const processRows = (rows) => {
+    if (!rows || !rows.length) {
+      if (typeof showToast === 'function') {
+        showToast(isAr ? 'الملف المحدد فارغ أو غير متوافق.' : 'Selected file is empty or incompatible.', 'warning');
+      }
+      return;
+    }
+
+    const allUsers = getSharedReportUsers();
+    const defaultRepSelect = document.getElementById('importDoctorsRepSelect');
+    const defaultRepId = defaultRepSelect ? defaultRepSelect.value : '';
+
+    pendingDoctorsImport = [];
+    let validCount = 0;
+    let invalidCount = 0;
+    const tableRowsHtml = [];
+
+    rows.forEach((r, idx) => {
+      const name = String(r.doctorname || r.name || r.doctor || r['اسمالطبيب'] || r['الطبيب'] || '').trim();
+      const specialty = String(r.specialty || r.speciality || r.spec || r['التخصص'] || 'Internal Medicine').trim();
+      let docClass = String(r.class || r.classification || r['الفئة'] || 'A').trim().toUpperCase();
+      if (!['A', 'B', 'C'].includes(docClass)) docClass = 'A';
+      const address = String(r.address || r.clinicaddress || r['العنوان'] || '').trim();
+      const phone = String(r.phone || r.mobile || r.telephone || r['الهاتف'] || '').trim();
+
+      const repKey = String(r.repcode || r.repid || r.rep || r.assignedrep || r['المندوب'] || '').trim();
+      let matchedRep = null;
+      if (repKey) {
+        matchedRep = allUsers.find((u) => 
+          String(u.id).toLowerCase() === repKey.toLowerCase() ||
+          String(u.employeeCode || '').toLowerCase() === repKey.toLowerCase() ||
+          String(u.code || '').toLowerCase() === repKey.toLowerCase() ||
+          String(u.name || '').toLowerCase() === repKey.toLowerCase()
+        );
+      }
+      if (!matchedRep && defaultRepId) {
+        matchedRep = allUsers.find((u) => u.id === defaultRepId);
+      }
+
+      const isValid = Boolean(name && address);
+      if (isValid) {
+        validCount++;
+        pendingDoctorsImport.push({
+          name,
+          specialty,
+          class: docClass,
+          address,
+          phone,
+          repId: matchedRep ? matchedRep.id : (defaultRepId || 'rep1')
+        });
+      } else {
+        invalidCount++;
+      }
+
+      const statusBadge = isValid
+        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'صالح' : 'Valid'}</span>`
+        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'بيانات ناقصة' : 'Missing Data'}</span>`;
+
+      const repName = matchedRep ? matchedRep.name : (isAr ? 'تلقائي' : 'Auto');
+
+      tableRowsHtml.push(`
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${statusBadge}</td>
+          <td><strong>${safeHtml(name || '-')}</strong></td>
+          <td>${safeHtml(specialty || '-')}</td>
+          <td>${safeHtml(docClass)}</td>
+          <td>${safeHtml(address || '-')}</td>
+          <td>${safeHtml(phone || '-')}</td>
+          <td>${safeHtml(repName)}</td>
+        </tr>
+      `);
+    });
+
+    const tableBody = document.getElementById('doctorsPreviewTableBody');
+    if (tableBody) tableBody.innerHTML = tableRowsHtml.join('');
+
+    const badgesContainer = document.getElementById('doctorsValidationBadges');
+    if (badgesContainer) {
+      badgesContainer.innerHTML = `
+        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'الإجمالي' : 'Total'}: ${rows.length}</span>
+        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'صالح' : 'Valid'}: ${validCount}</span>
+        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">${isAr ? 'غير مكتمل' : 'Invalid'}: ${invalidCount}</span>` : ''}
+      `;
+    }
+
+    const previewContainer = document.getElementById('doctorsPreviewContainer');
+    if (previewContainer) previewContainer.style.display = 'block';
+
+    const confirmBtn = document.getElementById('btnConfirmImportDoctors');
+    if (confirmBtn) confirmBtn.disabled = (validCount === 0);
+  };
+
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const text = e.target.result;
+        const rows = parseCSV(text);
+        processRows(rows);
+      } catch (err) {
+        console.error('CSV parse error:', err);
+        if (typeof showToast === 'function') showToast(isAr ? 'خطأ في معالجة ملف CSV' : 'Error parsing CSV file', 'error');
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    parseExcelFile(file, processRows);
+  }
+}
+window.handleDoctorsFileSelected = handleDoctorsFileSelected;
+
+function confirmImportDoctors() {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') showToast(isAr ? 'غير مصرح: استيراد بيانات الأطباء للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    return;
+  }
+
+  if (!pendingDoctorsImport || !pendingDoctorsImport.length) {
+    if (typeof showToast === 'function') showToast(isAr ? 'لا توجد بيانات صالحة للاستيراد.' : 'No valid records to import.', 'warning');
+    return;
+  }
+
+  const allSpecs = (window.store && window.store.specialties ? window.store.specialties.getAll() : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
+
+  pendingDoctorsImport.forEach((item, index) => {
+    const foundSpec = allSpecs.find((s) => s.name === item.specialty || s.id === item.specialty);
+    const specialtyId = foundSpec ? foundSpec.id : 'spec_internal';
+    const specialty = foundSpec ? foundSpec.name : item.specialty;
+    const specialtyAr = foundSpec ? (foundSpec.nameAr || foundSpec.name) : specialty;
+
+    const doctorObj = {
+      id: 'doc_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+      name: item.name,
+      specialtyId,
+      specialty,
+      specialtyAr,
+      class: item.class || 'A',
+      address: item.address,
+      clinicAddress: item.address,
+      phone: item.phone || '',
+      repId: item.repId,
+      visitsThisQuarter: 0
+    };
+
+    if (window.store && window.store.doctors) {
+      window.store.doctors.save(doctorObj);
+    } else {
+      if (!window.DEMO_DATA) window.DEMO_DATA = {};
+      if (!Array.isArray(window.DEMO_DATA.doctors)) window.DEMO_DATA.doctors = [];
+      window.DEMO_DATA.doctors.unshift(doctorObj);
+    }
+  });
+
+  if (typeof window.saveDataToStorage === 'function') window.saveDataToStorage();
+
+  const importedCount = pendingDoctorsImport.length;
+  closeImportDoctorsModal();
+
+  if (typeof showToast === 'function') {
+    showToast(isAr ? `تم استيراد ${importedCount} طبيب بنجاح!` : `Successfully imported ${importedCount} doctors!`, 'success');
+  }
+
+  if (typeof renderDoctorsReport === 'function') {
+    renderDoctorsReport();
+  }
+}
+window.confirmImportDoctors = confirmImportDoctors;
 
 function openImportPharmaciesModal() {
   const user = checkAuth();
@@ -1080,20 +1299,217 @@ function openImportPharmaciesModal() {
   }
   const modal = document.getElementById('importPharmaciesModal');
   if (modal) modal.style.display = 'flex';
+
+  pendingPharmaciesImport = [];
+  const fileInput = document.getElementById('pharmaciesFileInput');
+  if (fileInput) fileInput.value = '';
+  const fileNameDisplay = document.getElementById('pharmaciesSelectedFileName');
+  if (fileNameDisplay) {
+    fileNameDisplay.style.display = 'none';
+    fileNameDisplay.textContent = '';
+  }
+  const previewContainer = document.getElementById('pharmaciesPreviewContainer');
+  if (previewContainer) previewContainer.style.display = 'none';
+  const tableBody = document.getElementById('pharmaciesPreviewTableBody');
+  if (tableBody) tableBody.innerHTML = '';
+  const badges = document.getElementById('pharmaciesValidationBadges');
+  if (badges) badges.innerHTML = '';
+  const confirmBtn = document.getElementById('btnConfirmImportPharmacies');
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  populateModalHierarchy('importPharmaciesLmSelect', 'importPharmaciesDmSelect', 'importPharmaciesRepSelect');
 }
 window.openImportPharmaciesModal = openImportPharmaciesModal;
 
 function closeImportPharmaciesModal() {
   const modal = document.getElementById('importPharmaciesModal');
   if (modal) modal.style.display = 'none';
+  pendingPharmaciesImport = [];
 }
 window.closeImportPharmaciesModal = closeImportPharmaciesModal;
 
-function onDoctorsImportLmChange() {}
-window.onDoctorsImportLmChange = onDoctorsImportLmChange;
-
-function onPharmaciesImportLmChange() {}
+function onPharmaciesImportLmChange() {
+  updateModalDMs('importPharmaciesLmSelect', 'importPharmaciesDmSelect', 'importPharmaciesRepSelect');
+}
 window.onPharmaciesImportLmChange = onPharmaciesImportLmChange;
+
+function onPharmaciesImportDmChange() {
+  updateModalReps('importPharmaciesDmSelect', 'importPharmaciesRepSelect');
+}
+window.onPharmaciesImportDmChange = onPharmaciesImportDmChange;
+
+function onPharmaciesImportRepChange() {}
+window.onPharmaciesImportRepChange = onPharmaciesImportRepChange;
+
+function handlePharmaciesFileSelected(event) {
+  const file = event && event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const fileNameDisplay = document.getElementById('pharmaciesSelectedFileName');
+  if (fileNameDisplay) {
+    fileNameDisplay.style.display = 'block';
+    fileNameDisplay.textContent = file.name;
+  }
+
+  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  const safeHtml = window.escapeHtml || ((str) => String(str || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])));
+
+  const processRows = (rows) => {
+    if (!rows || !rows.length) {
+      if (typeof showToast === 'function') {
+        showToast(isAr ? 'الملف المحدد فارغ أو غير متوافق.' : 'Selected file is empty or incompatible.', 'warning');
+      }
+      return;
+    }
+
+    const allUsers = getSharedReportUsers();
+    const defaultRepSelect = document.getElementById('importPharmaciesRepSelect');
+    const defaultRepId = defaultRepSelect ? defaultRepSelect.value : '';
+
+    pendingPharmaciesImport = [];
+    let validCount = 0;
+    let invalidCount = 0;
+    const tableRowsHtml = [];
+
+    rows.forEach((r, idx) => {
+      const name = String(r.pharmacyname || r.name || r.pharmacy || r['اسمالصيدلية'] || r['الصيدلية'] || '').trim();
+      const address = String(r.address || r['العنوان'] || '').trim();
+      const contactPerson = String(r.contactperson || r.contact || r['المسؤول'] || '').trim();
+      const phone = String(r.phone || r.mobile || r.telephone || r['الهاتف'] || '').trim();
+
+      const repKey = String(r.repcode || r.repid || r.rep || r.assignedrep || r['المندوب'] || '').trim();
+      let matchedRep = null;
+      if (repKey) {
+        matchedRep = allUsers.find((u) => 
+          String(u.id).toLowerCase() === repKey.toLowerCase() ||
+          String(u.employeeCode || '').toLowerCase() === repKey.toLowerCase() ||
+          String(u.code || '').toLowerCase() === repKey.toLowerCase() ||
+          String(u.name || '').toLowerCase() === repKey.toLowerCase()
+        );
+      }
+      if (!matchedRep && defaultRepId) {
+        matchedRep = allUsers.find((u) => u.id === defaultRepId);
+      }
+
+      const isValid = Boolean(name && address);
+      if (isValid) {
+        validCount++;
+        pendingPharmaciesImport.push({
+          name,
+          address,
+          contactPerson,
+          phone,
+          repId: matchedRep ? matchedRep.id : (defaultRepId || 'rep1')
+        });
+      } else {
+        invalidCount++;
+      }
+
+      const statusBadge = isValid
+        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'صالح' : 'Valid'}</span>`
+        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'بيانات ناقصة' : 'Missing Data'}</span>`;
+
+      const repName = matchedRep ? matchedRep.name : (isAr ? 'تلقائي' : 'Auto');
+
+      tableRowsHtml.push(`
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${statusBadge}</td>
+          <td><strong>${safeHtml(name || '-')}</strong></td>
+          <td>${safeHtml(address || '-')}</td>
+          <td>${safeHtml(contactPerson || '-')}</td>
+          <td>${safeHtml(phone || '-')}</td>
+          <td>${safeHtml(repName)}</td>
+        </tr>
+      `);
+    });
+
+    const tableBody = document.getElementById('pharmaciesPreviewTableBody');
+    if (tableBody) tableBody.innerHTML = tableRowsHtml.join('');
+
+    const badgesContainer = document.getElementById('pharmaciesValidationBadges');
+    if (badgesContainer) {
+      badgesContainer.innerHTML = `
+        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'الإجمالي' : 'Total'}: ${rows.length}</span>
+        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'صالح' : 'Valid'}: ${validCount}</span>
+        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">${isAr ? 'غير مكتمل' : 'Invalid'}: ${invalidCount}</span>` : ''}
+      `;
+    }
+
+    const previewContainer = document.getElementById('pharmaciesPreviewContainer');
+    if (previewContainer) previewContainer.style.display = 'block';
+
+    const confirmBtn = document.getElementById('btnConfirmImportPharmacies');
+    if (confirmBtn) confirmBtn.disabled = (validCount === 0);
+  };
+
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const text = e.target.result;
+        const rows = parseCSV(text);
+        processRows(rows);
+      } catch (err) {
+        console.error('CSV parse error:', err);
+        if (typeof showToast === 'function') showToast(isAr ? 'خطأ في معالجة ملف CSV' : 'Error parsing CSV file', 'error');
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    parseExcelFile(file, processRows);
+  }
+}
+window.handlePharmaciesFileSelected = handlePharmaciesFileSelected;
+
+function confirmImportPharmacies() {
+  const user = checkAuth();
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  if (!isAdmin) {
+    if (typeof showToast === 'function') showToast(isAr ? 'غير مصرح: استيراد بيانات الصيدليات للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    return;
+  }
+
+  if (!pendingPharmaciesImport || !pendingPharmaciesImport.length) {
+    if (typeof showToast === 'function') showToast(isAr ? 'لا توجد بيانات صالحة للاستيراد.' : 'No valid records to import.', 'warning');
+    return;
+  }
+
+  pendingPharmaciesImport.forEach((item, index) => {
+    const pharmacyObj = {
+      id: 'pharm_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+      name: item.name,
+      address: item.address,
+      contactPerson: item.contactPerson || '',
+      phone: item.phone || '',
+      repId: item.repId
+    };
+
+    if (window.store && window.store.pharmacies) {
+      window.store.pharmacies.save(pharmacyObj);
+    } else {
+      if (!window.DEMO_DATA) window.DEMO_DATA = {};
+      if (!Array.isArray(window.DEMO_DATA.pharmacies)) window.DEMO_DATA.pharmacies = [];
+      window.DEMO_DATA.pharmacies.unshift(pharmacyObj);
+    }
+  });
+
+  if (typeof window.saveDataToStorage === 'function') window.saveDataToStorage();
+
+  const importedCount = pendingPharmaciesImport.length;
+  closeImportPharmaciesModal();
+
+  if (typeof showToast === 'function') {
+    showToast(isAr ? `تم استيراد ${importedCount} صيدلية بنجاح!` : `Successfully imported ${importedCount} pharmacies!`, 'success');
+  }
+
+  if (typeof renderPharmaciesReport === 'function') {
+    renderPharmaciesReport();
+  }
+}
+window.confirmImportPharmacies = confirmImportPharmacies;
 
 /**
  * Parse an Excel file (.xlsx, .xls) using SheetJS into normalized objects
