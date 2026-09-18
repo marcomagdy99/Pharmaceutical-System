@@ -39,6 +39,7 @@ const ASSETS_TO_CACHE = [
   './js/login.js',
   './js/dashboard.js',
   './js/visits.js',
+  './js/reschedule.js',
   './js/excel-templates-data.js',
   './js/chart.umd.min.js',
   './js/interactive-charts.js',

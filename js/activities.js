@@ -116,10 +116,11 @@ function saveActivities(data) {
 }
 
 let demoActivities = loadActivities();
-let currentDate = new Date(2026, 8, 2); // Default to demo date September 2, 2026
+let currentDate = window.getSystemDate ? window.getSystemDate() : new Date();
 
 function formatDate(date) {
-  return date.toISOString().split("T")[0];
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 /**
@@ -298,7 +299,7 @@ function initActivities() {
   });
 
   document.getElementById("todayBtn")?.addEventListener("click", () => {
-    currentDate = new Date(2026, 8, 2);
+    currentDate = window.getSystemDate ? window.getSystemDate() : new Date();
     updateView();
   });
 

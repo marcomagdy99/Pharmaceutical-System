@@ -223,7 +223,7 @@ function getDynamicCalendarEvents() {
   return events;
 }
 
-let currentDate = new Date(2026, 8, 1);
+let currentDate = window.getSystemDate ? window.getSystemDate() : new Date();
 window.currentCalendarTargetId = "all";
 window.currentCalendarTargetName = "All Subordinates (Team View)";
 window.currentCalendarTargetRole = "Team";
@@ -327,7 +327,7 @@ function renderCalendar() {
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthDays = new Date(year, month, 0).getDate();
-  const todayStr = "2026-09-04";
+  const todayStr = window.getSystemTodayStr ? window.getSystemTodayStr() : new Date().toISOString().split("T")[0];
 
   const targetId = window.currentCalendarTargetId || "all";
   const currentUser = (window.checkAuth && window.checkAuth()) || {
@@ -964,7 +964,7 @@ function setupCalendar() {
   });
 
   document.getElementById("btnToday")?.addEventListener("click", () => {
-    currentDate = new Date(2026, 8, 4);
+    currentDate = window.getSystemDate ? window.getSystemDate() : new Date();
     renderCalendar();
   });
 

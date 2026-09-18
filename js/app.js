@@ -31,6 +31,28 @@ function escapeHtml(str) {
 window.escapeHtml = escapeHtml;
 
 // ============================================================================
+// Section 0.5: Unified System Date Synchronizer
+// Ensures visits, calendar, activities, and dashboard stay synchronized.
+// If DEMO_DATA.systemDate is configured, it takes priority; otherwise uses live Date.
+// ============================================================================
+function getSystemDate() {
+  if (typeof window !== "undefined" && window.DEMO_DATA && window.DEMO_DATA.systemDate) {
+    const d = new Date(window.DEMO_DATA.systemDate);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+
+function getSystemTodayStr() {
+  const d = getSystemDate();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+window.getSystemDate = getSystemDate;
+window.getSystemTodayStr = getSystemTodayStr;
+
+// ============================================================================
 // Section 1: Default Master Seed Data
 // ============================================================================
 const DEFAULT_DEMO_DATA = {
@@ -2851,11 +2873,7 @@ function checkAuth() {
     sessionStorage.setItem("pharmaUser", JSON.stringify(user));
     return user;
   }
-  if (sessionStorage.getItem("pharma_logged_out") === "true") {
-    return null;
-  }
-  sessionStorage.setItem("pharmaUser", JSON.stringify(DEMO_DATA.currentUser));
-  return DEMO_DATA.currentUser;
+  return null;
 }
 
 function enforcePageRoleSecurity() {
@@ -2977,6 +2995,91 @@ function initPage(pageName) {
 if (document.getElementById("topbar")) {
   renderTopbar();
 }
+
+// ============================================================================
+// Section: Asynchronous Excel Import Progress Engine (Anti-Freezing & UI Smoothness)
+// ============================================================================
+function createExcelProgressModal() {
+  let modalEl = document.getElementById("excelImportProgressModal");
+  if (!modalEl) {
+    modalEl = document.createElement("div");
+    modalEl.id = "excelImportProgressModal";
+    modalEl.className = "modal-overlay";
+    modalEl.style.cssText = "display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);";
+    modalEl.innerHTML = `
+      <div style="background: var(--card-bg, #ffffff); color: var(--text-color, #1e293b); border-radius: 14px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;" id="excelProgressIcon">📊</div>
+        <h5 style="margin: 0 0 6px 0; font-weight: 700; color: var(--text-color, #1e293b);" id="excelProgressTitle">جاري استيراد ملف المبيعات</h5>
+        <div style="font-size: 0.85rem; color: var(--gray-500, #64748b); margin-bottom: 16px; word-break: break-all;" id="excelProgressFileName">-</div>
+        
+        <div style="background: rgba(0,0,0,0.08); border-radius: 8px; height: 14px; overflow: hidden; margin-bottom: 12px; position: relative;">
+          <div id="excelProgressBar" style="background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; width: 0%; transition: width 0.15s ease; border-radius: 8px;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; color: var(--gray-600, #475569); margin-bottom: 8px;">
+          <span id="excelProgressPercent">0%</span>
+          <span id="excelProgressCount">0 / 0</span>
+        </div>
+
+        <div style="font-size: 0.82rem; color: var(--gray-500, #64748b); min-height: 20px;" id="excelProgressStatus">جاري تجهيز الملف...</div>
+      </div>
+    `;
+    document.body.appendChild(modalEl);
+  }
+  return modalEl;
+}
+
+function openExcelImportProgress(options = {}) {
+  const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar") || document.documentElement.dir === "rtl";
+  const modalEl = createExcelProgressModal();
+  modalEl.style.display = "flex";
+
+  const titleEl = document.getElementById("excelProgressTitle");
+  const fileEl = document.getElementById("excelProgressFileName");
+  const barEl = document.getElementById("excelProgressBar");
+  const percentEl = document.getElementById("excelProgressPercent");
+  const countEl = document.getElementById("excelProgressCount");
+  const statusEl = document.getElementById("excelProgressStatus");
+  const iconEl = document.getElementById("excelProgressIcon");
+
+  titleEl.textContent = options.title || (isAr ? "جاري معالجة واستيراد المبيعات" : "Processing Sales Import");
+  fileEl.textContent = options.fileName || "";
+  barEl.style.width = "0%";
+  barEl.style.background = "linear-gradient(90deg, #3b82f6, #10b981)";
+  percentEl.textContent = "0%";
+  countEl.textContent = "0 / " + (options.totalRows ? options.totalRows.toLocaleString() : "0");
+  statusEl.textContent = options.status || (isAr ? "جاري قراءة وتفكيك بيانات الشيت..." : "Parsing sheet data...");
+  iconEl.textContent = "📊";
+
+  return {
+    update(current, total, customStatus) {
+      const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+      barEl.style.width = pct + "%";
+      percentEl.textContent = pct + "%";
+      countEl.textContent = `${current.toLocaleString()} / ${total.toLocaleString()}`;
+      if (customStatus) {
+        statusEl.textContent = customStatus;
+      } else {
+        statusEl.textContent = isAr
+          ? `تمت معالجة ${current.toLocaleString()} من ${total.toLocaleString()} سجل...`
+          : `Processed ${current.toLocaleString()} of ${total.toLocaleString()} records...`;
+      }
+    },
+    finish(successMsg) {
+      barEl.style.width = "100%";
+      percentEl.textContent = "100%";
+      statusEl.textContent = successMsg || (isAr ? "تم الاستيراد بنجاح!" : "Import completed successfully!");
+      iconEl.textContent = "✅";
+      setTimeout(() => {
+        modalEl.style.display = "none";
+      }, 700);
+    },
+    close() {
+      modalEl.style.display = "none";
+    }
+  };
+}
+window.openExcelImportProgress = openExcelImportProgress;
 
 document.addEventListener("DOMContentLoaded", () => {
   window.initTheme();

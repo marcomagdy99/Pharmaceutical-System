@@ -336,12 +336,8 @@
         allDocs.forEach((d) => {
           const matchAreaId = d.areaId === areaId;
           const matchAreaName = nameLower && d.area && d.area.toLowerCase().trim() === nameLower;
-          const matchAddress = nameLower && (
-            (d.clinicAddress && d.clinicAddress.toLowerCase().includes(nameLower)) ||
-            (d.address && d.address.toLowerCase().includes(nameLower))
-          );
 
-          if (matchAreaId || matchAreaName || matchAddress) {
+          if (matchAreaId || matchAreaName) {
             d.repId = newRepId || null;
             d.areaId = areaId;
             if (effectiveName) d.area = effectiveName;
@@ -354,9 +350,8 @@
         allPharms.forEach((p) => {
           const matchAreaId = p.areaId === areaId;
           const matchAreaName = nameLower && p.area && p.area.toLowerCase().trim() === nameLower;
-          const matchAddress = nameLower && p.address && p.address.toLowerCase().includes(nameLower);
 
-          if (matchAreaId || matchAreaName || matchAddress) {
+          if (matchAreaId || matchAreaName) {
             p.repId = newRepId || null;
             p.areaId = areaId;
             if (effectiveName) p.area = effectiveName;
@@ -369,9 +364,8 @@
         allHosps.forEach((h) => {
           const matchAreaId = h.areaId === areaId;
           const matchAreaName = nameLower && h.area && h.area.toLowerCase().trim() === nameLower;
-          const matchAddress = nameLower && h.address && h.address.toLowerCase().includes(nameLower);
 
-          if (matchAreaId || matchAreaName || matchAddress) {
+          if (matchAreaId || matchAreaName) {
             h.repId = newRepId || null;
             h.areaId = areaId;
             if (effectiveName) h.area = effectiveName;

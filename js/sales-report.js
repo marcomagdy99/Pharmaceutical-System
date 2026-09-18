@@ -529,7 +529,8 @@ function handleExcelUpload(e) {
   showToast(lang === 'ar' ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, 'info');
 
   const reader = new FileReader();
-  reader.onload = function (ev) {
+  reader.onload = async function (ev) {
+    let progress = null;
     try {
       const data = new Uint8Array(ev.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
@@ -538,93 +539,109 @@ function handleExcelUpload(e) {
       // dist.columnMap's values point to -- no positional guessing.
       const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
+      const totalRows = rows.length;
+      if (typeof window.openExcelImportProgress === 'function') {
+        progress = window.openExcelImportProgress({
+          title: lang === 'ar' ? `جاري استيراد مبيعات: ${dist.name}` : `Importing Sales: ${dist.name}`,
+          fileName: file.name,
+          totalRows: totalRows,
+        });
+      }
+
       const map = dist.columnMap;
       const batchId = 'batch_' + Date.now();
       const imported = [];
       let returnsCount = 0;
       let skippedInvalid = 0;
 
-      rows.forEach((row, idx) => {
-        const productRaw = map.product ? row[map.product] : '';
-        const valueRaw = map.value ? row[map.value] : '';
-        const quantityRaw = map.quantity ? row[map.quantity] : '';
-        const dateRaw = map.date ? row[map.date] : '';
-        const product = String(productRaw || '').trim();
-        // Sheets from these distributors use plain numbers or numbers
-        // with thousands separators; strip anything that isn't a digit,
-        // minus sign, or decimal point before parsing.
-        const numericValueRaw = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ''));
-        let numericQuantity = map.quantity && quantityRaw !== '' && quantityRaw !== null && quantityRaw !== undefined
-          ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ''))
-          : null;
-        // Best-effort date parsing: SheetJS may hand back a JS Date object
-        // (for real Excel date cells), an Excel serial number, or plain
-        // text (for CSV). Unparseable values are left null rather than
-        // guessed -- the row still gets the required Month/Year picked at
-        // upload time, it just won't be narrowable by exact date.
-        let parsedDate = null;
-        if (map.date && dateRaw !== '' && dateRaw !== null && dateRaw !== undefined) {
-          if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
-            parsedDate = dateRaw.toISOString().slice(0, 10);
-          } else if (typeof dateRaw === 'number') {
-            // Excel serial date (days since 1899-12-30)
-            const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
-            if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+      // Non-blocking asynchronous chunking (1,000 rows per chunk)
+      const CHUNK_SIZE = 1000;
+      for (let i = 0; i < totalRows; i += CHUNK_SIZE) {
+        const chunkEnd = Math.min(i + CHUNK_SIZE, totalRows);
+        for (let idx = i; idx < chunkEnd; idx++) {
+          const row = rows[idx];
+          const productRaw = map.product ? row[map.product] : '';
+          const valueRaw = map.value ? row[map.value] : '';
+          const quantityRaw = map.quantity ? row[map.quantity] : '';
+          const dateRaw = map.date ? row[map.date] : '';
+          const product = String(productRaw || '').trim();
+
+          const numericValueRaw = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ''));
+          let numericQuantity = map.quantity && quantityRaw !== '' && quantityRaw !== null && quantityRaw !== undefined
+            ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ''))
+            : null;
+
+          let parsedDate = null;
+          if (map.date && dateRaw !== '' && dateRaw !== null && dateRaw !== undefined) {
+            if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
+              parsedDate = dateRaw.toISOString().slice(0, 10);
+            } else if (typeof dateRaw === 'number') {
+              // Excel serial date (days since 1899-12-30)
+              const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+              if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+            } else {
+              const d = new Date(String(dateRaw).trim());
+              if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+            }
+          }
+
+          if (!product || isNaN(numericValueRaw)) {
+            skippedInvalid++;
+            continue;
+          }
+
+          let numericValue = numericValueRaw;
+
+          // A row is definitely a return/credit note if either the quantity is negative OR the value is negative
+          const hasNegativeQuantity = numericQuantity !== null && !isNaN(numericQuantity) && numericQuantity < 0;
+          const hasNegativeValue = numericValue < 0;
+          const isReturn = hasNegativeQuantity || hasNegativeValue;
+
+          if (isReturn) {
+            returnsCount++;
+
+            // Enforce consistent negative signs on both dimensions for correct arithmetic deduction
+            numericValue = -Math.abs(numericValue);
+            if (numericQuantity !== null && !isNaN(numericQuantity)) {
+              numericQuantity = -Math.abs(numericQuantity);
+            }
           } else {
-            const d = new Date(String(dateRaw).trim());
-            if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
+            // Ensure standard sales rows do not carry accidental negative artifacts
+            numericValue = Math.abs(numericValue);
+            if (numericQuantity !== null && !isNaN(numericQuantity)) {
+              numericQuantity = Math.abs(numericQuantity);
+            }
           }
+
+          imported.push({
+            id: `dsale_${Date.now()}_${idx}`,
+            batchId,
+            distributorId: distId,
+            month: monthKey,
+            date: parsedDate,
+            product,
+            value: numericValue,
+            quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
+            pharmacyName: map.pharmacy ? String(row[map.pharmacy] || '').trim() : '',
+            areaRaw: map.area ? String(row[map.area] || '').trim() : '',
+            repId: null,
+            dmId: null,
+            lmId: null,
+            lineId: null,
+            areaId: null,
+          });
         }
 
-        if (!product || isNaN(numericValueRaw)) {
-          skippedInvalid++;
-          return;
+        if (progress) {
+          progress.update(chunkEnd, totalRows);
         }
+        // Yield to browser event loop
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
 
-        let numericValue = numericValueRaw;
-
-        // A row is definitely a return/credit note if either the quantity is negative OR the value is negative
-        const hasNegativeQuantity = numericQuantity !== null && !isNaN(numericQuantity) && numericQuantity < 0;
-        const hasNegativeValue = numericValue < 0;
-        const isReturn = hasNegativeQuantity || hasNegativeValue;
-
-        if (isReturn) {
-          returnsCount++;
-
-          // Enforce consistent negative signs on both dimensions for correct arithmetic deduction
-          numericValue = -Math.abs(numericValue);
-          if (numericQuantity !== null && !isNaN(numericQuantity)) {
-            numericQuantity = -Math.abs(numericQuantity);
-          }
-        } else {
-          // Ensure standard sales rows do not carry accidental negative artifacts
-          numericValue = Math.abs(numericValue);
-          if (numericQuantity !== null && !isNaN(numericQuantity)) {
-            numericQuantity = Math.abs(numericQuantity);
-          }
-        }
-
-        imported.push({
-          id: `dsale_${Date.now()}_${idx}`,
-          batchId,
-          distributorId: distId,
-          month: monthKey,
-          date: parsedDate,
-          product,
-          value: numericValue,
-          quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
-          pharmacyName: map.pharmacy ? String(row[map.pharmacy] || '').trim() : '',
-          areaRaw: map.area ? String(row[map.area] || '').trim() : '',
-          // Deliberately unassigned: no raw-area-text -> Area/rep alias
-          // matching exists yet, so these don't get attributed to a rep,
-          // DM, LM, or line automatically.
-          repId: null,
-          dmId: null,
-          lmId: null,
-          lineId: null,
-          areaId: null,
-        });
-      });
+      if (progress) {
+        progress.update(totalRows, totalRows, lang === 'ar' ? 'جاري حفظ وتخزين البيانات...' : 'Saving imported records...');
+      }
 
       if (replacingPreviousBatch && existingBatch && window.store && window.store.distributorSales) {
         window.store.distributorSales.deleteByBatch(existingBatch.id);
@@ -653,17 +670,22 @@ function handleExcelUpload(e) {
           ? (lang === 'ar' ? ' (استبدلت رفعة سابقة لنفس الشهر/الموزّع)' : ' (replaced a previous upload for this month/distributor)')
           : '';
         panel.innerHTML = lang === 'ar'
-          ? `✅ اتسجل <strong>${imported.length}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> هتظهر الصفوف دي في جدول Pharmacies Sales فورًا، لكن لو فيها مناطق أو منتجات مش مربوطة لسه، مش هتتحسب في تبويب Achievements ولا في فلتر الـ Line لحد ما تربطها من صفحة الموزعين.`
-          : `✅ Imported <strong>${imported.length}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
+          ? `✅ اتسجل <strong>${imported.length.toLocaleString()}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> هتظهر الصفوف دي في جدول Pharmacies Sales فورًا، لكن لو فيها مناطق أو منتجات مش مربوطة لسه، مش هتتحسب في تبويب Achievements ولا في فلتر الـ Line لحد ما تربطها من صفحة الموزعين.`
+          : `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
+      }
+
+      if (progress) {
+        progress.finish(lang === 'ar' ? `تم استيراد ${imported.length.toLocaleString()} سجل بنجاح!` : `Successfully imported ${imported.length.toLocaleString()} rows!`);
       }
 
       showToast(
         lang === 'ar'
-          ? `تم استيراد ${imported.length} صف بنجاح.`
-          : `Successfully imported ${imported.length} rows.`,
+          ? `تم استيراد ${imported.length.toLocaleString()} صف بنجاح.`
+          : `Successfully imported ${imported.length.toLocaleString()} rows.`,
         'success',
       );
     } catch (err) {
+      if (progress) progress.close();
       console.error('Error parsing distributor sheet:', err);
       showToast(
         lang === 'ar'
