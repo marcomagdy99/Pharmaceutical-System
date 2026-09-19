@@ -843,25 +843,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupRoleBasedView() {
-  const filterRep = document.getElementById("filterRep");
-  const filterContainer = document.getElementById("managerRepFilterContainer");
-  const planVisitBtn = document.getElementById("planVisitBtn");
-  const addActualVisitBtn = document.getElementById("addActualVisitBtn");
-  const titleSpan = document.getElementById("visitsPageTitle");
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-
-  if (titleSpan) {
-    titleSpan.setAttribute("data-i18n", "tabDailyTimeline");
-    titleSpan.textContent =
-      lang === "ar" ? "الخط الزمني للزيارات اليومية" : "Daily Visits Timeline";
-  }
-
   updateAdminGpsButton();
 
   const filterBar = document.getElementById("managerFilterBar");
   const filterLine = document.getElementById("filterLine");
   const lineContainer = document.getElementById("managerLineFilterContainer");
   const filterContainer = document.getElementById("managerRepFilterContainer");
+  const filterRep = document.getElementById("filterRep");
   const planVisitBtn = document.getElementById("planVisitBtn");
   const addActualVisitBtn = document.getElementById("addActualVisitBtn");
   const titleSpan = document.getElementById("visitsPageTitle");
@@ -873,8 +861,6 @@ function setupRoleBasedView() {
     titleSpan.textContent =
       isAr ? "الخط الزمني للزيارات اليومية" : "Daily Visits Timeline";
   }
-
-  updateAdminGpsButton();
 
   // Always initialize the Line Filter for all authenticated users
   populateVisitsLineFilter();
