@@ -858,11 +858,35 @@ function setupRoleBasedView() {
 
   updateAdminGpsButton();
 
+  const filterBar = document.getElementById("managerFilterBar");
+  const filterLine = document.getElementById("filterLine");
+  const lineContainer = document.getElementById("managerLineFilterContainer");
+  const filterContainer = document.getElementById("managerRepFilterContainer");
+  const planVisitBtn = document.getElementById("planVisitBtn");
+  const addActualVisitBtn = document.getElementById("addActualVisitBtn");
+  const titleSpan = document.getElementById("visitsPageTitle");
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  if (titleSpan) {
+    titleSpan.setAttribute("data-i18n", "tabDailyTimeline");
+    titleSpan.textContent =
+      isAr ? "الخط الزمني للزيارات اليومية" : "Daily Visits Timeline";
+  }
+
+  updateAdminGpsButton();
+
+  // Always initialize the Line Filter for all authenticated users
+  populateVisitsLineFilter();
+
   if (isManager) {
+    if (filterBar) filterBar.style.display = "flex";
+    if (lineContainer) lineContainer.style.display = "flex";
     if (filterContainer) filterContainer.style.display = "flex";
     if (filterRep) {
       filterRep.style.display = "inline-block";
-      populateManagerRepDropdown();
+      const curLine = filterLine ? filterLine.value : "all";
+      populateManagerRepDropdown(curLine);
     }
     populateAreaFilters();
     const canLogVisits =
@@ -873,121 +897,120 @@ function setupRoleBasedView() {
     if (planVisitBtn) planVisitBtn.style.display = canLogVisits ? "inline-flex" : "none";
     if (addActualVisitBtn) addActualVisitBtn.style.display = canLogVisits ? "inline-flex" : "none";
   } else {
+    // Medical Rep view: Line filter is shown as single/fixed, team selector is hidden
+    if (filterBar) filterBar.style.display = "flex";
+    if (lineContainer) lineContainer.style.display = "flex";
     if (filterContainer) filterContainer.style.display = "none";
     if (filterRep) filterRep.style.display = "none";
     if (planVisitBtn) planVisitBtn.style.display = "inline-flex";
     if (addActualVisitBtn) addActualVisitBtn.style.display = "inline-flex";
+    populateAreaFilters();
   }
 }
 
-function populateManagerRepDropdown() {
-  const filterRep = document.getElementById("filterRep");
-  if (!filterRep) return;
+/**
+ * Populates the Product Line filter based on the current user's role and assigned lines.
+ */
+function populateVisitsLineFilter() {
+  const filterLine = document.getElementById("filterLine");
+  if (!filterLine) return;
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  filterRep.replaceChildren();
+  const isAr = lang === "ar";
+  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+  const curVal = filterLine.value;
 
-  if (currentUserRole === "line_manager") {
-    const dms = allUsers.filter(
-      (u) => u.managerId === currentUser.id && u.role === "district_manager",
-    );
-    const dmIds = dms.map((d) => d.id);
-    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
+  filterLine.replaceChildren();
 
-    const optAll = document.createElement("option");
-    optAll.value = "all";
-    optAll.textContent =
-      lang === "ar"
-        ? "🌐 كل الفريق (المديرين والمناديب)"
-        : "🌐 All Team (DMs & Med Reps)";
-    filterRep.appendChild(optAll);
-
-    const optSelf = document.createElement("option");
-    optSelf.value = currentUser.id;
-    optSelf.className = "filter-opt-lm";
-    optSelf.textContent =
-      lang === "ar"
-        ? `👔 ${currentUser.name} (LM - زياراتي)`
-        : `👔 ${currentUser.name} (LM - My Visits)`;
-    filterRep.appendChild(optSelf);
-
-    const optAllDMs = document.createElement("option");
-    optAllDMs.value = "all_dms";
-    optAllDMs.className = "filter-opt-dm";
-    optAllDMs.textContent =
-      lang === "ar"
-        ? "👥 جميع مديري المناطق (DMs فقط)"
-        : "👥 All District Managers (DMs Only)";
-    filterRep.appendChild(optAllDMs);
-
-    const optAllReps = document.createElement("option");
-    optAllReps.value = "all_reps";
-    optAllReps.className = "filter-opt-rep";
-    optAllReps.textContent =
-      lang === "ar"
-        ? "💼 جميع المناديب (Reps فقط)"
-        : "💼 All Medical Reps (Reps Only)";
-    filterRep.appendChild(optAllReps);
-
-    if (dms.length > 0) {
-      const dmGroup = document.createElement("optgroup");
-      dmGroup.label =
-        lang === "ar"
-          ? "مدراء المناطق (DMs)"
-          : "District Managers (DMs)";
-      dms.forEach((dm) => {
+  if (!isManager) {
+    // Rep has 1 line
+    if (userLines.length > 0) {
+      userLines.forEach((l) => {
         const opt = document.createElement("option");
-        opt.value = dm.id;
-        opt.className = "filter-opt-dm";
-        opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"})`;
-        dmGroup.appendChild(opt);
+        opt.value = l.id;
+        opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+        filterLine.appendChild(opt);
       });
-      filterRep.appendChild(dmGroup);
-    }
-
-    if (reps.length > 0) {
-      const repGroup = document.createElement("optgroup");
-      repGroup.label =
-        lang === "ar"
-          ? "المناديب الطبيين (Reps)"
-          : "Medical Reps (Reps)";
-      reps.forEach((rep) => {
-        const opt = document.createElement("option");
-        opt.value = rep.id;
-        opt.className = "filter-opt-rep";
-        opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
-        repGroup.appendChild(opt);
-      });
-      filterRep.appendChild(repGroup);
+      filterLine.disabled = true;
+    } else {
+      const opt = document.createElement("option");
+      opt.value = "line1";
+      opt.textContent = isAr ? "📦 خط افتراضي" : "📦 Assigned Line";
+      filterLine.appendChild(opt);
+      filterLine.disabled = true;
     }
     return;
   }
 
-  if (currentUserRole === "district_manager") {
+  // Managers & Admin
+  filterLine.disabled = false;
+  const isFullAdmin = currentUserRole === "admin" || currentUserRole === "hr";
+
+  if (isFullAdmin || userLines.length > 1) {
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent =
-      lang === "ar" ? "🌐 كل مناديب الفريق" : "🌐 All Team Reps";
-    filterRep.appendChild(optAll);
+    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    filterLine.appendChild(optAll);
+  }
 
-    const selfOpt = document.createElement("option");
-    selfOpt.value = currentUser.id;
-    selfOpt.className = "filter-opt-dm";
-    selfOpt.textContent =
-      lang === "ar"
-        ? `👔 ${currentUser.name} (DM - زياراتي)`
-        : `👔 ${currentUser.name} (DM - My Visits)`;
-    filterRep.appendChild(selfOpt);
+  userLines.forEach((l) => {
+    const opt = document.createElement("option");
+    opt.value = l.id;
+    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    filterLine.appendChild(opt);
+  });
 
-    const myReps = getReportingReps();
-    if (myReps.length > 0) {
+  if (curVal && Array.from(filterLine.options).some((o) => o.value === curVal)) {
+    filterLine.value = curVal;
+  }
+}
+
+/**
+ * Populates Team Filter (#filterRep) cascading strictly from the selected product line.
+ */
+function populateManagerRepDropdown(selectedLineId = "all") {
+  const filterRep = document.getElementById("filterRep");
+  if (!filterRep) return;
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const scopedTeam = window.getScopedTeamForLine
+    ? window.getScopedTeamForLine(selectedLineId, currentUser)
+    : allUsers;
+
+  filterRep.replaceChildren();
+
+  const isLM = currentUserRole === "line_manager" || currentUserRole === "lm";
+  const isDM = currentUserRole === "district_manager" || currentUserRole === "dm";
+  const isBU = currentUserRole === "business_unit" || currentUserRole === "bu";
+  const isAdmin = currentUserRole === "admin" || currentUserRole === "hr";
+
+  // Option: All Team in this line
+  const optAll = document.createElement("option");
+  optAll.value = "all";
+  optAll.textContent = isAr ? "🌐 كل الفريق في هذا الخط" : "🌐 All Team in Line";
+  filterRep.appendChild(optAll);
+
+  // Self Option
+  if (isManager && !isAdmin) {
+    const optSelf = document.createElement("option");
+    optSelf.value = currentUser.id;
+    optSelf.textContent = isAr
+      ? `👔 ${currentUser.name} (زياراتي الشخصية)`
+      : `👔 ${currentUser.name} (My Visits)`;
+    filterRep.appendChild(optSelf);
+  }
+
+  if (isDM) {
+    // DM only supervises Medical Reps
+    const reps = scopedTeam.filter(
+      (u) => u.id !== currentUser.id && (u.role === "medical_rep" || u.role === "rep")
+    );
+    if (reps.length > 0) {
       const repGroup = document.createElement("optgroup");
-      repGroup.label =
-        lang === "ar"
-          ? "المناديب الطبيين (Reps)"
-          : "Medical Reps (Reps)";
-      myReps.forEach((rep) => {
+      repGroup.label = isAr ? "المناديب الطبيين (Reps)" : "Medical Reps (Reps)";
+      reps.forEach((rep) => {
         const opt = document.createElement("option");
         opt.value = rep.id;
         opt.className = "filter-opt-rep";
@@ -999,86 +1022,17 @@ function populateManagerRepDropdown() {
     return;
   }
 
-  const optAll = document.createElement("option");
-  optAll.value = "all";
-  optAll.textContent =
-    lang === "ar"
-      ? "🌐 كل الفريق (الكل بالكامل)"
-      : "🌐 All Team (Entire Organization)";
-  filterRep.appendChild(optAll);
-
-  if (currentUserRole === "business_unit") {
-    const optSelf = document.createElement("option");
-    optSelf.value = currentUser.id;
-    optSelf.className = "filter-opt-bu";
-    optSelf.textContent =
-      lang === "ar"
-        ? `👔 ${currentUser.name} (BU - زياراتي)`
-        : `👔 ${currentUser.name} (BU - My Visits)`;
-    filterRep.appendChild(optSelf);
-  }
-
-  const optAllLMs = document.createElement("option");
-  optAllLMs.value = "all_lms";
-  optAllLMs.className = "filter-opt-lm";
-  optAllLMs.textContent =
-    lang === "ar"
-      ? "👔 جميع مديري الخطوط (LMs)"
-      : "👔 All Line Managers (LMs)";
-  filterRep.appendChild(optAllLMs);
-
-  const optAllDMs = document.createElement("option");
-  optAllDMs.value = "all_dms";
-  optAllDMs.className = "filter-opt-dm";
-  optAllDMs.textContent =
-    lang === "ar"
-      ? "👥 جميع مديري المناطق (DMs)"
-      : "👥 All District Managers (DMs)";
-  filterRep.appendChild(optAllDMs);
-
-  const optAllReps = document.createElement("option");
-  optAllReps.value = "all_reps";
-  optAllReps.className = "filter-opt-rep";
-  optAllReps.textContent =
-    lang === "ar"
-      ? "💼 جميع المناديب (Reps)"
-      : "💼 All Medical Reps (Reps)";
-  filterRep.appendChild(optAllReps);
-
-  const isBU = currentUserRole === "business_unit";
-  const myDownstream = isBU && window.getAllSubordinates ? window.getAllSubordinates(currentUser.id) : [];
-  const myDownstreamIds = myDownstream.map((u) => u.id);
-
-  const lms = isBU
-    ? allUsers.filter((u) => u.managerId === currentUser.id && (u.role === "line_manager" || u.role === "lm"))
-    : allUsers.filter((u) => u.role === "line_manager" || u.role === "lm");
-
-  if (lms.length > 0) {
-    const lmGroup = document.createElement("optgroup");
-    lmGroup.label =
-      lang === "ar"
-        ? "مدراء الخطوط (Line Managers)"
-        : "Line Managers (LMs)";
-    lms.forEach((lm) => {
-      const opt = document.createElement("option");
-      opt.value = lm.id;
-      opt.className = "filter-opt-lm";
-      opt.textContent = `👔 ${lm.name} (${lm.employeeCode || "LM"})`;
-      lmGroup.appendChild(opt);
-    });
-    filterRep.appendChild(lmGroup);
-  }
-
-  const dms = isBU
-    ? allUsers.filter((u) => myDownstreamIds.includes(u.id) && (u.role === "district_manager" || u.role === "dm"))
-    : allUsers.filter((u) => u.role === "district_manager" || u.role === "dm");
+  // For LM, BU, Admin: Group DMs first, then Reps under each DM
+  const dms = scopedTeam.filter(
+    (u) => u.id !== currentUser.id && (u.role === "district_manager" || u.role === "dm")
+  );
+  const reps = scopedTeam.filter(
+    (u) => u.id !== currentUser.id && (u.role === "medical_rep" || u.role === "rep")
+  );
 
   if (dms.length > 0) {
     const dmGroup = document.createElement("optgroup");
-    dmGroup.label =
-      lang === "ar"
-        ? "مدراء المناطق (District Managers)"
-        : "District Managers (DMs)";
+    dmGroup.label = isAr ? "مدراء المناطق (District Managers)" : "District Managers (DMs)";
     dms.forEach((dm) => {
       const opt = document.createElement("option");
       opt.value = dm.id;
@@ -1089,26 +1043,68 @@ function populateManagerRepDropdown() {
     filterRep.appendChild(dmGroup);
   }
 
-  const reps = isBU
-    ? allUsers.filter((u) => myDownstreamIds.includes(u.id) && (u.role === "medical_rep" || u.role === "rep"))
-    : allUsers.filter((u) => u.role === "medical_rep" || u.role === "rep");
-
   if (reps.length > 0) {
-    const repGroup = document.createElement("optgroup");
-    repGroup.label =
-      lang === "ar"
-        ? "المناديب الطبيين (Medical Reps)"
-        : "Medical Representatives (Reps)";
-    reps.forEach((rep) => {
-      const opt = document.createElement("option");
-      opt.value = rep.id;
-      opt.className = "filter-opt-rep";
-      opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
-      repGroup.appendChild(opt);
-    });
-    filterRep.appendChild(repGroup);
+    // Group reps by DM for structured clarity
+    if (dms.length > 0) {
+      dms.forEach((dm) => {
+        const dmReps = reps.filter((r) => r.managerId === dm.id);
+        if (dmReps.length > 0) {
+          const group = document.createElement("optgroup");
+          group.label = isAr ? `فريق ${dm.name} (Reps)` : `Team ${dm.name} (Reps)`;
+          dmReps.forEach((rep) => {
+            const opt = document.createElement("option");
+            opt.value = rep.id;
+            opt.className = "filter-opt-rep";
+            opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
+            group.appendChild(opt);
+          });
+          filterRep.appendChild(group);
+        }
+      });
+
+      // Reps without matching DM in this line
+      const directOrOtherReps = reps.filter((r) => !dms.some((dm) => dm.id === r.managerId));
+      if (directOrOtherReps.length > 0) {
+        const group = document.createElement("optgroup");
+        group.label = isAr ? "مناديب آخرين (Reps)" : "Other Reps";
+        directOrOtherReps.forEach((rep) => {
+          const opt = document.createElement("option");
+          opt.value = rep.id;
+          opt.className = "filter-opt-rep";
+          opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
+          group.appendChild(opt);
+        });
+        filterRep.appendChild(group);
+      }
+    } else {
+      const repGroup = document.createElement("optgroup");
+      repGroup.label = isAr ? "المناديب الطبيين (Medical Reps)" : "Medical Representatives (Reps)";
+      reps.forEach((rep) => {
+        const opt = document.createElement("option");
+        opt.value = rep.id;
+        opt.className = "filter-opt-rep";
+        opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
+        repGroup.appendChild(opt);
+      });
+      filterRep.appendChild(repGroup);
+    }
   }
 }
+
+window.onVisitsLineFilterChange = function (selectedLineId) {
+  populateManagerRepDropdown(selectedLineId);
+  populateAreaFilters();
+  if (typeof renderVisitsTimeline === "function") {
+    renderVisitsTimeline(true);
+  }
+};
+
+window.onVisitsRepFilterChange = function (selectedRepId) {
+  populateAreaFilters();
+  if (typeof renderVisitsTimeline === "function") {
+    renderVisitsTimeline(true);
+  }
+};
 
 function getAvailableAreas() {
   const allAreas =
@@ -1117,47 +1113,82 @@ function getAvailableAreas() {
       : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
 
   if (!isManager) {
-    const repAreas =
+    // 1. Identify product lines assigned to this medical rep
+    const repLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+
+    // 2. Fetch areas specifically assigned to this rep from the store
+    let repAreas =
       window.store && window.store.areas
         ? window.store.areas.getByRep(currentUser.id)
         : [];
-    if (repAreas.length > 0) return repAreas;
 
-    if (
-      currentUser.areaIds &&
-      Array.isArray(currentUser.areaIds) &&
-      currentUser.areaIds.length > 0
-    ) {
-      return allAreas.filter((a) => currentUser.areaIds.includes(a.id));
-    }
-    if (currentUser.areaId) {
-      return allAreas.filter((a) => a.id === currentUser.areaId);
-    }
-    if (currentUser.area) {
-      const names = currentUser.area.split(",").map((s) => s.trim().toLowerCase());
-      return allAreas.filter((a) => names.includes(a.name.toLowerCase()));
+    // 3. Fallback to user object's area attributes if store has no explicit area assignments
+    if (!repAreas || repAreas.length === 0) {
+      if (
+        currentUser.areaIds &&
+        Array.isArray(currentUser.areaIds) &&
+        currentUser.areaIds.length > 0
+      ) {
+        repAreas = allAreas.filter((a) => currentUser.areaIds.includes(a.id));
+      } else if (currentUser.areaId) {
+        repAreas = allAreas.filter((a) => a.id === currentUser.areaId);
+      } else if (currentUser.area) {
+        const names = currentUser.area.split(",").map((s) => s.trim().toLowerCase());
+        repAreas = allAreas.filter((a) => names.includes((a.name || "").toLowerCase().trim()));
+      }
     }
 
-    const myDocs = getMockDoctors().filter((d) => d.repId === currentUser.id);
-    const docAreaNames = [...new Set(myDocs.map((d) => d.area).filter(Boolean))];
-    const docAreaIds = [...new Set(myDocs.map((d) => d.areaId).filter(Boolean))];
-    const foundAreas = allAreas.filter(
-      (a) => docAreaIds.includes(a.id) || docAreaNames.includes(a.name),
-    );
-    return foundAreas.length > 0 ? foundAreas : allAreas;
+    // 4. Fallback to areas of doctors assigned to this rep
+    if (!repAreas || repAreas.length === 0) {
+      const myDocs = getMockDoctors().filter((d) => d.repId === currentUser.id);
+      const docAreaNames = [...new Set(myDocs.map((d) => d.area).filter(Boolean))];
+      const docAreaIds = [...new Set(myDocs.map((d) => d.areaId).filter(Boolean))];
+      repAreas = allAreas.filter(
+        (a) => docAreaIds.includes(a.id) || docAreaNames.includes(a.name),
+      );
+    }
+
+    // STRICT ISOLATION: If the rep has NO assigned area or doctors, return empty array!
+    // Never leak other reps' areas or whole company areas to an unassigned rep.
+    if (!repAreas || repAreas.length === 0) {
+      return [];
+    }
+
+    // STRICT LINE ISOLATION: Scope strictly to the rep's assigned product line(s)
+    if (repLineIds.length > 0) {
+      repAreas = repAreas.filter((a) => !a.lineId || repLineIds.includes(a.lineId));
+    }
+
+    return repAreas;
   }
 
+  let finalAreas = allAreas;
   const filterRepVal = document.getElementById("filterRep")?.value || "all";
   if (filterRepVal !== "all" && !filterRepVal.startsWith("all_")) {
     const repAreas =
       window.store && window.store.areas
         ? window.store.areas.getByRep(filterRepVal)
         : [];
-    if (repAreas.length > 0) return repAreas;
-    return allAreas.filter((a) => a.repId === filterRepVal);
+    if (repAreas.length > 0) {
+      finalAreas = repAreas;
+    } else {
+      finalAreas = allAreas.filter((a) => a.repId === filterRepVal);
+    }
+  } else {
+    // If a Line Manager or District Manager views all, scope strictly to their assigned product lines
+    const mgrLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+    if (mgrLineIds.length > 0 && currentUserRole !== "admin" && currentUserRole !== "hr") {
+      finalAreas = allAreas.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
+    }
   }
 
-  return allAreas;
+  // Filter by selected Line in the Line Filter dropdown
+  const filterLineVal = document.getElementById("filterLine")?.value || "all";
+  if (filterLineVal !== "all") {
+    finalAreas = finalAreas.filter((a) => !a.lineId || a.lineId === filterLineVal);
+  }
+
+  return finalAreas;
 }
 
 function populateAreaFilters() {
@@ -1165,27 +1196,50 @@ function populateAreaFilters() {
   const isAr = lang === "ar";
   const areas = getAvailableAreas();
 
+  // Deduplicate by normalized area name to prevent duplicate labels (e.g. across lines)
+  const seenNames = new Set();
+  const uniqueAreas = [];
+  areas.forEach((a) => {
+    const key = (a.name || "").trim().toLowerCase();
+    if (key && !seenNames.has(key)) {
+      seenNames.add(key);
+      uniqueAreas.push(a);
+    }
+  });
+
   const timelineFilter = document.getElementById("timelineAreaFilter");
   if (timelineFilter) {
     const curVal = timelineFilter.value || "all";
-    const allLabel = isAr ? "جميع المناطق" : "All Areas";
-    let html = `<option value="all">${allLabel}</option>`;
-    areas.forEach((a) => {
-      const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
-      html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
-    });
+    let html = "";
+    if (uniqueAreas.length === 0) {
+      const noAreasLabel = isAr ? "لا توجد مناطق معينة" : "No Assigned Areas";
+      html = `<option value="" disabled selected>${noAreasLabel}</option>`;
+    } else {
+      const allLabel = isAr ? "جميع المناطق" : "All Areas";
+      html = `<option value="all">${allLabel}</option>`;
+      uniqueAreas.forEach((a) => {
+        const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
+        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
+      });
+    }
     timelineFilter.innerHTML = html;
   }
 
   const bulkFilter = document.getElementById("bulkAreaFilter");
   if (bulkFilter) {
     const curVal = bulkFilter.value || "all";
-    const allLabel = isAr ? "جميع المناطق" : "All Areas";
-    let html = `<option value="all">${allLabel}</option>`;
-    areas.forEach((a) => {
-      const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
-      html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
-    });
+    let html = "";
+    if (uniqueAreas.length === 0) {
+      const noAreasLabel = isAr ? "لا توجد مناطق معينة" : "No Assigned Areas";
+      html = `<option value="" disabled selected>${noAreasLabel}</option>`;
+    } else {
+      const allLabel = isAr ? "جميع المناطق" : "All Areas";
+      html = `<option value="all">${allLabel}</option>`;
+      uniqueAreas.forEach((a) => {
+        const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
+        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
+      });
+    }
     bulkFilter.innerHTML = html;
   }
 }
@@ -1335,6 +1389,19 @@ function getScopedVisits() {
           allowedDmFilter.includes(selectedRepFilter),
       );
     }
+  }
+
+  // Filter visits strictly by the selected Product Line if specific line is selected
+  const filterLineVal = document.getElementById("filterLine")?.value || "all";
+  if (filterLineVal !== "all") {
+    const scopedUserIds = window.getScopedTeamForLine
+      ? window.getScopedTeamForLine(filterLineVal, currentUser).map((u) => u.id)
+      : [];
+    list = list.filter((v) => {
+      if (v.lineId && v.lineId === filterLineVal) return true;
+      if (v.repId && scopedUserIds.includes(v.repId)) return true;
+      return false;
+    });
   }
 
   return list.filter(
@@ -2042,28 +2109,37 @@ function renderVisitsTimeline(triggeredByShow = false) {
   ).length;
 
   if (summaryBar) {
+    const isMgr = Boolean(isManager);
+    summaryBar.className = `timeline-summary-bar ${isMgr ? "is-manager" : "is-rep"}`;
+    const cleanLabel = (s) => (s ? String(s).replace(/:$/, "").trim() : "");
     summaryBar.innerHTML = `
       <div class="timeline-stat-chip">
-        <span>${trans.totalEventsToday}</span>
-        <strong style="color: var(--primary, #0d6efd); font-size: 1.1rem; margin: 0 6px;">${totalItems}</strong>
+        <strong class="stat-value" style="color: var(--primary, #0d6efd);">${totalItems}</strong>
+        <span class="stat-label">${cleanLabel(trans.totalEventsToday)}</span>
       </div>
       <div class="timeline-stat-chip">
-        <span class="legend-dot actual" style="display:inline-block; vertical-align:middle; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-inline-end:4px;"></span>
-        <span>${trans.actualActivities}</span>
-        <strong style="color: #b45309; font-size: 1.1rem; margin: 0 6px;">${actualCount}</strong>
+        <strong class="stat-value" style="color: #b45309;">${actualCount}</strong>
+        <span class="stat-label">
+          <span class="legend-dot actual" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          ${cleanLabel(trans.actualActivities)}
+        </span>
       </div>
       <div class="timeline-stat-chip">
-        <span class="legend-dot planned" style="display:inline-block; vertical-align:middle; width:8px; height:8px; border-radius:50%; background:#0d6efd; margin-inline-end:4px;"></span>
-        <span>${trans.fromPlanStat}</span>
-        <strong style="color: #0284c7; font-size: 1.1rem; margin: 0 6px;">${plannedCount}</strong>
+        <strong class="stat-value" style="color: #0284c7;">${plannedCount}</strong>
+        <span class="stat-label">
+          <span class="legend-dot planned" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          ${cleanLabel(trans.fromPlanStat)}
+        </span>
       </div>
       ${
-        isManager
+        isMgr
           ? `
       <div class="timeline-stat-chip">
-        <span class="legend-dot joint" style="display:inline-block; vertical-align:middle; width:8px; height:8px; border-radius:50%; background:#6f42c1; margin-inline-end:4px;"></span>
-        <span>${trans.jointVisitsCount}</span>
-        <strong style="color: #6f42c1; font-size: 1.1rem; margin: 0 6px;">${jointCount}</strong>
+        <strong class="stat-value" style="color: #6f42c1;">${jointCount}</strong>
+        <span class="stat-label">
+          <span class="legend-dot joint" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          ${cleanLabel(trans.jointVisitsCount)}
+        </span>
       </div>`
           : ""
       }

@@ -80,6 +80,14 @@ function renderDailyTimeline() {
     }
   }
 
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    visitsInRange = visitsInRange.filter((v) => {
+      const repLines = window.getUserLines ? window.getUserLines(v.repId) : [];
+      return repLines.some((l) => l.id === selectedLineId);
+    });
+  }
+
   // Load stored activities across the range for all relevant users
   let activityTargetIds = [];
   if (isRep) {
@@ -88,6 +96,13 @@ function renderDailyTimeline() {
     activityTargetIds = [selectedRep];
   } else {
     activityTargetIds = allowedTeamIds.length > 0 ? allowedTeamIds : allUsers.map((u) => u.id);
+  }
+
+  if (selectedLineId !== 'all' && (!selectedRep || selectedRep === 'all')) {
+    activityTargetIds = activityTargetIds.filter((tId) => {
+      const repLines = window.getUserLines ? window.getUserLines(tId) : [];
+      return repLines.some((l) => l.id === selectedLineId);
+    });
   }
 
   const activityEvents = [];
@@ -151,23 +166,29 @@ function renderDailyTimeline() {
         <strong style="color: var(--primary); font-size: 1rem; margin: 0 6px;">${rangeLabel}</strong>
       </div>
       <div class="timeline-stat-chip">
-        <span>${lang === 'ar' ? 'إجمالي الأحداث:' : 'Total Events:'}</span>
-        <strong style="color: var(--primary); font-size: 1.1rem; margin: 0 6px;">${totalItems}</strong>
+        <strong class="stat-value" style="color: var(--primary);">${totalItems}</strong>
+        <span class="stat-label">${lang === 'ar' ? 'إجمالي الأحداث' : 'Total Events'}</span>
       </div>
       <div class="timeline-stat-chip">
-        <span class="legend-dot actual" style="display:inline-block; vertical-align:middle;"></span>
-        <span>${lang === 'ar' ? 'زيارات فعلية:' : 'Actual Visits:'}</span>
-        <strong style="color: #b45309; font-size: 1.1rem; margin: 0 6px;">${actualVisitCount}</strong>
+        <strong class="stat-value" style="color: #b45309;">${actualVisitCount}</strong>
+        <span class="stat-label">
+          <span class="legend-dot actual" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          ${lang === 'ar' ? 'زيارات فعلية' : 'Actual Visits'}
+        </span>
       </div>
       <div class="timeline-stat-chip">
-        <span class="legend-dot planned" style="display:inline-block; vertical-align:middle;"></span>
-        <span>${lang === 'ar' ? 'من الخطة:' : 'From Plan:'}</span>
-        <strong style="color: #0284c7; font-size: 1.1rem; margin: 0 6px;">${plannedVisitCount}</strong>
+        <strong class="stat-value" style="color: #0284c7;">${plannedVisitCount}</strong>
+        <span class="stat-label">
+          <span class="legend-dot planned" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          ${lang === 'ar' ? 'من الخطة' : 'From Plan'}
+        </span>
       </div>
       <div class="timeline-stat-chip">
-        <span class="legend-dot activity" style="background:#9333ea; display:inline-block; vertical-align:middle;"></span>
-        <span>${lang === 'ar' ? 'أنشطة مسجلة:' : 'Logged Activities:'}</span>
-        <strong style="color: #6b21a8; font-size: 1.1rem; margin: 0 6px;">${activityCount}</strong>
+        <strong class="stat-value" style="color: #6b21a8;">${activityCount}</strong>
+        <span class="stat-label">
+          <span class="legend-dot activity" style="background:#9333ea; width:7px; height:7px; margin-inline-end:3px;"></span>
+          ${lang === 'ar' ? 'أنشطة مسجلة' : 'Activities'}
+        </span>
       </div>
     `;
   }

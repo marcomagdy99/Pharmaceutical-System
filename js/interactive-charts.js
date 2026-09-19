@@ -318,7 +318,7 @@
     if (cleanPct >= 80) {
       gaugeColor = '#10b981';
     } else if (cleanPct >= 50) {
-      gaugeColor = '#f59e0b';
+      gaugeColor = '#c2410c';
     }
 
     // Always update label immediately regardless of Chart.js timing
@@ -393,10 +393,12 @@
     if (typeof window.initDashboardCharts === "function" && document.getElementById("dashSalesTrendChart")) {
       window.initDashboardCharts(user);
     }
-    if (typeof window.renderDoctorsReport === "function" && document.getElementById("repDoctorClassesChart")) {
+    const docRes = document.getElementById("doctorsResultsContainer");
+    if (docRes && docRes.style.display !== "none" && typeof window.renderDoctorsReport === "function" && document.getElementById("repDoctorClassesChart")) {
       window.renderDoctorsReport();
     }
-    if (typeof window.renderSalesReport === "function" && document.getElementById("salesReportTrendChart")) {
+    const salesRes = document.getElementById("salesResultsContainer");
+    if (salesRes && salesRes.style.display !== "none" && typeof window.renderSalesReport === "function" && document.getElementById("salesReportTrendChart")) {
       window.renderSalesReport();
     }
   }

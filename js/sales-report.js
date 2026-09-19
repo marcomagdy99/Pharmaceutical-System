@@ -227,18 +227,40 @@ function initPharmSalesFilters(user) {
     }
   }
 
-  if (productSelect) {
-    const allLabel = lang === 'ar' ? 'جميع الأدوية' : 'All Products';
-    productSelect.innerHTML = `<option value="all">${allLabel}</option>`;
-    const scopedLineIds = scopedLines.map((l) => l.id);
-    const products = getAllProductsFlat().filter((p) => allowedLineIds === null || scopedLineIds.includes(p.lineId));
+  window.updatePharmSalesProductsForLine = function (selectedLineId) {
+    const pSelect = document.getElementById('pharmSalesProductSelect');
+    if (!pSelect) return;
+    const curUser = typeof checkAuth === 'function' ? checkAuth() : null;
+    const curLang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+    const curAllowedLineIds = getPharmSalesAllowedLineIds(curUser);
+    const effLineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+
+    const prevVal = pSelect.value;
+    const allLabel = curLang === 'ar' ? 'جميع الأدوية' : 'All Products';
+    pSelect.innerHTML = `<option value="all">${allLabel}</option>`;
+
+    let products = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
+    if (effLineId !== 'all') {
+      products = products.filter((p) => p.lineId === effLineId);
+    } else if (curAllowedLineIds !== null) {
+      products = products.filter((p) => curAllowedLineIds.includes(p.lineId));
+    }
+
     products.forEach((p) => {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = `${p.name} (${p.lineName})`;
-      productSelect.appendChild(opt);
+      pSelect.appendChild(opt);
     });
-  }
+
+    if (prevVal && Array.from(pSelect.options).some((o) => o.value === prevVal)) {
+      pSelect.value = prevVal;
+    } else {
+      pSelect.value = 'all';
+    }
+  };
+
+  window.updatePharmSalesProductsForLine(window.selectedReportLineId || 'all');
 }
 
 // ============================================================================
@@ -258,18 +280,21 @@ function getFilteredPharmSalesRows() {
   const productSelect = document.getElementById('pharmSalesProductSelect');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
-  const lineSelect = document.getElementById('pharmSalesLineSelect');
+  const lineSelect = document.getElementById('reportLineFilter') || document.getElementById('pharmSalesLineSelect');
   const user = checkAuth();
 
   const selectedProduct = productSelect ? productSelect.value : 'all';
   const selectedYear = yearSelect ? yearSelect.value : '';
   const selectedDistributor = distSelect ? distSelect.value : 'all';
-  const selectedLine = lineSelect ? lineSelect.value : 'all';
+  const selectedLine = window.selectedReportLineId || (lineSelect ? lineSelect.value : 'all');
   const selectedMonths = typeof getSelectedPharmSalesMonths === 'function' ? getSelectedPharmSalesMonths() : [];
   const monthKeys = selectedYear ? selectedMonths.map((m) => `${selectedYear}-${m}`) : [];
   const allowedLineIds = getPharmSalesAllowedLineIds(user);
 
   let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
+  if (rows.length === 0 && typeof REPORTS_DATA !== 'undefined' && Array.isArray(REPORTS_DATA.sales)) {
+    rows = REPORTS_DATA.sales.slice();
+  }
 
   if (selectedMonths.length === 0) {
     return [];
@@ -346,6 +371,11 @@ function getFilteredPharmSalesRows() {
         rows = rows.filter((r) => r.repId === selectedRep || r.dmId === selectedRep);
       }
     }
+  }
+
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    rows = rows.filter((r) => r.lineId === selectedLineId);
   }
 
   return rows;

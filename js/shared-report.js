@@ -238,6 +238,9 @@ function syncReportsData() {
         pharmacyName: 'Al-Ezaby Pharmacy',
         area: s.area
       }));
+      if (typeof window.saveSalesDataToStorage === 'function') {
+        window.saveSalesDataToStorage();
+      }
     }
   }
 }
@@ -602,16 +605,111 @@ function getSharedReportUsers() {
 }
 
 function initAllFilters(user) {
+  populateReportLineFilter(user);
   if (typeof initPharmSalesFilters === 'function') {
     initPharmSalesFilters(user);
   }
-  populateUnifiedReportEmployeeFilters(user);
+  populateUnifiedReportEmployeeFilters(user, window.selectedReportLineId);
   if (typeof populateDoctorSpecialtyFilter === 'function') {
     populateDoctorSpecialtyFilter();
   }
 }
 
-function populateUnifiedReportEmployeeFilters(user) {
+function populateReportLineFilter(user) {
+  const lineSelect = document.getElementById('reportLineFilter');
+  if (!lineSelect) return;
+
+  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'admin1' };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
+  const isRep = role === 'medical_rep' || role === 'rep';
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
+  const isAr = lang === 'ar';
+  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+  const curVal = lineSelect.value;
+
+  lineSelect.replaceChildren();
+
+  if (isRep) {
+    if (userLines.length > 0) {
+      userLines.forEach((l) => {
+        const opt = document.createElement('option');
+        opt.value = l.id;
+        opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+        lineSelect.appendChild(opt);
+      });
+      lineSelect.value = userLines[0].id;
+      window.selectedReportLineId = userLines[0].id;
+      lineSelect.disabled = true;
+    } else {
+      const opt = document.createElement('option');
+      opt.value = 'line1';
+      opt.textContent = isAr ? '📦 خط افتراضي' : '📦 Assigned Line';
+      lineSelect.appendChild(opt);
+      window.selectedReportLineId = 'line1';
+      lineSelect.disabled = true;
+    }
+    return;
+  }
+
+  // Managers & Admin
+  lineSelect.disabled = false;
+  const isFullAdmin = role === 'admin' || role === 'hr';
+
+  if (isFullAdmin || userLines.length > 1) {
+    const optAll = document.createElement('option');
+    optAll.value = 'all';
+    optAll.textContent = isAr ? '🌐 جميع خطوط الإنتاج' : '🌐 All Product Lines';
+    lineSelect.appendChild(optAll);
+  }
+
+  userLines.forEach((l) => {
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    lineSelect.appendChild(opt);
+  });
+
+  if (curVal && Array.from(lineSelect.options).some((o) => o.value === curVal)) {
+    lineSelect.value = curVal;
+  } else {
+    lineSelect.value = lineSelect.options[0]?.value || 'all';
+  }
+  window.selectedReportLineId = lineSelect.value;
+}
+
+window.onReportLineFilterChange = function (selectedLineId) {
+  window.selectedReportLineId = selectedLineId;
+  const user = typeof checkAuth === 'function' ? checkAuth() : null;
+  populateUnifiedReportEmployeeFilters(user, selectedLineId);
+  if (typeof window.updatePharmSalesProductsForLine === 'function') {
+    window.updatePharmSalesProductsForLine(selectedLineId);
+  }
+
+  const activeTabBtn = document.querySelector('.report-tab-btn.active');
+  const activeTab = activeTabBtn ? activeTabBtn.dataset.tab : 'sales';
+
+  if (activeTab === 'sales' && typeof renderSalesReport === 'function') {
+    const results = document.getElementById('salesResultsContainer');
+    if (results && results.style.display !== 'none') renderSalesReport();
+  } else if (activeTab === 'achievements' && typeof renderAchievementsReport === 'function') {
+    const results = document.getElementById('achievementsResultsContainer');
+    if (results && results.style.display !== 'none') renderAchievementsReport();
+  } else if (activeTab === 'timeline' && typeof renderDailyTimeline === 'function') {
+    const results = document.getElementById('timelineResultsContainer');
+    if (results && results.style.display !== 'none') renderDailyTimeline();
+  } else if (activeTab === 'coverage' && typeof renderCoverageReport === 'function') {
+    const results = document.getElementById('coverageResultsContainer');
+    if (results && results.style.display !== 'none') renderCoverageReport();
+  } else if (activeTab === 'doctors' && typeof renderDoctorsReport === 'function') {
+    const results = document.getElementById('doctorsResultsContainer');
+    if (results && results.style.display !== 'none') renderDoctorsReport();
+  } else if (activeTab === 'pharmacies' && typeof renderPharmaciesReport === 'function') {
+    const results = document.getElementById('pharmaciesResultsContainer');
+    if (results && results.style.display !== 'none') renderPharmaciesReport();
+  }
+};
+
+function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
   const selects = [
     document.getElementById('pharmSalesRepSelect'),
     document.getElementById('achRepSelect'),
@@ -623,88 +721,82 @@ function populateUnifiedReportEmployeeFilters(user) {
 
   if (selects.length === 0) return;
 
+  const effectiveLineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   const lang = getCurrentLang();
+  const isAr = lang === 'ar';
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const allUsers = getSharedReportUsers();
+  const scopedTeam = window.getScopedTeamForLine
+    ? window.getScopedTeamForLine(effectiveLineId, user)
+    : allUsers;
+
+  const isRep = role === 'medical_rep' || role === 'rep';
+  const isDM = role === 'district_manager' || role === 'dm';
 
   selects.forEach((selectEl) => {
     const prevVal = selectEl.value;
     selectEl.replaceChildren();
 
-    if (role === 'line_manager') {
-      const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
-      const dmIds = dms.map((d) => d.id);
-      const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
-
-      const optAll = document.createElement('option');
-      optAll.value = 'all';
-      optAll.textContent = lang === 'ar' ? 'كل الفريق (المديرين والمناديب)' : 'All Team (DMs & Med Reps)';
-      selectEl.appendChild(optAll);
-
-      if (dms.length > 0) {
-        const dmGroup = document.createElement('optgroup');
-        dmGroup.label = lang === 'ar' ? 'مديرو المناطق (DMs)' : 'District Managers (DMs)';
-        appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `${dm.name} (${dm.employeeCode || 'DM'})`);
-        selectEl.appendChild(dmGroup);
-      }
-      if (reps.length > 0) {
-        const repGroup = document.createElement('optgroup');
-        repGroup.label = lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Reps (Reps)';
-        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `${rep.name} (${rep.employeeCode || 'Rep'})`);
-        selectEl.appendChild(repGroup);
-      }
-      selectEl.disabled = false;
-    } else if (role === 'district_manager') {
-      const allLabel = lang === 'ar' ? 'كل مناديب الفريق' : 'All Team Reps';
-      const allOpt = document.createElement('option');
-      allOpt.value = 'all';
-      allOpt.textContent = allLabel;
-      selectEl.appendChild(allOpt);
-
-      const reps = allUsers.filter((u) => u.managerId === user.id);
-      appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
-      selectEl.disabled = false;
-    } else if (role === 'medical_rep' || role === 'rep') {
+    if (isRep) {
       const opt = document.createElement('option');
       opt.value = user.id;
       opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
       opt.selected = true;
       selectEl.appendChild(opt);
       selectEl.disabled = true;
-    } else {
-      const isBU = role === 'business_unit';
-      const mySubordinates = isBU && typeof window.getAllSubordinates === 'function'
-        ? window.getAllSubordinates(user.id)
-        : [];
-      const mySubordinateIds = mySubordinates.map((u) => u.id);
-      const myDirectLMs = isBU ? allUsers.filter((u) => u.managerId === user.id) : [];
-      const myDirectLmIds = myDirectLMs.map((u) => u.id);
-      const myAllowedIds = isBU ? [user.id, ...myDirectLmIds, ...mySubordinateIds] : null;
+      return;
+    }
 
-      const allLabel = lang === 'ar' ? 'جميع الفريق (الكل)' : 'All Team';
+    selectEl.disabled = false;
+
+    if (isDM) {
+      const allLabel = isAr ? 'كل مناديب الخط/الفريق' : 'All Team Reps in Line';
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
       allOpt.textContent = allLabel;
       selectEl.appendChild(allOpt);
 
-      const rolesList = [
-        { key: 'line_manager', label: lang === 'ar' ? 'مديرو الخطوط (LMs)' : 'Line Managers (LM)' },
-        { key: 'district_manager', label: lang === 'ar' ? 'مديرو المناطق (DMs)' : 'District Managers (DM)' },
-        { key: 'medical_rep', label: lang === 'ar' ? 'المناديب الطبيين (Reps)' : 'Medical Reps' },
-      ];
-      rolesList.forEach(({ key, label }) => {
-        const members = allUsers.filter((u) => {
-          if (myAllowedIds && !myAllowedIds.includes(u.id)) return false;
-          const r = window.normalizeRole ? window.normalizeRole(u.role) : u.role;
-          return r === key || u.role === key || (key === 'medical_rep' && u.role === 'rep');
+      const reps = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'medical_rep' || u.role === 'rep'));
+      appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+    } else {
+      const allLabel = isAr ? 'جميع الفريق في الخط (الكل)' : 'All Team in Line';
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      allOpt.textContent = allLabel;
+      selectEl.appendChild(allOpt);
+
+      const dms = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'district_manager' || u.role === 'dm'));
+      const reps = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'medical_rep' || u.role === 'rep'));
+
+      if (dms.length > 0) {
+        const dmGroup = document.createElement('optgroup');
+        dmGroup.label = isAr ? 'مدراء المناطق (District Managers)' : 'District Managers (DMs)';
+        appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `💼 ${dm.name} (${dm.employeeCode || 'DM'})`);
+        selectEl.appendChild(dmGroup);
+
+        dms.forEach((dm) => {
+          const dmReps = reps.filter((r) => r.managerId === dm.id);
+          if (dmReps.length > 0) {
+            const group = document.createElement('optgroup');
+            group.label = isAr ? `فريق ${dm.name} (Reps)` : `Team ${dm.name} (Reps)`;
+            appendSelectOptions(group, dmReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+            selectEl.appendChild(group);
+          }
         });
-        if (!members.length) return;
-        const group = document.createElement('optgroup');
-        group.label = label;
-        appendSelectOptions(group, members, (u) => u.id, (u) => `${u.name} (${u.employeeCode || key})`);
-        selectEl.appendChild(group);
-      });
-      selectEl.disabled = false;
+
+        const otherReps = reps.filter((r) => !dms.some((dm) => dm.id === r.managerId));
+        if (otherReps.length > 0) {
+          const group = document.createElement('optgroup');
+          group.label = isAr ? 'مناديب آخرين (Reps)' : 'Other Reps';
+          appendSelectOptions(group, otherReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+          selectEl.appendChild(group);
+        }
+      } else if (reps.length > 0) {
+        const repGroup = document.createElement('optgroup');
+        repGroup.label = isAr ? 'المناديب الطبيين (Reps)' : 'Medical Reps (Reps)';
+        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+        selectEl.appendChild(repGroup);
+      }
     }
 
     if (prevVal && Array.from(selectEl.options).some((o) => o.value === prevVal)) {

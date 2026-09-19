@@ -583,16 +583,61 @@
     background-color: #1e2229;
 }
 
-.timeline-date-label,
-.timeline-area-label,
-.timeline-period-label,
-.timeline-status-label {
+/* Timeline Filter Form Grid */
+.timeline-filter-form-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.timeline-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.timeline-filter-label {
     font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--gray-800);
+    font-size: 0.84rem;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.timeline-filter-field .filter-input,
+.timeline-filter-field .form-control {
+    width: 100%;
+    height: 38px;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-300);
+    background-color: var(--white);
+    color: var(--gray-900);
+    box-sizing: border-box;
+}
+
+.timeline-filter-field.col-btn {
+    align-self: flex-end;
+}
+
+.timeline-filter-field.col-btn .btn {
+    height: 38px;
+    padding: 0 20px;
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 .timeline-date-badge {
@@ -624,22 +669,100 @@
 .legend-dot.planned { background-color: #0d6efd; }
 .legend-dot.joint { background-color: #8b5cf6; }
 
+/* Timeline Summary Bar: Always in ONE clean row across all devices */
 .timeline-summary-bar {
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
     margin-bottom: 16px;
-    flex-wrap: wrap;
+    width: 100%;
+}
+
+.timeline-summary-bar.is-manager {
+    grid-template-columns: repeat(4, 1fr);
 }
 
 .timeline-stat-chip {
     background-color: var(--white);
-    padding: 8px 14px;
-    border-radius: 8px;
-    box-shadow: var(--shadow-sm);
+    padding: 10px 8px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--gray-200);
-    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 0;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.timeline-stat-chip .stat-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--gray-900);
+    margin-bottom: 3px;
+}
+
+.timeline-stat-chip .stat-label {
+    font-size: 0.74rem;
     font-weight: 600;
-    color: var(--gray-800);
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timeline-stat-chip .stat-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Individual chip accent colors */
+.timeline-stat-chip.total-events {
+    border-top: 3px solid #0d6efd;
+}
+.timeline-stat-chip.actual-events {
+    border-top: 3px solid #f59e0b;
+}
+.timeline-stat-chip.planned-events {
+    border-top: 3px solid #10b981;
+}
+.timeline-stat-chip.joint-events {
+    border-top: 3px solid #8b5cf6;
+}
+
+/* Dark Mode for Timeline filters and stat chips */
+[data-theme="dark"] .timeline-filter-label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .timeline-filter-field .filter-input,
+[data-theme="dark"] .timeline-filter-field .form-control {
+    background-color: #1e2229;
+    border-color: #333a46;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .timeline-stat-chip {
+    background-color: #1e2229;
+    border-color: #333a46;
+}
+
+[data-theme="dark"] .timeline-stat-chip .stat-value {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .timeline-stat-chip .stat-label {
+    color: #94a3b8;
 }
 
 .timeline-container {
@@ -1062,6 +1185,35 @@
     }
     .manager-rep-filter-container select {
         font-size: 0.85rem !important;
+    }
+
+    /* Timeline Filters & Stats on Mobile/Tablet */
+    .timeline-filter-form-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 8px;
+    }
+    .timeline-filter-field.col-btn {
+        grid-column: 1 / -1;
+    }
+    .timeline-filter-field.col-btn .btn {
+        width: 100%;
+        height: 40px;
+    }
+    .timeline-summary-bar {
+        gap: 6px;
+    }
+    .timeline-stat-chip {
+        padding: 8px 4px;
+    }
+    .timeline-stat-chip .stat-value {
+        font-size: 1.15rem;
+    }
+    .timeline-stat-chip .stat-label {
+        font-size: 0.7rem;
+    }
+    .timeline-summary-bar.is-manager {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 }
 

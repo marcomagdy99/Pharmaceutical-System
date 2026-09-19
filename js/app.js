@@ -1167,26 +1167,81 @@ function loadDataFromStorage() {
             });
           }
         }
+
+        // Auto-migration: If pharma_master_data still contains distributorSales, extract it to pharma_sales_data
+        if ("distributorSales" in data) {
+          if (Array.isArray(data.distributorSales) && data.distributorSales.length > 0) {
+            try {
+              if (!localStorage.getItem("pharma_sales_data")) {
+                localStorage.setItem("pharma_sales_data", JSON.stringify(data.distributorSales));
+              }
+            } catch (e) {
+              console.error("Error migrating distributorSales to pharma_sales_data:", e);
+            }
+          }
+          delete data.distributorSales;
+          try {
+            localStorage.setItem("pharma_master_data", JSON.stringify(data));
+          } catch (e) {}
+        }
       }
+
+      // Load distributorSales from dedicated pharma_sales_data storage
+      let salesData = [];
+      try {
+        const cachedSales = localStorage.getItem("pharma_sales_data");
+        if (cachedSales) {
+          salesData = JSON.parse(cachedSales);
+        }
+      } catch (err) {
+        console.error("Error loading pharma_sales_data from localStorage:", err);
+      }
+      data.distributorSales = Array.isArray(salesData) ? salesData : [];
+
       return data;
     }
   } catch (err) {
     console.error("Error loading pharma_master_data from localStorage:", err);
   }
-  return JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA));
+
+  const defaultData = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA));
+  let fallbackSales = [];
+  try {
+    const cachedSales = localStorage.getItem("pharma_sales_data");
+    if (cachedSales) {
+      fallbackSales = JSON.parse(cachedSales);
+    }
+  } catch (e) {}
+  defaultData.distributorSales = Array.isArray(fallbackSales) ? fallbackSales : [];
+  return defaultData;
 }
 
 function saveDataToStorage() {
   try {
-    localStorage.setItem("pharma_master_data", JSON.stringify(DEMO_DATA));
+    if (!window.DEMO_DATA) return;
+    // Exclude distributorSales from pharma_master_data to keep it lightweight and under quota
+    const { distributorSales, ...cleanMasterData } = window.DEMO_DATA;
+    localStorage.setItem("pharma_master_data", JSON.stringify(cleanMasterData));
   } catch (err) {
     console.error("Error saving pharma_master_data to localStorage:", err);
+  }
+}
+
+function saveSalesDataToStorage() {
+  try {
+    if (!window.DEMO_DATA) return;
+    const sales = window.DEMO_DATA.distributorSales || [];
+    localStorage.setItem("pharma_sales_data", JSON.stringify(sales));
+  } catch (err) {
+    console.error("Error saving pharma_sales_data to localStorage:", err);
   }
 }
 
 const DEMO_DATA = loadDataFromStorage();
 window.DEMO_DATA = DEMO_DATA;
 window.saveDataToStorage = saveDataToStorage;
+window.saveSalesDataToStorage = saveSalesDataToStorage;
+window.loadDataFromStorage = loadDataFromStorage;
 
 // ============================================================================
 // Section 3: Recursive Hierarchy & Multi-Line Helpers
@@ -1385,6 +1440,10 @@ function getUserLines(userId) {
   });
 
   const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+  if (role === 'admin' || role === 'hr') {
+    return lines;
+  }
+
   if (role === 'business_unit') {
     const isLM = (u) => {
       const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
@@ -1409,10 +1468,61 @@ function getUserLines(userId) {
     });
   }
 
-  return lines.filter((l) => assignedLineIds.includes(l.id));
+  const result = lines.filter((l) => assignedLineIds.includes(l.id));
+  return result.length > 0 ? result : (lines.length > 0 ? [lines[0]] : []);
 }
 
 window.getUserLines = getUserLines;
+
+/**
+ * Returns team members belonging to a specific product line within the user's hierarchy.
+ * @param {string} lineId - Selected line ID or 'all'
+ * @param {Object} user - Authenticated user object
+ */
+function getScopedTeamForLine(lineId, user) {
+  const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  if (!user) return [];
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+
+  if (role === 'medical_rep' || role === 'rep') {
+    return [user];
+  }
+
+  let candidateUsers = [];
+  if (role === 'admin' || role === 'hr') {
+    candidateUsers = users;
+  } else if (role === 'business_unit' || role === 'bu') {
+    const subordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    candidateUsers = [user, ...subordinates];
+  } else if (role === 'line_manager' || role === 'lm') {
+    const subordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    candidateUsers = [user, ...subordinates];
+  } else if (role === 'district_manager' || role === 'dm') {
+    const myReps = users.filter((u) => u.managerId === user.id);
+    candidateUsers = [user, ...myReps];
+  } else {
+    candidateUsers = [user];
+  }
+
+  if (!lineId || lineId === 'all') {
+    return candidateUsers;
+  }
+
+  return candidateUsers.filter((u) => {
+    if (u.id === user.id) return true;
+    const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+    if (uLineIds.includes(lineId)) return true;
+
+    // If candidate is a manager, check if any of their subordinates are in this line
+    const subs = users.filter((sub) => sub.managerId === u.id);
+    return subs.some((sub) => {
+      const subLines = sub.lineIds || (sub.lineId ? [sub.lineId] : []);
+      return subLines.includes(lineId);
+    });
+  });
+}
+
+window.getScopedTeamForLine = getScopedTeamForLine;
 
 function getManagerChain(userId) {
   const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
@@ -2166,9 +2276,11 @@ function renderSidebar(activePage) {
 
   if (managementNavItems.length > 0) {
     html += `
-      <div style="padding: 16px 24px 4px; font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px;">
-        ${lang === "ar" ? "الإدارة والبيانات" : "Management & Data"}
-      </div>
+      <li class="nav-header" role="presentation" style="list-style: none;">
+        <div style="padding: 16px 24px 4px; font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px;">
+          ${lang === "ar" ? "الإدارة والبيانات" : "Management & Data"}
+        </div>
+      </li>
     `;
     managementNavItems.forEach((item) => {
       const activeClass = item.id === resolved ? "active" : "";

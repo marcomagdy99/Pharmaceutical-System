@@ -279,7 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   applyPlansReviewTranslations(lang);
-  populateRepFilter(currentUser);
+  populatePlansLineFilter(currentUser);
+  populateRepFilter(currentUser, window.selectedPlansLineId);
   renderPlansReview(currentUser);
 });
 
@@ -292,7 +293,8 @@ document.addEventListener("languageChanged", () => {
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   applyPlansReviewTranslations(lang);
-  populateRepFilter(currentUser);
+  populatePlansLineFilter(currentUser);
+  populateRepFilter(currentUser, window.selectedPlansLineId);
   renderPlansReview(currentUser);
 });
 
@@ -310,21 +312,88 @@ function applyPlansReviewTranslations(lang) {
   });
 }
 
-function populateRepFilter(currentUser) {
+function populatePlansLineFilter(currentUser) {
+  const lineSelect = document.getElementById("plansLineFilter");
+  if (!lineSelect) return;
+
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser.role)
+    : (currentUser.role || "").toLowerCase();
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+  const curVal = lineSelect.value;
+
+  lineSelect.replaceChildren();
+
+  const isFullAdmin = role === "admin" || role === "hr";
+  if (isFullAdmin || userLines.length > 1) {
+    const optAll = document.createElement("option");
+    optAll.value = "all";
+    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    lineSelect.appendChild(optAll);
+  }
+
+  userLines.forEach((l) => {
+    const opt = document.createElement("option");
+    opt.value = l.id;
+    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    lineSelect.appendChild(opt);
+  });
+
+  if (curVal && Array.from(lineSelect.options).some((o) => o.value === curVal)) {
+    lineSelect.value = curVal;
+  } else {
+    lineSelect.value = lineSelect.options[0]?.value || "all";
+  }
+  window.selectedPlansLineId = lineSelect.value;
+}
+
+window.onPlansLineFilterChange = function (selectedLineId) {
+  window.selectedPlansLineId = selectedLineId;
+  const currentUser = (window.checkAuth && window.checkAuth()) || {
+    id: "dm1",
+    name: "Karim Nasser",
+    role: "district_manager",
+  };
+  populateRepFilter(currentUser, selectedLineId);
+  renderPlansReview(currentUser);
+};
+
+function populateRepFilter(currentUser, selectedLineId) {
   const select = document.getElementById("plansRepFilter");
   if (!select) return;
 
+  const effectiveLineId = selectedLineId || window.selectedPlansLineId || document.getElementById("plansLineFilter")?.value || "all";
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
-  const reps = getScopedSubordinateReps(currentUser);
+  let reps = getScopedSubordinateReps(currentUser);
 
-  select.innerHTML = `<option value="all">${t.allTeamReps}</option>`;
+  if (effectiveLineId !== "all") {
+    reps = reps.filter((r) => {
+      const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+      return rLines.some((l) => l.id === effectiveLineId);
+    });
+  }
+
+  const prevVal = select.value;
+  select.replaceChildren();
+
+  const optAll = document.createElement("option");
+  optAll.value = "all";
+  optAll.textContent = t.allTeamReps;
+  select.appendChild(optAll);
+
   reps.forEach((r) => {
     const opt = document.createElement("option");
     opt.value = r.id;
     opt.textContent = `${r.name} (${r.employeeCode || "Rep"})`;
     select.appendChild(opt);
   });
+
+  if (prevVal && Array.from(select.options).some((o) => o.value === prevVal)) {
+    select.value = prevVal;
+  }
 }
 
 function renderPlansReview(currentUser) {
@@ -348,7 +417,14 @@ function renderPlansReview(currentUser) {
   const isAdmin = role === "admin";
   const isSupervisorOnly = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
 
-  const scopedReps = getScopedSubordinateReps(currentUser);
+  const effectiveLineId = window.selectedPlansLineId || document.getElementById("plansLineFilter")?.value || "all";
+  let scopedReps = getScopedSubordinateReps(currentUser);
+  if (effectiveLineId !== "all") {
+    scopedReps = scopedReps.filter((r) => {
+      const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+      return rLines.some((l) => l.id === effectiveLineId);
+    });
+  }
   const scopedRepIds = scopedReps.map((r) => r.id);
   const allVisits = getMasterVisits();
 
@@ -1198,3 +1274,6 @@ window.closeRejectModal = function () {
 window.confirmRejectPlan = function () {
   plansReview.confirmRejectPlan();
 };
+window.populatePlansLineFilter = populatePlansLineFilter;
+plansReview.populatePlansLineFilter = populatePlansLineFilter;
+plansReview.onPlansLineFilterChange = window.onPlansLineFilterChange;

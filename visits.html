@@ -71,56 +71,68 @@
                     </div>
                 </div>
 
-                <!-- Manager Team Filter Bar (Visible for managers) -->
-                <div id="managerRepFilterContainer" class="manager-rep-filter-container">
-                    <label for="filterRep" class="manager-rep-filter-label">
-                        <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
-                    </label>
-                    <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="if(typeof populateAreaFilters==='function') populateAreaFilters();">
-                        <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
-                    </select>
+                <!-- Manager Filter Bar (Product Line & Team Filters) -->
+                <div id="managerFilterBar" class="manager-rep-filter-container" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                    <div id="managerLineFilterContainer" style="display: flex; align-items: center; gap: 8px;">
+                        <label for="filterLine" class="manager-rep-filter-label" style="margin-bottom: 0;">
+                            <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
+                        </label>
+                        <select id="filterLine" class="filter-input" style="min-width: 180px; height: 38px; font-weight: 500;" onchange="onVisitsLineFilterChange(this.value)">
+                            <option value="all" data-i18n="allLines">All Lines</option>
+                        </select>
+                    </div>
+                    <div id="managerRepFilterContainer" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 260px;">
+                        <label for="filterRep" class="manager-rep-filter-label" style="margin-bottom: 0;">
+                            <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
+                        </label>
+                        <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="onVisitsRepFilterChange(this.value)">
+                            <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <!-- Daily Visits Timeline Main View -->
                 <div class="timeline-main-panel active" id="tab-timeline">
                     <div class="timeline-filter-card">
-                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label class="timeline-date-label" data-i18n="timelineSelectDate">Select Date:</label>
-                                <input type="date" id="timelineDatePicker" class="form-control filter-input" style="width: auto;">
+                        <div class="timeline-filter-form-grid">
+                            <div class="timeline-filter-field col-date">
+                                <label class="timeline-filter-label" for="timelineDatePicker" data-i18n="timelineSelectDate">Select Date:</label>
+                                <input type="date" id="timelineDatePicker" class="form-control filter-input">
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label class="timeline-area-label" for="timelineAreaFilter">
+                            <div class="timeline-filter-field col-area">
+                                <label class="timeline-filter-label" for="timelineAreaFilter">
                                     <span>📍</span> <span data-i18n="filterArea">Area:</span>
                                 </label>
-                                <select id="timelineAreaFilter" class="form-control filter-input" style="min-width: 140px; width: auto;">
+                                <select id="timelineAreaFilter" class="form-control filter-input">
                                     <option value="all" data-i18n="allAreas">All Areas</option>
                                 </select>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label class="timeline-period-label" for="timelinePeriodFilter">
+                            <div class="timeline-filter-field col-period">
+                                <label class="timeline-filter-label" for="timelinePeriodFilter">
                                     <span>⏰</span> <span data-i18n="filterPeriod">Period:</span>
                                 </label>
-                                <select id="timelinePeriodFilter" class="form-control filter-input" style="min-width: 130px; width: auto;">
+                                <select id="timelinePeriodFilter" class="form-control filter-input">
                                     <option value="all" data-i18n="allPeriods">All Periods</option>
                                     <option value="am" data-i18n="periodAM">AM (Hospitals)</option>
                                     <option value="pm" data-i18n="periodPM">PM (Doctors)</option>
                                     <option value="pharmacy" data-i18n="periodPharm">Pharmacy</option>
                                 </select>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label class="timeline-status-label" for="timelineStatusFilter">
+                            <div class="timeline-filter-field col-status">
+                                <label class="timeline-filter-label" for="timelineStatusFilter">
                                     <span>📊</span> <span data-i18n="filterStatus">Status:</span>
                                 </label>
-                                <select id="timelineStatusFilter" class="form-control filter-input" style="min-width: 130px; width: auto;">
+                                <select id="timelineStatusFilter" class="form-control filter-input">
                                     <option value="all" data-i18n="allStatuses">All Statuses</option>
                                     <option value="actual" data-i18n="statusExecuted">Executed / Actual</option>
                                     <option value="plan" data-i18n="statusPlannedOnly">Planned</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)" style="padding: 6px 18px; border-radius: 6px; font-weight: 600;">
-                                🔍 <span data-i18n="btnShow">Show</span>
-                            </button>
+                            <div class="timeline-filter-field col-btn">
+                                <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)">
+                                    🔍 <span data-i18n="btnShow">Show</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="legend-box" style="margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
                             <span class="legend-item">

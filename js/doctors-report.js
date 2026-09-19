@@ -99,6 +99,17 @@ function getScopedDoctors(respectActiveFilters = true) {
     }
   }
 
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    docs = docs.filter((d) => {
+      if (d.lineId) return d.lineId === selectedLineId;
+      if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
+      if (!d.repId) return role === 'admin' || role === 'hr';
+      const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
+      return repLines.some((l) => l.id === selectedLineId);
+    });
+  }
+
   if (!respectActiveFilters) {
     return docs;
   }

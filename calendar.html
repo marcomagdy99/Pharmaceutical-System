@@ -42,7 +42,15 @@
             <div class="content" id="pageContent">
                 
                 <div class="manager-filter" id="managerFilter">
-                    <div class="manager-filter-inner">
+                    <div class="manager-filter-inner" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <div id="calendarLineFilterContainer" style="display: flex; align-items: center; gap: 8px;">
+                            <label for="calendarLineFilter" class="fw-bold mb-0" style="font-size: 0.88rem;">
+                                <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
+                            </label>
+                            <select id="calendarLineFilter" class="form-control" style="min-width: 170px; height: 34px; padding: 4px 10px; font-size: 0.85rem;" onchange="onCalendarLineChange(this.value)">
+                                <option value="all" data-i18n="allLines">All Lines</option>
+                            </select>
+                        </div>
                         <label class="fw-bold mb-0" data-i18n="selectRep">Viewing Schedule For:</label>
                         <div class="current-target-pill" id="currentTargetPill">
                             <span class="target-role-badge badge bg-primary" id="targetRoleBadge">Team</span>

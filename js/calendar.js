@@ -404,6 +404,17 @@ function renderCalendar() {
       }
     }
 
+    // Filter by selected product line if scoped
+    const selectedLineId = window.selectedCalendarLineId || "all";
+    if (selectedLineId !== "all") {
+      dayEvents = dayEvents.filter((e) => {
+        if (e.type === "holiday") return true;
+        if (!e.repId) return true;
+        const repLines = window.getUserLines ? window.getUserLines(e.repId) : [];
+        return repLines.some((l) => l.id === selectedLineId);
+      });
+    }
+
     const matchedHoliday = publicHolidays.find((ph) => ph.date === cellDateStr);
     if (matchedHoliday) {
       dayEvents.unshift({
@@ -767,6 +778,14 @@ function renderOrgTreeNodes(searchTerm = "") {
       filteredUsers = filteredUsers.filter((u) => allowedIds.has(u.id));
     }
 
+    const selectedLineId = window.selectedCalendarLineId || "all";
+    if (selectedLineId !== "all") {
+      filteredUsers = filteredUsers.filter((u) => {
+        const uLines = window.getUserLines ? window.getUserLines(u.id) : [];
+        return uLines.some((l) => l.id === selectedLineId);
+      });
+    }
+
     if (filteredUsers.length === 0) {
       container.innerHTML = `
         <div class="search-empty-state">
@@ -810,7 +829,15 @@ function renderOrgTreeNodes(searchTerm = "") {
     const isInactive = userNode.status === "Inactive";
     const nodeName = isAr && userNode.nameAr ? userNode.nameAr : userNode.name;
     const roleInfo = getRoleBadgeInfo(userNode.role);
-    const directs = allUsers.filter((u) => u.managerId === userNode.id);
+    const directs = allUsers.filter((u) => {
+      if (u.managerId !== userNode.id) return false;
+      const selectedLineId = window.selectedCalendarLineId || "all";
+      if (selectedLineId !== "all") {
+        const uLines = window.getUserLines ? window.getUserLines(u.id) : [];
+        return uLines.some((l) => l.id === selectedLineId);
+      }
+      return true;
+    });
     const hasChildren = directs.length > 0;
     const isSelected = window.currentCalendarTargetId === userNode.id;
 
@@ -881,12 +908,20 @@ function renderOrgTreeNodes(searchTerm = "") {
 
   let treeHtml = '<div class="org-tree-root">';
 
+  const selectedLineId = window.selectedCalendarLineId || "all";
+
   if (hasFullOrgAccess) {
-    const topManagers = allUsers.filter(
+    let topManagers = allUsers.filter(
       (u) =>
         u.role === "business_unit" ||
         (u.managerId === "admin1" && u.role !== "admin" && u.role !== "hr"),
     );
+    if (selectedLineId !== "all") {
+      topManagers = topManagers.filter((m) => {
+        const mLines = window.getUserLines ? window.getUserLines(m.id) : [];
+        return mLines.some((l) => l.id === selectedLineId);
+      });
+    }
     topManagers.forEach((m) => {
       treeHtml += renderUserNode(m, 0);
     });
@@ -895,7 +930,13 @@ function renderOrgTreeNodes(searchTerm = "") {
     if (managerNode) {
       treeHtml += renderUserNode(managerNode, 0);
     } else {
-      const directs = allUsers.filter((u) => u.managerId === currentUser.id);
+      let directs = allUsers.filter((u) => u.managerId === currentUser.id);
+      if (selectedLineId !== "all") {
+        directs = directs.filter((d) => {
+          const dLines = window.getUserLines ? window.getUserLines(d.id) : [];
+          return dLines.some((l) => l.id === selectedLineId);
+        });
+      }
       directs.forEach((d) => {
         treeHtml += renderUserNode(d, 0);
       });
@@ -910,31 +951,120 @@ function filterOrgTree(query) {
   renderOrgTreeNodes(query);
 }
 
+function populateCalendarLineFilter(user = null) {
+  const lineSelect = document.getElementById("calendarLineFilter");
+  if (!lineSelect) return;
+
+  const currentUser = user || (window.checkAuth && window.checkAuth()) || { role: "admin", id: "admin1" };
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
+  const isRep = role === "medical_rep" || role === "rep";
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+  const curVal = lineSelect.value;
+
+  lineSelect.replaceChildren();
+
+  if (isRep) {
+    if (userLines.length > 0) {
+      userLines.forEach((l) => {
+        const opt = document.createElement("option");
+        opt.value = l.id;
+        opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+        lineSelect.appendChild(opt);
+      });
+      lineSelect.value = userLines[0].id;
+      window.selectedCalendarLineId = userLines[0].id;
+      lineSelect.disabled = true;
+    } else {
+      const opt = document.createElement("option");
+      opt.value = "line1";
+      opt.textContent = isAr ? "📦 خط افتراضي" : "📦 Assigned Line";
+      lineSelect.appendChild(opt);
+      window.selectedCalendarLineId = "line1";
+      lineSelect.disabled = true;
+    }
+    return;
+  }
+
+  // Managers & Admin
+  lineSelect.disabled = false;
+  const isFullAdmin = role === "admin" || role === "hr";
+
+  if (isFullAdmin || userLines.length > 1) {
+    const optAll = document.createElement("option");
+    optAll.value = "all";
+    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    lineSelect.appendChild(optAll);
+  }
+
+  userLines.forEach((l) => {
+    const opt = document.createElement("option");
+    opt.value = l.id;
+    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    lineSelect.appendChild(opt);
+  });
+
+  if (curVal && Array.from(lineSelect.options).some((o) => o.value === curVal)) {
+    lineSelect.value = curVal;
+  } else {
+    lineSelect.value = lineSelect.options[0]?.value || "all";
+  }
+  window.selectedCalendarLineId = lineSelect.value;
+}
+
+window.onCalendarLineChange = function (selectedLineId) {
+  window.selectedCalendarLineId = selectedLineId;
+  const targetId = window.currentCalendarTargetId;
+  if (targetId && targetId !== "all") {
+    const targetLines = window.getUserLines ? window.getUserLines(targetId) : [];
+    if (selectedLineId !== "all" && !targetLines.some((l) => l.id === selectedLineId)) {
+      resetCalendarToAll();
+      return;
+    }
+  }
+  renderCalendar();
+  if (document.getElementById("orgTreeModal")?.style.display !== "none") {
+    renderOrgTreeNodes(document.getElementById("orgTreeSearchInput")?.value || "");
+  }
+};
+
 function setupManagerFilter(user) {
   const managerFilter = document.getElementById("managerFilter");
+  const btnOpenTree = document.getElementById("btnOpenTreePicker");
+  const btnReset = document.getElementById("btnResetCalendar");
+  const targetRoleBadge = document.getElementById("targetRoleBadge");
+  const targetNameDisplay = document.getElementById("targetNameDisplay");
   if (!managerFilter) return;
 
-  const hasAccess =
-    (window.isManagerRole && window.isManagerRole(user)) ||
-    user.role === "hr" ||
-    user.role !== "medical_rep";
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+  const isRep = role === "medical_rep" || role === "rep";
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const t = calendarTranslations[lang] || calendarTranslations.en;
 
-  if (hasAccess) {
-    managerFilter.classList.add("active");
-    managerFilter.style.display = "flex";
+  managerFilter.classList.add("active");
+  managerFilter.style.display = "flex";
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = calendarTranslations[lang] || calendarTranslations.en;
-
-    if (window.currentCalendarTargetId === "all") {
-      const targetRoleBadge = document.getElementById("targetRoleBadge");
-      const targetNameDisplay = document.getElementById("targetNameDisplay");
-      if (targetRoleBadge) targetRoleBadge.textContent = t.teamBadge;
-      if (targetNameDisplay) targetNameDisplay.textContent = t.allTeamView;
+  if (isRep) {
+    if (btnOpenTree) btnOpenTree.style.display = "none";
+    if (btnReset) btnReset.style.display = "none";
+    if (targetRoleBadge) {
+      targetRoleBadge.textContent = isAr ? "مندوب" : "Rep";
+      targetRoleBadge.className = "target-role-badge role-badge role-medical_rep";
+    }
+    if (targetNameDisplay) {
+      targetNameDisplay.textContent = isAr && user.nameAr ? user.nameAr : user.name;
     }
   } else {
-    managerFilter.classList.remove("active");
-    managerFilter.style.display = "none";
+    if (btnOpenTree) btnOpenTree.style.display = "inline-flex";
+    if (window.currentCalendarTargetId === "all") {
+      if (targetRoleBadge) targetRoleBadge.textContent = t.teamBadge;
+      if (targetNameDisplay) targetNameDisplay.textContent = t.allTeamView;
+      if (btnReset) btnReset.style.display = "none";
+    } else {
+      if (btnReset) btnReset.style.display = "inline-flex";
+    }
   }
 }
 
@@ -950,6 +1080,7 @@ function setupCalendar() {
     window.currentCalendarTargetName = user.name;
     window.currentCalendarTargetRole = "Rep";
   }
+  populateCalendarLineFilter();
   setupManagerFilter(user);
   renderCalendar();
 
@@ -986,6 +1117,7 @@ function setupCalendar() {
   });
 
   document.addEventListener("languageChanged", () => {
+    populateCalendarLineFilter();
     setupManagerFilter(user);
     renderCalendar();
     if (document.getElementById("orgTreeModal")?.style.display !== "none") {
@@ -1005,6 +1137,8 @@ const calendarApp = {
   filterOrgTree,
   renderCalendar,
   setupCalendar,
+  populateCalendarLineFilter,
+  onCalendarLineChange: window.onCalendarLineChange,
 };
 
 window.calendarApp = calendarApp;

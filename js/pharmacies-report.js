@@ -71,6 +71,17 @@ function getScopedPharmacies(respectActiveFilters = true) {
     }
   }
 
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    pharms = pharms.filter((p) => {
+      if (p.lineId) return p.lineId === selectedLineId;
+      if (Array.isArray(p.lineIds) && p.lineIds.length > 0) return p.lineIds.includes(selectedLineId);
+      if (!p.repId) return role === 'admin' || role === 'hr';
+      const repLines = window.getUserLines ? window.getUserLines(p.repId) : [];
+      return repLines.some((l) => l.id === selectedLineId);
+    });
+  }
+
   if (!respectActiveFilters) {
     return pharms;
   }

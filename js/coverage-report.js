@@ -202,6 +202,17 @@ function renderCoverageReport() {
     }
   }
 
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    targetList = targetList.filter((d) => {
+      if (d.lineId) return d.lineId === selectedLineId;
+      if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
+      if (!d.repId) return role === 'admin' || role === 'hr';
+      const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
+      return repLines.some((l) => l.id === selectedLineId);
+    });
+  }
+
   // Pre-calculate visit counts for each target within selected date range
   const visits = REPORTS_DATA.visits || [];
   targetList.forEach((target) => {
@@ -263,6 +274,13 @@ function renderCoverageReport() {
     if (!scopedReps.length) {
       scopedReps = allUsers.filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'));
     }
+  }
+
+  if (selectedLineId !== 'all' && (!selectedRep || selectedRep === 'all' || selectedRep === 'all_reps' || selectedRep === 'all_dms')) {
+    scopedReps = scopedReps.filter((r) => {
+      const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+      return rLines.some((l) => l.id === selectedLineId);
+    });
   }
 
   // Fallback if empty

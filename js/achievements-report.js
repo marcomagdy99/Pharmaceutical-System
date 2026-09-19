@@ -180,6 +180,18 @@ function getAchievementsScopeRepIds(user) {
     return [selectedRep];
   }
 
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    const repsForLine = allUsers
+      .filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')))
+      .filter((u) => {
+        const repLines = window.getUserLines ? window.getUserLines(u.id) : [];
+        return repLines.some((l) => l.id === selectedLineId);
+      })
+      .map((u) => u.id);
+    allowedRepIds = allowedRepIds ? allowedRepIds.filter((id) => repsForLine.includes(id)) : repsForLine;
+  }
+
   return allowedRepIds;
 }
 
@@ -195,13 +207,33 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const keys = Array.isArray(monthKeys) ? monthKeys : [monthKeys];
   if (!keys.length) return [];
 
-  const targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
-    .filter((t) => keys.includes(t.month) && (!scopeRepIds || scopeRepIds.includes(t.repId)));
-  const salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-    .filter((s) => keys.includes(s.month) && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
+  const keysSet = new Set(keys);
+  const repScopeSet = scopeRepIds ? new Set(scopeRepIds) : null;
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+
+  let targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
+    .filter((t) => keysSet.has(t.month) && (!repScopeSet || repScopeSet.has(t.repId)));
+  let salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
+    .filter((s) => keysSet.has(s.month) && s.repId && s.productId && (!repScopeSet || repScopeSet.has(s.repId)));
 
   const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+
+  // O(1) Hash Map indices to replace repetitive O(N) .find searches in large datasets
+  const usersMap = new Map(allUsers.map((u) => [u.id, u]));
+  const productsMap = new Map(allProducts.map((p) => [p.id, p]));
+
+  if (selectedLineId !== 'all') {
+    targets = targets.filter((t) => {
+      const prod = productsMap.get(t.productId);
+      return prod && prod.lineId === selectedLineId;
+    });
+    salesRows = salesRows.filter((s) => {
+      if (s.lineId) return s.lineId === selectedLineId;
+      const prod = productsMap.get(s.productId);
+      return prod && prod.lineId === selectedLineId;
+    });
+  }
 
   const cellMap = {};
   targets.forEach((t) => {
@@ -222,7 +254,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const repGroups = {};
   Object.values(cellMap).forEach((cell) => {
     if (!repGroups[cell.repId]) {
-      const rep = allUsers.find((u) => u.id === cell.repId);
+      const rep = usersMap.get(cell.repId);
       repGroups[cell.repId] = {
         repId: cell.repId,
         repName: rep ? rep.name : cell.repId,
@@ -235,7 +267,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       };
     }
     const g = repGroups[cell.repId];
-    const prod = allProducts.find((p) => p.id === cell.productId);
+    const prod = productsMap.get(cell.productId);
     g.products.push({
       productId: cell.productId,
       productName: prod ? prod.name : cell.productId,

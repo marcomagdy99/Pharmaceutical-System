@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file dashboard.js
  * @description Comprehensive role-adaptive dashboard engine for PharmaCare.
  * Includes: Team planned visits visibility for DMs with 7-day auto-expiry & double visit linking, LM hierarchy, and dynamic KPIs.
@@ -983,7 +983,7 @@ function renderRepDashboard(userName, user) {
                   `,
                         )
                         .join("")
-                    : `<p style="color: var(--gray-400); margin: 0; font-style: italic; font-size: 0.85rem;">${t.no_planned_visits}</p>`
+                    : `<p style="color: var(--gray-600); margin: 0; font-style: italic; font-size: 0.85rem;">${t.no_planned_visits}</p>`
                 }
               </div>
             </div>
@@ -1019,7 +1019,7 @@ function renderRepDashboard(userName, user) {
                   `,
                         )
                         .join("")
-                    : `<p style="color: var(--gray-400); margin: 0; font-style: italic; font-size: 0.85rem;">${t.no_planned_visits}</p>`
+                    : `<p style="color: var(--gray-600); margin: 0; font-style: italic; font-size: 0.85rem;">${t.no_planned_visits}</p>`
                 }
               </div>
             </div>
@@ -1855,7 +1855,7 @@ function renderLMDashboard(userName, user) {
             const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
             const lTarget = lSales.reduce((sum, s) => sum + (parseFloat(s.target) || 0), 0);
             const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
-            const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#f59e0b";
+            const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#c2410c";
 
             return `
           <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
@@ -2043,7 +2043,7 @@ function renderBUDashboard(userName, user) {
             const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
             const lTarget = lSales.reduce((sum, s) => sum + (parseFloat(s.target) || 0), 0);
             const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
-            const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#f59e0b";
+            const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#c2410c";
 
             return `
           <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">

@@ -18,8 +18,16 @@
   }
 
   function autoSave(entity, action, payload) {
-    if (typeof window.saveDataToStorage === "function") {
-      window.saveDataToStorage();
+    if (entity === "distributorSales" || entity === "sales") {
+      if (typeof window.saveSalesDataToStorage === "function") {
+        window.saveSalesDataToStorage();
+      } else if (typeof window.saveDataToStorage === "function") {
+        window.saveDataToStorage();
+      }
+    } else {
+      if (typeof window.saveDataToStorage === "function") {
+        window.saveDataToStorage();
+      }
     }
     document.dispatchEvent(
       new CustomEvent("pharma:store:changed", {
