@@ -17,17 +17,15 @@ function getScopedPharmacies(respectActiveFilters = true) {
 
   let pharms = getPharmaciesData();
 
-  // Role scoping: Reps get all pharmacies assigned to their id OR located in any of their assigned areas (only if unassigned)
+  // Role scoping: Reps get all pharmacies assigned to their id OR located in any of their assigned areas
   if (!isMgr) {
     const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     pharms = pharms.filter((p) =>
       p.repId === currentUser.id ||
-      (!p.repId && (
-        (p.areaId && repAreaIds.includes(p.areaId)) ||
-        (p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
-      ))
+      (p.areaId && repAreaIds.includes(p.areaId)) ||
+      (p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -183,7 +181,7 @@ function renderPharmaciesReport() {
 }
 
 function openPharmacyModal(pharmId = null) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
@@ -201,18 +199,22 @@ function openPharmacyModal(pharmId = null) {
   const contactInput = document.getElementById("pharmacyContactInput");
   const phoneInput = document.getElementById("pharmacyPhoneInput");
   const repInput = document.getElementById("pharmacyRepInput");
+  const areaInput = document.getElementById("pharmacyAreaInput");
 
-  const existingRepId = pharmId ? (getPharmaciesData().find((p) => p.id === pharmId) || {}).repId : null;
+  const existingPharm = pharmId ? (getPharmaciesData().find((p) => p.id === pharmId) || {}) : {};
+  const existingRepId = existingPharm.repId || null;
+  const existingAreaId = existingPharm.areaId || null;
 
-  // Populates pharmacyModalLmSelect -> pharmacyModalDmSelect -> pharmacyRepInput
-  // as a real cascading hierarchy (defined in shared-report.js), instead
-  // of a flat list of every rep in the system.
+  // Populates pharmacyModalLmSelect -> pharmacyModalDmSelect -> pharmacyRepInput -> pharmacyAreaInput
+  // as a real cascading hierarchy (defined in shared-report.js)
   if (typeof populateModalHierarchy === "function") {
     populateModalHierarchy(
       "pharmacyModalLmSelect",
       "pharmacyModalDmSelect",
       "pharmacyRepInput",
       existingRepId || currentUser.id,
+      "pharmacyAreaInput",
+      existingAreaId,
     );
   }
 
@@ -225,6 +227,7 @@ function openPharmacyModal(pharmId = null) {
       if (addressInput) addressInput.value = pharm.address || "";
       if (contactInput) contactInput.value = pharm.contactPerson || "";
       if (phoneInput) phoneInput.value = pharm.phone || "";
+      if (areaInput && pharm.areaId) areaInput.value = pharm.areaId;
     }
   } else {
     if (idInput) idInput.value = "";
@@ -247,7 +250,7 @@ function closePharmacyModal() {
 }
 
 function savePharmacy() {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
@@ -262,6 +265,7 @@ function savePharmacy() {
   const contactInput = document.getElementById("pharmacyContactInput");
   const phoneInput = document.getElementById("pharmacyPhoneInput");
   const repSelect = document.getElementById("pharmacyRepInput");
+  const areaSelect = document.getElementById("pharmacyAreaInput");
 
   if (!nameInput || !addressInput) return;
 
@@ -270,33 +274,44 @@ function savePharmacy() {
   const address = addressInput.value.trim();
   const contactPerson = contactInput ? contactInput.value.trim() : "";
   const phone = phoneInput ? phoneInput.value.trim() : "";
-
-  // Automatic repId binding to active user if unselected
-  const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : currentUser.id;
+  const assignedAreaId = areaSelect ? areaSelect.value.trim() : "";
 
   if (!name || !address) {
     if (typeof showToast === "function") showToast("Please fill in required fields.", "warning");
     return;
   }
 
-  // Auto-resolve area and product line from the assigned rep
-  let assignedAreaId = null;
+  if (!assignedAreaId) {
+    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
+    if (typeof showToast === "function") {
+      showToast(isAr ? "يرجى اختيار المنطقة التابعة." : "Please select a territory / area.", "warning");
+    }
+    return;
+  }
+
+  // Resolve area details directly from store
   let assignedAreaName = "";
   let assignedLineId = "";
-  if (assignedRepId) {
-    if (window.store && window.store.areas) {
-      const repAreas = window.store.areas.getByRep(assignedRepId);
-      if (repAreas.length > 0) {
-        assignedAreaId = repAreas[0].id;
-        assignedAreaName = repAreas[0].name;
-        assignedLineId = repAreas[0].lineId || "";
-      }
-    }
-    if (!assignedLineId) {
-      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-      const rep = allUsers.find((u) => u.id === assignedRepId);
-      if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
-    }
+  let areaObj = null;
+  if (window.store && window.store.areas) {
+    areaObj = window.store.areas.getById(assignedAreaId);
+  }
+  if (!areaObj && window.DEMO_DATA && window.DEMO_DATA.areas) {
+    areaObj = window.DEMO_DATA.areas.find((a) => a.id === assignedAreaId);
+  }
+
+  if (areaObj) {
+    assignedAreaName = areaObj.name || "";
+    assignedLineId = areaObj.lineId || "";
+  }
+
+  // Automatic repId binding from modal selection, area's assigned rep, or currentUser
+  const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : ((areaObj && areaObj.repId) || currentUser.id);
+
+  if (!assignedLineId && assignedRepId) {
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const rep = allUsers.find((u) => u.id === assignedRepId);
+    if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
   }
 
   const pharmacyObj = {
@@ -333,7 +348,7 @@ function savePharmacy() {
 let pharmacyToDeleteId = null;
 
 function openDeletePharmacyModal(pharmId) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
@@ -360,7 +375,7 @@ function closeDeletePharmacyModal() {
 }
 
 function confirmDeletePharmacy() {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {

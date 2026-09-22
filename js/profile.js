@@ -327,12 +327,8 @@ document.addEventListener("DOMContentLoaded", () => {
  * Loads dynamic profile data and computes leave balances programmatically.
  */
 function loadUserProfile() {
-  const user = (window.checkAuth && window.checkAuth()) || (window.DEMO_DATA && window.DEMO_DATA.currentUser) || {
-    name: "Ahmed Mostafa",
-    email: "ahmed@pharmacare.com",
-    role: "medical_rep",
-    employeeCode: "EMP-001"
-  };
+  const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
+  if (!user || !user.id) return;
 
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const allAreas = (window.DEMO_DATA && window.DEMO_DATA.areas) || [];

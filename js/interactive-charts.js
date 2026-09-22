@@ -32,9 +32,20 @@
       try {
         activeCharts[canvasId].destroy();
       } catch (e) {
-        console.warn('Could not destroy chart instance:', e);
+        console.warn('Could not destroy chart instance from registry:', e);
       }
       delete activeCharts[canvasId];
+    }
+    // Defensive protection: if Chart.js maintains an attached instance on the DOM canvas, destroy it too
+    if (typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
+      try {
+        const existing = Chart.getChart(canvasId);
+        if (existing) {
+          existing.destroy();
+        }
+      } catch (e) {
+        console.warn('Could not destroy chart via Chart.getChart:', e);
+      }
     }
   }
 

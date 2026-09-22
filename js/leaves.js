@@ -244,11 +244,7 @@ if (window.translations) {
     Object.assign(window.translations.ar, leaveTranslations.ar);
 }
 
-let currentUser = (window.checkAuth && window.checkAuth()) || {
-  id: "rep1",
-  role: "medical_rep",
-  name: "Ahmed Mostafa",
-};
+let currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
 
 let activeRejectLeaveId = null;
 
@@ -665,8 +661,15 @@ function calcDays() {
     if (daysCount) daysCount.value = `${days} ${daysWord}`;
 
     if (holidayNotice) {
+      const noticeParts = [];
+      if (res.excludedFridays > 0) {
+        noticeParts.push(
+          isAr
+            ? `🕌 استثناء ${res.excludedFridays} يوم جمعة (راحة أسبوعية رسمية لا تُخصم من الرصيد)`
+            : `🕌 ${res.excludedFridays} Friday(s) excluded (statutory paid rest day)`
+        );
+      }
       if (res.excludedHolidays.length > 0) {
-        holidayNotice.style.display = "block";
         const titles = res.excludedHolidays
           .map((h) => {
             const durLabel =
@@ -680,9 +683,16 @@ function calcDays() {
             return `<strong>${window.escapeHtml(h.title)}</strong> (${window.escapeHtml(h.date)} - ${durLabel})`;
           })
           .join("، ");
-        holidayNotice.innerHTML = isAr
-          ? `🌴 <strong>تمت مراعاة ${res.excludedHolidays.length} عطلة رسمية بدون خصم كامل من رصيدك:</strong> ${titles}`
-          : `🌴 <strong>${res.excludedHolidays.length} Public Holiday(s) accounted for:</strong> ${titles}`;
+        noticeParts.push(
+          isAr
+            ? `🌴 <strong>عطلات رسمية:</strong> ${titles}`
+            : `🌴 <strong>Official holidays:</strong> ${titles}`
+        );
+      }
+
+      if (noticeParts.length > 0) {
+        holidayNotice.style.display = "block";
+        holidayNotice.innerHTML = noticeParts.join("<br>");
       } else {
         holidayNotice.style.display = "none";
       }
@@ -693,17 +703,17 @@ function calcDays() {
 }
 
 /**
- * Resolves leave days and detects any overlapping official public holidays.
- * Excludes official public holidays from deductible leave days.
+ * Resolves leave days and detects any overlapping official public holidays and weekly rest days.
+ * Excludes official public holidays and Fridays (statutory paid weekly rest) from deductible leave days.
  * If a public holiday is half day, 0.5 is deducted instead of 1.0.
  */
 function resolveLeaveDaysDetailed(start, end) {
-  if (!start || !end) return { totalDays: 1, excludedHolidays: [] };
+  if (!start || !end) return { totalDays: 1, excludedHolidays: [], excludedFridays: 0 };
 
   const s = new Date(start + "T00:00:00");
   const e = new Date(end + "T00:00:00");
   if (isNaN(s.getTime()) || isNaN(e.getTime()))
-    return { totalDays: 1, excludedHolidays: [] };
+    return { totalDays: 1, excludedHolidays: [], excludedFridays: 0 };
 
   const startD = s <= e ? s : e;
   const endD = s <= e ? e : s;
@@ -715,6 +725,7 @@ function resolveLeaveDaysDetailed(start, end) {
 
   let count = 0;
   const excludedHolidays = [];
+  let excludedFridays = 0;
 
   const cur = new Date(startD);
   while (cur <= endD) {
@@ -722,6 +733,7 @@ function resolveLeaveDaysDetailed(start, end) {
     const m = String(cur.getMonth() + 1).padStart(2, "0");
     const d = String(cur.getDate()).padStart(2, "0");
     const dateStr = `${y}-${m}-${d}`;
+    const isFriday = cur.getDay() === 5; // Friday: Egyptian Labor Law statutory paid weekly rest day
 
     const holidayMatch = publicHolidays.find((h) => h.date === dateStr);
     if (holidayMatch) {
@@ -729,6 +741,9 @@ function resolveLeaveDaysDetailed(start, end) {
       if (holidayMatch.duration === "half") {
         count += 0.5;
       }
+    } else if (isFriday) {
+      excludedFridays++;
+      // Friday is statutory weekly rest day; not deducted from annual/sick leave balance
     } else {
       count += 1;
     }
@@ -739,6 +754,7 @@ function resolveLeaveDaysDetailed(start, end) {
   return {
     totalDays: count,
     excludedHolidays,
+    excludedFridays,
   };
 }
 

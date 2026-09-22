@@ -1031,14 +1031,14 @@ const plansReview = {
     const visits = getMasterVisits();
 
     let count = 0;
-    let sampleDate = "2026-09-20";
+    const approvedDates = new Set();
     visits.forEach((v) => {
       if (v.repId === repId && v.status === "pending_approval") {
         v.status = "planned";
         v.approvedBy = currentUser.id;
         v.approvedByName = currentUser.name;
         v.approvedAt = new Date().toISOString();
-        if (v.date) sampleDate = v.date;
+        if (v.date) approvedDates.add(v.date);
         count++;
       }
     });
@@ -1052,14 +1052,28 @@ const plansReview = {
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
 
+    const sortedDates = Array.from(approvedDates).sort();
+    let dateTextAr = "";
+    let dateTextEn = "";
+    if (sortedDates.length === 0) {
+      dateTextAr = "الجديدة";
+      dateTextEn = "new";
+    } else if (sortedDates.length === 1) {
+      dateTextAr = `لتاريخ ${sortedDates[0]}`;
+      dateTextEn = `for ${sortedDates[0]}`;
+    } else {
+      dateTextAr = `للفترة (${sortedDates[0]} إلى ${sortedDates[sortedDates.length - 1]})`;
+      dateTextEn = `for the period (${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]})`;
+    }
+
     if (typeof window.addWorkflowNotification === "function") {
       window.addWorkflowNotification({
         userId: repId,
         type: "plan_approval",
         title: "اعتماد الخطة الميدانية",
         titleEn: "Field Plan Approved",
-        message: `اعتمد ${actorTitle} (${currentUser.name}) خطتك الميدانية لتاريخ ${sampleDate}.`,
-        messageEn: `${actorTitle} (${currentUser.name}) approved your field plan for ${sampleDate}.`,
+        message: `اعتمد ${actorTitle} (${currentUser.name}) خطتك الميدانية ${dateTextAr} بإجمالي (${count} زيارة).`,
+        messageEn: `${actorTitle} (${currentUser.name}) approved your field plan ${dateTextEn} (${count} visits total).`,
         link: "calendar.html",
         icon: "🗓️",
         badgeClass: "bg-success",

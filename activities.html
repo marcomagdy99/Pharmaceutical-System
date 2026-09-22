@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" href="images/pharma-icon-192.png">
     <link rel="apple-touch-icon" href="images/pharma-icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <title data-i18n="activitiesTitle">PharmaCare - Activities</title>
+    <title data-i18n="activitiesTitle">PharmaCare - Field Requests</title>
 
     <!-- Immediate synchronous theme execution to eliminate Flash of Light Theme (FOUC) -->
     <script>
@@ -26,9 +26,9 @@
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/activities.css">
-  <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
-  <script src="js/firebase-config.js"></script>
-  <script src="js/app.js"></script>
+    <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
     <script src="js/store.js"></script>
 </head>
 <body>
@@ -37,67 +37,348 @@
         <aside class="sidebar" id="sidebar"></aside>
 
         <main class="main-content">
-                  <!-- Unified Topbar Strip -->
-      <header class="topbar" id="topbar">
-        <script>renderTopbar();</script>
-      </header>
+            <!-- Unified Topbar Strip -->
+            <header class="topbar" id="topbar">
+                <script>renderTopbar();</script>
+            </header>
 
             <div class="content" id="pageContent">
-                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 12px;">
-                    <h1 data-i18n="dailyActivities" style="margin: 0;">Daily Activities</h1>
-                    <div class="date-navigation" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <button class="btn btn-outline" id="prevDayBtn">&lt;</button>
-                        <span id="currentDateDisplay" style="margin: 0 0.5rem; font-weight: 700;"></span>
-                        <button class="btn btn-outline" id="nextDayBtn">&gt;</button>
-                        <button class="btn btn-primary" id="todayBtn" data-i18n="today">Today</button>
+                <!-- Requests Navigation Pill Tabs -->
+                <nav class="requests-nav-tabs" id="requestsNavTabs" aria-label="Requests Sections">
+                    <button type="button" class="requests-tab-btn active" id="tabBtnActivities" onclick="switchRequestsTab('tab-activities')">
+                        <span>📋</span> <span data-i18n="tabDailyActivities">Daily Activities</span>
+                    </button>
+                    <button type="button" class="requests-tab-btn" id="tabBtnExpenses" onclick="switchRequestsTab('tab-expenses')">
+                        <span>💳</span> <span data-i18n="tabExpenses">Request Expenses</span>
+                    </button>
+                    <button type="button" class="requests-tab-btn" id="tabBtnServices" onclick="switchRequestsTab('tab-services')">
+                        <span>🤝</span> <span data-i18n="tabServices">Request Services</span>
+                    </button>
+                    <button type="button" class="requests-tab-btn" id="tabBtnBudget" style="display: none;" onclick="switchRequestsTab('tab-budget')">
+                        <span>💰</span> <span data-i18n="tabSalesBudget">Sales Budget</span>
+                    </button>
+                </nav>
+
+                <!-- ======================================================== -->
+                <!-- TAB 1: Daily Activities (Original Non-Promotional Logs)   -->
+                <!-- ======================================================== -->
+                <div class="requests-tab-pane active" id="pane-activities">
+                    <div class="page-header">
+                        <h1 data-i18n="dailyActivities">Daily Activities</h1>
+                        <div class="date-navigation">
+                            <button class="btn btn-outline" id="prevDayBtn">&lt;</button>
+                            <span id="currentDateDisplay" style="margin: 0 0.5rem; font-weight: 700;"></span>
+                            <button class="btn btn-outline" id="nextDayBtn">&gt;</button>
+                            <button class="btn btn-primary" id="todayBtn" data-i18n="today">Today</button>
+                        </div>
+                    </div>
+
+                    <div class="current-day-view" id="currentDayView">
+                        <!-- AM Section -->
+                        <div class="card" style="background: var(--white); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200);">
+                            <div class="card-header" style="padding-bottom: 10px; border-bottom: 1px solid var(--gray-200);">
+                                <h2 data-i18n="amPeriod" style="margin: 0; font-size: 1.2rem; font-weight: 700;">AM Period</h2>
+                                <span id="amStatusBadge" class="badge"></span>
+                            </div>
+                            <div class="card-body" id="amContent" style="min-height: 100px; margin-top: 1rem;">
+                                <!-- Populated by activities.js -->
+                            </div>
+                            <div class="card-footer" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+                                <button type="button" class="btn btn-primary log-btn" data-period="AM" onclick="openActivityModal('AM')">
+                                    <span>📝</span> <span data-i18n="logActivity">Log Activity</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- PM Section -->
+                        <div class="card" style="background: var(--white); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200);">
+                            <div class="card-header" style="padding-bottom: 10px; border-bottom: 1px solid var(--gray-200);">
+                                <h2 data-i18n="pmPeriod" style="margin: 0; font-size: 1.2rem; font-weight: 700;">PM Period</h2>
+                                <span id="pmStatusBadge" class="badge"></span>
+                            </div>
+                            <div class="card-body" id="pmContent" style="min-height: 100px; margin-top: 1rem;">
+                                <!-- Populated by activities.js -->
+                            </div>
+                            <div class="card-footer" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+                                <button type="button" class="btn btn-primary log-btn" data-period="PM" onclick="openActivityModal('PM')">
+                                    <span>📝</span> <span data-i18n="logActivity">Log Activity</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="weekly-overview card" style="background: var(--white); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--gray-200);">
+                        <h2 data-i18n="weeklyOverview" style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700;">Weekly Overview (Sat - Thu)</h2>
+                        <div class="grid" id="weeklyGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
+                            <!-- Populated by activities.js -->
+                        </div>
                     </div>
                 </div>
 
-                <div class="current-day-view" id="currentDayView" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                    <!-- AM Section -->
-                    <div class="card" style="background: var(--white); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200);">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--gray-200);">
-                            <h2 data-i18n="amPeriod" style="margin: 0; font-size: 1.2rem; font-weight: 700;">AM Period</h2>
-                            <span id="amStatusBadge" class="badge"></span>
+                <!-- ======================================================== -->
+                <!-- TAB 2: Request Expenses (Travel & Field Expenses)        -->
+                <!-- ======================================================== -->
+                <div class="requests-tab-pane" id="pane-expenses">
+                    <div class="page-header">
+                        <div>
+                            <h1 data-i18n="expensesTitle" style="margin: 0;">Travel & Field Expenses</h1>
+                            <p style="color: var(--gray-500); margin: 4px 0 0 0; font-size: 0.9rem;" data-i18n="expensesSubtitle">
+                                Manage field travel, fuel, tolls, and hospitality claims with hierarchical approval.
+                            </p>
                         </div>
-                        <div class="card-body" id="amContent" style="min-height: 100px; margin-top: 1rem;">
-                            <!-- Populated by activities.js -->
+                        <button type="button" class="btn btn-primary" onclick="openExpenseModal()">
+                            <span>➕</span> <span data-i18n="btnNewExpense">New Expense Claim</span>
+                        </button>
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    <div class="budget-metrics-grid" style="margin-bottom: 1.5rem;">
+                        <div class="budget-metric-box warning">
+                            <div class="budget-metric-title" data-i18n="pendingApproval">Pending Approvals</div>
+                            <div class="budget-metric-value" id="expMetricPending">0 EGP</div>
                         </div>
-                        <div class="card-footer" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
-                            <button type="button" class="btn btn-primary log-btn" data-period="AM" onclick="openActivityModal('AM')">
-                                ?? <span data-i18n="logActivity">Log Activity</span>
-                            </button>
+                        <div class="budget-metric-box success">
+                            <div class="budget-metric-title" data-i18n="approvedExpenses">Approved Claims</div>
+                            <div class="budget-metric-value" id="expMetricApproved">0 EGP</div>
+                        </div>
+                        <div class="budget-metric-box">
+                            <div class="budget-metric-title" data-i18n="disbursedExpenses">Disbursed / Paid</div>
+                            <div class="budget-metric-value" id="expMetricDisbursed">0 EGP</div>
                         </div>
                     </div>
 
-                    <!-- PM Section -->
-                    <div class="card" style="background: var(--white); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200);">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--gray-200);">
-                            <h2 data-i18n="pmPeriod" style="margin: 0; font-size: 1.2rem; font-weight: 700;">PM Period</h2>
-                            <span id="pmStatusBadge" class="badge"></span>
+                    <!-- Control & Filters Bar -->
+                    <div class="requests-control-bar">
+                        <div class="requests-filter-group">
+                            <select id="expenseFilterStatus" onchange="renderExpensesTab()">
+                                <option value="all" data-i18n="allStatuses">All Statuses</option>
+                                <option value="pending" data-i18n="filterPending">Pending Review</option>
+                                <option value="approved" data-i18n="filterApproved">Approved</option>
+                                <option value="rejected" data-i18n="filterRejected">Rejected</option>
+                                <option value="disbursed" data-i18n="filterDisbursed">Disbursed</option>
+                            </select>
+                            <select id="expenseFilterCategory" onchange="renderExpensesTab()">
+                                <option value="all" data-i18n="allCategories">All Categories</option>
+                                <option value="travel" data-i18n="catTravel">Travel & Transportation</option>
+                                <option value="fuel_tolls" data-i18n="catFuelTolls">Fuel & Road Tolls</option>
+                                <option value="hospitality" data-i18n="catHospitality">Hospitality & Meetings</option>
+                                <option value="hotel" data-i18n="catHotel">Hotel Accommodation</option>
+                            </select>
                         </div>
-                        <div class="card-body" id="pmContent" style="min-height: 100px; margin-top: 1rem;">
-                            <!-- Populated by activities.js -->
-                        </div>
-                        <div class="card-footer" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
-                            <button type="button" class="btn btn-primary log-btn" data-period="PM" onclick="openActivityModal('PM')">
-                                ?? <span data-i18n="logActivity">Log Activity</span>
-                            </button>
-                        </div>
+                    </div>
+
+                    <!-- Expenses Table -->
+                    <div class="requests-table-container">
+                        <table class="requests-table" id="expensesTable">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="colDate">Date</th>
+                                    <th data-i18n="colEmployee">Employee</th>
+                                    <th data-i18n="colCategory">Category</th>
+                                    <th data-i18n="colAmount">Amount</th>
+                                    <th data-i18n="colReceipt">Receipt</th>
+                                    <th data-i18n="colStatus">Approval Status</th>
+                                    <th data-i18n="colActions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="weekly-overview card" style="background: var(--white); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--gray-200);">
-                    <h2 data-i18n="weeklyOverview" style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700;">Weekly Overview (Sat - Thu)</h2>
-                    <div class="grid" id="weeklyGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
-                        <!-- Populated by activities.js -->
+                <!-- ======================================================== -->
+                <!-- TAB 3: Request Services (Doctor & Hospital Support)      -->
+                <!-- ======================================================== -->
+                <div class="requests-tab-pane" id="pane-services">
+                    <div class="page-header">
+                        <div>
+                            <h1 data-i18n="servicesTitle" style="margin: 0;">Doctor & Hospital Services</h1>
+                            <p style="color: var(--gray-500); margin: 4px 0 0 0; font-size: 0.9rem;" data-i18n="servicesSubtitle">
+                                Sponsor medical congresses, clinic awareness materials, and round table discussions.
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="btnNewServiceRequest" onclick="openServiceModal()">
+                            <span>➕</span> <span data-i18n="btnNewService">New Service Request</span>
+                        </button>
+                    </div>
+
+                    <!-- Budget Overview / Status Bar -->
+                    <div class="budget-overview-card" id="serviceBudgetOverviewCard">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.3rem;">📊</span>
+                                <strong style="font-size: 1.05rem;" data-i18n="allocatedBudgetOverview">Allocated Promo Budget</strong>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="serviceBudgetLineSelect" style="font-weight: 600; font-size: 0.88rem;" data-i18n="lineFilterLabel">Line:</label>
+                                <select id="serviceBudgetLineSelect" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" onchange="onServiceBudgetLineChange()">
+                                    <!-- Populated by userLines -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="budget-metrics-grid" id="serviceBudgetMetricsGrid">
+                            <div class="budget-metric-box">
+                                <div class="budget-metric-title" data-i18n="totalAllocatedBudget">Total Budget</div>
+                                <div class="budget-metric-value" id="srvMetricTotal">0 EGP</div>
+                            </div>
+                            <div class="budget-metric-box success">
+                                <div class="budget-metric-title" data-i18n="approvedSpent">Approved & Utilized</div>
+                                <div class="budget-metric-value" id="srvMetricApproved">0 EGP</div>
+                            </div>
+                            <div class="budget-metric-box warning">
+                                <div class="budget-metric-title" data-i18n="pendingServices">Pending In Requests</div>
+                                <div class="budget-metric-value" id="srvMetricPending">0 EGP</div>
+                            </div>
+                            <div class="budget-metric-box danger">
+                                <div class="budget-metric-title" data-i18n="remainingBudget">Remaining Balance</div>
+                                <div class="budget-metric-value" id="srvMetricRemaining">0 EGP</div>
+                            </div>
+                        </div>
+
+                        <!-- LM Distribution to DMs Collapsible Card (Visible only to LM) -->
+                        <div id="lmDistributionSection" style="display: none; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--gray-300);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <div>
+                                    <h4 style="margin: 0; font-weight: 700;" data-i18n="distributeToDmsTitle">Distribute Line Budget to District Managers (DMs)</h4>
+                                    <small style="color: var(--gray-500);" data-i18n="distributeToDmsSubtitle">Allocate portions of your received line budget to each DM under your line.</small>
+                                </div>
+                                <button type="button" class="btn btn-outline" onclick="saveLmAllocation()">
+                                    <span>💾</span> <span data-i18n="saveAllocations">Save DMs Allocations</span>
+                                </button>
+                            </div>
+                            <div class="requests-table-container">
+                                <table class="requests-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="colDm">District Manager (DM)</th>
+                                            <th data-i18n="colCode">Code</th>
+                                            <th data-i18n="colAllocatedAmount">Allocated Budget (EGP)</th>
+                                            <th data-i18n="colUtilized">Utilized</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lmDmAllocationTableBody">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Services Table Controls -->
+                    <div class="requests-control-bar">
+                        <div class="requests-filter-group">
+                            <select id="serviceFilterStatus" onchange="renderServicesTab()">
+                                <option value="all" data-i18n="allStatuses">All Statuses</option>
+                                <option value="pending" data-i18n="filterPending">Pending Approval</option>
+                                <option value="approved" data-i18n="filterApproved">Approved</option>
+                                <option value="rejected" data-i18n="filterRejected">Rejected</option>
+                            </select>
+                            <select id="serviceFilterDept" onchange="renderServicesTab()">
+                                <option value="all" data-i18n="allDepts">All Departments</option>
+                                <option value="sales" data-i18n="deptSales">Sales Services</option>
+                                <option value="marketing" data-i18n="deptMarketing">Marketing Services</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Services Table -->
+                    <div class="requests-table-container">
+                        <table class="requests-table" id="servicesTable">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="colDate">Date</th>
+                                    <th data-i18n="colEmployee">Requester</th>
+                                    <th data-i18n="colLine">Line</th>
+                                    <th data-i18n="colDept">Dept</th>
+                                    <th data-i18n="colArea">Area</th>
+                                    <th data-i18n="colShiftTarget">Shift & Target</th>
+                                    <th data-i18n="colService">Service Title</th>
+                                    <th data-i18n="colCost">Estimated Cost</th>
+                                    <th data-i18n="colStatus">Approval Status</th>
+                                    <th data-i18n="colActions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicesTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ======================================================== -->
+                <!-- TAB 4: Sales Budget Allocation (BU Head & Admin Only)     -->
+                <!-- ======================================================== -->
+                <div class="requests-tab-pane" id="pane-budget">
+                    <div class="page-header">
+                        <div>
+                            <h1 data-i18n="buBudgetTitle" style="margin: 0;">Sales Budget Allocation</h1>
+                            <p style="color: var(--gray-500); margin: 4px 0 0 0; font-size: 0.9rem;" data-i18n="buBudgetSubtitle">
+                                Assign and allocate sales promo budgets per product line to Line Managers (LMs).
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="saveBuAllocation()">
+                            <span>💾</span> <span data-i18n="saveAllocations">Save Allocations</span>
+                        </button>
+                    </div>
+
+                    <div class="budget-overview-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="buBudgetLineSelect" style="font-weight: 700; font-size: 1rem;" data-i18n="selectProductLine">Product Line:</label>
+                                <select id="buBudgetLineSelect" style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--gray-300); font-weight: 700;" onchange="onBuBudgetLineChange()">
+                                    <!-- Populated by Lines -->
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="buTotalBudgetInput" style="font-weight: 700;" data-i18n="totalLineBudget">Total Line Budget (EGP):</label>
+                                <input type="number" id="buTotalBudgetInput" class="allocation-input" style="width: 170px;" value="0" min="0" oninput="calculateBuBudgetSummary()">
+                            </div>
+                        </div>
+
+                        <!-- Metrics Box -->
+                        <div class="budget-metrics-grid">
+                            <div class="budget-metric-box">
+                                <div class="budget-metric-title" data-i18n="totalLineBudget">Total Line Budget</div>
+                                <div class="budget-metric-value" id="buMetricTotal">0 EGP</div>
+                            </div>
+                            <div class="budget-metric-box success">
+                                <div class="budget-metric-title" data-i18n="allocatedToLms">Allocated to LMs</div>
+                                <div class="budget-metric-value" id="buMetricAllocated">0 EGP</div>
+                            </div>
+                            <div class="budget-metric-box warning">
+                                <div class="budget-metric-title" data-i18n="unallocatedRemaining">Unallocated Remaining</div>
+                                <div class="budget-metric-value" id="buMetricRemaining">0 EGP</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LMs Allocation Table -->
+                    <div class="requests-table-container">
+                        <table class="requests-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="colLm">Line Manager (LM)</th>
+                                    <th data-i18n="colCode">Code</th>
+                                    <th data-i18n="colAllocatedAmount">Allocated Amount (EGP)</th>
+                                    <th data-i18n="colDistributedToDms">Distributed to DMs</th>
+                                </tr>
+                            </thead>
+                            <tbody id="buLmAllocationTableBody">
+                                <!-- Populated dynamically based on selected Line -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Activity Log Modal (Interactive & Clickable) -->
+    <!-- ======================================================== -->
+    <!-- MODAL 1: Activity Log Modal (Existing)                  -->
+    <!-- ======================================================== -->
     <div class="modal-overlay" id="activityModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; align-items: center; justify-content: center;">
         <div class="modal-card" style="background: var(--white); border-radius: 12px; width: 90%; max-width: 480px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); pointer-events: auto;">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 10px;">
@@ -138,6 +419,193 @@
                         <button type="submit" class="btn btn-primary" id="saveActivityBtn" data-i18n="save">Save</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 2: Request Expense Modal                           -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="expenseModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; align-items: center; justify-content: center;">
+        <div class="modal-card" style="background: var(--white); border-radius: 14px; width: 90%; max-width: 520px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); pointer-events: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">💳 <span data-i18n="modalNewExpenseTitle">Submit Travel & Field Expense</span></h3>
+                <button type="button" onclick="closeExpenseModal()" style="background: none; border: none; font-size: 1.6rem; color: var(--gray-500); cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="expenseForm" onsubmit="handleExpenseSubmit(event)">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colCategory">Expense Category</span> <span style="color:red;">*</span></label>
+                        <select id="expenseCategoryInput" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300); font-weight: 600;">
+                            <option value="travel" data-i18n="catTravel">انتقالات وسفر (Travel & Transportation)</option>
+                            <option value="fuel_tolls" data-i18n="catFuelTolls">كارتات وبنزين (Fuel & Road Tolls)</option>
+                            <option value="hospitality" data-i18n="catHospitality">ضيافة واجتماعات (Hospitality & Meetings)</option>
+                            <option value="hotel" data-i18n="catHotel">إقامة فندقية (Hotel Accommodation)</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colAmount">Amount (EGP)</span> <span style="color:red;">*</span></label>
+                            <input type="number" id="expenseAmountInput" class="form-control" required min="1" step="0.5" placeholder="0.00" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300); font-weight: 700;">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colDate">Expense Date</span> <span style="color:red;">*</span></label>
+                            <input type="date" id="expenseDateInput" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colReceipt">Receipt / Invoice Attachment</span> <span style="color:red;">*</span></label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="expenseReceiptFileInput" accept="image/*" capture="environment" style="flex: 1; padding: 7px; border: 1px dashed var(--gray-300); border-radius: 8px;" onchange="handleReceiptFilePreview(this)">
+                            <div id="receiptPreviewBox" style="display: none; width: 44px; height: 44px; border-radius: 6px; overflow: hidden; border: 1px solid var(--gray-300); flex-shrink: 0;">
+                                <img id="receiptPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="preview">
+                            </div>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 0.8rem;" data-i18n="receiptHelp">Take photo or attach clear invoice image.</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;" data-i18n="notes">Description / Justification</label>
+                        <textarea id="expenseNotesInput" class="form-control" rows="2" placeholder="Mention visit destination, purpose or road traveled..." style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-300);"></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--gray-200); padding-top: 12px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()" data-i18n="cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span>🚀</span> <span data-i18n="btnSubmitClaim">Submit Claim</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 3: Request Service Modal                           -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="serviceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2500; align-items: center; justify-content: center;">
+        <div class="modal-card" style="background: var(--white); border-radius: 14px; width: 92%; max-width: 620px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); pointer-events: auto; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">🤝 <span data-i18n="modalNewServiceTitle">New Doctor / Hospital Service Request</span></h3>
+                <button type="button" onclick="closeServiceModal()" style="background: none; border: none; font-size: 1.6rem; color: var(--gray-500); cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm" onsubmit="handleServiceSubmit(event)">
+                    <!-- Row 1: Line and Department -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colLine">Product Line</span> <span style="color:red;">*</span></label>
+                            <select id="serviceFormLineSelect" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" onchange="onServiceFormLineChange()">
+                                <!-- Dynamically populated -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colDept">Service Department</span> <span style="color:red;">*</span></label>
+                            <select id="serviceFormDeptSelect" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);">
+                                <option value="sales" data-i18n="deptSales">Sales Department</option>
+                                <option value="marketing" data-i18n="deptMarketing">Marketing Department</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Area and Shift -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colArea">Territory / Area</span> <span style="color:red;">*</span></label>
+                            <select id="serviceFormAreaSelect" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" onchange="onServiceFormAreaChange()">
+                                <!-- Dynamically populated by Line -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colShift">Shift Period</span> <span style="color:red;">*</span></label>
+                            <select id="serviceFormShiftSelect" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" onchange="onServiceFormShiftChange()">
+                                <option value="AM">AM Period (Hospitals / Centers)</option>
+                                <option value="PM" selected>PM Period (Doctors Clinics)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Conditional Target Entity (AM -> Hospitals, PM -> Doctors) -->
+                    <div class="form-group" id="serviceHospitalGroup" style="display: none; margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;">🏥 <span data-i18n="targetHospital">Target Hospital / Center</span> <span style="color:red;">*</span></label>
+                        <select id="serviceFormHospitalSelect" class="form-control" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);">
+                            <!-- Populated with hospitals in that line/area -->
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="serviceDoctorGroup" style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;">👨‍⚕️ <span data-i18n="targetDoctor">Target Doctor</span> <span style="color:red;">*</span></label>
+                        <select id="serviceFormDoctorSelect" class="form-control" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);">
+                            <!-- Populated with doctors in that line/area -->
+                        </select>
+                    </div>
+
+                    <!-- Row 4: Service Title and Cost -->
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="serviceTitleLabel">Service Type / Title</span> <span style="color:red;">*</span></label>
+                            <input type="text" id="serviceFormTitleInput" class="form-control" required placeholder="e.g. CME Congress Sponsorship, Patient Brochures..." style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);">
+                        </div>
+                        <div class="form-group">
+                            <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="colCost">Estimated Cost (EGP)</span> <span style="color:red;">*</span></label>
+                            <input type="number" id="serviceFormCostInput" class="form-control" required min="1" step="10" placeholder="0.00" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300); font-weight: 700;">
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Date -->
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;"><span data-i18n="serviceDateLabel">Expected Execution Date</span> <span style="color:red;">*</span></label>
+                        <input type="date" id="serviceFormDateInput" class="form-control" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--gray-300);">
+                    </div>
+
+                    <!-- Row 6: Comment -->
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 6px;" data-i18n="notes">Justification & Potential ROI</label>
+                        <textarea id="serviceFormNotesInput" class="form-control" rows="2" placeholder="Specify event details, expected Rx potential, or department benefit..." style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-300);"></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--gray-200); padding-top: 12px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeServiceModal()" data-i18n="cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span>🚀</span> <span data-i18n="btnSubmitService">Submit Service Request</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 4: Receipt Image Zoom Modal                        -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="receiptPreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center;">
+        <div style="position: relative; max-width: 90vw; max-height: 90vh;">
+            <button type="button" onclick="closeReceiptPreviewModal()" style="position: absolute; top: -14px; right: -14px; background: white; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">&times;</button>
+            <img id="receiptModalLargeImg" src="" style="max-width: 100%; max-height: 85vh; border-radius: 10px; object-fit: contain; background: #000;" alt="Receipt Full">
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 5: Decision / Approval Modal (Approve or Reject)    -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="decisionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2800; align-items: center; justify-content: center;">
+        <div class="modal-card" style="background: var(--white); border-radius: 14px; width: 90%; max-width: 440px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); pointer-events: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 10px;">
+                <h3 id="decisionModalTitle" style="margin: 0; font-size: 1.2rem; font-weight: 700;">Confirm Action</h3>
+                <button type="button" onclick="closeDecisionModal()" style="background: none; border: none; font-size: 1.6rem; color: var(--gray-500); cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="decisionModalMessage" style="color: var(--gray-700); font-weight: 600; margin-bottom: 1rem;"></p>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label id="decisionCommentLabel" style="display: block; font-weight: 700; margin-bottom: 6px;">Notes / Reason:</label>
+                    <textarea id="decisionCommentInput" class="form-control" rows="2" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" placeholder="Optional comment or rejection reason..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--gray-200); padding-top: 12px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDecisionModal()" data-i18n="cancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="decisionConfirmBtn" onclick="executeDecisionConfirm()">Confirm</button>
+                </div>
             </div>
         </div>
     </div>

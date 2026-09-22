@@ -571,8 +571,23 @@ function handleMappingFileSelected(event) {
         blankrows: false,
         defval: "",
       });
-      const headerRow =
-        rows.find((r) => Array.isArray(r) && r.some((c) => String(c).trim() !== "")) || [];
+
+      // Defensive Header Detection: Find the row with the maximum number of populated cells
+      // in the first 15 rows to bypass report title banners and metadata rows (e.g. Ibn Sina/UCP banners).
+      let headerRow = [];
+      let maxColsCount = 0;
+      const inspectLimit = Math.min(15, rows.length);
+      for (let i = 0; i < inspectLimit; i++) {
+        const row = rows[i];
+        if (Array.isArray(row)) {
+          const filledCount = row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length;
+          if (filledCount > maxColsCount) {
+            maxColsCount = filledCount;
+            headerRow = row;
+          }
+        }
+      }
+
       const headers = headerRow
         .map((h) => String(h).trim())
         .filter((h) => h !== "");
@@ -1425,7 +1440,24 @@ function handleExcelUpload(e) {
       const data = new Uint8Array(ev.target.result);
       const workbook = XLSX.read(data, { type: "array", cellDates: true });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "", cellDates: true });
+
+      // Detect header row index to skip top banners and align object keys with mapped column names
+      const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: "" });
+      let headerRowIndex = 0;
+      let maxColsCount = 0;
+      const inspectLimit = Math.min(15, rawMatrix.length);
+      for (let i = 0; i < inspectLimit; i++) {
+        const row = rawMatrix[i];
+        if (Array.isArray(row)) {
+          const filledCount = row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length;
+          if (filledCount > maxColsCount) {
+            maxColsCount = filledCount;
+            headerRowIndex = i;
+          }
+        }
+      }
+
+      const rows = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex, defval: "", cellDates: true });
 
       const totalRows = rows.length;
       if (typeof window.openExcelImportProgress === "function") {

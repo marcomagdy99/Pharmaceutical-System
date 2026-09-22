@@ -45,17 +45,15 @@ function getScopedDoctors(respectActiveFilters = true) {
 
   let docs = getDoctorsData();
 
-  // Role scoping: Reps get all doctors assigned to their id OR located in any of their assigned areas (only if unassigned)
+  // Role scoping: Reps get all doctors assigned to their id OR located in any of their assigned areas
   if (!isMgr) {
     const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     docs = docs.filter((d) =>
       d.repId === currentUser.id ||
-      (!d.repId && (
-        (d.areaId && repAreaIds.includes(d.areaId)) ||
-        (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
-      ))
+      (d.areaId && repAreaIds.includes(d.areaId)) ||
+      (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -263,7 +261,7 @@ function renderDoctorsReport() {
 }
 
 function openDoctorModal(docId = null) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
@@ -282,18 +280,22 @@ function openDoctorModal(docId = null) {
   const addressInput = document.getElementById("doctorAddressInput");
   const phoneInput = document.getElementById("doctorPhoneInput");
   const repInput = document.getElementById("doctorRepInput");
+  const areaInput = document.getElementById("doctorAreaInput");
 
-  const existingRepId = docId ? (getDoctorsData().find((d) => d.id === docId) || {}).repId : null;
+  const existingDoc = docId ? (getDoctorsData().find((d) => d.id === docId) || {}) : {};
+  const existingRepId = existingDoc.repId || null;
+  const existingAreaId = existingDoc.areaId || null;
 
-  // Populates doctorModalLmSelect -> doctorModalDmSelect -> doctorRepInput
-  // as a real cascading hierarchy (defined in shared-report.js), instead
-  // of a flat list of every rep in the system.
+  // Populates doctorModalLmSelect -> doctorModalDmSelect -> doctorRepInput -> doctorAreaInput
+  // as a real cascading hierarchy (defined in shared-report.js)
   if (typeof populateModalHierarchy === "function") {
     populateModalHierarchy(
       "doctorModalLmSelect",
       "doctorModalDmSelect",
       "doctorRepInput",
       existingRepId || currentUser.id,
+      "doctorAreaInput",
+      existingAreaId,
     );
   }
 
@@ -323,6 +325,7 @@ function openDoctorModal(docId = null) {
       if (classInput) classInput.value = doc.class || "A";
       if (addressInput) addressInput.value = doc.clinicAddress || doc.address || "";
       if (phoneInput) phoneInput.value = doc.phone || "";
+      if (areaInput && doc.areaId) areaInput.value = doc.areaId;
     }
   } else {
     if (idInput) idInput.value = "";
@@ -344,7 +347,7 @@ function closeDoctorModal() {
 }
 
 function saveDoctor() {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
@@ -360,6 +363,7 @@ function saveDoctor() {
   const addressInput = document.getElementById("doctorAddressInput");
   const phoneInput = document.getElementById("doctorPhoneInput");
   const repSelect = document.getElementById("doctorRepInput");
+  const areaSelect = document.getElementById("doctorAreaInput");
 
   if (!nameInput || !addressInput) return;
 
@@ -376,34 +380,47 @@ function saveDoctor() {
   const docClass = classInput ? classInput.value : "A";
   const address = addressInput.value.trim();
   const phone = phoneInput ? phoneInput.value.trim() : "";
-
-  // Automatic repId binding to active user if unselected
-  const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : currentUser.id;
+  const assignedAreaId = areaSelect ? areaSelect.value.trim() : "";
 
   if (!name || !address) {
     if (typeof showToast === "function") showToast("Please fill in required fields.", "warning");
     return;
   }
 
-  // Auto-resolve area and product line from the assigned rep
-  let assignedAreaId = null;
+  if (!assignedAreaId) {
+    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
+    if (typeof showToast === "function") {
+      showToast(isAr ? "يرجى اختيار المنطقة التابعة." : "Please select a territory / area.", "warning");
+    }
+    return;
+  }
+
+  // Resolve area details directly from store
   let assignedAreaName = "";
   let assignedLineId = "";
-  if (assignedRepId) {
-    if (window.store && window.store.areas) {
-      const repAreas = window.store.areas.getByRep(assignedRepId);
-      if (repAreas.length > 0) {
-        assignedAreaId = repAreas[0].id;
-        assignedAreaName = repAreas[0].name;
-        assignedLineId = repAreas[0].lineId || "";
-      }
-    }
-    if (!assignedLineId) {
-      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-      const rep = allUsers.find((u) => u.id === assignedRepId);
-      if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
-    }
+  let areaObj = null;
+  if (window.store && window.store.areas) {
+    areaObj = window.store.areas.getById(assignedAreaId);
   }
+  if (!areaObj && window.DEMO_DATA && window.DEMO_DATA.areas) {
+    areaObj = window.DEMO_DATA.areas.find((a) => a.id === assignedAreaId);
+  }
+
+  if (areaObj) {
+    assignedAreaName = areaObj.name || "";
+    assignedLineId = areaObj.lineId || "";
+  }
+
+  // Automatic repId binding from modal selection, area's assigned rep, or currentUser
+  const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : ((areaObj && areaObj.repId) || currentUser.id);
+
+  if (!assignedLineId && assignedRepId) {
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const rep = allUsers.find((u) => u.id === assignedRepId);
+    if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
+  }
+
+  const existingDocRecord = id ? (getDoctorsData().find((d) => d.id === id) || {}) : {};
 
   const doctorObj = {
     id: id || "doc_" + Date.now(),
@@ -419,7 +436,7 @@ function saveDoctor() {
     areaId: assignedAreaId,
     area: assignedAreaName,
     lineId: assignedLineId,
-    visitsThisQuarter: 0
+    visitsThisQuarter: existingDocRecord.visitsThisQuarter || 0
   };
 
   if (window.store && window.store.doctors) {
@@ -444,7 +461,7 @@ function saveDoctor() {
 let doctorToDeleteId = null;
 
 function openDeleteDoctorModal(docId) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
@@ -471,7 +488,7 @@ function closeDeleteDoctorModal() {
 }
 
 function confirmDeleteDoctor() {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { id: "rep1" };
+  const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {

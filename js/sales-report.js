@@ -304,6 +304,74 @@ function initPharmSalesFilters(user) {
     }
   }
 
+  window.populatePharmSalesAreas = function (filterUser) {
+    const areaSelect = document.getElementById('pharmSalesAreaSelect');
+    if (!areaSelect) return;
+    const curLang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+    const allLabel = curLang === 'ar' ? 'جميع المناطق' : 'All Areas';
+    const prevVal = areaSelect.value;
+    areaSelect.innerHTML = `<option value="all">${allLabel}</option>`;
+
+    const curUser = filterUser || (typeof checkAuth === 'function' ? checkAuth() : null);
+    const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+    const repSelect = document.getElementById('pharmSalesRepSelect');
+    const selectedRepVal = repSelect ? repSelect.value : 'all';
+
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    let areasToDisplay = [];
+
+    if (isRep) {
+      areasToDisplay = (window.store && window.store.areas ? window.store.areas.getByRep(curUser.id) : allAreas.filter((a) => a.repId === curUser.id));
+    } else if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms') {
+      areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
+      if (areasToDisplay.length === 0) areasToDisplay = allAreas;
+    } else {
+      const allowedLineIds = getPharmSalesAllowedLineIds(curUser);
+      const effLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || document.getElementById('pharmSalesLineSelect')?.value || 'all';
+      if (effLineId !== 'all' && effLineId !== 'none') {
+        areasToDisplay = allAreas.filter((a) => a.lineId === effLineId);
+      } else if (allowedLineIds !== null) {
+        areasToDisplay = allAreas.filter((a) => allowedLineIds.includes(a.lineId));
+      } else {
+        areasToDisplay = allAreas;
+      }
+    }
+
+    areasToDisplay.forEach((a) => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+      areaSelect.appendChild(opt);
+    });
+
+    if (prevVal && Array.from(areaSelect.options).some((o) => o.value === prevVal)) {
+      areaSelect.value = prevVal;
+    } else {
+      areaSelect.value = 'all';
+    }
+  };
+
+  window.populatePharmSalesAreas(user);
+
+  const areaSelectEl = document.getElementById('pharmSalesAreaSelect');
+  if (areaSelectEl && !areaSelectEl.dataset.listenerBound) {
+    areaSelectEl.dataset.listenerBound = 'true';
+    areaSelectEl.addEventListener('change', () => {
+      const resContainer = document.getElementById('pharmSalesResultsContainer');
+      if (resContainer && resContainer.style.display !== 'none' && typeof renderSalesReport === 'function') {
+        renderSalesReport();
+      }
+    });
+  }
+
+  const pharmRepSelectEl = document.getElementById('pharmSalesRepSelect');
+  if (pharmRepSelectEl && !pharmRepSelectEl.dataset.areaListenerBound) {
+    pharmRepSelectEl.dataset.areaListenerBound = 'true';
+    pharmRepSelectEl.addEventListener('change', () => {
+      window.populatePharmSalesAreas(user);
+    });
+  }
+
   window.updatePharmSalesProductsForLine = function (selectedLineId) {
     const pSelect = document.getElementById('pharmSalesProductSelect');
     if (!pSelect) return;
@@ -407,7 +475,9 @@ function getFilteredPharmSalesRows() {
     : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
   if (isRep) {
-    rows = rows.filter((r) => r.repId === user.id);
+    const repAreas = (window.store && window.store.areas ? window.store.areas.getByRep(user.id) : []);
+    const repAreaIds = repAreas.map((a) => a.id);
+    rows = rows.filter((r) => r.repId === user.id || (r.areaId && repAreaIds.includes(r.areaId)));
   } else if (role === 'district_manager') {
     const teamRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
     rows = rows.filter((r) => r.dmId === user.id || (r.repId && teamRepIds.includes(r.repId)));
@@ -453,6 +523,12 @@ function getFilteredPharmSalesRows() {
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   if (selectedLineId !== 'all') {
     rows = rows.filter((r) => r.lineId === selectedLineId);
+  }
+
+  const areaSelect = document.getElementById('pharmSalesAreaSelect');
+  const selectedArea = areaSelect ? areaSelect.value : 'all';
+  if (selectedArea && selectedArea !== 'all') {
+    rows = rows.filter((r) => r.areaId === selectedArea);
   }
 
   return rows;

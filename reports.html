@@ -162,6 +162,16 @@
                     <option value="all">All Employees</option>
                   </select>
                 </div>
+                <!-- Territory / Area Filter: scoped to rep or line -->
+                <div class="sales-filter-field col-area" id="pharmSalesAreaFilterContainer">
+                  <label data-i18n="colArea">Territory / Area:</label>
+                  <select
+                    id="pharmSalesAreaSelect"
+                    class="form-control"
+                  >
+                    <option value="all" data-i18n="allAreas">All Areas</option>
+                  </select>
+                </div>
                 <!-- Product Filter -->
                 <div class="sales-filter-field col-product">
                   <label data-i18n="labelProduct">Product:</label>
@@ -355,6 +365,17 @@
                       onchange="const res = document.getElementById('achievementsResultsContainer'); if (res && res.style.display !== 'none' && typeof renderAchievementsReport === 'function') renderAchievementsReport();"
                     >
                       <option value="all">All Employees</option>
+                    </select>
+                  </div>
+                  <!-- Territory / Area Filter -->
+                  <div class="sales-filter-field col-area" id="achAreaFilterContainer">
+                    <label data-i18n="colArea">Territory / Area:</label>
+                    <select
+                      id="achAreaSelect"
+                      class="form-control"
+                      onchange="const res = document.getElementById('achievementsResultsContainer'); if (res && res.style.display !== 'none' && typeof renderAchievementsReport === 'function') renderAchievementsReport();"
+                    >
+                      <option value="all" data-i18n="allAreas">All Areas</option>
                     </select>
                   </div>
                   <div class="sales-filter-field col-month">
@@ -1238,7 +1259,7 @@
                   ></select>
                 </div>
                 <!-- Assigned Medical Rep -->
-                <div class="form-group col-span-2">
+                <div class="form-group col-span-1">
                   <label class="form-label" for="doctorRepInput">
                     <span class="label-icon">👤</span>
                     <span data-i18n="assignedRep">Assigned Medical Rep</span>
@@ -1248,6 +1269,21 @@
                     id="doctorRepInput"
                     class="form-control modern-select"
                     required
+                    onchange="onDoctorModalRepChange()"
+                  ></select>
+                </div>
+                <!-- Assigned Territory / Area -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="doctorAreaInput">
+                    <span class="label-icon">📍</span>
+                    <span data-i18n="colArea">Territory / Area</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="doctorAreaInput"
+                    class="form-control modern-select"
+                    required
+                    onchange="onDoctorModalAreaChange()"
                   ></select>
                 </div>
               </div>
@@ -1457,7 +1493,7 @@
                   ></select>
                 </div>
                 <!-- Assigned Medical Rep -->
-                <div class="form-group col-span-2">
+                <div class="form-group col-span-1">
                   <label class="form-label" for="pharmacyRepInput">
                     <span class="label-icon">👤</span>
                     <span data-i18n="assignedRep">Assigned Medical Rep</span>
@@ -1467,6 +1503,21 @@
                     id="pharmacyRepInput"
                     class="form-control modern-select"
                     required
+                    onchange="onPharmacyModalRepChange()"
+                  ></select>
+                </div>
+                <!-- Assigned Territory / Area -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="pharmacyAreaInput">
+                    <span class="label-icon">📍</span>
+                    <span data-i18n="colArea">Territory / Area</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="pharmacyAreaInput"
+                    class="form-control modern-select"
+                    required
+                    onchange="onPharmacyModalAreaChange()"
                   ></select>
                 </div>
               </div>

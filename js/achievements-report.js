@@ -126,7 +126,63 @@ function populateAchFilters() {
     }
     yearSelect.dataset.populated = 'true';
   }
+
+  populateAchAreas();
+
+  const achRepEl = document.getElementById('achRepSelect');
+  if (achRepEl && !achRepEl.dataset.achAreaListenerBound) {
+    achRepEl.dataset.achAreaListenerBound = 'true';
+    achRepEl.addEventListener('change', () => {
+      populateAchAreas();
+    });
+  }
 }
+
+function populateAchAreas(filterUser) {
+  const areaSelect = document.getElementById('achAreaSelect');
+  if (!areaSelect) return;
+  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+  const allLabel = lang === 'ar' ? 'جميع المناطق' : 'All Areas';
+  const prevVal = areaSelect.value;
+  areaSelect.innerHTML = `<option value="all">${allLabel}</option>`;
+
+  const curUser = filterUser || (typeof checkAuth === 'function' ? checkAuth() : null);
+  const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+  const repSelect = document.getElementById('achRepSelect');
+  const selectedRepVal = repSelect ? repSelect.value : 'all';
+
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  let areasToDisplay = [];
+
+  if (isRep) {
+    areasToDisplay = (window.store && window.store.areas ? window.store.areas.getByRep(curUser.id) : allAreas.filter((a) => a.repId === curUser.id));
+  } else if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms') {
+    areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
+    if (areasToDisplay.length === 0) areasToDisplay = allAreas;
+  } else {
+    const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+    if (selectedLineId !== 'all') {
+      areasToDisplay = allAreas.filter((a) => a.lineId === selectedLineId);
+    } else {
+      areasToDisplay = allAreas;
+    }
+  }
+
+  areasToDisplay.forEach((a) => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+    areaSelect.appendChild(opt);
+  });
+
+  if (prevVal && Array.from(areaSelect.options).some((o) => o.value === prevVal)) {
+    areaSelect.value = prevVal;
+  } else {
+    areaSelect.value = 'all';
+  }
+}
+
+window.populateAchAreas = populateAchAreas;
 
 /**
  * Which rep ids this viewer is allowed to see. Returns null for
@@ -212,10 +268,18 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const repScopeSet = scopeRepIds ? new Set(scopeRepIds) : null;
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
+  const curUser = (typeof checkAuth === 'function' ? checkAuth() : null);
+  const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+  const repAreas = (isRep && window.store && window.store.areas) ? window.store.areas.getByRep(curUser.id) : [];
+  const repAreaIds = repAreas.map((a) => a.id);
+
   let targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
     .filter((t) => keysSet.has(t.month) && (!repScopeSet || repScopeSet.has(t.repId)));
   let salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-    .filter((s) => keysSet.has(s.month) && s.repId && s.productId && (!repScopeSet || repScopeSet.has(s.repId)));
+    .filter((s) => keysSet.has(s.month) && s.productId && (
+      (!repScopeSet || repScopeSet.has(s.repId)) ||
+      (isRep && s.areaId && repAreaIds.includes(s.areaId))
+    ));
 
   const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
@@ -236,6 +300,12 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     });
   }
 
+  const achAreaSelect = document.getElementById('achAreaSelect');
+  const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
+  if (selectedArea && selectedArea !== 'all') {
+    salesRows = salesRows.filter((s) => s.areaId === selectedArea);
+  }
+
   const cellMap = {};
   targets.forEach((t) => {
     const key = t.repId + '||' + t.productId;
@@ -246,8 +316,9 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       : (parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0);
   });
   salesRows.forEach((s) => {
-    const key = s.repId + '||' + s.productId;
-    if (!cellMap[key]) cellMap[key] = { repId: s.repId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+    const rowRepId = (isRep && s.areaId && repAreaIds.includes(s.areaId)) ? curUser.id : (s.repId || (curUser && curUser.id) || 'rep1');
+    const key = rowRepId + '||' + s.productId;
+    if (!cellMap[key]) cellMap[key] = { repId: rowRepId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     cellMap[key].sUnit += parseFloat(s.quantity) || 0;
     cellMap[key].sValue += parseFloat(s.value) || 0;
   });

@@ -161,7 +161,8 @@ function onRescheduleQuickReasonChange() {
 function openRescheduleModal(visitId) {
   attachRescheduleModal();
 
-  const user = (typeof currentUser !== "undefined" && currentUser) || (window.checkAuth && window.checkAuth()) || { id: "rep1", name: "Ahmed Mostafa" };
+  const user = (typeof currentUser !== "undefined" && currentUser) || (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
+  if (!user || !user.id) return;
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const isAr = lang === "ar";
   const today = (window.getSystemTodayStr && window.getSystemTodayStr()) || new Date().toISOString().split("T")[0];
@@ -240,7 +241,8 @@ function closeRescheduleModal() {
 function handleRescheduleSubmit(e) {
   e.preventDefault();
 
-  const user = (typeof currentUser !== "undefined" && currentUser) || (window.checkAuth && window.checkAuth()) || { id: "rep1", name: "Ahmed Mostafa" };
+  const user = (typeof currentUser !== "undefined" && currentUser) || (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
+  if (!user || !user.id) return;
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const isAr = lang === "ar";
   const today = (window.getSystemTodayStr && window.getSystemTodayStr()) || new Date().toISOString().split("T")[0];

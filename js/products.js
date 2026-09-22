@@ -441,9 +441,12 @@ function saveLine() {
   const managerId = document.getElementById("lineManager").value;
   const isAr = currentLang === "ar";
 
-  const freqA = parseInt(document.getElementById("lineFreqA")?.value, 10) || 4;
-  const freqB = parseInt(document.getElementById("lineFreqB")?.value, 10) || 3;
-  const freqC = parseInt(document.getElementById("lineFreqC")?.value, 10) || 1;
+  const rawFreqA = parseInt(document.getElementById("lineFreqA")?.value, 10);
+  const rawFreqB = parseInt(document.getElementById("lineFreqB")?.value, 10);
+  const rawFreqC = parseInt(document.getElementById("lineFreqC")?.value, 10);
+  const freqA = isNaN(rawFreqA) ? 4 : Math.max(0, rawFreqA);
+  const freqB = isNaN(rawFreqB) ? 3 : Math.max(0, rawFreqB);
+  const freqC = isNaN(rawFreqC) ? 1 : Math.max(0, rawFreqC);
 
   if (!name) {
     const msg = isAr ? "يرجى إدخال اسم الخط." : "Please enter Line Name.";

@@ -3110,6 +3110,15 @@ function requireAuth() {
 window.checkAuth = checkAuth;
 window.requireAuth = requireAuth;
 
+// Eager Global Authentication Guard: Runs synchronously when app.js parses
+(function enforceGlobalAuthImmediately() {
+  if (typeof window === "undefined" || !window.location) return;
+  const path = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
+  if (path !== "login.html") {
+    requireAuth();
+  }
+})();
+
 function logout() {
   sessionStorage.clear();
   localStorage.removeItem("pharmaUser");

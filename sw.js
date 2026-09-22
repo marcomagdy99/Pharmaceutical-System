@@ -3,7 +3,7 @@
  * @description Service Worker for PharmaCare PWA offline caching and reliable field performance.
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `pharmacare-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   './',
@@ -64,15 +64,30 @@ const ASSETS_TO_CACHE = [
   './js/activities.js',
   './js/announcements.js',
   './js/profile.js',
-  './manifest.json'
+  './manifest.json',
+  // Essential External CDN Libraries for complete offline UI/functionality
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('PharmaCare SW: Non-critical asset cache failed:', err);
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Use resilient per-asset caching so individual CDN timeouts do not abort whole installation
+      await Promise.allSettled(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn(`PharmaCare SW: Non-critical pre-cache skipped for ${url}:`, err);
+          })
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -95,13 +110,21 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         // Return cached version, but update cache in background (Stale-While-Revalidate)
         fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
           }
         }).catch(() => {});
         return cachedResponse;
       }
-      return fetch(event.request).catch(() => {
+
+      // Not in cache yet: fetch from network and dynamically cache valid/opaque GET responses
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      }).catch(() => {
         if (event.request.headers.get('accept')?.includes('text/html')) {
           return caches.match('./index.html', { ignoreSearch: true });
         }

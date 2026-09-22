@@ -279,9 +279,9 @@ function saveAnnouncementsToStorage() {
 /* --- START STATE --- */
 let announcements = loadAnnouncements();
 let currentFilter = "all"; // all, unread, high, normal, low
-let currentUserRole = localStorage.getItem("userRole") || "hr"; // fallback to hr for demo
-let currentUserId = localStorage.getItem("userId") || "hr1";
-let currentUserName = "Fatma El-Sherif";
+let currentUserRole = "medical_rep";
+let currentUserId = "";
+let currentUserName = "";
 let expandedCards = new Set();
 let editAnnouncementId = null;
 let currentAnnouncementImage = null;
@@ -293,19 +293,16 @@ let currentAnnouncementImage = null;
  */
 function initAnnouncementsPage() {
   const authUser =
-    typeof checkAuth === "function"
-      ? checkAuth()
-      : window.checkAuth
-        ? window.checkAuth()
-        : null;
-  if (authUser) {
-    currentUserRole = authUser.role || currentUserRole;
-    currentUserId = authUser.id || currentUserId;
-    currentUserName = authUser.name || currentUserName;
-  } else {
-    currentUserRole = localStorage.getItem("userRole") || "hr";
-    currentUserId = localStorage.getItem("userId") || "hr1";
-  }
+    typeof requireAuth === "function"
+      ? requireAuth()
+      : (window.requireAuth
+        ? window.requireAuth()
+        : (typeof checkAuth === "function" ? checkAuth() : (window.checkAuth ? window.checkAuth() : null)));
+  if (!authUser) return;
+
+  currentUserRole = authUser.role || "medical_rep";
+  currentUserId = authUser.id || "";
+  currentUserName = authUser.name || "";
 
   if (window.i18n) {
     window.i18n.translations = {

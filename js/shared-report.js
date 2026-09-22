@@ -342,7 +342,11 @@ const directoryTranslations = {
     allDoctorsClassAB: 'All Doctors (Class A & B)',
     classAOnly: 'Class A Only',
     classBOnly: 'Class B Only',
-    hospitalsOnly: 'Hospitals Only'
+    hospitalsOnly: 'Hospitals Only',
+    colArea: 'Area / Territory',
+    allAreas: 'All Areas',
+    assignedArea: 'Territory / Area',
+    selectArea: '-- Select Territory / Area --'
   },
   ar: {
     tabDoctorsList: 'قائمة الأطباء',
@@ -437,7 +441,11 @@ const directoryTranslations = {
     allDoctorsClassAB: 'جميع الأطباء (فئة A و B)',
     classAOnly: 'فئة A فقط',
     classBOnly: 'فئة B فقط',
-    hospitalsOnly: 'المستشفيات فقط'
+    hospitalsOnly: 'المستشفيات فقط',
+    colArea: 'المنطقة البيعية',
+    allAreas: 'جميع المناطق',
+    assignedArea: 'المنطقة البيعية',
+    selectArea: '-- اختر المنطقة البيعية --'
   }
 };
 
@@ -803,6 +811,13 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
       selectEl.value = prevVal;
     }
   });
+
+  if (typeof window.populatePharmSalesAreas === 'function') {
+    window.populatePharmSalesAreas(user);
+  }
+  if (typeof window.populateAchAreas === 'function') {
+    window.populateAchAreas(user);
+  }
 }
 
 // Aliases for compatibility
@@ -929,11 +944,12 @@ function printCurrentReport() {
 }
 
 // ============================================================================
-// Section 13: Modal Cascading Hierarchy (Line/LM -> District/DM -> Med Rep)
+// Section 13: Modal Cascading Hierarchy (Line/LM -> District/DM -> Med Rep -> Area)
 // ============================================================================
-function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId = null) {
+function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId = null, areaSelectId = null, targetAreaId = null) {
   const allUsers = getSharedReportUsers();
   const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   const lmSelect = document.getElementById(lmSelectId);
   if (!lmSelect) return;
 
@@ -948,9 +964,18 @@ function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId
     }
   );
 
-  // 2. Resolve selected Line / LM and District / DM from targetRepId
+  // 2. Resolve selected Line / LM and District / DM from targetAreaId or targetRepId
   let selectedLineId = lines[0]?.id || 'line1';
   let selectedDmId = null;
+
+  if (targetAreaId) {
+    const area = allAreas.find((a) => a.id === targetAreaId);
+    if (area) {
+      if (area.lineId) selectedLineId = area.lineId;
+      if (!targetRepId && area.repId) targetRepId = area.repId;
+    }
+  }
+
   if (targetRepId) {
     const rep = allUsers.find((u) => u.id === targetRepId);
     if (rep && rep.managerId) {
@@ -963,10 +988,10 @@ function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId
     }
   }
   lmSelect.value = selectedLineId;
-  updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId, targetRepId);
+  updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId, targetRepId, areaSelectId, targetAreaId);
 }
 
-function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null, targetRepId = null) {
+function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null, targetRepId = null, areaSelectId = null, targetAreaId = null) {
   const allUsers = getSharedReportUsers();
   const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const lmSelect = document.getElementById(lmSelectId);
@@ -982,10 +1007,10 @@ function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null
 
   let activeDmId = selectedDmId && dms.some((d) => d.id === selectedDmId) ? selectedDmId : (dms[0]?.id || '');
   dmSelect.value = activeDmId;
-  updateModalReps(dmSelectId, repSelectId, targetRepId);
+  updateModalReps(dmSelectId, repSelectId, targetRepId, areaSelectId, targetAreaId, lmSelectId);
 }
 
-function updateModalReps(dmSelectId, repSelectId, targetRepId = null) {
+function updateModalReps(dmSelectId, repSelectId, targetRepId = null, areaSelectId = null, targetAreaId = null, lmSelectId = null) {
   const allUsers = getSharedReportUsers();
   const dmSelect = document.getElementById(dmSelectId);
   const repSelect = document.getElementById(repSelectId);
@@ -1001,23 +1026,121 @@ function updateModalReps(dmSelectId, repSelectId, targetRepId = null) {
   } else if (reps.length > 0) {
     repSelect.value = reps[0].id;
   }
+
+  if (areaSelectId) {
+    const effLmId = lmSelectId || dmSelectId.replace('DmSelect', 'LmSelect');
+    const lmSelect = document.getElementById(effLmId);
+    const currentLineId = lmSelect ? lmSelect.value : null;
+    updateModalAreas(repSelectId, areaSelectId, targetAreaId, currentLineId);
+  }
+}
+
+function updateModalAreas(repSelectId, areaSelectId, targetAreaId = null, currentLineId = null) {
+  const areaSelect = document.getElementById(areaSelectId);
+  if (!areaSelect) return;
+  const repSelect = document.getElementById(repSelectId);
+  const repId = repSelect ? repSelect.value : null;
+
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+
+  let matchingAreas = [];
+  if (repId) {
+    matchingAreas = allAreas.filter((a) => a.repId === repId);
+  }
+  if (matchingAreas.length === 0 && currentLineId) {
+    matchingAreas = allAreas.filter((a) => a.lineId === currentLineId);
+  }
+  if (matchingAreas.length === 0) {
+    matchingAreas = allAreas;
+  }
+
+  const isAr = (window.getCurrentLang && window.getCurrentLang() === 'ar');
+  const defaultLabel = isAr ? '-- اختر المنطقة البيعية --' : '-- Select Territory / Area --';
+  areaSelect.innerHTML = `<option value="">${defaultLabel}</option>`;
+
+  matchingAreas.forEach((a) => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+    areaSelect.appendChild(opt);
+  });
+
+  if (targetAreaId && matchingAreas.some((a) => a.id === targetAreaId)) {
+    areaSelect.value = targetAreaId;
+  } else if (targetAreaId && allAreas.some((a) => a.id === targetAreaId)) {
+    const extArea = allAreas.find((a) => a.id === targetAreaId);
+    const opt = document.createElement('option');
+    opt.value = extArea.id;
+    opt.textContent = `${extArea.name}${extArea.code ? ' (' + extArea.code + ')' : ''}`;
+    areaSelect.appendChild(opt);
+    areaSelect.value = targetAreaId;
+  } else if (matchingAreas.length === 1) {
+    areaSelect.value = matchingAreas[0].id;
+  }
 }
 
 function onDoctorModalLmChange() {
-  updateModalDMs('doctorModalLmSelect', 'doctorModalDmSelect', 'doctorRepInput');
+  updateModalDMs('doctorModalLmSelect', 'doctorModalDmSelect', 'doctorRepInput', null, null, 'doctorAreaInput');
 }
 
 function onDoctorModalDmChange() {
-  updateModalReps('doctorModalDmSelect', 'doctorRepInput');
+  updateModalReps('doctorModalDmSelect', 'doctorRepInput', null, 'doctorAreaInput', null, 'doctorModalLmSelect');
+}
+
+function onDoctorModalRepChange() {
+  updateModalAreas('doctorRepInput', 'doctorAreaInput', null, document.getElementById('doctorModalLmSelect')?.value);
+}
+
+function onDoctorModalAreaChange() {
+  const areaSelect = document.getElementById('doctorAreaInput');
+  const repSelect = document.getElementById('doctorRepInput');
+  if (areaSelect && repSelect && areaSelect.value) {
+    const area = window.store && window.store.areas ? window.store.areas.getById(areaSelect.value) : null;
+    if (area && area.repId) {
+      if (repSelect.value !== area.repId && Array.from(repSelect.options).some((o) => o.value === area.repId)) {
+        repSelect.value = area.repId;
+      }
+    }
+  }
 }
 
 function onPharmacyModalLmChange() {
-  updateModalDMs('pharmacyModalLmSelect', 'pharmacyModalDmSelect', 'pharmacyRepInput');
+  updateModalDMs('pharmacyModalLmSelect', 'pharmacyModalDmSelect', 'pharmacyRepInput', null, null, 'pharmacyAreaInput');
 }
 
 function onPharmacyModalDmChange() {
-  updateModalReps('pharmacyModalDmSelect', 'pharmacyRepInput');
+  updateModalReps('pharmacyModalDmSelect', 'pharmacyRepInput', null, 'pharmacyAreaInput', null, 'pharmacyModalLmSelect');
 }
+
+function onPharmacyModalRepChange() {
+  updateModalAreas('pharmacyRepInput', 'pharmacyAreaInput', null, document.getElementById('pharmacyModalLmSelect')?.value);
+}
+
+function onPharmacyModalAreaChange() {
+  const areaSelect = document.getElementById('pharmacyAreaInput');
+  const repSelect = document.getElementById('pharmacyRepInput');
+  if (areaSelect && repSelect && areaSelect.value) {
+    const area = window.store && window.store.areas ? window.store.areas.getById(areaSelect.value) : null;
+    if (area && area.repId) {
+      if (repSelect.value !== area.repId && Array.from(repSelect.options).some((o) => o.value === area.repId)) {
+        repSelect.value = area.repId;
+      }
+    }
+  }
+}
+
+window.populateModalHierarchy = populateModalHierarchy;
+window.updateModalDMs = updateModalDMs;
+window.updateModalReps = updateModalReps;
+window.updateModalAreas = updateModalAreas;
+window.onDoctorModalLmChange = onDoctorModalLmChange;
+window.onDoctorModalDmChange = onDoctorModalDmChange;
+window.onDoctorModalRepChange = onDoctorModalRepChange;
+window.onDoctorModalAreaChange = onDoctorModalAreaChange;
+window.onPharmacyModalLmChange = onPharmacyModalLmChange;
+window.onPharmacyModalDmChange = onPharmacyModalDmChange;
+window.onPharmacyModalRepChange = onPharmacyModalRepChange;
+window.onPharmacyModalAreaChange = onPharmacyModalAreaChange;
 
 function populateRepModalOptions(selectElement) {
   if (!selectElement) return;

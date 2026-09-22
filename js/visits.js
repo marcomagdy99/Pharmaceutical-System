@@ -724,11 +724,7 @@ function updateAdminGpsButton() {
 // ============================================================================
 // Section 3: Active User Session & Role Scope
 // ============================================================================
-const currentUser = (window.checkAuth && window.checkAuth()) || {
-  id: "rep1",
-  role: "medical_rep",
-  name: "Ahmed Mostafa",
-};
+const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
 
 const currentUserRole = window.normalizeRole
   ? window.normalizeRole(currentUser.role)
@@ -3496,7 +3492,22 @@ function exportVisitsToCSV() {
   if (fRep && fRep !== "all") {
     filtered = filtered.filter((v) => v.repId === fRep);
   }
-  if (fDate) filtered = filtered.filter((v) => v.date === fDate);
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  let exportDate = null;
+
+  if (fDate) {
+    const exportDayOnly = confirm(
+      isAr
+        ? `هل تريد تصدير زيارات تاريخ اليوم المختار (${fDate}) فقط؟\n\n• اضغط (موافق / OK) لتصدير زيارات هذا اليوم فقط.\n• اضغط (إلغاء / Cancel) لتصدير كامل سجل الزيارات لجميع التواريخ.`
+        : `Do you want to export visits for the selected date (${fDate}) only?\n\n• Click (OK) to export visits for this date only.\n• Click (Cancel) to export all historical visits across all dates.`
+    );
+    if (exportDayOnly) {
+      exportDate = fDate;
+      filtered = filtered.filter((v) => v.date === fDate);
+    }
+  }
 
   // Status Filter (table or timeline filter)
   const activeStatus = (fStatus && fStatus !== "all") ? fStatus : (fTimelineStatus && fTimelineStatus !== "all" ? fTimelineStatus : null);
@@ -3614,7 +3625,7 @@ function exportVisitsToCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `PharmaCare_Visits_${fDate || "All"}.csv`;
+  a.download = `PharmaCare_Visits_${exportDate || "All_Dates"}.csv`;
   a.click();
 }
 
