@@ -481,6 +481,7 @@ function renderCalendar() {
 
 function openDayDetail(dateObj, events) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
   const t = calendarTranslations[lang] || calendarTranslations.en;
 
   const titleEl = document.getElementById("detailDateTitle");

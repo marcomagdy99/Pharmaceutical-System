@@ -72,20 +72,20 @@
                 </div>
 
                 <!-- Manager Filter Bar (Product Line & Team Filters) -->
-                <div id="managerFilterBar" class="manager-rep-filter-container" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-                    <div id="managerLineFilterContainer" style="display: flex; align-items: center; gap: 8px;">
-                        <label for="filterLine" class="manager-rep-filter-label" style="margin-bottom: 0;">
+                <div id="managerFilterBar" class="manager-rep-filter-container">
+                    <div id="managerLineFilterContainer" class="manager-filter-field col-line">
+                        <label for="filterLine" class="manager-rep-filter-label">
                             <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
                         </label>
-                        <select id="filterLine" class="filter-input" style="min-width: 180px; height: 38px; font-weight: 500;" onchange="onVisitsLineFilterChange(this.value)">
+                        <select id="filterLine" class="form-control filter-input" onchange="onVisitsLineFilterChange(this.value)">
                             <option value="all" data-i18n="allLines">All Lines</option>
                         </select>
                     </div>
-                    <div id="managerRepFilterContainer" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 260px;">
-                        <label for="filterRep" class="manager-rep-filter-label" style="margin-bottom: 0;">
+                    <div id="managerRepFilterContainer" class="manager-filter-field col-rep">
+                        <label for="filterRep" class="manager-rep-filter-label">
                             <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
                         </label>
-                        <select id="filterRep" class="filter-input" style="min-width: min(300px, 100%); max-width: 100%; height: 38px; font-weight: 500;" onchange="onVisitsRepFilterChange(this.value)">
+                        <select id="filterRep" class="form-control filter-input" onchange="onVisitsRepFilterChange(this.value)">
                             <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
                         </select>
                     </div>

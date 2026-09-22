@@ -811,7 +811,7 @@ function handleImageSelect(event) {
     const rawDataUrl = e.target.result;
     const img = new Image();
     img.onload = function () {
-      const maxDim = 1200;
+      const maxDim = 700;
       let width = img.width;
       let height = img.height;
 
@@ -830,7 +830,7 @@ function handleImageSelect(event) {
       canvas.height = height;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
-      currentAnnouncementImage = canvas.toDataURL("image/jpeg", 0.85);
+      currentAnnouncementImage = canvas.toDataURL("image/jpeg", 0.70);
       renderImagePreview();
     };
     img.src = rawDataUrl;

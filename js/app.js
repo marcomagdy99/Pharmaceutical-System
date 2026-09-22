@@ -2329,8 +2329,7 @@ function renderTopbar() {
 
   let user = checkAuth();
   if (!user) {
-    user = DEMO_DATA.currentUser;
-    sessionStorage.setItem("pharmaUser", JSON.stringify(user));
+    return;
   }
   const lang = getCurrentLang();
   const activePage = window.currentActivePage || resolveActivePage();

@@ -784,7 +784,7 @@ function renderRepDashboard(userName, user) {
       (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
   );
 
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const currentYearMonth = todayStr.slice(0, 7);
   const completedVisits = allVisits.filter(
     (v) =>
       v.repId === currentUserId &&
@@ -804,14 +804,15 @@ function renderRepDashboard(userName, user) {
       (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
   );
 
-  // PM Clinics Target: Doctors Class A (4/3 visits per month) + Class B (1 visit per month)
+  // PM Clinics Target: Dynamically calculated per doctor via getDoctorCallTarget based on assigned product line & class
   const monthlyVisitTargetPM = Math.max(
     1,
     Math.round(
       repDoctors.reduce((sum, d) => {
-        if (d.class === "A") return sum + 4 / 3;
-        if (d.class === "B") return sum + 1;
-        return sum + 1;
+        const quarterlyTarget =
+          (typeof window.getDoctorCallTarget === "function" && window.getDoctorCallTarget(d)) ||
+          (d.class === "A" ? 4 : 3);
+        return sum + quarterlyTarget / 3;
       }, 0),
     ),
   );
@@ -866,7 +867,7 @@ function renderRepDashboard(userName, user) {
       ? Math.round((coveredDoctorsCount / totalDoctorsCount) * 100)
       : 0;
 
-  const currentYear = new Date().toISOString().slice(0, 4);
+  const currentYear = todayStr.slice(0, 4);
   const repYTDSales = allSales.filter(
     (s) =>
       s.repId === currentUserId &&
@@ -1113,7 +1114,10 @@ function renderDMDashboard(userName, user) {
     (v) => myRepIds.includes(v.repId) && v.status === "pending_approval",
   ).length;
 
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const currentYearMonth = todayStr.slice(0, 7);
   const monthlyTeamCompletedVisits = allVisits.filter(
     (v) =>
       myRepIds.includes(v.repId) &&
@@ -1121,9 +1125,6 @@ function renderDMDashboard(userName, user) {
       v.date &&
       v.date.startsWith(currentYearMonth),
   ).length;
-
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const selectedDate = getDmSelectedDate();
 
   const storedSchedule = getDmAccompanimentSchedule(user.id);
@@ -1723,7 +1724,10 @@ function renderLMDashboard(userName, user) {
   const lineRepIds = myLineReps.map((r) => r.id);
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const _lmNow = new Date();
+  const _lmTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
+    `${_lmNow.getFullYear()}-${String(_lmNow.getMonth() + 1).padStart(2, "0")}-${String(_lmNow.getDate()).padStart(2, "0")}`;
+  const currentYearMonth = _lmTodayStr.slice(0, 7);
   const monthlyLineCompletedVisits = allVisits.filter(
     (v) =>
       lineRepIds.includes(v.repId) &&
@@ -2090,7 +2094,10 @@ function renderAdminDashboard(userName, user) {
   // Single Source of Truth for sales records
   const allSales = getDashboardSalesData();
 
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const _adminNow = new Date();
+  const _adminTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
+    `${_adminNow.getFullYear()}-${String(_adminNow.getMonth() + 1).padStart(2, "0")}-${String(_adminNow.getDate()).padStart(2, "0")}`;
+  const currentYearMonth = _adminTodayStr.slice(0, 7);
   const currentMonthSales = allSales.filter(
     (s) => s.month === currentYearMonth,
   );
@@ -2574,6 +2581,14 @@ window.handleDashCompleteSubmit = function (e) {
       const companions = Array.from(
         document.querySelectorAll('input[name="dashDoubleCompanion"]:checked'),
       ).map((c) => c.value);
+      if (companions.length === 0) {
+        const msg = lang === "ar"
+          ? "يرجى تحديد المرافق في الزيارة المزدوجة."
+          : "Please select at least one companion for the double visit.";
+        if (typeof showToast === "function") showToast(msg, "warning");
+        else alert(msg);
+        return;
+      }
       doubleWithUserName = companions.join(", ");
       const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
       const matchedMgr = allUsers.find((u) =>

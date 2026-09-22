@@ -3234,6 +3234,15 @@ function saveVisit() {
     const companionCbs = Array.from(
       document.querySelectorAll('#visitManagersGroup input[name="doubleCompanion"]:checked'),
     );
+    if (companionCbs.length === 0) {
+      resetSaveBtn();
+      const msg = lang === "ar"
+        ? "يرجى تحديد المرافق في الزيارة المزدوجة."
+        : "Please select at least one companion for the double visit.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
+    }
     doubleWithUserName = companionCbs.map((cb) => cb.value).join(", ");
     const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
     const firstCb = companionCbs[0];
@@ -3332,8 +3341,8 @@ function saveVisit() {
                 ? { status: "in_range", distanceMeters: dist }
                 : { status: "out_of_range", distanceMeters: dist };
             } else {
+              // Clinic has no pre-registered coordinates: do not override clinic coordinates with rep location (prevents GPS poisoning)
               gpsPayload = { status: "in_range", distanceMeters: 0 };
-              if (targetItem) { targetItem.lat = loc.lat; targetItem.lng = loc.lng; }
             }
           }
           finalizeEdit(gpsPayload);
@@ -3444,8 +3453,8 @@ function saveVisit() {
               ? { status: "in_range", distanceMeters: dist }
               : { status: "out_of_range", distanceMeters: dist };
           } else {
+            // Clinic has no pre-registered coordinates: do not override clinic coordinates with rep location (prevents GPS poisoning)
             gpsPayload = { status: "in_range", distanceMeters: 0 };
-            if (targetItem) { targetItem.lat = loc.lat; targetItem.lng = loc.lng; }
           }
         }
         finalizeNewSave(gpsPayload);

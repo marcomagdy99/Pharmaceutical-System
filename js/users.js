@@ -1022,23 +1022,14 @@ const userMgmt = {
     const selectedAreaId = document.getElementById("uArea")
       ? document.getElementById("uArea").value
       : null;
-    if (role === "Rep" && window.store && window.store.areas) {
-      if (selectedAreaId) {
-        const areaObj = window.store.areas.getById(selectedAreaId);
-        if (areaObj && areaObj.repId !== userData.id) {
-          const oldAreas = window.store.areas.getByRep(userData.id);
-          oldAreas.forEach((a) => {
-            if (a.id !== selectedAreaId) {
-              window.store.areas.unassignRep(a.id);
-            }
-          });
-          areaObj.repId = userData.id;
-          areaObj.repName = userData.name;
-          window.store.areas.save(areaObj);
-        }
-      } else {
-        const oldAreas = window.store.areas.getByRep(userData.id);
-        oldAreas.forEach((a) => window.store.areas.unassignRep(a.id));
+    // Multi-area assignments are managed centrally via areas.html.
+    // When saving from users.html, assign the selected area if new without stripping existing assigned areas.
+    if (role === "Rep" && window.store && window.store.areas && selectedAreaId) {
+      const areaObj = window.store.areas.getById(selectedAreaId);
+      if (areaObj && areaObj.repId !== userData.id) {
+        areaObj.repId = userData.id;
+        areaObj.repName = userData.name;
+        window.store.areas.save(areaObj);
       }
     }
 

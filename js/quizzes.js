@@ -741,7 +741,7 @@ function setupAdminQuizTools(allReps) {
       const marksInput = document.getElementById('new-quiz-marks');
 
       const title = titleInput ? titleInput.value.trim() : 'New Quiz';
-      const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+      const date = dateInput ? dateInput.value : ((window.getSystemTodayStr && window.getSystemTodayStr()) || (() => { const _n = new Date(); return `${_n.getFullYear()}-${String(_n.getMonth() + 1).padStart(2, "0")}-${String(_n.getDate()).padStart(2, "0")}`; })());
       const marks = marksInput ? (parseInt(marksInput.value, 10) || 50) : 50;
 
       const newQuiz = {

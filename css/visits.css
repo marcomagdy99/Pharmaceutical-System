@@ -520,26 +520,69 @@
    ========================================================================== */
 .manager-rep-filter-container {
     display: none;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
     margin-bottom: 16px;
     background-color: var(--white);
     border: 1px solid var(--gray-200);
-    border-radius: 10px;
-    padding: 12px 18px;
-    flex-wrap: wrap;
+    border-radius: 12px;
+    padding: 14px 16px;
     box-shadow: var(--shadow-sm);
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.manager-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 200px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .manager-rep-filter-label {
     font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--gray-800);
-    display: inline-flex;
+    font-size: 0.84rem;
+    color: var(--gray-700);
+    display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     margin: 0;
+    white-space: nowrap;
+}
+
+.manager-filter-field .filter-input,
+.manager-filter-field select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-300);
+    background-color: var(--white);
+    color: var(--gray-900);
+    box-sizing: border-box !important;
+}
+
+/* Dark Mode for Manager Filter Bar */
+[data-theme="dark"] .manager-rep-filter-container {
+    background-color: #1e2229;
+    border-color: #333a46;
+}
+
+[data-theme="dark"] .manager-rep-filter-label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .manager-filter-field .filter-input,
+[data-theme="dark"] .manager-filter-field select {
+    background-color: #16191f;
+    border-color: #333a46;
+    color: #f1f5f9;
 }
 
 .timeline-filter-card {
@@ -1182,8 +1225,19 @@
     .manager-rep-filter-container {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
+        padding: 12px 14px;
     }
-    .manager-rep-filter-container select {
+    .manager-filter-field {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+    }
+    .manager-filter-field .filter-input,
+    .manager-filter-field select {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         font-size: 0.85rem !important;
     }
 

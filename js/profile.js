@@ -94,6 +94,25 @@ const profileTranslations = {
   },
 };
 
+async function hashPassword(str) {
+  if (window.crypto && window.crypto.subtle) {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(str);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    } catch (e) {}
+  }
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return "fallback_" + Math.abs(hash).toString(16);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (window.translations) {
     Object.keys(profileTranslations).forEach((lang) => {
@@ -110,28 +129,61 @@ document.addEventListener("DOMContentLoaded", () => {
     photoInput.addEventListener("change", function (e) {
       const file = e.target.files[0];
       if (file) {
+        if (!file.type.startsWith("image/")) {
+          const currentLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+          const msg = currentLang === "ar" ? "يرجى اختيار ملف صورة صالح." : "Please select a valid image file.";
+          if (typeof showToast === "function") showToast(msg, "warning");
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = function (ev) {
-          const photoData = ev.target.result;
-          if (profileImagePreview) {
-            profileImagePreview.src = photoData;
-            profileImagePreview.style.display = "block";
-          }
-          if (profileInitials) profileInitials.style.display = "none";
+          const rawDataUrl = ev.target.result;
+          const img = new Image();
+          img.onload = function () {
+            // Compress profile photo to max 400x400 pixels to stay well within localStorage quota (< 50KB)
+            const maxDim = 400;
+            let width = img.width;
+            let height = img.height;
 
-          const currentUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
-          if (currentUser) {
-            try {
-              localStorage.setItem("user_photo_" + (currentUser.id || currentUser.employeeCode || "current"), photoData);
-            } catch (err) {
-              console.warn("Could not save photo to localStorage:", err);
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
             }
-          }
 
-          const currentLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-          const msg = (window.translations && window.translations[currentLang]?.photo_updated) ||
-            (currentLang === "ar" ? "تم تحديث الصورة الشخصية بنجاح!" : "Profile photo updated successfully!");
-          if (typeof showToast === "function") showToast(msg, "success");
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            const photoData = canvas.toDataURL("image/jpeg", 0.85);
+
+            if (profileImagePreview) {
+              profileImagePreview.src = photoData;
+              profileImagePreview.style.display = "block";
+            }
+            if (profileInitials) profileInitials.style.display = "none";
+
+            const currentUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
+            if (currentUser) {
+              try {
+                localStorage.setItem("user_photo_" + (currentUser.id || currentUser.employeeCode || "current"), photoData);
+              } catch (err) {
+                console.warn("Could not save photo to localStorage:", err);
+              }
+            }
+
+            const currentLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+            const msg = (window.translations && window.translations[currentLang]?.photo_updated) ||
+              (currentLang === "ar" ? "تم تحديث الصورة الشخصية بنجاح!" : "Profile photo updated successfully!");
+            if (typeof showToast === "function") showToast(msg, "success");
+          };
+          img.src = rawDataUrl;
         };
         reader.readAsDataURL(file);
       }
@@ -153,15 +205,54 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof showToast === "function") showToast("Preferences saved successfully!", "success");
   });
 
-  document.getElementById("passwordForm")?.addEventListener("submit", (e) => {
+  document.getElementById("passwordForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const isAr = lang === "ar";
+    const currentPass = document.getElementById("currentPassword")?.value || "";
     const newPass = document.getElementById("newPassword").value;
     const confirmPass = document.getElementById("confirmPassword").value;
-    if (newPass !== confirmPass) {
-      if (typeof showToast === "function") showToast("New password and confirmation do not match.", "error");
+
+    if (newPass.length < 6) {
+      const msg = isAr ? "يجب ألا تقل كلمة المرور عن 6 أحرف." : "Password must be at least 6 characters.";
+      if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
-    if (typeof showToast === "function") showToast("Password updated successfully!", "success");
+
+    if (newPass !== confirmPass) {
+      const msg = isAr ? "كلمة المرور وتأكيدها غير متطابقين." : "New password and confirmation do not match.";
+      if (typeof showToast === "function") showToast(msg, "error");
+      return;
+    }
+
+    const currentUser = (window.checkAuth && window.checkAuth());
+    if (currentUser && window.store && window.store.users) {
+      const userObj = window.store.users.getById(currentUser.id);
+      if (userObj) {
+        if (currentPass && userObj.passwordHash) {
+          const checkHash = await hashPassword(currentPass);
+          if (checkHash !== userObj.passwordHash && (!userObj.password || userObj.password !== currentPass)) {
+            const msg = isAr ? "كلمة المرور الحالية غير صحيحة." : "Current password is incorrect.";
+            if (typeof showToast === "function") showToast(msg, "error");
+            return;
+          }
+        }
+        userObj.passwordHash = await hashPassword(newPass);
+        if (userObj.password) userObj.password = newPass;
+        window.store.users.save(userObj);
+
+        try {
+          const sessionUser = JSON.parse(sessionStorage.getItem("pharmaUser") || "{}");
+          if (sessionUser && sessionUser.id === userObj.id) {
+            sessionUser.passwordHash = userObj.passwordHash;
+            sessionStorage.setItem("pharmaUser", JSON.stringify(sessionUser));
+          }
+        } catch (err) {}
+      }
+    }
+
+    const successMsg = isAr ? "تم تحديث كلمة المرور بنجاح!" : "Password updated successfully!";
+    if (typeof showToast === "function") showToast(successMsg, "success");
     e.target.reset();
     const ind = document.getElementById("strengthIndicator");
     if (ind) ind.style.width = "0";

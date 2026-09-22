@@ -1454,7 +1454,10 @@ Object.assign(leavesApp, {
         return;
       }
 
-      const timestampStr = `${new Date().toISOString().split("T")[0]} ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+      const _leavesNow = new Date();
+      const _leavesTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
+        `${_leavesNow.getFullYear()}-${String(_leavesNow.getMonth() + 1).padStart(2, "0")}-${String(_leavesNow.getDate()).padStart(2, "0")}`;
+      const timestampStr = `${_leavesTodayStr} ${_leavesNow.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
       if (!leave.approvals) {
         leave.approvals = {

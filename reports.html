@@ -76,12 +76,12 @@
             </div>
           </div>
           <!-- Global Product Line Filter Bar -->
-          <div class="report-global-line-bar card border-0 shadow-sm" id="reportLineFilterBar" style="margin-bottom: 16px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: var(--card-bg, #ffffff); border-radius: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <div class="report-global-line-bar" id="reportLineFilterBar">
+            <div class="report-global-line-inner">
               <label for="reportLineFilter" class="fw-bold mb-0" style="font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
                 <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
               </label>
-              <select id="reportLineFilter" class="form-control" style="min-width: 220px; height: 38px; padding: 6px 12px; font-size: 0.88rem; border-radius: 8px;" onchange="onReportLineFilterChange(this.value)">
+              <select id="reportLineFilter" class="form-control" onchange="onReportLineFilterChange(this.value)">
                 <option value="all" data-i18n="allLines">All Lines</option>
               </select>
             </div>
@@ -141,6 +141,15 @@
                  achievements-report.js. -->
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
+                <!-- Line Filter: First in hierarchy -->
+                <div class="sales-filter-field col-line">
+                  <label data-i18n="lineFilterLabel">Product Line:</label>
+                  <select
+                    id="pharmSalesLineSelect"
+                    class="form-control"
+                  ></select>
+                </div>
+                <!-- Employee Filter: Second in hierarchy (scoped to line) -->
                 <div class="sales-filter-field col-rep" id="pharmSalesRepFilterContainer">
                   <label data-i18n="teamFilterLabel">Employee Filter:</label>
                   <select
@@ -150,6 +159,7 @@
                     <option value="all">All Employees</option>
                   </select>
                 </div>
+                <!-- Product Filter -->
                 <div class="sales-filter-field col-product">
                   <label data-i18n="labelProduct">Product:</label>
                   <select id="pharmSalesProductSelect" class="form-control">
@@ -158,6 +168,16 @@
                     </option>
                   </select>
                 </div>
+                <!-- Distributor Filter -->
+                <div class="sales-filter-field col-distributor">
+                  <label data-i18n="labelDistributor">Distributor:</label>
+                  <select id="pharmSalesDistributorSelect" class="form-control">
+                    <option value="all" data-i18n="allDistributors">
+                      All Distributors
+                    </option>
+                  </select>
+                </div>
+                <!-- Month Filter -->
                 <div class="sales-filter-field col-month">
                   <label data-i18n="labelMonth">Month:</label>
                   <div class="multi-select-container" id="pharmSalesMonthMultiSelectContainer">
@@ -184,6 +204,7 @@
                     </div>
                   </div>
                 </div>
+                <!-- Year Filter -->
                 <div class="sales-filter-field col-year">
                   <label data-i18n="labelYear">Year:</label>
                   <select
@@ -191,24 +212,7 @@
                     class="form-control"
                   ></select>
                 </div>
-                <div class="sales-filter-field col-distributor">
-                  <label data-i18n="labelDistributor">Distributor:</label>
-                  <select id="pharmSalesDistributorSelect" class="form-control">
-                    <option value="all" data-i18n="allDistributors">
-                      All Distributors
-                    </option>
-                  </select>
-                </div>
-                <!-- Line: locked to the viewer's own line(s) for Rep/DM/LM
-                     (a DM or LM covering 2 lines gets both), fully open
-                     for BU/Admin/HR. See populatePharmSalesLineSelect(). -->
-                <div class="sales-filter-field col-line">
-                  <label data-i18n="labelLine">Line:</label>
-                  <select
-                    id="pharmSalesLineSelect"
-                    class="form-control"
-                  ></select>
-                </div>
+                <!-- Show Button -->
                 <div class="sales-filter-field col-btn">
                   <button
                     type="button"

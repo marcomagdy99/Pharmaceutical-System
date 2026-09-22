@@ -106,6 +106,60 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- Global Product Line Filter Bar --- */
+.report-global-line-bar {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 16px;
+    padding: 12px 18px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.report-global-line-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.report-global-line-inner select {
+    min-width: 220px;
+    height: 38px;
+    padding: 6px 12px;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-300);
+    background-color: var(--white);
+    color: var(--gray-800);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .report-global-line-bar {
+        padding: 12px 14px;
+    }
+    .report-global-line-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        width: 100%;
+    }
+    .report-global-line-inner select {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+}
+
 /* --- Filter Card & Form Grid --- */
 .sales-filter-card {
     background: var(--white);
@@ -134,7 +188,7 @@
     justify-content: flex-end;
 }
 
-.sales-filter-field label {
+.sales-filter-field > label {
     font-weight: 700;
     font-size: 0.85rem;
     color: var(--gray-700);
@@ -149,7 +203,7 @@
 
 /* Strictly unified 40px height for all interactive filter elements */
 .sales-filter-field select,
-.sales-filter-field input,
+.sales-filter-field input:not([type="checkbox"]),
 .sales-filter-field .multi-select-btn,
 .multi-select-btn {
     height: 40px !important;
@@ -410,25 +464,49 @@
 }
 
 .multi-select-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--gray-800);
-    user-select: none;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+    height: auto !important;
+    min-height: 28px !important;
+    max-height: none !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    user-select: none !important;
+}
+
+.multi-select-item span {
+    color: #1f2937 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    display: inline-block !important;
+    line-height: 1.3 !important;
+}
+
+.multi-select-item input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
 }
 
 .multi-select-item:hover {
     background: var(--gray-100);
 }
 
-.multi-select-item.select-all-item {
-    font-weight: 700;
-    color: var(--primary);
+.multi-select-item.select-all-item span {
+    font-weight: 700 !important;
+    color: var(--primary) !important;
 }
 
 .multi-select-divider {
@@ -1019,6 +1097,30 @@
         grid-template-columns: 1fr 1fr;
         gap: 10px;
     }
+    .sales-filter-field.col-line {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-rep {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-product {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-distributor {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-search {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
+    .sales-filter-field.col-dm {
+        grid-column: 1 / 3;
+        min-width: 0;
+    }
     .sales-filter-field.col-month {
         grid-column: 1 / 2;
         min-width: 0;
@@ -1027,47 +1129,44 @@
         grid-column: 2 / 3;
         min-width: 0;
     }
-    .sales-filter-field.col-product {
+    .sales-filter-field.col-date {
+        grid-column: span 1;
+        min-width: 0;
+    }
+    /* Default: col-class is full width */
+    .sales-filter-field.col-class {
         grid-column: 1 / 3;
         min-width: 0;
     }
-    .sales-filter-field.col-line {
-        grid-column: 1 / 3;
-        min-width: 0;
-    }
-    .sales-filter-field.col-dm {
-        grid-column: 1 / 3;
-        min-width: 0;
-    }
-    .sales-filter-field.col-rep {
-        grid-column: 1 / 3;
-        min-width: 0;
-    }
-    .sales-filter-field.col-search {
-        grid-column: 1 / 3;
-        min-width: 0;
-    }
-    .sales-filter-field.col-specialty {
+    /* When paired with specialty in Doctors Directory: specialty is left, class is right */
+    #tabPanel-doctors .sales-filter-field.col-specialty {
         grid-column: 1 / 2;
         min-width: 0;
     }
-    .sales-filter-field.col-class {
+    #tabPanel-doctors .sales-filter-field.col-class {
         grid-column: 2 / 3;
-        min-width: 0;
-    }
-    .sales-filter-field.col-date {
-        grid-column: span 1;
         min-width: 0;
     }
     .sales-filter-field.col-btn {
         grid-column: 1 / 3;
         display: flex;
         gap: 8px;
+        align-items: center;
     }
     .sales-filter-field.col-btn button {
         flex: 1;
         width: 100%;
         justify-content: center;
+        height: 40px !important;
+    }
+    .sales-filter-field.col-btn #timelineDateBadge {
+        height: 40px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        font-weight: 700;
+        border-radius: 8px;
     }
     .achievements-filter-bar {
         display: grid;
@@ -1285,21 +1384,25 @@
 }
 
 [data-theme="dark"] .multi-select-menu {
-    background-color: var(--white) !important;
-    border-color: var(--gray-300) !important;
+    background-color: #1e2229 !important;
+    border-color: #3d4554 !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
 }
 
 [data-theme="dark"] .multi-select-item {
-    color: var(--gray-800) !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .multi-select-item span {
+    color: #f1f5f9 !important;
 }
 
 [data-theme="dark"] .multi-select-item:hover {
-    background-color: var(--surface-hover) !important;
+    background-color: #282d38 !important;
 }
 
 [data-theme="dark"] .multi-select-divider {
-    background-color: var(--gray-200) !important;
+    background-color: #3d4554 !important;
 }
 
 [data-theme="dark"] .sales-actions-left h3 { color: #ffffff !important; }
@@ -2544,10 +2647,21 @@
     color: #ffffff !important;
 }
 
-[data-theme="dark"] .sales-filter-card {
-    background: var(--white, #1e2229) !important;
-    border: 1px solid var(--gray-200, #2d3340) !important;
+[data-theme="dark"] .sales-filter-card,
+[data-theme="dark"] .report-global-line-bar {
+    background: #1e2229 !important;
+    border: 1px solid #2d3340 !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .report-global-line-bar label {
+    color: var(--gray-400, #9da5b1) !important;
+}
+
+[data-theme="dark"] .report-global-line-bar select {
+    background-color: var(--surface-dim, #16191f) !important;
+    border-color: var(--gray-300, #3d4554) !important;
+    color: #f1f3f5 !important;
 }
 
 [data-theme="dark"] .sales-filter-field label {
