@@ -343,7 +343,12 @@
         const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
         allDocs.forEach((d) => {
           const matchAreaId = d.areaId === areaId;
-          const matchAreaName = nameLower && d.area && d.area.toLowerCase().trim() === nameLower;
+          const matchAreaName =
+            nameLower &&
+            d.area &&
+            d.area.toLowerCase().trim() === nameLower &&
+            (!d.areaId || d.areaId === areaId) &&
+            (!area || !area.lineId || !d.lineId || d.lineId === area.lineId);
 
           if (matchAreaId || matchAreaName) {
             d.repId = newRepId || null;
@@ -357,7 +362,12 @@
         const allPharms = (window.DEMO_DATA && window.DEMO_DATA.pharmacies) || [];
         allPharms.forEach((p) => {
           const matchAreaId = p.areaId === areaId;
-          const matchAreaName = nameLower && p.area && p.area.toLowerCase().trim() === nameLower;
+          const matchAreaName =
+            nameLower &&
+            p.area &&
+            p.area.toLowerCase().trim() === nameLower &&
+            (!p.areaId || p.areaId === areaId) &&
+            (!area || !area.lineId || !p.lineId || p.lineId === area.lineId);
 
           if (matchAreaId || matchAreaName) {
             p.repId = newRepId || null;
@@ -371,7 +381,12 @@
         const allHosps = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
         allHosps.forEach((h) => {
           const matchAreaId = h.areaId === areaId;
-          const matchAreaName = nameLower && h.area && h.area.toLowerCase().trim() === nameLower;
+          const matchAreaName =
+            nameLower &&
+            h.area &&
+            h.area.toLowerCase().trim() === nameLower &&
+            (!h.areaId || h.areaId === areaId) &&
+            (!area || !area.lineId || !h.lineId || h.lineId === area.lineId);
 
           if (matchAreaId || matchAreaName) {
             h.repId = newRepId || null;
@@ -818,7 +833,12 @@
       getById(id) {
         return this.getAll().find((b) => b.id === id);
       },
-      find(distributorId, month) {
+      find(distributorId, month, fileName = null) {
+        if (fileName) {
+          return this.getAll().find(
+            (b) => b.distributorId === distributorId && b.month === month && b.fileName === fileName,
+          );
+        }
         return this.getAll().find(
           (b) => b.distributorId === distributorId && b.month === month,
         );
@@ -1095,6 +1115,14 @@
         autoSave("leaves", "update", l);
         return l;
       },
+      delete(id) {
+        if (!window.DEMO_DATA.leaves) return false;
+        const before = window.DEMO_DATA.leaves.length;
+        window.DEMO_DATA.leaves = window.DEMO_DATA.leaves.filter((l) => l.id !== id);
+        const changed = window.DEMO_DATA.leaves.length !== before;
+        if (changed) autoSave("leaves", "delete", { id });
+        return changed;
+      },
     },
 
     // ==========================================
@@ -1115,7 +1143,20 @@
             requireGpsValidation: true,
             gpsMaxDistanceMeters: 200,
             minPmVisitsPerDay: 4,
+            allowLeaveRollover: true,
+            leaveRolloverGraceMonths: 3,
+            leaveRolloverMaxDays: 5,
           };
+        } else {
+          if (window.DEMO_DATA.companySettings.allowLeaveRollover === undefined) {
+            window.DEMO_DATA.companySettings.allowLeaveRollover = true;
+          }
+          if (window.DEMO_DATA.companySettings.leaveRolloverGraceMonths === undefined) {
+            window.DEMO_DATA.companySettings.leaveRolloverGraceMonths = 3;
+          }
+          if (window.DEMO_DATA.companySettings.leaveRolloverMaxDays === undefined) {
+            window.DEMO_DATA.companySettings.leaveRolloverMaxDays = 5;
+          }
         }
         return window.DEMO_DATA.companySettings;
       },

@@ -336,7 +336,7 @@ function getDmSelectedDate() {
     const savedDate = localStorage.getItem("pharma_dm_selected_date");
     if (savedDate) return savedDate;
   } catch (e) {}
-  const now = new Date();
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
@@ -753,9 +753,10 @@ function renderRepDashboard(userName, user) {
   const repHospitals = allHospitals.filter((h) => !h.repId || h.repId === currentUserId);
   const totalHospitalsCount = repHospitals.length;
 
-  const now = new Date();
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   const todayStr =
     (typeof window.todayStr !== "undefined" && window.todayStr) ||
+    (typeof window.getSystemTodayStr === "function" && window.getSystemTodayStr()) ||
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   const activePlanned = allVisits.filter(
@@ -2457,6 +2458,10 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   document.getElementById("dashVisitTime").value = timeStr;
   document.getElementById("dashVisitComment").value =
     (target && target.comment) || "";
+  const giveawayInput = document.getElementById("dashVisitGiveawaySamples");
+  if (giveawayInput) {
+    giveawayInput.value = (target && target.giveawaySamples) || "";
+  }
 
   const container = document.getElementById("dashProdContainer");
   if (container) {
@@ -2516,6 +2521,11 @@ window.closeDashCompleteModal = function () {
     modal.style.display = "none";
     modal.classList.remove("active");
   }
+  const submitBtn = document.getElementById("btnDashSubmit");
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    if (submitBtn.dataset.originalText) submitBtn.innerText = submitBtn.dataset.originalText;
+  }
   targetVisitToCompleteId = null;
   isCurrentActionJoinDouble = false;
 };
@@ -2524,16 +2534,32 @@ window.handleDashCompleteSubmit = function (e) {
   e.preventDefault();
   if (!targetVisitToCompleteId) return;
 
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const submitBtn = document.getElementById("btnDashSubmit");
+  if (submitBtn) {
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.dataset.originalText = submitBtn.innerText;
+    submitBtn.innerText = lang === "ar" ? "جاري الحفظ... ⏳" : "Saving... ⏳";
+  }
+
+  const resetSubmitBtn = () => {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      if (submitBtn.dataset.originalText) submitBtn.innerText = submitBtn.dataset.originalText;
+    }
+  };
+
   const dateInput = document.getElementById("dashVisitDate");
   const now = new Date();
   const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const dateVal = dateInput && dateInput.value ? dateInput.value : todayISO;
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const twoDaysAgo = new Date();
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
   const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${String(twoDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(twoDaysAgo.getDate()).padStart(2, "0")}`;
 
   if (dateVal > todayISO) {
+    resetSubmitBtn();
     const msg = lang === "ar"
       ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
       : "Cannot log an actual visit in a future date.";
@@ -2542,6 +2568,7 @@ window.handleDashCompleteSubmit = function (e) {
     return;
   }
   if (dateVal < twoDaysAgoISO) {
+    resetSubmitBtn();
     const msg = lang === "ar"
       ? "لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من يومين على تاريخها."
       : "Cannot log an actual visit older than 2 days.";
@@ -2553,6 +2580,7 @@ window.handleDashCompleteSubmit = function (e) {
     document.getElementById("dashVisitTime").value ||
     `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const commentVal = document.getElementById("dashVisitComment").value;
+  const giveawayVal = (document.getElementById("dashVisitGiveawaySamples")?.value || "").trim();
   const checkedProductInputs = Array.from(
     document.querySelectorAll('input[name="dashProd"]:checked'),
   );
@@ -2582,6 +2610,7 @@ window.handleDashCompleteSubmit = function (e) {
         document.querySelectorAll('input[name="dashDoubleCompanion"]:checked'),
       ).map((c) => c.value);
       if (companions.length === 0) {
+        resetSubmitBtn();
         const msg = lang === "ar"
           ? "يرجى تحديد المرافق في الزيارة المزدوجة."
           : "Please select at least one companion for the double visit.";
@@ -2601,7 +2630,10 @@ window.handleDashCompleteSubmit = function (e) {
   const visits =
     window.DEMO_DATA && window.DEMO_DATA.visits ? window.DEMO_DATA.visits : [];
   const target = visits.find((v) => v.id === targetVisitToCompleteId);
-  if (!target) return;
+  if (!target) {
+    resetSubmitBtn();
+    return;
+  }
 
   const authUser =
     (window.checkAuth && window.checkAuth()) ||
@@ -2613,6 +2645,7 @@ window.handleDashCompleteSubmit = function (e) {
   if (typeof window.checkVisitDateAllowed === "function") {
     const dateCheck = window.checkVisitDateAllowed(dateVal, targetRepId, lang);
     if (!dateCheck.allowed) {
+      resetSubmitBtn();
       if (typeof showToast === "function") showToast(dateCheck.message, "warning");
       else alert(dateCheck.message);
       return;
@@ -2623,6 +2656,7 @@ window.handleDashCompleteSubmit = function (e) {
   if (typeof window.checkVisitTimeConflict === "function") {
     const timeConflict = window.checkVisitTimeConflict(targetRepId, dateVal, timeVal, target.id);
     if (timeConflict.hasConflict) {
+      resetSubmitBtn();
       const conflictingTarget = timeConflict.conflictingVisit.doctorName || timeConflict.conflictingVisit.doctorId || "";
       const conflictingTime = timeConflict.conflictingVisit.time || timeVal;
       const msg = timeConflict.exactMatch
@@ -2644,6 +2678,7 @@ window.handleDashCompleteSubmit = function (e) {
     target.time = timeVal;
     target.entryDate = dateVal;
     target.comment = commentVal;
+    target.giveawaySamples = giveawayVal;
     target.productIds = selectedProductIds;
     target.products = selectedProductNames;
     target.visitType = visitType;

@@ -290,8 +290,7 @@ function getAllAuthenticatableUsers() {
 async function handleLogin() {
   const rawInput = emailInput ? emailInput.value.trim() : '';
   const email = rawInput.toLowerCase();
-  const rawPassword = passwordInput ? passwordInput.value : '';
-  const password = rawPassword.trim();
+  const password = passwordInput ? passwordInput.value : '';
 
   if (emailInput) emailInput.classList.remove('is-invalid');
   if (passwordInput) passwordInput.classList.remove('is-invalid');

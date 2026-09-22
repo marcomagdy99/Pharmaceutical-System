@@ -423,6 +423,16 @@ function setupEventListeners() {
       );
     }
 
+    // Labor Law & Pharma Policy Check: Casual Leave cannot exceed 2 consecutive days per request
+    if ((type === "casual" || type === "emergency") && calculatedDays > 2) {
+      return showToast(
+        isAr
+          ? "⚠️ طبقاً للائحة العمل، الحد الأقصى للإجازة العارضة هو يومان متتاليان فقط في المرة الواحدة. يرجى اختيار إجازة اعتيادية (Annual) للفترات الأطول."
+          : "⚠️ Casual leave cannot exceed 2 consecutive days per request. Please submit as Annual Leave for longer periods.",
+        "warning",
+      );
+    }
+
     // Balance Check: Verify that requested days do not exceed remaining leave balance for (Annual / Sick / Casual)
     const trackedBalanceTypes = ["annual", "casual", "sick", "emergency"];
     if (trackedBalanceTypes.includes(type)) {
@@ -438,9 +448,12 @@ function setupEventListeners() {
         balKey = "emergency";
       }
 
+      const rollover = balKey === "annual" ? getEmployeeLeaveRollover(currentUser.id) : { isValid: false, carriedOver: 0 };
+      const activeRollover = rollover.isValid ? rollover.carriedOver : 0;
+
       const total =
         balKey === "annual"
-          ? (userBalance.annual !== undefined ? Number(userBalance.annual) : 21)
+          ? ((userBalance.annual !== undefined ? Number(userBalance.annual) : 21) + activeRollover)
           : balKey === "sick"
             ? (userBalance.sick !== undefined ? Number(userBalance.sick) : 7)
             : userBalance.emergency !== undefined
@@ -778,7 +791,93 @@ function updateUIForUser() {
 }
 
 /**
+ * Dynamically computes employee rollover balance from previous year based on companySettings.
+ */
+function getEmployeeLeaveRollover(userId, targetYear) {
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+
+  if (companySettings.allowLeaveRollover === false) {
+    return {
+      initialCarriedOver: 0,
+      consumedFromRollover: 0,
+      remainingRollover: 0,
+      carriedOver: 0,
+      isValid: false,
+      isExpired: false,
+      expiryDate: null,
+      maxCap: 0,
+      graceMonths: 0,
+      consumedFromNewAnnual: 0,
+    };
+  }
+
+  const allUsers = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
+    ? window.DEMO_DATA.users
+    : [];
+  const userObj = allUsers.find((u) => u.id === userId) || {};
+  const userBalance = userObj.leaveBalance || {};
+  const annualTotal = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
+
+  const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
+  const prevYearStr = String(currentYear - 1);
+  const currentYearStr = String(currentYear);
+  const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+
+  // 1. Calculate used annual leaves in previous year
+  let prevYearUsed = 0;
+  (demoLeaves || []).forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(prevYearStr)) {
+      prevYearUsed += (parseFloat(l.days) || 1);
+    }
+  });
+
+  const leftover = Math.max(0, annualTotal - prevYearUsed);
+  const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
+  const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
+
+  // 2. FIFO: Approved annual leaves taken in the current year that have started consume the carried-over balance FIRST!
+  let currentYearApprovedTaken = 0;
+  (demoLeaves || []).forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr) && l.startDate <= todayStr) {
+      currentYearApprovedTaken += (parseFloat(l.days) || 1);
+    }
+  });
+
+  const consumedFromRollover = Math.min(initialCarriedOver, currentYearApprovedTaken);
+  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
+  const consumedFromNewAnnual = Math.max(0, currentYearApprovedTaken - initialCarriedOver);
+
+  const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
+  let expiryDate = `${currentYear}-03-31`;
+  if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
+  else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
+  else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
+  else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
+
+  const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
+  const isExpired = remainingRollover > 0 && todayStr > expiryDate;
+
+  return {
+    initialCarriedOver,
+    consumedFromRollover,
+    remainingRollover,
+    carriedOver: remainingRollover,
+    isValid,
+    isExpired,
+    expiryDate,
+    maxCap,
+    graceMonths,
+    consumedFromNewAnnual,
+  };
+}
+window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
+
+/**
  * Dynamically computes and updates leave balances based on approved leaves.
+ * Real-world policy: Approved leaves are only deducted from 'Used' once their start date has actually arrived.
+ * FIFO Rule: Leaves taken in the new year consume carried-over balance FIRST before deducting from new year quota.
  */
 function calculateBalances() {
   const allUsers =
@@ -787,8 +886,15 @@ function calculateBalances() {
       : [];
   const userObj = allUsers.find((u) => u.id === currentUser.id) || currentUser;
   const userBalance = userObj.leaveBalance || currentUser.leaveBalance || {};
+  const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+  const rollover = getEmployeeLeaveRollover(currentUser.id);
+  const baseAnnual = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
+
+  const isWithinGrace = rollover.isValid;
+  const activeAnnualTotal = isWithinGrace ? (baseAnnual + rollover.initialCarriedOver) : baseAnnual;
+
   const totals = {
-    annual: userBalance.annual !== undefined ? Number(userBalance.annual) : 21,
+    annual: activeAnnualTotal,
     sick: userBalance.sick !== undefined ? Number(userBalance.sick) : 7,
     emergency:
       userBalance.emergency !== undefined
@@ -800,7 +906,8 @@ function calculateBalances() {
   let used = { annual: 0, sick: 0, emergency: 0 };
 
   demoLeaves.forEach((l) => {
-    if (l.userId === currentUser.id && l.status === "approved") {
+    // Only deduct approved leaves whose start date has arrived or passed
+    if (l.userId === currentUser.id && l.status === "approved" && l.startDate && l.startDate <= todayStr) {
       const d = parseFloat(l.days) || 1;
       if (l.type === "annual") {
         used.annual += d;
@@ -811,6 +918,55 @@ function calculateBalances() {
       }
     }
   });
+
+  // After grace period ends, any days paid from rollover are NOT charged against the new annual quota
+  if (!isWithinGrace && rollover.initialCarriedOver > 0) {
+    used.annual = rollover.consumedFromNewAnnual;
+  }
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  const badgeEl = document.getElementById("annualRolloverBadge");
+  if (badgeEl) {
+    if (rollover.isValid && rollover.initialCarriedOver > 0) {
+      badgeEl.style.display = "block";
+      const remainingMsg = rollover.consumedFromRollover > 0
+        ? `متبقي ${rollover.remainingRollover} من ${rollover.initialCarriedOver} (تم استهلاك ${rollover.consumedFromRollover} أولاً)`
+        : `+${rollover.initialCarriedOver} أيام مرحلة`;
+      const remainingMsgEn = rollover.consumedFromRollover > 0
+        ? `${rollover.remainingRollover} left of ${rollover.initialCarriedOver} (${rollover.consumedFromRollover} consumed first)`
+        : `+${rollover.initialCarriedOver} days`;
+
+      badgeEl.innerHTML = `
+        <div class="mt-2 pt-2 border-top" style="border-color: rgba(13, 110, 253, 0.15) !important;">
+          <div class="p-2 rounded-3 bg-success-subtle border border-success-subtle" style="font-size: 0.78rem;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold text-success-emphasis d-flex align-items-center gap-1">
+                <i class="bi bi-arrow-repeat"></i> ${isAr ? "رصيد مرحل (يُخصم أولاً FIFO):" : "Carried Over (Deducted First):"}
+              </span>
+              <span class="badge bg-success text-white fw-bold px-2 py-1">${isAr ? remainingMsg : remainingMsgEn}</span>
+            </div>
+            <div class="text-danger fw-semibold d-flex align-items-center gap-1" style="font-size: 0.74rem;">
+              <i class="bi bi-hourglass-split"></i> ${isAr ? `مهلة الاستخدام تنتهي في: ${rollover.expiryDate}` : `Expires on: ${rollover.expiryDate}`}
+            </div>
+          </div>
+        </div>`;
+    } else if (rollover.isExpired) {
+      badgeEl.style.display = "block";
+      badgeEl.innerHTML = `
+        <div class="mt-2 pt-2 border-top" style="border-color: rgba(0, 0, 0, 0.08) !important;">
+          <div class="p-2 rounded-3 bg-secondary-subtle border border-secondary-subtle text-muted" style="font-size: 0.75rem;">
+            <div class="d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-clock-history me-1"></i>${isAr ? `انتهت مهلة الرصيد المرحل (${rollover.remainingRollover} يوم سقطت)` : `Rollover expired (${rollover.remainingRollover}d forfeited)`}</span>
+              <span class="fw-semibold text-danger">${rollover.expiryDate}</span>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      badgeEl.style.display = "none";
+    }
+  }
 
   ["annual", "sick", "emergency"].forEach((type) => {
     const rem = Math.max(0, totals[type] - used[type]);
@@ -978,6 +1134,10 @@ function renderHistory() {
       `;
     }
 
+    const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+    const isFuture = l.startDate && l.startDate > todayStr;
+    const canDelete = (l.status === "pending" || (l.status === "approved" && isFuture)) && (l.userId === currentUser.id || currentUser.role === "admin");
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>
@@ -1000,21 +1160,79 @@ function renderHistory() {
         </div>
       </td>
       <td>
-        <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
-          ${l.status.toUpperCase()}
-        </span>
-        ${
-          l.status === "rejected" && l.rejectionReason
-            ? `<div class="mt-1 small text-danger" style="font-size: 0.76rem; max-width: 220px; line-height: 1.3;" title="${window.escapeHtml(l.rejectionReason)}">
-                 <i class="bi bi-chat-left-text me-1"></i><strong>${lang === "ar" ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
-               </div>`
-            : ""
-        }
+        <div class="d-flex flex-column align-items-start gap-1">
+          <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
+            ${l.status.toUpperCase()}
+          </span>
+          ${
+            canDelete
+              ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1" style="font-size:0.75rem;" onclick="deleteMyLeave('${l.id}')">
+                   <i class="bi bi-trash3 me-1"></i>${lang === "ar" ? "حذف" : "Delete"}
+                 </button>`
+              : ""
+          }
+          ${
+            l.status === "rejected" && l.rejectionReason
+              ? `<div class="mt-1 small text-danger" style="font-size: 0.76rem; max-width: 220px; line-height: 1.3;" title="${window.escapeHtml(l.rejectionReason)}">
+                   <i class="bi bi-chat-left-text me-1"></i><strong>${lang === "ar" ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
+                 </div>`
+              : ""
+          }
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
+
+window.deleteMyLeave = function(leaveId) {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+
+  const idx = demoLeaves.findIndex((l) => l.id === leaveId);
+  if (idx < 0) return;
+  const l = demoLeaves[idx];
+
+  const isFuture = l.startDate && l.startDate > todayStr;
+  const canDelete = l.status === "pending" || (l.status === "approved" && isFuture) || currentUser.role === "admin";
+
+  if (!canDelete) {
+    showToast(
+      isAr
+        ? "لا يمكن حذف إجازة معتمدة حل تاريخ بدئها بالفعل أو في الماضي."
+        : "Cannot delete an approved leave that has already started or passed.",
+      "warning"
+    );
+    return;
+  }
+
+  const confirmMsg = isAr
+    ? (l.status === "approved"
+        ? "هل أنت متأكد من رغبتك في التراجع عن هذه الإجازة المعتمدة وحذفها؟ سيبقى الرصيد متاحاً في حسابك."
+        : "هل أنت متأكد من حذف طلب الإجازة هذا؟")
+    : (l.status === "approved"
+        ? "Are you sure you want to cancel and delete this approved leave? The days will remain in your balance."
+        : "Are you sure you want to delete this leave request?");
+
+  if (!confirm(confirmMsg)) return;
+
+  demoLeaves.splice(idx, 1);
+  if (window.store && window.store.leaves && typeof window.store.leaves.delete === "function") {
+    window.store.leaves.delete(leaveId);
+  }
+  window.DEMO_DATA.leaves = demoLeaves;
+  if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+
+  renderHistory();
+  calculateBalances();
+  if (typeof updateNavPendingBadges === "function") updateNavPendingBadges();
+
+  showToast(
+    isAr ? "تم حذف الإجازة بنجاح وتحديث رصيدك." : "Leave deleted successfully and balance updated.",
+    "success"
+  );
+};
 
 function renderPendingApprovals() {
   const container = document.getElementById("pendingApprovalsContainer");
@@ -1751,13 +1969,18 @@ Object.assign(leavesApp, {
     if (casualInput) casualInput.value = casualTotal;
     if (sickInput) sickInput.value = sickTotal;
 
+    const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+    const rollover = getEmployeeLeaveRollover(user.id);
+    const effectiveAnnual = annualTotal + (rollover.isValid ? rollover.carriedOver : 0);
+
     const leavesList =
       window.DEMO_DATA && Array.isArray(window.DEMO_DATA.leaves)
         ? window.DEMO_DATA.leaves
         : demoLeaves;
     let used = { annual: 0, casual: 0, sick: 0 };
     leavesList.forEach((l) => {
-      if (l.userId === user.id && l.status === "approved") {
+      // Only deduct approved leaves whose start date has arrived or passed
+      if (l.userId === user.id && l.status === "approved" && l.startDate && l.startDate <= todayStr) {
         const d = parseFloat(l.days) || 1;
         if (l.type === "annual") used.annual += d;
         else if (l.type === "casual" || l.type === "emergency")
@@ -1769,20 +1992,24 @@ Object.assign(leavesApp, {
     if (summaryEl) {
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
       const isAr = lang === "ar";
-      const remAnnual = Math.max(0, annualTotal - used.annual);
+      const remAnnual = Math.max(0, effectiveAnnual - used.annual);
       const remCasual = Math.max(0, casualTotal - used.casual);
       const remSick = Math.max(0, sickTotal - used.sick);
       const rawDisplayName = isAr && user.nameAr ? user.nameAr : user.name;
       const displayName = window.escapeHtml(rawDisplayName);
       const safeUserName = window.escapeHtml(user.name);
 
+      const rolloverBadge = rollover.isValid
+        ? `<span class="badge bg-success-subtle text-success border">+${rollover.carriedOver} ${isAr ? "مرحل" : "Rollover"}</span>`
+        : "";
+
       summaryEl.style.display = "block";
       summaryEl.innerHTML = isAr
         ? `
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span class="fw-bold text-dark">ملخص استهلاك الإجازات لـ (${displayName}):</span>
-          <div class="d-flex gap-2 flex-wrap">
-            <span class="badge bg-primary-subtle text-primary border">اعتيادي: مستخدم ${used.annual} / متبقي ${remAnnual} من ${annualTotal}</span>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="badge bg-primary-subtle text-primary border">اعتيادي: مستخدم ${used.annual} / متبقي ${remAnnual} من ${effectiveAnnual} ${rolloverBadge}</span>
             <span class="badge bg-warning-subtle text-warning-emphasis border">عارضة: مستخدم ${used.casual} / متبقي ${remCasual} من ${casualTotal}</span>
             <span class="badge bg-info-subtle text-info-emphasis border">مرضي: مستخدم ${used.sick} / متبقي ${remSick} من ${sickTotal}</span>
           </div>
@@ -1790,8 +2017,8 @@ Object.assign(leavesApp, {
         : `
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span class="fw-bold text-dark">Leave Usage Snapshot for (${safeUserName}):</span>
-          <div class="d-flex gap-2 flex-wrap">
-            <span class="badge bg-primary-subtle text-primary border">Annual: ${used.annual} Used / ${remAnnual} Left of ${annualTotal}</span>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="badge bg-primary-subtle text-primary border">Annual: ${used.annual} Used / ${remAnnual} Left of ${effectiveAnnual} ${rolloverBadge}</span>
             <span class="badge bg-warning-subtle text-warning-emphasis border">Casual: ${used.casual} Used / ${remCasual} Left of ${casualTotal}</span>
             <span class="badge bg-info-subtle text-info-emphasis border">Sick: ${used.sick} Used / ${remSick} Left of ${sickTotal}</span>
           </div>

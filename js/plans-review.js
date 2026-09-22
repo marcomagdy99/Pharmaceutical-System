@@ -29,6 +29,8 @@ const plansReviewTranslations = {
     colActions: "Actions",
     noPendingPlans:
       "All submitted plans have been reviewed and approved! No pending plans waiting.",
+    noMatchingPlansTitle: "No pending plans match your search or filter",
+    noMatchingPlansDesc: "Try adjusting your search query, representative, or line filter.",
     toastApprovedSingle:
       "Visit approved successfully and added to active schedule!",
     toastApprovedAllRep:
@@ -84,6 +86,8 @@ const plansReviewTranslations = {
     colActions: "إجراءات",
     noPendingPlans:
       "تمت مراجعة واعتماد جميع الخطط بنجاح! لا توجد خطط معلقة حالياً.",
+    noMatchingPlansTitle: "لا توجد خطط معلقة مطابقة لمعايير البحث",
+    noMatchingPlansDesc: "جرب البحث باسم طبيب أو مندوب آخر أو تعديل فلاتر الخط والمندوب.",
     toastApprovedSingle: "تم اعتماد الزيارة بنجاح وإضافتها للجدول النشط!",
     toastApprovedAllRep: "تم اعتماد جميع زيارات المندوب بنجاح!",
     toastApprovedAllGlobal: "تم اعتماد جميع خطط الفريق بالكامل بنجاح!",
@@ -208,9 +212,13 @@ function getScopedSubordinateReps(currentUser) {
 function getRepDirectDm(rep, allUsers) {
   if (!rep) return null;
   const users = allUsers || (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const dmId = rep.managerId || rep.dmId;
+  const dmId = rep.dmId || rep.managerId;
   if (!dmId) return null;
-  return users.find((u) => u.id === dmId) || null;
+  return users.find((u) => {
+    if (u.id !== dmId) return false;
+    const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || "").toLowerCase();
+    return r === "district_manager" || r === "dm";
+  }) || null;
 }
 
 function isRepDmActive(rep, allUsers) {
@@ -486,16 +494,27 @@ function renderPlansReview(currentUser) {
   }
 
   if (displayedVisits.length === 0) {
-    container.innerHTML = `
-      <div class="card border-0 shadow-sm rounded-4 p-5 text-center" style="background: var(--card-bg, #ffffff);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
-        <h4 class="fw-bold rep-title mb-2">${t.noPendingPlans}</h4>
-        <p class="text-muted small mb-3">All visit plans have been approved and are active in team schedules.</p>
-        <div>
-          <a href="visits.html" class="btn btn-primary btn-sm">📍 ${t.btnGoToVisits}</a>
+    const isFiltered = Boolean(searchKeyword || (selectedRepId && selectedRepId !== 'all') || (selectedLineId && selectedLineId !== 'all'));
+    if (isFiltered) {
+      container.innerHTML = `
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center" style="background: var(--card-bg, #ffffff);">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🔍</div>
+          <h4 class="fw-bold rep-title mb-2">${t.noMatchingPlansTitle || (lang === 'ar' ? 'لا توجد خطط معلقة مطابقة لبحثك' : 'No pending plans match your search')}</h4>
+          <p class="text-muted small mb-0">${t.noMatchingPlansDesc || (lang === 'ar' ? 'جرب البحث باسم طبيب أو مندوب آخر أو تعديل الفلاتر.' : 'Try adjusting your search query, rep, or product line filter.')}</p>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center" style="background: var(--card-bg, #ffffff);">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
+          <h4 class="fw-bold rep-title mb-2">${t.noPendingPlans}</h4>
+          <p class="text-muted small mb-3">All visit plans have been approved and are active in team schedules.</p>
+          <div>
+            <a href="visits.html" class="btn btn-primary btn-sm">📍 ${t.btnGoToVisits}</a>
+          </div>
+        </div>
+      `;
+    }
     return;
   }
 
@@ -1067,7 +1086,10 @@ const plansReview = {
 
     let count = 0;
     const repCounts = {};
+    const effectiveLineId = window.selectedPlansLineId || document.getElementById("plansLineFilter")?.value || "all";
     visits.forEach((v) => {
+      // Only approve visits matching the currently active line filter
+      if (effectiveLineId !== "all" && v.lineId && v.lineId !== effectiveLineId) return;
       const rep = scopedReps.find((r) => r.id === v.repId);
       if (rep && canUserApproveForRep(currentUser, rep, allUsers) && v.status === "pending_approval") {
         v.status = "planned";

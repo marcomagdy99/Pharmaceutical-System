@@ -385,6 +385,26 @@ function saveDoctor() {
     return;
   }
 
+  // Auto-resolve area and product line from the assigned rep
+  let assignedAreaId = null;
+  let assignedAreaName = "";
+  let assignedLineId = "";
+  if (assignedRepId) {
+    if (window.store && window.store.areas) {
+      const repAreas = window.store.areas.getByRep(assignedRepId);
+      if (repAreas.length > 0) {
+        assignedAreaId = repAreas[0].id;
+        assignedAreaName = repAreas[0].name;
+        assignedLineId = repAreas[0].lineId || "";
+      }
+    }
+    if (!assignedLineId) {
+      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const rep = allUsers.find((u) => u.id === assignedRepId);
+      if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
+    }
+  }
+
   const doctorObj = {
     id: id || "doc_" + Date.now(),
     name,
@@ -396,6 +416,9 @@ function saveDoctor() {
     clinicAddress: address,
     phone,
     repId: assignedRepId,
+    areaId: assignedAreaId,
+    area: assignedAreaName,
+    lineId: assignedLineId,
     visitsThisQuarter: 0
   };
 

@@ -247,18 +247,29 @@ function loadAnnouncements() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        if (window.DEMO_DATA) window.DEMO_DATA.announcements = parsed;
         return parsed;
       }
     }
   } catch (e) {
     console.error("Failed to load announcements from storage:", e);
   }
-  return [...demoAnnouncements];
+  const fallback = [...demoAnnouncements];
+  if (window.DEMO_DATA && (!window.DEMO_DATA.announcements || !window.DEMO_DATA.announcements.length)) {
+    window.DEMO_DATA.announcements = fallback;
+  }
+  return fallback;
 }
 
 function saveAnnouncementsToStorage() {
   try {
     localStorage.setItem("pharmaAnnouncements", JSON.stringify(announcements));
+    if (window.DEMO_DATA) {
+      window.DEMO_DATA.announcements = announcements;
+    }
+    if (typeof window.saveDataToStorage === "function") {
+      window.saveDataToStorage();
+    }
   } catch (e) {
     console.error("Failed to save announcements to storage:", e);
   }

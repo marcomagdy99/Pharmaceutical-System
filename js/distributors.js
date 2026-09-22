@@ -8,6 +8,82 @@
 
 let distributorModal = null;
 let deleteModal = null;
+
+/**
+ * Parses a numeric string from imported Excel/CSV data.
+ * Handles:
+ * - Eastern Arabic digits (١٢٣)
+ * - Accounting negative notation in parentheses e.g. (1,500.00) or (250)
+ * - Trailing negative signs e.g. 1500-
+ * - Standard negative signs e.g. -1500
+ * - European decimal notation (1.250,50)
+ * - Standard thousand-separator format (1,250.50)
+ */
+function parseSalesNumber(val) {
+  if (val === null || val === undefined || val === "") return NaN;
+  if (typeof val === "number") return val;
+  let s = String(val).trim();
+  if (!s) return NaN;
+
+  // Check if negative in accounting formats: (1,500) or 1500- or -1500
+  const isAccountingNegative = (s.startsWith("(") && s.endsWith(")")) || s.endsWith("-") || s.startsWith("-");
+
+  // Convert Eastern Arabic-Indic digits ٠١٢٣٤٥٦٧٨٩ to Latin
+  s = s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
+
+  // Clean parentheses and trailing/leading minus
+  s = s.replace(/[\(\)]/g, "");
+
+  // European format: dot as thousands separator, comma as decimal (e.g. 1.250,50)
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else {
+    // Standard: remove thousand commas
+    s = s.replace(/,/g, "");
+  }
+
+  const num = parseFloat(s.replace(/[^0-9.]/g, ""));
+  if (isNaN(num)) return NaN;
+  return isAccountingNegative ? -Math.abs(num) : num;
+}
+
+/**
+ * Parses date strictly from Excel/CSV imports, prioritizing DD/MM/YYYY and YYYY-MM-DD
+ */
+function parseDateStrict(dateRaw) {
+  if (!dateRaw && dateRaw !== 0) return null;
+  if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
+    return dateRaw.toISOString().slice(0, 10);
+  }
+  if (typeof dateRaw === "number") {
+    const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+    return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
+  }
+  const str = String(dateRaw).trim();
+  if (!str) return null;
+
+  // Check DD/MM/YYYY or DD-MM-YYYY
+  const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmy) {
+    const day = dmy[1].padStart(2, "0");
+    const month = dmy[2].padStart(2, "0");
+    const year = dmy[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // Check YYYY-MM-DD or YYYY/MM/DD
+  const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (ymd) {
+    const year = ymd[1];
+    const month = ymd[2].padStart(2, "0");
+    const day = ymd[3].padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const d = new Date(str);
+  return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
+}
+
 let mappingModal = null;
 let mappingTargetDistId = null;
 let mappingDetectedHeaders = [];
@@ -1250,7 +1326,8 @@ function populateUploadControls() {
 
   if (yearSelect && yearSelect.options.length === 0) {
     const currentYear = String(new Date().getFullYear());
-    ["2025", "2026", "2027"].forEach((y) => {
+    const yearsList = typeof window.getDynamicYears === "function" ? window.getDynamicYears() : ["2025", "2026", "2027"];
+    yearsList.forEach((y) => {
       const opt = document.createElement("option");
       opt.value = y;
       opt.textContent = y;
@@ -1321,7 +1398,7 @@ function handleExcelUpload(e) {
 
   const monthKey = `${year}-${month}`;
   const existingBatch = window.store && window.store.importBatches
-    ? window.store.importBatches.find(distId, monthKey)
+    ? window.store.importBatches.find(distId, monthKey, file.name)
     : null;
   let replacingPreviousBatch = false;
 
@@ -1346,9 +1423,9 @@ function handleExcelUpload(e) {
     let progress = null;
     try {
       const data = new Uint8Array(ev.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
+      const workbook = XLSX.read(data, { type: "array", cellDates: true });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "", cellDates: true });
 
       const totalRows = rows.length;
       if (typeof window.openExcelImportProgress === "function") {
@@ -1377,22 +1454,14 @@ function handleExcelUpload(e) {
           const dateRaw = map.date ? row[map.date] : "";
           const product = String(productRaw || "").trim();
 
-          const numericValueRaw = parseFloat(String(valueRaw).replace(/[^0-9.-]/g, ""));
+          const numericValueRaw = parseSalesNumber(valueRaw);
           let numericQuantity = map.quantity && quantityRaw !== "" && quantityRaw !== null && quantityRaw !== undefined
-            ? parseFloat(String(quantityRaw).replace(/[^0-9.-]/g, ""))
+            ? parseSalesNumber(quantityRaw)
             : null;
 
           let parsedDate = null;
           if (map.date && dateRaw !== "" && dateRaw !== null && dateRaw !== undefined) {
-            if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
-              parsedDate = dateRaw.toISOString().slice(0, 10);
-            } else if (typeof dateRaw === "number") {
-              const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
-              if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
-            } else {
-              const d = new Date(String(dateRaw).trim());
-              if (!isNaN(d.getTime())) parsedDate = d.toISOString().slice(0, 10);
-            }
+            parsedDate = parseDateStrict(dateRaw);
           }
 
           if (!product || isNaN(numericValueRaw)) {

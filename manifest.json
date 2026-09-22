@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "css/pharma-icon-192.png",
+      "src": "images/pharma-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "css/pharma-icon-512.png",
+      "src": "images/pharma-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

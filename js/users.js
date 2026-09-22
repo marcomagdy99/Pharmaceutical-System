@@ -969,7 +969,7 @@ const userMgmt = {
 
     const rawExistingUser = id ? window.store.users.getById(id) : null;
     const enteredPwd = document.getElementById("uPassword")
-      ? document.getElementById("uPassword").value.trim()
+      ? document.getElementById("uPassword").value
       : "";
 
     let passwordHash = rawExistingUser ? rawExistingUser.passwordHash : null;

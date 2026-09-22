@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/pharma-icon-192.png">
+    <link rel="apple-touch-icon" href="images/pharma-icon-192.png">
+    <link rel="manifest" href="manifest.json">
     <title>PharmaCare - Profile</title>
         <script>
         (function() {
@@ -189,6 +192,41 @@
                                     <span style="font-weight: 700; color: var(--gray-600);" data-i18n="days">visits</span>
                                 </div>
                                 <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="minPmVisitsHint">Daily minimum required clinic visits during evening shift.</small>
+                            </div>
+                            <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
+                            <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <span>🏖️</span>
+                                <span data-i18n="leaveRolloverPolicyTitle">Annual Leave Carryover & Expiry Policy</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="toggle-input" id="toggleLeaveRollover" checked onchange="onToggleLeaveRolloverChange()">
+                                    <div class="toggle-slider"></div>
+                                    <span style="font-weight: 600;" data-i18n="toggleLeaveRolloverLabel">Allow Unused Annual Leaves to Roll Over to New Year</span>
+                                </label>
+                                <small class="text-muted" style="display: block; margin-top: 6px; margin-inline-start: 56px;" data-i18n="toggleLeaveRolloverHint">When enabled, unused annual leave days from previous year roll over into the new year per employee. If disabled, unused balance resets on Jan 1 (Use it or lose it).</small>
+                            </div>
+                            <div id="leaveRolloverOptionsContainer" style="margin-inline-start: 56px; margin-bottom: 20px;">
+                                <div class="grid-2" style="max-width: 600px; gap: 16px;">
+                                    <div class="form-group">
+                                        <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="leaveRolloverGraceLabel">Rollover Expiry Grace Period</label>
+                                        <select class="form-control" id="leaveRolloverGraceSelect">
+                                            <option value="1">1 Month (Expires Jan 31)</option>
+                                            <option value="3" selected>3 Months - Q1 (Expires Mar 31)</option>
+                                            <option value="6">6 Months - H1 (Expires Jun 30)</option>
+                                            <option value="12">Full Year (No Early Expiry)</option>
+                                        </select>
+                                        <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="leaveRolloverGraceHint">Carried over days expire after this date.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="leaveRolloverCapLabel">Max Rollover Days Cap</label>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="number" class="form-control" id="leaveRolloverMaxDaysInput" value="5" min="0" max="30" step="1">
+                                            <span style="font-weight: 700; color: var(--gray-600);" data-i18n="days">days</span>
+                                        </div>
+                                        <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="leaveRolloverCapHint">Enter 0 for unlimited carryover.</small>
+                                    </div>
+                                </div>
                             </div>
                             <button type="submit" class="btn-primary" data-i18n="saveCompanyPolicies">Save Company Policies</button>
                         </form>

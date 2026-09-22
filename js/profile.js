@@ -465,14 +465,33 @@ function loadUserProfile() {
       const toggleInput = document.getElementById("toggleGpsValidation");
       const radiusInput = document.getElementById("gpsMaxRadiusInput");
       const minPmInput = document.getElementById("minPmVisitsInput");
+      const rolloverToggle = document.getElementById("toggleLeaveRollover");
+      const rolloverGrace = document.getElementById("leaveRolloverGraceSelect");
+      const rolloverMax = document.getElementById("leaveRolloverMaxDaysInput");
+      const rolloverOpts = document.getElementById("leaveRolloverOptionsContainer");
+
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
       if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
       if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
+
+      const allowRollover = currentSettings.allowLeaveRollover !== false;
+      if (rolloverToggle) rolloverToggle.checked = allowRollover;
+      if (rolloverGrace) rolloverGrace.value = String(currentSettings.leaveRolloverGraceMonths || 3);
+      if (rolloverMax) rolloverMax.value = currentSettings.leaveRolloverMaxDays !== undefined ? currentSettings.leaveRolloverMaxDays : 5;
+      if (rolloverOpts) rolloverOpts.style.display = allowRollover ? "block" : "none";
     } else {
       adminCompanyCard.style.display = "none";
     }
   }
 }
+
+window.onToggleLeaveRolloverChange = function() {
+  const toggle = document.getElementById("toggleLeaveRollover");
+  const opts = document.getElementById("leaveRolloverOptionsContainer");
+  if (toggle && opts) {
+    opts.style.display = toggle.checked ? "block" : "none";
+  }
+};
 
 function handleSaveCompanySettings(e) {
   if (e) e.preventDefault();
@@ -485,16 +504,25 @@ function handleSaveCompanySettings(e) {
   const toggleInput = document.getElementById("toggleGpsValidation");
   const radiusInput = document.getElementById("gpsMaxRadiusInput");
   const minPmInput = document.getElementById("minPmVisitsInput");
+  const rolloverToggle = document.getElementById("toggleLeaveRollover");
+  const rolloverGrace = document.getElementById("leaveRolloverGraceSelect");
+  const rolloverMax = document.getElementById("leaveRolloverMaxDaysInput");
 
   const requireGpsValidation = toggleInput ? toggleInput.checked : true;
   const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
   const minPmVisitsPerDay = minPmInput ? (parseInt(minPmInput.value, 10) || 4) : 4;
+  const allowLeaveRollover = rolloverToggle ? rolloverToggle.checked : true;
+  const leaveRolloverGraceMonths = rolloverGrace ? (parseInt(rolloverGrace.value, 10) || 3) : 3;
+  const leaveRolloverMaxDays = rolloverMax ? Math.max(0, parseInt(rolloverMax.value, 10) || 0) : 5;
 
   if (window.store && window.store.companySettings) {
     window.store.companySettings.update({
       requireGpsValidation,
       gpsMaxDistanceMeters,
       minPmVisitsPerDay,
+      allowLeaveRollover,
+      leaveRolloverGraceMonths,
+      leaveRolloverMaxDays,
     });
   }
 

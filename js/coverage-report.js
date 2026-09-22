@@ -1,11 +1,11 @@
 // Dynamic default date helpers for coverage report
 function _coverageStart() {
-  const n = new Date();
+  const n = (window.getSystemDate && window.getSystemDate()) || new Date();
   const m = String(n.getMonth() + 1).padStart(2, '0');
   return `${n.getFullYear()}-${m}-01`;
 }
 function _coverageEnd() {
-  const n = new Date();
+  const n = (window.getSystemDate && window.getSystemDate()) || new Date();
   const l = new Date(n.getFullYear(), n.getMonth() + 1, 0);
   const m = String(l.getMonth() + 1).padStart(2, '0');
   const d = String(l.getDate()).padStart(2, '0');
@@ -673,6 +673,16 @@ function exportCoverageReport() {
     targetList = targetList.filter((d) => d.repId === user.id);
   } else if (selectedRep && selectedRep !== 'all') {
     targetList = targetList.filter((d) => d.repId === selectedRep);
+  }
+
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  if (selectedLineId !== 'all') {
+    targetList = targetList.filter((d) => {
+      if (d.lineId) return d.lineId === selectedLineId;
+      if (!d.repId) return true;
+      const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
+      return repLines.some((l) => l.id === selectedLineId);
+    });
   }
 
   const numMonths = Math.max(

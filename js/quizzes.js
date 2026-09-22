@@ -298,10 +298,11 @@ function initManagerView(authUser, userRole) {
   const subtitleElem = document.getElementById('quiz-filter-subtitle');
 
   // Resolve users by role
-  const allBUs = users.filter((u) => u.role === 'business_unit');
-  const allLMs = users.filter((u) => u.role === 'line_manager');
-  const allDMs = users.filter((u) => u.role === 'district_manager');
-  const allReps = users.filter((u) => u.role === 'medical_rep');
+  const getRole = (u) => (window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase());
+  const allBUs = users.filter((u) => getRole(u) === 'business_unit' || getRole(u) === 'bu');
+  const allLMs = users.filter((u) => getRole(u) === 'line_manager' || getRole(u) === 'lm');
+  const allDMs = users.filter((u) => getRole(u) === 'district_manager' || getRole(u) === 'dm');
+  const allReps = users.filter((u) => getRole(u) === 'medical_rep' || getRole(u) === 'rep');
 
   // Helper to get localized name
   function getUserName(u) {
@@ -591,7 +592,7 @@ function renderComparisonTable(repsToDisplay) {
       const td = document.createElement('td');
       if (index === repsToDisplay.length - 1) td.classList.add('pe-4');
 
-      const scoreObj = scores.find((s) => s.quizId === quiz.id && (s.userId === rep.id || s.userName === rep.name));
+      const scoreObj = scores.find((s) => s.quizId === quiz.id && s.userId === rep.id);
       if (scoreObj) {
         const perc = (scoreObj.score / quiz.totalMarks) * 100;
         td.innerHTML = `
@@ -660,7 +661,7 @@ function setupAdminQuizTools(allReps) {
 
       allReps.forEach((rep) => {
         const repName = currentLang === 'ar' ? (rep.nameAr || rep.name) : rep.name;
-        const existingScore = scores.find((s) => s.quizId === selectedQuizId && (s.userId === rep.id || s.userName === rep.name));
+        const existingScore = scores.find((s) => s.quizId === selectedQuizId && s.userId === rep.id);
         const val = existingScore ? existingScore.score : '';
 
         const tr = document.createElement('tr');
@@ -697,7 +698,9 @@ function setupAdminQuizTools(allReps) {
         const repName = input.dataset.repName;
 
         if (valStr !== '') {
-          const numVal = Math.min(Math.max(0, parseFloat(valStr)), totalMarks);
+          const parsed = parseFloat(valStr);
+          if (isNaN(parsed)) return;
+          const numVal = Math.min(Math.max(0, parsed), totalMarks);
           const existingIdx = storedScores.findIndex((s) => s.quizId === selectedQuizId && s.userId === repId);
 
           if (existingIdx >= 0) {
@@ -736,6 +739,15 @@ function setupAdminQuizTools(allReps) {
   if (createForm) {
     createForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      const currentUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
+      const role = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : currentUser.role) : null;
+      if (role !== "admin") {
+        if (typeof showToast === 'function') {
+          showToast(currentLang === 'ar' ? "عفواً، إنشاء الاختبارات مقتصر على مدير النظام فقط." : "Permission Denied: Admins only.", "error");
+        }
+        return;
+      }
+
       const titleInput = document.getElementById('new-quiz-title');
       const dateInput = document.getElementById('new-quiz-date');
       const marksInput = document.getElementById('new-quiz-marks');
@@ -749,7 +761,7 @@ function setupAdminQuizTools(allReps) {
         title: title,
         date: date,
         totalMarks: marks,
-        createdBy: 'admin1'
+        createdBy: (currentUser && currentUser.id) || 'admin1'
       };
 
       const quizzes = getStoredQuizzes();
@@ -778,3 +790,18 @@ function setupAdminQuizTools(allReps) {
     });
   }
 }
+
+// Dynamic language change listener
+document.addEventListener("languageChanged", (e) => {
+  currentLang = (e && e.detail && e.detail.lang) || (window.getCurrentLang && window.getCurrentLang()) || 'en';
+  const authUser = (typeof checkAuth === 'function') ? checkAuth() : null;
+  const rawRole = (authUser && authUser.role) ? authUser.role : (localStorage.getItem('userRole') || 'medical_rep');
+  const userRole = (typeof normalizeRole === 'function') ? normalizeRole(rawRole) : rawRole;
+  const userId = (authUser && authUser.id) ? authUser.id : (localStorage.getItem('userId') || 'rep1');
+  const isRep = (userRole === 'medical_rep' || userRole === 'rep');
+  if (isRep) {
+    initRepView(userId);
+  } else {
+    initManagerView(authUser, userRole);
+  }
+});

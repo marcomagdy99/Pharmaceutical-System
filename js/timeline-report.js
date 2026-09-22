@@ -15,9 +15,9 @@ function renderDailyTimeline() {
 
   syncReportsData();
 
-  const _now = new Date();
+  const _now = (window.getSystemDate && window.getSystemDate()) || new Date();
   const _pad = (n) => String(n).padStart(2, '0');
-  const _todayStr = `${_now.getFullYear()}-${_pad(_now.getMonth()+1)}-${_pad(_now.getDate())}`;
+  const _todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || `${_now.getFullYear()}-${_pad(_now.getMonth()+1)}-${_pad(_now.getDate())}`;
 
   const fromInput = document.getElementById('timelineDateFrom');
   const toInput   = document.getElementById('timelineDateTo');

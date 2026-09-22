@@ -605,6 +605,16 @@ function saveProduct() {
 
   if (!Array.isArray(line.products)) line.products = [];
 
+  const isDuplicate = line.products.some(
+    (p) => p.id !== prodId &&
+           p.name.trim().toLowerCase() === name.toLowerCase() &&
+           p.dosage.trim().toLowerCase() === dosage.toLowerCase()
+  );
+  if (isDuplicate) {
+    const msg = isAr ? "هذا الصنف بنفس الجرعة مسجل بالفعل في هذا الخط." : "This product with the same dosage already exists in this line.";
+    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+  }
+
   if (prodId) {
     const prod = line.products.find((p) => p.id === prodId);
     if (prod) {
@@ -684,6 +694,18 @@ function confirmDelete() {
         }
       });
     }
+
+    // Clean up deleted line assignment from areas to prevent orphaned areas
+    if (window.store && window.store.areas) {
+      const defaultLineId = (typeof window.store.areas._defaultLineId === "function" && window.store.areas._defaultLineId()) || null;
+      const allAreas = window.store.areas.getAll();
+      allAreas.forEach((a) => {
+        if (a.lineId === targetId) {
+          a.lineId = defaultLineId;
+          window.store.areas.save(a);
+        }
+      });
+    }
   } else if (type === "product") {
     const line = window.store.productLines.getById(lineId);
     if (line && line.products) {
@@ -760,6 +782,20 @@ function confirmTransferProduct() {
 
   window.store.productLines.save(sourceLine);
   window.store.productLines.save(targetLine);
+
+  // Update product line in distributor sales records
+  if (window.store && window.store.distributorSales) {
+    let salesUpdated = false;
+    window.store.distributorSales.getAll().forEach((row) => {
+      if (row.productId === productId) {
+        row.lineId = targetLineId;
+        salesUpdated = true;
+      }
+    });
+    if (salesUpdated && typeof window.saveSalesDataToStorage === "function") {
+      window.saveSalesDataToStorage();
+    }
+  }
 
   if (transferProductModal) transferProductModal.hide();
   renderProductLines();

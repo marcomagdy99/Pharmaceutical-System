@@ -606,7 +606,6 @@ function confirmDelete() {
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
-
     // Reassign doctors to the destination area
     if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.doctors)) {
       window.DEMO_DATA.doctors.forEach((d) => {
@@ -623,6 +622,26 @@ function confirmDelete() {
         if (v.areaId === id || (v.area && v.area.toLowerCase() === area.name.toLowerCase())) {
           v.areaId = destinationArea.id;
           v.area = destinationArea.name;
+        }
+      });
+    }
+
+    // Reassign pharmacies to the destination area
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.pharmacies)) {
+      window.DEMO_DATA.pharmacies.forEach((p) => {
+        if (p.areaId === id || (p.area && p.area.toLowerCase() === area.name.toLowerCase())) {
+          p.areaId = destinationArea.id;
+          p.area = destinationArea.name;
+        }
+      });
+    }
+
+    // Reassign hospitals to the destination area
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.hospitals)) {
+      window.DEMO_DATA.hospitals.forEach((h) => {
+        if (h.areaId === id || (h.area && h.area.toLowerCase() === area.name.toLowerCase())) {
+          h.areaId = destinationArea.id;
+          h.area = destinationArea.name;
         }
       });
     }

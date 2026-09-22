@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/pharma-icon-192.png">
+    <link rel="apple-touch-icon" href="images/pharma-icon-192.png">
+    <link rel="manifest" href="manifest.json">
     <meta name="description" content="Pharmaceutical CRM and Field Activity Management System for Medical Representatives.">
     <title>PharmaCare - Dashboard</title>
 
@@ -108,6 +111,11 @@
             <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashProducts" data-i18n="products_discussed">Products Discussed</label>
             <div id="dashProdContainer" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; max-height: 140px; overflow-y: auto; padding-right: 4px;">
             </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashSamples" data-i18n="giveaway_samples">Giveaway Samples</label>
+            <input type="text" id="dashVisitGiveawaySamples" class="form-control" placeholder="e.g. 2 Packs, Pen, Note Pad..." style="width: 100%; padding: 8px 12px; border-radius: 8px;">
           </div>
 
           <div class="form-group" style="margin-bottom: 18px;">

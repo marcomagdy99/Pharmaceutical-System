@@ -204,6 +204,15 @@ input, select, textarea {
   flex-shrink: 0;
 }
 
+.pharma-brand-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.35);
+}
+
 .pharma-brand-title {
   font-size: 1.15rem;
   font-weight: 800;

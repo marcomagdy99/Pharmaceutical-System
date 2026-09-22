@@ -115,7 +115,8 @@ function populateAchFilters() {
   if (yearSelect && !yearSelect.dataset.populated) {
     if (yearSelect.options.length === 0) {
       const currentYear = String(now.getFullYear());
-      ['2025', '2026', '2027'].forEach((y) => {
+      const yearsList = typeof window.getDynamicYears === 'function' ? window.getDynamicYears() : ['2025', '2026', '2027'];
+      yearsList.forEach((y) => {
         const opt = document.createElement('option');
         opt.value = y;
         opt.textContent = y;
@@ -316,6 +317,8 @@ function renderAchievementsReport() {
   tbody.replaceChildren();
   let grandTarget = 0;
   let grandActual = 0;
+  let grandTUnit = 0;
+  let grandSUnit = 0;
 
   const kpiTarget = document.getElementById('kpiAchTotalTarget');
   const kpiActual = document.getElementById('kpiAchTotalActual');
@@ -354,6 +357,8 @@ function renderAchievementsReport() {
     groups.forEach((g) => {
       grandTarget += g.totalTValue;
       grandActual += g.totalSValue;
+      grandTUnit += g.totalTUnit;
+      grandSUnit += g.totalSUnit;
       const totalPctLabel = g.totalPct === null ? '—' : g.totalPct.toFixed(1) + '%';
       const totalPctColor = g.totalPct !== null && g.totalPct >= 100 ? 'var(--success)' : 'var(--warning)';
 
@@ -391,6 +396,26 @@ function renderAchievementsReport() {
       });
     });
 
+    if (groups.length > 1) {
+      const overallPct = grandTarget > 0 ? (grandActual / grandTarget) * 100 : null;
+      const overallPctLabel = overallPct !== null ? overallPct.toFixed(1) + '%' : '—';
+      const overallPctColor = overallPct !== null && overallPct >= 100 ? 'var(--success)' : 'var(--warning)';
+
+      const grandRow = document.createElement('tr');
+      grandRow.className = 'ach-grand-total-row';
+      grandRow.style.cssText = "font-weight: 900; background: var(--gray-100, #f1f5f9); border-top: 3px double var(--gray-400);";
+      grandRow.innerHTML = `
+        <td style="color: var(--primary); font-size: 0.95rem;">${lang === 'ar' ? 'الإجمالي العام للشركة/الخط' : 'OVERALL GRAND TOTAL'}</td>
+        <td style="color: var(--gray-600);">${lang === 'ar' ? 'جميع المنتجات' : 'ALL PRODUCTS'}</td>
+        <td>${grandTUnit.toLocaleString()}</td>
+        <td>${grandSUnit.toLocaleString()}</td>
+        <td>${grandTarget.toLocaleString()}</td>
+        <td style="color: var(--primary);">${grandActual.toLocaleString()}</td>
+        <td style="color: ${overallPctColor}; font-size: 1.05rem;">${overallPctLabel}</td>
+      `;
+      tbody.appendChild(grandRow);
+    }
+
   if (kpiTarget) kpiTarget.textContent = grandTarget.toLocaleString();
   if (kpiActual) kpiActual.textContent = grandActual.toLocaleString();
   if (kpiPct) kpiPct.textContent = grandTarget > 0 ? ((grandActual / grandTarget) * 100).toFixed(1) + '%' : '—';
@@ -403,10 +428,20 @@ function renderAchievementsReport() {
       return isAr ? ACH_MONTHS_AR[idx] : ACH_MONTHS[idx];
     });
 
+    const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+    const allProducts = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
+    const productsMap = new Map(allProducts.map((p) => [p.id, p]));
+
     const chartTargets = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
-      const mTargets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
+      let mTargets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
         .filter((t) => t.month === mKey && (!scopeRepIds || scopeRepIds.includes(t.repId)));
+      if (selectedLineId !== 'all') {
+        mTargets = mTargets.filter((t) => {
+          const p = productsMap.get(t.productId);
+          return p && p.lineId === selectedLineId;
+        });
+      }
       return mTargets.reduce((sum, t) => {
         return sum + (t.target != null ? (parseFloat(t.target) || 0) : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0)));
       }, 0);
@@ -414,8 +449,15 @@ function renderAchievementsReport() {
 
     const chartActuals = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
-      const mSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
+      let mSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
         .filter((s) => s.month === mKey && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
+      if (selectedLineId !== 'all') {
+        mSales = mSales.filter((s) => {
+          if (s.lineId) return s.lineId === selectedLineId;
+          const p = productsMap.get(s.productId);
+          return p && p.lineId === selectedLineId;
+        });
+      }
       return mSales.reduce((sum, s) => sum + (parseFloat(s.value) || 0), 0);
     });
 

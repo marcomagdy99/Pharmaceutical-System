@@ -307,3 +307,7 @@ function initActivities() {
 }
 
 document.addEventListener("DOMContentLoaded", initActivities);
+
+document.addEventListener("languageChanged", () => {
+  if (typeof updateView === "function") updateView();
+});

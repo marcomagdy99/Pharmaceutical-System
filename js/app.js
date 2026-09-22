@@ -72,7 +72,7 @@ const DEFAULT_DEMO_DATA = {
     leaveBalance: {
       annual: 21,
       sick: 7,
-      emergency: 3,
+      emergency: 6,
       unpaid: 0,
       maternity: 90,
     },
@@ -177,6 +177,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
       id: "rep2",
@@ -191,6 +192,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
       id: "rep3",
@@ -204,6 +206,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
       id: "rep4",
@@ -217,6 +220,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line2",
       lineIds: ["line2"],
       status: "Active",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
       id: "hr1",
@@ -228,6 +232,7 @@ const DEFAULT_DEMO_DATA = {
       phone: "+20100888999",
       managerId: "admin1",
       status: "Active",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
   ],
   specialties: [
@@ -1025,6 +1030,11 @@ const DEFAULT_DEMO_DATA = {
       action: "endorsed",
     },
   ],
+  distributors: [
+    { id: "dist1", name: "Ibn Sina Pharma", type: "commercial", columnMap: null },
+    { id: "dist2", name: "United Company of Pharmacists (UCP)", type: "commercial", columnMap: null },
+    { id: "dist3", name: "Overseas", type: "commercial", columnMap: null },
+  ],
   publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day" }],
 };
 
@@ -1041,6 +1051,15 @@ function loadDataFromStorage() {
           DEFAULT_DEMO_DATA.users.forEach((u) => {
             if (!data.users.some((existing) => existing.id === u.id)) {
               data.users.push(u);
+            }
+          });
+        }
+        if (!Array.isArray(data.distributors) || data.distributors.length === 0) {
+          data.distributors = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.distributors));
+        } else {
+          DEFAULT_DEMO_DATA.distributors.forEach((d) => {
+            if (!data.distributors.some((existing) => existing.id === d.id)) {
+              data.distributors.push(d);
             }
           });
         }
@@ -1243,10 +1262,51 @@ window.saveDataToStorage = saveDataToStorage;
 window.saveSalesDataToStorage = saveSalesDataToStorage;
 window.loadDataFromStorage = loadDataFromStorage;
 
+// Cross-tab synchronization: keep in-memory DEMO_DATA in sync across multiple tabs
+window.addEventListener("storage", (e) => {
+  if (e.key === "pharma_master_data" && e.newValue) {
+    try {
+      const fresh = JSON.parse(e.newValue);
+      if (window.DEMO_DATA && typeof fresh === "object") {
+        Object.assign(window.DEMO_DATA, fresh);
+        document.dispatchEvent(new CustomEvent("pharma:storage:synced", { detail: { key: "pharma_master_data" } }));
+      }
+    } catch (err) {
+      console.warn("[StorageSync] Failed to sync master data across tabs:", err);
+    }
+  }
+  if (e.key === "pharma_sales_data" && e.newValue) {
+    try {
+      const freshSales = JSON.parse(e.newValue);
+      if (window.DEMO_DATA && Array.isArray(freshSales)) {
+        window.DEMO_DATA.distributorSales = freshSales;
+        document.dispatchEvent(new CustomEvent("pharma:storage:synced", { detail: { key: "pharma_sales_data" } }));
+      }
+    } catch (err) {
+      console.warn("[StorageSync] Failed to sync sales data across tabs:", err);
+    }
+  }
+});
+
+function getDynamicYears() {
+  const current = (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
+  const years = new Set([2025, 2026, current - 1, current, current + 1]);
+  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.targets)) {
+    window.DEMO_DATA.targets.forEach((t) => {
+      if (t.month && t.month.length >= 4) {
+        const y = parseInt(t.month.slice(0, 4), 10);
+        if (!isNaN(y) && y >= 2020 && y <= 2099) years.add(y);
+      }
+    });
+  }
+  return Array.from(years).sort((a, b) => a - b).map(String);
+}
+window.getDynamicYears = getDynamicYears;
+
 // ============================================================================
 // Section 3: Recursive Hierarchy & Multi-Line Helpers
 // ============================================================================
-function getAllSubordinates(managerId) {
+function getAllSubordinates(managerId, visited = new Set()) {
   const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const manager = users.find((u) => u.id === managerId);
   if (!manager) return [];
@@ -1255,10 +1315,12 @@ function getAllSubordinates(managerId) {
     return users.filter((u) => u.role !== "admin");
   }
 
-  const direct = users.filter((u) => u.managerId === managerId);
+  visited.add(managerId);
+  const direct = users.filter((u) => u.managerId === managerId && !visited.has(u.id));
   let all = [...direct];
   direct.forEach((d) => {
-    all = all.concat(getAllSubordinates(d.id));
+    visited.add(d.id);
+    all = all.concat(getAllSubordinates(d.id, visited));
   });
   return all;
 }
@@ -1526,10 +1588,13 @@ window.getScopedTeamForLine = getScopedTeamForLine;
 
 function getManagerChain(userId) {
   const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  let chain = [];
+  const chain = [];
+  const visited = new Set();
+  if (userId) visited.add(userId);
   let user = users.find((u) => u.id === userId);
 
-  while (user && user.managerId) {
+  while (user && user.managerId && !visited.has(user.managerId)) {
+    visited.add(user.managerId);
     user = users.find((u) => u.id === user.managerId);
     if (user) chain.push(user);
   }
@@ -2159,8 +2224,21 @@ function getNavPendingCount(itemId, user) {
     const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
     let subRepIds = [];
     if (role === "line_manager" || role === "business_unit") {
+      // In plans-review, LM/BU only act as DM (with approval authority) if the rep's DM is vacant/inactive.
+      // If all DMs are active, LM/BU has supervisory view only, so show 0 to avoid false pending alerts.
       const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
-      subRepIds = subs.filter((s) => normalizeRole(s.role) === "medical_rep").map((s) => s.id);
+      const subReps = subs.filter((s) => normalizeRole(s.role) === "medical_rep");
+      const repsWithVacantDm = subReps.filter((rep) => {
+        const dmId = rep.dmId || rep.managerId;
+        if (!dmId) return true;
+        const dm = allUsers.find(
+          (u) => u.id === dmId && (normalizeRole(u.role) === "district_manager" || normalizeRole(u.role) === "dm")
+        );
+        if (!dm) return true;
+        const dmStatus = (dm.status || "Active").toLowerCase();
+        return dmStatus !== "active";
+      });
+      subRepIds = repsWithVacantDm.map((s) => s.id);
     } else {
       const subordinateReps = allUsers.filter(
         (u) =>
@@ -2208,9 +2286,20 @@ function getNavPendingCount(itemId, user) {
     }
 
     if (role === "line_manager") {
+      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      let subIds = [];
+      if (typeof window.getAllSubordinates === "function") {
+        subIds = window.getAllSubordinates(user.id).map((u) => u.id);
+      } else {
+        const myDms = allUsers.filter((u) => u.managerId === user.id).map((d) => d.id);
+        const myReps = allUsers.filter((u) => myDms.includes(u.managerId) || u.managerId === user.id).map((r) => r.id);
+        subIds = [...new Set([...myDms, ...myReps])];
+      }
+
       return allLeaves.filter(
         (l) =>
           l.status === "pending" &&
+          subIds.includes(l.userId) &&
           l.approvals &&
           l.approvals.dm &&
           l.approvals.dm.status === "approved" &&
@@ -2461,7 +2550,7 @@ function renderTopbar() {
           &#9776;
         </button>
         <a href="index.html" class="pharma-brand-link">
-          <div class="pharma-brand-icon">&#9764;</div>
+          <img src="images/pharma-icon-192.png" alt="PharmaCare Logo" class="pharma-brand-img" width="34" height="34" style="border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 6px rgba(13,110,253,0.35);">
           <span class="pharma-brand-title">PharmaCare</span>
         </a>
       </div>
@@ -2975,14 +3064,13 @@ function checkAuth() {
       return parsed;
     } catch (e) {}
   }
-  const role = localStorage.getItem("userRole");
-  if (role) {
-    const user = DEMO_DATA.users.find((u) => u.role === role) || {
-      ...DEMO_DATA.currentUser,
-      role: role,
-    };
-    sessionStorage.setItem("pharmaUser", JSON.stringify(user));
-    return user;
+  const savedUserId = localStorage.getItem("userId");
+  if (savedUserId && typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users)) {
+    const user = DEMO_DATA.users.find((u) => u.id === savedUserId);
+    if (user) {
+      sessionStorage.setItem("pharmaUser", JSON.stringify(user));
+      return user;
+    }
   }
   return null;
 }
@@ -3193,6 +3281,14 @@ function openExcelImportProgress(options = {}) {
 window.openExcelImportProgress = openExcelImportProgress;
 
 document.addEventListener("DOMContentLoaded", () => {
+  const currentPath = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
+  if (currentPath !== "login.html") {
+    if (typeof requireAuth === "function") {
+      const authUser = requireAuth();
+      if (!authUser) return;
+    }
+  }
+
   window.initTheme();
 
   const topbar = document.getElementById("topbar");
