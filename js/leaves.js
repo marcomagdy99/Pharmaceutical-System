@@ -72,11 +72,6 @@ let demoLeaves = (window.store && window.store.leaves
     attachmentName: null,
     status: "pending",
     approvals: {
-      dm: {
-        status: "approved",
-        approverName: "Karim Nasser",
-        updatedAt: "2026-09-03 09:00 AM",
-      },
       lm: { status: "pending", approverName: null, updatedAt: null },
       hr: { status: "pending", approverName: null, updatedAt: null },
     },
@@ -293,6 +288,23 @@ function initLeaves() {
     window.applyTranslations();
   }
   currentUser = (window.checkAuth && window.checkAuth()) || currentUser;
+
+  // Sanitize stored leaves: District Managers cannot self-approve their own leave requests
+  if (Array.isArray(demoLeaves)) {
+    let changed = false;
+    demoLeaves.forEach((lv) => {
+      const isDM = lv.userRole === "district_manager" || lv.userRole === "dm" || lv.userId === "dm1";
+      if (isDM && lv.approvals && lv.approvals.dm) {
+        delete lv.approvals.dm;
+        changed = true;
+      }
+    });
+    if (changed) {
+      if (window.DEMO_DATA) window.DEMO_DATA.leaves = demoLeaves;
+      if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+    }
+  }
+
   updateUIForUser();
   setupEventListeners();
   calculateBalances();
@@ -532,11 +544,6 @@ function setupEventListeners() {
       };
     } else if (userRole === "district_manager" || userRole === "dm") {
       initialApprovals = {
-        dm: {
-          status: "approved",
-          approverName: currentUser.name,
-          updatedAt: new Date().toLocaleDateString(),
-        },
         lm: { status: "pending", approverName: null, updatedAt: null },
         hr: { status: "pending", approverName: null, updatedAt: null },
       };
@@ -955,8 +962,8 @@ function calculateBalances() {
         : `+${rollover.initialCarriedOver} days`;
 
       badgeEl.innerHTML = `
-        <div class="mt-2 pt-2 border-top" style="border-color: rgba(13, 110, 253, 0.15) !important;">
-          <div class="p-2 rounded-3 bg-success-subtle border border-success-subtle" style="font-size: 0.78rem;">
+        <div class="mt-2 pt-2 border-top rollover-border-active">
+          <div class="p-2 rounded-3 rollover-banner-active" style="font-size: 0.78rem;">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="fw-bold text-success-emphasis d-flex align-items-center gap-1">
                 <i class="bi bi-arrow-repeat"></i> ${isAr ? "رصيد مرحل (يُخصم أولاً FIFO):" : "Carried Over (Deducted First):"}
@@ -971,11 +978,11 @@ function calculateBalances() {
     } else if (rollover.isExpired) {
       badgeEl.style.display = "block";
       badgeEl.innerHTML = `
-        <div class="mt-2 pt-2 border-top" style="border-color: rgba(0, 0, 0, 0.08) !important;">
-          <div class="p-2 rounded-3 bg-secondary-subtle border border-secondary-subtle text-muted" style="font-size: 0.75rem;">
+        <div class="mt-2 pt-2 border-top rollover-border-expired">
+          <div class="p-2 rounded-3 rollover-banner-expired" style="font-size: 0.75rem;">
             <div class="d-flex justify-content-between align-items-center">
-              <span><i class="bi bi-clock-history me-1"></i>${isAr ? `انتهت مهلة الرصيد المرحل (${rollover.remainingRollover} يوم سقطت)` : `Rollover expired (${rollover.remainingRollover}d forfeited)`}</span>
-              <span class="fw-semibold text-danger">${rollover.expiryDate}</span>
+              <span class="rollover-expired-label"><i class="bi bi-clock-history me-1"></i>${isAr ? `انتهت مهلة الرصيد المرحل (${rollover.remainingRollover} يوم سقطت)` : `Rollover expired (${rollover.remainingRollover}d forfeited)`}</span>
+              <span class="fw-semibold rollover-expiry-date">${rollover.expiryDate}</span>
             </div>
           </div>
         </div>`;
@@ -1034,14 +1041,6 @@ function resolveApproverDisplayName(leave, level, lang) {
   const applicantUser = allUsers.find((u) => u.id === leave.userId) || {};
 
   if (level === "dm") {
-    if (
-      applicantUser.role === "district_manager" ||
-      applicantUser.role === "dm"
-    ) {
-      return isAr && applicantUser.nameAr
-        ? applicantUser.nameAr
-        : applicantUser.name || "Karim Nasser";
-    }
     const dmUser = allUsers.find((u) => u.id === applicantUser.managerId);
     if (dmUser) {
       return isAr && dmUser.nameAr ? dmUser.nameAr : dmUser.name;
@@ -1161,7 +1160,7 @@ function renderHistory() {
       </td>
       <td>
         <div>${l.startDate} to ${l.endDate}</div>
-        <small class="badge bg-light text-dark border">${durationLabel}</small>
+        <small class="badge duration-badge">${durationLabel}</small>
       </td>
       <td>
         ${
@@ -1300,19 +1299,17 @@ function renderPendingApprovals() {
 
   pending.forEach((l) => {
     const card = document.createElement("div");
-    card.className = "card border-0 mb-3";
-    card.style.background = "#1e293b";
-    card.style.borderRadius = "12px";
+    card.className = "card border-0 mb-3 pending-approval-card";
     card.innerHTML = `
       <div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <div>
-            <h6 class="fw-bold mb-0 text-white">${window.escapeHtml(l.userName || "Medical Rep")}</h6>
-            <small style="color:#94a3b8;">${l.type ? l.type.toUpperCase() : "ANNUAL"} LEAVE (${l.dayDuration === "half" ? "Half Day" : l.days + " Days"})</small>
+            <h6 class="fw-bold mb-0 approval-title">${window.escapeHtml(l.userName || "Medical Rep")}</h6>
+            <small class="approval-meta">${l.type ? l.type.toUpperCase() : "ANNUAL"} LEAVE (${l.dayDuration === "half" ? "Half Day" : l.days + " Days"})</small>
           </div>
-          <span style="color:#9da5b1;" class="small">${l.startDate} to ${l.endDate}</span>
+          <span class="small approval-meta">${l.startDate} to ${l.endDate}</span>
         </div>
-        <p class="mb-2 small" style="color:#dee2e6;"><strong>Reason:</strong> <span class="leave-reason-text"></span></p>
+        <p class="mb-2 small approval-reason"><strong>Reason:</strong> <span class="leave-reason-text"></span></p>
         ${
           l.attachmentName
             ? `<div class="mb-3"><span class="badge bg-primary-subtle text-primary border">📎 Attached: ${window.escapeHtml(l.attachmentName)}</span></div>`
@@ -1704,9 +1701,10 @@ Object.assign(leavesApp, {
           hr: { status: "pending", approverName: null, updatedAt: null },
         };
       }
-      if (!leave.approvals.dm) leave.approvals.dm = { status: "approved" };
-      if (!leave.approvals.lm) leave.approvals.lm = { status: "pending" };
-      if (!leave.approvals.hr) leave.approvals.hr = { status: "pending" };
+      const applicantIsDM = leave.userRole === "district_manager" || leave.userRole === "dm" || leave.userId === "dm1";
+      if (!applicantIsDM && !leave.approvals.dm) leave.approvals.dm = { status: "pending", approverName: null, updatedAt: null };
+      if (!leave.approvals.lm) leave.approvals.lm = { status: "pending", approverName: null, updatedAt: null };
+      if (!leave.approvals.hr) leave.approvals.hr = { status: "pending", approverName: null, updatedAt: null };
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 

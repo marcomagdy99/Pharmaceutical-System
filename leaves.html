@@ -77,54 +77,62 @@
           <div class="row g-3 mb-4" id="balancesContainer">
             <!-- Annual -->
             <div class="col-md-4">
-              <div class="card leave-balance-card p-3 border-start border-4 border-primary">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="m-0 fw-bold" data-i18n="annualLeave">Annual Leave</h6>
-                  <i class="bi bi-airplane text-primary fs-5"></i>
-                </div>
-                <h3 class="mb-2"><span id="annualRemaining">21</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
-                <div class="progress" style="height: 8px;">
-                  <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="annualProgress"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2 small text-muted">
-                  <span><span data-i18n="used">Used</span>: <span id="annualUsed">0</span></span>
-                  <span><span data-i18n="totalDays">Total</span>: <span id="annualTotal">21</span></span>
+              <div class="card leave-balance-card h-100 p-3 border-start border-4 border-primary d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="m-0 fw-bold" data-i18n="annualLeave">Annual Leave</h6>
+                    <i class="bi bi-airplane text-primary fs-5"></i>
+                  </div>
+                  <h3 class="mb-2"><span id="annualRemaining">21</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="annualProgress"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-2 small text-muted">
+                    <span><span data-i18n="used">Used</span>: <span id="annualUsed">0</span></span>
+                    <span><span data-i18n="totalDays">Total</span>: <span id="annualTotal">21</span></span>
+                  </div>
                 </div>
                 <div id="annualRolloverBadge" style="display:none;"></div>
               </div>
             </div>
             <!-- Sick -->
             <div class="col-md-4">
-              <div class="card leave-balance-card p-3 border-start border-4 border-warning">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="m-0 fw-bold" data-i18n="sickLeave">Sick Leave</h6>
-                  <i class="bi bi-thermometer-half text-warning fs-5"></i>
+              <div class="card leave-balance-card h-100 p-3 border-start border-4 border-warning d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="m-0 fw-bold" data-i18n="sickLeave">Sick Leave</h6>
+                    <i class="bi bi-thermometer-half text-warning fs-5"></i>
+                  </div>
+                  <h3 class="mb-2"><span id="sickRemaining">7</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="sickProgress"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-2 small text-muted">
+                    <span><span data-i18n="used">Used</span>: <span id="sickUsed">0</span></span>
+                    <span><span data-i18n="totalDays">Total</span>: <span id="sickTotal">7</span></span>
+                  </div>
                 </div>
-                <h3 class="mb-2"><span id="sickRemaining">7</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
-                <div class="progress" style="height: 8px;">
-                  <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="sickProgress"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2 small text-muted">
-                  <span><span data-i18n="used">Used</span>: <span id="sickUsed">0</span></span>
-                  <span><span data-i18n="totalDays">Total</span>: <span id="sickTotal">7</span></span>
-                </div>
+                <div></div>
               </div>
             </div>
             <!-- Emergency / Casual -->
             <div class="col-md-4">
-              <div class="card leave-balance-card p-3 border-start border-4 border-danger">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="m-0 fw-bold" data-i18n="emergencyLeave">Emergency & Casual Leave</h6>
-                  <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
+              <div class="card leave-balance-card h-100 p-3 border-start border-4 border-danger d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="m-0 fw-bold" data-i18n="emergencyLeave">Emergency & Casual Leave</h6>
+                    <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
+                  </div>
+                  <h3 class="mb-2"><span id="emergencyRemaining">6</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="emergencyProgress"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-2 small text-muted">
+                    <span><span data-i18n="used">Used</span>: <span id="emergencyUsed">0</span></span>
+                    <span><span data-i18n="totalDays">Total</span>: <span id="emergencyTotal">6</span></span>
+                  </div>
                 </div>
-                <h3 class="mb-2"><span id="emergencyRemaining">6</span> <small class="text-muted fs-6" data-i18n="days">Days</small></h3>
-                <div class="progress" style="height: 8px;">
-                  <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="emergencyProgress"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-2 small text-muted">
-                  <span><span data-i18n="used">Used</span>: <span id="emergencyUsed">0</span></span>
-                  <span><span data-i18n="totalDays">Total</span>: <span id="emergencyTotal">6</span></span>
-                </div>
+                <div></div>
               </div>
             </div>
           </div>
@@ -133,7 +141,7 @@
             <!-- Request Form (New Leave Types, Full/Half Day, and Attachment) -->
             <div class="col-lg-5 mb-4">
               <div class="card shadow-sm rounded-4 border-0">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <div class="card-header border-bottom-0 pt-4 pb-0">
                   <h5 class="fw-bold" data-i18n="submitRequest">Submit Leave Request</h5>
                 </div>
                 <div class="card-body">
@@ -182,7 +190,7 @@
 
                     <div class="mb-3">
                       <label class="form-label fw-semibold"><span data-i18n="daysCount">Days Count</span></label>
-                      <input type="text" class="form-control bg-light" id="daysCount" readonly value="1 Day">
+                      <input type="text" class="form-control" id="daysCount" readonly value="1 Day">
                       <div id="leaveHolidayNotice" class="alert alert-success py-2 px-3 small mt-2" style="display: none; border-radius: 8px;"></div>
                     </div>
 
@@ -209,7 +217,7 @@
             <!-- History Table with Exact 3-Tier Approval Tracking -->
             <div class="col-lg-7 mb-4">
               <div class="card shadow-sm rounded-4 border-0 h-100">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="card-header border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <div>
                     <h5 class="fw-bold m-0" data-i18n="myHistory">My Leave History</h5>
                     <small class="text-muted">Real-time status of DM, LM, and HR approvals</small>
@@ -355,7 +363,7 @@
 
             <div class="col-12 mb-4">
               <div class="card shadow-sm rounded-4 border-0">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                <div class="card-header border-bottom-0 pt-4 pb-2">
                   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                     <div>
                       <h5 class="fw-bold m-0" data-i18n="companyLeaveArchive">Company Leave Archive</h5>
@@ -449,7 +457,7 @@
             
             <div class="col-lg-12 mb-4">
               <div class="card shadow-sm rounded-4 border-0">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <div class="card-header border-bottom-0 pt-4 pb-0">
                   <h5 class="fw-bold" data-i18n="pendingApprovals">Pending Approvals Requiring Your Decision</h5>
                 </div>
                 <div class="card-body" id="pendingApprovalsContainer"></div>

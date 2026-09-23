@@ -7,14 +7,55 @@
 /* --- Leave Balance Card --- */
 .leave-balance-card {
   border-radius: 14px;
-  border: none;
+  border: 1px solid var(--gray-200);
   background-color: var(--white);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   transition: transform 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .leave-balance-card:hover {
   transform: translateY(-2px);
+}
+
+#annualRolloverBadge {
+  margin-top: auto;
+}
+
+.rollover-banner-active {
+  background-color: #d1e7dd;
+  border: 1px solid #a3cfbb;
+  color: #0f5132;
+}
+
+.rollover-banner-expired {
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #991b1b;
+}
+
+.rollover-expired-label {
+  color: #7f1d1d;
+  font-weight: 600;
+}
+
+.rollover-banner-expired .text-danger,
+.rollover-expiry-date {
+  color: #dc2626;
+}
+
+.duration-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
 }
 
 .progress-bar {
@@ -30,6 +71,30 @@
 
 .manager-section {
   display: none;
+}
+
+.card-header.border-bottom-0 {
+  background-color: transparent;
+  border-bottom: none;
+}
+
+.pending-approval-card {
+  background: var(--surface-alt, #f8fafc);
+  border: 1px solid var(--gray-200, #e2e8f0);
+  border-radius: 12px;
+}
+
+.pending-approval-card .approval-title {
+  color: var(--gray-800, #1e293b);
+  font-weight: 700;
+}
+
+.pending-approval-card .approval-meta {
+  color: var(--gray-500, #64748b);
+}
+
+.pending-approval-card .approval-reason {
+  color: var(--gray-700, #334155);
 }
 
 /* Multi-level Approval Step Tags */
@@ -77,10 +142,22 @@
 }
 
 [data-theme="dark"] .leave-balance-card {
-  background-color: var(--white);
-  border-color: var(--gray-200);
-  color: var(--gray-800);
+  background-color: #1e2229;
+  border: 1px solid #2d3340;
+  color: #f1f3f5;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .leave-balance-card.border-primary {
+  border-inline-start: 4px solid #388bfd;
+}
+
+[data-theme="dark"] .leave-balance-card.border-warning {
+  border-inline-start: 4px solid #f59e0b;
+}
+
+[data-theme="dark"] .leave-balance-card.border-danger {
+  border-inline-start: 4px solid #ef4444;
 }
 
 [data-theme="dark"] .leave-balance-card h6,
@@ -90,8 +167,69 @@
 
 [data-theme="dark"] .leave-balance-card .text-muted,
 [data-theme="dark"] .leave-balance-card small {
-  color: #cbd5e1;
+  color: #9da5b1;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .progress {
+  --bs-progress-bg: #16191f;
+  background-color: #16191f;
+  border: 1px solid #2d3340;
+}
+
+[data-theme="dark"] .progress-bar.bg-primary {
+  background-color: #388bfd;
+}
+
+[data-theme="dark"] .progress-bar.bg-warning {
+  background-color: #f59e0b;
+}
+
+[data-theme="dark"] .progress-bar.bg-danger {
+  background-color: #ef4444;
+}
+
+[data-theme="dark"] .rollover-banner-active {
+  background-color: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .rollover-banner-expired {
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .rollover-expired-label {
+  color: #f1f5f9;
   font-weight: 600;
+}
+
+[data-theme="dark"] .rollover-banner-expired .bi-clock-history {
+  color: #f87171;
+}
+
+[data-theme="dark"] .rollover-banner-expired .text-danger,
+[data-theme="dark"] .rollover-expiry-date {
+  color: #f87171;
+}
+
+[data-theme="dark"] .rollover-border-active,
+[data-theme="dark"] .rollover-border-expired {
+  border-top-color: #2d3340;
+}
+
+[data-theme="dark"] .duration-badge {
+  background-color: #16191f;
+  color: #cbd5e1;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .bg-primary-subtle {
+  background-color: rgba(56, 139, 253, 0.15);
+  border-color: rgba(56, 139, 253, 0.3);
+  color: #58a6ff;
 }
 
 [data-theme="dark"] .card {
@@ -106,6 +244,28 @@
   border-bottom: 1px solid var(--gray-200);
 }
 
+[data-theme="dark"] .card-header.border-bottom-0 {
+  background-color: transparent;
+  border-bottom: none;
+}
+
+[data-theme="dark"] .pending-approval-card {
+  background-color: #16191f;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .pending-approval-card .approval-title {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pending-approval-card .approval-meta {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .pending-approval-card .approval-reason {
+  color: #cbd5e1;
+}
+
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
   background-color: var(--surface-alt);
@@ -117,10 +277,17 @@
   color: var(--gray-500);
 }
 
-[data-theme="dark"] .form-control[readonly] {
+[data-theme="dark"] .form-control[readonly],
+[data-theme="dark"] .form-control:disabled {
   background-color: var(--surface-dim);
   color: #cbd5e1;
   border-color: var(--gray-200);
+}
+
+[data-theme="dark"] #historyFilter {
+  background-color: #16191f;
+  color: #f1f5f9;
+  border-color: #2d3340;
 }
 
 [data-theme="dark"] .table {

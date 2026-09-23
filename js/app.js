@@ -904,11 +904,6 @@ const DEFAULT_DEMO_DATA = {
       attachmentName: null,
       status: "pending",
       approvals: {
-        dm: {
-          status: "approved",
-          approverName: "Karim Nasser",
-          updatedAt: "2026-09-03 09:00 AM",
-        },
         lm: { status: "pending", approverName: null, updatedAt: null },
         hr: { status: "pending", approverName: null, updatedAt: null },
       },
@@ -1181,6 +1176,10 @@ function loadDataFromStorage() {
             }
           });
           data.leaves.forEach((lv) => {
+            const isDM = lv.userRole === "district_manager" || lv.userRole === "dm" || lv.userId === "dm1";
+            if (isDM && lv.approvals && lv.approvals.dm) {
+              delete lv.approvals.dm;
+            }
             if (lv.approvals) {
               ["dm", "lm", "hr"].forEach((tier) => {
                 if (lv.approvals[tier] && lv.approvals[tier].approverName) {
@@ -1192,7 +1191,7 @@ function loadDataFromStorage() {
                   if (
                     lv.approvals[tier].approverName.toLowerCase() === "self"
                   ) {
-                    lv.approvals[tier].approverName = "Karim Nasser";
+                    delete lv.approvals[tier];
                   }
                 }
               });
@@ -2356,9 +2355,9 @@ function getNavPendingCount(itemId, user) {
           l.status === "pending" &&
           subIds.includes(l.userId) &&
           l.approvals &&
-          l.approvals.dm &&
-          l.approvals.dm.status === "approved" &&
-          (!l.approvals.lm || l.approvals.lm.status === "pending"),
+          (!l.approvals.dm || l.approvals.dm.status === "approved") &&
+          l.approvals.lm &&
+          l.approvals.lm.status === "pending",
       ).length;
     }
 
