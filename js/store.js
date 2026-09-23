@@ -548,6 +548,36 @@
     },
 
     // ==========================================
+    // Section: Hospitals Module
+    // ==========================================
+    hospitals: {
+      getAll() {
+        return window.DEMO_DATA.hospitals || [];
+      },
+      getById(id) {
+        return (window.DEMO_DATA.hospitals || []).find((h) => h.id === id);
+      },
+      save(hospObj) {
+        if (!window.DEMO_DATA.hospitals) window.DEMO_DATA.hospitals = [];
+        const hosps = window.DEMO_DATA.hospitals;
+        const idx = hosps.findIndex((h) => h.id === hospObj.id);
+        if (idx >= 0) {
+          hosps[idx] = { ...hosps[idx], ...hospObj };
+        } else {
+          hosps.unshift(hospObj);
+        }
+        autoSave("hospitals", idx >= 0 ? "update" : "create", hospObj);
+        return hospObj;
+      },
+      delete(hospId) {
+        window.DEMO_DATA.hospitals = (
+          window.DEMO_DATA.hospitals || []
+        ).filter((h) => h.id !== hospId);
+        autoSave("hospitals", "delete", { id: hospId });
+      },
+    },
+
+    // ==========================================
     // Section: Product Lines Module
     // ==========================================
     productLines: {

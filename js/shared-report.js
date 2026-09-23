@@ -251,13 +251,18 @@ function syncReportsData() {
 const directoryTranslations = {
   en: {
     tabDoctorsList: 'Doctors List',
+    tabHospitalsList: 'Hospitals List',
     tabPharmaciesList: 'Pharmacies List',
     doctorsDirectoryTitle: '👨‍⚕️ Doctors Directory',
     doctorsDirectorySubtitle: 'Master physician registry with contact details, specialty, and assignment.',
+    hospitalsDirectoryTitle: '🏥 Hospitals Directory',
+    hospitalsDirectorySubtitle: 'Master registry of hospitals, medical centers, contact numbers, and assigned territories.',
     pharmaciesDirectoryTitle: '💊 Pharmacies Directory',
     pharmaciesDirectorySubtitle: 'Directory of authorized partner pharmacies, contact personnel, and assigned territories.',
     searchDoctors: 'Search Doctors:',
     searchDoctorsPlaceholder: 'Search by name, clinic, phone...',
+    searchHospitals: 'Search Hospitals:',
+    searchHospitalsPlaceholder: 'Search by hospital name, address, phone...',
     specialty: 'Specialty:',
     allSpecialties: 'All Specialties',
     doctorClass: 'Class:',
@@ -276,11 +281,21 @@ const directoryTranslations = {
     editPharmacySubtitle: 'Update pharmacy details, contact person, and assignment.',
     deletePharmacy: 'Delete Pharmacy',
     confirmDeletePharmacy: 'Are you sure you want to delete this pharmacy? This action cannot be undone.',
+    addHospital: 'Add Hospital',
+    editHospital: 'Edit Hospital',
+    addHospitalSubtitle: 'Register a new hospital or medical center and assign territory & representative.',
+    editHospitalSubtitle: 'Update hospital credentials, address, and representative assignment.',
+    deleteHospital: 'Delete Hospital',
+    confirmDeleteHospital: 'Are you sure you want to delete this hospital? This action cannot be undone.',
     noDoctorsFound: 'No Doctors Found',
     noDoctorsDesc: 'Try adjusting search query or filters.',
+    noHospitalsFound: 'No Hospitals Found',
+    noHospitalsDesc: 'Try adjusting search query or filters.',
     noPharmaciesFound: 'No Pharmacies Found',
     noPharmaciesDesc: 'Try adjusting search query or filters.',
     doctorName: 'Doctor Name',
+    hospitalName: 'Hospital Name',
+    hospitalNameAr: 'Arabic Hospital Name',
     clinicAddress: 'Clinic Address',
     phone: 'Phone Number',
     assignedRep: 'Assigned Medical Rep',
@@ -295,6 +310,7 @@ const directoryTranslations = {
     filterDm: 'District / DM',
     allReps: 'All Representatives',
     doctorsCountSuffix: 'Doctors',
+    hospitalsCountSuffix: 'Hospitals',
     pharmaciesCountSuffix: 'Pharmacies',
     btnEdit: 'Edit',
     btnDelete: 'Delete',
@@ -304,6 +320,7 @@ const directoryTranslations = {
     btnImportDoctors: 'Import Sheet (.csv)',
     btnImportPharmacies: 'Import Sheet (.csv)',
     btnExportDoctors: 'Export Directory',
+    btnExportHospitals: 'Export Directory',
     btnExportPharmacies: 'Export Directory',
     btnExportCSV: 'Export CSV',
     importDoctorsTitle: 'Import Doctors from Sheet',
@@ -334,6 +351,8 @@ const directoryTranslations = {
     promptShowCoverageDesc: 'Choose employee, date range, and class filter then click Show to calculate coverage and frequency.',
     promptShowDoctorsTitle: 'Click Show to View Doctors Directory',
     promptShowDoctorsDesc: 'Choose employee, specialty, class, or search query then click Show to display doctors.',
+    promptShowHospitalsTitle: 'Click Show to View Hospitals Directory',
+    promptShowHospitalsDesc: 'Choose employee or search query then click Show to display hospitals.',
     promptShowPharmaciesTitle: 'Click Show to View Pharmacies Directory',
     promptShowPharmaciesDesc: 'Choose employee or search query then click Show to display pharmacies.',
     timelineFrom: 'From:',
@@ -350,13 +369,18 @@ const directoryTranslations = {
   },
   ar: {
     tabDoctorsList: 'قائمة الأطباء',
+    tabHospitalsList: 'قائمة المستشفيات',
     tabPharmaciesList: 'قائمة الصيدليات',
     doctorsDirectoryTitle: '👨‍⚕️ دليل الأطباء',
     doctorsDirectorySubtitle: 'سجل الأطباء المعتمد مع تفاصيل الاتصال، التخصص، والمنطقة التابعة.',
+    hospitalsDirectoryTitle: '🏥 دليل المستشفيات',
+    hospitalsDirectorySubtitle: 'سجل المستشفيات والمراكز الطبية المعتمدة مع تفاصيل الاتصال والمندوب والمنطقة التابعة.',
     pharmaciesDirectoryTitle: '💊 دليل الصيدليات',
     pharmaciesDirectorySubtitle: 'سجل الصيدليات الشريكة، بيانات الصيدلي المسؤول، والمنطقة التابعة.',
     searchDoctors: 'بحث الأطباء:',
     searchDoctorsPlaceholder: 'ابحث بالاسم، العيادة، الهاتف...',
+    searchHospitals: 'بحث المستشفيات:',
+    searchHospitalsPlaceholder: 'ابحث باسم المستشفى، العنوان، الهاتف...',
     specialty: 'التخصص:',
     allSpecialties: 'جميع التخصصات',
     doctorClass: 'الفئة:',
@@ -375,11 +399,21 @@ const directoryTranslations = {
     editPharmacySubtitle: 'تعديل بيانات الصيدلية، الصيدلي المسؤول، والمنطقة التابعة.',
     deletePharmacy: 'حذف صيدلية',
     confirmDeletePharmacy: 'هل أنت متأكد من حذف هذه الصيدلية من النظام نهائياً؟',
+    addHospital: 'إضافة مستشفى',
+    editHospital: 'تعديل بيانات المستشفى',
+    addHospitalSubtitle: 'تسجيل مستشفى أو مركز طبي جديد وتعيين المندوب والمنطقة التابعة.',
+    editHospitalSubtitle: 'تعديل بيانات المستشفى، العنوان، والمنطقة التابعة والمندوب.',
+    deleteHospital: 'حذف مستشفى',
+    confirmDeleteHospital: 'هل أنت متأكد من حذف هذه المستشفى من النظام نهائياً؟',
     noDoctorsFound: 'لا يوجد أطباء مطابقين',
     noDoctorsDesc: 'يرجى تجربة معايير بحث أخرى أو تعديل الفلاتر.',
+    noHospitalsFound: 'لا توجد مستشفيات مطابقة',
+    noHospitalsDesc: 'يرجى تجربة معايير بحث أخرى أو تعديل الفلاتر.',
     noPharmaciesFound: 'لا توجد صيدليات مطابقة',
     noPharmaciesDesc: 'يرجى تجربة معايير بحث أخرى أو تعديل الفلاتر.',
     doctorName: 'اسم الطبيب',
+    hospitalName: 'اسم المستشفى',
+    hospitalNameAr: 'اسم المستشفى بالعربي',
     clinicAddress: 'عنوان العيادة',
     phone: 'رقم الهاتف',
     assignedRep: 'المندوب المسؤول',
@@ -394,6 +428,7 @@ const directoryTranslations = {
     filterDm: 'المنطقة / DM',
     allReps: 'جميع المناديب',
     doctorsCountSuffix: 'طبيب',
+    hospitalsCountSuffix: 'مستشفى',
     pharmaciesCountSuffix: 'صيدلية',
     btnEdit: 'تعديل',
     btnDelete: 'حذف',
@@ -545,6 +580,8 @@ function setupRolePermissions(user) {
     '#linkUploadDistributorSales',
     '#btnAddDoctor',
     '#btnImportDoctors',
+    '#btnAddHospital',
+    '#btnImportHospitals',
     '#btnAddPharmacy',
     '#btnImportPharmacies',
     '.admin-only-action'
@@ -564,12 +601,12 @@ function setupRolePermissions(user) {
     if (isAdmin) {
       noticeBadge.className = 'admin-notice-pill admin-mode';
       noticeText.textContent = lang === 'ar' 
-        ? 'صلاحية الإدارة: متاح إدارة الأهداف والتقارير والأطباء والصيدليات' 
-        : 'Admin Role: Full Targets Management, Doctors & Pharmacies Management';
+        ? 'صلاحية الإدارة: متاح إدارة الأهداف والتقارير والأطباء والمستشفيات والصيدليات' 
+        : 'Admin Role: Full Targets Management, Doctors, Hospitals & Pharmacies Management';
     } else {
       noticeBadge.className = 'admin-notice-pill';
       noticeText.textContent = lang === 'ar' 
-        ? 'عرض فقط: تعديل التارجت والأطباء والصيدليات مقتصر على الإدارة' 
+        ? 'عرض فقط: تعديل التارجت والأطباء والمستشفيات والصيدليات مقتصر على الإدارة' 
         : 'View-Only: Targets and Directories managed by Admin';
     }
   }
@@ -591,6 +628,13 @@ function switchReportTab(tabKey) {
   }
   if (tabKey === 'doctors') {
     if (typeof populateDoctorSpecialtyFilter === 'function') populateDoctorSpecialtyFilter();
+    if (typeof renderDoctorsReport === 'function') renderDoctorsReport();
+  }
+  if (tabKey === 'hospitals') {
+    if (typeof renderHospitalsReport === 'function') renderHospitalsReport();
+  }
+  if (tabKey === 'pharmacies') {
+    if (typeof renderPharmaciesReport === 'function') renderPharmaciesReport();
   }
 }
 
@@ -711,6 +755,9 @@ window.onReportLineFilterChange = function (selectedLineId) {
   } else if (activeTab === 'doctors' && typeof renderDoctorsReport === 'function') {
     const results = document.getElementById('doctorsResultsContainer');
     if (results && results.style.display !== 'none') renderDoctorsReport();
+  } else if (activeTab === 'hospitals' && typeof renderHospitalsReport === 'function') {
+    const results = document.getElementById('hospitalsResultsContainer');
+    if (results && results.style.display !== 'none') renderHospitalsReport();
   } else if (activeTab === 'pharmacies' && typeof renderPharmaciesReport === 'function') {
     const results = document.getElementById('pharmaciesResultsContainer');
     if (results && results.style.display !== 'none') renderPharmaciesReport();
@@ -724,6 +771,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
     document.getElementById('timelineRepSelect'),
     document.getElementById('coverageRepSelect'),
     document.getElementById('doctorRepSelect'),
+    document.getElementById('hospitalRepSelect'),
     document.getElementById('pharmacyRepSelect')
   ].filter(Boolean);
 
@@ -1129,6 +1177,31 @@ function onPharmacyModalAreaChange() {
   }
 }
 
+function onHospitalModalLmChange() {
+  updateModalDMs('hospitalModalLmSelect', 'hospitalModalDmSelect', 'hospitalRepInput', null, null, 'hospitalAreaInput');
+}
+
+function onHospitalModalDmChange() {
+  updateModalReps('hospitalModalDmSelect', 'hospitalRepInput', null, 'hospitalAreaInput', null, 'hospitalModalLmSelect');
+}
+
+function onHospitalModalRepChange() {
+  updateModalAreas('hospitalRepInput', 'hospitalAreaInput', null, document.getElementById('hospitalModalLmSelect')?.value);
+}
+
+function onHospitalModalAreaChange() {
+  const areaSelect = document.getElementById('hospitalAreaInput');
+  const repSelect = document.getElementById('hospitalRepInput');
+  if (areaSelect && repSelect && areaSelect.value) {
+    const area = window.store && window.store.areas ? window.store.areas.getById(areaSelect.value) : null;
+    if (area && area.repId) {
+      if (repSelect.value !== area.repId && Array.from(repSelect.options).some((o) => o.value === area.repId)) {
+        repSelect.value = area.repId;
+      }
+    }
+  }
+}
+
 window.populateModalHierarchy = populateModalHierarchy;
 window.updateModalDMs = updateModalDMs;
 window.updateModalReps = updateModalReps;
@@ -1141,6 +1214,10 @@ window.onPharmacyModalLmChange = onPharmacyModalLmChange;
 window.onPharmacyModalDmChange = onPharmacyModalDmChange;
 window.onPharmacyModalRepChange = onPharmacyModalRepChange;
 window.onPharmacyModalAreaChange = onPharmacyModalAreaChange;
+window.onHospitalModalLmChange = onHospitalModalLmChange;
+window.onHospitalModalDmChange = onHospitalModalDmChange;
+window.onHospitalModalRepChange = onHospitalModalRepChange;
+window.onHospitalModalAreaChange = onHospitalModalAreaChange;
 
 function populateRepModalOptions(selectElement) {
   if (!selectElement) return;

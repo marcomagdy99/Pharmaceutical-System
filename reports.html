@@ -129,6 +129,13 @@
             </button>
             <button
               class="report-tab-btn"
+              data-tab="hospitals"
+              onclick="switchReportTab('hospitals')"
+            >
+              🏥 <span data-i18n="tabHospitalsList">Hospitals List</span>
+            </button>
+            <button
+              class="report-tab-btn"
               data-tab="pharmacies"
               onclick="switchReportTab('pharmacies')"
             >
@@ -942,7 +949,146 @@
               </div>
             </div>
           </div>
-          <!-- TAB 6: Pharmacies List -->
+          <!-- TAB: Hospitals List -->
+          <div class="report-content-panel" id="tabPanel-hospitals">
+            <div class="sales-filter-card">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 1rem;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                "
+              >
+                <div>
+                  <h3
+                    style="
+                      margin: 0;
+                      font-size: 1.15rem;
+                      font-weight: 700;
+                      color: var(--gray-800);
+                    "
+                    data-i18n="hospitalsDirectoryTitle"
+                  >
+                    🏥 Hospitals Directory
+                  </h3>
+                  <p
+                    style="
+                      margin: 4px 0 0;
+                      font-size: 0.82rem;
+                      color: var(--gray-500);
+                    "
+                    data-i18n="hospitalsDirectorySubtitle"
+                  >
+                    Directory of hospitals, healthcare centers, medical rep, and territory assignment.
+                  </p>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <span
+                    class="badge"
+                    id="totalHospitalsCountBadge"
+                    style="background: var(--primary-light); color: var(--primary); display: none;"
+                    >0 Hospitals</span
+                  >
+                  <button
+                    type="button"
+                    class="btn btn-outline"
+                    id="btnExportHospitals"
+                    onclick="exportHospitalsDirectory()"
+                    title="Export Hospitals Directory"
+                  >
+                    <span>📥</span>
+                    <span data-i18n="btnExportHospitals">Export Directory</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary admin-only-action"
+                    id="btnAddHospital"
+                    onclick="openHospitalModal()"
+                    style="display: none"
+                  >
+                    <span>➕</span>
+                    <span data-i18n="addHospital">Add Hospital</span>
+                  </button>
+                </div>
+              </div>
+              <!-- Filters Grid -->
+              <div class="sales-filter-form-grid">
+                <!-- Employee Filter -->
+                <div class="sales-filter-field col-rep" id="hospitalRepFilterContainer">
+                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <select
+                    id="hospitalRepSelect"
+                    class="form-control"
+                    onchange="if (typeof onHospitalFilterChange === 'function') onHospitalFilterChange();"
+                  >
+                    <option value="all" data-i18n="allReps">All Employees</option>
+                  </select>
+                </div>
+                <!-- Search -->
+                <div class="sales-filter-field col-search">
+                  <label data-i18n="searchHospitals">Search:</label>
+                  <input
+                    type="text"
+                    id="hospitalSearchInput"
+                    class="form-control"
+                    data-i18n-placeholder="searchHospitalsPlaceholder"
+                    placeholder="Search by hospital name, address, phone..."
+                    onkeyup="if (event.key === 'Enter') renderHospitalsReport();"
+                  />
+                </div>
+                <div class="sales-filter-field col-btn">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="btnShowHospitalsReport"
+                    onclick="renderHospitalsReport()"
+                  >
+                    <span>🔍</span> <span data-i18n="btnShow">Show</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hospitals Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="hospitalsPromptContainer">
+              <div class="report-show-prompt-icon">🏥</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowHospitalsTitle">Click Show to View Hospitals Directory</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowHospitalsDesc">Choose employee or search query then click Show to display hospitals.</p>
+              <button type="button" class="btn btn-primary" onclick="renderHospitalsReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show</span>
+              </button>
+            </div>
+
+            <!-- Hospitals Results Container (Hidden until Show is clicked) -->
+            <div id="hospitalsResultsContainer" style="display: none;">
+              <!-- Hospitals Cards Grid -->
+              <div id="hospitalsDirectoryGrid" class="directory-cards-grid"></div>
+              <!-- Hospitals Empty State -->
+              <div
+                id="hospitalsEmptyState"
+                class="directory-empty-state"
+                style="display: none"
+              >
+                <div class="empty-state-icon">🏥</div>
+                <h4 data-i18n="noHospitalsFound">No Hospitals Found</h4>
+                <p class="text-muted" data-i18n="noHospitalsDesc">
+                  Try adjusting search query or filters.
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- TAB 7: Pharmacies List -->
           <div class="report-content-panel" id="tabPanel-pharmacies">
             <div class="sales-filter-card">
               <div
@@ -1596,6 +1742,236 @@
         </div>
       </div>
     </div>
+    <!-- Hospital Modal (Admin Only) -->
+    <div id="hospitalModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog modal-dialog-lg">
+        <div class="custom-modal-content card">
+          <div class="custom-modal-header modern-modal-header">
+            <div class="modal-header-left">
+              <div class="modal-header-avatar hospital">🏥</div>
+              <div>
+                <h3 id="hospitalModalTitle" data-i18n="addHospital">Add Hospital</h3>
+                <p
+                  class="modal-subtitle"
+                  id="hospitalModalSubtitle"
+                  data-i18n="addHospitalSubtitle"
+                >
+                  Register a new hospital or medical center and assign territory & representative.
+                </p>
+              </div>
+            </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeHospitalModal()"
+              title="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body">
+            <form
+              id="hospitalForm"
+              onsubmit="
+                event.preventDefault();
+                saveHospital();
+              "
+            >
+              <input type="hidden" id="hospitalId" />
+              <div class="modal-form-grid">
+                <!-- Hospital Name (EN) -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="hospitalNameInput">
+                    <span class="label-icon">🏥</span>
+                    <span data-i18n="hospitalName">Hospital Name (EN)</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="hospitalNameInput"
+                    class="form-control modern-input"
+                    required
+                    placeholder="e.g. Al-Salam International Hospital"
+                  />
+                </div>
+                <!-- Hospital Name (AR) -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="hospitalNameArInput">
+                    <span class="label-icon">🏥</span>
+                    <span data-i18n="hospitalNameAr">Hospital Name (AR)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="hospitalNameArInput"
+                    class="form-control modern-input"
+                    placeholder="مثال: مستشفى السلام الدولي"
+                  />
+                </div>
+                <!-- Hospital Address -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="hospitalAddressInput">
+                    <span class="label-icon">📍</span>
+                    <span data-i18n="address">Address</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="hospitalAddressInput"
+                    class="form-control modern-input"
+                    required
+                    placeholder="e.g. 15 Makram Ebeid, Nasr City, Cairo"
+                  />
+                </div>
+                <!-- Phone Number -->
+                <div class="form-group col-span-2">
+                  <label class="form-label" for="hospitalPhoneInput">
+                    <span class="label-icon">📞</span>
+                    <span data-i18n="phone">Phone Number</span>
+                  </label>
+                  <input
+                    type="tel"
+                    id="hospitalPhoneInput"
+                    class="form-control modern-input"
+                    placeholder="e.g. 0225240250"
+                  />
+                </div>
+                <!-- Section Divider: Territory & Representative Assignment -->
+                <div class="col-span-2 modal-section-divider">
+                  <span class="modal-section-title">
+                    <span class="label-icon">🏢</span>
+                    <span data-i18n="territoryAssignment"
+                      >Territory & Rep Assignment</span
+                    >
+                  </span>
+                </div>
+                <!-- Hierarchy Filter 1: Line / LM -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="hospitalModalLmSelect">
+                    <span class="label-icon">👔</span>
+                    <span data-i18n="filterLm">Line / LM</span>
+                  </label>
+                  <select
+                    id="hospitalModalLmSelect"
+                    class="form-control modern-select"
+                    onchange="onHospitalModalLmChange()"
+                  ></select>
+                </div>
+                <!-- Hierarchy Filter 2: District / DM -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="hospitalModalDmSelect">
+                    <span class="label-icon">💼</span>
+                    <span data-i18n="filterDm">District / DM</span>
+                  </label>
+                  <select
+                    id="hospitalModalDmSelect"
+                    class="form-control modern-select"
+                    onchange="onHospitalModalDmChange()"
+                  ></select>
+                </div>
+                <!-- Assigned Medical Rep -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="hospitalRepInput">
+                    <span class="label-icon">👤</span>
+                    <span data-i18n="assignedRep">Assigned Medical Rep</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="hospitalRepInput"
+                    class="form-control modern-select"
+                    required
+                    onchange="onHospitalModalRepChange()"
+                  ></select>
+                </div>
+                <!-- Target Area / Territory -->
+                <div class="form-group col-span-1">
+                  <label class="form-label" for="hospitalAreaInput">
+                    <span class="label-icon">📍</span>
+                    <span data-i18n="assignedArea">Territory / Area</span>
+                    <span class="required-star">*</span>
+                  </label>
+                  <select
+                    id="hospitalAreaInput"
+                    class="form-control modern-select"
+                    required
+                    onchange="onHospitalModalAreaChange()"
+                  ></select>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="custom-modal-footer modern-modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeHospitalModal()"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-save-modal"
+              onclick="saveHospital()"
+            >
+              <span>💾</span> <span data-i18n="save">Save Hospital</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Delete Hospital Modal -->
+    <div id="deleteHospitalModal" class="custom-modal" style="display: none">
+      <div class="custom-modal-dialog" style="max-width: 440px">
+        <div class="custom-modal-content card text-center p-3">
+          <div class="custom-modal-header border-bottom pb-2">
+            <div
+              class="d-flex align-items-center gap-2"
+              style="display: flex; align-items: center; gap: 8px"
+            >
+              <span style="font-size: 1.4rem">⚠️</span>
+              <h3
+                class="text-danger"
+                style="margin: 0; font-size: 1.15rem"
+                data-i18n="deleteHospital"
+              >
+                Delete Hospital
+              </h3>
+            </div>
+            <button
+              class="custom-modal-close"
+              onclick="closeDeleteHospitalModal()"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="custom-modal-body py-4">
+            <p
+              style="font-size: 0.95rem; color: var(--gray-600); margin: 0"
+              data-i18n="confirmDeleteHospital"
+            >
+              Are you sure you want to delete this hospital? This action cannot
+              be undone.
+            </p>
+          </div>
+          <div class="custom-modal-footer border-top pt-2">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick="closeDeleteHospitalModal()"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmDeleteHospital()"
+            >
+              <span>🗑️</span> <span data-i18n="delete">Delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Import Doctors Sheet Modal (Admin Only) -->
     <div id="importDoctorsModal" class="custom-modal" style="display: none">
       <div class="custom-modal-dialog modal-dialog-lg" style="max-width: 740px">
@@ -2171,12 +2547,13 @@
     <script src="js/interactive-charts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/excel-templates-data.js"></script>
-    <script src="js/shared-report.js"></script>
+    <script src="js/shared-report.js?v=8.0.0"></script>
     <script src="js/sales-report.js"></script>
     <script src="js/achievements-report.js"></script>
     <script src="js/timeline-report.js"></script>
     <script src="js/coverage-report.js"></script>
     <script src="js/doctors-report.js"></script>
+    <script src="js/hospitals-report.js?v=8.0.0"></script>
     <script src="js/pharmacies-report.js"></script>
   </body>
 </html>

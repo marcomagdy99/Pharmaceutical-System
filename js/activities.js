@@ -856,21 +856,26 @@ const ActivitiesModule = (function () {
   }
 
   function getDoctorsForLineAndArea(lineId, areaId) {
-    const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+    const allDocs =
+      (window.store && window.store.doctors && window.store.doctors.getAll()) ||
+      (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
     return allDocs.filter((d) => {
       const matchLine = !lineId || !d.lineId || d.lineId === lineId;
-      const matchArea = !areaId || !d.areaId || d.areaId === areaId;
+      // Strict: if area selected, doctor must have that exact areaId
+      const matchArea = !areaId ? true : (d.areaId === areaId);
       return matchLine && matchArea;
     });
   }
 
   function getHospitalsForLineAndArea(lineId, areaId) {
-    const allHosps = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [
-      { id: "hosp1", name: "Al-Salam International Hospital", nameAr: "مستشفى السلام الدولي", address: "Maadi, Cairo", areaId: "area1" },
-      { id: "hosp2", name: "Dar Al Fouad Hospital", nameAr: "مستشفى دار الفؤاد", address: "6th of October", areaId: "area2" },
-      { id: "hosp3", name: "Cleopatra Hospital", nameAr: "مستشفى كليوباترا", address: "Heliopolis, Cairo", areaId: "area1" }
-    ];
-    return allHosps.filter((h) => !areaId || !h.areaId || h.areaId === areaId);
+    const allHosps =
+      (window.store && window.store.hospitals && window.store.hospitals.getAll()) ||
+      (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+    return allHosps.filter((h) => {
+      const matchArea = !areaId ? true : (h.areaId === areaId);
+      const matchLine = !lineId || !h.lineId || h.lineId === lineId;
+      return matchArea && matchLine;
+    });
   }
 
   function getAreaName(areaId) {
@@ -1955,8 +1960,12 @@ const ActivitiesModule = (function () {
       if (docs.length === 0) {
         docSelect.innerHTML = `<option value="" disabled selected>No doctors found in this area</option>`;
       } else {
+        const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
         docSelect.innerHTML = docs
-          .map((d) => `<option value="${d.id}">${d.nameAr || d.name} - ${d.specialty || ""} (Class ${d.class || "A"})</option>`)
+          .map((d) => {
+            const displayName = isAr ? (d.nameAr || d.name) : (d.name || d.nameAr);
+            return `<option value="${d.id}">${displayName} - ${d.specialty || ""} (Class ${d.class || "A"})</option>`;
+          })
           .join("");
       }
     }
@@ -1966,8 +1975,12 @@ const ActivitiesModule = (function () {
       if (hosps.length === 0) {
         hospSelect.innerHTML = `<option value="" disabled selected>No hospitals found in this area</option>`;
       } else {
+        const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
         hospSelect.innerHTML = hosps
-          .map((h) => `<option value="${h.id}">${h.nameAr || h.name} - ${h.address || ""}</option>`)
+          .map((h) => {
+            const displayName = isAr ? (h.nameAr || h.name) : (h.name || h.nameAr);
+            return `<option value="${h.id}">${displayName} - ${h.address || ""}</option>`;
+          })
           .join("");
       }
     }

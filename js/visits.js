@@ -768,14 +768,23 @@ function getReportingReps() {
 // Section 4: Dynamic Master Target Getters
 // ============================================================================
 function getMockDoctors() {
+  if (window.store && window.store.doctors) {
+    return window.store.doctors.getAll();
+  }
   return (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
 }
 
 function getMockHospitals() {
+  if (window.store && window.store.hospitals) {
+    return window.store.hospitals.getAll();
+  }
   return (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
 }
 
 function getMockPharmacies() {
+  if (window.store && window.store.pharmacies) {
+    return window.store.pharmacies.getAll();
+  }
   if (
     window.DEMO_DATA &&
     Array.isArray(window.DEMO_DATA.pharmacies) &&
@@ -2842,9 +2851,16 @@ function updateTargetOptions() {
     const allHosps = getMockHospitals();
     if (targetLabel) targetLabel.textContent = isAr ? "المستشفى" : "Hospital";
     if (!isManager) {
-      options = allHosps.filter((h) => !h.repId || h.repId === currentUser.id);
+      const repAreas =
+        window.store && window.store.areas
+          ? window.store.areas.getByRep(currentUser.id)
+          : [];
+      const repAreaIds = repAreas.map((a) => a.id);
+      options = allHosps.filter(
+        (h) => h.repId === currentUser.id || (h.areaId && repAreaIds.includes(h.areaId))
+      );
     } else if (allowedRepIds) {
-      options = allHosps.filter((h) => !h.repId || allowedRepIds.includes(h.repId));
+      options = allHosps.filter((h) => allowedRepIds.includes(h.repId));
     } else {
       options = allHosps;
     }
@@ -2852,9 +2868,16 @@ function updateTargetOptions() {
     const allPharms = getMockPharmacies();
     if (targetLabel) targetLabel.textContent = isAr ? "الصيدلية" : "Pharmacy";
     if (!isManager) {
-      options = allPharms.filter((p) => !p.repId || p.repId === currentUser.id);
+      const repAreas =
+        window.store && window.store.areas
+          ? window.store.areas.getByRep(currentUser.id)
+          : [];
+      const repAreaIds = repAreas.map((a) => a.id);
+      options = allPharms.filter(
+        (p) => p.repId === currentUser.id || (p.areaId && repAreaIds.includes(p.areaId))
+      );
     } else if (allowedRepIds) {
-      options = allPharms.filter((p) => !p.repId || allowedRepIds.includes(p.repId));
+      options = allPharms.filter((p) => allowedRepIds.includes(p.repId));
     } else {
       options = allPharms;
     }
@@ -3022,7 +3045,8 @@ function updateTargetOptions() {
   options.forEach((opt) => {
     const o = document.createElement("option");
     o.value = opt.id;
-    o.textContent = opt.name;
+    const displayName = isAr ? (opt.nameAr || opt.name) : (opt.name || opt.nameAr);
+    o.textContent = displayName;
     targetSelect.appendChild(o);
   });
 }

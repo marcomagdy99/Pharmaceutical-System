@@ -295,6 +295,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "15 Makram Ebeid, Nasr City",
       phone: "01001234567",
       repId: "rep1",
+      areaId: "area1",
     },
     {
       id: "d2",
@@ -308,6 +309,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "22 Abbas Al-Akkad, Nasr City",
       phone: "01112345678",
       repId: "rep1",
+      areaId: "area1",
     },
     {
       id: "d3",
@@ -321,6 +323,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "8 Mostafa El Nahas, Nasr City",
       phone: "01223456789",
       repId: "rep1",
+      areaId: "area1",
     },
     {
       id: "d4",
@@ -334,6 +337,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "3 Al Tayaran St, Nasr City",
       phone: "01098765432",
       repId: "rep1",
+      areaId: "area1",
     },
     {
       id: "d5",
@@ -347,6 +351,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "12 Nozha St, Heliopolis",
       phone: "01234567890",
       repId: "rep1",
+      areaId: "area1",
     },
     {
       id: "d6",
@@ -360,6 +365,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "45 Al-Horreya St, Heliopolis",
       phone: "01144556677",
       repId: "rep2",
+      areaId: "area2",
     },
     {
       id: "d7",
@@ -373,6 +379,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "30 Nozha St, Heliopolis",
       phone: "01088776655",
       repId: "rep2",
+      areaId: "area2",
     },
     {
       id: "d8",
@@ -386,6 +393,7 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "14 Abbas Al-Akkad, Nasr City",
       phone: "01211223344",
       repId: "rep3",
+      areaId: "area1",
     },
     {
       id: "d9",
@@ -399,24 +407,53 @@ const DEFAULT_DEMO_DATA = {
       clinicAddress: "19 Merghany St, Heliopolis",
       phone: "01066778899",
       repId: "rep4",
+      areaId: "area3",
     },
   ],
   hospitals: [
     {
       id: "h1",
-      name: "Al-Salam Hospital",
-      nameAr: "مستشفى السلام",
+      name: "Al-Salam International Hospital",
+      nameAr: "مستشفى السلام الدولي",
       type: "hospital",
-      address: "Nasr City",
+      address: "15 Makram Ebeid, Nasr City",
+      phone: "0225240250",
       repId: "rep1",
+      areaId: "area1",
+      lineId: "line1",
     },
     {
       id: "h2",
       name: "Nasser Institute",
       nameAr: "معهد ناصر",
       type: "hospital",
-      address: "Nasr City",
+      address: "Corniche El Nil, Nasr City",
+      phone: "0222039164",
       repId: "rep1",
+      areaId: "area1",
+      lineId: "line1",
+    },
+    {
+      id: "h3",
+      name: "Cleopatra Hospital",
+      nameAr: "مستشفى كليوباترا",
+      type: "hospital",
+      address: "39 Cleopatra St, Heliopolis",
+      phone: "0224143931",
+      repId: "rep2",
+      areaId: "area2",
+      lineId: "line1",
+    },
+    {
+      id: "h4",
+      name: "Dar Al Fouad Hospital",
+      nameAr: "مستشفى دار الفؤاد",
+      type: "hospital",
+      address: "26th of July Corridor, Nasr City",
+      phone: "0238247247",
+      repId: "rep4",
+      areaId: "area3",
+      lineId: "line2",
     },
   ],
   pharmacies: [
@@ -1088,12 +1125,17 @@ function loadDataFromStorage() {
           data.productLines = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.productLines));
         }
         if (Array.isArray(data.doctors)) {
+          // Add any missing default doctors, but KEEP localStorage edits (name, areaId, etc.)
           DEFAULT_DEMO_DATA.doctors.forEach((d) => {
             const existing = data.doctors.find((ed) => ed.id === d.id);
             if (!existing) {
-              data.doctors.push(d);
-            } else if (!existing.specialtyId && d.specialtyId) {
-              existing.specialtyId = d.specialtyId;
+              // Doctor was deleted — don't re-add from defaults
+              // data.doctors.push(d);
+            } else {
+              // Merge missing fields from defaults without overwriting localStorage edits
+              if (!existing.specialtyId && d.specialtyId) existing.specialtyId = d.specialtyId;
+              if (!existing.areaId && d.areaId) existing.areaId = d.areaId;
+              if (!existing.lineId && d.lineId) existing.lineId = d.lineId;
             }
           });
         } else {
@@ -1107,6 +1149,19 @@ function loadDataFromStorage() {
           });
         } else {
           data.pharmacies = [...DEFAULT_DEMO_DATA.pharmacies];
+        }
+        if (Array.isArray(data.hospitals)) {
+          DEFAULT_DEMO_DATA.hospitals.forEach((h) => {
+            const existing = data.hospitals.find((eh) => eh.id === h.id);
+            if (existing) {
+              if (!existing.areaId && h.areaId) existing.areaId = h.areaId;
+              if (!existing.lineId && h.lineId) existing.lineId = h.lineId;
+              if (!existing.address && h.address) existing.address = h.address;
+              if (!existing.phone && h.phone) existing.phone = h.phone;
+            }
+          });
+        } else {
+          data.hospitals = [...DEFAULT_DEMO_DATA.hospitals];
         }
         if (Array.isArray(data.leaves)) {
           DEFAULT_DEMO_DATA.leaves.forEach((l) => {
