@@ -816,12 +816,16 @@ function getTwoDaysAgoStr() {
 let hasLoadedTimelineOnce = false;
 
 document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramDate = urlParams.get("date");
+  const effectiveDate = (paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate)) ? paramDate : todayStr;
+
   const dateInput = document.getElementById("visitDate");
-  if (dateInput) dateInput.value = todayStr;
+  if (dateInput) dateInput.value = effectiveDate;
 
   const timelineDatePicker = document.getElementById("timelineDatePicker");
-  if (timelineDatePicker && !timelineDatePicker.value) {
-    timelineDatePicker.value = todayStr;
+  if (timelineDatePicker) {
+    timelineDatePicker.value = effectiveDate;
   }
 
   timelineDatePicker?.addEventListener("keydown", (e) => {
@@ -836,6 +840,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderVisits(false);
   setupModalTargetFilter();
   updateTargetOptions();
+
+  if (paramDate) {
+    renderVisitsTimeline(true);
+  }
 });
 
 function setupRoleBasedView() {
@@ -1903,10 +1911,9 @@ function renderVisitsTimeline(triggeredByShow = false) {
 
   const datePicker = document.getElementById("timelineDatePicker");
   if (datePicker && !datePicker.value) {
-    datePicker.value =
-      typeof todayStr !== "undefined" && todayStr ? todayStr : "2026-09-02";
+    datePicker.value = typeof todayStr !== "undefined" && todayStr ? todayStr : "";
   }
-  const selectedDate = datePicker ? datePicker.value : "2026-09-02";
+  const selectedDate = (datePicker && datePicker.value) ? datePicker.value : (typeof todayStr !== "undefined" ? todayStr : "");
 
   if (!triggeredByShow && !hasLoadedTimelineOnce) {
     if (summaryBar) summaryBar.innerHTML = "";
@@ -3672,6 +3679,36 @@ Object.assign(visitsApp, {
       }
     } catch (e) {
       console.error("Error updating pharma_reports_data on visit deletion:", e);
+    }
+
+    // Synchronize DM accompaniment calendar: if deleted visit was double accompaniment,
+    // verify if any remaining double visits exist for that DM and rep on that date.
+    // If none remain, release the DM's booked schedule date.
+    try {
+      const dmId = visit.doubleWithUserId;
+      const visitDate = visit.date;
+      const repId = visit.repId;
+      if (dmId && visitDate) {
+        const remainingDouble = demoVisits.filter(
+          (v) => v.date === visitDate && v.repId === repId && (v.doubleWithUserId === dmId || v.visitType === "double")
+        );
+        if (remainingDouble.length === 0) {
+          const storageKey = "pharma_dm_accompaniments";
+          const raw = localStorage.getItem(storageKey);
+          if (raw) {
+            const cached = JSON.parse(raw);
+            if (cached[dmId] && cached[dmId][visitDate] === repId) {
+              delete cached[dmId][visitDate];
+              if (Object.keys(cached[dmId]).length === 0) {
+                delete cached[dmId];
+              }
+              localStorage.setItem(storageKey, JSON.stringify(cached));
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error updating pharma_dm_accompaniments on visit deletion:", e);
     }
 
     renderVisits();

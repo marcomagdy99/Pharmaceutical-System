@@ -1268,6 +1268,221 @@
         }
       },
     },
+
+    // ==========================================
+    // Section: Daily Activities Module
+    // ==========================================
+    activities: {
+      getStorageKey(userId) {
+        return `pharma_activities_data_${userId || "rep1"}`;
+      },
+      getAllForUser(userId) {
+        const uid = userId || "rep1";
+        if (!window.DEMO_DATA._activitiesByUser) {
+          window.DEMO_DATA._activitiesByUser = {};
+        }
+        if (!window.DEMO_DATA._activitiesByUser[uid]) {
+          try {
+            const raw = localStorage.getItem(this.getStorageKey(uid));
+            window.DEMO_DATA._activitiesByUser[uid] = raw ? JSON.parse(raw) : {};
+          } catch (e) {
+            window.DEMO_DATA._activitiesByUser[uid] = {};
+          }
+        }
+        return window.DEMO_DATA._activitiesByUser[uid];
+      },
+      get(userId, dateStr) {
+        const userActivities = this.getAllForUser(userId);
+        return userActivities[dateStr] || {};
+      },
+      save(userId, dateStr, period, activityData) {
+        const uid = userId || "rep1";
+        const userActivities = this.getAllForUser(uid);
+        if (!userActivities[dateStr]) {
+          userActivities[dateStr] = {};
+        }
+        userActivities[dateStr][period] = activityData;
+        try {
+          localStorage.setItem(this.getStorageKey(uid), JSON.stringify(userActivities));
+        } catch (e) {}
+        autoSave("activities", "save", { userId: uid, date: dateStr, period, activityData });
+        return userActivities[dateStr][period];
+      },
+      delete(userId, dateStr, period) {
+        const uid = userId || "rep1";
+        const userActivities = this.getAllForUser(uid);
+        if (userActivities[dateStr] && userActivities[dateStr][period]) {
+          delete userActivities[dateStr][period];
+          if (Object.keys(userActivities[dateStr]).length === 0) {
+            delete userActivities[dateStr];
+          }
+          try {
+            localStorage.setItem(this.getStorageKey(uid), JSON.stringify(userActivities));
+          } catch (e) {}
+          autoSave("activities", "delete", { userId: uid, date: dateStr, period });
+          return true;
+        }
+        return false;
+      }
+    },
+
+    // ==========================================
+    // Section: Request Expenses Module
+    // ==========================================
+    expenses: {
+      STORAGE_KEY: "pharma_expenses_data",
+      getAll() {
+        if (!Array.isArray(window.DEMO_DATA.expenses)) {
+          try {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            window.DEMO_DATA.expenses = raw ? JSON.parse(raw) : [];
+          } catch (e) {
+            window.DEMO_DATA.expenses = [];
+          }
+        }
+        return window.DEMO_DATA.expenses;
+      },
+      getById(id) {
+        return this.getAll().find((e) => e.id === id);
+      },
+      add(expenseObj) {
+        const list = this.getAll();
+        list.unshift(expenseObj);
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+        autoSave("expenses", "create", expenseObj);
+        return expenseObj;
+      },
+      update(id, updates) {
+        const list = this.getAll();
+        const item = list.find((e) => e.id === id);
+        if (!item) return null;
+        Object.assign(item, updates);
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+        autoSave("expenses", "update", item);
+        return item;
+      },
+      updateStatus(id, newStatus, approverUser, comment) {
+        const item = this.getById(id);
+        if (!item) return null;
+        item.status = newStatus;
+        if (!item.history) item.history = [];
+        item.history.push({
+          action: newStatus,
+          at: new Date().toISOString(),
+          by: approverUser ? approverUser.id : "system",
+          role: approverUser ? approverUser.role : "system",
+          comment: comment || ""
+        });
+        const list = this.getAll();
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+        autoSave("expenses", "statusChange", { id, newStatus, approverUser, comment });
+        return item;
+      }
+    },
+
+    // ==========================================
+    // Section: Request Services Module
+    // ==========================================
+    services: {
+      STORAGE_KEY: "pharma_services_data",
+      getAll() {
+        if (!Array.isArray(window.DEMO_DATA.services)) {
+          try {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            window.DEMO_DATA.services = raw ? JSON.parse(raw) : [];
+          } catch (e) {
+            window.DEMO_DATA.services = [];
+          }
+        }
+        return window.DEMO_DATA.services;
+      },
+      getById(id) {
+        return this.getAll().find((s) => s.id === id);
+      },
+      add(serviceObj) {
+        const list = this.getAll();
+        list.unshift(serviceObj);
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+        autoSave("services", "create", serviceObj);
+        return serviceObj;
+      },
+      update(id, updates) {
+        const list = this.getAll();
+        const item = list.find((s) => s.id === id);
+        if (!item) return null;
+        Object.assign(item, updates);
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+        autoSave("services", "update", item);
+        return item;
+      },
+      updateStatus(id, newStatus, approverUser, comment, nextApproverId) {
+        const item = this.getById(id);
+        if (!item) return null;
+        item.status = newStatus;
+        if (nextApproverId !== undefined) {
+          item.nextApproverId = nextApproverId;
+        }
+        if (!item.history) item.history = [];
+        item.history.push({
+          action: newStatus,
+          at: new Date().toISOString(),
+          by: approverUser ? approverUser.id : "system",
+          role: approverUser ? approverUser.role : "system",
+          comment: comment || ""
+        });
+        const list = this.getAll();
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+        autoSave("services", "statusChange", { id, newStatus, approverUser, comment });
+        return item;
+      }
+    },
+
+    // ==========================================
+    // Section: Sales Promo Budgets Module
+    // ==========================================
+    budgets: {
+      STORAGE_KEY: "pharma_sales_budgets",
+      getAll() {
+        if (!window.DEMO_DATA.salesBudgets) {
+          try {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            window.DEMO_DATA.salesBudgets = raw ? JSON.parse(raw) : null;
+          } catch (e) {
+            window.DEMO_DATA.salesBudgets = null;
+          }
+        }
+        return window.DEMO_DATA.salesBudgets;
+      },
+      getByLine(lineId) {
+        const all = this.getAll();
+        return all ? all[lineId] : null;
+      },
+      saveAll(budgetsObj) {
+        window.DEMO_DATA.salesBudgets = budgetsObj;
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(budgetsObj));
+        } catch (e) {}
+        autoSave("budgets", "saveAll", budgetsObj);
+        return budgetsObj;
+      },
+      saveLineBudget(lineId, lineBudgetObj) {
+        const all = this.getAll() || {};
+        all[lineId] = lineBudgetObj;
+        return this.saveAll(all);
+      }
+    },
   };
 
   window.store = store;

@@ -499,3 +499,512 @@
         overflow-x: auto;
     }
 }
+
+/* --- Semantic Layout Classes (Replaces Inline Styles) --- */
+.period-panel-card {
+    background: var(--surface, #ffffff);
+    border-radius: 14px;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.period-header-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+.period-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.period-content-box {
+    padding: 1rem 0;
+    min-height: 80px;
+}
+.period-footer-bar {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+.current-date-badge {
+    margin: 0 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-color, #1e293b);
+}
+.weekly-overview-container {
+    background: var(--surface, #ffffff);
+    padding: 1.5rem;
+    border-radius: 14px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.weekly-overview-title {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+.weekly-days-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 1rem !important;
+}
+.week-card {
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--surface, #ffffff);
+}
+.week-card.selected {
+    border: 2px solid var(--primary, #2563eb) !important;
+}
+.week-card.day-off {
+    background: var(--gray-50, #f8fafc);
+}
+.week-card.day-off.selected {
+    background: var(--primary-light, #eff6ff);
+}
+.week-card-inner {
+    text-align: center;
+    padding: 0.85rem;
+}
+.week-card-day-name {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.week-card-date-sub {
+    font-size: 0.78rem;
+    color: var(--gray-500, #94a3b8);
+    margin-bottom: 0.5rem;
+}
+.week-card-shift-badges {
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.85rem;
+    background: var(--gray-100, #f1f5f9);
+    padding: 0.4rem;
+    border-radius: 6px;
+}
+.week-card-off-notice {
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-500, #64748b);
+    background: var(--gray-100, #f1f5f9);
+    padding: 0.4rem;
+    border-radius: 6px;
+}
+
+/* --- Dark Mode for Activities Cards & Weekly Grid --- */
+[data-theme="dark"] .period-panel-card,
+[data-theme="dark"] .weekly-overview-container {
+    background: #1e2229 !important;
+    border-color: #2d3340 !important;
+    color: #f1f3f5 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+[data-theme="dark"] .period-header-strip,
+[data-theme="dark"] .period-footer-bar {
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] .period-title,
+[data-theme="dark"] .weekly-overview-title {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .current-date-badge {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .week-card {
+    background: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #f1f3f5 !important;
+}
+[data-theme="dark"] .week-card.day-off {
+    background: #1a1d24 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] .week-card.day-off.selected {
+    background: #1e293b !important;
+}
+[data-theme="dark"] .week-card-shift-badges,
+[data-theme="dark"] .week-card-off-notice {
+    background: #181b21 !important;
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .week-card-date-sub {
+    color: #94a3b8 !important;
+}
+
+
+/* --- App Modal Shared Styles --- */
+.app-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 2500;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.app-modal-overlay.active {
+    display: flex;
+}
+.app-modal-card {
+    background: var(--surface, #ffffff);
+    border-radius: 14px;
+    width: 90%;
+    padding: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.app-modal-card.modal-sm { max-width: 440px; }
+.app-modal-card.modal-md { max-width: 520px; }
+.app-modal-card.modal-lg { max-width: 640px; }
+
+[data-theme="dark"] .app-modal-card {
+    background: #1e2229 !important;
+    border: 1px solid #2d3340 !important;
+    color: #f1f3f5 !important;
+}
+[data-theme="dark"] .app-modal-header {
+    border-bottom-color: #2d3340 !important;
+}
+[data-theme="dark"] .app-modal-footer {
+    border-top-color: #2d3340 !important;
+}
+[data-theme="dark"] .app-modal-title {
+    color: #f8fafc !important;
+}
+
+.app-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    padding-bottom: 12px;
+}
+.app-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+.app-modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    color: var(--gray-500, #94a3b8);
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+.app-modal-close-btn:hover {
+    color: var(--danger, #ef4444);
+}
+.app-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding-top: 14px;
+    margin-top: 1.25rem;
+}
+.app-modal-footer.footer-split {
+    justify-content: space-between;
+    align-items: center;
+}
+.btn-delete-activity {
+    color: #dc2626;
+    border: 1px solid #f87171;
+    background: transparent;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-delete-activity:hover {
+    background: #fef2f2;
+    border-color: #dc2626;
+}
+.form-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+.form-grid-2to1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+@media (max-width: 600px) {
+    .form-grid-2col,
+    .form-grid-2to1 {
+        grid-template-columns: 1fr;
+    }
+}
+.receipt-zoom-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+}
+.receipt-zoom-overlay.active {
+    display: flex;
+}
+.receipt-zoom-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+.receipt-zoom-close-btn {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    background: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.receipt-zoom-img {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #000000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* --- App Modal Form Controls & Helpers --- */
+.app-modal-card .form-group {
+    margin-bottom: 1rem;
+}
+.app-modal-card .form-group:last-of-type {
+    margin-bottom: 1.25rem;
+}
+.app-modal-card .form-label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--gray-700, #334155);
+    font-size: 0.92rem;
+}
+.app-modal-card .form-control {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--surface, #ffffff);
+    color: var(--text-color, #1e293b);
+    font-size: 0.92rem;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+.app-modal-card .form-control:focus {
+    outline: none;
+    border-color: var(--primary, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.app-modal-card .required-star {
+    color: #dc2626;
+    margin-inline-start: 2px;
+    font-weight: 700;
+}
+.receipt-upload-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.receipt-file-input {
+    flex: 1;
+    padding: 7px;
+    border: 1px dashed var(--gray-300, #cbd5e1);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+.receipt-preview-thumbnail-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--gray-300, #cbd5e1);
+    flex-shrink: 0;
+}
+.receipt-preview-thumbnail-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.form-hint {
+    display: block;
+    color: var(--gray-500, #64748b);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+.decision-message {
+    color: var(--gray-700, #334155);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+/* ============================================================================
+   Daily Activities & Weekly Overview Specific Components
+   ============================================================================ */
+
+/* Generic Card Base for Activities Hub */
+.card {
+    background: var(--surface, #ffffff);
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .card {
+    background: var(--surface, #1e2229) !important;
+    border-color: var(--border-color, #2d3340) !important;
+}
+
+/* Current Day AM/PM Panels */
+.current-day-view {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.period-panel-card {
+    background: var(--surface, #ffffff);
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .period-panel-card {
+    background: var(--surface, #1e2229) !important;
+    border-color: var(--border-color, #2d3340) !important;
+}
+
+.period-header-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+[data-theme="dark"] .period-header-strip {
+    border-bottom-color: var(--border-color, #2d3340) !important;
+}
+
+.period-footer-bar {
+    margin-top: 1rem;
+    text-align: right;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+[data-theme="dark"] .period-footer-bar {
+    border-top-color: var(--border-color, #2d3340) !important;
+}
+
+/* Weekly Overview Calendar Card & Grid */
+.weekly-overview-container {
+    background: var(--surface, #ffffff);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .weekly-overview-container {
+    background: var(--surface, #1e2229) !important;
+    border-color: var(--border-color, #2d3340) !important;
+}
+
+.weekly-days-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+.week-card {
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 0.75rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.week-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.week-card.selected {
+    border: 2px solid var(--primary, #2563eb) !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.week-card.day-off {
+    background: var(--surface-alt, #f8fafc);
+}
+
+[data-theme="dark"] .week-card {
+    background: var(--surface, #1e2229) !important;
+    border-color: var(--border-color, #2d3340) !important;
+}
+
+[data-theme="dark"] .week-card.day-off {
+    background: var(--surface-alt, #15181e) !important;
+}
+
+.current-date-badge {
+    padding: 6px 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    background: var(--surface-dim, #f1f5f9);
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-color, #1e293b);
+}
+
+[data-theme="dark"] .current-date-badge {
+    background: var(--surface-dim, #2d3340) !important;
+    border-color: var(--border-color, #2d3340) !important;
+    color: var(--white, #f8fafc) !important;
+}
+
+

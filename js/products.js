@@ -737,14 +737,13 @@ function openTransferModal(lineId, productId) {
   if (!selectEl) return;
 
   const isAr = document.documentElement.dir === "rtl";
-  const placeholder = isAr ? productTranslations.ar.selectLinePlaceholder : productTranslations.en.selectLinePlaceholder;
-  selectEl.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
-
+  let optionsHtml = `<option value="" disabled selected>${placeholder}</option>`;
   window.store.productLines.getAll().forEach((l) => {
     if (l.id !== lineId) {
-      selectEl.innerHTML += `<option value="${window.escapeHtml(l.id)}">${window.escapeHtml(l.name)} (${l.products ? l.products.length : 0} products)</option>`;
+      optionsHtml += `<option value="${window.escapeHtml(l.id)}">${window.escapeHtml(l.name)} (${l.products ? l.products.length : 0} products)</option>`;
     }
   });
+  selectEl.innerHTML = optionsHtml;
 
   const modalEl = document.getElementById("transferProductModal");
   if (modalEl) {

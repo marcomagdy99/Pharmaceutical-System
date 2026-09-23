@@ -3,7 +3,7 @@
  * @description Service Worker for PharmaCare PWA offline caching and reliable field performance.
  */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = `pharmacare-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   './',
@@ -106,7 +106,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         // Return cached version, but update cache in background (Stale-While-Revalidate)
         fetch(event.request).then((networkResponse) => {

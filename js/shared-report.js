@@ -1328,7 +1328,7 @@ function handleDoctorsFileSelected(event) {
   }
 
   const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
-  const safeHtml = window.escapeHtml || ((str) => String(str || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])));
+  const safeHtml = window.escapeHtml;
 
   const processRows = (rows) => {
     if (!rows || !rows.length) {
@@ -1567,7 +1567,7 @@ function handlePharmaciesFileSelected(event) {
   }
 
   const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
-  const safeHtml = window.escapeHtml || ((str) => String(str || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])));
+  const safeHtml = window.escapeHtml;
 
   const processRows = (rows) => {
     if (!rows || !rows.length) {
