@@ -5,7 +5,7 @@
  * Strictly enforces Role Hierarchy Isolation:
  * - Rep: sees ONLY their own requests.
  * - DM: sees their own requests + requests from their supervised reps.
- * - LM: sees their own requests + requests from their supervised DMs and reps in their line.
+ * - LM: sees their own requests + requests from their supervised DMs and reps.
  * - BU & Admin: see requests across their line/organization.
  * - HR: sees all expense requests for audit, approval, and disbursement.
  */
@@ -154,141 +154,141 @@ const activityTranslations = {
   },
   ar: {
     // Page & Navigation
-    activitiesTitle: "ÙØ§Ø±Ù…Ø§ÙƒÙŠØ± - Ø§Ù„Ø·Ù„Ø¨Ø§Øª Ø§Ù„Ù…ÙŠØ¯Ø§Ù†ÙŠØ©",
-    dailyActivities: "Ø§Ù„Ø£Ù†Ø´Ø·Ø© Ø§Ù„ÙŠÙˆÙ…ÙŠØ©",
-    tabDailyActivities: "Ø§Ù„Ø£Ù†Ø´Ø·Ø© Ø§Ù„ÙŠÙˆÙ…ÙŠØ©",
-    tabExpenses: "Ù†ÙÙ‚Ø§Øª ÙˆÙ…ØµØ§Ø±ÙŠÙ Ø§Ù„Ø¹Ù…Ù„",
-    tabServices: "Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ø¯ÙƒØ§ØªØ±Ø© ÙˆØ§Ù„Ù…Ø³ØªØ´ÙÙŠØ§Øª",
-    tabSalesBudget: "Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª (Budget)",
-    today: "Ø§Ù„ÙŠÙˆÙ…",
-    amPeriod: "ÙØªØ±Ø© Ø§Ù„ØµØ¨Ø§Ø­",
-    pmPeriod: "ÙØªØ±Ø© Ø§Ù„Ù…Ø³Ø§Ø¡",
-    logActivity: "ØªØ³Ø¬ÙŠÙ„ Ù†Ø´Ø§Ø·",
-    logActivityTitle: "ØªØ³Ø¬ÙŠÙ„ Ù†Ø´Ø§Ø·",
-    weeklyOverview: "Ù†Ø¸Ø±Ø© Ø¹Ø§Ù…Ø© Ø£Ø³Ø¨ÙˆØ¹ÙŠØ© (Ø§Ù„Ø³Ø¨Øª - Ø§Ù„Ø®Ù…ÙŠØ³)",
-    period: "Ø§Ù„ÙØªØ±Ø©",
-    activityType: "Ù†ÙˆØ¹ Ø§Ù„Ù†Ø´Ø§Ø·",
-    selectActivity: "Ø§Ø®ØªØ± Ø§Ù„Ù†Ø´Ø§Ø·...",
-    typeVisit: "Ø²ÙŠØ§Ø±Ø©",
-    typeOfficeWork: "Ø¹Ù…Ù„ Ù…ÙƒØªØ¨ÙŠ",
-    typeTraining: "ØªØ¯Ø±ÙŠØ¨",
-    typeMeeting: "Ø§Ø¬ØªÙ…Ø§Ø¹",
-    typeConference: "Ù…Ø¤ØªÙ…Ø±",
-    notes: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª",
-    cancel: "Ø¥Ù„ØºØ§Ø¡",
-    save: "Ø­ÙØ¸",
-    statusLogged: "ØªÙ… Ø§Ù„ØªØ³Ø¬ÙŠÙ„",
-    statusNotLogged: "Ù„Ù… ÙŠØªÙ… Ø§Ù„ØªØ³Ø¬ÙŠÙ„",
-    goToVisits: "Ø§Ù„Ø°Ù‡Ø§Ø¨ Ù„ØµÙØ­Ø© Ø§Ù„Ø²ÙŠØ§Ø±Ø§Øª",
-    noActivityLogged: "Ù„Ù… ÙŠØªÙ… ØªØ³Ø¬ÙŠÙ„ Ù†Ø´Ø§Ø· Ù„Ù‡Ø°Ù‡ Ø§Ù„ÙØªØ±Ø©.",
-    sat: "Ø§Ù„Ø³Ø¨Øª",
-    sun: "Ø§Ù„Ø£Ø­Ø¯",
-    mon: "Ø§Ù„Ø§Ø«Ù†ÙŠÙ†",
-    tue: "Ø§Ù„Ø«Ù„Ø§Ø«Ø§Ø¡",
-    wed: "Ø§Ù„Ø£Ø±Ø¨Ø¹Ø§Ø¡",
-    thu: "Ø§Ù„Ø®Ù…ÙŠØ³",
-    fri: "Ø§Ù„Ø¬Ù…Ø¹Ø©",
+    activitiesTitle: "فارماكير - الطلبات الميدانية",
+    dailyActivities: "الأنشطة اليومية",
+    tabDailyActivities: "الأنشطة اليومية",
+    tabExpenses: "نفقات ومصاريف العمل",
+    tabServices: "خدمات الدكاترة والمستشفيات",
+    tabSalesBudget: "ميزانية المبيعات (Budget)",
+    today: "اليوم",
+    amPeriod: "فترة الصباح",
+    pmPeriod: "فترة المساء",
+    logActivity: "تسجيل نشاط",
+    logActivityTitle: "تسجيل نشاط",
+    weeklyOverview: "نظرة عامة أسبوعية (السبت - الخميس)",
+    period: "الفترة",
+    activityType: "نوع النشاط",
+    selectActivity: "اختر النشاط...",
+    typeVisit: "زيارة",
+    typeOfficeWork: "عمل مكتبي",
+    typeTraining: "تدريب",
+    typeMeeting: "اجتماع",
+    typeConference: "مؤتمر",
+    notes: "ملاحظات",
+    cancel: "إلغاء",
+    save: "حفظ",
+    statusLogged: "تم التسجيل",
+    statusNotLogged: "لم يتم التسجيل",
+    goToVisits: "الذهاب لصفحة الزيارات",
+    noActivityLogged: "لم يتم تسجيل نشاط لهذه الفترة.",
+    sat: "السبت",
+    sun: "الأحد",
+    mon: "الاثنين",
+    tue: "الثلاثاء",
+    wed: "الأربعاء",
+    thu: "الخميس",
+    fri: "الجمعة",
 
     // Expenses Tab
-    expensesTitle: "Ù†ÙÙ‚Ø§Øª ÙˆÙ…ØµØ§Ø±ÙŠÙ Ø§Ù„Ù…ÙŠØ¯Ø§Ù† ÙˆØ§Ù„Ø³ÙØ±",
-    expensesSubtitle: "Ø¥Ø¯Ø§Ø±Ø© Ù…Ø·Ø§Ù„Ø¨Ø§Øª Ø§Ù„Ø³ÙØ±ØŒ Ø§Ù„Ø§Ù†ØªÙ‚Ø§Ù„Ø§ØªØŒ Ø§Ù„Ø¨Ù†Ø²ÙŠÙ†ØŒ Ø§Ù„ÙƒØ§Ø±ØªØ§ØªØŒ ÙˆØ§Ù„Ø¶ÙŠØ§ÙØ© Ø¨Ø³Ù„Ø³Ù„Ø© Ù…ÙˆØ§ÙÙ‚Ø§Øª Ø¯Ù‚ÙŠÙ‚Ø©.",
-    btnNewExpense: "Ù…Ø·Ø§Ù„Ø¨Ø© Ù†ÙÙ‚Ø§Øª Ø¬Ø¯ÙŠØ¯Ø©",
-    pendingApproval: "ÙÙŠ Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø©",
-    approvedExpenses: "Ø§Ù„Ù…Ø·Ø§Ù„Ø¨Ø§Øª Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø©",
-    disbursedExpenses: "Ø§Ù„Ù…Ù†ØµØ±Ù / Ø§Ù„Ù…Ø¯ÙÙˆØ¹",
-    allStatuses: "ÙƒÙ„ Ø§Ù„Ø­Ø§Ù„Ø§Øª",
-    filterPending: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
-    filterApproved: "Ù…Ø¹ØªÙ…Ø¯",
-    filterRejected: "Ù…Ø±ÙÙˆØ¶",
-    filterDisbursed: "ØªÙ… Ø§Ù„ØµØ±Ù",
-    allCategories: "ÙƒÙ„ Ø§Ù„Ø¨Ù†ÙˆØ¯",
-    catTravel: "Ø§Ù†ØªÙ‚Ø§Ù„Ø§Øª ÙˆØ³ÙØ±",
-    catFuelTolls: "ÙƒØ§Ø±ØªØ§Øª ÙˆØ¨Ù†Ø²ÙŠÙ†",
-    catHospitality: "Ø¶ÙŠØ§ÙØ© ÙˆØ§Ø¬ØªÙ…Ø§Ø¹Ø§Øª",
-    catHotel: "Ø¥Ù‚Ø§Ù…Ø© ÙÙ†Ø¯Ù‚ÙŠØ©",
-    colDate: "Ø§Ù„ØªØ§Ø±ÙŠØ®",
-    colEmployee: "Ø§Ù„Ù…ÙˆØ¸Ù",
-    colCategory: "Ø¨Ù†Ø¯ Ø§Ù„Ù†ÙÙ‚Ø©",
-    colAmount: "Ø§Ù„Ù…Ø¨Ù„Øº",
-    colReceipt: "Ø§Ù„ÙØ§ØªÙˆØ±Ø© / Ø§Ù„Ø¥ÙŠØµØ§Ù„",
-    colStatus: "Ø­Ø§Ù„Ø© Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯",
-    colActions: "Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª",
-    modalNewExpenseTitle: "ØªØ³Ø¬ÙŠÙ„ Ù…Ø·Ø§Ù„Ø¨Ø© Ù†ÙÙ‚Ø§Øª Ù…ÙŠØ¯Ø§Ù†ÙŠØ©",
-    receiptHelp: "Ø§Ù„ØªÙ‚Ø· ØµÙˆØ±Ø© ÙˆØ§Ø¶Ø­Ø© Ù„Ù„ÙØ§ØªÙˆØ±Ø© Ø£Ùˆ Ø§Ù„Ø¥ÙŠØµØ§Ù„ Ø£Ùˆ Ø£Ø±ÙÙ‚Ù‡Ø§ Ù…Ù† Ø¬Ù‡Ø§Ø²Ùƒ.",
-    btnSubmitClaim: "Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…Ø·Ø§Ù„Ø¨Ø©",
-    noExpensesFound: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø·Ø§Ù„Ø¨Ø§Øª Ù†ÙÙ‚Ø§Øª Ù…Ø·Ø§Ø¨Ù‚Ø© Ù„Ù„ÙÙ„ØªØ± Ø§Ù„Ù…Ø­Ø¯Ø¯.",
+    expensesTitle: "نفقات ومصاريف الميدان والسفر",
+    expensesSubtitle: "إدارة مطالبات السفر، الانتقالات، البنزين، الكارتات، والضيافة بسلسلة موافقات دقيقة.",
+    btnNewExpense: "مطالبة نفقات جديدة",
+    pendingApproval: "في انتظار الموافقة",
+    approvedExpenses: "المطالبات المعتمدة",
+    disbursedExpenses: "المنصرف / المدفوع",
+    allStatuses: "كل الحالات",
+    filterPending: "قيد المراجعة",
+    filterApproved: "معتمد",
+    filterRejected: "مرفوض",
+    filterDisbursed: "تم الصرف",
+    allCategories: "كل البنود",
+    catTravel: "انتقالات وسفر",
+    catFuelTolls: "كارتات وبنزين",
+    catHospitality: "ضيافة واجتماعات",
+    catHotel: "إقامة فندقية",
+    colDate: "التاريخ",
+    colEmployee: "الموظف",
+    colCategory: "بند النفقة",
+    colAmount: "المبلغ",
+    colReceipt: "الفاتورة / الإيصال",
+    colStatus: "حالة الاعتماد",
+    colActions: "إجراءات",
+    modalNewExpenseTitle: "تسجيل مطالبة نفقات ميدانية",
+    receiptHelp: "التقط صورة واضحة للفاتورة أو الإيصال أو أرفقها من جهازك.",
+    btnSubmitClaim: "إرسال المطالبة",
+    noExpensesFound: "لا توجد مطالبات نفقات مطابقة للفلتر المحدد.",
 
     // Services Tab
-    servicesTitle: "Ø®Ø¯Ù…Ø§Øª ÙˆØ±Ø¹Ø§ÙŠØ§Øª Ø§Ù„Ø£Ø·Ø¨Ø§Ø¡ ÙˆØ§Ù„Ù…Ø³ØªØ´ÙÙŠØ§Øª",
-    servicesSubtitle: "ØªÙ‚Ø¯ÙŠÙ… Ø·Ù„Ø¨Ø§Øª Ø±Ø¹Ø§ÙŠØ© Ø§Ù„Ù…Ø¤ØªÙ…Ø±Ø§Øª ÙˆØ§Ù„Ù…Ø­Ø§Ø¶Ø±Ø§Øª Ø§Ù„Ø¹Ù„Ù…ÙŠØ© ÙˆØ§Ù„Ù…Ø·Ø¨ÙˆØ¹Ø§Øª Ø§Ù„Ø·Ø¨ÙŠØ© Ø¨Ø¯Ø¹Ù… Ù…Ù† Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ù„Ø§ÙŠÙ†.",
-    btnNewService: "Ø·Ù„Ø¨ Ø®Ø¯Ù…Ø© Ø¬Ø¯ÙŠØ¯",
-    allocatedBudgetOverview: "Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ø£Ù†Ø´Ø·Ø© Ø§Ù„ØªØ±ÙˆÙŠØ¬ÙŠØ© Ø§Ù„Ù…Ø®ØµØµØ©",
-    lineFilterLabel: "Ø§Ù„Ù„Ø§ÙŠÙ†:",
-    totalAllocatedBudget: "Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©",
-    approvedSpent: "Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ ÙˆØ§Ù„Ù…Ø³ØªÙ‡Ù„Ùƒ",
-    pendingServices: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ø¨Ø§Ù„Ø·Ù„Ø¨Ø§Øª",
-    remainingBudget: "Ø§Ù„Ø±ØµÙŠØ¯ Ø§Ù„Ù…ØªØ¨Ù‚ÙŠ",
-    distributeToDmsTitle: "ØªÙˆØ²ÙŠØ¹ Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ù„Ø§ÙŠÙ† Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø´Ø±ÙÙŠÙ† (DMs)",
-    distributeToDmsSubtitle: "ØªÙˆØ²ÙŠØ¹ Ø­ØµØµ Ù…Ù† Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ù„Ø§ÙŠÙ† Ø§Ù„Ù…Ø³ØªÙ„Ù…Ø© Ù…Ù† Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„ÙˆØ­Ø¯Ø© Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø´Ø±ÙÙŠÙ† Ø§Ù„ØªØ§Ø¨Ø¹ÙŠÙ† Ù„Ùƒ.",
-    saveAllocations: "Ø­ÙØ¸ Ø§Ù„ØªÙˆØ²ÙŠØ¹",
-    colDm: "Ø§Ù„Ù…Ø´Ø±Ù (DM)",
-    colCode: "Ø§Ù„ÙƒÙˆØ¯",
-    colAllocatedAmount: "Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ù…Ø®ØµØµØ© (Ø¬.Ù…)",
-    colUtilized: "Ø§Ù„Ù…Ø³ØªÙ‡Ù„Ùƒ",
-    allDepts: "ÙƒÙ„ Ø§Ù„Ø£Ù‚Ø³Ø§Ù…",
-    deptSales: "Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª (Sales)",
-    deptMarketing: "Ø®Ø¯Ù…Ø§Øª Ø§Ù„ØªØ³ÙˆÙŠÙ‚ (Marketing)",
-    colLine: "Ø§Ù„Ù„Ø§ÙŠÙ†",
-    colDept: "Ø§Ù„Ù‚Ø³Ù…",
-    colArea: "Ø§Ù„Ù…Ù†Ø·Ù‚Ø©",
-    colShiftTarget: "Ø§Ù„ÙØªØ±Ø© ÙˆØ§Ù„Ø¬Ù‡Ø© Ø§Ù„Ù…Ø³ØªÙ‡Ø¯ÙØ©",
-    colService: "Ø§Ø³Ù… / Ù†ÙˆØ¹ Ø§Ù„Ø®Ø¯Ù…Ø©",
-    colCost: "Ø§Ù„ØªÙƒÙ„ÙØ© Ø§Ù„ØªÙ‚Ø¯ÙŠØ±ÙŠØ©",
-    colShift: "Ø§Ù„ÙØªØ±Ø©",
-    modalNewServiceTitle: "Ø·Ù„Ø¨ Ø®Ø¯Ù…Ø© / Ø±Ø¹Ø§ÙŠØ© Ø·Ø¨ÙŠØ© Ø¬Ø¯ÙŠØ¯Ø©",
-    targetHospital: "Ø§Ù„Ù…Ø³ØªØ´ÙÙ‰ / Ø§Ù„Ù…Ø±ÙƒØ² Ø§Ù„Ù…Ø³ØªÙ‡Ø¯Ù",
-    targetDoctor: "Ø§Ù„Ø·Ø¨ÙŠØ¨ Ø§Ù„Ù…Ø³ØªÙ‡Ø¯Ù",
-    serviceTitleLabel: "Ù†ÙˆØ¹ / Ø¹Ù†ÙˆØ§Ù† Ø§Ù„Ø®Ø¯Ù…Ø©",
-    serviceDateLabel: "ØªØ§Ø±ÙŠØ® Ø§Ù„ØªÙ†ÙÙŠØ° Ø§Ù„Ù…ØªÙˆÙ‚Ø¹",
-    btnSubmitService: "Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ Ø§Ù„Ø®Ø¯Ù…Ø©",
-    noServicesFound: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ø®Ø¯Ù…Ø§Øª Ù…Ø·Ø§Ø¨Ù‚Ø© Ù„Ù„ÙÙ„ØªØ± Ø§Ù„Ù…Ø­Ø¯Ø¯.",
+    servicesTitle: "خدمات ورعايات الأطباء والمستشفيات",
+    servicesSubtitle: "تقديم طلبات رعاية المؤتمرات والمحاضرات العلمية والمطبوعات الطبية بدعم من ميزانية اللاين.",
+    btnNewService: "طلب خدمة جديد",
+    allocatedBudgetOverview: "ميزانية الأنشطة الترويجية المخصصة",
+    lineFilterLabel: "اللاين:",
+    totalAllocatedBudget: "إجمالي الميزانية",
+    approvedSpent: "المعتمد والمستهلك",
+    pendingServices: "قيد المراجعة بالطلبات",
+    remainingBudget: "الرصيد المتبقي",
+    distributeToDmsTitle: "توزيع ميزانية اللاين على المشرفين (DMs)",
+    distributeToDmsSubtitle: "توزيع حصص من ميزانية اللاين المستلمة من إدارة الوحدة على المشرفين التابعين لك.",
+    saveAllocations: "حفظ التوزيع",
+    colDm: "المشرف (DM)",
+    colCode: "الكود",
+    colAllocatedAmount: "الميزانية المخصصة (ج.م)",
+    colUtilized: "المستهلك",
+    allDepts: "كل الأقسام",
+    deptSales: "خدمات المبيعات (Sales)",
+    deptMarketing: "خدمات التسويق (Marketing)",
+    colLine: "اللاين",
+    colDept: "القسم",
+    colArea: "المنطقة",
+    colShiftTarget: "الفترة والجهة المستهدفة",
+    colService: "اسم / نوع الخدمة",
+    colCost: "التكلفة التقديرية",
+    colShift: "الفترة",
+    modalNewServiceTitle: "طلب خدمة / رعاية طبية جديدة",
+    targetHospital: "المستشفى / المركز المستهدف",
+    targetDoctor: "الطبيب المستهدف",
+    serviceTitleLabel: "نوع / عنوان الخدمة",
+    serviceDateLabel: "تاريخ التنفيذ المتوقع",
+    btnSubmitService: "إرسال طلب الخدمة",
+    noServicesFound: "لا توجد طلبات خدمات مطابقة للفلتر المحدد.",
 
     // Sales Budget Tab
-    buBudgetTitle: "ØªÙˆØ²ÙŠØ¹ Ù…ÙŠØ²Ø§Ù†ÙŠØ§Øª Ø§Ù„Ù…Ø¨ÙŠØ¹Ø§Øª (Sales Budget)",
-    buBudgetSubtitle: "ØªØ®ØµÙŠØµ ÙˆØ§Ø¹ØªÙ…Ø§Ø¯ Ù…ÙŠØ²Ø§Ù†ÙŠØ§Øª Ø§Ù„ØªØ±ÙˆÙŠØ¬ Ø§Ù„Ù…ÙŠØ¯Ø§Ù†ÙŠ Ù„ÙƒÙ„ Ù„Ø§ÙŠÙ† Ø¹Ù„Ù‰ Ù…Ø¯ÙŠØ±ÙŠ Ø§Ù„Ø®Ø·ÙˆØ· (LMs).",
-    selectProductLine: "Ø®Ø· Ø§Ù„Ø¥Ù†ØªØ§Ø¬ (Line):",
-    totalLineBudget: "Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø§Ù„Ù„Ø§ÙŠÙ†",
-    allocatedToLms: "Ø§Ù„Ù…ÙˆØ²Ø¹ Ø¹Ù„Ù‰ Ù…Ø¯ÙŠØ±ÙŠ Ø§Ù„Ø®Ø·ÙˆØ· (LMs)",
-    unallocatedRemaining: "Ø§Ù„Ù…ØªØ¨Ù‚ÙŠ ØºÙŠØ± Ø§Ù„Ù…ÙˆØ²Ø¹",
-    colLm: "Ù…Ø¯ÙŠØ± Ø§Ù„Ø®Ø· (LM)",
-    colDistributedToDms: "Ø§Ù„Ù…ÙˆØ²Ø¹ Ø¹Ù„Ù‰ Ø§Ù„Ù€ DMs",
+    buBudgetTitle: "توزيع ميزانيات المبيعات (Sales Budget)",
+    buBudgetSubtitle: "تخصيص واعتماد ميزانيات الترويج الميداني لكل لاين على مديري الخطوط (LMs).",
+    selectProductLine: "خط الإنتاج (Line):",
+    totalLineBudget: "إجمالي ميزانية اللاين",
+    allocatedToLms: "الموزع على مديري الخطوط (LMs)",
+    unallocatedRemaining: "المتبقي غير الموزع",
+    colLm: "مدير الخط (LM)",
+    colDistributedToDms: "الموزع على الـ DMs",
 
     // Hierarchical Status Text
-    waitingDmPrefix: "ÙÙŠ Ø§Ù†ØªØ¸Ø§Ø± Ù…ÙˆØ§ÙÙ‚Ø©: ",
-    waitingLmPrefix: "ÙÙŠ Ø§Ù†ØªØ¸Ø§Ø± Ù…ÙˆØ§ÙÙ‚Ø©: ",
-    waitingHr: "ÙÙŠ Ø§Ù†ØªØ¸Ø§Ø± Ù…ÙˆØ§ÙÙ‚Ø© Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù…ÙˆØ§Ø±Ø¯ Ø§Ù„Ø¨Ø´Ø±ÙŠØ© (HR)",
-    approvedLabel: "Ù…Ø¹ØªÙ…Ø¯",
-    rejectedLabel: "Ù…Ø±ÙÙˆØ¶",
-    disbursedLabel: "ØªÙ… Ø§Ù„ØµØ±Ù",
-    statusPending: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    waitingDmPrefix: "في انتظار موافقة: ",
+    waitingLmPrefix: "في انتظار موافقة: ",
+    waitingHr: "في انتظار موافقة إدارة الموارد البشرية (HR)",
+    approvedLabel: "معتمد",
+    rejectedLabel: "مرفوض",
+    disbursedLabel: "تم الصرف",
+    statusPending: "قيد المراجعة",
 
     // Decision Modal
-    confirmApprovalTitle: "ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø©",
-    confirmRejectionTitle: "ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø±ÙØ¶",
-    confirmDisbursementTitle: "ØªØ£ÙƒÙŠØ¯ ØµØ±Ù Ø§Ù„Ù†ÙÙ‚Ø§Øª",
-    confirmApproveMsg: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ Ø¨Ù‚ÙŠÙ…Ø© {amount} Ø¬.Ù… Ø§Ù„Ù…Ù‚Ø¯Ù… Ù…Ù† {name}ØŸ",
-    confirmRejectMsg: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø±ÙØ¶ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ Ø§Ù„Ù…Ù‚Ø¯Ù… Ù…Ù† {name}ØŸ",
-    confirmDisburseMsg: "ØªØ£ÙƒÙŠØ¯ ØªØ³Ø¬ÙŠÙ„ ØµØ±Ù Ù…Ø¨Ù„Øº {amount} Ø¬.Ù… Ù„Ù„Ù…ÙˆØ¸Ù {name}ØŸ",
-    reasonLabel: "Ø§Ù„Ø³Ø¨Ø¨ / Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯:",
-    reasonPlaceholder: "Ø£Ø¯Ø®Ù„ Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø£Ùˆ Ø³Ø¨Ø¨ Ø§Ù„Ø±ÙØ¶...",
-    btnApprove: "Ù…ÙˆØ§ÙÙ‚Ø© ÙˆØ§Ø¹ØªÙ…Ø§Ø¯",
-    btnReject: "Ø±ÙØ¶ Ø§Ù„Ø·Ù„Ø¨",
-    btnDisburse: "ØªØ£ÙƒÙŠØ¯ Ø§Ù„ØµØ±Ù",
-    rejectionReasonRequired: "ÙŠØ±Ø¬Ù‰ ÙƒØªØ§Ø¨Ø© Ø³Ø¨Ø¨ Ø§Ù„Ø±ÙØ¶ Ù‚Ø¨Ù„ Ø§Ù„Ù…ØªØ§Ø¨Ø¹Ø©.",
-    successAction: "ØªÙ… ØªÙ†ÙÙŠØ° Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡ Ø¨Ù†Ø¬Ø§Ø­!",
-    savedBudgetMessage: "ØªÙ… Ø­ÙØ¸ ÙˆØªØ­Ø¯ÙŠØ« ØªÙˆØ²ÙŠØ¹ Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ© Ø¨Ù†Ø¬Ø§Ø­!",
-    insufficientBudgetNotice: "ØªÙ†Ø¨ÙŠÙ‡: ØªÙƒÙ„ÙØ© Ø§Ù„Ø·Ù„Ø¨ ØªØªØ¬Ø§ÙˆØ² Ø§Ù„Ø±ØµÙŠØ¯ Ø§Ù„Ù…ØªØ§Ø­ Ø­Ø§Ù„ÙŠØ§Ù‹ Ø¨Ø§Ù„Ù…ÙŠØ²Ø§Ù†ÙŠØ©.",
-    noReceipt: "Ù„Ø§ ØªÙˆØ¬Ø¯ ÙØ§ØªÙˆØ±Ø© Ù…Ø±ÙÙ‚Ø©"
+    confirmApprovalTitle: "تأكيد الموافقة",
+    confirmRejectionTitle: "تأكيد الرفض",
+    confirmDisbursementTitle: "تأكيد صرف النفقات",
+    confirmApproveMsg: "هل أنت متأكد من الموافقة على هذا الطلب بقيمة {amount} ج.م المقدم من {name}؟",
+    confirmRejectMsg: "هل أنت متأكد من رفض هذا الطلب المقدم من {name}؟",
+    confirmDisburseMsg: "تأكيد تسجيل صرف مبلغ {amount} ج.م للموظف {name}؟",
+    reasonLabel: "السبب / ملاحظات الاعتماد:",
+    reasonPlaceholder: "أدخل ملاحظات أو سبب الرفض...",
+    btnApprove: "موافقة واعتماد",
+    btnReject: "رفض الطلب",
+    btnDisburse: "تأكيد الصرف",
+    rejectionReasonRequired: "يرجى كتابة سبب الرفض قبل المتابعة.",
+    successAction: "تم تنفيذ الإجراء بنجاح!",
+    savedBudgetMessage: "تم حفظ وتحديث توزيع الميزانية بنجاح!",
+    insufficientBudgetNotice: "تنبيه: تكلفة الطلب تتجاوز الرصيد المتاح حالياً بالميزانية.",
+    noReceipt: "لا توجد فاتورة مرفقة"
   }
 };
 
@@ -326,7 +326,7 @@ function getAuthUser() {
     id: "rep1",
     role: "medical_rep",
     name: "Ahmed Mostafa",
-    nameAr: "Ø£Ø­Ù…Ø¯ Ù…ØµØ·ÙÙ‰",
+    nameAr: "أحمد مصطفى",
     lineIds: ["line1"],
     areaId: "area1"
   };
@@ -424,66 +424,66 @@ function getHospitalsForLineAndArea(lineId, areaId) {
 
 function getHrUser() {
   const hr = getAllUsers().find((u) => u.role === "hr");
-  return hr || { id: "hr1", name: "HR Department", nameAr: "Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù…ÙˆØ§Ø±Ø¯ Ø§Ù„Ø¨Ø´Ø±ÙŠØ©" };
+  return hr || { id: "hr1", name: "HR Department", nameAr: "إدارة الموارد البشرية" };
 }
 
 // ============================================================================
 // 2.5 Strict Role Hierarchy Visibility Engine
 // ============================================================================
 /**
- * Recursively checks whether a user is directly or indirectly subordinate
- * to a manager in the organizational reporting structure.
- */
-function isSubordinateOf(subordinateId, managerId) {
-  if (!subordinateId || !managerId) return false;
-  if (subordinateId === managerId) return false;
-  let curr = getUserById(subordinateId);
-  let guard = 0;
-  while (curr && curr.managerId && guard < 15) {
-    guard++;
-    if (curr.managerId === managerId) return true;
-    curr = getUserById(curr.managerId);
-  }
-  return false;
-}
-
-/**
  * Determines whether a user has permission to see a given request in their view.
  * Rules:
  * - Rep: sees ONLY their own requests.
  * - DM: sees their own requests + requests from their supervised reps.
- * - LM: sees their own requests + requests from their supervised DMs and reps.
- * - BU & Admin: sees all requests across their business unit / company.
- * - HR: sees all expense claims for audit & disbursement, and only own service requests.
+ * - LM: sees their own requests + requests from their supervised DMs and reps in their line.
+ * - BU & Admin: sees all requests in their line/organization.
+ * - HR: sees all expense requests for audit & approval.
  */
 function canUserViewRequest(req, user) {
   if (!user || !req) return false;
 
-  // 1. Admin & BU Head see all requests across the organization
+  // 1. Admin & BU Head see everything in their scope
   if (user.role === "admin" || user.role === "business_unit") {
     return true;
   }
 
-  // 2. HR sees all expense claims (for audit & payment)
+  // 2. HR sees all expenses
   if (user.role === "hr") {
-    if (req.category || req.receiptUrl !== undefined) {
-      return true; // Expenses tab
-    }
-    return req.requesterId === user.id;
-  }
-
-  // 3. Any user always sees their own submitted requests
-  if (req.requesterId === user.id) {
     return true;
   }
 
-  // 4. Medical Rep: STRICT ISOLATION -> ONLY their own items
+  // 3. Medical Rep: STRICT ISOLATION -> ONLY their own items
   if (user.role === "medical_rep" || user.role === "rep") {
+    return req.requesterId === user.id;
+  }
+
+  // 4. District Manager: sees their own items + supervised reps
+  if (user.role === "district_manager") {
+    if (req.requesterId === user.id) return true;
+    const requester = getUserById(req.requesterId);
+    return requester && requester.managerId === user.id;
+  }
+
+  // 5. Line Manager: sees their own items + supervised DMs + reps under those DMs
+  if (user.role === "line_manager") {
+    if (req.requesterId === user.id) return true;
+    const requester = getUserById(req.requesterId);
+    if (!requester) return false;
+    // Direct DM report
+    if (requester.managerId === user.id) return true;
+    // Rep reporting to one of this LM's DMs
+    const dm = getUserById(requester.managerId);
+    if (dm && dm.managerId === user.id) return true;
+    // If request matches LM line
+    const lmLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if (req.lineId && lmLines.includes(req.lineId)) {
+      return true;
+    }
     return false;
   }
 
-  // 5. DM & LM: strictly see requests from their direct and indirect team subordinates
-  return isSubordinateOf(req.requesterId, user.id);
+  // Fallback: only own items
+  return req.requesterId === user.id;
 }
 
 // ============================================================================
@@ -686,11 +686,11 @@ function renderWeeklyOverview() {
     const dayData = demoActivities[dateStr] || {};
 
     const amIcon = dayData.AM
-      ? '<span style="color: var(--success); font-weight: bold;">âœ“</span>'
-      : '<span style="color: var(--danger); font-weight: bold;">âœ•</span>';
+      ? '<span style="color: var(--success); font-weight: bold;">✓</span>'
+      : '<span style="color: var(--danger); font-weight: bold;">✕</span>';
     const pmIcon = dayData.PM
-      ? '<span style="color: var(--success); font-weight: bold;">âœ“</span>'
-      : '<span style="color: var(--danger); font-weight: bold;">âœ•</span>';
+      ? '<span style="color: var(--success); font-weight: bold;">✓</span>'
+      : '<span style="color: var(--danger); font-weight: bold;">✕</span>';
 
     const isSelected = dateStr === formatDate(currentDate);
     const card = document.createElement("div");
@@ -1192,10 +1192,10 @@ function renderExpensesTab() {
 
   const allExpenses = loadExpenses();
 
-  // 1. Strictly filter by role hierarchy
+  // 1. Filter expenses according to strict role hierarchy
   const userScopedExpenses = allExpenses.filter((e) => canUserViewRequest(e, currentUser));
 
-  // 2. Calculate summary metrics from user-scoped requests
+  // 2. Metrics calculated from user-scoped expenses
   let totalPending = 0;
   let totalApproved = 0;
   let totalDisbursed = 0;
@@ -1213,7 +1213,7 @@ function renderExpensesTab() {
   if (mApproved) mApproved.textContent = `${totalApproved.toLocaleString()} EGP`;
   if (mDisbursed) mDisbursed.textContent = `${totalDisbursed.toLocaleString()} EGP`;
 
-  // 3. Status and category dropdown filtering
+  // 3. Status and Category dropdown filters
   const filtered = userScopedExpenses.filter((e) => {
     if (filterStatus !== "all") {
       if (filterStatus === "pending" && !e.status.startsWith("pending_")) return false;
@@ -1241,9 +1241,9 @@ function renderExpensesTab() {
         if (exp.status.startsWith("pending_")) canApprove = true;
         if (exp.status === "approved") canDisburse = true;
       } else if (exp.requesterId !== currentUser.id) {
-        if (exp.status === "pending_dm" && currentUser.role === "district_manager" && (exp.nextApproverId === currentUser.id || isSubordinateOf(exp.requesterId, currentUser.id))) {
+        if (exp.status === "pending_dm" && currentUser.role === "district_manager") {
           canApprove = true;
-        } else if (exp.status === "pending_lm" && currentUser.role === "line_manager" && (exp.nextApproverId === currentUser.id || isSubordinateOf(exp.requesterId, currentUser.id))) {
+        } else if (exp.status === "pending_lm" && currentUser.role === "line_manager") {
           canApprove = true;
         } else if (exp.status === "pending_hr" && currentUser.role === "hr") {
           canApprove = true;
@@ -1257,24 +1257,30 @@ function renderExpensesTab() {
       let actionsHtml = "";
       if (canApprove) {
         actionsHtml += `
-          <button type="button" class="action-btn-circle approve" title="${t("btnApprove")}" onclick="openDecisionModal('expense', '${exp.id}', 'approve')">âœ“</button>
-          <button type="button" class="action-btn-circle reject" title="${t("btnReject")}" onclick="openDecisionModal('expense', '${exp.id}', 'reject')">âœ•</button>
+          <button type="button" class="action-btn-circle approve" title="${t("btnApprove")}" onclick="openDecisionModal('expense', '${exp.id}', 'approve')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          <button type="button" class="action-btn-circle reject" title="${t("btnReject")}" onclick="openDecisionModal('expense', '${exp.id}', 'reject')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         `;
       }
       if (canDisburse) {
         actionsHtml += `
-          <button type="button" class="action-btn-circle disburse" title="${t("btnDisburse")}" onclick="openDecisionModal('expense', '${exp.id}', 'disburse')">ðŸ’µ</button>
+          <button type="button" class="action-btn-circle disburse" title="${t("btnDisburse")}" onclick="openDecisionModal('expense', '${exp.id}', 'disburse')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+          </button>
         `;
       }
       if (!actionsHtml) {
-        actionsHtml = `<span style="color:var(--gray-400); font-size:0.85rem;">â€”</span>`;
+        actionsHtml = `<span style="color:var(--gray-400); font-size:1.1rem; font-weight:700;">&mdash;</span>`;
       }
 
       const receiptThumb = exp.receiptUrl
         ? `<div class="receipt-cell">
              <button type="button" class="receipt-preview-btn" onclick="openReceiptPreviewModal('${exp.receiptUrl}')" title="${t("colReceipt")}">
                <img src="${exp.receiptUrl}" class="receipt-thumbnail" alt="Receipt">
-               <span class="receipt-zoom-badge">ðŸ”</span>
+               <span class="receipt-zoom-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
              </button>
            </div>`
         : `<span style="color:var(--gray-400); font-size:0.8rem;">${t("noReceipt")}</span>`;
@@ -1528,9 +1534,9 @@ function renderServicesTab() {
       if (currentUser.role === "admin") {
         if (srv.status.startsWith("pending_")) canApprove = true;
       } else if (srv.requesterId !== currentUser.id) {
-        if (srv.status === "pending_dm" && currentUser.role === "district_manager" && (srv.nextApproverId === currentUser.id || isSubordinateOf(srv.requesterId, currentUser.id))) {
+        if (srv.status === "pending_dm" && currentUser.role === "district_manager") {
           canApprove = true;
-        } else if (srv.status === "pending_lm" && currentUser.role === "line_manager" && (srv.nextApproverId === currentUser.id || isSubordinateOf(srv.requesterId, currentUser.id))) {
+        } else if (srv.status === "pending_lm" && currentUser.role === "line_manager") {
           canApprove = true;
         }
       }
@@ -1538,14 +1544,26 @@ function renderServicesTab() {
       let actionsHtml = "";
       if (canApprove) {
         actionsHtml += `
-          <button type="button" class="action-btn-circle approve" title="${t("btnApprove")}" onclick="openDecisionModal('service', '${srv.id}', 'approve')">âœ“</button>
-          <button type="button" class="action-btn-circle reject" title="${t("btnReject")}" onclick="openDecisionModal('service', '${srv.id}', 'reject')">âœ•</button>
+          <button type="button" class="action-btn-circle approve" title="${t("btnApprove")}" onclick="openDecisionModal('service', '${srv.id}', 'approve')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          <button type="button" class="action-btn-circle reject" title="${t("btnReject")}" onclick="openDecisionModal('service', '${srv.id}', 'reject')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         `;
       } else {
-        actionsHtml = `<span style="color:var(--gray-400); font-size:0.85rem;">â€”</span>`;
+        actionsHtml = `<span style="color:var(--gray-400); font-size:1.1rem; font-weight:700;">&mdash;</span>`;
       }
 
-      const shiftIcon = srv.shift === "AM" ? "ðŸ¥ AM" : "ðŸ‘¨â€âš•ï¸ PM";
+      const shiftIcon = srv.shift === "AM"
+        ? `<span class="badge" style="background:#ecfdf5; color:#065f46; font-weight:700; display:inline-flex; align-items:center; gap:5px; font-size:0.82rem; padding:4px 8px; border-radius:6px;">
+             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h6M12 6v6"/></svg>
+             AM
+           </span>`
+        : `<span class="badge" style="background:#eff6ff; color:#1e40af; font-weight:700; display:inline-flex; align-items:center; gap:5px; font-size:0.82rem; padding:4px 8px; border-radius:6px;">
+             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+             PM
+           </span>`;
       const deptBadge = srv.department === "sales"
         ? `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">Sales</span>`
         : `<span class="badge" style="background:#fce7f3; color:#be185d; font-weight:700;">Marketing</span>`;
@@ -2046,7 +2064,9 @@ window.executeDecisionConfirm = function () {
     } else if (decision === "approve") {
       if (srv.status === "pending_dm") {
         srv.status = "pending_lm";
-        srv.nextApproverId = currentUser.managerId || "lm1";
+        const dm = getUserById(srv.requesterId);
+        const lm = (dm && dm.managerId) ? dm.managerId : (currentUser.managerId || "lm1");
+        srv.nextApproverId = lm;
       } else if (srv.status === "pending_lm") {
         srv.status = "approved";
         srv.nextApproverId = null;
