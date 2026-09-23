@@ -17,23 +17,23 @@
 }
 @media (max-width: 1024px) {
     .dashboard-layout {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
     }
     .grid-2-col {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 480px) {
     .stat-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
     .stat-card {
-        padding: 12px !important;
+        padding: 12px;
     }
     .stat-value {
-        font-size: 1.25rem !important;
+        font-size: 1.25rem;
     }
 }
 /* --- END: Dashboard Layout --- */
@@ -482,7 +482,7 @@ html[dir="rtl"] .data-table {
 }
 .btn-confirm-accompaniment {
     background: var(--primary);
-    color: #ffffff !important;
+    color: #ffffff;
     border: none;
     border-radius: 6px;
     height: 34px;
@@ -584,82 +584,82 @@ html[dir="rtl"] .data-table {
 /* --- START: Dark Mode Support --- */
 [data-theme="dark"] .stat-card,
 [data-theme="dark"] .dashboard-card {
-    background-color: #1e2229 !important;
-    color: #f1f3f5 !important;
-    border: 1px solid #2d3340 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+    background-color: #1e2229;
+    color: #f1f3f5;
+    border: 1px solid #2d3340;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="dark"] .card-title {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 [data-theme="dark"] .stat-label {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 [data-theme="dark"] .stat-card-link {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 [data-theme="dark"] .stat-card:hover .stat-card-link {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
-[data-theme="dark"] .stat-card .stat-value.primary { color: #60a5fa !important; }
-[data-theme="dark"] .stat-card .stat-value.success { color: #4ade80 !important; }
-[data-theme="dark"] .stat-card .stat-value.warning { color: #fbbf24 !important; }
-[data-theme="dark"] .stat-card .stat-value.danger  { color: #f87171 !important; }
-[data-theme="dark"] .stat-card .stat-value.purple  { color: #c084fc !important; }
+[data-theme="dark"] .stat-card .stat-value.primary { color: #60a5fa; }
+[data-theme="dark"] .stat-card .stat-value.success { color: #4ade80; }
+[data-theme="dark"] .stat-card .stat-value.warning { color: #fbbf24; }
+[data-theme="dark"] .stat-card .stat-value.danger  { color: #f87171; }
+[data-theme="dark"] .stat-card .stat-value.purple  { color: #c084fc; }
 
 [data-theme="dark"] .activity-item {
-    background: #232731 !important;
-    color: #dee2e6 !important;
+    background: #232731;
+    color: #dee2e6;
     border: 1px solid #2d3340;
 }
 
 [data-theme="dark"] .action-btn {
-    border-color: #3d4554 !important;
-    background: #232731 !important;
-    color: #f1f3f5 !important;
+    border-color: #3d4554;
+    background: #232731;
+    color: #f1f3f5;
 }
 [data-theme="dark"] .action-btn:hover {
-    background: #2c323f !important;
-    border-color: #4b5563 !important;
+    background: #2c323f;
+    border-color: #4b5563;
 }
 
 [data-theme="dark"] .data-table th {
-    background-color: #232731 !important;
-    border-bottom: 2px solid #2d3340 !important;
-    color: #f1f3f5 !important;
+    background-color: #232731;
+    border-bottom: 2px solid #2d3340;
+    color: #f1f3f5;
 }
 
 [data-theme="dark"] .data-table td {
-    border-bottom: 1px solid #2d3340 !important;
-    color: #dee2e6 !important;
+    border-bottom: 1px solid #2d3340;
+    color: #dee2e6;
 }
 
 /* DM Specific Dark Mode Styles */
 [data-theme="dark"] .dm-schedule-controls {
-    background: #161922 !important;
-    border-color: #2d3340 !important;
+    background: #161922;
+    border-color: #2d3340;
 }
 [data-theme="dark"] .dm-control-label {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 [data-theme="dark"] .dm-schedule-controls input[type="date"],
 [data-theme="dark"] .dm-schedule-controls select {
-    background-color: #232731 !important;
-    border-color: #3d4554 !important;
-    color: #f8fafc !important;
+    background-color: #232731;
+    border-color: #3d4554;
+    color: #f8fafc;
 }
 [data-theme="dark"] .dm-schedule-controls select option {
-    background-color: #232731 !important;
-    color: #f8fafc !important;
+    background-color: #232731;
+    color: #f8fafc;
 }
 
 [data-theme="dark"] .btn-confirm-accompaniment {
     background: #2563eb;
-    color: #ffffff !important;
+    color: #ffffff;
     box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
 }
 [data-theme="dark"] .btn-confirm-accompaniment:hover {
@@ -667,120 +667,120 @@ html[dir="rtl"] .data-table {
 }
 
 [data-theme="dark"] .badge-locked-status {
-    background: rgba(220, 53, 69, 0.22) !important;
-    color: #f87171 !important;
-    border-color: rgba(220, 53, 69, 0.4) !important;
+    background: rgba(220, 53, 69, 0.22);
+    color: #f87171;
+    border-color: rgba(220, 53, 69, 0.4);
 }
 [data-theme="dark"] .dm-lock-notice {
-    color: #f87171 !important;
+    color: #f87171;
 }
 
 [data-theme="dark"] .dm-accompanied-banner {
-    background: rgba(13, 110, 253, 0.15) !important;
-    border: 1px solid rgba(13, 110, 253, 0.4) !important;
+    background: rgba(13, 110, 253, 0.15);
+    border: 1px solid rgba(13, 110, 253, 0.4);
 }
 [data-theme="dark"] .dm-accompanied-title {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 [data-theme="dark"] .dm-accompanied-sub {
-    color: #bfdbfe !important;
+    color: #bfdbfe;
 }
 
 [data-theme="dark"] .dm-office-banner {
-    background: #161922 !important;
-    border: 1px dashed #3d4554 !important;
+    background: #161922;
+    border: 1px dashed #3d4554;
 }
 [data-theme="dark"] .dm-office-title {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 [data-theme="dark"] .dm-office-desc {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 [data-theme="dark"] .visit-doc-name {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 [data-theme="dark"] .visit-time-badge {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 [data-theme="dark"] .target-type-badge {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 [data-theme="dark"] .empty-table-msg {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 [data-theme="dark"] .team-perf-subtitle {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 [data-theme="dark"] .badge-hospital {
-    background: rgba(255, 193, 7, 0.18) !important;
-    color: #fde047 !important;
-    border: 1px solid rgba(255, 193, 7, 0.3) !important;
+    background: rgba(255, 193, 7, 0.18);
+    color: #fde047;
+    border: 1px solid rgba(255, 193, 7, 0.3);
 }
 [data-theme="dark"] .badge-clinic {
-    background: rgba(13, 202, 240, 0.18) !important;
-    color: #67e8f9 !important;
-    border: 1px solid rgba(13, 202, 240, 0.3) !important;
+    background: rgba(13, 202, 240, 0.18);
+    color: #67e8f9;
+    border: 1px solid rgba(13, 202, 240, 0.3);
 }
 [data-theme="dark"] .badge-pharmacy {
-    background: rgba(25, 135, 84, 0.2) !important;
-    color: #86efac !important;
-    border: 1px solid rgba(25, 135, 84, 0.35) !important;
+    background: rgba(25, 135, 84, 0.2);
+    color: #86efac;
+    border: 1px solid rgba(25, 135, 84, 0.35);
 }
 [data-theme="dark"] .badge-product {
-    background: #232731 !important;
-    color: #cbd5e1 !important;
-    border: 1px solid #3d4554 !important;
+    background: #232731;
+    color: #cbd5e1;
+    border: 1px solid #3d4554;
 }
 [data-theme="dark"] .badge-vacant {
-    background: #232731 !important;
-    color: #94a3b8 !important;
-    border: 1px solid #3d4554 !important;
+    background: #232731;
+    color: #94a3b8;
+    border: 1px solid #3d4554;
 }
 
 [data-theme="dark"] .dm-rep-name {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 [data-theme="dark"] .dm-ach-pct {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 [data-theme="dark"] .dm-vacant-row {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 [data-theme="dark"] .dm-vacant-text {
-    color: #64748b !important;
+    color: #64748b;
 }
 
 [data-theme="dark"] .plan-item.am {
-    background: rgba(13, 110, 253, 0.15) !important;
-    border-left: 4px solid #3b82f6 !important;
-    color: #e2e8f0 !important;
+    background: rgba(13, 110, 253, 0.15);
+    border-left: 4px solid #3b82f6;
+    color: #e2e8f0;
 }
 [data-theme="dark"] .plan-item.pm {
-    background: rgba(253, 126, 20, 0.15) !important;
-    border-left: 4px solid #f97316 !important;
-    color: #e2e8f0 !important;
+    background: rgba(253, 126, 20, 0.15);
+    border-left: 4px solid #f97316;
+    color: #e2e8f0;
 }
 [data-theme="dark"] .plan-item-desc {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 [data-theme="dark"] .coverage-circle {
-    border-color: #232731 !important;
-    border-top-color: var(--primary) !important;
-    color: #60a5fa !important;
+    border-color: #232731;
+    border-top-color: var(--primary);
+    color: #60a5fa;
 }
 
 [data-theme="dark"] .status-badge.completed {
-    background: rgba(25, 135, 84, 0.2) !important;
-    color: #86efac !important;
-    border: 1px solid rgba(25, 135, 84, 0.35) !important;
+    background: rgba(25, 135, 84, 0.2);
+    color: #86efac;
+    border: 1px solid rgba(25, 135, 84, 0.35);
 }
 [data-theme="dark"] .status-badge.pending {
-    background: rgba(255, 193, 7, 0.2) !important;
-    color: #fde047 !important;
-    border: 1px solid rgba(255, 193, 7, 0.35) !important;
+    background: rgba(255, 193, 7, 0.2);
+    color: #fde047;
+    border: 1px solid rgba(255, 193, 7, 0.35);
 }
 /* Multi-Day Accompaniment Schedule Styles */
 .dm-schedule-tab-btn {
@@ -833,72 +833,72 @@ html[dir="rtl"] .data-table {
     color: var(--gray-700);
 }
 [data-theme="dark"] .dm-schedule-tab-btn {
-    background: #232731 !important;
-    border-color: #3d4554 !important;
-    color: #e2e8f0 !important;
+    background: #232731;
+    border-color: #3d4554;
+    color: #e2e8f0;
 }
 [data-theme="dark"] .dm-schedule-tab-btn.active {
-    background: var(--primary) !important;
-    color: #fff !important;
-    border-color: var(--primary) !important;
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
 }
 [data-theme="dark"] .dm-schedule-day-badge {
-    background: rgba(13, 110, 253, 0.2) !important;
-    color: #93c5fd !important;
+    background: rgba(13, 110, 253, 0.2);
+    color: #93c5fd;
 }
 [data-theme="dark"] .dm-schedule-rep-badge {
-    background: rgba(25, 135, 84, 0.2) !important;
-    color: #86efac !important;
+    background: rgba(25, 135, 84, 0.2);
+    color: #86efac;
 }
 [data-theme="dark"] .dm-schedule-office-badge {
-    background: rgba(148, 163, 184, 0.15) !important;
-    color: #cbd5e1 !important;
+    background: rgba(148, 163, 184, 0.15);
+    color: #cbd5e1;
 }
 
 [data-theme="dark"] .plan-item {
-    background: var(--surface-alt) !important;
+    background: var(--surface-alt);
 }
 [data-theme="dark"] .plan-header-title.am {
-    color: #67e8f9 !important;
+    color: #67e8f9;
 }
 [data-theme="dark"] .plan-header-title.pm {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 [data-theme="dark"] .planned-target-row {
-    border-bottom-color: var(--gray-200) !important;
+    border-bottom-color: var(--gray-200);
 }
 [data-theme="dark"] .planned-target-name {
-    color: #f1f3f5 !important;
+    color: #f1f3f5;
 }
 [data-theme="dark"] .planned-target-date {
-    color: #9da5b1 !important;
+    color: #9da5b1;
 }
 [data-theme="dark"] .entry-type-badge.plan {
-    background: rgba(13, 110, 253, 0.25) !important;
-    color: #6ea8fe !important;
+    background: rgba(13, 110, 253, 0.25);
+    color: #6ea8fe;
 }
 [data-theme="dark"] .entry-type-badge.actual {
-    background: rgba(255, 193, 7, 0.25) !important;
-    color: #ffda6a !important;
+    background: rgba(255, 193, 7, 0.25);
+    color: #ffda6a;
 }
 [data-theme="dark"] .double-companion-tag {
-    color: #c084fc !important;
+    color: #c084fc;
 }
 [data-theme="dark"] .status-badge.completed {
-    background: rgba(25, 135, 84, 0.25) !important;
-    color: #75b798 !important;
+    background: rgba(25, 135, 84, 0.25);
+    color: #75b798;
 }
 /* --- END: Dark Mode Support --- */
 
 /* --- Responsive Adjustments for Dashboard Tables & Planned Targets --- */
 @media (max-width: 768px) {
     .dashboard-card {
-        padding: 16px 12px !important;
+        padding: 16px 12px;
     }
     .data-table th,
     .data-table td {
-        padding: 8px 6px !important;
-        font-size: 0.8rem !important;
+        padding: 8px 6px;
+        font-size: 0.8rem;
     }
 }
 
@@ -908,10 +908,10 @@ html[dir="rtl"] .data-table {
         padding: 7px 0;
     }
     .planned-target-name {
-        font-size: 0.84rem !important;
+        font-size: 0.84rem;
     }
     .planned-target-date {
-        font-size: 0.74rem !important;
+        font-size: 0.74rem;
     }
 }
 
@@ -961,31 +961,31 @@ html[dir="rtl"] .data-table {
 }
 
 [data-theme="dark"] .dm-schedule-pills-container {
-    background: #161a22 !important;
-    border-color: #2b3240 !important;
+    background: #161a22;
+    border-color: #2b3240;
 }
 
 [data-theme="dark"] .dm-schedule-pill {
-    background: #1f242e !important;
-    border-color: #364050 !important;
-    color: #e2e8f0 !important;
+    background: #1f242e;
+    border-color: #364050;
+    color: #e2e8f0;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="dark"] .dm-schedule-pill .pill-date {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
 [data-theme="dark"] .dm-schedule-pill .pill-divider {
-    color: #4b5563 !important;
+    color: #4b5563;
 }
 
 [data-theme="dark"] .dm-schedule-pill .pill-rep {
-    color: #4ade80 !important;
+    color: #4ade80;
 }
 
 [data-theme="dark"] .dm-schedule-pill .pill-office {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 /* Co-Visiting Table and Sticky Column */
@@ -1007,15 +1007,15 @@ html[dir="rtl"] .dm-covisit-sticky-col {
 }
 
 [data-theme="dark"] .dm-covisit-sticky-col {
-    background: #1c2229 !important;
+    background: #1c2229;
 }
 
 [data-theme="dark"] tr:hover .dm-covisit-sticky-col {
-    background: #252b35 !important;
+    background: #252b35;
 }
 
 .covisit-action-cell {
-    white-space: nowrap !important;
+    white-space: nowrap;
 }
 
 /* Prompt and Accompaniment Banners */
@@ -1029,17 +1029,17 @@ html[dir="rtl"] .dm-covisit-sticky-col {
 }
 
 [data-theme="dark"] .dm-prompt-banner {
-    background: #181b22 !important;
-    border-color: #384252 !important;
+    background: #181b22;
+    border-color: #384252;
 }
 
 [data-theme="dark"] .dm-prompt-banner strong {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 [data-theme="dark"] .dm-prompt-banner p,
 [data-theme="dark"] .dm-prompt-banner span {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 .dm-office-banner {
@@ -1052,8 +1052,8 @@ html[dir="rtl"] .dm-covisit-sticky-col {
 }
 
 [data-theme="dark"] .dm-office-banner {
-    background: #181b22 !important;
-    border-color: #2b3240 !important;
+    background: #181b22;
+    border-color: #2b3240;
 }
 
 .dm-accompanied-banner {
@@ -1070,14 +1070,14 @@ html[dir="rtl"] .dm-covisit-sticky-col {
 }
 
 [data-theme="dark"] .dm-accompanied-banner {
-    background: #181b22 !important;
-    border-color: #2b3240 !important;
+    background: #181b22;
+    border-color: #2b3240;
 }
 
 @media (max-width: 768px) {
     .dm-schedule-header {
         flex-direction: column;
-        gap: 10px !important;
+        gap: 10px;
     }
     .dm-schedule-nav-btn {
         width: 100%;
@@ -1085,8 +1085,8 @@ html[dir="rtl"] .dm-covisit-sticky-col {
     .dm-schedule-nav-btn a {
         width: 100%;
         justify-content: center;
-        font-size: 0.82rem !important;
-        padding: 7px 12px !important;
+        font-size: 0.82rem;
+        padding: 7px 12px;
     }
     .dm-schedule-pill {
         width: 100%;
@@ -1094,9 +1094,9 @@ html[dir="rtl"] .dm-covisit-sticky-col {
         font-size: 0.8rem;
     }
     .covisit-action-cell .btn-convert-action {
-        padding: 5px 9px !important;
-        font-size: 0.75rem !important;
-        white-space: nowrap !important;
+        padding: 5px 9px;
+        font-size: 0.75rem;
+        white-space: nowrap;
     }
 }
 

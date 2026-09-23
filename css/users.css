@@ -21,15 +21,15 @@
 }
 
 .user-actions-cell {
-  white-space: nowrap !important;
+  white-space: nowrap;
 }
 
 .modal {
-  z-index: 2500 !important;
+  z-index: 2500;
 }
 
 .modal-backdrop {
-  z-index: 2490 !important;
+  z-index: 2490;
 }
 
 .modal-content {
@@ -38,13 +38,13 @@
 }
 
 [data-theme="dark"] .form-label {
-  color: #f1f3f5 !important;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .modal-content {
-  background-color: #1e2229 !important;
-  color: #f1f3f5 !important;
-  border: 1px solid #3d4554 !important;
+  background-color: #1e2229;
+  color: #f1f3f5;
+  border: 1px solid #3d4554;
 }
 
 /* RTL Tree Node Alignment */
@@ -83,17 +83,17 @@ html[dir="rtl"] .tree-node {
   }
   #tableView .table th,
   #tableView .table td {
-    padding: 8px 6px !important;
-    font-size: 0.8rem !important;
+    padding: 8px 6px;
+    font-size: 0.8rem;
     white-space: nowrap;
   }
   #tableView .table th.ps-4,
   #tableView .table td.ps-4 {
-    padding-left: 10px !important;
+    padding-left: 10px;
   }
   #tableView .table th.pe-4,
   #tableView .table td.pe-4 {
-    padding-right: 10px !important;
+    padding-right: 10px;
   }
   #tableView .table th:first-child,
   #tableView .table td:first-child {
@@ -110,23 +110,23 @@ html[dir="rtl"] .tree-node {
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.08);
   }
   .user-avatar-circle {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 13px !important;
-    margin-right: 8px !important;
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    margin-right: 8px;
   }
   html[dir="rtl"] .user-avatar-circle {
-    margin-right: 0 !important;
-    margin-left: 8px !important;
+    margin-right: 0;
+    margin-left: 8px;
   }
   .user-actions-cell {
-    white-space: nowrap !important;
-    min-width: 105px !important;
+    white-space: nowrap;
+    min-width: 105px;
   }
   .user-actions-cell .btn {
-    padding: 4px 6px !important;
-    font-size: 0.75rem !important;
-    margin-right: 2px !important;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    margin-right: 2px;
   }
 }
 /* --- END: Responsive Fixes for Users Page --- */
@@ -135,9 +135,9 @@ html[dir="rtl"] .tree-node {
    Dark Mode Styles for Users Page
    ========================================================================== */
 [data-theme="dark"] .card {
-  background-color: #1e2229 !important;
-  border-color: #2d3340 !important;
-  color: #f1f3f5 !important;
+  background-color: #1e2229;
+  border-color: #2d3340;
+  color: #f1f3f5;
 }
 
 /* --- START: User Typography --- */
@@ -154,76 +154,76 @@ html[dir="rtl"] .tree-node {
 /* --- END: User Typography --- */
 
 [data-theme="dark"] .card-body {
-  color: #f1f3f5 !important;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .user-name-text,
 [data-theme="dark"] .text-dark {
-  color: #ffffff !important;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge.bg-light.text-dark {
-  background-color: #282d38 !important;
-  color: #f1f3f5 !important;
-  border-color: #3d4554 !important;
+  background-color: #282d38;
+  color: #f1f3f5;
+  border-color: #3d4554;
 }
 
 [data-theme="dark"] .bg-primary-light {
-  background-color: rgba(13, 110, 253, 0.25) !important;
-  color: #79c0ff !important;
+  background-color: rgba(13, 110, 253, 0.25);
+  color: #79c0ff;
 }
 
 [data-theme="dark"] .tree-node {
-  border-left-color: #3d4554 !important;
+  border-left-color: #3d4554;
 }
 
 [data-theme="dark"] html[dir="rtl"] .tree-node {
-  border-right-color: #3d4554 !important;
+  border-right-color: #3d4554;
 }
 
 [data-theme="dark"] .tree-node .node-content {
-  background: #232731 !important;
-  border-color: #3d4554 !important;
-  color: #f1f3f5 !important;
+  background: #232731;
+  border-color: #3d4554;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .tree-node .node-content:hover {
-  background: #282d38 !important;
+  background: #282d38;
 }
 
 [data-theme="dark"] .table {
-  color: #dee2e6 !important;
-  border-color: #2d3340 !important;
+  color: #dee2e6;
+  border-color: #2d3340;
 }
 
 [data-theme="dark"] .table thead,
 [data-theme="dark"] .table thead th,
 [data-theme="dark"] .table thead.table-light {
-  background-color: #232731 !important;
-  color: #f1f3f5 !important;
-  border-bottom-color: #2d3340 !important;
+  background-color: #232731;
+  color: #f1f3f5;
+  border-bottom-color: #2d3340;
 }
 
 [data-theme="dark"] .table tbody tr {
-  border-bottom-color: #2d3340 !important;
+  border-bottom-color: #2d3340;
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover {
-  background-color: #282d38 !important;
-  color: #ffffff !important;
+  background-color: #282d38;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .badge-multi-line {
-  background: rgba(168, 85, 247, 0.2) !important;
-  color: #d8b4fe !important;
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
 }
 
 [data-theme="dark"] #tableView .table th:first-child {
-  background-color: #232731 !important;
+  background-color: #232731;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] #tableView .table td:first-child {
-  background-color: #1e2229 !important;
+  background-color: #1e2229;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] html[dir="rtl"] #tableView .table th:first-child,
@@ -231,64 +231,64 @@ html[dir="rtl"] .tree-node {
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] #tableView .table-hover tbody tr:hover td:first-child {
-  background-color: #282d38 !important;
+  background-color: #282d38;
 }
 
 [data-theme="dark"] .input-group-text,
 [data-theme="dark"] .input-group-text.bg-light {
-  background-color: #232731 !important;
-  border-color: #3d4554 !important;
-  color: #9da5b1 !important;
+  background-color: #232731;
+  border-color: #3d4554;
+  color: #9da5b1;
 }
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select,
 [data-theme="dark"] .form-control.bg-light,
 [data-theme="dark"] .form-select.bg-light {
-  background-color: #232731 !important;
-  border-color: #3d4554 !important;
-  color: #f1f3f5 !important;
+  background-color: #232731;
+  border-color: #3d4554;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus {
-  background-color: #232731 !important;
-  border-color: #388bfd !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 0 0.25rem rgba(56, 139, 253, 0.25) !important;
+  background-color: #232731;
+  border-color: #388bfd;
+  color: #ffffff;
+  box-shadow: 0 0 0 0.25rem rgba(56, 139, 253, 0.25);
 }
 
 [data-theme="dark"] .form-control::placeholder {
-  color: #6c757d !important;
+  color: #6c757d;
 }
 
 [data-theme="dark"] #uProductLinesContainer,
 [data-theme="dark"] #uProductLinesContainer.bg-light {
-  background-color: #121418 !important;
-  border-color: #3d4554 !important;
-  color: #f1f3f5 !important;
+  background-color: #121418;
+  border-color: #3d4554;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .card.bg-light {
-  background-color: #232731 !important;
-  border-color: #3d4554 !important;
-  color: #f1f3f5 !important;
+  background-color: #232731;
+  border-color: #3d4554;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .modal-content {
-  background-color: #1e2229 !important;
-  color: #f1f3f5 !important;
-  border: 1px solid #3d4554 !important;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7) !important;
+  background-color: #1e2229;
+  color: #f1f3f5;
+  border: 1px solid #3d4554;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
 }
 
 [data-theme="dark"] .modal-header,
 [data-theme="dark"] .modal-footer {
-  border-color: #2d3340 !important;
+  border-color: #2d3340;
 }
 
 [data-theme="dark"] .modal-title {
-  color: #ffffff !important;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .btn-close {
@@ -296,70 +296,70 @@ html[dir="rtl"] .tree-node {
 }
 
 [data-theme="dark"] .btn-light {
-  background-color: #2d3340 !important;
-  border-color: #3d4554 !important;
-  color: #dee2e6 !important;
+  background-color: #2d3340;
+  border-color: #3d4554;
+  color: #dee2e6;
 }
 
 [data-theme="dark"] .btn-light:hover {
-  background-color: #3d4554 !important;
-  color: #ffffff !important;
+  background-color: #3d4554;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .btn-outline-primary {
-  border-color: #388bfd !important;
-  color: #58a6ff !important;
+  border-color: #388bfd;
+  color: #58a6ff;
 }
 
 [data-theme="dark"] .btn-outline-primary:hover,
 [data-theme="dark"] .btn-check:checked + .btn-outline-primary {
-  background-color: #388bfd !important;
-  border-color: #388bfd !important;
-  color: #ffffff !important;
+  background-color: #388bfd;
+  border-color: #388bfd;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .btn-outline-secondary {
-  border-color: #3d4554 !important;
-  color: #9da5b1 !important;
+  border-color: #3d4554;
+  color: #9da5b1;
 }
 
 [data-theme="dark"] .btn-outline-secondary:hover {
-  background-color: #3d4554 !important;
-  color: #ffffff !important;
+  background-color: #3d4554;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .text-muted {
-  color: #9da5b1 !important;
+  color: #9da5b1;
 }
 
 [data-theme="dark"] .bg-primary-subtle {
-  background-color: rgba(13, 110, 253, 0.2) !important;
-  color: #6ea8fe !important;
+  background-color: rgba(13, 110, 253, 0.2);
+  color: #6ea8fe;
 }
 
 [data-theme="dark"] .bg-danger-subtle {
-  background-color: rgba(220, 53, 69, 0.2) !important;
-  color: #ea868f !important;
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #ea868f;
 }
 
 [data-theme="dark"] .bg-success-subtle {
-  background-color: rgba(25, 135, 84, 0.2) !important;
-  color: #75b798 !important;
+  background-color: rgba(25, 135, 84, 0.2);
+  color: #75b798;
 }
 
 [data-theme="dark"] .bg-secondary-subtle {
-  background-color: rgba(108, 117, 125, 0.2) !important;
-  color: #ced4da !important;
+  background-color: rgba(108, 117, 125, 0.2);
+  color: #ced4da;
 }
 
 [data-theme="dark"] .badge.bg-success-subtle {
-  background-color: rgba(25, 135, 84, 0.25) !important;
-  color: #75b798 !important;
+  background-color: rgba(25, 135, 84, 0.25);
+  color: #75b798;
 }
 
 [data-theme="dark"] .badge.bg-secondary-subtle {
-  background-color: rgba(108, 117, 125, 0.25) !important;
-  color: #ced4da !important;
+  background-color: rgba(108, 117, 125, 0.25);
+  color: #ced4da;
 }
 
 [data-theme="dark"] .form-check-input {
@@ -373,8 +373,8 @@ html[dir="rtl"] .tree-node {
 }
 
 [data-theme="dark"] .tree-node .node-content {
-  background: #1e2229 !important;
-  border-color: #2d3340 !important;
+  background: #1e2229;
+  border-color: #2d3340;
 }
 
 [data-theme="dark"] .tree-node .node-content[style*="background:#fffbeb"] {

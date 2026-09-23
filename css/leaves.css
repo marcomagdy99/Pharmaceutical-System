@@ -72,107 +72,107 @@
    Dark Mode Overrides for Leaves Management
    ========================================================================== */
 [data-theme="dark"] body {
-  background-color: var(--bg-color) !important;
-  color: var(--gray-800) !important;
+  background-color: var(--bg-color);
+  color: var(--gray-800);
 }
 
 [data-theme="dark"] .leave-balance-card {
-  background-color: var(--white) !important;
-  border-color: var(--gray-200) !important;
-  color: var(--gray-800) !important;
+  background-color: var(--white);
+  border-color: var(--gray-200);
+  color: var(--gray-800);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .leave-balance-card h6,
 [data-theme="dark"] .leave-balance-card h3 {
-  color: #ffffff !important;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .leave-balance-card .text-muted,
 [data-theme="dark"] .leave-balance-card small {
-  color: #cbd5e1 !important;
+  color: #cbd5e1;
   font-weight: 600;
 }
 
 [data-theme="dark"] .card {
-  background-color: var(--white) !important;
-  color: var(--gray-800) !important;
-  border: 1px solid var(--gray-200) !important;
+  background-color: var(--white);
+  color: var(--gray-800);
+  border: 1px solid var(--gray-200);
 }
 
 [data-theme="dark"] .card-header {
-  background-color: var(--surface-alt) !important;
-  color: #ffffff !important;
-  border-bottom: 1px solid var(--gray-200) !important;
+  background-color: var(--surface-alt);
+  color: #ffffff;
+  border-bottom: 1px solid var(--gray-200);
 }
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
-  background-color: var(--surface-alt) !important;
-  border-color: var(--gray-300) !important;
-  color: #ffffff !important;
+  background-color: var(--surface-alt);
+  border-color: var(--gray-300);
+  color: #ffffff;
 }
 
 [data-theme="dark"] .form-control::placeholder {
-  color: var(--gray-500) !important;
+  color: var(--gray-500);
 }
 
 [data-theme="dark"] .form-control[readonly] {
-  background-color: var(--surface-dim) !important;
-  color: #cbd5e1 !important;
-  border-color: var(--gray-200) !important;
+  background-color: var(--surface-dim);
+  color: #cbd5e1;
+  border-color: var(--gray-200);
 }
 
 [data-theme="dark"] .table {
-  --bs-table-bg: var(--white) !important;
-  --bs-table-color: var(--gray-800) !important;
-  --bs-table-hover-bg: var(--surface-hover) !important;
-  --bs-table-hover-color: #ffffff !important;
-  --bs-table-border-color: var(--gray-200) !important;
-  background-color: var(--white) !important;
-  color: var(--gray-800) !important;
-  border-color: var(--gray-200) !important;
+  --bs-table-bg: var(--white);
+  --bs-table-color: var(--gray-800);
+  --bs-table-hover-bg: var(--surface-hover);
+  --bs-table-hover-color: #ffffff;
+  --bs-table-border-color: var(--gray-200);
+  background-color: var(--white);
+  color: var(--gray-800);
+  border-color: var(--gray-200);
 }
 
 [data-theme="dark"] .table thead th,
 [data-theme="dark"] .table-light th {
-  background-color: var(--surface-alt) !important;
-  color: #ffffff !important;
-  border-bottom: 2px solid var(--gray-200) !important;
+  background-color: var(--surface-alt);
+  color: #ffffff;
+  border-bottom: 2px solid var(--gray-200);
 }
 
 [data-theme="dark"] .table tbody tr,
 [data-theme="dark"] .table tbody td {
-  background-color: var(--white) !important;
-  color: #ffffff !important;
-  border-bottom: 1px solid var(--gray-200) !important;
+  background-color: var(--white);
+  color: #ffffff;
+  border-bottom: 1px solid var(--gray-200);
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover td {
-  background-color: var(--surface-hover) !important;
-  color: #ffffff !important;
+  background-color: var(--surface-hover);
+  color: #ffffff;
 }
 
 [data-theme="dark"] .leave-item-title {
-  color: #f1f3f5 !important;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .approval-step-tag.approved {
-  background: rgba(25, 135, 84, 0.25) !important;
-  color: #75b798 !important;
-  border-color: rgba(25, 135, 84, 0.4) !important;
+  background: rgba(25, 135, 84, 0.25);
+  color: #75b798;
+  border-color: rgba(25, 135, 84, 0.4);
 }
 
 [data-theme="dark"] .approval-step-tag.pending {
-  background: rgba(255, 193, 7, 0.25) !important;
-  color: #ffda6a !important;
-  border-color: rgba(255, 193, 7, 0.4) !important;
+  background: rgba(255, 193, 7, 0.25);
+  color: #ffda6a;
+  border-color: rgba(255, 193, 7, 0.4);
 }
 
 [data-theme="dark"] .approval-step-tag.rejected {
-  background: rgba(220, 53, 69, 0.25) !important;
-  color: #ea868f !important;
-  border-color: rgba(220, 53, 69, 0.4) !important;
+  background: rgba(220, 53, 69, 0.25);
+  color: #ea868f;
+  border-color: rgba(220, 53, 69, 0.4);
 }
 
 /* Ensure HR governance panels align with equal height cards */
@@ -185,37 +185,37 @@
    ========================================================================== */
 @media (max-width: 768px) {
   .hr-stats-badges {
-    width: 100% !important;
-    display: flex !important;
-    gap: 6px !important;
+    width: 100%;
+    display: flex;
+    gap: 6px;
     margin-top: 4px;
   }
 
   .hr-stats-badges .badge {
-    flex: 1 1 0 !important;
-    text-align: center !important;
-    font-size: 0.72rem !important;
-    padding: 6px 4px !important;
-    white-space: nowrap !important;
+    flex: 1 1 0;
+    text-align: center;
+    font-size: 0.72rem;
+    padding: 6px 4px;
+    white-space: nowrap;
   }
 
   #historyFilter {
-    width: 100% !important;
+    width: 100%;
     margin-top: 6px;
   }
 
   .leaves-table th,
   .leaves-table td {
-    padding: 8px 6px !important;
-    font-size: 0.8rem !important;
+    padding: 8px 6px;
+    font-size: 0.8rem;
     white-space: nowrap;
   }
 
   .approval-step-tag {
-    font-size: 0.68rem !important;
-    padding: 2px 6px !important;
-    margin-bottom: 2px !important;
-    line-height: 1.25 !important;
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    margin-bottom: 2px;
+    line-height: 1.25;
     white-space: nowrap;
   }
 

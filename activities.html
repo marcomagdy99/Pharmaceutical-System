@@ -28,136 +28,8 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/activities.css?v=4.0.0">
-    <style>
-        /* Modern Form Controls & Modal Enhancements */
-        .form-group {
-            margin-bottom: 1.15rem;
-        }
-        .form-label,
-        .app-modal-card label {
-            display: block !important;
-            margin-bottom: 7px !important;
-            font-weight: 700 !important;
-            font-size: 0.92rem !important;
-            color: var(--gray-700, #334155);
-        }
-        [data-theme="dark"] .form-label,
-        [data-theme="dark"] .app-modal-card label {
-            color: #e2e8f0 !important;
-        }
-        .form-control,
-        .app-modal-card input,
-        .app-modal-card select,
-        .app-modal-card textarea {
-            width: 100% !important;
-            display: block !important;
-            box-sizing: border-box !important;
-            padding: 10px 14px !important;
-            border-radius: 8px !important;
-            border: 1px solid var(--border-color, #cbd5e1) !important;
-            background: var(--surface, #ffffff);
-            color: var(--text-color, #1e293b);
-            font-size: 0.92rem !important;
-            font-family: inherit !important;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        [data-theme="dark"] .form-control,
-        [data-theme="dark"] .app-modal-card input,
-        [data-theme="dark"] .app-modal-card select,
-        [data-theme="dark"] .app-modal-card textarea {
-            background-color: #16191f !important;
-            border-color: #3d4554 !important;
-            color: #f1f3f5 !important;
-        }
-        .form-control:focus,
-        .app-modal-card input:focus,
-        .app-modal-card select:focus,
-        .app-modal-card textarea:focus {
-            outline: none !important;
-            border-color: var(--primary, #0d6efd) !important;
-            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
-        }
-        .form-control:disabled,
-        .app-modal-card select:disabled {
-            opacity: 0.75 !important;
-            cursor: not-allowed !important;
-            background-color: var(--gray-100, #f1f5f9) !important;
-        }
-        [data-theme="dark"] .form-control:disabled,
-        [data-theme="dark"] .app-modal-card select:disabled {
-            background-color: #121418 !important;
-            color: #64748b !important;
-            border-color: #2d3340 !important;
-        }
-        [data-theme="dark"] select.form-control option,
-        [data-theme="dark"] .app-modal-card select option {
-            background-color: #1e2229 !important;
-            color: #f1f3f5 !important;
-        }
-        .app-modal-card .btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 8px !important;
-            padding: 9px 20px !important;
-            border-radius: 8px !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            font-size: 0.92rem !important;
-            transition: all 0.2s ease !important;
-            font-family: inherit !important;
-            border: none !important;
-            line-height: 1.4 !important;
-        }
-        .app-modal-card .btn-primary {
-            background: #0d6efd !important;
-            color: #ffffff !important;
-        }
-        .app-modal-card .btn-primary:hover {
-            background: #0b5ed7 !important;
-        }
-        .app-modal-card .btn-secondary {
-            background: var(--gray-200, #e2e8f0) !important;
-            color: var(--gray-800, #1e293b) !important;
-            border: 1px solid var(--gray-300, #cbd5e1) !important;
-        }
-        [data-theme="dark"] .app-modal-card .btn-secondary {
-            background: #2d3340 !important;
-            color: #e2e8f0 !important;
-            border: 1px solid #3d4554 !important;
-        }
-        [data-theme="dark"] .app-modal-card .btn-secondary:hover {
-            background: #3d4554 !important;
-            color: #ffffff !important;
-        }
-        .app-modal-close-btn {
-            background: none !important;
-            border: none !important;
-            font-size: 1.5rem !important;
-            color: var(--gray-500, #94a3b8) !important;
-            cursor: pointer !important;
-            line-height: 1 !important;
-            padding: 4px 8px !important;
-            border-radius: 6px !important;
-            transition: all 0.15s ease !important;
-        }
-        .app-modal-close-btn:hover {
-            color: var(--danger, #ef4444) !important;
-            background: rgba(239, 68, 68, 0.1) !important;
-        }
-        .modal-actions-right {
-            display: flex !important;
-            gap: 10px !important;
-            align-items: center !important;
-            margin-inline-start: auto !important;
-        }
-        .required-star {
-            color: #dc2626 !important;
-            font-weight: 700 !important;
-            margin-inline-start: 2px !important;
-        }
-    </style>
+    <link rel="stylesheet" href="css/activities.css?v=6.2.4">
+
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
     <script src="js/firebase-config.js"></script>
     <script src="js/app.js?v=6.0.0"></script>
@@ -203,17 +75,17 @@
                         </div>
                     </div>
 
-                    <div class="current-day-view" id="currentDayView" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="current-day-view" id="currentDayView">
                         <!-- AM Section -->
-                        <div class="card period-panel-card" style="background: var(--surface, var(--white)); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color, var(--gray-200)); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                            <div class="card-header period-header-strip" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-color, var(--gray-200));">
-                                <h2 data-i18n="amPeriod" class="period-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">AM Period</h2>
+                        <div class="card period-panel-card">
+                            <div class="card-header period-header-strip">
+                                <h2 data-i18n="amPeriod" class="period-title">AM Period</h2>
                                 <span id="amStatusBadge" class="badge"></span>
                             </div>
-                            <div class="card-body period-content-box" id="amContent" style="min-height: 100px; margin-top: 1rem;">
+                            <div class="card-body period-content-box" id="amContent">
                                 <!-- Populated by activities.js -->
                             </div>
-                            <div class="card-footer period-footer-bar" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--border-color, var(--gray-200)); padding-top: 1rem; display: flex; justify-content: flex-end;">
+                            <div class="card-footer period-footer-bar">
                                 <button type="button" class="btn btn-primary log-btn" data-period="AM" onclick="openActivityModal('AM')">
                                     <span>📝</span> <span data-i18n="logActivity">Log Activity</span>
                                 </button>
@@ -221,15 +93,15 @@
                         </div>
 
                         <!-- PM Section -->
-                        <div class="card period-panel-card" style="background: var(--surface, var(--white)); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color, var(--gray-200)); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                            <div class="card-header period-header-strip" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-color, var(--gray-200));">
-                                <h2 data-i18n="pmPeriod" class="period-title" style="margin: 0; font-size: 1.2rem; font-weight: 700;">PM Period</h2>
+                        <div class="card period-panel-card">
+                            <div class="card-header period-header-strip">
+                                <h2 data-i18n="pmPeriod" class="period-title">PM Period</h2>
                                 <span id="pmStatusBadge" class="badge"></span>
                             </div>
-                            <div class="card-body period-content-box" id="pmContent" style="min-height: 100px; margin-top: 1rem;">
+                            <div class="card-body period-content-box" id="pmContent">
                                 <!-- Populated by activities.js -->
                             </div>
-                            <div class="card-footer period-footer-bar" style="margin-top: 1rem; text-align: right; border-top: 1px solid var(--border-color, var(--gray-200)); padding-top: 1rem; display: flex; justify-content: flex-end;">
+                            <div class="card-footer period-footer-bar">
                                 <button type="button" class="btn btn-primary log-btn" data-period="PM" onclick="openActivityModal('PM')">
                                     <span>📝</span> <span data-i18n="logActivity">Log Activity</span>
                                 </button>
@@ -237,9 +109,9 @@
                         </div>
                     </div>
 
-                    <div class="card weekly-overview weekly-overview-container" id="weeklyOverviewContainer" style="background: var(--surface, var(--white)); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color, var(--gray-200)); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                        <h2 data-i18n="weeklyOverview" class="weekly-overview-title" style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700;">Weekly Overview (Sat - Fri)</h2>
-                        <div class="grid weekly-days-grid" id="weeklyGrid" style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; gap: 1rem !important;">
+                    <div class="card weekly-overview weekly-overview-container" id="weeklyOverviewContainer">
+                        <h2 data-i18n="weeklyOverview" class="weekly-overview-title">Weekly Overview (Sat - Fri)</h2>
+                        <div class="grid weekly-days-grid" id="weeklyGrid">
                             <!-- Populated by activities.js -->
                         </div>
                     </div>
@@ -251,8 +123,8 @@
                 <div class="requests-tab-pane" id="pane-expenses">
                     <div class="page-header">
                         <div>
-                            <h1 data-i18n="expensesTitle" style="margin: 0;">Travel & Field Expenses</h1>
-                            <p style="color: var(--gray-500); margin: 4px 0 0 0; font-size: 0.9rem;" data-i18n="expensesSubtitle">
+                            <h1 data-i18n="expensesTitle" class="section-header-title">Travel & Field Expenses</h1>
+                            <p class="section-header-subtitle" data-i18n="expensesSubtitle">
                                 Manage field travel, fuel, tolls, and hospitality claims with hierarchical approval.
                             </p>
                         </div>
@@ -262,7 +134,7 @@
                     </div>
 
                     <!-- Metrics Grid -->
-                    <div class="budget-metrics-grid" style="margin-bottom: 1.5rem;">
+                    <div class="budget-metrics-grid">
                         <div class="budget-metric-box warning">
                             <div class="budget-metric-title" data-i18n="pendingApproval">Pending Approvals</div>
                             <div class="budget-metric-value" id="expMetricPending">0 EGP</div>
@@ -281,10 +153,10 @@
                     <div class="requests-control-bar">
                         <div class="requests-filter-group">
                             <select id="expenseFilterLine" onchange="ActivitiesModule.onExpenseLineFilterChange()">
-                                <!-- Populated dynamically by user lines -->
+                                <option value="all" data-i18n="allLines">All Lines</option>
                             </select>
-                            <select id="expenseFilterEmployee" onchange="ActivitiesModule.renderExpensesTab()">
-                                <!-- Populated dynamically by subordinates in line -->
+                            <select id="expenseFilterEmployee" onchange="ActivitiesModule.renderExpensesTab()" style="display: none;">
+                                <option value="all" data-i18n="allEmployees">All Subordinates</option>
                             </select>
                             <select id="expenseFilterStatus" onchange="renderExpensesTab()">
                                 <option value="all" data-i18n="allStatuses">All Statuses</option>
@@ -330,8 +202,8 @@
                 <div class="requests-tab-pane" id="pane-services">
                     <div class="page-header">
                         <div>
-                            <h1 data-i18n="servicesTitle" style="margin: 0;">Doctor & Hospital Services</h1>
-                            <p style="color: var(--gray-500); margin: 4px 0 0 0; font-size: 0.9rem;" data-i18n="servicesSubtitle">
+                            <h1 data-i18n="servicesTitle" class="section-header-title">Doctor & Hospital Services</h1>
+                            <p class="section-header-subtitle" data-i18n="servicesSubtitle">
                                 Sponsor medical congresses, clinic awareness materials, and round table discussions.
                             </p>
                         </div>
@@ -342,14 +214,14 @@
 
                     <!-- Budget Overview / Status Bar -->
                     <div class="budget-overview-card" id="serviceBudgetOverviewCard">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.3rem;">📊</span>
-                                <strong style="font-size: 1.05rem;" data-i18n="allocatedBudgetOverview">Allocated Promo Budget</strong>
+                        <div class="budget-control-strip">
+                            <div class="budget-strip-title-group">
+                                <span class="budget-strip-icon">📊</span>
+                                <strong class="budget-strip-label" data-i18n="allocatedBudgetOverview">Allocated Promo Budget</strong>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label for="serviceBudgetLineSelect" style="font-weight: 600; font-size: 0.88rem;" data-i18n="lineFilterLabel">Line:</label>
-                                <select id="serviceBudgetLineSelect" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--gray-300);" onchange="onServiceBudgetLineChange()">
+                            <div class="budget-strip-select-group">
+                                <label for="serviceBudgetLineSelect" class="budget-strip-select-label" data-i18n="lineFilterLabel">Line:</label>
+                                <select id="serviceBudgetLineSelect" class="budget-strip-select" onchange="onServiceBudgetLineChange()">
                                     <!-- Populated by userLines -->
                                 </select>
                             </div>
@@ -375,11 +247,11 @@
                         </div>
 
                         <!-- LM Distribution to DMs Collapsible Card (Visible only to LM) -->
-                        <div id="lmDistributionSection" style="display: none; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--gray-300);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div id="lmDistributionSection" class="lm-distribution-card" style="display: none;">
+                            <div class="lm-distribution-header">
                                 <div>
-                                    <h4 style="margin: 0; font-weight: 700;" data-i18n="distributeToDmsTitle">Distribute Line Budget to District Managers (DMs)</h4>
-                                    <small style="color: var(--gray-500);" data-i18n="distributeToDmsSubtitle">Allocate portions of your received line budget to each DM under your line.</small>
+                                    <h4 class="lm-distribution-title" data-i18n="distributeToDmsTitle">Distribute Line Budget to District Managers (DMs)</h4>
+                                    <small class="lm-distribution-subtitle" data-i18n="distributeToDmsSubtitle">Allocate portions of your received line budget to each DM under your line.</small>
                                 </div>
                                 <button type="button" class="btn btn-outline" onclick="saveLmAllocation()">
                                     <span>💾</span> <span data-i18n="saveAllocations">Save DMs Allocations</span>
@@ -396,6 +268,34 @@
                                         </tr>
                                     </thead>
                                     <tbody id="lmDmAllocationTableBody">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- DM Distribution to Medical Reps Collapsible Card (Visible only to DM) -->
+                        <div id="dmDistributionSection" class="lm-distribution-card" style="display: none;">
+                            <div class="lm-distribution-header">
+                                <div>
+                                    <h4 class="lm-distribution-title" data-i18n="distributeToRepsTitle">Distribute District Budget to Medical Reps</h4>
+                                    <small class="lm-distribution-subtitle" data-i18n="distributeToRepsSubtitle">Allocate portions of your received district budget to each Medical Rep under your district.</small>
+                                </div>
+                                <button type="button" class="btn btn-outline" onclick="saveDmRepAllocation()">
+                                    <span>💾</span> <span data-i18n="saveRepsAllocations">Save Reps Allocations</span>
+                                </button>
+                            </div>
+                            <div class="requests-table-container">
+                                <table class="requests-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="colRep">Medical Rep</th>
+                                            <th data-i18n="colCode">Code</th>
+                                            <th data-i18n="colAllocatedAmount">Allocated Budget (EGP)</th>
+                                            <th data-i18n="colUtilized">Utilized</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dmRepAllocationTableBody">
                                         <!-- Populated dynamically -->
                                     </tbody>
                                 </table>
@@ -453,8 +353,8 @@
                 <div class="requests-tab-pane" id="pane-budget">
                     <div class="page-header">
                         <div>
-                            <h1 data-i18n="buBudgetTitle" style="margin: 0;">Sales Budget Allocation</h1>
-                            <p style="color: var(--gray-500); margin: 4px 0 0 0; font-size: 0.9rem;" data-i18n="buBudgetSubtitle">
+                            <h1 data-i18n="buBudgetTitle" class="section-header-title">Sales Budget Allocation</h1>
+                            <p class="section-header-subtitle" data-i18n="buBudgetSubtitle">
                                 Assign and allocate sales promo budgets per product line to Line Managers (LMs).
                             </p>
                         </div>
@@ -464,16 +364,16 @@
                     </div>
 
                     <div class="budget-overview-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label for="buBudgetLineSelect" style="font-weight: 700; font-size: 1rem;" data-i18n="selectProductLine">Product Line:</label>
-                                <select id="buBudgetLineSelect" style="padding: 8px 14px; border-radius: 8px; border: 1px solid var(--gray-300); font-weight: 700;" onchange="onBuBudgetLineChange()">
+                        <div class="bu-budget-control-strip">
+                            <div class="bu-budget-input-group">
+                                <label for="buBudgetLineSelect" class="budget-strip-select-label" data-i18n="selectProductLine">Product Line:</label>
+                                <select id="buBudgetLineSelect" class="budget-strip-select" onchange="onBuBudgetLineChange()">
                                     <!-- Populated by Lines -->
                                 </select>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label for="buTotalBudgetInput" style="font-weight: 700;" data-i18n="totalLineBudget">Total Line Budget (EGP):</label>
-                                <input type="number" id="buTotalBudgetInput" class="allocation-input" style="width: 170px;" value="0" min="0" oninput="calculateBuBudgetSummary()">
+                            <div class="bu-budget-input-group">
+                                <label for="buTotalBudgetInput" class="budget-strip-select-label" data-i18n="totalLineBudget">Total Line Budget (EGP):</label>
+                                <input type="number" id="buTotalBudgetInput" class="allocation-input bu-budget-total-input" value="0" min="0" oninput="calculateBuBudgetSummary()">
                             </div>
                         </div>
 
@@ -518,25 +418,25 @@
     <!-- ======================================================== -->
     <!-- MODAL 1: Activity Log Modal                             -->
     <!-- ======================================================== -->
-    <div class="app-modal-overlay modal-overlay" id="activityModal" role="dialog" aria-modal="true" aria-labelledby="activityModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 2500; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-        <div class="app-modal-card modal-sm" style="background: var(--surface, var(--white)); border-radius: 14px; width: 90%; max-width: 440px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color, var(--gray-200)); max-height: 90vh; overflow-y: auto;">
-            <div class="app-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color, var(--gray-200)); padding-bottom: 12px;">
-                <h3 id="activityModalTitle" data-i18n="logActivityTitle" class="app-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Log Activity</h3>
+    <div class="app-modal-overlay modal-overlay" id="activityModal" role="dialog" aria-modal="true" aria-labelledby="activityModalTitle" style="display: none;">
+        <div class="app-modal-card modal-sm" >
+            <div class="app-modal-header" >
+                <h3 id="activityModalTitle" data-i18n="logActivityTitle" class="app-modal-title" >Log Activity</h3>
                 <button type="button" class="app-modal-close-btn" onclick="closeActivityModal()" aria-label="Close modal" title="Close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="activityForm" onsubmit="handleActivitySubmit(event)">
-                    <div class="form-group" style="margin-bottom: 1.15rem;">
-                        <label data-i18n="period" class="form-label" style="display: block; margin-bottom: 7px; font-weight: 700; font-size: 0.92rem;">Period</label>
-                        <select id="activityPeriod" class="form-control" disabled style="display: block; width: 100%; padding: 10px 14px; box-sizing: border-box; border-radius: 8px;">
+                    <div class="form-group" >
+                        <label data-i18n="period" class="form-label" >Period</label>
+                        <select id="activityPeriod" class="form-control" disabled >
                             <option value="AM" data-i18n="amPeriod">AM Period</option>
                             <option value="PM" data-i18n="pmPeriod">PM Period</option>
                         </select>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 1.15rem;">
-                        <label data-i18n="activityType" class="form-label" style="display: block; margin-bottom: 7px; font-weight: 700; font-size: 0.92rem;">Activity Type <span class="required-star">*</span></label>
-                        <select id="activityType" class="form-control" required style="display: block; width: 100%; padding: 10px 14px; box-sizing: border-box; border-radius: 8px;">
+                    <div class="form-group" >
+                        <label data-i18n="activityType" class="form-label" >Activity Type <span class="required-star">*</span></label>
+                        <select id="activityType" class="form-control" required >
                             <option value="" disabled selected data-i18n="selectActivity">Select Activity</option>
                             <option value="Visit" data-i18n="typeVisit">Visit</option>
                             <option value="Office Work" data-i18n="typeOfficeWork">Office Work</option>
@@ -546,14 +446,14 @@
                         </select>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 1.25rem;">
-                        <label data-i18n="notes" class="form-label" style="display: block; margin-bottom: 7px; font-weight: 700; font-size: 0.92rem;">Notes</label>
-                        <textarea id="activityNotes" class="form-control" rows="3" placeholder="Enter activity details..." style="display: block; width: 100%; padding: 10px 14px; box-sizing: border-box; border-radius: 8px; resize: vertical; min-height: 80px;"></textarea>
+                    <div class="form-group" >
+                        <label data-i18n="notes" class="form-label" >Notes</label>
+                        <textarea id="activityNotes" class="form-control" rows="3" placeholder="Enter activity details..." ></textarea>
                     </div>
 
-                    <div class="app-modal-footer footer-split" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color, #2d3340); padding-top: 16px; margin-top: 1.25rem;">
+                    <div class="app-modal-footer footer-split" >
                         <button type="button" class="btn-delete-activity" id="btnDeleteActivity" onclick="deleteCurrentActivity()" style="display: none;" data-i18n="deleteActivity">Delete Activity</button>
-                        <div class="modal-actions-right" style="display: flex; gap: 10px; margin-inline-start: auto;">
+                        <div class="modal-actions-right" >
                             <button type="button" class="btn btn-secondary" onclick="closeActivityModal()" data-i18n="cancel">Cancel</button>
                             <button type="submit" class="btn btn-primary" id="saveActivityBtn" data-i18n="save">Save</button>
                         </div>
@@ -566,10 +466,10 @@
     <!-- ======================================================== -->
     <!-- MODAL 2: Request Expense Modal                           -->
     <!-- ======================================================== -->
-    <div class="app-modal-overlay modal-overlay" id="expenseModal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 2500; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-        <div class="app-modal-card modal-md" style="background: var(--surface, var(--white)); border-radius: 14px; width: 90%; max-width: 520px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color, var(--gray-200)); max-height: 90vh; overflow-y: auto;">
-            <div class="app-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color, var(--gray-200)); padding-bottom: 12px;">
-                <h3 id="expenseModalTitle" class="app-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700;">💳 <span data-i18n="modalNewExpenseTitle">Submit Travel & Field Expense</span></h3>
+    <div class="app-modal-overlay modal-overlay" id="expenseModal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle" style="display: none;">
+        <div class="app-modal-card modal-md" >
+            <div class="app-modal-header" >
+                <h3 id="expenseModalTitle" class="app-modal-title" >💳 <span data-i18n="modalNewExpenseTitle">Submit Travel & Field Expense</span></h3>
                 <button type="button" class="app-modal-close-btn" onclick="closeExpenseModal()" aria-label="Close modal" title="Close">&times;</button>
             </div>
             <div class="modal-body">
@@ -584,10 +484,10 @@
                         <div class="form-group">
                             <label class="form-label"><span data-i18n="colCategory">Expense Category</span> <span class="required-star">*</span></label>
                             <select id="expenseCategoryInput" class="form-control" required>
-                                <option value="travel" data-i18n="catTravel">انتقالات وسفر (Travel & Transportation)</option>
-                                <option value="fuel_tolls" data-i18n="catFuelTolls">كارتات وبنزين (Fuel & Road Tolls)</option>
-                                <option value="hospitality" data-i18n="catHospitality">ضيافة واجتماعات (Hospitality & Meetings)</option>
-                                <option value="hotel" data-i18n="catHotel">إقامة فندقية (Hotel Accommodation)</option>
+                                <option value="travel" data-i18n="catTravel">Travel & Transportation</option>
+                                <option value="fuel_tolls" data-i18n="catFuelTolls">Fuel & Road Tolls</option>
+                                <option value="hospitality" data-i18n="catHospitality">Hospitality & Meetings</option>
+                                <option value="hotel" data-i18n="catHotel">Hotel Accommodation</option>
                             </select>
                         </div>
                     </div>
@@ -633,10 +533,10 @@
     <!-- ======================================================== -->
     <!-- MODAL 3: Request Service Modal                           -->
     <!-- ======================================================== -->
-    <div class="app-modal-overlay modal-overlay" id="serviceModal" role="dialog" aria-modal="true" aria-labelledby="serviceModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 2500; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-        <div class="app-modal-card modal-lg" style="background: var(--surface, var(--white)); border-radius: 14px; width: 90%; max-width: 640px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color, var(--gray-200)); max-height: 90vh; overflow-y: auto;">
-            <div class="app-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color, var(--gray-200)); padding-bottom: 12px;">
-                <h3 id="serviceModalTitle" class="app-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700;">🤝 <span data-i18n="modalNewServiceTitle">New Doctor / Hospital Service Request</span></h3>
+    <div class="app-modal-overlay modal-overlay" id="serviceModal" role="dialog" aria-modal="true" aria-labelledby="serviceModalTitle" style="display: none;">
+        <div class="app-modal-card modal-lg" >
+            <div class="app-modal-header" >
+                <h3 id="serviceModalTitle" class="app-modal-title" >🤝 <span data-i18n="modalNewServiceTitle">New Doctor / Hospital Service Request</span></h3>
                 <button type="button" class="app-modal-close-btn" onclick="closeServiceModal()" aria-label="Close modal" title="Close">&times;</button>
             </div>
             <div class="modal-body">
@@ -698,25 +598,96 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label"><span data-i18n="colCost">Estimated Cost (EGP)</span> <span class="required-star">*</span></label>
-                            <input type="number" id="serviceFormCostInput" class="form-control" required min="1" step="10" placeholder="0.00">
+                            <input type="number" id="serviceFormCostInput" class="form-control" required min="1" step="10" placeholder="0.00" oninput="ActivitiesModule.recalculateSharedBalances()">
                         </div>
                     </div>
 
-                    <!-- Row 5: Date -->
+                    <!-- Row 5: Shared Service Modern Toggle & Dynamic Distribution Block -->
+                    <div class="shared-toggle-box">
+                        <div class="shared-toggle-info">
+                            <span class="shared-toggle-icon">🤝</span>
+                            <div>
+                                <div class="shared-toggle-title" data-i18n="sharedServiceToggleLabel">Split Cost across Multiple Lines / Territories</div>
+                                <div class="shared-toggle-sub" data-i18n="sharedSubtitle">Distribute cost percentage across participating lines or territories</div>
+                            </div>
+                        </div>
+                        <label class="modern-switch" title="Toggle Shared Service">
+                            <input type="checkbox" id="serviceFormSharedToggle" onchange="ActivitiesModule.onSharedServiceToggle(this.checked)">
+                            <span class="modern-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Dynamic Shared Section (Hidden until toggled) -->
+                    <div id="sharedServiceSection" class="shared-service-section" style="display: none;">
+                        <!-- Primary Line Share Card -->
+                        <div id="sharedPrimaryShareCard" class="shared-primary-card">
+                            <div>
+                                <div class="shared-tag-primary">⭐ <span data-i18n="sharedPrimaryTitle">Primary Line (Request Initiator)</span></div>
+                                <div class="shared-primary-title" id="sharedPrimaryInfoText">-</div>
+                            </div>
+                            <div class="shared-percent-control">
+                                <label data-i18n="sharedShare">Share:</label>
+                                <div class="shared-percent-input-wrapper">
+                                    <input type="number" id="sharedPrimaryPercentInput" class="shared-percent-input" min="1" max="100" value="50" oninput="ActivitiesModule.onPrimarySharePercentInput(this.value)">
+                                    <span class="shared-percent-suffix">%</span>
+                                </div>
+                                <span id="sharedPrimaryAmountBadge" class="shared-amount-badge">0 EGP</span>
+                            </div>
+                        </div>
+
+                        <!-- Participating Lines Dynamic Container -->
+                        <div id="sharedParticipatingLinesContainer" >
+                            <!-- Dynamically generated rows injected here -->
+                        </div>
+
+                        <!-- Add Participating Line Button -->
+                        <div >
+                            <button type="button" class="btn-add-shared-row" id="btnAddSharedLineBtn" onclick="ActivitiesModule.addSharedLineRow()">
+                                <span>➕</span> <span data-i18n="btnAddSharedLine">Add Participating Line / Area</span>
+                            </button>
+                        </div>
+
+                        <!-- Live Balance and Validation Summary -->
+                        <div id="sharedBalanceValidator" class="shared-validator-card">
+                            <div class="shared-validator-stats">
+                                <div class="shared-stat-item">
+                                    <span class="shared-stat-label" data-i18n="sharedTotalCost">Total Cost</span>
+                                    <span class="shared-stat-value" id="sharedValidatorTotalCost">0 EGP</span>
+                                </div>
+                                <div class="vertical-divider"></div>
+                                <div class="shared-stat-item">
+                                    <span class="shared-stat-label" data-i18n="sharedAllocated">Allocated</span>
+                                    <span class="shared-stat-value" id="sharedValidatorAllocated" class="text-primary-link">0% (0 EGP)</span>
+                                </div>
+                            </div>
+                            <div id="sharedValidatorStatusBadge">
+                                <!-- Dynamic badge: Green when 100%, Amber when incomplete -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: Date -->
                     <div class="form-group">
                         <label class="form-label"><span data-i18n="serviceDateLabel">Expected Execution Date</span> <span class="required-star">*</span></label>
                         <input type="date" id="serviceFormDateInput" class="form-control" required>
                     </div>
 
-                    <!-- Row 6: Comment -->
+                    <!-- Row 7: Comment / Justification -->
                     <div class="form-group">
                         <label class="form-label" data-i18n="notes">Justification & Potential ROI</label>
                         <textarea id="serviceFormNotesInput" class="form-control" rows="2" placeholder="Specify event details, expected Rx potential, or department benefit..."></textarea>
                     </div>
 
+                    <!-- Row 8: Optional File / Invoice / Receipt Attachment -->
+                    <div class="form-group">
+                        <label class="form-label">📎 <span data-i18n="serviceAttachmentLabel">Quotation / Invoice Attachment (Optional)</span></label>
+                        <input type="file" id="serviceFormFileInput" class="form-control" accept="image/*,application/pdf" onchange="ActivitiesModule.handleServiceFileSelect(event)">
+                        <input type="hidden" id="serviceFormFileBase64">
+                    </div>
+
                     <div class="app-modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="closeServiceModal()" data-i18n="cancel">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnSubmitService">
                             <span>🚀</span> <span data-i18n="btnSubmitService">Submit Service Request</span>
                         </button>
                     </div>
@@ -728,7 +699,7 @@
     <!-- ======================================================== -->
     <!-- MODAL 4: Receipt Image Zoom Modal                        -->
     <!-- ======================================================== -->
-    <div class="receipt-zoom-overlay modal-overlay" id="receiptPreviewModal" role="dialog" aria-modal="true" aria-label="Receipt Preview" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 3000; align-items: center; justify-content: center;">
+    <div class="receipt-zoom-overlay modal-overlay" id="receiptPreviewModal" role="dialog" aria-modal="true" aria-label="Receipt Preview" style="display: none;">
         <div class="receipt-zoom-container">
             <button type="button" class="receipt-zoom-close-btn" onclick="closeReceiptPreviewModal()" aria-label="Close modal" title="Close">&times;</button>
             <img id="receiptModalLargeImg" class="receipt-zoom-img" src="" alt="Receipt Full">
@@ -738,10 +709,10 @@
     <!-- ======================================================== -->
     <!-- MODAL 5: Decision / Approval Modal (Approve or Reject)    -->
     <!-- ======================================================== -->
-    <div class="app-modal-overlay modal-overlay" id="decisionModal" role="dialog" aria-modal="true" aria-labelledby="decisionModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 2500; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-        <div class="app-modal-card modal-sm" style="background: var(--surface, var(--white)); border-radius: 14px; width: 90%; max-width: 440px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color, var(--gray-200)); max-height: 90vh; overflow-y: auto;">
-            <div class="app-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color, var(--gray-200)); padding-bottom: 12px;">
-                <h3 id="decisionModalTitle" class="app-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Confirm Action</h3>
+    <div class="app-modal-overlay modal-overlay" id="decisionModal" role="dialog" aria-modal="true" aria-labelledby="decisionModalTitle" style="display: none;">
+        <div class="app-modal-card modal-sm" >
+            <div class="app-modal-header" >
+                <h3 id="decisionModalTitle" class="app-modal-title" >Confirm Action</h3>
                 <button type="button" class="app-modal-close-btn" onclick="closeDecisionModal()" aria-label="Close modal" title="Close">&times;</button>
             </div>
             <div class="modal-body">
@@ -759,9 +730,13 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/activities.js?v=6.0.1" charset="UTF-8"></script>
-    <script>
-        if (typeof renderTopbar === "function") renderTopbar();
-    </script>
+    <!-- Modular Field Activities Architecture -->
+    <script src="js/activities-core.js?v=6.2.4" charset="UTF-8"></script>
+    <script src="js/activities-tab-daily.js?v=6.2.4" charset="UTF-8"></script>
+    <script src="js/activities-tab-expenses.js?v=6.2.4" charset="UTF-8"></script>
+    <script src="js/activities-tab-services.js?v=6.2.4" charset="UTF-8"></script>
+    <script src="js/activities-tab-budget.js?v=6.2.4" charset="UTF-8"></script>
+    <script src="js/activities-decisions.js?v=6.2.4" charset="UTF-8"></script>
+    <script src="js/activities-init.js?v=6.2.4" charset="UTF-8"></script>
 </body>
 </html>

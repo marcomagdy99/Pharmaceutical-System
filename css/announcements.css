@@ -214,7 +214,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    z-index: 99999 !important;
+    z-index: 99999;
     padding: 40px 16px 20px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -490,7 +490,7 @@
 .lightbox-overlay {
     background: rgba(0, 0, 0, 0.88);
     backdrop-filter: blur(8px);
-    z-index: 100000 !important;
+    z-index: 100000;
 }
 
 .lightbox-content {
@@ -694,7 +694,7 @@ html[dir="rtl"][data-theme="dark"] .announcement-card.priority-low {
 [data-theme="dark"] .modal-overlay {
     background: rgba(0, 0, 0, 0.78);
     backdrop-filter: blur(4px);
-    z-index: 99999 !important;
+    z-index: 99999;
 }
 
 [data-theme="dark"] .modal-content {
