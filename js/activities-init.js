@@ -80,6 +80,7 @@
       { id: "serviceModal", close: () => window.ActivitiesServices?.closeServiceModal?.() },
       { id: "decisionModal", close: () => window.ActivitiesDecisions?.closeDecisionModal?.() },
       { id: "receiptPreviewModal", close: () => window.ActivitiesDecisions?.closeReceiptPreviewModal?.() },
+      { id: "lmDetailModal", close: () => window.ActivitiesBudget?.closeLmDetailModal?.() },
     ];
 
     modalClosers.forEach(({ id, close }) => {
@@ -97,6 +98,8 @@
           window.ActivitiesDecisions?.closeReceiptPreviewModal?.();
         } else if (document.getElementById("decisionModal")?.style.display === "flex") {
           window.ActivitiesDecisions?.closeDecisionModal?.();
+        } else if (document.getElementById("lmDetailModal")?.style.display === "flex") {
+          window.ActivitiesBudget?.closeLmDetailModal?.();
         } else if (document.getElementById("serviceModal")?.style.display === "flex") {
           window.ActivitiesServices?.closeServiceModal?.();
         } else if (document.getElementById("expenseModal")?.style.display === "flex") {
@@ -135,7 +138,7 @@
     }
 
     // Defensive guarantee: Ensure all modals are strictly closed and hidden on startup
-    ["activityModal", "expenseModal", "serviceModal", "decisionModal", "receiptPreviewModal"].forEach((mId) => {
+    ["activityModal", "expenseModal", "serviceModal", "decisionModal", "receiptPreviewModal", "lmDetailModal"].forEach((mId) => {
       const el = document.getElementById(mId);
       if (el) {
         el.style.display = "none";
@@ -266,6 +269,7 @@
     calculateBuBudgetSummary: () => window.ActivitiesBudget?.calculateBuBudgetSummary(),
     saveBuBudgetAllocations: () => window.ActivitiesBudget?.saveBuBudgetAllocations(),
     openLmDetailModal: (lmId, lineId) => window.ActivitiesBudget?.openLmDetailModal(lmId, lineId),
+    closeLmDetailModal: () => window.ActivitiesBudget?.closeLmDetailModal?.(),
     onBuLineChange: () => window.ActivitiesBudget?.onBuLineChange?.(),
     calculateLmAllocationPreview: () => window.ActivitiesBudget?.calculateLmAllocationPreview?.(),
     onServiceBudgetLineChange: () => window.ActivitiesBudget?.onServiceBudgetLineChange?.(),
@@ -309,6 +313,7 @@
   window.calculateBuBudgetSummary = ActivitiesModule.calculateBuBudgetSummary;
   window.saveBuBudgetAllocations = ActivitiesModule.saveBuBudgetAllocations;
   window.openLmDetailModal = ActivitiesModule.openLmDetailModal;
+  window.closeLmDetailModal = ActivitiesModule.closeLmDetailModal;
   window.openDecisionModal = ActivitiesModule.openDecisionModal;
   window.closeDecisionModal = ActivitiesModule.closeDecisionModal;
   window.executeDecisionConfirm = ActivitiesModule.executeDecisionConfirm;

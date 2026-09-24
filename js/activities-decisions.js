@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file activities-decisions.js
  * @description Hierarchical Workflow Decision Engine: Approvals, Rejections, Disbursements & Live Notifications
  */
@@ -97,6 +97,14 @@
       const expenses = Core.StoreAdapter.getExpenses();
       const exp = expenses.find((e) => e.id === requestId);
       if (!exp) return;
+
+      const actionKey = `${decision}_expense`;
+      if (!Core.isActionAuthorized(actionKey, exp, Core._state.currentUser)) {
+        Core.safeShowToast(Core.t("unauthorizedExpenseAction") || "غير مصرح لك بتنفيذ هذا الإجراء على هذه المطالبة وفقاً للصلاحيات الإدارية.", "warning");
+        closeDecisionModal();
+        return;
+      }
+
       const actorName = Core.getUserDisplayName(Core._state.currentUser.id);
 
       if (decision === "reject") {
@@ -134,11 +142,6 @@
           });
         }
       } else if (decision === "approve") {
-        if (!Core.isActionAuthorized("approve_expense", exp, Core._state.currentUser)) {
-          Core.safeShowToast(Core.t("unauthorizedExpenseApproval") || "غير مصرح لك باعتماد هذه المطالبة وفقاً للصلاحيات الإدارية.", "warning");
-          closeDecisionModal();
-          return;
-        }
         let nextStatus = Core.REQUEST_STATUS.PENDING_HR;
         let nextApproverId = null;
         if (exp.status === Core.REQUEST_STATUS.PENDING_DM || exp.status === Core.REQUEST_STATUS.PENDING_LM) {
@@ -191,12 +194,11 @@
       const srv = services.find((s) => s.id === requestId);
       if (!srv) return;
 
-      if (decision === "approve") {
-        if (!Core.isActionAuthorized("approve_service", srv, Core._state.currentUser)) {
-          Core.safeShowToast(Core.t("unauthorizedServiceApproval") || "غير مصرح لك باعتماد هذا الطلب وفقاً للصلاحيات الإدارية.", "warning");
-          closeDecisionModal();
-          return;
-        }
+      const actionKey = `${decision}_service`;
+      if (!Core.isActionAuthorized(actionKey, srv, Core._state.currentUser)) {
+        Core.safeShowToast(Core.t("unauthorizedServiceAction") || "غير مصرح لك بتنفيذ هذا الإجراء على هذا الطلب وفقاً للصلاحيات الإدارية.", "warning");
+        closeDecisionModal();
+        return;
       }
 
       const actorName = Core.getUserDisplayName(Core._state.currentUser.id);

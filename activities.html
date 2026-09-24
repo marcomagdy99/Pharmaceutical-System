@@ -729,6 +729,23 @@
         </div>
     </div>
 
+    <!-- ======================================================== -->
+    <!-- MODAL 6: LM Detail / DM Allocations Modal                -->
+    <!-- ======================================================== -->
+    <div class="app-modal-overlay modal-overlay" id="lmDetailModal" role="dialog" aria-modal="true" aria-labelledby="lmDetailModalTitle" style="display: none;">
+        <div class="app-modal-card modal-md">
+            <div class="app-modal-header">
+                <h3 id="lmDetailModalTitle" class="app-modal-title">District Managers Allocations</h3>
+                <button type="button" class="app-modal-close-btn" onclick="closeLmDetailModal()" aria-label="Close modal" title="Close">&times;</button>
+            </div>
+            <div class="modal-body" id="lmDetailModalBody" style="max-height: 60vh; overflow-y: auto;">
+            </div>
+            <div class="app-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeLmDetailModal()" data-i18n="close">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <!-- Modular Field Activities Architecture -->
     <script src="js/activities-core.js?v=6.2.4" charset="UTF-8"></script>

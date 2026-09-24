@@ -108,15 +108,27 @@
     const budgets = Core.StoreAdapter.getBudgets();
     if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
 
-    budgets[lineId].totalBudget = total;
-    if (!budgets[lineId].lmAllocations) budgets[lineId].lmAllocations = {};
-
+    let totalLmAlloc = 0;
+    const tempAllocations = {};
     document.querySelectorAll(".bu-lm-input").forEach((inp) => {
       const lmId = inp.dataset.lmid;
       if (lmId) {
-        budgets[lineId].lmAllocations[lmId] = Number(inp.value || 0);
+        const val = Number(inp.value || 0);
+        tempAllocations[lmId] = val;
+        totalLmAlloc += val;
       }
     });
+
+    if (total > 0 && totalLmAlloc > total) {
+      Core.safeShowToast(
+        Core.t("budgetOverAllocated") || `تحذير: إجمالي مخصصات مديري الخطوط (${totalLmAlloc.toLocaleString()}) يتجاوز الميزانية الكلية للخط (${total.toLocaleString()}).`,
+        "warning"
+      );
+    }
+
+    budgets[lineId].totalBudget = total;
+    if (!budgets[lineId].lmAllocations) budgets[lineId].lmAllocations = {};
+    budgets[lineId].lmAllocations = tempAllocations;
 
     Core.StoreAdapter.saveBudgets(budgets);
     Core.safeShowToast(Core.t("savedBudgetMessage") || "تم حفظ مخصصات الميزانية بنجاح", "success");
@@ -130,17 +142,70 @@
     const dms = Core.getDmsUnderLmForLine(lmId, lineId);
 
     const lmName = lm ? Core.getUserDisplayName(lm.id) : lmId;
-    if (dms.length === 0) {
-      alert(`No District Managers found under ${lmName}.`);
-      return;
+    const modal = document.getElementById("lmDetailModal");
+    const titleEl = document.getElementById("lmDetailModalTitle");
+    const bodyEl = document.getElementById("lmDetailModalBody");
+
+    if (titleEl) {
+      titleEl.textContent = `${Core.t("dmsUnderLm") || "District Managers under"} ${lmName}`;
     }
 
-    let summary = `District Managers under ${lmName}:\n\n`;
-    dms.forEach((dm) => {
-      const alloc = (lineBudget.dmAllocations && lineBudget.dmAllocations[dm.id]) || 0;
-      summary += `• ${Core.getUserDisplayName(dm.id)} (${dm.employeeCode || dm.id}): ${alloc.toLocaleString()} ${Core.t("currency") || "EGP"}\n`;
-    });
-    alert(summary);
+    if (dms.length === 0) {
+      if (bodyEl) {
+        bodyEl.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted, var(--gray-500)); font-size:14px;">
+          ${Core.t("noDmsUnderLm") || "No District Managers found under this Line Manager for the selected line."}
+        </div>`;
+      }
+    } else {
+      let rows = "";
+      let totalAlloc = 0;
+      dms.forEach((dm) => {
+        const alloc = (lineBudget.dmAllocations && lineBudget.dmAllocations[dm.id]) || 0;
+        totalAlloc += alloc;
+        rows += `
+          <tr style="border-bottom:1px solid var(--border-color, #e2e8f0);">
+            <td style="padding:10px 12px; font-weight:600; color:var(--text-color, var(--gray-800));">${Core.escapeHTML(Core.getUserDisplayName(dm.id))}</td>
+            <td style="padding:10px 12px;"><span class="badge" style="background:var(--surface-dim, var(--gray-100)); color:var(--text-color, var(--gray-700)); font-weight:600;">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
+            <td style="padding:10px 12px; text-align:end; font-weight:700; color:var(--primary);">${alloc.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+          </tr>
+        `;
+      });
+
+      if (bodyEl) {
+        bodyEl.innerHTML = `
+          <div style="margin-bottom:14px; font-size:13px; color:var(--text-muted, var(--gray-600));">
+            ${Core.t("totalDmAllocation") || "Total allocated to DMs"}: <strong style="color:var(--text-color, var(--gray-900));">${totalAlloc.toLocaleString()} ${Core.t("currency") || "EGP"}</strong>
+          </div>
+          <div class="table-responsive">
+            <table class="table" style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:2px solid var(--border-color, #cbd5e1); text-align:start;">
+                  <th style="padding:8px 12px; font-size:12px; text-transform:uppercase; color:var(--text-muted);">${Core.t("name") || "District Manager"}</th>
+                  <th style="padding:8px 12px; font-size:12px; text-transform:uppercase; color:var(--text-muted);">${Core.t("code") || "Code"}</th>
+                  <th style="padding:8px 12px; font-size:12px; text-transform:uppercase; color:var(--text-muted); text-align:end;">${Core.t("allocation") || "Allocated"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+
+    if (modal) {
+      modal.style.display = "flex";
+      modal.classList.add("active");
+    }
+  }
+
+  function closeLmDetailModal() {
+    const modal = document.getElementById("lmDetailModal");
+    if (modal) {
+      modal.style.display = "none";
+      modal.classList.remove("active");
+    }
   }
 
   function onBuLineChange() {
@@ -386,6 +451,7 @@
     calculateBuBudgetSummary,
     saveBuBudgetAllocations,
     openLmDetailModal,
+    closeLmDetailModal,
     onBuLineChange,
     renderLmDistributionSection,
     calculateLmAllocationPreview,
