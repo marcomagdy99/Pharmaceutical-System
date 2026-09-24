@@ -213,6 +213,8 @@ function renderDailyTimeline() {
     return periodA - periodB;
   });
 
+  const _escape = (s) => (typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')));
+
   sortedTimeline.forEach((v) => {
     const isActivity = v.type === 'activity';
     const isActual   = !!v.isActual;
@@ -235,6 +237,12 @@ function renderDailyTimeline() {
       badgeLabel = lang === 'ar' ? 'زيارة من الخطة (Planned Visit)' : 'Planned & Executed';
     }
 
+    const safeTargetName = _escape(v.targetName || '');
+    const safeActivityType = _escape(v.activityType || v.targetName || '');
+    const safeSpecialty = _escape(v.specialty || '');
+    const safeRepName = _escape(v.repName || '');
+    const safeClass = _escape(v.class || 'A');
+
     const card = document.createElement('div');
     card.className = 'timeline-event-card';
     card.innerHTML = `
@@ -245,20 +253,20 @@ function renderDailyTimeline() {
       </div>
       <div class="timeline-content-box ${borderClass}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-          <strong class="timeline-target-title" style="font-size: 1.05rem; ${isActivity ? 'color: #6b21a8;' : ''}">${v.targetName}</strong>
+          <strong class="timeline-target-title" style="font-size: 1.05rem; ${isActivity ? 'color: #6b21a8;' : ''}">${safeTargetName}</strong>
           <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
         </div>
         ${isActivity ? `
           <div style="font-size: 0.88rem; color: var(--gray-700); margin-bottom: 6px; line-height: 1.5;">
             <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #6b21a8;">
-              ${lang === 'ar' ? 'نوع النشاط:' : 'Activity Type:'} <strong>${v.activityType || v.targetName}</strong>
+              ${lang === 'ar' ? 'نوع النشاط:' : 'Activity Type:'} <strong>${safeActivityType}</strong>
             </span>
-            ${v.specialty ? `• <span style="color: var(--gray-600);">${lang === 'ar' ? 'ملاحظات:' : 'Notes:'} <em>"${v.specialty}"</em></span>` : ''}
-            • <span style="font-weight: 500;">${lang === 'ar' ? 'الموظف:' : 'Employee:'} <strong>${v.repName}</strong></span>
+            ${safeSpecialty ? `• <span style="color: var(--gray-600);">${lang === 'ar' ? 'ملاحظات:' : 'Notes:'} <em>"${safeSpecialty}"</em></span>` : ''}
+            • <span style="font-weight: 500;">${lang === 'ar' ? 'الموظف:' : 'Employee:'} <strong>${safeRepName}</strong></span>
           </div>
         ` : `
           <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 6px;">
-            <span>${v.specialty || ''}</span> • <span>Class: <strong>${v.class || 'A'}</strong></span> • <span>Rep: <strong>${v.repName}</strong></span>
+            <span>${safeSpecialty}</span> • <span>Class: <strong>${safeClass}</strong></span> • <span>Rep: <strong>${safeRepName}</strong></span>
           </div>
         `}
         <div class="timeline-entry-timestamp" style="font-size: 0.78rem; padding: 6px 10px; border-radius: 6px; display: inline-block;">
