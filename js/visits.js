@@ -543,16 +543,16 @@ function renderGpsBadge(v, lang) {
   if (!v || !v.gpsStatus) return "";
   if (v.gpsStatus === "permission_denied") {
     const text = lang === "ar" ? "⚠️ تم تعطيل الـ GPS من المندوب" : "⚠️ GPS Disabled by Rep";
-    return `<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">${text}</span>`;
+    return `<span class="badge badge-gps-denied">${text}</span>`;
   }
   if (v.gpsStatus === "in_range") {
     const text = lang === "ar" ? "✅ تم التحقق (داخل النطاق)" : "✅ Verified (In Range)";
-    return `<span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">${text}</span>`;
+    return `<span class="badge badge-gps-in-range">${text}</span>`;
   }
   if (v.gpsStatus === "out_of_range") {
     const distText = v.distanceMeters ? ` (${v.distanceMeters}m)` : "";
     const text = lang === "ar" ? `⚠️ خارج النطاق${distText}` : `⚠️ Out of Range${distText}`;
-    return `<span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; font-weight: 700;">${text}</span>`;
+    return `<span class="badge badge-gps-out-of-range">${text}</span>`;
   }
   return "";
 }
@@ -822,12 +822,24 @@ function getTwoDaysAgoStr() {
   return `${d.getFullYear()}-${_padZ(d.getMonth() + 1)}-${_padZ(d.getDate())}`;
 }
 
+const getSysLang = () => (window.getCurrentLang && window.getCurrentLang()) || "en";
+const isSysAr = () => getSysLang() === "ar";
+
 let hasLoadedTimelineOnce = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramDate = urlParams.get("date");
-  const effectiveDate = (paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate)) ? paramDate : todayStr;
+  let savedTimelineDate = null;
+  try {
+    savedTimelineDate = sessionStorage.getItem("pharma_timeline_selected_date");
+  } catch (e) {}
+
+  const effectiveDate = (paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate))
+    ? paramDate
+    : (savedTimelineDate && /^\d{4}-\d{2}-\d{2}$/.test(savedTimelineDate))
+      ? savedTimelineDate
+      : todayStr;
 
   const dateInput = document.getElementById("visitDate");
   if (dateInput) dateInput.value = effectiveDate;
@@ -835,24 +847,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const timelineDatePicker = document.getElementById("timelineDatePicker");
   if (timelineDatePicker) {
     timelineDatePicker.value = effectiveDate;
+    timelineDatePicker.addEventListener("change", (e) => {
+      if (e.target.value) {
+        try {
+          sessionStorage.setItem("pharma_timeline_selected_date", e.target.value);
+        } catch (err) {}
+        renderVisitsTimeline(true);
+      }
+    });
+    timelineDatePicker.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        renderVisitsTimeline(true);
+      }
+    });
   }
 
-  timelineDatePicker?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
+  // Reactive filters: auto-update timeline when filters change
+  ["timelineAreaFilter", "timelinePeriodFilter", "timelineStatusFilter"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("change", () => {
       renderVisitsTimeline(true);
-    }
+    });
   });
 
   setupRoleBasedView();
   populateAreaFilters();
-  renderVisits(false);
+  renderVisitsTimeline(true);
   setupModalTargetFilter();
   updateTargetOptions();
-
-  if (paramDate) {
-    renderVisitsTimeline(true);
-  }
 });
 
 function setupRoleBasedView() {
@@ -1420,10 +1442,22 @@ const visitsApp = {
       populateAreaFilters();
     }
 
+    const timelinePicker = document.getElementById("timelineDatePicker");
+    const activeTimelineDate =
+      timelinePicker && timelinePicker.value && timelinePicker.value >= todayStr
+        ? timelinePicker.value
+        : todayStr;
+
     const bulkDateInput = document.getElementById("bulkPlanDate");
     if (bulkDateInput) {
       bulkDateInput.min = todayStr;
-      bulkDateInput.value = todayStr;
+      bulkDateInput.value = activeTimelineDate;
+      if (!bulkDateInput.dataset.boundChange) {
+        bulkDateInput.dataset.boundChange = "true";
+        bulkDateInput.addEventListener("change", () => {
+          visitsApp.renderBulkTargetsList();
+        });
+      }
     }
     document.getElementById("bulkSearchInput").value = "";
     const pmRadio = document.querySelector(
@@ -1551,10 +1585,15 @@ const visitsApp = {
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--gray-500); font-style: italic;">No matching targets found.</div>`;
+      container.innerHTML = `<div class="bulk-targets-empty">No matching targets found.</div>`;
       this.updateBulkCounter();
       return;
     }
+
+    const planDateInput = document.getElementById("bulkPlanDate");
+    const currentPlanDate = (planDateInput && planDateInput.value) || todayStr;
+    const targetRepId = (currentUser && currentUser.id) || "rep1";
+    const isAr = isSysAr();
 
     filtered.forEach((target) => {
       let targetArea = target.area;
@@ -1563,20 +1602,25 @@ const visitsApp = {
         if (fa) targetArea = fa.name;
       }
       const areaBadge = targetArea
-        ? `<span class="badge" style="background: var(--gray-100, #f3f4f6); color: var(--gray-700, #374151); font-size: 0.72rem; margin-inline-start: 6px;">📍 ${window.escapeHtml(targetArea)}</span>`
+        ? `<span class="badge bulk-target-area-badge">📍 ${window.escapeHtml(targetArea)}</span>`
+        : "";
+
+      const isAlready = isDoctorAlreadyVisitedToday(target.id, currentPlanDate, targetRepId);
+      const scheduledBadge = isAlready
+        ? `<span class="badge bulk-target-already-badge">✓ ${isAr ? "مجدول بالفعل" : "Already Scheduled"}</span>`
         : "";
 
       const itemDiv = document.createElement("label");
-      itemDiv.className = "bulk-target-item";
+      itemDiv.className = `bulk-target-item${isAlready ? " bulk-target-already-scheduled" : ""}`;
       itemDiv.innerHTML = `
-        <input type="checkbox" class="bulk-target-cb" value="${target.id}" data-name="${target.name}" onchange="visitsApp.updateBulkCounter()">
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 700; color: var(--gray-800); font-size: 0.9rem;">${target.name}${areaBadge}</div>
-          <div style="font-size: 0.75rem; color: var(--gray-500);">
+        <input type="checkbox" class="bulk-target-cb" value="${target.id}" data-name="${target.name}" ${isAlready ? "disabled" : 'onchange="visitsApp.updateBulkCounter()"'} title="${isAlready ? (isAr ? 'مجدول بالفعل في هذا اليوم' : 'Already scheduled today') : ''}">
+        <div class="bulk-target-info">
+          <div class="bulk-target-name">${target.name}${areaBadge}${scheduledBadge}</div>
+          <div class="bulk-target-meta">
             ${isHospital ? target.address || "Hospital" : `${target.specialty || "General"} • Class ${target.class || "A"}`}
           </div>
         </div>
-        <span class="badge" style="background: ${isHospital ? "#fff3cd" : "#e7f1ff"}; color: ${isHospital ? "#664d03" : "#0d6efd"}; font-size: 0.72rem; font-weight: bold;">
+        <span class="badge ${isHospital ? "bulk-target-badge-hosp" : "bulk-target-badge-class"}">
           ${isHospital ? "Hospital" : `Class ${target.class || "A"}`}
         </span>
       `;
@@ -1591,26 +1635,29 @@ const visitsApp = {
   },
 
   toggleBulkSelectAll(isChecked) {
-    document.querySelectorAll(".bulk-target-cb").forEach((cb) => {
+    document.querySelectorAll(".bulk-target-cb:not(:disabled)").forEach((cb) => {
       cb.checked = isChecked;
     });
     this.updateBulkCounter();
   },
 
   updateBulkCounter() {
-    const allCheckboxes = document.querySelectorAll(".bulk-target-cb");
-    const checkedBoxes = document.querySelectorAll(".bulk-target-cb:checked");
+    const allCheckboxes = document.querySelectorAll(".bulk-target-cb:not(:disabled)");
+    const checkedBoxes = document.querySelectorAll(".bulk-target-cb:checked:not(:disabled)");
     const counterEl = document.getElementById("bulkSelectionCounter");
     const saveBtn = document.getElementById("btnSaveBulkPlan");
     const selectAllCb = document.getElementById("bulkSelectAllToggle");
+    const isAr = isSysAr();
 
     const count = checkedBoxes.length;
     if (counterEl) {
-      counterEl.textContent = `Selected: ${count} Targets`;
+      counterEl.textContent = isAr ? `المحدد: ${count} أهداف` : `Selected: ${count} Targets`;
     }
     if (saveBtn) {
       saveBtn.textContent =
-        count > 0 ? `Save ${count} Planned Visits` : "Save Planned Visits";
+        count > 0
+          ? (isAr ? `حفظ ${count} زيارة مخططة` : `Save ${count} Planned Visits`)
+          : (isAr ? "حفظ الزيارات المخططة" : "Save Planned Visits");
     }
     if (selectAllCb && allCheckboxes.length > 0) {
       selectAllCb.checked = checkedBoxes.length === allCheckboxes.length;
@@ -1618,19 +1665,37 @@ const visitsApp = {
   },
 
   saveBulkPlanVisits() {
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const saveBtn = document.getElementById("btnSaveBulkPlan");
+    const originalBtnText = saveBtn ? saveBtn.textContent : "";
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = lang === "ar" ? "جاري الحفظ... ⏳" : "Saving... ⏳";
+    }
+
+    const resetSaveBtn = () => {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalBtnText || (lang === "ar" ? "حفظ الزيارات المخططة" : "Save Planned Visits");
+      }
+    };
+
     const checkedBoxes = Array.from(
       document.querySelectorAll(".bulk-target-cb:checked"),
     );
     if (checkedBoxes.length === 0) {
-      return showToast(
-        "Please select at least one doctor or hospital.",
-        "warning",
-      );
+      resetSaveBtn();
+      const msg = lang === "ar"
+        ? "يرجى اختيار طبيب أو مستشفى واحد على الأقل."
+        : "Please select at least one doctor or hospital.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      else alert(msg);
+      return;
     }
 
     const planDate = document.getElementById("bulkPlanDate").value || todayStr;
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     if (planDate < todayStr) {
+      resetSaveBtn();
       const msg = lang === "ar"
         ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
         : "Cannot plan visits in the past. Please select today or a future date.";
@@ -1642,6 +1707,7 @@ const visitsApp = {
     const targetRepId = currentUser.id || "rep1";
     const dateCheck = checkVisitDateAllowed(planDate, targetRepId, lang);
     if (!dateCheck.allowed) {
+      resetSaveBtn();
       if (typeof showToast === "function") showToast(dateCheck.message, "warning");
       else alert(dateCheck.message);
       return;
@@ -1656,7 +1722,7 @@ const visitsApp = {
     checkedBoxes.forEach((cb) => {
       const targetId = cb.value;
       const targetName = cb.getAttribute("data-name") || "Doctor";
-      if (isDoctorAlreadyVisitedToday(targetId, planDate, currentUser.id || "rep1")) {
+      if (isDoctorAlreadyVisitedToday(targetId, planDate, targetRepId)) {
         duplicateTargets.push(targetName);
       } else {
         validBoxes.push(cb);
@@ -1664,6 +1730,7 @@ const visitsApp = {
     });
 
     if (duplicateTargets.length > 0 && validBoxes.length === 0) {
+      resetSaveBtn();
       const msg = lang === "ar"
         ? `الأهداف المحددة مسجلة بالفعل في هذا اليوم: (${duplicateTargets.join("، ")}). لا يمكن تكرار الزيارة لنفس الطبيب مرتين في نفس اليوم.`
         : `Selected targets are already scheduled/visited today: (${duplicateTargets.join(", ")}). Duplicate visits on the same day are not permitted.`;
@@ -1672,9 +1739,10 @@ const visitsApp = {
       return;
     }
 
-    // 2. Minimum PM visits check: dynamically read from company settings (default 4, unless exempt)
+    // 2. Minimum PM visits check: provide a helpful reminder without blocking planning
+    let pmReminder = "";
     if (period.toLowerCase() === "pm") {
-      const exemption = isWorkdayExemptFromMinVisits(planDate, currentUser.id || "rep1");
+      const exemption = isWorkdayExemptFromMinVisits(planDate, targetRepId);
       if (!exemption.exempt) {
         const companySettings = (window.store && window.store.companySettings)
           ? window.store.companySettings.get()
@@ -1683,7 +1751,7 @@ const visitsApp = {
 
         const existingPmCount = demoVisits.filter(
           (v) =>
-            v.repId === (currentUser.id || "rep1") &&
+            v.repId === targetRepId &&
             v.date === planDate &&
             (v.period || "").toLowerCase() === "pm" &&
             v.targetType !== "pharmacy" &&
@@ -1693,12 +1761,9 @@ const visitsApp = {
         const totalPm = existingPmCount + validBoxes.length;
         if (totalPm < minPmRequired) {
           const needed = minPmRequired - totalPm;
-          const msg = lang === "ar"
-            ? `الحد الأدنى لزيارات الفترة المسائية (PM) هو ${minPmRequired} زيارات يومياً. إجمالي زيارات هذا اليوم (${totalPm}) فقط. يرجى اختيار ${needed} أطباء إضافيين لاستكمال خطة اليوم.`
-            : `Minimum PM visits requirement is ${minPmRequired} visits per day. Total for this day is (${totalPm}). Please select ${needed} more target(s) to complete today's plan.`;
-          if (typeof showToast === "function") showToast(msg, "warning");
-          else alert(msg);
-          return;
+          pmReminder = lang === "ar"
+            ? ` (تذكير: مستهدف اليوم ${minPmRequired} زيارات مسائية، تم تخطيط ${totalPm} حتى الآن)`
+            : ` (Note: Daily target is ${minPmRequired} PM visits, ${totalPm} planned so far)`;
         }
       }
     }
@@ -1725,7 +1790,7 @@ const visitsApp = {
       const newVisit = {
         id: "v_bulk_" + Date.now() + "_" + index,
         planId: planUniqueId,
-        repId: currentUser.id || "rep1",
+        repId: targetRepId,
         doctorId: targetId,
         doctorName: targetName,
         date: planDate,
@@ -1744,13 +1809,27 @@ const visitsApp = {
     });
 
     persistVisits();
+    resetSaveBtn();
     this.closeBulkPlanModal();
+
+    // Switch the timeline date to the planned date so user immediately sees their newly scheduled visits
+    const datePicker = document.getElementById("timelineDatePicker");
+    if (datePicker && planDate) {
+      datePicker.value = planDate;
+      try {
+        sessionStorage.setItem("pharma_timeline_selected_date", planDate);
+      } catch (e) {}
+    }
     renderVisits(true);
 
     let successMsg =
       lang === "ar"
-        ? `تم إرسال ${validBoxes.length} زيارة للمراجعة والاعتماد من المدير!`
-        : `${validBoxes.length} planned visits submitted for manager review and approval!`;
+        ? `✓ تم حفظ ${validBoxes.length} زيارة مخطط لها بنجاح وإرسالها للاعتماد!`
+        : `✓ Successfully saved ${validBoxes.length} planned visit(s) for manager approval!`;
+
+    if (pmReminder) {
+      successMsg += pmReminder;
+    }
 
     if (duplicateTargets.length > 0) {
       successMsg += lang === "ar"
@@ -1928,14 +2007,14 @@ function renderVisitsTimeline(triggeredByShow = false) {
     if (summaryBar) summaryBar.innerHTML = "";
     container.innerHTML = `
       <div class="timeline-prompt-card">
-        <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
+        <div class="timeline-prompt-card-icon">🔍</div>
         <h4 class="timeline-prompt-title" data-i18n="promptSelectDateAndShow">
           ${trans.promptSelectDateAndShow || 'Select a date and click "Show" to view visits'}
         </h4>
         <p class="timeline-prompt-sub" data-i18n="promptSelectDateSub">
           ${trans.promptSelectDateSub || "Choose your desired date and filters above, then click the Show button to load the daily visits timeline."}
         </p>
-        <button type="button" class="btn btn-primary" onclick="renderVisitsTimeline(true)" style="padding: 8px 24px; font-weight: 600; border-radius: 8px;">
+        <button type="button" class="btn btn-primary timeline-show-btn" onclick="renderVisitsTimeline(true)">
           🔍 <span data-i18n="btnShow">${trans.btnShow || "Show"}</span>
         </button>
       </div>
@@ -2112,20 +2191,20 @@ function renderVisitsTimeline(triggeredByShow = false) {
     const cleanLabel = (s) => (s ? String(s).replace(/:$/, "").trim() : "");
     summaryBar.innerHTML = `
       <div class="timeline-stat-chip">
-        <strong class="stat-value" style="color: var(--primary, #0d6efd);">${totalItems}</strong>
+        <strong class="stat-value stat-value-primary">${totalItems}</strong>
         <span class="stat-label">${cleanLabel(trans.totalEventsToday)}</span>
       </div>
       <div class="timeline-stat-chip">
-        <strong class="stat-value" style="color: #b45309;">${actualCount}</strong>
+        <strong class="stat-value stat-value-actual">${actualCount}</strong>
         <span class="stat-label">
-          <span class="legend-dot actual" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          <span class="legend-dot actual legend-dot-sm"></span>
           ${cleanLabel(trans.actualActivities)}
         </span>
       </div>
       <div class="timeline-stat-chip">
-        <strong class="stat-value" style="color: #0284c7;">${plannedCount}</strong>
+        <strong class="stat-value stat-value-planned">${plannedCount}</strong>
         <span class="stat-label">
-          <span class="legend-dot planned" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          <span class="legend-dot planned legend-dot-sm"></span>
           ${cleanLabel(trans.fromPlanStat)}
         </span>
       </div>
@@ -2133,9 +2212,9 @@ function renderVisitsTimeline(triggeredByShow = false) {
         isMgr
           ? `
       <div class="timeline-stat-chip">
-        <strong class="stat-value" style="color: #6f42c1;">${jointCount}</strong>
+        <strong class="stat-value stat-value-joint">${jointCount}</strong>
         <span class="stat-label">
-          <span class="legend-dot joint" style="width:7px; height:7px; margin-inline-end:3px;"></span>
+          <span class="legend-dot joint legend-dot-sm"></span>
           ${cleanLabel(trans.jointVisitsCount)}
         </span>
       </div>`
@@ -2146,10 +2225,10 @@ function renderVisitsTimeline(triggeredByShow = false) {
 
   if (combined.length === 0) {
     container.innerHTML = `
-      <div class="timeline-empty-card" style="text-align: center; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-sm);">
-        <span style="font-size: 2.5rem;">📅</span>
-        <h4 class="timeline-target-title" style="margin: 10px 0 4px;">${trans.noTimelineEvents}</h4>
-        <p class="timeline-meta-row" style="margin-top: 4px;">${trans.selectAnotherDate}</p>
+      <div class="timeline-empty-card timeline-empty-card-wrapper">
+        <span class="timeline-empty-icon">📅</span>
+        <h4 class="timeline-target-title timeline-empty-title">${trans.noTimelineEvents}</h4>
+        <p class="timeline-meta-row timeline-empty-sub">${trans.selectAnotherDate}</p>
       </div>
     `;
     return;
@@ -2245,13 +2324,13 @@ function renderVisitsTimeline(triggeredByShow = false) {
         partnerName =
           v.repId === currentUser.id ? "Team Rep" : currentUser.name;
       }
-      accompanimentNote = ` • <span style="color: var(--purple, #6f42c1); font-weight: 700;">🤝 ${lang === "ar" ? "نزول مشترك مع:" : "Co-visiting with:"} ${window.escapeHtml(partnerName)}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-joint">🤝 ${lang === "ar" ? "نزول مشترك مع:" : "Co-visiting with:"} ${window.escapeHtml(partnerName)}</span>`;
     } else if (repUser && repUser.role === "district_manager") {
-      accompanimentNote = ` • <span style="color: #b45309; font-weight: 700;">👔 ${trans.supervisoryVisit}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
     } else if (repUser && repUser.role === "line_manager") {
-      accompanimentNote = ` • <span style="color: #b45309; font-weight: 700;">👔 ${lang === "ar" ? "زيارة إشرافية (LM)" : "Supervisory Visit (LM)"}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${lang === "ar" ? "زيارة إشرافية (LM)" : "Supervisory Visit (LM)"}</span>`;
     } else if (v.repId === currentUser.id && isManager) {
-      accompanimentNote = ` • <span style="color: #b45309; font-weight: 700;">👔 ${trans.supervisoryVisit}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
     }
 
     const isPharmVisit =
@@ -2284,46 +2363,46 @@ function renderVisitsTimeline(triggeredByShow = false) {
     card.innerHTML = `
       <div class="timeline-time-col">
         <span>${v.time || "10:00"}</span>
-        <span style="font-size: 0.72rem; color: var(--gray-400);">${periodDisplay}</span>
+        <span class="timeline-period-label">${periodDisplay}</span>
         <div class="timeline-icon-dot ${dotClass}"></div>
       </div>
       <div class="timeline-content-box ${borderClass}">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+        <div class="timeline-card-header">
           <strong class="timeline-target-title">${window.escapeHtml(v.doctorName)}</strong>
-          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <div class="timeline-card-badges">
             ${renderGpsBadge(v, lang)}
             <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
           </div>
         </div>
         <div class="timeline-meta-row">
-          <span>${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span>${targetArea ? ` • <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-weight: 600; padding: 2px 8px; border-radius: 6px;">${window.escapeHtml(targetArea)}</span>` : ""} • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
+          <span>${window.escapeHtml(specialtyText)}</span> • <span>Class: <strong>${window.escapeHtml(classText)}</strong></span>${targetArea ? ` • <span class="badge bg-secondary bg-opacity-10 text-secondary timeline-target-area-badge">${window.escapeHtml(targetArea)}</span>` : ""} • <span>${repRoleLabel}: <strong>${window.escapeHtml(repDisplayName)}</strong></span>${accompanimentNote}
         </div>
         ${
           (() => {
             const cardProds = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
             return cardProds.length > 0
-              ? `<div style="font-size: 0.8rem; color: var(--primary); margin-bottom: 6px;"><strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
+              ? `<div class="timeline-products-row"><strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
               : "";
           })()
         }
         ${
           v.giveawaySamples
-            ? `<div style="font-size: 0.8rem; color: #d97706; margin-bottom: 6px;"><strong>${lang === "ar" ? "عينات ومواد دعائية:" : "Giveaway Samples:"}</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
+            ? `<div class="timeline-samples-row"><strong>${lang === "ar" ? "عينات ومواد دعائية:" : "Giveaway Samples:"}</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
             : ""
         }
         ${
           v.comment
-            ? `<div class="timeline-comment-text" style="font-size: 0.8rem; margin-bottom: 6px; font-style: italic;">"${window.escapeHtml(v.comment)}"</div>`
+            ? `<div class="timeline-comment-text">"${window.escapeHtml(v.comment)}"</div>`
             : ""
         }
         ${
           v.status === "missed" && v.missedReason
-            ? `<div style="font-size: 0.82rem; color: #dc3545; margin-bottom: 6px; font-weight: 600;"><strong>${lang === "ar" ? "سبب تعذر المقابلة:" : "Missed Reason:"}</strong> "${window.escapeHtml(v.missedReason)}"</div>`
+            ? `<div class="timeline-missed-reason"><strong>${lang === "ar" ? "سبب تعذر المقابلة:" : "Missed Reason:"}</strong> "${window.escapeHtml(v.missedReason)}"</div>`
             : ""
         }
         ${
           v.lastRescheduleReason
-            ? `<div style="font-size: 0.8rem; color: #b45309; margin-bottom: 6px;"><strong>${lang === "ar" ? "مؤجلة سابقاً بسبب:" : "Rescheduled Reason:"}</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
+            ? `<div class="timeline-rescheduled-reason"><strong>${lang === "ar" ? "مؤجلة سابقاً بسبب:" : "Rescheduled Reason:"}</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
             : ""
         }
         <div class="timeline-timestamp-chip">
@@ -2334,24 +2413,24 @@ function renderVisitsTimeline(triggeredByShow = false) {
           v.status === "planned" &&
           (!isManager || v.repId === currentUser.id)
             ? `
-          <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button type="button" class="btn btn-primary" style="padding: 5px 16px; font-size: 0.82rem; border-radius: 6px; font-weight: 700;" onclick="openCompleteModal('${v.id}')">
+          <div class="timeline-card-actions">
+            <button type="button" class="btn btn-primary btn-timeline-complete" onclick="openCompleteModal('${v.id}')">
               ✓ ${trans.btnComplete}
             </button>
-            <button type="button" class="btn" style="padding: 5px 12px; font-size: 0.82rem; border-radius: 6px; font-weight: 700; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); cursor: pointer;" onclick="openRescheduleModal('${v.id}')">
+            <button type="button" class="btn btn-timeline-reschedule" onclick="openRescheduleModal('${v.id}')">
               🗓️ ${lang === "ar" ? "تأجيل الزيارة" : "Reschedule"}
             </button>
             ${
               canDeleteVisit(v)
-                ? `<button type="button" class="btn-outline-danger" style="padding: 5px 12px; font-size: 0.82rem; border-radius: 6px;" onclick="confirmDeleteVisit('${v.id}')">🗑️ ${trans.btnDelete}</button>`
+                ? `<button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')">🗑️ ${trans.btnDelete}</button>`
                 : ""
             }
           </div>
         `
             : !isActivity && canDeleteVisit(v)
               ? `
-          <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button type="button" class="btn-outline-danger" style="padding: 5px 12px; font-size: 0.82rem; border-radius: 6px;" onclick="confirmDeleteVisit('${v.id}')">🗑️ ${trans.btnDelete}</button>
+          <div class="timeline-card-actions">
+            <button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')">🗑️ ${trans.btnDelete}</button>
           </div>
         `
               : ""
@@ -2395,7 +2474,7 @@ function populateVisitProducts(selectedProducts = []) {
 
   if (productsToShow.length === 0) {
     container.innerHTML =
-      '<span style="font-size: 0.85rem; color: var(--gray-500);">No products available. Add some in the Products page.</span>';
+      '<span class="products-empty-msg">No products available. Add some in the Products page.</span>';
     return;
   }
 
@@ -2502,7 +2581,7 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
 
   if (candidates.length === 0) {
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    container.innerHTML = `<span style="font-size: 0.82rem; color: var(--gray-500); font-style: italic;">${lang === "ar" ? "لا يوجد زملاء أو مدراء متاحين للاختيار" : "No colleagues or managers available for companion selection."}</span>`;
+    container.innerHTML = `<span class="candidates-empty-msg">${lang === "ar" ? "لا يوجد زملاء أو مدراء متاحين للاختيار" : "No colleagues or managers available for companion selection."}</span>`;
     return;
   }
 
@@ -3438,7 +3517,7 @@ function saveVisit() {
       products: selectedProductNames,
       comment: document.getElementById("visitComment").value,
       giveawaySamples: giveawaySamples,
-      status: "completed",
+      status: modalSource === "plan" ? "pending_approval" : "completed",
       source: modalSource,
       createdAt: new Date().toISOString(),
       entryDate: visitDate,
@@ -3457,8 +3536,8 @@ function saveVisit() {
 
       const successMsg =
         lang === "ar"
-          ? "تم تسجيل وحفظ الزيارة بنجاح."
-          : "Visit saved successfully.";
+          ? (modalSource === "plan" ? "تم حفظ الزيارة المخططة وإرسالها للاعتماد بنجاح." : "تم تسجيل وحفظ الزيارة بنجاح.")
+          : (modalSource === "plan" ? "Visit planned and submitted for approval successfully." : "Visit saved successfully.");
       showToast(successMsg, "success");
     };
 

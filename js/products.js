@@ -13,6 +13,7 @@ function initProductLinesData() {
     window.store.productLines.save({
       id: "line1",
       name: "Cardio Line",
+      nameAr: "خط الكارديو (Cardio)",
       lineManagerId: "lm1",
       lineManagerName: "Hassan Ali",
       products: [
@@ -23,6 +24,7 @@ function initProductLinesData() {
     window.store.productLines.save({
       id: "line2",
       name: "Neuro Line",
+      nameAr: "خط النيورو (Neuro)",
       lineManagerId: "lm2",
       lineManagerName: "Sayed Ibrahim",
       products: [
@@ -32,6 +34,10 @@ function initProductLinesData() {
   } else {
     lines.forEach(line => {
       let updated = false;
+      if (!line.nameAr) {
+        if (line.id === "line1") { line.nameAr = "خط الكارديو (Cardio)"; updated = true; }
+        else if (line.id === "line2") { line.nameAr = "خط النيورو (Neuro)"; updated = true; }
+      }
       if (!line.lineManagerId) {
         if (line.id === "line1") { line.lineManagerId = "lm1"; updated = true; }
         else if (line.id === "line2") { line.lineManagerId = "lm2"; updated = true; }

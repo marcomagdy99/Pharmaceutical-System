@@ -55,8 +55,8 @@
                         </svg>
                         <span id="visitsPageTitle" data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
                     </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="toggleCompanyGpsPolicy()" id="adminGpsPolicyBtn" style="display: none;" title="Toggle Company GPS Enforcement Policy">
+                    <div class="header-actions-row">
+                        <button class="btn btn-outline d-none" onclick="toggleCompanyGpsPolicy()" id="adminGpsPolicyBtn" title="Toggle Company GPS Enforcement Policy">
                             📍 <span id="adminGpsPolicyLabel">GPS: Active</span>
                         </button>
                         <button class="btn btn-outline" onclick="exportVisitsToCSV()" id="exportVisitsBtn" title="Export to CSV/Excel">
@@ -134,10 +134,10 @@
                             <div class="timeline-filter-field col-btn">
                                 <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)">
                                     🔍 <span data-i18n="btnShow">Show</span>
-                                </button>
+                                 </button>
                             </div>
                         </div>
-                        <div class="legend-box" style="margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
+                        <div class="legend-box">
                             <span class="legend-item">
                                 <span class="legend-dot actual"></span> 
                                 <span data-i18n="directActual">Direct Actual Visit</span>
@@ -163,20 +163,20 @@
     
     <!-- Fast Bulk Plan Visits Modal -->
     <div class="modal" id="bulkPlanModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content modal-content-lg">
             <div class="modal-header">
-                <div class="modal-title" style="font-weight: 700; font-size: 1.25rem;">🗓️ Plan Visits (Multi-Select)</div>
+                <div class="modal-title modal-header-title">🗓️ Plan Visits (Multi-Select)</div>
                 <button class="close-btn" onclick="closeBulkPlanModal()">&times;</button>
             </div>
             
-            <div class="bulk-plan-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
-                <div class="form-group" style="margin-bottom: 0;">
+            <div class="bulk-plan-grid">
+                <div class="form-group form-group-compact">
                     <label class="form-label" data-i18n="modalDate">Planning Date</label>
                     <input type="date" id="bulkPlanDate" class="form-control">
                 </div>
-                <div class="form-group" style="margin-bottom: 0;">
+                <div class="form-group form-group-compact">
                     <label class="form-label" data-i18n="modalPeriod">Period</label>
-                    <div class="radio-group" style="margin-top: 6px;">
+                    <div class="radio-group radio-group-compact">
                         <label class="radio-label">
                             <input type="radio" name="bulkPeriod" value="am" onchange="renderBulkTargetsList()"> 
                             <span data-i18n="modalAM">AM (Hospitals)</span>
@@ -189,31 +189,31 @@
                 </div>
             </div>
 
-            <div class="bulk-search-bar" style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                <input type="text" id="bulkSearchInput" class="form-control" style="flex: 1; min-width: 160px;" placeholder="Search doctor by name or specialty..." oninput="filterBulkTargetsList()">
-                <select id="bulkAreaFilter" class="form-control" style="max-width: 160px;" onchange="filterBulkTargetsList()">
+            <div class="bulk-search-bar">
+                <input type="text" id="bulkSearchInput" class="form-control bulk-search-input" placeholder="Search doctor by name or specialty..." oninput="filterBulkTargetsList()">
+                <select id="bulkAreaFilter" class="form-control bulk-area-select" onchange="filterBulkTargetsList()">
                     <option value="all" data-i18n="allAreas">All Areas</option>
                 </select>
-                <select id="bulkClassFilter" class="form-control" style="max-width: 130px;" onchange="filterBulkTargetsList()">
+                <select id="bulkClassFilter" class="form-control bulk-class-select" onchange="filterBulkTargetsList()">
                     <option value="all">All Classes</option>
                     <option value="A">Class A Only</option>
                     <option value="B">Class B Only</option>
                 </select>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 700;">
+            <div class="bulk-select-row">
+                <label class="bulk-select-label">
                     <input type="checkbox" id="bulkSelectAllToggle" onchange="toggleBulkSelectAll(this.checked)">
                     <span data-i18n="selectAll">Select All</span>
                 </label>
-                <span id="bulkSelectionCounter" class="badge" style="background: var(--primary-light); color: var(--primary); font-weight: 700; padding: 4px 10px; border-radius: 12px;">
+                <span id="bulkSelectionCounter" class="badge bulk-selection-counter-badge">
                     Selected: 0 Targets
                 </span>
             </div>
 
             <div class="bulk-targets-list" id="bulkTargetsContainer"></div>
 
-            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--gray-200); padding-top: 1rem;">
+            <div class="modal-actions-footer">
                 <button class="btn btn-secondary" onclick="closeBulkPlanModal()" data-i18n="btnCancel">Cancel</button>
                 <button class="btn btn-primary" id="btnSaveBulkPlan" onclick="saveBulkPlanVisits()">
                     Save Planned Visits
@@ -229,11 +229,11 @@
                 <div class="modal-title" id="visitModalTitle" data-i18n="modalAddVisit">Add New Visit</div>
                 <button class="close-btn" onclick="closeVisitModal()">&times;</button>
             </div>
-            <div class="visit-modal-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="visit-modal-grid">
                 <div class="form-group">
                     <label class="form-label" data-i18n="modalDate">Date</label>
                     <input type="date" id="visitDate" class="form-control" onchange="updateVisitModalDayDisplay()">
-                    <div id="visitModalDayName" style="margin-top: 4px; font-size: 0.82rem; font-weight: 700; color: var(--primary);"></div>
+                    <div id="visitModalDayName" class="visit-day-name-label"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Visit Time (HH:MM)</label>
@@ -248,7 +248,7 @@
                     <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy">💊 Pharmacy</span></label>
                 </div>
             </div>
-            <div class="form-group" id="modalTargetFilterContainer" style="display: none;">
+            <div class="form-group d-none" id="modalTargetFilterContainer">
                 <label class="form-label" id="modalTargetFilterLabel" data-i18n="modalFilterDoctor">Filter Doctor by Team Member</label>
                 <select id="modalTargetFilterSelect" class="form-control" onchange="updateTargetOptions()"></select>
             </div>
@@ -258,25 +258,25 @@
             </div>
 
             <!-- GPS Geofencing Verification Card (Controlled by Admin Policy) -->
-            <div class="form-group" id="visitGpsSection" style="display: none; margin-bottom: 14px;">
-                <div style="background: var(--surface-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 12px 14px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
-                        <label style="margin: 0; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; color: var(--gray-800);">
+            <div class="form-group d-none mb-3" id="visitGpsSection">
+                <div class="visit-gps-card">
+                    <div class="visit-gps-card-header">
+                        <label class="visit-gps-label">
                             <span>📍</span>
                             <span id="lblVisitGpsTitle" data-i18n="modalGpsTitle">GPS Geofencing Verification</span>
                         </label>
-                        <span id="visitGpsBadge" class="badge" data-i18n="gpsBadgePending" style="background: #e2e8f0; color: #475569; font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; font-weight: 700;">
+                        <span id="visitGpsBadge" class="badge visit-gps-badge" data-i18n="gpsBadgePending">
                             Pending Check
                         </span>
                     </div>
-                    <div id="visitGpsInfoText" data-i18n="gpsInfoDefault" style="font-size: 0.8rem; color: var(--gray-600); margin-bottom: 8px;">
+                    <div id="visitGpsInfoText" class="visit-gps-info-text" data-i18n="gpsInfoDefault">
                         Verifying your presence within the clinic geofence radius (200m).
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button type="button" class="btn btn-outline" id="btnCheckMyGps" onclick="triggerManualGpsCheck()" style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px;">
+                    <div class="visit-gps-actions">
+                        <button type="button" class="btn btn-outline btn-check-gps" id="btnCheckMyGps" onclick="triggerManualGpsCheck()">
                             <span data-i18n="btnCheckGps">📡 Check Location Now</span>
                         </button>
-                        <span id="visitGpsDistanceText" style="font-size: 0.82rem; font-weight: 700; color: var(--primary);"></span>
+                        <span id="visitGpsDistanceText" class="visit-gps-distance"></span>
                     </div>
                 </div>
             </div>
@@ -288,9 +288,9 @@
                     <label class="radio-label"><input type="radio" name="visitType" value="double" onchange="toggleDoubleVisit()"> <span data-i18n="modalDouble">Double</span></label>
                 </div>
             </div>
-            <div class="form-group" id="doubleManagerSection" style="display: none;">
+            <div class="form-group d-none" id="doubleManagerSection">
                 <label class="form-label" data-i18n="modalSelectManager">Accompanied By (Select Companion(s))</label>
-                <div class="checkbox-group" id="visitManagersGroup" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px;">
+                <div class="checkbox-group visit-managers-group" id="visitManagersGroup">
                 </div>
             </div>
             
@@ -307,7 +307,7 @@
                 <label class="form-label" data-i18n="modalComment">Comment</label>
                 <textarea id="visitComment" class="form-control" rows="3"></textarea>
             </div>
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <div class="modal-actions-footer-simple">
                 <button class="btn btn-secondary" onclick="closeVisitModal()" data-i18n="btnCancel">Cancel</button>
                 <button class="btn btn-primary" id="btnSaveVisit" onclick="saveVisit()" data-i18n="btnSaveVisit">Save Visit</button>
             </div>

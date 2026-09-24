@@ -349,7 +349,7 @@ function renderPage() {
   let html = `
         <div class="announcements-header">
             <h1 data-i18n="announcements">Announcements</h1>
-            ${isHR ? `<button class="btn btn-primary" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> <span data-i18n="newAnnouncement">New Announcement</span></button>` : ""}
+            ${isHR ? `<button class="btn btn-primary btn-new-announcement" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> <span data-i18n="newAnnouncement">New Announcement</span></button>` : ""}
         </div>
     `;
 
@@ -541,7 +541,7 @@ function renderAnnouncementCard(ann) {
                     <span class="badge badge-${ann.priority}">
                         <i class="fas fa-${priorityIcon}"></i> <span data-i18n="priority${ann.priority.charAt(0).toUpperCase() + ann.priority.slice(1)}">${ann.priority}</span>
                     </span>
-                    <span class="badge" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd; border: 1px solid rgba(13, 110, 253, 0.25); font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                    <span class="badge badge-target">
                         <i class="fas fa-bullseye"></i> ${targetLabel}
                     </span>
                     ${!isRead && !isHR ? `<span class="badge badge-new" data-i18n="new">NEW</span>` : ""}
@@ -593,7 +593,7 @@ function renderAnnouncementCard(ann) {
 function renderModals() {
   return `
         <!-- Create/Edit Modal -->
-        <div class="modal-overlay" id="announcementModal" style="display: none;" onclick="if(event.target === this) closeModal('announcementModal')">
+        <div class="modal-overlay" id="announcementModal" onclick="if(event.target === this) closeModal('announcementModal')">
             <div class="modal-content large">
                 <div class="modal-header">
                     <h2 id="modalTitle" data-i18n="createAnnouncement">Create Announcement</h2>
@@ -642,13 +642,13 @@ function renderModals() {
                         </div>
                         <div class="form-group">
                             <label data-i18n="imageOptional">Announcement Image (Optional)</label>
-                            <input type="file" id="annImageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                            <input type="file" id="annImageInput" accept="image/*" class="hidden-file-input" onchange="handleImageSelect(event)">
                             <div class="image-upload-dropzone" id="annImageUploadDropzone" onclick="document.getElementById('annImageInput').click()">
                                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                 <span class="upload-text" data-i18n="uploadImage">Upload Image</span>
                                 <span class="upload-hint" data-i18n="imageHint">Click or drag & drop (JPG, PNG, WebP)</span>
                             </div>
-                            <div class="image-preview-container" id="annImagePreviewContainer" style="display: none;">
+                            <div class="image-preview-container d-none" id="annImagePreviewContainer">
                                 <img id="annImagePreview" src="" alt="Preview" class="image-preview-img">
                                 <div class="preview-actions">
                                     <button type="button" class="btn-change-image" onclick="document.getElementById('annImageInput').click()" data-i18n="uploadImage">Change</button>
@@ -670,7 +670,7 @@ function renderModals() {
         </div>
 
         <!-- Delete Modal -->
-        <div class="modal-overlay" id="deleteModal" style="display: none;" onclick="if(event.target === this) closeModal('deleteModal')">
+        <div class="modal-overlay" id="deleteModal" onclick="if(event.target === this) closeModal('deleteModal')">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 data-i18n="deleteConfirmTitle">Delete Announcement</h2>
@@ -695,7 +695,7 @@ function renderModals() {
 function renderLightboxModal() {
   return `
         <!-- Image Lightbox Modal -->
-        <div class="modal-overlay lightbox-overlay" id="imageLightboxModal" style="display: none;" onclick="if(event.target === this) closeImageLightbox()">
+        <div class="modal-overlay lightbox-overlay" id="imageLightboxModal" onclick="if(event.target === this) closeImageLightbox()">
             <div class="lightbox-content">
                 <button class="btn-close lightbox-close" onclick="closeImageLightbox()" aria-label="Close"><i class="fas fa-times"></i></button>
                 <img id="lightboxImage" src="" alt="Announcement Image" class="lightbox-img" />
@@ -789,6 +789,7 @@ function openAnnouncementModal(id = null) {
   setupDragAndDrop();
 
   if (modal) {
+    modal.classList.add("active");
     modal.style.display = "flex";
     modal.scrollTop = 0;
     const modalBody = modal.querySelector(".modal-body");
@@ -912,6 +913,7 @@ function openImageLightbox(idOrSrc) {
       if (ann && ann.image) resolvedSrc = ann.image;
     }
     lightboxImg.src = resolvedSrc;
+    lightbox.classList.add("active");
     lightbox.style.display = "flex";
     document.body.style.overflow = "hidden";
   }
@@ -922,7 +924,11 @@ function openImageLightbox(idOrSrc) {
  */
 function closeImageLightbox() {
   const lightbox = document.getElementById("imageLightboxModal");
-  if (lightbox) lightbox.style.display = "none";
+  if (lightbox) {
+    lightbox.classList.remove("active");
+    lightbox.classList.remove("show");
+    lightbox.style.display = "none";
+  }
   document.body.style.overflow = "";
 }
 
@@ -932,7 +938,11 @@ function closeImageLightbox() {
  */
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
-  if (modal) modal.style.display = "none";
+  if (modal) {
+    modal.classList.remove("active");
+    modal.classList.remove("show");
+    modal.style.display = "none";
+  }
   document.body.style.overflow = "";
 }
 
@@ -1015,6 +1025,7 @@ function openDeleteModal(id) {
   editAnnouncementId = id;
   const modal = document.getElementById("deleteModal");
   if (modal) {
+    modal.classList.add("active");
     modal.style.display = "flex";
     modal.scrollTop = 0;
   }

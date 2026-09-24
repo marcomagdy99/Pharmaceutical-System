@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    PharmaCare - Visits Page Stylesheet
    Includes: Header, Stats bar, Tabs, Visit cards, Filters,
    Bulk Planning Modal (Checklist, Search, Badges), and Dark Mode overrides.
@@ -1292,3 +1292,430 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Layout & Component Classes migrated from inline styles */
+.header-actions-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.legend-box {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.modal-content-lg {
+    max-width: 600px;
+}
+
+.modal-header-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.bulk-plan-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.form-group-compact {
+    margin-bottom: 0;
+}
+
+.radio-group-compact {
+    margin-top: 6px;
+}
+
+.bulk-search-bar {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bulk-search-input {
+    flex: 1;
+    min-width: 160px;
+}
+
+.bulk-area-select {
+    max-width: 160px;
+}
+
+.bulk-class-select {
+    max-width: 130px;
+}
+
+.bulk-select-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+}
+
+.bulk-select-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.bulk-selection-counter-badge {
+    background: var(--primary-light, #e0f2fe);
+    color: var(--primary, #0284c7);
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.modal-actions-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    padding-top: 1rem;
+}
+
+.modal-actions-footer-simple {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.visit-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.visit-day-name-label {
+    margin-top: 4px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.visit-gps-card {
+    background: var(--surface-hover, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.visit-gps-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.visit-gps-label {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gray-800);
+}
+
+.visit-gps-badge {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.visit-gps-info-text {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    margin-bottom: 8px;
+}
+
+.visit-gps-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-check-gps {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.visit-gps-distance {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.visit-managers-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+/* Dynamic JS template classes */
+.timeline-prompt-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.timeline-show-btn {
+    padding: 8px 24px;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.timeline-empty-card-wrapper {
+    text-align: center;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.timeline-empty-icon {
+    font-size: 2.5rem;
+}
+
+.timeline-empty-title {
+    margin: 10px 0 4px;
+}
+
+.timeline-empty-sub {
+    margin-top: 4px;
+}
+
+.bulk-target-already-scheduled {
+    opacity: 0.75;
+}
+
+.bulk-target-name {
+    font-weight: 700;
+    color: var(--gray-800);
+    font-size: 0.9rem;
+}
+
+.bulk-target-meta {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.bulk-target-badge-hosp {
+    background: #fff3cd;
+    color: #664d03;
+    font-size: 0.72rem;
+    font-weight: bold;
+}
+
+.bulk-target-badge-class {
+    background: #e7f1ff;
+    color: #0d6efd;
+    font-size: 0.72rem;
+    font-weight: bold;
+}
+
+.bulk-target-already-badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-inline-start: 6px;
+}
+
+.bulk-target-area-badge {
+    background: var(--gray-100, #f3f4f6);
+    color: var(--gray-700, #374151);
+    font-size: 0.72rem;
+    margin-inline-start: 6px;
+}
+
+.bulk-targets-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+.bulk-target-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.badge-gps-denied {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.badge-gps-in-range {
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.badge-gps-out-of-range {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.stat-value-primary {
+    color: var(--primary, #0d6efd);
+}
+
+.stat-value-actual {
+    color: #b45309;
+}
+
+.stat-value-planned {
+    color: #0284c7;
+}
+
+.stat-value-joint {
+    color: #6f42c1;
+}
+
+.legend-dot-sm {
+    width: 7px;
+    height: 7px;
+    margin-inline-end: 3px;
+}
+
+.accompaniment-note-joint {
+    color: var(--purple, #6f42c1);
+    font-weight: 700;
+}
+
+.accompaniment-note-mgr {
+    color: #b45309;
+    font-weight: 700;
+}
+
+.timeline-period-label {
+    font-size: 0.72rem;
+    color: var(--gray-400);
+}
+
+.timeline-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.timeline-card-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.timeline-target-area-badge {
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.timeline-products-row {
+    font-size: 0.8rem;
+    color: var(--primary);
+    margin-bottom: 6px;
+}
+
+.timeline-samples-row {
+    font-size: 0.8rem;
+    color: #d97706;
+    margin-bottom: 6px;
+}
+
+.timeline-comment-text {
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    font-style: italic;
+    color: var(--gray-600);
+}
+
+.timeline-missed-reason {
+    font-size: 0.82rem;
+    color: #dc3545;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.timeline-rescheduled-reason {
+    font-size: 0.8rem;
+    color: #b45309;
+    margin-bottom: 6px;
+}
+
+.timeline-card-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-timeline-complete {
+    padding: 5px 16px;
+    font-size: 0.82rem;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.btn-timeline-reschedule {
+    padding: 5px 12px;
+    font-size: 0.82rem;
+    border-radius: 6px;
+    font-weight: 700;
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    cursor: pointer;
+}
+
+.btn-timeline-danger {
+    padding: 5px 12px;
+    font-size: 0.82rem;
+    border-radius: 6px;
+}
+
+.products-empty-msg {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+.candidates-empty-msg {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+

@@ -16,6 +16,12 @@ const dashboardTranslations = {
     plan_expiry_note: "Auto-expires after 7 days if not executed",
     am_hospitals: "AM Planned Hospitals",
     pm_doctors: "PM Planned Doctors",
+    pharm_planned: "Planned Pharmacies",
+    filter_today: "Today",
+    filter_tomorrow: "Tomorrow",
+    filter_upcoming: "Upcoming",
+    filter_all_planned: "All Planned",
+    specific_date: "Specific Date",
     convert_to_actual: "Convert to Actual",
     no_planned_visits: "No active planned visits for this period.",
     recent_visits: "Recent Completed Visits",
@@ -117,6 +123,12 @@ const dashboardTranslations = {
     plan_expiry_note: "تختفي تلقائياً بعد 7 أيام إذا لم تُنفذ",
     am_hospitals: "مستشفيات الصباح في الخطة",
     pm_doctors: "عيادات الأطباء في الخطة",
+    pharm_planned: "صيدليات في الخطة (Pharmacies)",
+    filter_today: "اليوم",
+    filter_tomorrow: "غداً",
+    filter_upcoming: "الزيارات القادمة",
+    filter_all_planned: "جميع المخططة",
+    specific_date: "تاريخ محدد",
     convert_to_actual: "تحويل لزيارة فعلية",
     no_planned_visits: "لا توجد زيارات مخططة نشطة لهذه الفترة.",
     recent_visits: "الزيارات الفعلية المنفذة مؤخراً",
@@ -380,6 +392,24 @@ window.deleteDmAccompanimentDate = function (dateStr) {
 
 window.switchDmScheduleTab = function (tab) {
   window.dmScheduleActiveTab = tab;
+  renderDashboard();
+};
+
+window.buActiveLineFilter = window.buActiveLineFilter || "all";
+window.switchBuLineFilter = function (lineId) {
+  window.buActiveLineFilter = lineId;
+  renderDashboard();
+};
+
+window.lmActiveLineFilter = window.lmActiveLineFilter || "all";
+window.switchLmLineFilter = function (lineId) {
+  window.lmActiveLineFilter = lineId;
+  renderDashboard();
+};
+
+window.dmActiveLineFilter = window.dmActiveLineFilter || "all";
+window.switchDmLineFilter = function (lineId) {
+  window.dmActiveLineFilter = lineId;
   renderDashboard();
 };
 
@@ -739,35 +769,93 @@ function renderRepDashboard(userName, user) {
   const currentUserId = user?.id || "rep1";
 
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
-  const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-  
+  const allDoctors =
+    (window.store && window.store.doctors
+      ? window.store.doctors.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.doctors)) || [];
+
   // Single Source of Truth for sales records
   const allSales = getDashboardSalesData();
 
+  const repAreas =
+    window.store && window.store.areas
+      ? window.store.areas.getByRep(currentUserId)
+      : ((window.DEMO_DATA && window.DEMO_DATA.areas)
+          ? window.DEMO_DATA.areas.filter((a) => a.repId === currentUserId)
+          : []);
+  const repAreaIds = repAreas.map((a) => a.id).filter(Boolean);
+  const repAreaNames = repAreas.map((a) => String(a.name || "").toLowerCase().trim()).filter(Boolean);
+
   const repDoctors = allDoctors.filter(
-    (d) => d.repId === currentUserId,
+    (d) =>
+      d.repId === currentUserId ||
+      (d.areaId && repAreaIds.includes(d.areaId)) ||
+      (d.area && typeof d.area === "string" && repAreaNames.includes(d.area.toLowerCase().trim())),
   );
   const totalDoctorsCount = repDoctors.length;
 
-  const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
-  const repHospitals = allHospitals.filter((h) => !h.repId || h.repId === currentUserId);
+  const allHospitals =
+    (window.store && window.store.hospitals
+      ? window.store.hospitals.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.hospitals)) || [];
+  const repHospitals = allHospitals.filter(
+    (h) =>
+      h.repId === currentUserId ||
+      (h.areaId && repAreaIds.includes(h.areaId)) ||
+      (!h.repId && repAreaIds.length === 0),
+  );
   const totalHospitalsCount = repHospitals.length;
 
   const now = (window.getSystemDate && window.getSystemDate()) || new Date();
+  const pad = (n) => String(n).padStart(2, "0");
   const todayStr =
     (typeof window.todayStr !== "undefined" && window.todayStr) ||
     (typeof window.getSystemTodayStr === "function" && window.getSystemTodayStr()) ||
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
-  const activePlanned = allVisits.filter(
+  const tomorrowDate = new Date(now);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowStr = `${tomorrowDate.getFullYear()}-${pad(tomorrowDate.getMonth() + 1)}-${pad(tomorrowDate.getDate())}`;
+
+  // All valid approved planned visits for this representative
+  const allRepPlannedVisits = allVisits.filter(
     (v) =>
       v.repId === currentUserId &&
       v.status === "planned" &&
       v.date &&
-      v.date <= todayStr &&
-      !isPlannedVisitExpired(v.date),
+      !isPlannedVisitExpired(v.date) &&
+      !isPlanVisitAlreadyCompleted(v, allVisits),
   );
-  activePlanned.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  allRepPlannedVisits.sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.time || "").localeCompare(b.time || ""));
+
+  const todayPlanned = allRepPlannedVisits.filter(
+    (v) => v.date === todayStr || (v.date < todayStr && !isPlannedVisitExpired(v.date)),
+  );
+  const tomorrowPlanned = allRepPlannedVisits.filter((v) => v.date === tomorrowStr);
+  const upcomingPlanned = allRepPlannedVisits.filter((v) => v.date > todayStr);
+
+  let activeTab = window.currentRepPlanTab || "auto";
+  if (activeTab === "auto") {
+    if (todayPlanned.length > 0) activeTab = "today";
+    else if (tomorrowPlanned.length > 0) activeTab = "tomorrow";
+    else if (upcomingPlanned.length > 0) activeTab = "upcoming";
+    else activeTab = "today";
+  }
+
+  let activePlanned = [];
+  if (activeTab === "today") {
+    activePlanned = todayPlanned;
+  } else if (activeTab === "tomorrow") {
+    activePlanned = tomorrowPlanned;
+  } else if (activeTab === "upcoming") {
+    activePlanned = upcomingPlanned;
+  } else if (activeTab === "all") {
+    activePlanned = allRepPlannedVisits;
+  } else if (activeTab === "date" && window.currentRepPlanDate) {
+    activePlanned = allRepPlannedVisits.filter((v) => v.date === window.currentRepPlanDate);
+  } else {
+    activePlanned = todayPlanned;
+  }
 
   const isPharmVisit = (v) =>
     v.targetType === "pharmacy" ||
@@ -777,49 +865,18 @@ function renderRepDashboard(userName, user) {
   const plannedAM = activePlanned.filter(
     (v) =>
       !isPharmVisit(v) &&
-      (v.period === "am" || v.period === "AM" || v.type === "hospital"),
+      (v.period === "am" || v.period === "AM" || v.type === "hospital" || v.targetType === "hospital"),
   );
   const plannedPM = activePlanned.filter(
     (v) =>
       !isPharmVisit(v) &&
-      (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
+      (v.period === "pm" || v.period === "PM" || v.type === "doctor" || v.targetType === "doctor" || (!v.type && !v.period)),
   );
+  const plannedPharm = activePlanned.filter((v) => isPharmVisit(v));
 
-  const currentYearMonth = todayStr.slice(0, 7);
-  const completedVisits = allVisits.filter(
-    (v) =>
-      v.repId === currentUserId &&
-      v.status === "completed" &&
-      v.date &&
-      v.date.startsWith(currentYearMonth),
-  );
-
-  const completedVisitsAM = completedVisits.filter(
-    (v) =>
-      !isPharmVisit(v) &&
-      (v.period === "am" || v.period === "AM" || v.type === "hospital"),
-  );
-  const completedVisitsPM = completedVisits.filter(
-    (v) =>
-      !isPharmVisit(v) &&
-      (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
-  );
-
-  // PM Clinics Target: Dynamically calculated per doctor via getDoctorCallTarget based on assigned product line & class
-  const monthlyVisitTargetPM = Math.max(
-    1,
-    Math.round(
-      repDoctors.reduce((sum, d) => {
-        const quarterlyTarget =
-          (typeof window.getDoctorCallTarget === "function" && window.getDoctorCallTarget(d)) ||
-          (d.class === "A" ? 4 : 3);
-        return sum + quarterlyTarget / 3;
-      }, 0),
-    ),
-  );
-
-  // AM Hospitals Target: 2 visits per hospital per month (minimum 1 if hospitals exist)
-  const monthlyVisitTargetAM = totalHospitalsCount > 0 ? (totalHospitalsCount * 2) : 2;
+  const completedVisits = allVisits
+    .filter((v) => v.repId === currentUserId && v.status === "completed")
+    .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.time || "").localeCompare(a.time || ""));
 
   const currentMonthNum = now.getMonth();
   const currentQuarterNum = Math.floor(currentMonthNum / 3) + 1;
@@ -846,6 +903,31 @@ function renderRepDashboard(userName, user) {
       vMonth <= quarterEndMonth
     );
   });
+
+  const quarterCompletedVisitsAM = currentQuarterCompletedVisits.filter(
+    (v) =>
+      !isPharmVisit(v) &&
+      (v.period === "am" || v.period === "AM" || v.type === "hospital"),
+  );
+  const quarterCompletedVisitsPM = currentQuarterCompletedVisits.filter(
+    (v) =>
+      !isPharmVisit(v) &&
+      (v.period === "pm" || v.period === "PM" || v.type === "doctor" || !v.type),
+  );
+
+  // PM Clinics Quarterly Target: Dynamically calculated per doctor via getDoctorCallTarget based on assigned product line & class
+  const quarterlyVisitTargetPM = Math.max(
+    1,
+    repDoctors.reduce((sum, d) => {
+      const quarterlyTarget =
+        (typeof window.getDoctorCallTarget === "function" && window.getDoctorCallTarget(d)) ||
+        (d.class === "A" ? 4 : (d.class === "B" ? 3 : 1));
+      return sum + quarterlyTarget;
+    }, 0),
+  );
+
+  // AM Hospitals Quarterly Target: 6 visits per hospital per quarter (2 visits per month * 3 months)
+  const quarterlyVisitTargetAM = totalHospitalsCount > 0 ? (totalHospitalsCount * 6) : 6;
 
   const coveredDoctorIds = new Set();
   currentQuarterCompletedVisits.forEach((v) => {
@@ -888,36 +970,42 @@ function renderRepDashboard(userName, user) {
       ? Math.round((actualSalesTotal / targetSalesTotal) * 100)
       : actualSalesTotal > 0 ? 100 : 0;
 
+  const userLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+  const lineNames = userLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+
   return `
     <div class="flex-col">
-      <div class="welcome-banner rep" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, ${userName}!</h2>
-        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px;">${lang === "ar" ? "لوحة تحكم المندوب الطبي والمتابعة الميدانية" : "Medical Representative Field & Activity Overview"}</div>
+      <div class="welcome-banner rep">
+        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "المندوب الطبي" : "Medical Representative"} ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "المندوب الطبي" : "Medical Representative")}</div>
       </div>
 
-        <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+        <div class="stat-grid">
           <div class="stat-card">
             <div class="stat-label">${t.total_doctors}</div>
             <div class="stat-value primary counter" data-target="${totalDoctorsCount}">${totalDoctorsCount}</div>
+            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+              ${lang === "ar" ? "أطباء اللستة المسندين" : "Assigned Doctor List"}
+            </div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${lang === "ar" ? "زيارات العيادات (PM)" : "Clinics (PM)"}</div>
+            <div class="stat-label">${lang === "ar" ? `زيارات العيادات (PM - ${quarterLabel})` : `Clinics (PM - ${quarterLabel})`}</div>
             <div class="stat-value success">
-              <span class="counter" data-target="${completedVisitsPM.length}">${completedVisitsPM.length}</span>
-              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${monthlyVisitTargetPM}</span>
+              <span class="counter" data-target="${quarterCompletedVisitsPM.length}">${quarterCompletedVisitsPM.length}</span>
+              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${quarterlyVisitTargetPM}</span>
             </div>
             <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${lang === "ar" ? "أطباء وعيادات" : "Clinics & Doctors"}
+              ${lang === "ar" ? `مستهدف الزيارات / الربع (${totalDoctorsCount} أطباء)` : `Target Visits / Quarter (${totalDoctorsCount} Doctors)`}
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${lang === "ar" ? "زيارات المستشفيات (AM)" : "Hospitals (AM)"}</div>
+            <div class="stat-label">${lang === "ar" ? `زيارات المستشفيات (AM - ${quarterLabel})` : `Hospitals (AM - ${quarterLabel})`}</div>
             <div class="stat-value info" style="color: var(--primary, #2563eb);">
-              <span class="counter" data-target="${completedVisitsAM.length}">${completedVisitsAM.length}</span>
-              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${monthlyVisitTargetAM}</span>
+              <span class="counter" data-target="${quarterCompletedVisitsAM.length}">${quarterCompletedVisitsAM.length}</span>
+              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${quarterlyVisitTargetAM}</span>
             </div>
             <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${totalHospitalsCount} ${lang === "ar" ? "مستشفيات ومراكز" : "Hospitals"}
+              ${lang === "ar" ? `مستهدف الزيارات / الربع (${totalHospitalsCount} مستشفيات)` : `Target Visits / Quarter (${totalHospitalsCount} Hospitals)`}
             </div>
           </div>
           <div class="stat-card">
@@ -938,7 +1026,10 @@ function renderRepDashboard(userName, user) {
           </div>
           <div class="stat-card">
             <div class="stat-label">${t.active_planned}</div>
-            <div class="stat-value danger counter" data-target="${activePlanned.length}">${activePlanned.length}</div>
+            <div class="stat-value danger counter" data-target="${allRepPlannedVisits.length}">${allRepPlannedVisits.length}</div>
+            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+              ${todayPlanned.length} ${lang === "ar" ? "اليوم" : "Today"} • ${upcomingPlanned.length} ${lang === "ar" ? "قادمة" : "Upcoming"}
+            </div>
           </div>
         </div>
 
@@ -951,6 +1042,27 @@ function renderRepDashboard(userName, user) {
             <a href="visits.html" class="btn btn-sm btn-primary" style="padding: 6px 14px; text-decoration: none; border-radius: 8px;">
               + ${t.new_visit}
             </a>
+          </div>
+
+          <div class="rep-plan-filter-toolbar">
+            <div class="rep-plan-tabs">
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'today' ? 'active' : ''}" onclick="switchRepPlanTab('today')">
+                📅 ${t.filter_today} <span class="badge">${todayPlanned.length}</span>
+              </button>
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'tomorrow' ? 'active' : ''}" onclick="switchRepPlanTab('tomorrow')">
+                🌅 ${t.filter_tomorrow} <span class="badge">${tomorrowPlanned.length}</span>
+              </button>
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'upcoming' ? 'active' : ''}" onclick="switchRepPlanTab('upcoming')">
+                🗓️ ${t.filter_upcoming} <span class="badge">${upcomingPlanned.length}</span>
+              </button>
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'all' ? 'active' : ''}" onclick="switchRepPlanTab('all')">
+                🌐 ${t.filter_all_planned} <span class="badge">${allRepPlannedVisits.length}</span>
+              </button>
+            </div>
+            <div class="rep-plan-date-picker-wrap">
+              <label class="rep-plan-date-label">📅 ${t.specific_date}:</label>
+              <input type="date" class="form-control form-control-sm rep-plan-date-input" value="${window.currentRepPlanDate || ''}" onchange="switchRepPlanDate(this.value)">
+            </div>
           </div>
 
           <div class="plan-list">
@@ -969,8 +1081,9 @@ function renderRepDashboard(userName, user) {
                       <div class="planned-target-info">
                         <strong class="planned-target-name">${window.escapeHtml(h.doctorName || h.targetName || "Hospital")}</strong>
                         <div class="planned-target-date">
-                          <span class="date-icon">📅</span> ${h.date}
-                          ${h.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`}
+                          <span class="date-icon">📅</span> ${h.date} ${h.time ? `• ⏰ ${h.time}` : ""}
+                          ${h.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : (h.date === tomorrowStr ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (h.date > todayStr ? `<span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
+                          ${h.visitType === "double" ? `<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
                         </div>
                       </div>
                       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
@@ -1005,8 +1118,9 @@ function renderRepDashboard(userName, user) {
                       <div class="planned-target-info">
                         <strong class="planned-target-name">${window.escapeHtml(d.doctorName || d.targetName || "Doctor")}</strong>
                         <div class="planned-target-date">
-                          <span class="date-icon">📅</span> ${d.date}
-                          ${d.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`}
+                          <span class="date-icon">📅</span> ${d.date} ${d.time ? `• ⏰ ${d.time}` : ""}
+                          ${d.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : (d.date === tomorrowStr ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (d.date > todayStr ? `<span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
+                          ${d.visitType === "double" ? `<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
                         </div>
                       </div>
                       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
@@ -1025,6 +1139,43 @@ function renderRepDashboard(userName, user) {
                 }
               </div>
             </div>
+
+            ${plannedPharm.length > 0 ? `
+            <div class="plan-item pharm">
+              <div class="plan-item-header">
+                <strong class="plan-header-title pharm">💊 ${t.pharm_planned}</strong>
+                <span class="badge badge-plan-count pharm">${plannedPharm.length}</span>
+              </div>
+              <div>
+                ${plannedPharm
+                  .map(
+                    (p) => `
+                  <div class="planned-target-row">
+                    <div class="planned-target-info">
+                      <strong class="planned-target-name">${window.escapeHtml(p.doctorName || p.targetName || "Pharmacy")}</strong>
+                      <div class="planned-target-date">
+                        <span class="date-icon">📅</span> ${p.date} ${p.time ? `• ⏰ ${p.time}` : ""}
+                        ${p.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : (p.date === tomorrowStr ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (p.date > todayStr ? `<span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
+                        ${p.visitType === "double" ? `<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+                      </div>
+                    </div>
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                      <button class="btn-convert-action" onclick="openCompletePlanModal('${p.id}', false)">
+                        ✓ ${t.convert_to_actual}
+                      </button>
+                      <button type="button" class="btn-reschedule-action" onclick="openRescheduleModal('${p.id}')" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
+                        🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
+                      </button>
+                    </div>
+                  </div>
+                `,
+                  )
+                  .join("")}
+              </div>
+            </div>
+            ` : ""}
+          </div>
+        </div>
           </div>
         </div>
 
@@ -1093,10 +1244,20 @@ function renderDMDashboard(userName, user) {
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
-  const myReps = allUsers.filter(
+  const dmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+  const lineNames = dmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const activeDmLine = window.dmActiveLineFilter || "all";
+
+  const allMyReps = allUsers.filter(
     (u) =>
       u.managerId === user.id && (u.role === "medical_rep" || u.role === "rep"),
   );
+  const myReps = activeDmLine === "all"
+    ? allMyReps
+    : allMyReps.filter((r) => {
+        const rLines = r.lineIds || (r.lineId ? [r.lineId] : []);
+        return rLines.includes(activeDmLine);
+      });
   const myRepIds = myReps.map((r) => r.id);
 
   const allLeaves =
@@ -1224,10 +1385,32 @@ function renderDMDashboard(userName, user) {
 
   return `
     <div class="flex-col">
-      <div class="welcome-banner dm" style="background: linear-gradient(135deg, var(--success), #0f5132); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, District Manager ${userName}!</h2>
-        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px;">${t.team_stats}</div>
+      <div class="welcome-banner dm">
+        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير المنطقة" : "District Manager"} ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة المناطق" : "District Management")}</div>
       </div>
+
+      ${
+        dmLines.length > 1
+          ? `
+        <div class="dashboard-line-filter">
+          <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+          <button type="button" class="line-filter-btn ${activeDmLine === "all" ? "active" : ""}" onclick="window.switchDmLineFilter('all')">
+            ${lang === "ar" ? `جميع الخطوط (${dmLines.length})` : `All Lines (${dmLines.length})`}
+          </button>
+          ${dmLines
+            .map(
+              (l) => `
+            <button type="button" class="line-filter-btn ${activeDmLine === l.id ? "active" : ""}" onclick="window.switchDmLineFilter('${l.id}')">
+              ${lang === "ar" ? (l.nameAr || l.name) : l.name}
+            </button>
+          `,
+            )
+            .join("")}
+        </div>
+      `
+          : ""
+      }
 
       <div class="stat-grid">
         <div class="stat-card">
@@ -1285,8 +1468,8 @@ function renderDMDashboard(userName, user) {
             </div>
           </div>
 
-          <div class="dm-schedule-nav-btn" style="display: flex; align-items: center; gap: 8px;">
-            <a href="plans-review.html" class="btn btn-sm btn-primary" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 700; border-radius: 8px; padding: 7px 16px; box-shadow: var(--shadow-sm);">
+          <div class="dm-schedule-nav-btn">
+            <a href="plans-review.html" class="btn btn-sm btn-primary">
               📋 <span>${lang === "ar" ? "مراجعة الخطط وجدولة النزول الميداني" : "Review Plans & Schedule Accompaniment"}</span>
             </a>
           </div>
@@ -1306,7 +1489,7 @@ function renderDMDashboard(userName, user) {
               <p style="font-size: 0.88rem; margin-bottom: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
                 ${lang === "ar" ? "انتقل إلى «مراجعة واعتماد الخطط» لمراجعة خطط مناديب فريقك واختيار الأيام التي ترغب بمرافقتهم فيها بالكامل." : 'Go to "Plans to Review" to review your team\'s planned schedules and choose full days to accompany them.'}
               </p>
-              <a href="plans-review.html" class="btn btn-primary btn-sm" style="text-decoration: none; font-weight: 700; padding: 6px 18px;">
+              <a href="plans-review.html" class="btn btn-primary btn-sm">
                 📋 ${lang === "ar" ? "الذهاب لمراجعة الخطط وحجز الأيام" : "Go to Plans to Review"}
               </a>
             </div>
@@ -1442,7 +1625,7 @@ function renderDMDashboard(userName, user) {
               <p style="font-size: 0.88rem; margin-bottom: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
                 ${lang === "ar" ? "انتقل إلى «مراجعة واعتماد الخطط» لمراجعة خطط مناديب فريقك واختيار الأيام التي ترغب بمرافقتهم فيها بالكامل." : 'Go to "Plans to Review" to review your team\'s planned schedules and choose full days to accompany them.'}
               </p>
-              <a href="plans-review.html" class="btn btn-primary btn-sm" style="text-decoration: none; font-weight: 700; padding: 6px 18px;">
+              <a href="plans-review.html" class="btn btn-primary btn-sm">
                 📋 ${lang === "ar" ? "الذهاب لمراجعة الخطط وحجز الأيام" : "Go to Plans to Review"}
               </a>
             </div>
@@ -1710,18 +1893,40 @@ function renderLMDashboard(userName, user) {
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
-  const myDMs = allUsers.filter(
+  const lmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+  const lineNames = lmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const activeLmLine = window.lmActiveLineFilter || "all";
+
+  const allMyDMs = allUsers.filter(
     (u) =>
-      u.managerId === user.id &&
+      (u.managerId === user.id || (user.lineIds && (u.lineIds || [u.lineId]).some((id) => user.lineIds.includes(id)))) &&
       (u.role === "district_manager" || u.role === "dm"),
   );
 
+  const myDMs =
+    activeLmLine === "all"
+      ? allMyDMs
+      : allMyDMs.filter((dm) => {
+          const dmLines = dm.lineIds || (dm.lineId ? [dm.lineId] : []);
+          return dmLines.includes(activeLmLine);
+        });
+
   const dmIds = myDMs.map((d) => d.id);
-  const myLineReps = allUsers.filter(
+
+  const allMyLineReps = allUsers.filter(
     (u) =>
-      dmIds.includes(u.managerId) &&
-      (u.role === "medical_rep" || u.role === "rep"),
+      (u.role === "medical_rep" || u.role === "rep") &&
+      (allMyDMs.some((d) => d.id === u.managerId) ||
+        (user.lineIds && (u.lineIds || [u.lineId]).some((id) => user.lineIds.includes(id)))),
   );
+
+  const myLineReps =
+    activeLmLine === "all"
+      ? allMyLineReps
+      : allMyLineReps.filter((r) => {
+          const rLines = r.lineIds || (r.lineId ? [r.lineId] : []);
+          return rLines.includes(activeLmLine);
+        });
   const lineRepIds = myLineReps.map((r) => r.id);
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
@@ -1753,10 +1958,32 @@ function renderLMDashboard(userName, user) {
 
   return `
     <div class="flex-col">
-      <div class="welcome-banner lm" style="background: linear-gradient(135deg, var(--warning), #995c00); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, Line Manager ${userName}!</h2>
-        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px;">${t.line_overview}</div>
+      <div class="welcome-banner lm">
+        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير الخط" : "Line Manager"} ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة خط الإنتاج" : "Product Line Management")}</div>
       </div>
+
+      ${
+        lmLines.length > 1
+          ? `
+        <div class="dashboard-line-filter">
+          <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+          <button type="button" class="line-filter-btn ${activeLmLine === "all" ? "active" : ""}" onclick="window.switchLmLineFilter('all')">
+            ${lang === "ar" ? `جميع الخطوط (${lmLines.length})` : `All Lines (${lmLines.length})`}
+          </button>
+          ${lmLines
+            .map(
+              (l) => `
+            <button type="button" class="line-filter-btn ${activeLmLine === l.id ? "active" : ""}" onclick="window.switchLmLineFilter('${l.id}')">
+              ${lang === "ar" ? (l.nameAr || l.name) : l.name}
+            </button>
+          `,
+            )
+            .join("")}
+        </div>
+      `
+          : ""
+      }
 
       <div class="stat-grid">
         <div class="stat-card">
@@ -1808,9 +2035,6 @@ function renderLMDashboard(userName, user) {
                         const repsForThisDM = myLineReps.filter(
                           (r) => r.managerId === dm.id,
                         );
-                        const repNames =
-                          repsForThisDM.map((r) => r.name).join(", ") ||
-                          "No reps assigned";
                         return `
                           <tr>
                             <td style="padding: 10px; font-weight: 700;">
@@ -1818,11 +2042,31 @@ function renderLMDashboard(userName, user) {
                               <div style="font-size: 0.75rem; color: var(--gray-500);">${dm.employeeCode || dm.code || "DM-001"}</div>
                             </td>
                             <td style="padding: 10px;">
-                              <span style="font-weight: 600; color: var(--primary);">${repsForThisDM.length} Reps</span>
-                              <div style="font-size: 0.78rem; color: var(--gray-600);">${repNames}</div>
+                              <span style="font-weight: 600; color: var(--primary); display: block; margin-bottom: 4px;">
+                                ${repsForThisDM.length} ${repsForThisDM.length === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}
+                              </span>
+                              ${
+                                repsForThisDM.length > 0
+                                  ? `
+                                <div class="rep-names-list">
+                                  ${repsForThisDM
+                                    .map(
+                                      (r) => `
+                                    <div class="rep-name-item">
+                                      <span class="rep-name-dot">•</span>
+                                      <span style="font-weight: 600;">${r.name}</span>
+                                      <span style="font-size: 0.7rem; color: var(--gray-500);">(${r.employeeCode || r.code || "Rep"})</span>
+                                    </div>
+                                  `,
+                                    )
+                                    .join("")}
+                                </div>
+                              `
+                                  : `<div style="font-size: 0.78rem; color: var(--gray-500); font-style: italic;">${lang === "ar" ? "لا يوجد مناديب مسندين" : "No reps assigned"}</div>`
+                              }
                             </td>
                             <td style="padding: 10px;">
-                              <span class="badge bg-success-subtle text-success" style="padding: 3px 8px; border-radius: 6px;">Active</span>
+                              <span class="badge bg-success-subtle text-success" style="padding: 3px 8px; border-radius: 6px;">${lang === "ar" ? "نشط" : "Active"}</span>
                             </td>
                           </tr>
                         `;
@@ -1838,7 +2082,8 @@ function renderLMDashboard(userName, user) {
       ${(() => {
         const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
         const myUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-        const linesToShow = myUserLines.length > 0 ? myUserLines : allLines.filter(l => l.lineManagerId === user.id);
+        const rawLines = myUserLines.length > 0 ? myUserLines : allLines.filter(l => l.lineManagerId === user.id);
+        const linesToShow = rawLines.filter(l => activeLmLine === "all" || l.id === activeLmLine);
         if (linesToShow.length === 0) return "";
         const isAr = lang === "ar";
         const currentYear = new Date().getFullYear().toString();
@@ -1917,94 +2162,204 @@ function renderBUDashboard(userName, user) {
     (u) => u.role === "medical_rep" || u.role === "rep",
   );
 
+  const buLines = myUserLines.length > 0 ? myUserLines : lines;
+  const lineNames = buLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const activeBuLine = window.buActiveLineFilter || "all";
+
+  const filteredLines =
+    activeBuLine === "all" ? lines : lines.filter((l) => l.id === activeBuLine);
+
+  const displayLMs =
+    activeBuLine === "all"
+      ? myLMs
+      : myLMs.filter((lm) => {
+          const lmLineIds = lm.lineIds || (lm.lineId ? [lm.lineId] : []);
+          const managesLine = lines.some(
+            (l) =>
+              l.id === activeBuLine &&
+              (l.lineManagerId === lm.id || lmLineIds.includes(activeBuLine)),
+          );
+          return lmLineIds.includes(activeBuLine) || managesLine;
+        });
+
+  const displayDMs =
+    activeBuLine === "all"
+      ? myDMs
+      : myDMs.filter((dm) =>
+          (dm.lineIds || (dm.lineId ? [dm.lineId] : [])).includes(activeBuLine),
+        );
+
+  const displayReps =
+    activeBuLine === "all"
+      ? myReps
+      : myReps.filter((r) =>
+          (r.lineIds || (r.lineId ? [r.lineId] : [])).includes(activeBuLine),
+        );
+
   return `
     <div class="flex-col">
-      <div class="welcome-banner bu" style="background: linear-gradient(135deg, #6f42c1, #4b2a85); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, Business Unit Head ${userName}!</h2>
-        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px;">${t.bu_overview}</div>
+      <div class="welcome-banner bu">
+        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "رئيس وحدة الأعمال" : "Business Unit Head"} ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة وحدة الأعمال" : "Business Unit Management")}</div>
       </div>
+
+      ${
+        lines.length > 1
+          ? `
+        <div class="dashboard-line-filter">
+          <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+          <button type="button" class="line-filter-btn ${activeBuLine === "all" ? "active" : ""}" onclick="window.switchBuLineFilter('all')">
+            ${lang === "ar" ? `جميع الخطوط (${lines.length})` : `All Lines (${lines.length})`}
+          </button>
+          ${lines
+            .map(
+              (l) => `
+            <button type="button" class="line-filter-btn ${activeBuLine === l.id ? "active" : ""}" onclick="window.switchBuLineFilter('${l.id}')">
+              ${lang === "ar" ? (l.nameAr || l.name) : l.name}
+            </button>
+          `,
+            )
+            .join("")}
+        </div>
+      `
+          : ""
+      }
 
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-label">${t.total_lines}</div>
-          <div class="stat-value primary counter" data-target="${lines.length}">${lines.length}</div>
+          <div class="stat-value primary counter" data-target="${filteredLines.length}">${filteredLines.length}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">${t.total_lms}</div>
-          <div class="stat-value success counter" data-target="${myLMs.length}">${myLMs.length}</div>
+          <div class="stat-value success counter" data-target="${displayLMs.length}">${displayLMs.length}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">${t.total_bu_dms}</div>
-          <div class="stat-value warning counter" data-target="${myDMs.length}">${myDMs.length}</div>
+          <div class="stat-value warning counter" data-target="${displayDMs.length}">${displayDMs.length}</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">${t.total_bu_reps}</div>
-          <div class="stat-value purple counter" data-target="${myReps.length}">${myReps.length}</div>
+          <div class="stat-value purple counter" data-target="${displayReps.length}">${displayReps.length}</div>
         </div>
       </div>
 
       <div class="grid-2-col">
         <div class="dashboard-card">
-          <h3 class="card-title" style="font-weight: 700; margin-bottom: 16px;">Product Lines & Assigned Leadership</h3>
+          <h3 class="card-title">Product Lines & Assigned Leadership</h3>
           <div class="table-container">
-            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <table class="data-table bu-leadership-table">
               <thead>
-                <tr style="border-bottom: 2px solid var(--gray-200);">
-                  <th style="padding: 10px;">${t.line_name}</th>
-                  <th style="padding: 10px;">${t.assigned_lm}</th>
-                  <th style="padding: 10px;">Field Force</th>
+                <tr>
+                  <th>${t.line_name}</th>
+                  <th>${t.assigned_lm}</th>
+                  <th>Field Force</th>
                 </tr>
               </thead>
               <tbody>
                 ${
-                  lines.length > 0
-                    ? lines
-                        .map((line) => {
+                  filteredLines.length > 0
+                    ? filteredLines
+                        .flatMap((line) => {
                           const assignedLM =
-                            allUsers.find((u) => u.id === line.lineManagerId) ||
-                            myLMs.find(
-                              (lm) =>
-                                lm.lineId === line.id ||
-                                (lm.lineIds && lm.lineIds.includes(line.id)),
-                            ) ||
-                            myLMs[0];
-                          const lineDMs = allUsers.filter(
-                            (u) =>
-                              (u.role === "district_manager" ||
-                                u.role === "dm") &&
-                              (u.lineId === line.id ||
-                                (u.lineIds && u.lineIds.includes(line.id)) ||
-                                (assignedLM && u.managerId === assignedLM.id)),
-                          );
-                          const lineDmIds = lineDMs.map((d) => d.id);
-                          const lineReps = allUsers.filter(
-                            (u) =>
-                              (u.role === "medical_rep" || u.role === "rep") &&
-                              (u.lineId === line.id ||
-                                (u.lineIds && u.lineIds.includes(line.id)) ||
-                                lineDmIds.includes(u.managerId)),
-                          );
-                          const dmsCount = lineDMs.length;
-                          const repsCount = lineReps.length;
-                          return `
-                            <tr>
-                              <td style="padding: 10px; font-weight: 700;">
-                                ${line.name}
-                                <div style="font-size: 0.75rem; color: var(--gray-500);">${(line.products || []).length} Products Active</div>
-                              </td>
-                              <td style="padding: 10px;">
-                                <strong>${assignedLM ? assignedLM.name : "Unassigned"}</strong>
-                                <div style="font-size: 0.75rem; color: var(--gray-500);">${assignedLM ? assignedLM.email : ""}</div>
-                              </td>
-                              <td style="padding: 10px;">
-                                <span class="badge bg-primary-subtle text-primary" style="padding: 3px 8px; border-radius: 6px;">${dmsCount} DMs</span>
-                                <span class="badge bg-success-subtle text-success" style="padding: 3px 8px; border-radius: 6px;">${repsCount} Reps</span>
-                              </td>
-                            </tr>
-                          `;
+                            allUsers.find((u) => u.id === line.lineManagerId && (u.role === "line_manager" || u.role === "lm")) ||
+                            myLMs.find((lm) => lm.lineId === line.id) ||
+                            null;
+
+                          const otherLMs = myLMs.filter((lm) => {
+                            if (assignedLM && lm.id === assignedLM.id) return false;
+                            if (lm.lineId === line.id) return true;
+                            const lmLineIds = lm.lineIds || [];
+                            if (!lmLineIds.includes(line.id)) return false;
+                            return allUsers.some(
+                              (u) =>
+                                u.managerId === lm.id &&
+                                (u.role === "district_manager" || u.role === "dm") &&
+                                (u.lineIds || [u.lineId]).includes(line.id),
+                            );
+                          });
+
+                          const lineManagers = assignedLM ? [assignedLM, ...otherLMs] : (otherLMs.length > 0 ? otherLMs : [null]);
+
+                          return lineManagers.map((lm) => {
+                            let dmsCount = 0;
+                            let repsCount = 0;
+
+                            if (lm) {
+                              const lineDMs = allUsers.filter((u) => {
+                                if (u.role !== "district_manager" && u.role !== "dm") return false;
+                                const userLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+                                const inLine = userLineIds.length > 0 ? userLineIds.includes(line.id) : true;
+                                return u.managerId === lm.id && inLine;
+                              });
+                              const lineDmIds = lineDMs.map((d) => d.id);
+                              const lineReps = allUsers.filter((u) => {
+                                if (u.role !== "medical_rep" && u.role !== "rep") return false;
+                                const userLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+                                const inLine = userLineIds.length > 0 ? userLineIds.includes(line.id) : true;
+                                return lineDmIds.includes(u.managerId) && inLine;
+                              });
+                              dmsCount = lineDMs.length;
+                              repsCount = lineReps.length;
+                            }
+
+                            return `
+                              <tr>
+                                <td>
+                                  <strong>${lang === "ar" ? (line.nameAr || line.name) : line.name}</strong>
+                                  <div class="bu-line-subtext">${(line.products || []).length} ${lang === "ar" ? "منتجات نشطة" : "Products Active"}</div>
+                                </td>
+                                <td>
+                                  ${
+                                    lm
+                                      ? `
+                                    <strong>${lm.name}</strong>
+                                    ${lm.email ? `<div class="bu-line-subtext">${lm.email}</div>` : ""}
+                                  `
+                                      : `<em class="text-muted">${lang === "ar" ? "غير معين" : "Unassigned"}</em>`
+                                  }
+                                </td>
+                                <td>
+                                  <div class="field-force-badges">
+                                    <span class="badge bg-primary-subtle text-primary badge-dm-count">${dmsCount} ${dmsCount === 1 ? (lang === "ar" ? "مدير منطقة" : "DM") : (lang === "ar" ? "مديري مناطق" : "DMs")}</span>
+                                    <span class="badge bg-success-subtle text-success badge-rep-count">${repsCount} ${repsCount === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            `;
+                          });
                         })
-                        .join("")
-                    : `<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--gray-500);">No product lines recorded.</td></tr>`
+                        .join("") +
+                      (activeBuLine === "all"
+                        ? (() => {
+                            const unassignedLMs = myLMs.filter((lm) => {
+                              const lmLineIds = lm.lineIds || (lm.lineId ? [lm.lineId] : []);
+                              const managesAnyLine = lines.some((l) => l.lineManagerId === lm.id || (l.id && lmLineIds.includes(l.id)));
+                              return lmLineIds.length === 0 && !managesAnyLine;
+                            });
+                            return unassignedLMs.length > 0
+                              ? unassignedLMs
+                                  .map(
+                                    (lm) => `
+                                <tr class="bu-unassigned-row">
+                                  <td>
+                                    <em class="text-muted">${lang === "ar" ? "خط غير محدد" : "Unassigned Line"}</em>
+                                  </td>
+                                  <td>
+                                    <strong>${lm.name}</strong>
+                                    ${lm.email ? `<div class="bu-line-subtext">${lm.email}</div>` : ""}
+                                  </td>
+                                  <td>
+                                    <span class="badge bg-secondary-subtle text-secondary">${lang === "ar" ? "بدون خط مسند" : "No Line Assigned"}</span>
+                                  </td>
+                                </tr>
+                              `,
+                                  )
+                                  .join("")
+                              : "";
+                          })()
+                        : "")
+                    : `<tr><td colspan="3" class="text-center text-muted py-3">No product lines recorded.</td></tr>`
                 }
               </tbody>
             </table>
@@ -2012,13 +2367,12 @@ function renderBUDashboard(userName, user) {
         </div>
 
         <div class="dashboard-card">
-          <h3 class="card-title" style="font-weight: 700; margin-bottom: 16px;">${t.quick_actions}</h3>
-          <div class="quick-actions-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <a href="reports.html" class="action-btn primary" style="text-decoration: none; text-align: center; padding: 14px; border-radius: 8px; background: var(--primary); color: white; font-weight: bold;">📊 BU Sales & Target</a>
-            <a href="visits.html" class="action-btn success" style="text-decoration: none; text-align: center; padding: 14px; border-radius: 8px; background: var(--success); color: white; font-weight: bold;">📍 Territory Visits</a>
-            <a href="leaves.html" class="action-btn warning" style="text-decoration: none; text-align: center; padding: 14px; border-radius: 8px; background: var(--warning); color: white; font-weight: bold;">🏖️ Approvals Inbox</a>
-            <a href="calendar.html" class="action-btn" style="text-decoration: none; text-align: center; padding: 14px; border-radius: 8px; background: var(--gray-200); color: var(--gray-800); font-weight: bold;">📅 Team Calendar</a>
-          </div>
+          <h3 class="card-title">${t.quick_actions}</h3>
+          <div class="quick-actions-grid">
+            <a href="reports.html" class="quick-action-link primary">📊 BU Sales & Target</a>
+            <a href="visits.html" class="quick-action-link success">📍 Territory Visits</a>
+            <a href="leaves.html" class="quick-action-link warning">🏖️ Approvals Inbox</a>
+            <a href="calendar.html" class="quick-action-link neutral">📅 Team Calendar</a>
           </div>
         </div>
       </div>
@@ -2026,7 +2380,8 @@ function renderBUDashboard(userName, user) {
       ${(() => {
         const allLinesLocal = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
         const buUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-        const linesToShow = buUserLines.length > 0 ? buUserLines : allLinesLocal;
+        const rawLines = buUserLines.length > 0 ? buUserLines : allLinesLocal;
+        const linesToShow = rawLines.filter((l) => activeBuLine === "all" || l.id === activeBuLine);
         if (linesToShow.length === 0) return "";
         const isAr = lang === "ar";
         const currentYear = new Date().getFullYear().toString();
@@ -2116,9 +2471,9 @@ function renderAdminDashboard(userName, user) {
 
   return `
     <div class="flex-col">
-      <div class="welcome-banner admin" style="background: linear-gradient(135deg, #212529, #343a40); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, Admin ${userName}!</h2>
-        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px;">${t.system_overview}</div>
+      <div class="welcome-banner admin">
+        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مسؤول النظام" : "System Administrator"} ${userName}!</h2>
+        <div class="welcome-subtitle">${lang === "ar" ? "جميع خطوط الإنتاج والعمليات" : "All Product Lines & Operations"}</div>
       </div>
 
       <div class="stat-grid">
@@ -2142,21 +2497,21 @@ function renderAdminDashboard(userName, user) {
 
       <div class="grid-2-col">
         <div class="dashboard-card">
-          <h3 class="card-title" style="font-weight: 700; margin-bottom: 16px;">${t.quick_links}</h3>
-          <div class="quick-actions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
-            <a href="users.html" class="action-btn primary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--primary); color: white;">👥 ${t.manage_users}</a>
-            <a href="reports.html" class="action-btn success" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--success); color: white;">📈 ${t.upload_sales}</a>
-            <a href="products.html" class="action-btn warning" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--warning); color: white;">📦 ${t.manage_products}</a>
-            <a href="areas.html" class="action-btn danger" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--danger); color: white;">🗺️ ${t.manage_areas}</a>
+          <h3 class="card-title">${t.quick_links}</h3>
+          <div class="quick-actions-grid">
+            <a href="users.html" class="quick-action-link primary">👥 ${t.manage_users}</a>
+            <a href="reports.html" class="quick-action-link success">📈 ${t.upload_sales}</a>
+            <a href="products.html" class="quick-action-link warning">📦 ${t.manage_products}</a>
+            <a href="areas.html" class="quick-action-link danger">🗺️ ${t.manage_areas}</a>
           </div>
         </div>
 
         <div class="dashboard-card">
-          <h3 class="card-title" style="font-weight: 700; margin-bottom: 16px;">${t.recent_activity}</h3>
-          <ul class="activity-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-            <li class="activity-item primary" style="padding: 10px; background: var(--gray-50); border-left: 3px solid var(--primary); border-radius: 6px;">System Admin initialized database synchronization.</li>
-            <li class="activity-item success" style="padding: 10px; background: var(--gray-50); border-left: 3px solid var(--success); border-radius: 6px;">Product Line "Cardio Line" verified with 4 products.</li>
-            <li class="activity-item warning" style="padding: 10px; background: var(--gray-50); border-left: 3px solid var(--warning); border-radius: 6px;">Territory Area "Nasr City (CAI-N01)" assigned to rep1.</li>
+          <h3 class="card-title">${t.recent_activity}</h3>
+          <ul class="activity-list">
+            <li class="activity-item primary">System Admin initialized database synchronization.</li>
+            <li class="activity-item success">Product Line "Cardio Line" verified with 4 products.</li>
+            <li class="activity-item warning">Territory Area "Nasr City (CAI-N01)" assigned to rep1.</li>
           </ul>
         </div>
       </div>
@@ -2196,9 +2551,9 @@ function renderHRDashboard(userName) {
 
   return `
     <div class="flex-col">
-      <div class="welcome-banner" style="background: linear-gradient(135deg, #6f42c1, #593196); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, ${userName}!</h2>
-        <div style="opacity: 0.9; margin-top: 4px;">${t.hr_overview}</div>
+      <div class="welcome-banner hr" style="background: linear-gradient(135deg, #6f42c1, #593196); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
+        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, ${lang === "ar" ? "مدير الموارد البشرية" : "HR Manager"} ${userName}!</h2>
+        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px; font-size: 0.875rem;">${lang === "ar" ? "الموارد البشرية وشؤون الموظفين" : "Human Resources & People Operations"}</div>
       </div>
       <div class="stat-grid">
         <a href="users.html" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;"><div class="stat-label">${t.total_employees}</div><div class="stat-value primary counter" data-target="${totalEmployees}">${totalEmployees}</div></a>
@@ -2732,6 +3087,36 @@ window.switchDemoUser = function (role) {
     window.location.reload();
   }
 };
+
+window.currentRepPlanTab = window.currentRepPlanTab || "auto";
+window.currentRepPlanDate = window.currentRepPlanDate || null;
+
+window.switchRepPlanTab = function (tab) {
+  window.currentRepPlanTab = tab;
+  window.currentRepPlanDate = null;
+  renderDashboard();
+};
+
+window.switchRepPlanDate = function (dateStr) {
+  if (dateStr) {
+    window.currentRepPlanTab = "date";
+    window.currentRepPlanDate = dateStr;
+  } else {
+    window.currentRepPlanTab = "today";
+    window.currentRepPlanDate = null;
+  }
+  renderDashboard();
+};
+
+window.addEventListener("storage", (e) => {
+  if (e.key === "pharma_master_data") {
+    renderDashboard();
+  }
+});
+
+document.addEventListener("pharma:storage:synced", () => {
+  renderDashboard();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   const user =

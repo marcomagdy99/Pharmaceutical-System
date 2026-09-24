@@ -258,6 +258,7 @@ const DEFAULT_DEMO_DATA = {
     {
       id: "line1",
       name: "Cardio Line",
+      nameAr: "خط الكارديو (Cardio)",
       status: "Active",
       lineManagerId: "lm1",
       lineManagerName: "Hassan Ali",
@@ -272,6 +273,7 @@ const DEFAULT_DEMO_DATA = {
     {
       id: "line2",
       name: "Neuro Line",
+      nameAr: "خط النيورو (Neuro)",
       status: "Active",
       lineManagerId: "lm2",
       lineManagerName: "Sayed Ibrahim",
@@ -1789,10 +1791,10 @@ window.getDoctorCallTarget = getDoctorCallTarget;
 function normalizeRole(role) {
   if (!role) return "";
   const r = String(role).toLowerCase().trim();
-  if (r === "dm" || r === "district_manager") return "district_manager";
-  if (r === "lm" || r === "line_manager") return "line_manager";
-  if (r === "bu" || r === "business_unit") return "business_unit";
-  if (r === "rep" || r === "medical_rep") return "medical_rep";
+  if (r === "dm" || r === "district_manager" || r === "district manager") return "district_manager";
+  if (r === "lm" || r === "line_manager" || r === "line manager") return "line_manager";
+  if (r === "bu" || r === "business_unit" || r === "business unit") return "business_unit";
+  if (r === "rep" || r === "medical_rep" || r === "medical rep") return "medical_rep";
   if (r === "admin" || r === "administrator") return "admin";
   if (r === "hr") return "hr";
   return r;
@@ -3211,13 +3213,23 @@ function showToast(message, type = "info") {
     document.body.appendChild(container);
   }
   const toast = document.createElement("div");
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
+  const normalizedType = type === "error" ? "danger" : type;
+  toast.className = `toast toast-${normalizedType} show`;
+  
+  const icons = {
+    success: "✓ ",
+    warning: "⚠️ ",
+    danger: "✕ ",
+    error: "✕ ",
+    info: "ℹ "
+  };
+  const icon = icons[type] || "";
+  toast.textContent = `${icon}${message}`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add("fade-out");
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+    setTimeout(() => toast.remove(), 350);
+  }, 4000);
 }
 window.showToast = showToast;
 

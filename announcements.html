@@ -52,7 +52,7 @@
     <!-- Modal Container for Full Overlay Portals -->
     <div id="modalContainer">
         <!-- Create/Edit Modal -->
-        <div class="modal-overlay" id="announcementModal" style="display: none;" onclick="if(event.target === this) closeModal('announcementModal')">
+        <div class="modal-overlay" id="announcementModal" onclick="if(event.target === this) closeModal('announcementModal')">
             <div class="modal-content large">
                 <div class="modal-header">
                     <h2 id="modalTitle" data-i18n="createAnnouncement">Create Announcement</h2>
@@ -101,13 +101,13 @@
                         </div>
                         <div class="form-group">
                             <label data-i18n="imageOptional">Announcement Image (Optional)</label>
-                            <input type="file" id="annImageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                            <input type="file" id="annImageInput" accept="image/*" class="hidden-file-input" onchange="handleImageSelect(event)">
                             <div class="image-upload-dropzone" id="annImageUploadDropzone" onclick="document.getElementById('annImageInput').click()">
                                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                 <span class="upload-text" data-i18n="uploadImage">Upload Image</span>
                                 <span class="upload-hint" data-i18n="imageHint">Click or drag & drop (JPG, PNG, WebP)</span>
                             </div>
-                            <div class="image-preview-container" id="annImagePreviewContainer" style="display: none;">
+                            <div class="image-preview-container d-none" id="annImagePreviewContainer">
                                 <img id="annImagePreview" src="" alt="Preview" class="image-preview-img">
                                 <div class="preview-actions">
                                     <button type="button" class="btn-change-image" onclick="document.getElementById('annImageInput').click()" data-i18n="uploadImage">Change</button>
@@ -129,7 +129,7 @@
         </div>
 
         <!-- Delete Modal -->
-        <div class="modal-overlay" id="deleteModal" style="display: none;" onclick="if(event.target === this) closeModal('deleteModal')">
+        <div class="modal-overlay" id="deleteModal" onclick="if(event.target === this) closeModal('deleteModal')">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 data-i18n="deleteConfirmTitle">Delete Announcement</h2>
@@ -146,7 +146,7 @@
         </div>
 
         <!-- Image Lightbox Modal -->
-        <div class="modal-overlay lightbox-overlay" id="imageLightboxModal" style="display: none;" onclick="if(event.target === this) closeImageLightbox()">
+        <div class="modal-overlay lightbox-overlay" id="imageLightboxModal" onclick="if(event.target === this) closeImageLightbox()">
             <div class="lightbox-content">
                 <button class="btn-close lightbox-close" onclick="closeImageLightbox()" aria-label="Close"><i class="fas fa-times"></i></button>
                 <img id="lightboxImage" src="" alt="Announcement Image" class="lightbox-img" />

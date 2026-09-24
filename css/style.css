@@ -1110,7 +1110,8 @@ body[data-theme="dark"],
   color: #ffffff;
 }
 
-.btn {
+.btn,
+a.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1120,12 +1121,63 @@ body[data-theme="dark"],
   font-size: 0.875rem;
   transition: var(--transition);
   gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
 }
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-secondary { background: var(--gray-200); color: var(--gray-800); }
-.btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); }
-.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+.btn-primary,
+a.btn-primary { 
+  background: var(--primary); 
+  color: #ffffff; 
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:visited,
+a.btn-primary:hover,
+a.btn-primary:focus,
+a.btn-primary:active,
+a.btn-primary:visited { 
+  background: var(--primary-dark); 
+  color: #ffffff; 
+}
+.btn-secondary,
+a.btn-secondary { 
+  background: var(--gray-200); 
+  color: var(--gray-800); 
+}
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active,
+.btn-secondary:visited,
+a.btn-secondary:hover,
+a.btn-secondary:focus,
+a.btn-secondary:active,
+a.btn-secondary:visited { 
+  background: var(--gray-300); 
+  color: var(--gray-900); 
+}
+.btn-outline,
+a.btn-outline { 
+  background: transparent; 
+  border: 1px solid var(--gray-300); 
+  color: var(--gray-700); 
+}
+.btn-outline:hover,
+.btn-outline:focus,
+.btn-outline:active,
+.btn-outline:visited,
+a.btn-outline:hover,
+a.btn-outline:focus,
+a.btn-outline:active,
+a.btn-outline:visited { 
+  background: var(--gray-100); 
+  color: var(--gray-900); 
+}
+.btn-sm,
+a.btn-sm { 
+  padding: 4px 10px; 
+  font-size: 0.8rem; 
+}
 
 /* Convert to Actual & Action Buttons */
 .btn-convert-action {
@@ -1222,4 +1274,89 @@ body[data-theme="dark"],
 
 .modal-dialog {
   z-index: 2501;
+}
+
+/* ==========================================================================
+   Global Toast Notifications System
+   Floats on top of all modals (z-index: 2500) and sticky topbars with high contrast
+   ========================================================================== */
+#toast-container.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 440px;
+  width: calc(100% - 48px);
+}
+
+[dir="rtl"] #toast-container.toast-container {
+  right: auto;
+  left: 24px;
+}
+
+#toast-container .toast {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 1;
+  color: #ffffff;
+  border: none;
+}
+
+#toast-container .toast.toast-success {
+  background-color: #10b981;
+}
+
+#toast-container .toast.toast-warning {
+  background-color: #f59e0b;
+  color: #1f2937;
+}
+
+#toast-container .toast.toast-danger,
+#toast-container .toast.toast-error {
+  background-color: #ef4444;
+}
+
+#toast-container .toast.toast-info {
+  background-color: #3b82f6;
+}
+
+#toast-container .toast.fade-out {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* Global Date Input Styling */
+input[type="date"] {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+[data-theme="dark"] input[type="date"] {
+  color-scheme: dark;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
 }

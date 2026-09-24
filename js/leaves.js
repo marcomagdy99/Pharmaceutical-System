@@ -81,6 +81,7 @@ let demoLeaves = (window.store && window.store.leaves
 const leaveTranslations = {
   en: {
     pageTitle: "Leaves Management",
+    pageSubtitle: "Submit, track multi-level approvals, and manage balances",
     annualLeave: "Annual Leave",
     casualLeave: "Casual Vacation",
     sickLeave: "Sick Leave",
@@ -109,7 +110,7 @@ const leaveTranslations = {
     approved: "Approved",
     rejected: "Rejected",
     managerSection: "Manager Approvals Inbox",
-    pendingApprovals: "Pending Approvals Inbox",
+    pendingApprovals: "Pending Requests Requiring Decision",
     approve: "Approve",
     reject: "Reject",
     modalRejectLeaveTitle: "Reject Leave Request",
@@ -156,6 +157,7 @@ const leaveTranslations = {
   },
   ar: {
     pageTitle: "إدارة الإجازات",
+    pageSubtitle: "تقديم ومتابعة موافقات الإجازات وإدارة الأرصدة",
     annualLeave: "Annual Leave",
     casualLeave: "Casual Vacation",
     sickLeave: "Sick Leave",
@@ -184,7 +186,7 @@ const leaveTranslations = {
     approved: "مقبول",
     rejected: "مرفوض",
     managerSection: "صندوق موافقات المدير",
-    pendingApprovals: "طلبات قيد الانتظار",
+    pendingApprovals: "الطلبات المعلقة التي تتطلب قرارك",
     approve: "قبول",
     reject: "رفض",
     modalRejectLeaveTitle: "رفض طلب الإجازة",
@@ -241,6 +243,71 @@ if (window.translations) {
 
 let currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
 
+const getSysLang = () => (window.getCurrentLang && window.getCurrentLang()) || "en";
+const isSysAr = () => getSysLang() === "ar";
+const getSysToday = () => (window.getSystemTodayStr && window.getSystemTodayStr()) || (new Date()).toISOString().slice(0, 10);
+
+function formatLeaveDurationText(l, lang) {
+  if (l.dayDuration === "half") {
+    return lang === "ar" ? "نصف يوم" : "Half Day";
+  }
+  const count = parseFloat(l.days) || 1;
+  if (lang === "ar") {
+    if (count === 1) return "يوم واحد";
+    if (count === 2) return "يومان";
+    if (count >= 3 && count <= 10) return `${count} أيام`;
+    return `${count} يوم`;
+  }
+  return count === 1 ? "1 Day" : `${count} Days`;
+}
+
+function formatLeaveDateRange(startDate, endDate, lang) {
+  if (!startDate) return "";
+  if (!endDate || startDate === endDate) {
+    return startDate;
+  }
+  const separator = lang === "ar" ? " إلى " : " to ";
+  return `${startDate}${separator}${endDate}`;
+}
+
+function formatLeaveDateDisplay(startDate, endDate, lang) {
+  if (!startDate) return "";
+  if (!endDate || startDate === endDate) {
+    return `<div class="leave-date-single">
+      <span class="leave-date-value">${startDate}</span>
+    </div>`;
+  }
+  const fromLabel = lang === "ar" ? "من:" : "From:";
+  const toLabel = lang === "ar" ? "إلى:" : "To:";
+  return `<div class="leave-date-range-block">
+    <div class="leave-date-row">
+      <span class="leave-date-prefix">${fromLabel}</span>
+      <span class="leave-date-value">${startDate}</span>
+    </div>
+    <div class="leave-date-row">
+      <span class="leave-date-prefix">${toLabel}</span>
+      <span class="leave-date-value">${endDate}</span>
+    </div>
+  </div>`;
+}
+
+function formatLeaveUserRole(role, lang) {
+  const r = (role || "").toLowerCase();
+  if (r === "medical_rep" || r === "rep") {
+    return lang === "ar" ? "مندوب طبي" : "Medical Rep";
+  }
+  if (r === "district_manager" || r === "dm") {
+    return lang === "ar" ? "مدير منطقة" : "District Manager";
+  }
+  if (r === "line_manager" || r === "lm") {
+    return lang === "ar" ? "مدير خط" : "Line Manager";
+  }
+  if (r === "admin" || r === "hr") {
+    return lang === "ar" ? "الموارد البشرية" : "HR / Admin";
+  }
+  return role || (lang === "ar" ? "موظف" : "Staff");
+}
+
 let activeRejectLeaveId = null;
 
 function openRejectLeaveModal(leaveId) {
@@ -249,7 +316,7 @@ function openRejectLeaveModal(leaveId) {
   if (modal) {
     const reasonInput = document.getElementById("rejectLeaveReasonText");
     if (reasonInput) reasonInput.value = "";
-    modal.style.display = "flex";
+    modal.classList.add("active");
   }
 }
 
@@ -257,7 +324,7 @@ function closeRejectLeaveModal() {
   activeRejectLeaveId = null;
   const modal = document.getElementById("rejectLeaveModal");
   if (modal) {
-    modal.style.display = "none";
+    modal.classList.remove("active");
   }
 }
 
@@ -321,8 +388,38 @@ function setupEventListeners() {
   const startInput = document.getElementById("startDate");
   const endInput = document.getElementById("endDate");
 
-  startInput?.addEventListener("change", calcDays);
+  const todayStr = getSysToday();
+  if (startInput && !startInput.value) {
+    startInput.value = todayStr;
+  }
+  if (endInput && !endInput.value) {
+    endInput.value = todayStr;
+    endInput.min = startInput ? startInput.value : todayStr;
+  }
+
+  [startInput, endInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("click", () => {
+      try {
+        if (typeof input.showPicker === "function") {
+          input.showPicker();
+        }
+      } catch (e) {}
+    });
+  });
+
+  startInput?.addEventListener("change", () => {
+    if (endInput) {
+      endInput.min = startInput.value;
+      if (endInput.value && endInput.value < startInput.value) {
+        endInput.value = startInput.value;
+      }
+    }
+    calcDays();
+  });
   endInput?.addEventListener("change", calcDays);
+
+  calcDays();
 
   document.getElementById("leaveForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -601,7 +698,7 @@ function setupEventListeners() {
     e.target.reset();
     document.getElementById("daysCount").value = "1 Day";
     const holidayNotice = document.getElementById("leaveHolidayNotice");
-    if (holidayNotice) holidayNotice.style.display = "none";
+    if (holidayNotice) holidayNotice.classList.add("d-none");
     renderHistory();
     renderPendingApprovals();
     if (typeof renderHrAllLeaves === "function") renderHrAllLeaves();
@@ -643,7 +740,7 @@ function calcDays() {
 
   if (durationType === "half") {
     if (daysCount) daysCount.value = isAr ? "نصف يوم" : "Half Day";
-    if (holidayNotice) holidayNotice.style.display = "none";
+    if (holidayNotice) holidayNotice.classList.add("d-none");
     return;
   }
 
@@ -698,14 +795,14 @@ function calcDays() {
       }
 
       if (noticeParts.length > 0) {
-        holidayNotice.style.display = "block";
+        holidayNotice.classList.remove("d-none");
         holidayNotice.innerHTML = noticeParts.join("<br>");
       } else {
-        holidayNotice.style.display = "none";
+        holidayNotice.classList.add("d-none");
       }
     }
   } else {
-    if (holidayNotice) holidayNotice.style.display = "none";
+    if (holidayNotice) holidayNotice.classList.add("d-none");
   }
 }
 
@@ -786,14 +883,14 @@ function updateUIForUser() {
 
   const managerSection = document.getElementById("managerSection");
   if (managerSection) {
-    managerSection.style.display = isManager ? "flex" : "none";
+    managerSection.classList.toggle("d-none", !isManager);
   }
 
   const hrHolidaySection = document.getElementById("hrHolidaySection");
   if (hrHolidaySection) {
-    hrHolidaySection.style.display =
-      role === "hr" || role === "admin" ? "flex" : "none";
-    if (role === "hr" || role === "admin") {
+    const isHrOrAdmin = role === "hr" || role === "admin";
+    hrHolidaySection.classList.toggle("d-none", !isHrOrAdmin);
+    if (isHrOrAdmin) {
       renderDeclaredHolidaysList();
       initHrBalanceControl();
     }
@@ -801,9 +898,9 @@ function updateUIForUser() {
 
   const hrAllLeavesSection = document.getElementById("hrAllLeavesSection");
   if (hrAllLeavesSection) {
-    hrAllLeavesSection.style.display =
-      role === "hr" || role === "admin" ? "flex" : "none";
-    if (role === "hr" || role === "admin") {
+    const isHrOrAdmin = role === "hr" || role === "admin";
+    hrAllLeavesSection.classList.toggle("d-none", !isHrOrAdmin);
+    if (isHrOrAdmin) {
       initHrAllLeavesControl();
       renderHrAllLeaves();
     }
@@ -846,7 +943,7 @@ function getEmployeeLeaveRollover(userId, targetYear) {
   const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
   const prevYearStr = String(currentYear - 1);
   const currentYearStr = String(currentYear);
-  const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+  const todayStr = getSysToday();
 
   // 1. Calculate used annual leaves in previous year
   let prevYearUsed = 0;
@@ -860,24 +957,35 @@ function getEmployeeLeaveRollover(userId, targetYear) {
   const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
   const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
 
-  // 2. FIFO: Approved annual leaves taken in the current year that have started consume the carried-over balance FIRST!
-  let currentYearApprovedTaken = 0;
-  (demoLeaves || []).forEach((l) => {
-    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr) && l.startDate <= todayStr) {
-      currentYearApprovedTaken += (parseFloat(l.days) || 1);
-    }
-  });
-
-  const consumedFromRollover = Math.min(initialCarriedOver, currentYearApprovedTaken);
-  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
-  const consumedFromNewAnnual = Math.max(0, currentYearApprovedTaken - initialCarriedOver);
-
   const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
   let expiryDate = `${currentYear}-03-31`;
   if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
   else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
   else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
   else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
+
+  const allLeaves =
+    (window.store && window.store.leaves
+      ? window.store.leaves.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves || [];
+
+  // 2. FIFO: Only approved leaves taken during the active grace period can consume carried-over days
+  let gracePeriodApprovedTaken = 0;
+  let postGraceApprovedTaken = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr)) {
+      const days = parseFloat(l.days) || 1;
+      if (l.startDate <= expiryDate) {
+        gracePeriodApprovedTaken += days;
+      } else {
+        postGraceApprovedTaken += days;
+      }
+    }
+  });
+
+  const consumedFromRollover = Math.min(initialCarriedOver, gracePeriodApprovedTaken);
+  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
+  const consumedFromNewAnnual = Math.max(0, gracePeriodApprovedTaken - initialCarriedOver) + postGraceApprovedTaken;
 
   const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
   const isExpired = remainingRollover > 0 && todayStr > expiryDate;
@@ -909,7 +1017,7 @@ function calculateBalances() {
       : [];
   const userObj = allUsers.find((u) => u.id === currentUser.id) || currentUser;
   const userBalance = userObj.leaveBalance || currentUser.leaveBalance || {};
-  const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+  const todayStr = getSysToday();
   const rollover = getEmployeeLeaveRollover(currentUser.id);
   const baseAnnual = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
 
@@ -927,17 +1035,32 @@ function calculateBalances() {
           : 6,
   };
   let used = { annual: 0, sick: 0, emergency: 0 };
+  let pendingCounts = { annual: 0, sick: 0, emergency: 0 };
 
-  demoLeaves.forEach((l) => {
-    // Only deduct approved leaves whose start date has arrived or passed
-    if (l.userId === currentUser.id && l.status === "approved" && l.startDate && l.startDate <= todayStr) {
+  const allLeaves =
+    (window.store && window.store.leaves
+      ? window.store.leaves.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves;
+
+  allLeaves.forEach((l) => {
+    if (l.userId === currentUser.id) {
       const d = parseFloat(l.days) || 1;
-      if (l.type === "annual") {
-        used.annual += d;
-      } else if (l.type === "casual" || l.type === "emergency") {
-        used.emergency += d;
-      } else if (l.type === "sick") {
-        used.sick += d;
+      if (l.status === "approved") {
+        if (l.type === "annual") {
+          used.annual += d;
+        } else if (l.type === "casual" || l.type === "emergency") {
+          used.emergency += d;
+        } else if (l.type === "sick") {
+          used.sick += d;
+        }
+      } else if (l.status === "pending") {
+        if (l.type === "annual") {
+          pendingCounts.annual += d;
+        } else if (l.type === "casual" || l.type === "emergency") {
+          pendingCounts.emergency += d;
+        } else if (l.type === "sick") {
+          pendingCounts.sick += d;
+        }
       }
     }
   });
@@ -953,7 +1076,7 @@ function calculateBalances() {
   const badgeEl = document.getElementById("annualRolloverBadge");
   if (badgeEl) {
     if (rollover.isValid && rollover.initialCarriedOver > 0) {
-      badgeEl.style.display = "block";
+      badgeEl.classList.remove("d-none");
       const remainingMsg = rollover.consumedFromRollover > 0
         ? `متبقي ${rollover.remainingRollover} من ${rollover.initialCarriedOver} (تم استهلاك ${rollover.consumedFromRollover} أولاً)`
         : `+${rollover.initialCarriedOver} أيام مرحلة`;
@@ -963,23 +1086,23 @@ function calculateBalances() {
 
       badgeEl.innerHTML = `
         <div class="mt-2 pt-2 border-top rollover-border-active">
-          <div class="p-2 rounded-3 rollover-banner-active" style="font-size: 0.78rem;">
+          <div class="p-2 rounded-3 rollover-banner-active">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="fw-bold text-success-emphasis d-flex align-items-center gap-1">
                 <i class="bi bi-arrow-repeat"></i> ${isAr ? "رصيد مرحل (يُخصم أولاً FIFO):" : "Carried Over (Deducted First):"}
               </span>
               <span class="badge bg-success text-white fw-bold px-2 py-1">${isAr ? remainingMsg : remainingMsgEn}</span>
             </div>
-            <div class="text-danger fw-semibold d-flex align-items-center gap-1" style="font-size: 0.74rem;">
+            <div class="text-danger fw-semibold d-flex align-items-center gap-1 rollover-expiry-countdown">
               <i class="bi bi-hourglass-split"></i> ${isAr ? `مهلة الاستخدام تنتهي في: ${rollover.expiryDate}` : `Expires on: ${rollover.expiryDate}`}
             </div>
           </div>
         </div>`;
     } else if (rollover.isExpired) {
-      badgeEl.style.display = "block";
+      badgeEl.classList.remove("d-none");
       badgeEl.innerHTML = `
         <div class="mt-2 pt-2 border-top rollover-border-expired">
-          <div class="p-2 rounded-3 rollover-banner-expired" style="font-size: 0.75rem;">
+          <div class="p-2 rounded-3 rollover-banner-expired">
             <div class="d-flex justify-content-between align-items-center">
               <span class="rollover-expired-label"><i class="bi bi-clock-history me-1"></i>${isAr ? `انتهت مهلة الرصيد المرحل (${rollover.remainingRollover} يوم سقطت)` : `Rollover expired (${rollover.remainingRollover}d forfeited)`}</span>
               <span class="fw-semibold rollover-expiry-date">${rollover.expiryDate}</span>
@@ -987,7 +1110,7 @@ function calculateBalances() {
           </div>
         </div>`;
     } else {
-      badgeEl.style.display = "none";
+      badgeEl.classList.add("d-none");
     }
   }
 
@@ -997,12 +1120,25 @@ function calculateBalances() {
     const elUsed = document.getElementById(`${type}Used`);
     const elTotal = document.getElementById(`${type}Total`);
     const elProg = document.getElementById(`${type}Progress`);
+    const elPending = document.getElementById(`${type}PendingNote`);
 
     if (elRem) elRem.textContent = rem;
     if (elUsed) elUsed.textContent = used[type];
     if (elTotal) elTotal.textContent = totals[type];
     if (elProg)
       elProg.style.width = `${Math.min(100, (used[type] / totals[type]) * 100)}%`;
+
+    if (elPending) {
+      if (pendingCounts[type] > 0) {
+        elPending.textContent = isAr
+          ? `(${pendingCounts[type]} معلق)`
+          : `(${pendingCounts[type]} pending)`;
+        elPending.className = "ms-1 badge bg-warning-subtle text-warning border leave-pending-chip";
+      } else {
+        elPending.textContent = "";
+        elPending.className = "";
+      }
+    }
   });
 }
 
@@ -1105,12 +1241,8 @@ function renderHistory() {
   myLeaves.forEach((l) => {
     const typeKey = l.type + "Leave";
     const typeLabel = leaveTranslations[lang]?.[typeKey] || l.type;
-    const durationLabel =
-      l.dayDuration === "half"
-        ? lang === "ar"
-          ? "نصف يوم"
-          : "Half Day"
-        : `${l.days} ${lang === "ar" ? "أيام" : "Days"}`;
+    const durationLabel = formatLeaveDurationText(l, lang);
+    const dateRangeStr = formatLeaveDateRange(l.startDate, l.endDate, lang);
 
     const app = l.approvals || {};
     let stepsHtml = "";
@@ -1149,7 +1281,7 @@ function renderHistory() {
       `;
     }
 
-    const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+    const todayStr = getSysToday();
     const isFuture = l.startDate && l.startDate > todayStr;
     const canDelete = (l.status === "pending" || (l.status === "approved" && isFuture)) && (l.userId === currentUser.id || currentUser.role === "admin");
 
@@ -1159,18 +1291,20 @@ function renderHistory() {
         <strong class="leave-item-title">${typeLabel}</strong>
       </td>
       <td>
-        <div>${l.startDate} to ${l.endDate}</div>
-        <small class="badge duration-badge">${durationLabel}</small>
+        <div class="d-flex flex-column align-items-start gap-1">
+          ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
+          <span class="badge duration-badge mt-1">${durationLabel}</span>
+        </div>
       </td>
       <td>
         ${
           l.attachmentName
-            ? `<span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">📎 ${window.escapeHtml(l.attachmentName)}</span>`
-            : '<span class="text-muted" style="font-size:0.75rem;">None</span>'
+            ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag">📎 ${window.escapeHtml(l.attachmentName)}</span>`
+            : '<span class="text-muted small">None</span>'
         }
       </td>
       <td>
-        <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div class="approval-steps-flow">
           ${stepsHtml}
         </div>
       </td>
@@ -1181,14 +1315,14 @@ function renderHistory() {
           </span>
           ${
             canDelete
-              ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1" style="font-size:0.75rem;" onclick="deleteMyLeave('${l.id}')">
+              ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1 leave-delete-btn" onclick="deleteMyLeave('${l.id}')">
                    <i class="bi bi-trash3 me-1"></i>${lang === "ar" ? "حذف" : "Delete"}
                  </button>`
               : ""
           }
           ${
             l.status === "rejected" && l.rejectionReason
-              ? `<div class="mt-1 small text-danger" style="font-size: 0.76rem; max-width: 220px; line-height: 1.3;" title="${window.escapeHtml(l.rejectionReason)}">
+              ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
                    <i class="bi bi-chat-left-text me-1"></i><strong>${lang === "ar" ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
                  </div>`
               : ""
@@ -1201,9 +1335,9 @@ function renderHistory() {
 }
 
 window.deleteMyLeave = function(leaveId) {
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+  const lang = getSysLang();
+  const isAr = isSysAr();
+  const todayStr = getSysToday();
 
   const idx = demoLeaves.findIndex((l) => l.id === leaveId);
   if (idx < 0) return;
@@ -1254,9 +1388,17 @@ function renderPendingApprovals() {
   if (!container) return;
   container.replaceChildren();
 
-  const role = (currentUser.role || "medical_rep").toLowerCase();
+  currentUser = (window.checkAuth && window.checkAuth()) || currentUser;
+  const role = window.normalizeRole
+    ? window.normalizeRole(currentUser.role)
+    : (currentUser.role || "medical_rep").toLowerCase().replace(/\s+/g, "_");
 
-  const pending = demoLeaves.filter((l) => {
+  const allLeaves =
+    (window.store && window.store.leaves
+      ? window.store.leaves.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves;
+
+  const pending = allLeaves.filter((l) => {
     if (l.status === "rejected" || l.status === "approved") return false;
     const app = l.approvals || {};
 
@@ -1270,10 +1412,16 @@ function renderPendingApprovals() {
     }
 
     // Verify applicant is in current manager's hierarchy to prevent unauthorized approvals
-    const isSubordinate =
-      typeof window.canApproveFor === "function"
-        ? window.canApproveFor(l.userId)
-        : false;
+    let isSubordinate = false;
+    if (typeof window.canApproveFor === "function" && window.canApproveFor(l.userId)) {
+      isSubordinate = true;
+    } else {
+      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const applicant = allUsers.find((u) => u.id === l.userId);
+      if (applicant && (applicant.managerId === currentUser.id || applicant.dmId === currentUser.id || applicant.districtManagerId === currentUser.id)) {
+        isSubordinate = true;
+      }
+    }
 
     if (!isSubordinate) return false;
 
@@ -1299,28 +1447,67 @@ function renderPendingApprovals() {
 
   pending.forEach((l) => {
     const card = document.createElement("div");
-    card.className = "card border-0 mb-3 pending-approval-card";
+    card.className = "card border-0 mb-3 pending-approval-card shadow-sm";
+
+    const typeKey = (l.type || "annual") + "Leave";
+    const typeLabel = leaveTranslations[lang]?.[typeKey] || (l.type ? l.type.toUpperCase() : "ANNUAL");
+    const durationLabel = formatLeaveDurationText(l, lang);
+    const roleLabel = formatLeaveUserRole(l.userRole, lang);
+
     card.innerHTML = `
       <div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div>
-            <h6 class="fw-bold mb-0 approval-title">${window.escapeHtml(l.userName || "Medical Rep")}</h6>
-            <small class="approval-meta">${l.type ? l.type.toUpperCase() : "ANNUAL"} LEAVE (${l.dayDuration === "half" ? "Half Day" : l.days + " Days"})</small>
+        <div class="approval-header-row mb-3">
+          <div class="approval-user-info">
+            <div class="approval-user-avatar">
+              ${(l.userName || "U").charAt(0).toUpperCase()}
+            </div>
+            <div class="approval-user-details">
+              <div class="approval-user-name">${window.escapeHtml(l.userName || "Medical Rep")}</div>
+              <div class="approval-user-role">${window.escapeHtml(roleLabel)}</div>
+            </div>
           </div>
-          <span class="small approval-meta">${l.startDate} to ${l.endDate}</span>
+          <div class="approval-badge-wrap">
+            <span class="badge approval-type-badge">${typeLabel}</span>
+          </div>
         </div>
-        <p class="mb-2 small approval-reason"><strong>Reason:</strong> <span class="leave-reason-text"></span></p>
+
+        <div class="approval-meta-grid mb-3">
+          <div class="approval-meta-item">
+            <span class="approval-meta-label"><i class="bi bi-calendar-event me-1"></i>${lang === "ar" ? "الفترة" : "Dates"}</span>
+            <div class="approval-meta-val">
+              ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
+            </div>
+          </div>
+          <div class="approval-meta-item">
+            <span class="approval-meta-label"><i class="bi bi-clock me-1"></i>${lang === "ar" ? "المدة" : "Duration"}</span>
+            <span class="badge duration-badge">${durationLabel}</span>
+          </div>
+        </div>
+
+        <div class="approval-reason-box mb-3">
+          <div class="approval-reason-header">
+            <i class="bi bi-chat-left-quote me-1"></i>
+            <span>${lang === "ar" ? "سبب الإجازة" : "Reason"}</span>
+          </div>
+          <div class="approval-reason-content leave-reason-text"></div>
+        </div>
+
         ${
           l.attachmentName
-            ? `<div class="mb-3"><span class="badge bg-primary-subtle text-primary border">📎 Attached: ${window.escapeHtml(l.attachmentName)}</span></div>`
+            ? `<div class="mb-3">
+                 <span class="approval-attachment-pill">
+                   <i class="bi bi-paperclip me-1"></i>${window.escapeHtml(l.attachmentName)}
+                 </span>
+               </div>`
             : ""
         }
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-success px-3 fw-bold" onclick="window.handleDecisionStep('${l.id}', 'approved')">
-            <i class="bi bi-check-lg me-1"></i>Approve Request
+
+        <div class="approval-actions-row">
+          <button type="button" class="btn btn-sm btn-success approval-btn" onclick="window.handleDecisionStep('${l.id}', 'approved')">
+            <i class="bi bi-check-circle me-1"></i>${leaveTranslations[lang]?.approve || (lang === "ar" ? "قبول" : "Approve")}
           </button>
-          <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="window.openRejectLeaveModal('${l.id}')">
-            <i class="bi bi-x-lg me-1"></i>Reject Request
+          <button type="button" class="btn btn-sm btn-outline-danger approval-btn" onclick="window.openRejectLeaveModal('${l.id}')">
+            <i class="bi bi-x-circle me-1"></i>${leaveTranslations[lang]?.reject || (lang === "ar" ? "رفض" : "Reject")}
           </button>
         </div>
       </div>
@@ -1328,7 +1515,7 @@ function renderPendingApprovals() {
 
     const reasonEl = card.querySelector(".leave-reason-text");
     if (reasonEl) {
-      reasonEl.textContent = l.reason || "";
+      reasonEl.textContent = l.reason || (lang === "ar" ? "بدون ملاحظات" : "No reason provided");
     }
 
     container.appendChild(card);
@@ -1355,14 +1542,14 @@ function renderDeclaredHolidaysList() {
     .map((h, idx) => {
       const isHalf = h.duration === "half";
       const durationBadge = isHalf
-        ? `<span class="badge bg-warning text-dark border border-warning" style="font-size: 11px;">${isAr ? "نصف يوم" : "Half Day"}</span>`
-        : `<span class="badge bg-success-subtle text-success border border-success" style="font-size: 11px;">${isAr ? "يوم كامل" : "Full Day"}</span>`;
+        ? `<span class="badge bg-warning text-dark border border-warning duration-chip-badge">${isAr ? "نصف يوم" : "Half Day"}</span>`
+        : `<span class="badge bg-success-subtle text-success border border-success duration-chip-badge">${isAr ? "يوم كامل" : "Full Day"}</span>`;
 
       return `
-      <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2" style="font-size: 13px;">
+      <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2 holiday-chip-badge">
         <span>🌴 <strong>${h.date}</strong>: ${window.escapeHtml(h.title)}</span>
         ${durationBadge}
-        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none" onclick="removeDeclaredHoliday(${idx})" title="Remove Holiday" style="font-size: 14px; line-height: 1;">✕</button>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none holiday-remove-btn" onclick="removeDeclaredHoliday(${idx})" title="Remove Holiday">✕</button>
       </span>
     `;
     })
@@ -1493,13 +1680,9 @@ function renderHrAllLeaves() {
 
   filtered.forEach((l) => {
     const typeKey = l.type + "Leave";
-    const typeLabel = leaveTranslations[lang]?.[typeKey] || l.type;
-    const durationLabel =
-      l.dayDuration === "half"
-        ? isAr
-          ? "نصف يوم"
-          : "Half Day"
-        : `${l.days} ${isAr ? "أيام" : "Days"}`;
+    const durationLabel = formatLeaveDurationText(l, lang);
+    const dateRangeStr = formatLeaveDateRange(l.startDate, l.endDate, lang);
+    const roleLabel = formatLeaveUserRole(l.userRole, lang);
 
     const app = l.approvals || {};
     let stepsHtml = "";
@@ -1542,12 +1725,12 @@ function renderHrAllLeaves() {
     tr.innerHTML = `
       <td>
         <div class="d-flex align-items-center">
-          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 34px; height: 34px; font-weight: bold; font-size: 13px;">
+          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 rep-avatar-sm">
             ${(l.userName || "U").charAt(0)}
           </div>
           <div>
             <div class="fw-bold leave-item-title">${window.escapeHtml(l.userName || "Employee")}</div>
-            <small class="text-muted">${window.escapeHtml(l.userRole || "Staff")}</small>
+            <small class="text-muted">${window.escapeHtml(roleLabel)}</small>
           </div>
         </div>
       </td>
@@ -1555,18 +1738,20 @@ function renderHrAllLeaves() {
         <strong class="leave-item-title">${typeLabel}</strong>
       </td>
       <td>
-        <div>${l.startDate} to ${l.endDate}</div>
-        <small class="badge bg-light text-dark border">${durationLabel}</small>
+        <div class="d-flex flex-column align-items-start gap-1">
+          ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
+          <span class="badge duration-badge mt-1">${durationLabel}</span>
+        </div>
       </td>
       <td>
         ${
           l.attachmentName
-            ? `<span class="badge bg-primary-subtle text-primary border" style="font-size: 0.72rem;">📎 ${window.escapeHtml(l.attachmentName)}</span>`
-            : '<span class="text-muted" style="font-size:0.75rem;">None</span>'
+            ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag">📎 ${window.escapeHtml(l.attachmentName)}</span>`
+            : '<span class="text-muted small">None</span>'
         }
       </td>
       <td>
-        <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div class="approval-steps-flow">
           ${stepsHtml}
         </div>
       </td>
@@ -1576,7 +1761,7 @@ function renderHrAllLeaves() {
         </span>
         ${
           l.status === "rejected" && l.rejectionReason
-            ? `<div class="mt-1 small text-danger" style="font-size: 0.76rem; max-width: 220px; line-height: 1.3;" title="${window.escapeHtml(l.rejectionReason)}">
+            ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
                  <i class="bi bi-chat-left-text me-1"></i><strong>${isAr ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
                </div>`
             : ""
@@ -1655,7 +1840,7 @@ function populateHrEmployeeSelect() {
     if (annualInput) annualInput.value = 21;
     if (casualInput) casualInput.value = 6;
     if (sickInput) sickInput.value = 7;
-    if (summaryEl) summaryEl.style.display = "none";
+    if (summaryEl) summaryEl.classList.add("d-none");
   }
 }
 
@@ -1864,6 +2049,7 @@ Object.assign(leavesApp, {
         renderPendingApprovals();
       if (typeof renderHistory === "function") renderHistory();
       if (typeof renderHrAllLeaves === "function") renderHrAllLeaves();
+      if (typeof window.renderTopbar === "function") window.renderTopbar();
     } catch (err) {
       console.error("Error in handleDecisionStep:", err);
     }
@@ -1960,7 +2146,7 @@ Object.assign(leavesApp, {
     const summaryEl = document.getElementById("hrEmployeeUsageSummary");
 
     if (!user) {
-      if (summaryEl) summaryEl.style.display = "none";
+      if (summaryEl) summaryEl.classList.add("d-none");
       return;
     }
 
@@ -1983,7 +2169,7 @@ Object.assign(leavesApp, {
     if (casualInput) casualInput.value = casualTotal;
     if (sickInput) sickInput.value = sickTotal;
 
-    const todayStr = (window.getSystemDate ? window.getSystemDate() : new Date()).toISOString().slice(0, 10);
+    const todayStr = getSysToday();
     const rollover = getEmployeeLeaveRollover(user.id);
     const effectiveAnnual = annualTotal + (rollover.isValid ? rollover.carriedOver : 0);
 
@@ -2017,7 +2203,7 @@ Object.assign(leavesApp, {
         ? `<span class="badge bg-success-subtle text-success border">+${rollover.carriedOver} ${isAr ? "مرحل" : "Rollover"}</span>`
         : "";
 
-      summaryEl.style.display = "block";
+      summaryEl.classList.remove("d-none");
       summaryEl.innerHTML = isAr
         ? `
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -2141,9 +2327,7 @@ window.leavesApp = leavesApp;
 
 // Backward-compatible bindings for inline HTML event handlers & legacy callers
 window.getApproverDisplayName = resolveApproverDisplayName;
-window.handleDecisionStep = function (leaveId, decision, rejectionReason = "") {
-  leavesApp.handleDecisionStep(leaveId, decision, rejectionReason);
-};
+window.handleDecisionStep = handleDecisionStep;
 window.removeDeclaredHoliday = function (idx) {
   leavesApp.removeDeclaredHoliday(idx);
 };
