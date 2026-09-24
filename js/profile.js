@@ -45,6 +45,9 @@ const profileTranslations = {
     gpsRadiusLabel: "Geofencing Validation Radius (Meters)",
     minPmVisitsLabel: "Minimum Evening Visits (PM Visits/Day)",
     minPmVisitsHint: "Daily minimum required clinic visits during the evening shift for medical representatives.",
+    workSchedulePolicyTitle: "Work Schedule & Weekly Rest Days",
+    toggleThursdayWeekendLabel: "Designate Thursday as Official Weekend (Thursday & Friday)",
+    toggleThursdayWeekendHint: "When enabled, Thursday is treated as an official day off alongside Friday across all visits, daily activities, and leave balances. If disabled, only Friday is the statutory rest day.",
     saveCompanyPolicies: "Save Company Policies",
     companyPoliciesSaved: "Company field policies updated successfully!",
   },
@@ -89,6 +92,9 @@ const profileTranslations = {
     gpsRadiusLabel: "نصف قطر نطاق العيادة المسموح به (بالأمتار)",
     minPmVisitsLabel: "الحد الأدنى لزيارات العيادات المسائية (PM Visits)",
     minPmVisitsHint: "الحد الأدنى الإلزامي لعدد زيارات العيادات خلال الفترة المسائية يومياً لكل مندوب طبي.",
+    workSchedulePolicyTitle: "مواعيد العمل والعطلات الأسبوعية الرسمية",
+    toggleThursdayWeekendLabel: "اعتماد يوم الخميس عطلة أسبوعية رسمية (خميس وجمعة)",
+    toggleThursdayWeekendHint: "عند التفعيل، يُعتبر يوم الخميس راحة أسبوعية رسمية إلى جانب الجمعة في تقارير الزيارات وجداول الأنشطة ورصيد الإجازات. في حال التعطيل، يكون يوم الجمعة فقط هو العطلة الرسمية.",
     saveCompanyPolicies: "حفظ سياسات الشركة",
     companyPoliciesSaved: "تم حفظ وتطبيق سياسات الشركة بنجاح على جميع المستخدمين!",
   },
@@ -465,10 +471,12 @@ function loadUserProfile() {
       const rolloverGrace = document.getElementById("leaveRolloverGraceSelect");
       const rolloverMax = document.getElementById("leaveRolloverMaxDaysInput");
       const rolloverOpts = document.getElementById("leaveRolloverOptionsContainer");
+      const thursdayToggle = document.getElementById("toggleThursdayWeekend");
 
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
       if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
       if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
+      if (thursdayToggle) thursdayToggle.checked = !!currentSettings.isThursdayWeekend;
 
       const allowRollover = currentSettings.allowLeaveRollover !== false;
       if (rolloverToggle) rolloverToggle.checked = allowRollover;
@@ -503,6 +511,7 @@ function handleSaveCompanySettings(e) {
   const rolloverToggle = document.getElementById("toggleLeaveRollover");
   const rolloverGrace = document.getElementById("leaveRolloverGraceSelect");
   const rolloverMax = document.getElementById("leaveRolloverMaxDaysInput");
+  const thursdayToggle = document.getElementById("toggleThursdayWeekend");
 
   const requireGpsValidation = toggleInput ? toggleInput.checked : true;
   const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
@@ -510,6 +519,12 @@ function handleSaveCompanySettings(e) {
   const allowLeaveRollover = rolloverToggle ? rolloverToggle.checked : true;
   const leaveRolloverGraceMonths = rolloverGrace ? (parseInt(rolloverGrace.value, 10) || 3) : 3;
   const leaveRolloverMaxDays = rolloverMax ? Math.max(0, parseInt(rolloverMax.value, 10) || 0) : 5;
+  const isThursdayWeekend = thursdayToggle ? thursdayToggle.checked : false;
+
+  const prevSettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+  const prevThursday = !!prevSettings.isThursdayWeekend;
 
   if (window.store && window.store.companySettings) {
     window.store.companySettings.update({
@@ -519,6 +534,34 @@ function handleSaveCompanySettings(e) {
       allowLeaveRollover,
       leaveRolloverGraceMonths,
       leaveRolloverMaxDays,
+      isThursdayWeekend,
+    });
+  }
+
+  // If Thursday weekend status changed, broadcast notification to all employees
+  if (prevThursday !== isThursdayWeekend) {
+    const allUsers = (window.store && window.store.users)
+      ? window.store.users.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+
+    allUsers.forEach((u) => {
+      if (typeof window.addWorkflowNotification === "function") {
+        window.addWorkflowNotification({
+          userId: u.id,
+          type: "policy_update",
+          icon: "📅",
+          badgeClass: "bg-info",
+          title: "تحديث سياسة أيام العمل والعطلات",
+          titleEn: "Work Schedule Policy Update",
+          message: isThursdayWeekend
+            ? "تنبيه: تم اعتماد يوم الخميس عطلة أسبوعية رسمية للشركة (الخميس والجمعة)."
+            : "تنبيه: تم إلغاء عطلة يوم الخميس واعتباره يوم عمل رسمي للشركة.",
+          messageEn: isThursdayWeekend
+            ? "Notice: Thursday has been officially designated as a weekly day off (Thursday & Friday)."
+            : "Notice: Thursday is now designated as an official working day.",
+          link: "profile.html"
+        });
+      }
     });
   }
 

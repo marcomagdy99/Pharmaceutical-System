@@ -773,6 +773,13 @@ function calcDays() {
             : `🕌 ${res.excludedFridays} Friday(s) excluded (statutory paid rest day)`
         );
       }
+      if (res.excludedThursdays > 0) {
+        noticeParts.push(
+          isAr
+            ? `📅 استثناء ${res.excludedThursdays} يوم خميس (عطلة أسبوعية لا تُخصم من الرصيد)`
+            : `📅 ${res.excludedThursdays} Thursday(s) excluded (company weekly rest day)`
+        );
+      }
       if (res.excludedHolidays.length > 0) {
         const titles = res.excludedHolidays
           .map((h) => {
@@ -812,12 +819,12 @@ function calcDays() {
  * If a public holiday is half day, 0.5 is deducted instead of 1.0.
  */
 function resolveLeaveDaysDetailed(start, end) {
-  if (!start || !end) return { totalDays: 1, excludedHolidays: [], excludedFridays: 0 };
+  if (!start || !end) return { totalDays: 1, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0 };
 
   const s = new Date(start + "T00:00:00");
   const e = new Date(end + "T00:00:00");
   if (isNaN(s.getTime()) || isNaN(e.getTime()))
-    return { totalDays: 1, excludedHolidays: [], excludedFridays: 0 };
+    return { totalDays: 1, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0 };
 
   const startD = s <= e ? s : e;
   const endD = s <= e ? e : s;
@@ -827,9 +834,15 @@ function resolveLeaveDaysDetailed(start, end) {
       ? window.DEMO_DATA.publicHolidays
       : [];
 
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+  const isThursdayWeekend = !!companySettings.isThursdayWeekend;
+
   let count = 0;
   const excludedHolidays = [];
   let excludedFridays = 0;
+  let excludedThursdays = 0;
 
   const cur = new Date(startD);
   while (cur <= endD) {
@@ -837,7 +850,9 @@ function resolveLeaveDaysDetailed(start, end) {
     const m = String(cur.getMonth() + 1).padStart(2, "0");
     const d = String(cur.getDate()).padStart(2, "0");
     const dateStr = `${y}-${m}-${d}`;
-    const isFriday = cur.getDay() === 5; // Friday: Egyptian Labor Law statutory paid weekly rest day
+    const dayOfWeek = cur.getDay();
+    const isFriday = dayOfWeek === 5;
+    const isThursday = dayOfWeek === 4 && isThursdayWeekend;
 
     const holidayMatch = publicHolidays.find((h) => h.date === dateStr);
     if (holidayMatch) {
@@ -847,7 +862,8 @@ function resolveLeaveDaysDetailed(start, end) {
       }
     } else if (isFriday) {
       excludedFridays++;
-      // Friday is statutory weekly rest day; not deducted from annual/sick leave balance
+    } else if (isThursday) {
+      excludedThursdays++;
     } else {
       count += 1;
     }
@@ -859,6 +875,7 @@ function resolveLeaveDaysDetailed(start, end) {
     totalDays: count,
     excludedHolidays,
     excludedFridays,
+    excludedThursdays,
   };
 }
 
@@ -891,8 +908,12 @@ function updateUIForUser() {
     const isHrOrAdmin = role === "hr" || role === "admin";
     hrHolidaySection.classList.toggle("d-none", !isHrOrAdmin);
     if (isHrOrAdmin) {
-      renderDeclaredHolidaysList();
-      initHrBalanceControl();
+      try {
+        renderDeclaredHolidaysList();
+        initHrBalanceControl();
+      } catch (err) {
+        console.error("Error in HR holiday/balance control:", err);
+      }
     }
   }
 
@@ -901,13 +922,28 @@ function updateUIForUser() {
     const isHrOrAdmin = role === "hr" || role === "admin";
     hrAllLeavesSection.classList.toggle("d-none", !isHrOrAdmin);
     if (isHrOrAdmin) {
-      initHrAllLeavesControl();
-      renderHrAllLeaves();
+      try {
+        initHrAllLeavesControl();
+        renderHrAllLeaves();
+      } catch (err) {
+        console.error("Error in HR all leaves section:", err);
+      }
     }
   }
 
-  renderHistory();
-  if (isManager) renderPendingApprovals();
+  try {
+    renderHistory();
+  } catch (err) {
+    console.error("Error in renderHistory:", err);
+  }
+
+  if (isManager) {
+    try {
+      renderPendingApprovals();
+    } catch (err) {
+      console.error("Error in renderPendingApprovals:", err);
+    }
+  }
 }
 
 /**
@@ -1151,7 +1187,7 @@ function resolveApproverDisplayName(leave, level, lang) {
   const app = (leave && leave.approvals && leave.approvals[level]) || {};
   const isAr = lang === "ar";
 
-  if (app.approverName) {
+  if (app.approverName && typeof app.approverName === "string") {
     let clean = app.approverName
       .replace(/\s*\((?:DM|LM|HR|Self)\)/gi, "")
       .trim();
@@ -1164,8 +1200,8 @@ function resolveApproverDisplayName(leave, level, lang) {
     ) {
       const foundUser = allUsers.find(
         (u) =>
-          u.name.toLowerCase() === clean.toLowerCase() ||
-          (u.nameAr && u.nameAr === clean),
+          (u && u.name && u.name.toLowerCase() === clean.toLowerCase()) ||
+          (u && u.nameAr && u.nameAr === clean),
       );
       if (foundUser) {
         return isAr && foundUser.nameAr ? foundUser.nameAr : foundUser.name;
@@ -1174,10 +1210,10 @@ function resolveApproverDisplayName(leave, level, lang) {
     }
   }
 
-  const applicantUser = allUsers.find((u) => u.id === leave.userId) || {};
+  const applicantUser = allUsers.find((u) => u && u.id === leave.userId) || {};
 
   if (level === "dm") {
-    const dmUser = allUsers.find((u) => u.id === applicantUser.managerId);
+    const dmUser = allUsers.find((u) => u && u.id === applicantUser.managerId);
     if (dmUser) {
       return isAr && dmUser.nameAr ? dmUser.nameAr : dmUser.name;
     }
@@ -1190,11 +1226,11 @@ function resolveApproverDisplayName(leave, level, lang) {
       applicantUser.role === "district_manager" ||
       applicantUser.role === "dm"
     ) {
-      lmUser = allUsers.find((u) => u.id === applicantUser.managerId);
+      lmUser = allUsers.find((u) => u && u.id === applicantUser.managerId);
     } else {
-      const dmUser = allUsers.find((u) => u.id === applicantUser.managerId);
+      const dmUser = allUsers.find((u) => u && u.id === applicantUser.managerId);
       if (dmUser && dmUser.managerId) {
-        lmUser = allUsers.find((u) => u.id === dmUser.managerId);
+        lmUser = allUsers.find((u) => u && u.id === dmUser.managerId);
       }
     }
     if (lmUser) {
@@ -1204,7 +1240,7 @@ function resolveApproverDisplayName(leave, level, lang) {
   }
 
   if (level === "hr") {
-    const hrUser = allUsers.find((u) => u.role === "hr");
+    const hrUser = allUsers.find((u) => u && (u.role === "hr" || u.role === "HR"));
     if (hrUser) {
       return isAr && hrUser.nameAr ? hrUser.nameAr : hrUser.name;
     }
@@ -1251,31 +1287,31 @@ function renderHistory() {
     const lmName = getApproverDisplayName(l, "lm", lang);
     const hrName = getApproverDisplayName(l, "hr", lang);
 
-    if (app.dm) {
+    if (app.dm && app.dm.status) {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.dm.status}">
-            ${window.escapeHtml(dmName)}: ${app.dm.status.toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
+            ${window.escapeHtml(dmName)}: ${(app.dm.status || "").toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
           </span>
         </div>
       `;
     }
 
-    if (app.lm) {
+    if (app.lm && app.lm.status) {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.lm.status}">
-            ${window.escapeHtml(lmName)}: ${app.lm.status.toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
+            ${window.escapeHtml(lmName)}: ${(app.lm.status || "").toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
           </span>
         </div>
       `;
     }
 
-    if (app.hr) {
+    if (app.hr && app.hr.status) {
       stepsHtml += `
         <div>
           <span class="approval-step-tag ${app.hr.status}">
-            ${window.escapeHtml(hrName)}: ${app.hr.status.toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
+            ${window.escapeHtml(hrName)}: ${(app.hr.status || "").toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -1311,7 +1347,7 @@ function renderHistory() {
       <td>
         <div class="d-flex flex-column align-items-start gap-1">
           <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
-            ${l.status.toUpperCase()}
+            ${(l.status || "").toUpperCase()}
           </span>
           ${
             canDelete
@@ -1399,15 +1435,18 @@ function renderPendingApprovals() {
       : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves;
 
   const pending = allLeaves.filter((l) => {
-    if (l.status === "rejected" || l.status === "approved") return false;
+    if (!l || l.status === "rejected" || l.status === "approved") return false;
     const app = l.approvals || {};
+
+    const hrStatus = (app.hr && app.hr.status ? app.hr.status : "").toLowerCase();
+    const lmStatus = (app.lm && app.lm.status ? app.lm.status : "").toLowerCase();
+    const dmStatus = (app.dm && app.dm.status ? app.dm.status : "").toLowerCase();
 
     // HR and Admin have organization-wide authority to review pending approvals
     if (role === "hr" || role === "admin") {
       return (
-        app.hr &&
-        app.hr.status === "pending" &&
-        (app.lm ? app.lm.status === "approved" : true)
+        hrStatus === "pending" &&
+        (app.lm ? lmStatus === "approved" : true)
       );
     }
 
@@ -1417,7 +1456,7 @@ function renderPendingApprovals() {
       isSubordinate = true;
     } else {
       const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-      const applicant = allUsers.find((u) => u.id === l.userId);
+      const applicant = allUsers.find((u) => u && u.id === l.userId);
       if (applicant && (applicant.managerId === currentUser.id || applicant.dmId === currentUser.id || applicant.districtManagerId === currentUser.id)) {
         isSubordinate = true;
       }
@@ -1426,13 +1465,12 @@ function renderPendingApprovals() {
     if (!isSubordinate) return false;
 
     if (role === "district_manager" || role === "dm") {
-      return app.dm && app.dm.status === "pending";
+      return dmStatus === "pending";
     }
     if (role === "line_manager" || role === "lm") {
       return (
-        app.lm &&
-        app.lm.status === "pending" &&
-        (app.dm ? app.dm.status === "approved" : true)
+        lmStatus === "pending" &&
+        (app.dm ? dmStatus === "approved" : true)
       );
     }
     return false;
@@ -1679,96 +1717,101 @@ function renderHrAllLeaves() {
   }
 
   filtered.forEach((l) => {
-    const typeKey = l.type + "Leave";
-    const durationLabel = formatLeaveDurationText(l, lang);
-    const dateRangeStr = formatLeaveDateRange(l.startDate, l.endDate, lang);
-    const roleLabel = formatLeaveUserRole(l.userRole, lang);
+    try {
+      const typeKey = (l.type || "annual") + "Leave";
+      const typeLabel = leaveTranslations[lang]?.[typeKey] || (l.type ? l.type.toUpperCase() : "ANNUAL");
+      const durationLabel = formatLeaveDurationText(l, lang);
+      const dateRangeStr = formatLeaveDateRange(l.startDate, l.endDate, lang);
+      const roleLabel = formatLeaveUserRole(l.userRole, lang);
 
-    const app = l.approvals || {};
-    let stepsHtml = "";
+      const app = l.approvals || {};
+      let stepsHtml = "";
 
-    const dmName = getApproverDisplayName(l, "dm", lang);
-    const lmName = getApproverDisplayName(l, "lm", lang);
-    const hrName = getApproverDisplayName(l, "hr", lang);
+      const dmName = getApproverDisplayName(l, "dm", lang);
+      const lmName = getApproverDisplayName(l, "lm", lang);
+      const hrName = getApproverDisplayName(l, "hr", lang);
 
-    if (app.dm) {
-      stepsHtml += `
-        <div>
-          <span class="approval-step-tag ${app.dm.status}">
-            ${window.escapeHtml(dmName)}: ${app.dm.status.toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
-          </span>
-        </div>
-      `;
-    }
-
-    if (app.lm) {
-      stepsHtml += `
-        <div>
-          <span class="approval-step-tag ${app.lm.status}">
-            ${window.escapeHtml(lmName)}: ${app.lm.status.toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
-          </span>
-        </div>
-      `;
-    }
-
-    if (app.hr) {
-      stepsHtml += `
-        <div>
-          <span class="approval-step-tag ${app.hr.status}">
-            ${window.escapeHtml(hrName)}: ${app.hr.status.toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
-          </span>
-        </div>
-      `;
-    }
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>
-        <div class="d-flex align-items-center">
-          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 rep-avatar-sm">
-            ${(l.userName || "U").charAt(0)}
-          </div>
+      if (app.dm && app.dm.status) {
+        stepsHtml += `
           <div>
-            <div class="fw-bold leave-item-title">${window.escapeHtml(l.userName || "Employee")}</div>
-            <small class="text-muted">${window.escapeHtml(roleLabel)}</small>
+            <span class="approval-step-tag ${app.dm.status}">
+              ${window.escapeHtml(dmName)}: ${(app.dm.status || "").toUpperCase()} ${app.dm.updatedAt ? `(${app.dm.updatedAt})` : ""}
+            </span>
           </div>
-        </div>
-      </td>
-      <td>
-        <strong class="leave-item-title">${typeLabel}</strong>
-      </td>
-      <td>
-        <div class="d-flex flex-column align-items-start gap-1">
-          ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
-          <span class="badge duration-badge mt-1">${durationLabel}</span>
-        </div>
-      </td>
-      <td>
-        ${
-          l.attachmentName
-            ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag">📎 ${window.escapeHtml(l.attachmentName)}</span>`
-            : '<span class="text-muted small">None</span>'
-        }
-      </td>
-      <td>
-        <div class="approval-steps-flow">
-          ${stepsHtml}
-        </div>
-      </td>
-      <td>
-        <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
-          ${l.status.toUpperCase()}
-        </span>
-        ${
-          l.status === "rejected" && l.rejectionReason
-            ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
-                 <i class="bi bi-chat-left-text me-1"></i><strong>${isAr ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
-               </div>`
-            : ""
-        }
-      </td>
-    `;
-    tbody.appendChild(tr);
+        `;
+      }
+
+      if (app.lm && app.lm.status) {
+        stepsHtml += `
+          <div>
+            <span class="approval-step-tag ${app.lm.status}">
+              ${window.escapeHtml(lmName)}: ${(app.lm.status || "").toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
+            </span>
+          </div>
+        `;
+      }
+
+      if (app.hr && app.hr.status) {
+        stepsHtml += `
+          <div>
+            <span class="approval-step-tag ${app.hr.status}">
+              ${window.escapeHtml(hrName)}: ${(app.hr.status || "").toUpperCase()} ${app.hr.updatedAt ? `(${app.hr.updatedAt})` : ""}
+            </span>
+          </div>
+        `;
+      }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 rep-avatar-sm">
+              ${(l.userName || "U").charAt(0)}
+            </div>
+            <div>
+              <div class="fw-bold leave-item-title">${window.escapeHtml(l.userName || "Employee")}</div>
+              <small class="text-muted">${window.escapeHtml(roleLabel)}</small>
+            </div>
+          </div>
+        </td>
+        <td>
+          <strong class="leave-item-title">${typeLabel}</strong>
+        </td>
+        <td>
+          <div class="d-flex flex-column align-items-start gap-1">
+            ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
+            <span class="badge duration-badge mt-1">${durationLabel}</span>
+          </div>
+        </td>
+        <td>
+          ${
+            l.attachmentName
+              ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag">📎 ${window.escapeHtml(l.attachmentName)}</span>`
+              : '<span class="text-muted small">None</span>'
+          }
+        </td>
+        <td>
+          <div class="approval-steps-flow">
+            ${stepsHtml}
+          </div>
+        </td>
+        <td>
+          <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
+            ${(l.status || "").toUpperCase()}
+          </span>
+          ${
+            l.status === "rejected" && l.rejectionReason
+              ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
+                   <i class="bi bi-chat-left-text me-1"></i><strong>${isAr ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
+                 </div>`
+              : ""
+          }
+        </td>
+      `;
+      tbody.appendChild(tr);
+    } catch (rowErr) {
+      console.error("Error rendering leave row in HR archive:", rowErr, l);
+    }
   });
 }
 
@@ -2352,12 +2395,20 @@ document.addEventListener("languageChanged", () => {
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "medical_rep").toLowerCase();
   if (role === "hr" || role === "admin") {
-    renderDeclaredHolidaysList();
-    initHrBalanceControl();
-    initHrAllLeavesControl();
-    renderHrAllLeaves();
+    try {
+      renderDeclaredHolidaysList();
+      initHrBalanceControl();
+      initHrAllLeavesControl();
+      renderHrAllLeaves();
+    } catch (err) {
+      console.error("Error updating HR sections on languageChanged:", err);
+    }
   }
-  calculateBalances();
-  renderHistory();
-  renderPendingApprovals();
+  try {
+    calculateBalances();
+    renderHistory();
+    renderPendingApprovals();
+  } catch (err) {
+    console.error("Error refreshing leaves on languageChanged:", err);
+  }
 });

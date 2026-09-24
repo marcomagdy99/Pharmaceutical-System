@@ -933,12 +933,9 @@
         if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
         window.DEMO_DATA.distributorSales.push(...rows);
         autoSave("distributorSales", "importBatch", { count: rows.length });
-        // Auto-resolve any rows whose raw area text already has a saved
-        // alias from a previous import, so re-uploading a distributor
-        // you've already configured doesn't require re-resolving the
-        // same territories every time.
-        this.applyAreaMatching();
+        // Auto-resolve products first so lineId is populated before area matching
         this.applyProductMatching();
+        this.applyAreaMatching();
       },
       /**
        * Distinct (distributorId, areaRaw) pairs among still-unassigned
@@ -983,9 +980,8 @@
           let area = null;
           if (row.lineId) {
             area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, row.lineId);
-          }
-          // Fallback: global alias match (backward compat)
-          if (!area) {
+          } else {
+            // Fallback: global alias match (only if lineId is not yet known)
             area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
           }
           if (!area) return;
@@ -1176,6 +1172,7 @@
             allowLeaveRollover: true,
             leaveRolloverGraceMonths: 3,
             leaveRolloverMaxDays: 5,
+            isThursdayWeekend: false,
           };
         } else {
           if (window.DEMO_DATA.companySettings.allowLeaveRollover === undefined) {
@@ -1186,6 +1183,9 @@
           }
           if (window.DEMO_DATA.companySettings.leaveRolloverMaxDays === undefined) {
             window.DEMO_DATA.companySettings.leaveRolloverMaxDays = 5;
+          }
+          if (window.DEMO_DATA.companySettings.isThursdayWeekend === undefined) {
+            window.DEMO_DATA.companySettings.isThursdayWeekend = false;
           }
         }
         return window.DEMO_DATA.companySettings;

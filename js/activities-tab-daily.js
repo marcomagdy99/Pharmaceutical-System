@@ -102,12 +102,17 @@
     const curDateStr = Core.formatDate(Core._state.currentDate);
     const userId = Core._state.currentUser?.id || "rep1";
 
+    const companySettings = (window.store && window.store.companySettings)
+      ? window.store.companySettings.get()
+      : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+    const isThursdayWeekend = !!companySettings.isThursdayWeekend;
+
     for (let i = 0; i < 7; i++) {
       const dayDate = Core.addDays(weekStart, i);
       const dayStr = Core.formatDate(dayDate);
       const isSelected = dayStr === curDateStr;
       const dayKey = Core.WEEK_DAY_KEYS[i];
-      const isDayOff = i === 6; // Friday is weekly day off
+      const isDayOff = i === 6 || (i === 5 && isThursdayWeekend);
       const acts = Core.StoreAdapter.getActivities(userId, dayStr) || {};
 
       const hasAm = !!(acts[Core.PERIODS.AM] && acts[Core.PERIODS.AM].type);

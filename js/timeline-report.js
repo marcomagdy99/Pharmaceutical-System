@@ -213,8 +213,6 @@ function renderDailyTimeline() {
     return periodA - periodB;
   });
 
-  const _escape = (s) => (typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')));
-
   sortedTimeline.forEach((v) => {
     const isActivity = v.type === 'activity';
     const isActual   = !!v.isActual;
@@ -237,11 +235,11 @@ function renderDailyTimeline() {
       badgeLabel = lang === 'ar' ? 'زيارة من الخطة (Planned Visit)' : 'Planned & Executed';
     }
 
-    const safeTargetName = _escape(v.targetName || '');
-    const safeActivityType = _escape(v.activityType || v.targetName || '');
-    const safeSpecialty = _escape(v.specialty || '');
-    const safeRepName = _escape(v.repName || '');
-    const safeClass = _escape(v.class || 'A');
+    const safeTargetName = window.escapeHtml(v.targetName || '');
+    const safeActivityType = window.escapeHtml(v.activityType || v.targetName || '');
+    const safeSpecialty = window.escapeHtml(v.specialty || '');
+    const safeRepName = window.escapeHtml(v.repName || '');
+    const safeClass = window.escapeHtml(v.class || 'A');
 
     const card = document.createElement('div');
     card.className = 'timeline-event-card';

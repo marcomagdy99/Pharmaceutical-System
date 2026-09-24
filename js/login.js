@@ -10,7 +10,7 @@
     if (sessionStorage.getItem('pharma_logged_out') === 'true') {
       return;
     }
-    const user = sessionStorage.getItem('pharmaUser');
+    const user = sessionStorage.getItem('pharmaUser') || localStorage.getItem('pharmaUser');
     if (user) {
       window.location.replace('index.html');
     }
@@ -419,10 +419,20 @@ async function handleLogin() {
       token: 'token_' + Date.now()
     };
 
+    const rememberMe = !!document.getElementById('remember')?.checked;
+
     sessionStorage.removeItem('pharma_logged_out');
     sessionStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-    localStorage.setItem('userRole', matchedUser.role);
-    localStorage.setItem('userId', matchedUser.id);
+
+    if (rememberMe) {
+      localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
+      localStorage.setItem('userRole', matchedUser.role);
+      localStorage.setItem('userId', matchedUser.id);
+    } else {
+      localStorage.removeItem('pharmaUser');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userId');
+    }
 
     window.location.replace('index.html');
   }, 400);

@@ -426,10 +426,15 @@ window.checkVisitDateAllowed = checkVisitDateAllowed;
 function isWorkdayExemptFromMinVisits(dateStr, repId) {
   if (!dateStr) return { exempt: false };
 
-  // 1. Weekend check: Thursday (4) and Friday (5)
+  // 1. Weekend check: Friday (5) is statutory; Thursday (4) is optional based on company settings
   const dateObj = new Date(dateStr + "T00:00:00");
   const dayOfWeek = dateObj.getDay();
-  if (dayOfWeek === 4 || dayOfWeek === 5) {
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+  const isThursdayWeekend = !!companySettings.isThursdayWeekend;
+
+  if (dayOfWeek === 5 || (dayOfWeek === 4 && isThursdayWeekend)) {
     return { exempt: true, reason: "weekend" };
   }
 

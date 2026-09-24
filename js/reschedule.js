@@ -14,15 +14,14 @@ function getDailyRescheduleCount(userId, dateStr) {
 
   let count = 0;
   allVisits.forEach((v) => {
-    if (v.repId === userId) {
-      if (v.rescheduledTodayDate === dateStr) {
+    if (Array.isArray(v.rescheduleHistory) && v.rescheduleHistory.length > 0) {
+      const historyMatches = v.rescheduleHistory.filter(
+        (h) => h.performedOnDate === dateStr && (h.byUserId === userId || (!h.byUserId && v.repId === userId))
+      );
+      count += historyMatches.length;
+    } else if (v.repId === userId) {
+      if (v.rescheduledTodayDate === dateStr || v.missedOnDate === dateStr) {
         count++;
-      } else if (v.missedOnDate === dateStr) {
-        count++;
-      } else if (Array.isArray(v.rescheduleHistory)) {
-        if (v.rescheduleHistory.some((h) => h.performedOnDate === dateStr && h.byUserId === userId)) {
-          count++;
-        }
       }
     }
   });

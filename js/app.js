@@ -1796,7 +1796,7 @@ function normalizeRole(role) {
   if (r === "bu" || r === "business_unit" || r === "business unit") return "business_unit";
   if (r === "rep" || r === "medical_rep" || r === "medical rep") return "medical_rep";
   if (r === "admin" || r === "administrator") return "admin";
-  if (r === "hr") return "hr";
+  if (r === "hr" || r === "human_resources" || r === "human resources") return "hr";
   return r;
 }
 

@@ -743,6 +743,7 @@ function openTransferModal(lineId, productId) {
   if (!selectEl) return;
 
   const isAr = document.documentElement.dir === "rtl";
+  const placeholder = isAr ? "-- اختر الخط الهدف --" : "-- Select Target Line --";
   let optionsHtml = `<option value="" disabled selected>${placeholder}</option>`;
   window.store.productLines.getAll().forEach((l) => {
     if (l.id !== lineId) {

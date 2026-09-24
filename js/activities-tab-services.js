@@ -920,6 +920,7 @@
     const isShared = document.getElementById("serviceFormSharedToggle")?.checked || false;
     let shares = [];
 
+    let primaryPercent = 100;
     if (isShared) {
       if (Core._state.sharedLines.length === 0) {
         Core.safeShowToast("يرجى إضافة خط أو منطقة مشاركة واحدة على الأقل.", "warning");
@@ -927,7 +928,7 @@
       }
 
       const primaryInput = document.getElementById("sharedPrimaryPercentInput");
-      const primaryPercent = parseFloat(primaryInput?.value) || 0;
+      primaryPercent = parseFloat(primaryInput?.value) || 0;
       const partSum = Core._state.sharedLines.reduce((s, r) => s + (parseFloat(r.sharePercent) || 0), 0);
       const totalPct = primaryPercent + partSum;
 
@@ -935,7 +936,33 @@
         Core.safeShowToast(Core.t("sharedExceedsNotice") || "يجب أن يكون مجموع نسب المشاركة 100% بالضبط.", "warning");
         return;
       }
+    }
 
+    // Budget validation for requesting user
+    const userRole = (Core._state.currentUser?.role || "").toLowerCase();
+    const isRep = userRole === Core.ROLES.REP || userRole === Core.ROLES.REP_ALT;
+    const myShareCost = isShared ? Math.round((cost * primaryPercent) / 100) : cost;
+
+    if (isRep) {
+      const budgetMetrics = getBudgetMetricsForUser(lineId, Core._state.currentUser);
+      if (budgetMetrics.allocated <= 0) {
+        Core.safeShowToast(
+          Core.t("noBudgetAllocated") || "عفواً، لم يتم تخصيص ميزانية لخدمات الأطباء لهذا الخط بعد. يرجى مراجعة مدير المنطقة.",
+          "warning"
+        );
+        return;
+      }
+      if (myShareCost > budgetMetrics.remaining) {
+        const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+        const errMsg = lang === "ar"
+          ? `عفواً، التكلفة المطلوبة (${myShareCost.toLocaleString()} ج.م) تتجاوز الرصيد المتبقي من ميزانيتك (${budgetMetrics.remaining.toLocaleString()} ج.م).`
+          : `Requested cost (${myShareCost.toLocaleString()} EGP) exceeds your remaining promotional budget (${budgetMetrics.remaining.toLocaleString()} EGP).`;
+        Core.safeShowToast(errMsg, "danger");
+        return;
+      }
+    }
+
+    if (isShared) {
       const primaryHierarchy = Core.getLiveHierarchyForArea(areaId, Core._state.currentUser.id);
       const primaryRepId = primaryHierarchy.repId || Core._state.currentUser.id;
       const primaryDmId = primaryHierarchy.dmId || Core._state.currentUser.managerId || "dm1";

@@ -209,6 +209,8 @@
       yourShare: "Your Share",
       sharedIntraLineBadge: "Intra-Line Share",
       serviceAttachmentLabel: "Quotation / Invoice Attachment (Optional)",
+      noBudgetAllocated: "No promotional budget allocated for this product line. Please consult your manager.",
+      budgetExceededNotice: "Requested service cost exceeds remaining promotional budget.",
 
       // Sales Budget Tab
       buBudgetTitle: "Sales Budget Allocation",
@@ -395,6 +397,8 @@
       yourShare: "حصتك",
       sharedIntraLineBadge: "مشاركة داخل اللاين",
       serviceAttachmentLabel: "مرفق عرض السعر / الفاتورة (اختياري)",
+      noBudgetAllocated: "عفواً، لم يتم تخصيص ميزانية لخدمات الأطباء لهذا الخط بعد. يرجى مراجعة مدير المنطقة.",
+      budgetExceededNotice: "عفواً، التكلفة المطلوبة تتجاوز الرصيد المتبقي من ميزانيتك المتاحة.",
 
       // Sales Budget Tab
       buBudgetTitle: "توزيع ميزانيات المبيعات (Sales Promo Budget)",

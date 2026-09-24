@@ -39,6 +39,9 @@ function parseSalesNumber(val) {
   // European format: dot as thousands separator, comma as decimal (e.g. 1.250,50)
   if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) {
     s = s.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d+(,\d{1,2})$/.test(s)) {
+    // European decimal without thousands dots (e.g. 1250,50)
+    s = s.replace(",", ".");
   } else {
     // Standard: remove thousand commas
     s = s.replace(/,/g, "");
