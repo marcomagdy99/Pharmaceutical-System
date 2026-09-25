@@ -2468,7 +2468,7 @@ function renderSidebar(activePage) {
   if (sidebarEl) sidebarEl.innerHTML = html;
 }
 
-function renderTopbar() {
+function renderTopbar(force = false) {
   const topbarEl = document.getElementById("topbar");
   if (!topbarEl) return;
 
@@ -2478,6 +2478,16 @@ function renderTopbar() {
   }
   const lang = getCurrentLang();
   const activePage = window.currentActivePage || resolveActivePage();
+  const theme = document.documentElement.getAttribute("data-theme") || "light";
+
+  const renderStateKey = `${user.id}_${user.role}_${lang}_${activePage}_${theme}`;
+  if (!force && topbarEl.dataset.renderedState === renderStateKey && topbarEl.querySelector(".pharma-topbar-top-row")) {
+    if (typeof window.updateWorkflowNotifUI === "function") {
+      window.updateWorkflowNotifUI();
+    }
+    return;
+  }
+  topbarEl.dataset.renderedState = renderStateKey;
 
   const userName = lang === "ar" ? user.nameAr || user.name : user.name;
   const userCode = user.employeeCode || user.code || "EMP-001";
@@ -3264,10 +3274,6 @@ function initPage(pageName) {
   renderSidebar(pageName);
   renderTopbar();
   applyTranslations(lang);
-}
-
-if (document.getElementById("topbar")) {
-  renderTopbar();
 }
 
 // ============================================================================

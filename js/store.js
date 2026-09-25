@@ -932,10 +932,9 @@
       addBatch(rows) {
         if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
         window.DEMO_DATA.distributorSales.push(...rows);
+        this.applyProductMatching(false);
+        this.applyAreaMatching(false, false);
         autoSave("distributorSales", "importBatch", { count: rows.length });
-        // Auto-resolve products first so lineId is populated before area matching
-        this.applyProductMatching();
-        this.applyAreaMatching();
       },
       /**
        * Distinct (distributorId, areaRaw) pairs among still-unassigned
@@ -971,7 +970,7 @@
        * the Cardio line's rep for Nasr City, not the Neuro line's rep.
        * If no lineId is set yet, falls back to global alias matching.
        */
-      applyAreaMatching(forceAll = false) {
+      applyAreaMatching(forceAll = false, shouldAutoSave = true) {
         const rows = this.getAll().filter((s) => (forceAll || !s.repId) && s.areaRaw);
         let matchedCount = 0;
         rows.forEach((row) => {
@@ -994,7 +993,7 @@
           row.lmId = dm ? dm.managerId || null : null;
           matchedCount++;
         });
-        if (matchedCount) {
+        if (matchedCount && shouldAutoSave) {
           autoSave("distributorSales", "applyAreaMatching", { matchedCount });
         }
         return matchedCount;
@@ -1101,7 +1100,7 @@
        * product matching and area matching are independent and can
        * resolve in either order.
        */
-      applyProductMatching() {
+      applyProductMatching(shouldAutoSave = true) {
         const rows = this.getAll().filter((s) => !s.lineId && s.product);
         let matchedCount = 0;
         rows.forEach((row) => {
@@ -1111,7 +1110,7 @@
           row.productId = match.product.id;
           matchedCount++;
         });
-        if (matchedCount) {
+        if (matchedCount && shouldAutoSave) {
           autoSave("distributorSales", "applyProductMatching", { matchedCount });
         }
         return matchedCount;
@@ -1395,23 +1394,27 @@
         autoSave("expenses", "update", item);
         return item;
       },
-      updateStatus(id, newStatus, approverUser, comment) {
+      updateStatus(id, newStatus, approverUser, comment, nextApproverId = null) {
         const item = this.getById(id);
         if (!item) return null;
         item.status = newStatus;
+        if (nextApproverId !== undefined) {
+          item.nextApproverId = nextApproverId;
+        }
         if (!item.history) item.history = [];
         item.history.push({
           action: newStatus,
           at: new Date().toISOString(),
           by: approverUser ? approverUser.id : "system",
           role: approverUser ? approverUser.role : "system",
-          comment: comment || ""
+          comment: comment || "",
+          nextApproverId: nextApproverId || null
         });
         const list = this.getAll();
         try {
           localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
         } catch (e) {}
-        autoSave("expenses", "statusChange", { id, newStatus, approverUser, comment });
+        autoSave("expenses", "statusChange", { id, newStatus, approverUser, comment, nextApproverId });
         return item;
       }
     },

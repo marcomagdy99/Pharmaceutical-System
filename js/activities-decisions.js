@@ -142,16 +142,25 @@
           });
         }
       } else if (decision === "approve") {
-        let nextStatus = Core.REQUEST_STATUS.PENDING_HR;
+        let nextStatus = Core.REQUEST_STATUS.APPROVED;
         let nextApproverId = null;
-        if (exp.status === Core.REQUEST_STATUS.PENDING_DM || exp.status === Core.REQUEST_STATUS.PENDING_LM) {
+
+        if (exp.status === Core.REQUEST_STATUS.PENDING_DM) {
+          nextStatus = Core.REQUEST_STATUS.PENDING_LM;
+          const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
+          const requester = allUsers.find((u) => u.id === exp.requesterId);
+          const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : Core._state.currentUser;
+          nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || "lm1";
+        } else if (exp.status === Core.REQUEST_STATUS.PENDING_LM) {
           nextStatus = Core.REQUEST_STATUS.PENDING_HR;
           const hr = Core.getHrUser();
           nextApproverId = hr ? hr.id : "hr1";
         } else if (exp.status === Core.REQUEST_STATUS.PENDING_HR) {
           nextStatus = Core.REQUEST_STATUS.APPROVED;
+          nextApproverId = null;
         }
-        Core.StoreAdapter.updateExpenseStatus(requestId, nextStatus, Core._state.currentUser, comment);
+
+        Core.StoreAdapter.updateExpenseStatus(requestId, nextStatus, Core._state.currentUser, comment, nextApproverId);
 
         if (nextStatus === Core.REQUEST_STATUS.APPROVED) {
           if (exp.requesterId && exp.requesterId !== Core._state.currentUser.id) {
@@ -170,18 +179,27 @@
             });
           }
         } else if (nextApproverId) {
+          const isPendingLm = nextStatus === Core.REQUEST_STATUS.PENDING_LM;
           Core.dispatchWorkflowNotification({
             userId: nextApproverId,
             type: "expense_approval",
-            title: "طلب مصروفات بانتظار اعتماد الموارد البشرية (HR)",
-            titleEn: "Expense Claim Pending HR Approval",
-            message: `اعتمد المدير مطالبة المصروفات بقيمة ${(exp.amount || 0).toLocaleString()} ج.م والمقدمة من ${Core.getUserDisplayName(exp.requesterId)}، وبانتظار اعتمادك.`,
-            messageEn: `Manager approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`,
+            title: isPendingLm
+              ? "طلب مصروفات بانتظار اعتماد مدير الخط (LM)"
+              : "طلب مصروفات بانتظار اعتماد الموارد البشرية (HR)",
+            titleEn: isPendingLm
+              ? "Expense Claim Pending Line Manager Approval"
+              : "Expense Claim Pending HR Approval",
+            message: isPendingLm
+              ? `اعتمد مشرف المنطقة مطالبة المصروفات بقيمة ${(exp.amount || 0).toLocaleString()} ج.م والمقدمة من ${Core.getUserDisplayName(exp.requesterId)}، وبانتظار اعتمادك.`
+              : `اعتمد مدير الخط مطالبة المصروفات بقيمة ${(exp.amount || 0).toLocaleString()} ج.م والمقدمة من ${Core.getUserDisplayName(exp.requesterId)}، وبانتظار اعتمادك.`,
+            messageEn: isPendingLm
+              ? `District Manager approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`
+              : `Line Manager approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
-            badgeClass: "bg-warning",
+            badgeClass: isPendingLm ? "bg-warning" : "bg-info",
             actorName: actorName,
-            action: "pending_approval",
+            action: isPendingLm ? "pending_lm_approval" : "pending_hr_approval",
           });
         }
       }

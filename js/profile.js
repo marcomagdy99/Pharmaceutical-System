@@ -330,6 +330,104 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
+ * Computes employee rollover balance dynamically from previous year based on companySettings.
+ */
+function getEmployeeLeaveRollover(userId, targetYear) {
+  if (typeof window.getEmployeeLeaveRollover === "function" && window.getEmployeeLeaveRollover !== getEmployeeLeaveRollover) {
+    return window.getEmployeeLeaveRollover(userId, targetYear);
+  }
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+
+  if (companySettings.allowLeaveRollover === false) {
+    return {
+      initialCarriedOver: 0,
+      consumedFromRollover: 0,
+      remainingRollover: 0,
+      carriedOver: 0,
+      isValid: false,
+      isExpired: false,
+      expiryDate: null,
+      maxCap: 0,
+      graceMonths: 0,
+      consumedFromNewAnnual: 0,
+    };
+  }
+
+  const allUsers = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
+    ? window.DEMO_DATA.users
+    : [];
+  const userObj = allUsers.find((u) => u.id === userId) || {};
+  const userBalance = userObj.leaveBalance || {};
+  const annualTotal = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
+
+  const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
+  const prevYearStr = String(currentYear - 1);
+  const currentYearStr = String(currentYear);
+  const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || (new Date()).toISOString().slice(0, 10);
+
+  const allLeaves = (window.store && window.store.leaves
+    ? window.store.leaves.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
+
+  let prevYearUsed = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(prevYearStr)) {
+      prevYearUsed += (parseFloat(l.days) || 1);
+    }
+  });
+
+  const leftover = Math.max(0, annualTotal - prevYearUsed);
+  const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
+  const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
+
+  const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
+  let expiryDate = `${currentYear}-03-31`;
+  if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
+  else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
+  else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
+  else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
+
+  let gracePeriodApprovedTaken = 0;
+  let postGraceApprovedTaken = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr)) {
+      const days = parseFloat(l.days) || 1;
+      if (l.startDate <= expiryDate) {
+        gracePeriodApprovedTaken += days;
+      } else {
+        postGraceApprovedTaken += days;
+      }
+    }
+  });
+
+  const consumedFromRollover = Math.min(initialCarriedOver, gracePeriodApprovedTaken);
+  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
+  const consumedFromNewAnnual = Math.max(0, gracePeriodApprovedTaken - initialCarriedOver) + postGraceApprovedTaken;
+
+  const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
+  const isExpired = remainingRollover > 0 && todayStr > expiryDate;
+
+  return {
+    initialCarriedOver,
+    consumedFromRollover,
+    remainingRollover,
+    carriedOver: remainingRollover,
+    isValid,
+    isExpired,
+    expiryDate,
+    maxCap,
+    graceMonths,
+    consumedFromNewAnnual,
+  };
+}
+
+if (!window.getEmployeeLeaveRollover) {
+  window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
+}
+
+/**
  * Loads dynamic profile data and computes leave balances programmatically.
  */
 function loadUserProfile() {
@@ -413,7 +511,7 @@ function loadUserProfile() {
     adminShortcut.style.display = (user.role === "admin") ? "block" : "none";
   }
 
-  // Dynamic leave balances calculation synchronized with store leaves
+  // Dynamic leave balances calculation synchronized with store leaves & rollover policy
   const approvedLeaves = allLeaves.filter((l) => l.userId === user.id && l.status === "approved");
   const used = { annual: 0, sick: 0, emergency: 0, unpaid: 0 };
   approvedLeaves.forEach((l) => {
@@ -426,19 +524,29 @@ function loadUserProfile() {
 
   const freshUser = allUsers.find((u) => u.id === user.id) || user;
   const userBalance = freshUser.leaveBalance || user.leaveBalance || {};
+  const rollover = getEmployeeLeaveRollover(user.id);
+  const isWithinGrace = rollover && rollover.isValid;
+  const baseAnnual = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
+  const activeAnnualTotal = isWithinGrace ? (baseAnnual + rollover.initialCarriedOver) : baseAnnual;
+
+  // After grace period ends, days consumed from rollover are not charged against new annual quota
+  if (rollover && !isWithinGrace && rollover.initialCarriedOver > 0) {
+    used.annual = rollover.consumedFromNewAnnual;
+  }
+
   const totals = {
-    annual: userBalance.annual !== undefined ? Number(userBalance.annual) : 21,
+    annual: activeAnnualTotal,
     sick: userBalance.sick !== undefined ? Number(userBalance.sick) : 7,
     emergency: userBalance.emergency !== undefined ? Number(userBalance.emergency) : (userBalance.casual !== undefined ? Number(userBalance.casual) : 6),
     unpaid: userBalance.unpaid || 0
   };
   const daysSuffix = lang === "ar" ? "أيام" : "Days";
 
-  const updateLeaveEl = (textId, progId, usedVal, totalVal) => {
+  const updateLeaveEl = (textId, progId, usedVal, totalVal, badgeHtml = "") => {
     const textEl = document.getElementById(textId);
     const progEl = document.getElementById(progId);
     if (textEl) {
-      textEl.innerHTML = `${usedVal} / ${totalVal} <span>${daysSuffix}</span>`;
+      textEl.innerHTML = `${usedVal} / ${totalVal} <span>${daysSuffix}</span>${badgeHtml}`;
     }
     if (progEl) {
       const pct = totalVal > 0 ? Math.min(100, Math.round((usedVal / totalVal) * 100)) : 0;
@@ -446,7 +554,11 @@ function loadUserProfile() {
     }
   };
 
-  updateLeaveEl("annualLeaveText", "annualLeaveProgress", used.annual, totals.annual);
+  const rolloverBadge = (rollover && isWithinGrace && rollover.initialCarriedOver > 0)
+    ? ` <span class="badge bg-success-subtle text-success border ms-1" style="font-size:0.75rem; vertical-align:middle;">+${rollover.carriedOver} ${lang === "ar" ? "مرحل" : "Rollover"}</span>`
+    : "";
+
+  updateLeaveEl("annualLeaveText", "annualLeaveProgress", used.annual, totals.annual, rolloverBadge);
   updateLeaveEl("sickLeaveText", "sickLeaveProgress", used.sick, totals.sick);
   updateLeaveEl("emergencyLeaveText", "emergencyLeaveProgress", used.emergency, totals.emergency);
 

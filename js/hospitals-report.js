@@ -29,16 +29,37 @@ function getScopedHospitals(respectActiveFilters = true) {
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     let allowedTeamIds = null;
+    let allowedAreaIds = null;
+    let allowedAreaNames = null;
 
     if (role === "district_manager") {
       const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...teamRepIds];
+
+      const dmAreas = allAreas.filter((a) =>
+        (a.repId && teamRepIds.includes(a.repId)) ||
+        a.dmId === currentUser.id ||
+        a.districtManagerId === currentUser.id ||
+        (currentUser.areaIds && currentUser.areaIds.includes(a.id)) ||
+        (currentUser.areaId && currentUser.areaId === a.id)
+      );
+      allowedAreaIds = dmAreas.map((a) => a.id);
+      allowedAreaNames = dmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
     } else if (role === "line_manager") {
       const dms = allUsers.filter((u) => u.managerId === currentUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
       const dmIds = dms.map((d) => d.id);
       const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...dmIds, ...repIds];
+
+      const myLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+      const lmAreas = allAreas.filter((a) =>
+        (a.repId && (repIds.includes(a.repId) || dmIds.includes(a.repId))) ||
+        (a.lineId && myLineIds.includes(a.lineId))
+      );
+      allowedAreaIds = lmAreas.map((a) => a.id);
+      allowedAreaNames = lmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
     } else if (role === "business_unit") {
       const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
       const myLmIds = myLMs.map((u) => u.id);
@@ -48,7 +69,22 @@ function getScopedHospitals(respectActiveFilters = true) {
     }
 
     if (allowedTeamIds) {
-      hosps = hosps.filter((h) => h.repId ? allowedTeamIds.includes(h.repId) : (role === "admin" || role === "hr"));
+      hosps = hosps.filter((h) => {
+        if (h.repId) {
+          return allowedTeamIds.includes(h.repId);
+        }
+        if (role === "admin" || role === "hr" || role === "business_unit") {
+          return true;
+        }
+        if (h.dmId && h.dmId === currentUser.id) {
+          return true;
+        }
+        if (allowedAreaIds) {
+          const hospAreaName = (h.area || "").toLowerCase().trim();
+          return (h.areaId && allowedAreaIds.includes(h.areaId)) || (hospAreaName && allowedAreaNames.includes(hospAreaName));
+        }
+        return false;
+      });
     }
 
     const repFilter = document.getElementById("hospitalRepSelect");
@@ -440,14 +476,16 @@ function exportHospitalsDirectory() {
     ].join(",");
   });
 
-  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows].join("\n");
-  const encodedUri = encodeURI(csvContent);
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
+  link.setAttribute("href", url);
   link.setAttribute("download", `Hospitals_Directory_${new Date().toISOString().slice(0, 10)}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 // Global window bindings

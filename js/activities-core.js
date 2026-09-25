@@ -621,14 +621,17 @@
       return expObj;
     },
 
-    updateExpenseStatus(id, newStatus, user, comment) {
+    updateExpenseStatus(id, newStatus, user, comment, nextApproverId = null) {
       if (window.store && window.store.expenses) {
-        return window.store.expenses.updateStatus(id, newStatus, user, comment);
+        return window.store.expenses.updateStatus(id, newStatus, user, comment, nextApproverId);
       }
       const list = this.getExpenses();
       const exp = list.find((e) => e.id === id);
       if (!exp) return null;
       exp.status = newStatus;
+      if (nextApproverId !== undefined) {
+        exp.nextApproverId = nextApproverId;
+      }
       if (!exp.history) exp.history = [];
       exp.history.push({
         action: newStatus,
@@ -636,6 +639,7 @@
         by: user.id,
         role: user.role,
         comment: comment || "",
+        nextApproverId: nextApproverId || null,
       });
       try {
         localStorage.setItem("pharma_expenses_data", JSON.stringify(list));

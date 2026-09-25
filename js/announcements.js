@@ -510,6 +510,8 @@ function renderAnnouncementCard(ann) {
 
   const title = escapeHtml(lang === "ar" ? ann.titleAr : ann.title);
   const body = escapeHtml(lang === "ar" ? ann.bodyAr : ann.body);
+  const authorName = escapeHtml(ann.createdByName || "");
+  const safeImage = ann.image ? escapeHtml(ann.image) : "";
 
   const priorityClass = `priority-${ann.priority}`;
   const unreadClass = !isRead && !isHR ? "unread" : "";
@@ -559,15 +561,15 @@ function renderAnnouncementCard(ann) {
             </div>
             <h3 class="card-title">${title}</h3>
             <div class="card-meta">
-                <span><i class="fas fa-user"></i> ${ann.createdByName}</span>
+                <span><i class="fas fa-user"></i> ${authorName}</span>
                 <span><i class="fas fa-clock"></i> ${timeAgo(ann.createdAt)}</span>
                 ${isHR ? `<span title="Read by"><i class="fas fa-eye"></i> ${ann.readBy.length}</span>` : ""}
             </div>
             ${
-              ann.image
+              safeImage
                 ? `
             <div class="announcement-image-box" onclick="openImageLightbox('${ann.id}')" title="Click to view image">
-                <img src="${ann.image}" alt="${title}" class="announcement-image" loading="lazy" />
+                <img src="${safeImage}" alt="${title}" class="announcement-image" loading="lazy" />
             </div>
             `
                 : ""

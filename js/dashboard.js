@@ -414,6 +414,194 @@ window.switchDmLineFilter = function (lineId) {
 };
 
 /**
+ * Opens a modal displaying all field representatives assigned to a specific District Manager.
+ * Accurately queries live users, roles, manager assignments, and line filters.
+ * @param {string} dmId
+ */
+window.openDmTeamModal = function (dmId) {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+
+  const allUsers =
+    (window.store && window.store.users
+      ? window.store.users.getAll()
+      : window.DEMO_DATA && window.DEMO_DATA.users) || [];
+
+  const dm = allUsers.find((u) => u.id === dmId);
+  if (!dm) return;
+
+  const allLines =
+    (window.store && window.store.productLines
+      ? window.store.productLines.getAll()
+      : window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+
+  const allAreas =
+    (window.store && window.store.areas
+      ? window.store.areas.getAll()
+      : window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+
+  const activeLmLine = window.lmActiveLineFilter || "all";
+
+  const reps = allUsers.filter((r) => {
+    const role = (r.role || "").toLowerCase();
+    const isRep = role === "medical_rep" || role === "rep";
+    if (!isRep) return false;
+    if (r.managerId !== dm.id) return false;
+    if (activeLmLine !== "all") {
+      const rLines = r.lineIds || (r.lineId ? [r.lineId] : []);
+      if (!rLines.includes(activeLmLine)) return false;
+    }
+    return true;
+  });
+
+  let overlay = document.getElementById("dmTeamModalOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "dmTeamModalOverlay";
+    overlay.className = "dm-team-modal-overlay";
+    overlay.onclick = function (e) {
+      if (e.target === overlay) window.closeDmTeamModal();
+    };
+    document.body.appendChild(overlay);
+  }
+
+  const dmLines = (dm.lineIds || (dm.lineId ? [dm.lineId] : []))
+    .map((lid) => {
+      const l = allLines.find((x) => x.id === lid);
+      return l ? (isAr ? l.nameAr || l.name : l.name) : lid;
+    })
+    .filter(Boolean);
+
+  const dmLineText =
+    dmLines.length > 0
+      ? dmLines.join(" • ")
+      : isAr
+        ? "بدون خط محدد"
+        : "No Line Assigned";
+  const dmCode = dm.employeeCode || dm.code || "DM";
+
+  const getInitials = (name) => {
+    if (!name) return "RP";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
+  };
+
+  const repsCountText = `${reps.length} ${
+    reps.length === 1
+      ? isAr
+        ? "مندوب ميداني"
+        : "Field Rep"
+      : isAr
+        ? "مناديب ميدانيين"
+        : "Field Reps"
+  }`;
+
+  const repsHtml =
+    reps.length > 0
+      ? reps
+          .map((r) => {
+            let areaName = r.area;
+            if (!areaName && r.areaId) {
+              const a = allAreas.find((x) => x.id === r.areaId);
+              if (a) areaName = isAr ? a.nameAr || a.name : a.name;
+            }
+            if (!areaName && r.areaIds && r.areaIds.length > 0) {
+              const areaNames = r.areaIds.map((aid) => {
+                const a = allAreas.find((x) => x.id === aid);
+                return a ? (isAr ? a.nameAr || a.name : a.name) : aid;
+              });
+              areaName = areaNames.join("، ");
+            }
+            if (!areaName) areaName = isAr ? "غير محدد" : "Unassigned";
+
+            const repCode = r.employeeCode || r.code || "REP";
+            const repName = isAr ? r.nameAr || r.name : r.name;
+            const initials = getInitials(r.name);
+            const isActive = (r.status || "Active").toLowerCase() === "active";
+
+            return `
+              <div class="dm-team-rep-card">
+                <div class="dm-team-rep-avatar">${initials}</div>
+                <div class="dm-team-rep-info">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div class="dm-team-rep-name">${repName}</div>
+                    <span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 6px;">
+                      ${isActive ? (isAr ? "نشط" : "Active") : isAr ? "غير نشط" : "Inactive"}
+                    </span>
+                  </div>
+                  <div class="dm-team-rep-meta">
+                    <span class="dm-team-rep-tag">🆔 ${repCode}</span>
+                    <span class="dm-team-rep-tag">📍 ${areaName}</span>
+                    ${r.phone ? `<span class="dm-team-rep-tag" title="${r.phone}">📞 <span dir="ltr">${r.phone}</span></span>` : ""}
+                    ${r.email ? `<span class="dm-team-rep-tag" title="${r.email}">✉️ ${r.email}</span>` : ""}
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("")
+      : `
+        <div style="text-align: center; padding: 30px 20px; color: var(--gray-500);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">👥</div>
+          <div style="font-weight: 600;">${isAr ? "لا يوجد مناديب مسندين لهذا المدير حالياً" : "No representatives assigned under this manager yet"}</div>
+        </div>
+      `;
+
+  overlay.innerHTML = `
+    <div class="dm-team-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="dmTeamModalTitle">
+      <div class="dm-team-modal-header">
+        <div class="dm-team-modal-header-info">
+          <h3 class="dm-team-modal-title" id="dmTeamModalTitle">
+            <span>👥</span>
+            <span>${isAr ? dm.nameAr || dm.name : dm.name}</span>
+          </h3>
+          <div class="dm-team-modal-subtitle">
+            <span>🆔 ${dmCode}</span>
+            <span>•</span>
+            <span>🏷️ ${dmLineText}</span>
+            <span>•</span>
+            <span style="font-weight: 600; color: var(--primary);">${repsCountText}</span>
+          </div>
+        </div>
+        <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="${isAr ? "إغلاق" : "Close"}">✕</button>
+      </div>
+      <div class="dm-team-modal-body">
+        ${repsHtml}
+      </div>
+      <div class="dm-team-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.closeDmTeamModal()" style="padding: 6px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">
+          ${isAr ? "إغلاق" : "Close"}
+        </button>
+      </div>
+    </div>
+  `;
+
+  overlay.classList.add("show");
+  document.body.style.overflow = "hidden";
+};
+
+window.closeDmTeamModal = function () {
+  const overlay = document.getElementById("dmTeamModalOverlay");
+  if (overlay) {
+    overlay.classList.remove("show");
+  }
+  document.body.style.overflow = "";
+};
+
+if (!window._dmTeamModalEscListenerAttached) {
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      const overlay = document.getElementById("dmTeamModalOverlay");
+      if (overlay && overlay.classList.contains("show")) {
+        window.closeDmTeamModal();
+      }
+    }
+  });
+  window._dmTeamModalEscListenerAttached = true;
+}
+
+/**
  * Generates the HTML markup for interactive dashboard charts.
  * @param {string} lang
  */
@@ -1891,17 +2079,21 @@ function renderDMDashboard(userName, user) {
 function renderLMDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers =
+    (window.store && window.store.users
+      ? window.store.users.getAll()
+      : window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
   const lmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
   const lineNames = lmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
   const activeLmLine = window.lmActiveLineFilter || "all";
 
-  const allMyDMs = allUsers.filter(
-    (u) =>
-      (u.managerId === user.id || (user.lineIds && (u.lineIds || [u.lineId]).some((id) => user.lineIds.includes(id)))) &&
-      (u.role === "district_manager" || u.role === "dm"),
-  );
+  const allMyDMs = allUsers.filter((u) => {
+    const r = (u.role || "").toLowerCase();
+    const isDM = r === "district_manager" || r === "dm";
+    if (!isDM) return false;
+    return u.managerId === user.id;
+  });
 
   const myDMs =
     activeLmLine === "all"
@@ -1913,12 +2105,13 @@ function renderLMDashboard(userName, user) {
 
   const dmIds = myDMs.map((d) => d.id);
 
-  const allMyLineReps = allUsers.filter(
-    (u) =>
-      (u.role === "medical_rep" || u.role === "rep") &&
-      (allMyDMs.some((d) => d.id === u.managerId) ||
-        (user.lineIds && (u.lineIds || [u.lineId]).some((id) => user.lineIds.includes(id)))),
-  );
+  const allMyLineReps = allUsers.filter((u) => {
+    const r = (u.role || "").toLowerCase();
+    const isRep = r === "medical_rep" || r === "rep";
+    if (!isRep) return false;
+    const underDM = allMyDMs.some((d) => d.id === u.managerId);
+    return underDM || u.managerId === user.id;
+  });
 
   const myLineReps =
     activeLmLine === "all"
@@ -2042,28 +2235,21 @@ function renderLMDashboard(userName, user) {
                               <div style="font-size: 0.75rem; color: var(--gray-500);">${dm.employeeCode || dm.code || "DM-001"}</div>
                             </td>
                             <td style="padding: 10px;">
-                              <span style="font-weight: 600; color: var(--primary); display: block; margin-bottom: 4px;">
-                                ${repsForThisDM.length} ${repsForThisDM.length === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}
-                              </span>
-                              ${
-                                repsForThisDM.length > 0
-                                  ? `
-                                <div class="rep-names-list">
-                                  ${repsForThisDM
-                                    .map(
-                                      (r) => `
-                                    <div class="rep-name-item">
-                                      <span class="rep-name-dot">•</span>
-                                      <span style="font-weight: 600;">${r.name}</span>
-                                      <span style="font-size: 0.7rem; color: var(--gray-500);">(${r.employeeCode || r.code || "Rep"})</span>
-                                    </div>
-                                  `,
-                                    )
-                                    .join("")}
-                                </div>
-                              `
-                                  : `<div style="font-size: 0.78rem; color: var(--gray-500); font-style: italic;">${lang === "ar" ? "لا يوجد مناديب مسندين" : "No reps assigned"}</div>`
-                              }
+                              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span class="badge bg-primary-subtle text-primary" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 8px; font-weight: 600;">
+                                  👥 ${repsForThisDM.length} ${repsForThisDM.length === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}
+                                </span>
+                                ${
+                                  repsForThisDM.length > 0
+                                    ? `
+                                  <button type="button" class="btn-view-team" onclick="window.openDmTeamModal('${dm.id}')" title="${lang === "ar" ? "عرض أعضاء الفريق" : "View Team Members"}">
+                                    <span>👁️</span>
+                                    <span>${lang === "ar" ? "عرض الفريق" : "View Team"}</span>
+                                  </button>
+                                `
+                                    : `<span style="font-size: 0.78rem; color: var(--gray-500); font-style: italic;">${lang === "ar" ? "لا يوجد مناديب مسندين" : "No reps assigned"}</span>`
+                                }
+                              </div>
                             </td>
                             <td style="padding: 10px;">
                               <span class="badge bg-success-subtle text-success" style="padding: 3px 8px; border-radius: 6px;">${lang === "ar" ? "نشط" : "Active"}</span>

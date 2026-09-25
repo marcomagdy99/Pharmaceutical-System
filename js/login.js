@@ -377,8 +377,6 @@ async function handleLogin() {
 
     const isPasswordValid = Boolean(
       matchedUser && (
-        isHrLogin ||
-        matchedUser.role === 'hr' ||
         (matchedUser.passwordHash && matchedUser.passwordHash === enteredHash) ||
         (matchedUser.password && (matchedUser.password === password || matchedUser.password === enteredHash)) ||
         password === '123456' ||

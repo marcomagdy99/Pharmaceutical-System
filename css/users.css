@@ -147,6 +147,12 @@ html[dir="rtl"] .tree-node {
   transition: color 0.2s ease;
 }
 
+.stat-card-label {
+  color: var(--gray-600, #64748b);
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
 .bg-primary-light {
   background-color: rgba(13, 110, 253, 0.1);
   color: var(--primary, #0d6efd);
@@ -328,8 +334,18 @@ html[dir="rtl"] .tree-node {
   color: #ffffff;
 }
 
+[data-theme="dark"] {
+  --bs-secondary-color: #cbd5e1;
+  --bs-secondary-rgb: 203, 213, 225;
+}
+
+[data-theme="dark"] .stat-card-label {
+  color: #cbd5e1;
+}
+
 [data-theme="dark"] .text-muted {
-  color: #9da5b1;
+  --bs-secondary-color: #cbd5e1;
+  color: #cbd5e1;
 }
 
 [data-theme="dark"] .bg-primary-subtle {
@@ -348,8 +364,13 @@ html[dir="rtl"] .tree-node {
 }
 
 [data-theme="dark"] .bg-secondary-subtle {
-  background-color: rgba(108, 117, 125, 0.2);
-  color: #ced4da;
+  background-color: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .bg-secondary-subtle.text-secondary {
+  --bs-secondary-color: #cbd5e1;
+  color: #cbd5e1;
 }
 
 [data-theme="dark"] .badge.bg-success-subtle {
