@@ -32,6 +32,7 @@
   --surface-dim: var(--gray-100);
   --surface-hover: var(--gray-100);
   --border-color: #dee2e6;
+  --text-muted: #64748b;
   
   --sidebar-width: 280px; 
   --radius: 14px;
@@ -932,6 +933,9 @@ body[data-theme="dark"],
   --surface-dim: #16191f;
   --surface-hover: #282d38;
   --border-color: #2d3340;
+  --text-muted: #cbd5e1;
+  --bs-secondary-color: #cbd5e1;
+  --bs-secondary-rgb: 203, 213, 225;
 }
 
 html[data-theme="dark"],
@@ -1359,4 +1363,110 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   opacity: 0.85;
+}
+
+/* Dark mode: Modal form elements (radio buttons, labels, descriptions) */
+[data-theme="dark"] .modal-content .text-muted,
+[data-theme="dark"] .modal-body .text-muted {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .modal-body .form-check-label,
+[data-theme="dark"] .modal-body label {
+  color: #f1f3f5;
+}
+
+[data-theme="dark"] .modal-body .bg-light {
+  background-color: #232731;
+  border-color: #3d4554;
+}
+
+[data-theme="dark"] .modal-body .bg-light .form-check-label {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .modal-body .bg-light .text-muted {
+  color: #8b95a5;
+}
+
+[data-theme="dark"] .modal-header {
+  background-color: #232731;
+  border-color: #2d3340;
+  color: #f1f3f5;
+}
+
+[data-theme="dark"] .modal-header .modal-title,
+[data-theme="dark"] .modal-header h5 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .modal-footer {
+  background-color: #232731;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .modal-footer .btn-light {
+  background-color: #2d3340;
+  border-color: #3d4554;
+  color: #dee2e6;
+}
+
+[data-theme="dark"] .form-check-input {
+  background-color: #2d3340;
+  border-color: #4b5563;
+}
+
+[data-theme="dark"] .form-check-input:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] input[type="month"] {
+  color-scheme: dark;
+  background-color: #232731;
+  border-color: #3d4554;
+  color: #f1f3f5;
+}
+
+/* Pharmacy Overrides Scope Card (Light & Dark mode) */
+.povr-scope-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.povr-scope-card .form-check-label {
+  color: #1e293b;
+}
+
+.povr-scope-card .scope-desc {
+  color: #64748b;
+}
+
+[data-theme="dark"] .povr-scope-card {
+  background-color: #16191f;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .povr-scope-card .form-check-label {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .povr-scope-card .scope-desc {
+  color: #94a3b8;
+}
+
+.raw-badge {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+[data-theme="dark"] .raw-badge {
+  background-color: #232731;
+  color: #f1f5f9;
+  border-color: #3d4554;
 }

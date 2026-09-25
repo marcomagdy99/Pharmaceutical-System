@@ -317,8 +317,22 @@
     const file = input?.files && input.files[0];
     if (!file) return;
 
+    const isPdf = file.type === "application/pdf" || (file.name && file.name.toLowerCase().endsWith(".pdf"));
     const reader = new FileReader();
     reader.onload = function (evt) {
+      if (isPdf) {
+        Core._state.currentReceiptBase64 = evt.target.result;
+        const previewContainer = document.getElementById("receiptPreviewBox");
+        const previewImg = document.getElementById("receiptPreviewImg");
+        if (previewContainer) {
+          if (previewImg) {
+            previewImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23ef4444' viewBox='0 0 16 16'><path d='M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 1.5l3 3H9.5v-3z'/><text x='3' y='12' fill='white' font-size='3' font-weight='bold'>PDF</text></svg>";
+          }
+          previewContainer.style.display = "block";
+        }
+        return;
+      }
+
       const img = new Image();
       img.onload = function () {
         const canvas = document.createElement("canvas");
@@ -351,8 +365,32 @@
   function openReceiptPreviewModal(url) {
     const modal = document.getElementById("receiptPreviewModal");
     const img = document.getElementById("receiptModalLargeImg");
-    if (!modal || !img) return;
-    img.src = url;
+    if (!modal) return;
+
+    const isPdf = typeof url === "string" && (url.startsWith("data:application/pdf") || url.toLowerCase().includes(".pdf"));
+    let iframe = document.getElementById("receiptModalPdfFrame");
+
+    if (isPdf) {
+      if (img) img.style.display = "none";
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "receiptModalPdfFrame";
+        iframe.style.width = "100%";
+        iframe.style.height = "75vh";
+        iframe.style.border = "none";
+        iframe.style.borderRadius = "8px";
+        if (img && img.parentNode) img.parentNode.appendChild(iframe);
+      }
+      iframe.src = url;
+      iframe.style.display = "block";
+    } else {
+      if (iframe) iframe.style.display = "none";
+      if (img) {
+        img.src = url;
+        img.style.display = "block";
+      }
+    }
+
     modal.style.display = "flex";
     modal.classList.add("active");
   }

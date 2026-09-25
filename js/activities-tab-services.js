@@ -72,6 +72,9 @@
     let remaining = 0;
 
     function getLineSharesList(s) {
+      if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") {
+        return [];
+      }
       if (s.isShared && Array.isArray(s.shares) && s.shares.length > 0) {
         return s.shares
           .filter((sh) => sh.lineId === lineId)
@@ -763,19 +766,19 @@
         <div class="shared-row-fields">
           <div class="shared-field-group">
             <label>${Core.t("sharedLineLabel")}</label>
-            <select class="form-control" onchange="ActivitiesModule.onSharedLineChange(${idx}, this.value)">
+            <select id="sharedLineSelect_${idx}" class="form-control" onchange="ActivitiesModule.onSharedLineChange(${idx}, this.value)">
               ${linesOptions}
             </select>
           </div>
           <div class="shared-field-group">
             <label>${Core.t("sharedAreaLabel")}</label>
-            <select class="form-control" onchange="ActivitiesModule.onSharedAreaChange(${idx}, this.value)">
+            <select id="sharedAreaSelect_${idx}" class="form-control" onchange="ActivitiesModule.onSharedAreaChange(${idx}, this.value)">
               ${areasOptions}
             </select>
           </div>
         </div>
         <div class="shared-row-footer">
-          <span class="shared-rep-badge">${repIcon} ${Core.escapeHTML(repLabel)}</span>
+          <span id="sharedRepBadge_${idx}" class="shared-rep-badge">${repIcon} ${Core.escapeHTML(repLabel)}</span>
           <div class="shared-percent-control">
             <label>${Core.t("sharedShare")}:</label>
             <div class="shared-percent-input-wrapper">
@@ -796,15 +799,43 @@
     Core._state.sharedLines[index].lineId = lineId;
     const allAreas = (window.store && window.store.areas && window.store.areas.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
     const areasForLine = allAreas.filter(a => !lineId || a.lineId === lineId);
-    Core._state.sharedLines[index].areaId = areasForLine[0] ? areasForLine[0].id : "";
-    renderSharedLinesRows();
+    const newAreaId = areasForLine[0] ? areasForLine[0].id : "";
+    Core._state.sharedLines[index].areaId = newAreaId;
+
+    const areaSelect = document.getElementById(`sharedAreaSelect_${index}`);
+    const badgeEl = document.getElementById(`sharedRepBadge_${index}`);
+
+    if (areaSelect) {
+      areaSelect.innerHTML = areasForLine.map(a => `<option value="${a.id}" ${a.id === newAreaId ? "selected" : ""}>${a.name} (${a.code || a.id})</option>`).join("");
+      if (badgeEl) {
+        const liveRep = Core.getLiveRepForArea(newAreaId);
+        const repLabel = liveRep
+          ? `${Core.getUserDisplayName(liveRep.id)} (${liveRep.employeeCode || liveRep.id})`
+          : Core.t("sharedNoRepAssigned");
+        const repIcon = liveRep ? "👤" : "⚠️";
+        badgeEl.innerHTML = `${repIcon} ${Core.escapeHTML(repLabel)}`;
+      }
+    } else {
+      renderSharedLinesRows();
+    }
     recalculateSharedBalances();
   }
 
   function onSharedAreaChange(index, areaId) {
     if (!Core._state.sharedLines[index]) return;
     Core._state.sharedLines[index].areaId = areaId;
-    renderSharedLinesRows();
+
+    const badgeEl = document.getElementById(`sharedRepBadge_${index}`);
+    if (badgeEl) {
+      const liveRep = Core.getLiveRepForArea(areaId);
+      const repLabel = liveRep
+        ? `${Core.getUserDisplayName(liveRep.id)} (${liveRep.employeeCode || liveRep.id})`
+        : Core.t("sharedNoRepAssigned");
+      const repIcon = liveRep ? "👤" : "⚠️";
+      badgeEl.innerHTML = `${repIcon} ${Core.escapeHTML(repLabel)}`;
+    } else {
+      renderSharedLinesRows();
+    }
     recalculateSharedBalances();
   }
 

@@ -1069,6 +1069,7 @@ const DEFAULT_DEMO_DATA = {
     { id: "dist2", name: "United Company of Pharmacists (UCP)", type: "commercial", columnMap: null },
     { id: "dist3", name: "Overseas", type: "commercial", columnMap: null },
   ],
+  pharmacyOverrides: [],
   publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day" }],
 };
 
@@ -1230,6 +1231,9 @@ function loadDataFromStorage() {
         // Ensure synchronized sales seed
         if (!Array.isArray(data.sales) || data.sales.length === 0) {
           data.sales = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.sales));
+        }
+        if (!Array.isArray(data.pharmacyOverrides)) {
+          data.pharmacyOverrides = [];
         }
         // Ensure synchronized live workflow notifications seed
         if (!Array.isArray(data.notifications) || data.notifications.length === 0) {
@@ -1784,6 +1788,113 @@ function getDoctorCallTarget(doc) {
   return targetFreq;
 }
 window.getDoctorCallTarget = getDoctorCallTarget;
+
+function isPlannedVisitExpired(dateStr) {
+  if (!dateStr) return false;
+  const parts = String(dateStr).split("T")[0].split("-");
+  const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
+  if (parts.length !== 3) {
+    const planDate = new Date(dateStr);
+    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > 7;
+  }
+  const planDateMidnight = new Date(
+    parseInt(parts[0], 10),
+    parseInt(parts[1], 10) - 1,
+    parseInt(parts[2], 10),
+    0, 0, 0, 0
+  );
+  const todayMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0, 0, 0, 0
+  );
+  const diffDays = (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
+  return diffDays > 7;
+}
+window.isPlannedVisitExpired = isPlannedVisitExpired;
+
+// ============================================================================
+// Section 3.4b: Excel & Sales Parsing Helpers (Single Source of Truth)
+// ============================================================================
+/**
+ * Parses numeric sales value or quantity from Excel/CSV imports:
+ * - Eastern Arabic digits (١٢٣)
+ * - Accounting negative notation in parentheses e.g. (1,500.00) or (250)
+ * - Trailing negative signs e.g. 1500-
+ * - Standard negative signs e.g. -1500
+ * - European decimal notation (1.250,50)
+ * - Standard thousand-separator format (1,250.50)
+ */
+function parseSalesNumber(val) {
+  if (val === null || val === undefined || val === "") return NaN;
+  if (typeof val === "number") return val;
+  let s = String(val).trim();
+  if (!s) return NaN;
+
+  // Check if negative in accounting formats: (1,500) or 1500- or -1500
+  const isAccountingNegative = (s.startsWith("(") && s.endsWith(")")) || s.endsWith("-") || s.startsWith("-");
+
+  // Convert Eastern Arabic-Indic digits ٠١٢٣٤٥٦٧٨٩ to Latin
+  s = s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
+
+  // Clean parentheses and trailing/leading minus
+  s = s.replace(/[\(\)]/g, "");
+
+  // European format: dot as thousands separator, comma as decimal (e.g. 1.250,50)
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d+(,\d{1,2})$/.test(s)) {
+    // European decimal without thousands dots (e.g. 1250,50)
+    s = s.replace(",", ".");
+  } else {
+    // Standard: remove thousand commas
+    s = s.replace(/,/g, "");
+  }
+
+  const num = parseFloat(s.replace(/[^0-9.]/g, ""));
+  if (isNaN(num)) return NaN;
+  return isAccountingNegative ? -Math.abs(num) : num;
+}
+window.parseSalesNumber = parseSalesNumber;
+
+/**
+ * Parses date strictly from Excel/CSV imports, prioritizing DD/MM/YYYY and YYYY-MM-DD
+ */
+function parseDateStrict(dateRaw) {
+  if (!dateRaw && dateRaw !== 0) return null;
+  if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
+    return dateRaw.toISOString().slice(0, 10);
+  }
+  if (typeof dateRaw === "number") {
+    const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+    return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
+  }
+  const str = String(dateRaw).trim();
+  if (!str) return null;
+
+  // Check DD/MM/YYYY or DD-MM-YYYY
+  const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmy) {
+    const day = dmy[1].padStart(2, "0");
+    const month = dmy[2].padStart(2, "0");
+    const year = dmy[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // Check YYYY-MM-DD or YYYY/MM/DD
+  const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (ymd) {
+    const year = ymd[1];
+    const month = ymd[2].padStart(2, "0");
+    const day = ymd[3].padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const d = new Date(str);
+  return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
+}
+window.parseDateStrict = parseDateStrict;
 
 // ============================================================================
 // Section 3.5: Centralized Role & Permission Engine (Single Source of Truth)
@@ -3153,12 +3264,14 @@ function enforcePageRoleSecurity() {
     "areas.html": ["admin", "hr"],
     "products.html": ["admin"],
     "plans-review.html": ["admin", "district_manager", "line_manager", "business_unit"],
+    "reports.html": ["admin", "business_unit", "line_manager", "district_manager", "medical_rep", "rep"],
   };
 
   if (restrictions[path] && !restrictions[path].includes(role)) {
-    console.warn(`[RBAC] Access denied: role '${role}' cannot access '${path}'. Redirecting to index.html.`);
+    console.warn(`[RBAC] Access denied: role '${role}' cannot access '${path}'. Redirecting.`);
     sessionStorage.setItem("pharma_rbac_denied", "true");
-    window.location.replace("index.html");
+    const targetRedirect = role === "hr" ? "users.html" : "index.html";
+    window.location.replace(targetRedirect);
   }
 }
 window.enforcePageRoleSecurity = enforcePageRoleSecurity;

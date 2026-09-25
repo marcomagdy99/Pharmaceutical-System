@@ -14,6 +14,30 @@
           document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {}
       })();
+      // Force-clear stale SW caches once after a code update
+      (function () {
+        var EXPECTED_SW = "v23";
+        var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
+        try {
+          if (
+            "serviceWorker" in navigator &&
+            !sessionStorage.getItem(FLAG)
+          ) {
+            sessionStorage.setItem(FLAG, "1");
+            caches.keys().then(function (names) {
+              var stale = names.filter(function (n) {
+                return n.indexOf("pharmacare-") === 0 && n !== "pharmacare-" + EXPECTED_SW;
+              });
+              return Promise.all(stale.map(function (n) { return caches.delete(n); }));
+            }).then(function () {
+              return navigator.serviceWorker.getRegistrations();
+            }).then(function (regs) {
+              regs.forEach(function (r) { r.update(); });
+              setTimeout(function () { location.reload(); }, 300);
+            });
+          }
+        } catch (e) {}
+      })();
     </script>
     <!-- Bootstrap CSS -->
     <link
@@ -26,7 +50,7 @@
       rel="stylesheet"
     />
     <!-- Custom CSS -->
-    <link href="css/style.css" rel="stylesheet" />
+    <link href="css/style.css?v=20260925_23" rel="stylesheet" />
     <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap"
@@ -381,6 +405,11 @@
                         <i class="fas fa-pills me-1"></i>Products (<span id="countMappedProducts">0</span>)
                       </button>
                     </li>
+                    <li class="nav-item">
+                      <button class="nav-link py-1 px-3 fw-semibold" id="aliasTabPharmacies" onclick="switchAliasTab('pharmacies')" data-i18n="tab_pharmacy_overrides">
+                        <i class="fas fa-clinic-medical me-1"></i>Pharmacy Overrides (<span id="countMappedPharmacies">0</span>)
+                      </button>
+                    </li>
                   </ul>
                 </div>
 
@@ -414,6 +443,36 @@
                         </tr>
                       </thead>
                       <tbody id="mappedProductsTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Mapped Pharmacy Overrides Table View -->
+                <div id="mappedPharmaciesContainer" style="display: none;">
+                  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div>
+                      <span class="text-muted small" data-i18n="pharmacy_overrides_desc">
+                        Route specific pharmacies to a custom territory regardless of the raw brick text in distributor sheets.
+                      </span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="openPharmacyOverrideModal()">
+                      <i class="fas fa-plus me-1"></i><span data-i18n="btn_add_pharmacy_override">Add Pharmacy Override</span>
+                    </button>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                      <thead class="bg-light">
+                        <tr>
+                          <th class="border-0 px-3 py-2" data-i18n="distributor_name">Distributor</th>
+                          <th class="border-0 px-3 py-2" data-i18n="col_pharmacy_code">Pharmacy Code</th>
+                          <th class="border-0 px-3 py-2" data-i18n="col_pharmacy_name">Pharmacy Name</th>
+                          <th class="border-0 px-3 py-2" data-i18n="mapped_to_area">Target Area</th>
+                          <th class="border-0 px-3 py-2" data-i18n="col_rep">Assigned Rep</th>
+                          <th class="border-0 px-3 py-2" data-i18n="col_effective_period">Effective Scope</th>
+                          <th class="border-0 px-3 py-2 text-end" data-i18n="colActions">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="mappedPharmaciesTableBody"></tbody>
                     </table>
                   </div>
                 </div>
@@ -686,13 +745,13 @@
 
             <div class="mb-3">
               <label class="form-label text-muted small mb-1" data-i18n="distributor_name">Distributor</label>
-              <div class="fw-semibold fs-6 text-dark" id="editAliasDistName">-</div>
+              <div class="fw-semibold fs-6" id="editAliasDistName">-</div>
             </div>
 
             <div class="mb-3">
               <label class="form-label text-muted small mb-1" data-i18n="raw_sheet_text">Raw Sheet Text</label>
               <div>
-                <span class="badge bg-light text-dark border p-2 fs-6 font-monospace" id="editAliasRawBadge">-</span>
+                <span class="badge border p-2 fs-6 font-monospace raw-badge" id="editAliasRawBadge">-</span>
               </div>
             </div>
 
@@ -718,8 +777,105 @@
       </div>
     </div>
 
+    <!-- Add / Edit Pharmacy Territory Override Modal -->
+    <div class="modal fade" id="pharmacyOverrideModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+          <div class="modal-header border-bottom py-3">
+            <h5 class="modal-title fw-bold">
+              <i class="fas fa-clinic-medical text-primary me-2"></i><span id="pharmacyOverrideModalHeading" data-i18n="add_pharmacy_override">Add Pharmacy Territory Override</span>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <input type="hidden" id="povrEditId" value="" />
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small" data-i18n="distributor_name">Distributor *</label>
+              <select class="form-select" id="povrDistributorSelect" required>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small" data-i18n="col_pharmacy_code">Pharmacy Code *</label>
+                <input type="text" class="form-control" id="povrPharmacyCodeInput" placeholder="e.g. 416464" required />
+                <small class="text-muted" style="font-size: 0.75rem;" data-i18n="pharmacy_code_hint">Account code as listed in distributor sheet.</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small" data-i18n="col_pharmacy_name">Pharmacy Name (Optional)</label>
+                <input type="text" class="form-control" id="povrPharmacyNameInput" placeholder="e.g. Al-Ezaby" />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small" data-i18n="target_area">Target Territory / Area *</label>
+              <select class="form-select" id="povrTargetAreaSelect" required>
+                <!-- Populated dynamically with all areas and their reps -->
+              </select>
+            </div>
+
+            <div class="mb-3 p-3 rounded-3 border povr-scope-card">
+              <label class="form-label fw-bold small mb-2 d-block" data-i18n="retroactive_scope_label">
+                <i class="fas fa-history me-1 text-primary"></i>Effective Scope / Retroactive Period
+              </label>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="povrScopeRadio" id="povrScopeAll" value="all_history" checked onchange="togglePovrMonthPicker()" />
+                <label class="form-check-label small fw-semibold" for="povrScopeAll" data-i18n="scope_all_history_label">
+                  All past & future sheets (Full Retroactive)
+                </label>
+                <div class="scope-desc" style="font-size: 0.75rem;" data-i18n="scope_all_desc">
+                  Re-attributes all historical sales rows and all incoming sheets for this pharmacy.
+                </div>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="povrScopeRadio" id="povrScopeFromMonth" value="from_month" onchange="togglePovrMonthPicker()" />
+                <label class="form-check-label small fw-semibold" for="povrScopeFromMonth" data-i18n="scope_from_month_label">
+                  From a specific month onwards
+                </label>
+                <div class="scope-desc" style="font-size: 0.75rem;" data-i18n="scope_from_month_desc">
+                  Only affects sales from this month forward; previous months remain untouched.
+                </div>
+                <!-- Month selector container -->
+                <div id="povrMonthPickerContainer" class="mt-2 ps-4" style="display: none;">
+                  <div class="row g-2 align-items-center">
+                    <div class="col-auto">
+                      <label class="col-form-label col-form-label-sm fw-semibold" data-i18n="effective_from_month">Starting Month:</label>
+                    </div>
+                    <div class="col-auto">
+                      <input type="month" class="form-control form-control-sm" id="povrFromMonthInput" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="povrScopeRadio" id="povrScopeFutureOnly" value="future_only" onchange="togglePovrMonthPicker()" />
+                <label class="form-check-label small fw-semibold" for="povrScopeFutureOnly" data-i18n="scope_future_only_label">
+                  Future imports only (No Retroactive Changes)
+                </label>
+                <div class="scope-desc" style="font-size: 0.75rem;" data-i18n="scope_future_desc">
+                  Leaves all already-imported sheets untouched; applies only when new sheets are uploaded.
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer border-top py-3">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+            <button type="button" class="btn btn-primary px-4 shadow-sm" onclick="savePharmacyOverride()">
+              <i class="fas fa-save me-1"></i><span data-i18n="save_override">Save Override</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/distributors.js"></script>
+    <script src="js/distributors.js?v=20260925_23"></script>
   </body>
 </html>

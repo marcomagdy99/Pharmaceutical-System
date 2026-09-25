@@ -474,6 +474,13 @@ function renderAnnouncementsList() {
     if (
       currentUserRole !== "hr" &&
       currentUserRole !== "admin" &&
+      !a.published
+    ) {
+      return false;
+    }
+    if (
+      currentUserRole !== "hr" &&
+      currentUserRole !== "admin" &&
       !isUserInTargetAudience(a.target, currentUserRole)
     ) {
       return false;
@@ -546,6 +553,7 @@ function renderAnnouncementCard(ann) {
                     <span class="badge badge-target">
                         <i class="fas fa-bullseye"></i> ${targetLabel}
                     </span>
+                    ${!ann.published ? `<span class="badge bg-warning text-dark border border-warning-subtle"><i class="fas fa-file-alt"></i> ${lang === "ar" ? "مسودة" : "Draft"}</span>` : ""}
                     ${!isRead && !isHR ? `<span class="badge badge-new" data-i18n="new">NEW</span>` : ""}
                 </div>
                 ${

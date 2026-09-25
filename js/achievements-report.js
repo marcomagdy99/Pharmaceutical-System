@@ -268,18 +268,29 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const repScopeSet = scopeRepIds ? new Set(scopeRepIds) : null;
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
-  const curUser = (typeof checkAuth === 'function' ? checkAuth() : null);
-  const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
-  const repAreas = (isRep && window.store && window.store.areas) ? window.store.areas.getByRep(curUser.id) : [];
-  const repAreaIds = repAreas.map((a) => a.id);
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
+  const areasMap = new Map(allAreas.map((a) => [a.id, a]));
+
+  const getRowEffectiveRepId = (s) => {
+    if (s.repId) return s.repId;
+    if (s.areaId) {
+      const area = areasMap.get(s.areaId);
+      if (area && area.repId) return area.repId;
+    }
+    return null;
+  };
 
   let targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
     .filter((t) => keysSet.has(t.month) && (!repScopeSet || repScopeSet.has(t.repId)));
   let salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-    .filter((s) => keysSet.has(s.month) && s.productId && (
-      (!repScopeSet || repScopeSet.has(s.repId)) ||
-      (isRep && s.areaId && repAreaIds.includes(s.areaId))
-    ));
+    .filter((s) => {
+      if (!keysSet.has(s.month) || !s.productId) return false;
+      const effectiveRepId = getRowEffectiveRepId(s);
+      if (repScopeSet) {
+        return effectiveRepId && repScopeSet.has(effectiveRepId);
+      }
+      return true;
+    });
 
   const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
@@ -316,7 +327,9 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       : (parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0);
   });
   salesRows.forEach((s) => {
-    const rowRepId = (isRep && s.areaId && repAreaIds.includes(s.areaId)) ? curUser.id : (s.repId || (curUser && curUser.id) || 'rep1');
+    const rowRepId = getRowEffectiveRepId(s);
+    if (!rowRepId) return;
+    if (isRep && rowRepId !== curUser.id) return;
     const key = rowRepId + '||' + s.productId;
     if (!cellMap[key]) cellMap[key] = { repId: rowRepId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     cellMap[key].sUnit += parseFloat(s.quantity) || 0;
@@ -500,6 +513,13 @@ function renderAchievementsReport() {
     });
 
     const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+    const achAreaSelect = document.getElementById('achAreaSelect');
+    const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
+    const selectedAreaObj = (selectedArea !== 'all' && window.store && window.store.areas)
+      ? window.store.areas.getById(selectedArea)
+      : null;
+    const selectedAreaRepId = selectedAreaObj ? selectedAreaObj.repId : null;
+
     const allProducts = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
     const productsMap = new Map(allProducts.map((p) => [p.id, p]));
 
@@ -507,6 +527,9 @@ function renderAchievementsReport() {
       const mKey = `${year}-${mVal}`;
       let mTargets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
         .filter((t) => t.month === mKey && (!scopeRepIds || scopeRepIds.includes(t.repId)));
+      if (selectedArea !== 'all' && selectedAreaRepId) {
+        mTargets = mTargets.filter((t) => t.repId === selectedAreaRepId);
+      }
       if (selectedLineId !== 'all') {
         mTargets = mTargets.filter((t) => {
           const p = productsMap.get(t.productId);
@@ -522,6 +545,9 @@ function renderAchievementsReport() {
       const mKey = `${year}-${mVal}`;
       let mSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
         .filter((s) => s.month === mKey && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
+      if (selectedArea !== 'all') {
+        mSales = mSales.filter((s) => s.areaId === selectedArea);
+      }
       if (selectedLineId !== 'all') {
         mSales = mSales.filter((s) => {
           if (s.lineId) return s.lineId === selectedLineId;

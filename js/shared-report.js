@@ -523,7 +523,7 @@ function initializeReportsPage() {
   // Check URL query parameter for active tab
   const urlParams = new URLSearchParams(window.location.search);
   const requestedTab = urlParams.get('tab');
-  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'pharmacies'].includes(requestedTab)) {
+  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'hospitals', 'pharmacies'].includes(requestedTab)) {
     switchReportTab(requestedTab);
   }
 }

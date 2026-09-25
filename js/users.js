@@ -665,8 +665,12 @@ const userMgmt = {
       .join("");
   },
 
-  buildTree(parentId = null) {
-    const children = this.users.filter((u) => u.managerId === parentId);
+  buildTree(parentId = null, visited = new Set()) {
+    if (!parentId || visited.has(parentId)) return "";
+    const nextVisited = new Set(visited);
+    nextVisited.add(parentId);
+
+    const children = this.users.filter((u) => u.managerId === parentId && !nextVisited.has(u.id));
     if (children.length === 0) return "";
     return `<div class="tree-children">
       ${children
@@ -685,7 +689,7 @@ const userMgmt = {
                   <small class="text-muted" style="font-size:0.75rem;">(Position Open • Former: ${u.name})</small>
                 </div>
               </div>
-              ${this.buildTree(u.id)}
+              ${this.buildTree(u.id, nextVisited)}
             </div>`;
           }
           return `
@@ -697,7 +701,7 @@ const userMgmt = {
                 <small class="text-muted" style="font-size:0.75rem;">${u.code} ${u.area ? `• Area: ${u.area}` : ""}</small>
               </div>
             </div>
-            ${this.buildTree(u.id)}
+            ${this.buildTree(u.id, nextVisited)}
           </div>`;
         })
         .join("")}
@@ -749,6 +753,20 @@ const userMgmt = {
       view === "tree" ? "block" : "none";
   },
 
+  wouldCreateCycle(userId, newManagerId) {
+    if (!userId || !newManagerId) return false;
+    if (userId === newManagerId) return true;
+    const visited = new Set([userId]);
+    let cur = newManagerId;
+    while (cur) {
+      if (visited.has(cur)) return true;
+      visited.add(cur);
+      const parent = this.users.find((u) => u.id === cur);
+      cur = parent ? parent.managerId : null;
+    }
+    return false;
+  },
+
   updateManagerDropdown() {
     const role = document.getElementById("uRole").value;
     const managerSelect = document.getElementById("uManager");
@@ -772,7 +790,8 @@ const userMgmt = {
       (u) =>
         u.role === targetManagerRole &&
         (u.status || "Active") === "Active" &&
-        u.id !== currentUserId,
+        u.id !== currentUserId &&
+        !this.wouldCreateCycle(currentUserId, u.id),
     );
 
     const selectedLineIds = Array.from(
@@ -794,7 +813,8 @@ const userMgmt = {
         (u) =>
           ["Admin", "BU", "LM", "DM"].includes(u.role) &&
           (u.status || "Active") === "Active" &&
-          u.id !== currentUserId,
+          u.id !== currentUserId &&
+          !this.wouldCreateCycle(currentUserId, u.id),
       );
     }
 
@@ -963,6 +983,14 @@ const userMgmt = {
         "warning",
       );
 
+    if (id && managerId && this.wouldCreateCycle(id, managerId)) {
+      const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
+      const cycleMsg = isAr
+        ? "⚠️ تعذر الحفظ: لا يمكن اختيار هذا المدير لأنه سيؤدي إلى حلقة إدارية مغلقة (المستخدم الحالي يقع ضمن السلسلة الإدارية له)."
+        : "⚠️ Cannot save: selecting this manager creates a circular management loop.";
+      return showToast(cycleMsg, "warning");
+    }
+
     const selectedLineIds = Array.from(
       document.querySelectorAll(".user-line-cb:checked"),
     ).map((cb) => cb.value);
@@ -1001,15 +1029,25 @@ const userMgmt = {
       lineIds: selectedLineIds,
       lineId: selectedLineIds[0] || null,
       leaveBalance: {
-        annual:
-          parseInt(document.getElementById("uAnnualLeave")?.value, 10) || 21,
-        casual:
-          parseInt(document.getElementById("uCasualLeave")?.value, 10) || 6,
-        emergency:
-          parseInt(document.getElementById("uCasualLeave")?.value, 10) || 6,
-        sick: parseInt(document.getElementById("uSickLeave")?.value, 10) || 7,
-        unpaid: rawExistingUser?.leaveBalance?.unpaid || 0,
-        maternity: rawExistingUser?.leaveBalance?.maternity || 90,
+        annual: (() => {
+          const val = parseInt(document.getElementById("uAnnualLeave")?.value, 10);
+          return isNaN(val) ? 21 : Math.max(0, val);
+        })(),
+        casual: (() => {
+          const val = parseInt(document.getElementById("uCasualLeave")?.value, 10);
+          return isNaN(val) ? 6 : Math.max(0, val);
+        })(),
+        emergency: (() => {
+          const el = document.getElementById("uEmergencyLeave") || document.getElementById("uCasualLeave");
+          const val = parseInt(el?.value, 10);
+          return isNaN(val) ? 6 : Math.max(0, val);
+        })(),
+        sick: (() => {
+          const val = parseInt(document.getElementById("uSickLeave")?.value, 10);
+          return isNaN(val) ? 7 : Math.max(0, val);
+        })(),
+        unpaid: rawExistingUser?.leaveBalance?.unpaid != null ? rawExistingUser.leaveBalance.unpaid : 0,
+        maternity: rawExistingUser?.leaveBalance?.maternity != null ? rawExistingUser.leaveBalance.maternity : 90,
       },
       // Territory information is managed through areas.html and synchronized via store.users.syncAreasFromStore()
       area: rawExistingUser ? rawExistingUser.area : null,
@@ -1096,6 +1134,9 @@ const userMgmt = {
       const willBeInactive = rawUser.status === "Active";
       rawUser.status = willBeInactive ? "Inactive" : "Active";
 
+      const allSystemUsers = window.DEMO_DATA.users || [];
+      let hasSubordinateUpdates = false;
+
       if (willBeInactive) {
         const assignedAreas = window.store.areas ? window.store.areas.getByRep(rawUser.id) : [];
         assignedAreas.forEach((assignedArea) => {
@@ -1113,27 +1154,33 @@ const userMgmt = {
           }
         });
 
-        const allSystemUsers = window.DEMO_DATA.users || [];
-        let hasSubordinateUpdates = false;
-
         allSystemUsers.forEach((u) => {
           if (u.managerId === rawUser.id) {
+            u.previousManagerId = rawUser.id;
             u.managerId = rawUser.managerId || null;
             hasSubordinateUpdates = true;
           }
         });
+      } else {
+        allSystemUsers.forEach((u) => {
+          if (u.previousManagerId === rawUser.id) {
+            u.managerId = rawUser.id;
+            delete u.previousManagerId;
+            hasSubordinateUpdates = true;
+          }
+        });
+      }
 
-        if (
-          hasSubordinateUpdates &&
-          typeof window.saveDataToStorage === "function"
-        ) {
-          window.saveDataToStorage();
-          document.dispatchEvent(
-            new CustomEvent("pharma:store:changed", {
-              detail: { entity: "users", action: "bulkUpdate", payload: null },
-            }),
-          );
-        }
+      if (
+        hasSubordinateUpdates &&
+        typeof window.saveDataToStorage === "function"
+      ) {
+        window.saveDataToStorage();
+        document.dispatchEvent(
+          new CustomEvent("pharma:store:changed", {
+            detail: { entity: "users", action: "bulkUpdate", payload: null },
+          }),
+        );
       }
 
       window.store.users.save(rawUser);
@@ -1141,7 +1188,7 @@ const userMgmt = {
       this.render();
       const msg = willBeInactive
         ? "User deactivated. Territory preserved as Vacant and subordinates successfully transferred to upper manager."
-        : `User is now Active.`;
+        : "User is now Active. Former subordinates successfully restored to their team.";
       showToast(msg, "info");
     }
     this.closeModal("deactivate");

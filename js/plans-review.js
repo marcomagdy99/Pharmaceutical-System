@@ -11,7 +11,7 @@ const plansReviewTranslations = {
     pageTitle: "Plans to Review - PharmaCare",
     plansReviewTitle: "📋 Plans to Review & Approvals",
     plansReviewSubtitle:
-      "Review and approve planned visit schedules submitted by your medical representatives",
+      "Review and approve planned visit schedules submitted by your Medical Representatives",
     btnGoToVisits: "Go to Visits",
     btnApproveAll: "Approve All Plans",
     btnApproveAllForRep: "Approve All for",
@@ -497,7 +497,7 @@ function renderPlansReview(currentUser) {
     const isFiltered = Boolean(searchKeyword || (selectedRepId && selectedRepId !== 'all') || (selectedLineId && selectedLineId !== 'all'));
     if (isFiltered) {
       container.innerHTML = `
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center" style="background: var(--card-bg, #ffffff);">
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
           <div style="font-size: 3rem; margin-bottom: 12px;">🔍</div>
           <h4 class="fw-bold rep-title mb-2">${t.noMatchingPlansTitle || (lang === 'ar' ? 'لا توجد خطط معلقة مطابقة لبحثك' : 'No pending plans match your search')}</h4>
           <p class="text-muted small mb-0">${t.noMatchingPlansDesc || (lang === 'ar' ? 'جرب البحث باسم طبيب أو مندوب آخر أو تعديل الفلاتر.' : 'Try adjusting your search query, rep, or product line filter.')}</p>
@@ -505,7 +505,7 @@ function renderPlansReview(currentUser) {
       `;
     } else {
       container.innerHTML = `
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center" style="background: var(--card-bg, #ffffff);">
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
           <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
           <h4 class="fw-bold rep-title mb-2">${t.noPendingPlans}</h4>
           <p class="text-muted small mb-3">All visit plans have been approved and are active in team schedules.</p>
@@ -616,7 +616,7 @@ function renderPlansReview(currentUser) {
             <div class="d-flex align-items-center gap-2">
               <span style="font-size: 1.1rem;">📅</span>
               <strong style="font-size: 0.95rem;">${dt.dayName ? dt.dayName + " • " : ""}${dateStr}</strong>
-              <span class="badge bg-light text-dark border ms-1" style="font-size: 0.78rem;">${dayVisits.length} ${lang === "ar" ? "زيارات" : "visits"}</span>
+              <span class="badge plans-count-badge ms-1" style="font-size: 0.78rem;">${dayVisits.length} ${lang === "ar" ? "زيارات" : "visits"}</span>
             </div>
             ${dayActionsHtml}
           </div>
@@ -751,7 +751,9 @@ function renderPlansReview(currentUser) {
                     ? `<span class="badge bg-warning text-dark">Vacant</span>`
                     : (dm.status === "Inactive"
                         ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Former: ${dm.name})</span>`
-                        : dm.name)
+                        : (window.normalizeRole ? window.normalizeRole(dm.role) : (dm.role || "").toLowerCase()) !== "district_manager"
+                          ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Supervised by LM: ${dm.name})</span>`
+                          : dm.name)
                 }</strong>
               </div>
             </div>
@@ -858,6 +860,21 @@ const plansReview = {
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
 
+    const eligibleVisits = visits.filter(
+      (v) =>
+        v.repId === repId &&
+        v.date === dateStr &&
+        (v.status === "pending_approval" || v.status === "pending" || v.status === "planned")
+    );
+
+    if (eligibleVisits.length === 0) {
+      const msg = lang === "ar"
+        ? "لا توجد زيارات معلقة أو مجدولة للمرافقة في هذا اليوم."
+        : "No pending or planned visits available for accompaniment on this day.";
+      if (typeof window.showToast === "function") window.showToast(msg, "warning");
+      return;
+    }
+
     // Safety check: verify if date is already booked with another rep
     const storageKey = "pharma_dm_accompaniments";
     let cachedSchedule = {};
@@ -878,19 +895,17 @@ const plansReview = {
     cachedSchedule[currentUser.id][dateStr] = repId;
     localStorage.setItem(storageKey, JSON.stringify(cachedSchedule));
 
-    // Adopt rep planned visits as accompaniment planned itinerary
+    // Adopt only eligible visits for accompaniment itinerary
     let count = 0;
-    visits.forEach((v) => {
-      if (v.repId === repId && v.date === dateStr) {
-        v.status = "planned";
-        v.visitType = "double";
-        v.doubleWithUserId = currentUser.id;
-        v.doubleWithUserName = currentUser.name;
-        v.approvedBy = currentUser.id;
-        v.approvedByName = currentUser.name;
-        v.approvedAt = new Date().toISOString();
-        count++;
-      }
+    eligibleVisits.forEach((v) => {
+      v.status = "planned";
+      v.visitType = "double";
+      v.doubleWithUserId = currentUser.id;
+      v.doubleWithUserName = currentUser.name;
+      v.approvedBy = currentUser.id;
+      v.approvedByName = currentUser.name;
+      v.approvedAt = new Date().toISOString();
+      count++;
     });
 
     saveMasterVisits(visits);
@@ -944,6 +959,15 @@ const plansReview = {
     const visit = visits.find((v) => v.id === visitId);
     if (!visit) return;
     if (!this._ensureCanApprove(currentUser, visit.repId)) return;
+
+    if (visit.status === "completed") {
+      const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+      const msg = lang === "ar"
+        ? "لا يمكن تعديل زيارة تم إنجازها بالفعل."
+        : "Cannot modify a visit that has already been completed.";
+      if (typeof window.showToast === "function") window.showToast(msg, "warning");
+      return;
+    }
 
     visit.status = "planned";
     visit.visitType = "double";
@@ -1103,7 +1127,18 @@ const plansReview = {
     const effectiveLineId = window.selectedPlansLineId || document.getElementById("plansLineFilter")?.value || "all";
     visits.forEach((v) => {
       // Only approve visits matching the currently active line filter
-      if (effectiveLineId !== "all" && v.lineId && v.lineId !== effectiveLineId) return;
+      if (effectiveLineId !== "all") {
+        let visitLine = v.lineId;
+        if (!visitLine) {
+          const doc = (window.DEMO_DATA && window.DEMO_DATA.doctors ? window.DEMO_DATA.doctors : []).find((d) => d.id === v.doctorId);
+          visitLine = doc ? doc.lineId : null;
+          if (!visitLine && typeof window.getUserLines === "function") {
+            const rLines = window.getUserLines(v.repId);
+            if (rLines.length > 0) visitLine = rLines[0].id;
+          }
+        }
+        if (visitLine && visitLine !== effectiveLineId) return;
+      }
       const rep = scopedReps.find((r) => r.id === v.repId);
       if (rep && canUserApproveForRep(currentUser, rep, allUsers) && v.status === "pending_approval") {
         v.status = "planned";
@@ -1205,11 +1240,14 @@ const plansReview = {
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
 
+    const affectedDates = new Set();
+
     if (this.activeRejectTarget.visitId) {
       const v = visits.find(
         (item) => item.id === this.activeRejectTarget.visitId,
       );
       if (v) {
+        if (v.date) affectedDates.add(v.date);
         v.status = "rejected";
         v.rejectionReason = reason;
         v.rejectedBy = currentUser.id;
@@ -1239,6 +1277,7 @@ const plansReview = {
           v.repId === this.activeRejectTarget.repId &&
           v.status === "pending_approval"
         ) {
+          if (v.date) affectedDates.add(v.date);
           v.status = "rejected";
           v.rejectionReason = reason;
           v.rejectedBy = currentUser.id;
@@ -1261,6 +1300,38 @@ const plansReview = {
           action: "rejected",
         });
       }
+    }
+
+    // Release accompaniment schedule for dates where no active double visits remain
+    try {
+      const storageKey = "pharma_dm_accompaniments";
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && cached[currentUser.id]) {
+          affectedDates.forEach((dateStr) => {
+            const bookedRepId = cached[currentUser.id][dateStr];
+            if (bookedRepId) {
+              const hasActiveDouble = visits.some(
+                (v) =>
+                  v.date === dateStr &&
+                  v.repId === bookedRepId &&
+                  v.status !== "rejected" &&
+                  (v.doubleWithUserId === currentUser.id || v.visitType === "double"),
+              );
+              if (!hasActiveDouble) {
+                delete cached[currentUser.id][dateStr];
+                if (Object.keys(cached[currentUser.id]).length === 0) {
+                  delete cached[currentUser.id];
+                }
+              }
+            }
+          });
+          localStorage.setItem(storageKey, JSON.stringify(cached));
+        }
+      }
+    } catch (e) {
+      console.error("Error updating accompaniment schedule on rejection:", e);
     }
 
     saveMasterVisits(visits);

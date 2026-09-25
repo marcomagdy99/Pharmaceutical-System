@@ -216,8 +216,20 @@
       addAlias(areaId, distributorId, rawText) {
         const area = this.getById(areaId);
         if (!area || !rawText) return;
-        if (!Array.isArray(area.aliases)) area.aliases = [];
         const normalized = String(rawText).trim().toLowerCase();
+
+        const allAreas = window.DEMO_DATA && Array.isArray(window.DEMO_DATA.areas) ? window.DEMO_DATA.areas : [];
+        allAreas.forEach((otherArea) => {
+          if (otherArea.id !== areaId && Array.isArray(otherArea.aliases)) {
+            otherArea.aliases = otherArea.aliases.filter(
+              (al) =>
+                !(al.distributorId === distributorId &&
+                  String(al.rawText).trim().toLowerCase() === normalized)
+            );
+          }
+        });
+
+        if (!Array.isArray(area.aliases)) area.aliases = [];
         const exists = area.aliases.some(
           (al) =>
             al.distributorId === distributorId &&
@@ -544,6 +556,82 @@
           window.DEMO_DATA.pharmacies || []
         ).filter((p) => p.id !== pharmId);
         autoSave("pharmacies", "delete", { id: pharmId });
+      },
+    },
+
+    // ==========================================
+    // Section: Pharmacy Territory Overrides Module
+    // Allows routing a pharmacy (identified by distributorId and pharmacyCode/pharmacyName)
+    // to a custom territory, overriding raw distributor sheet brick text.
+    // ==========================================
+    pharmacyOverrides: {
+      getAll() {
+        return window.DEMO_DATA.pharmacyOverrides || [];
+      },
+      getById(id) {
+        return (window.DEMO_DATA.pharmacyOverrides || []).find((o) => o.id === id);
+      },
+      findMatch(distributorId, pharmacyCode, pharmacyName, month = null, lineId = null) {
+        if (!distributorId) return null;
+        const cleanCode = String(pharmacyCode || "").trim().toLowerCase();
+        const cleanName = String(pharmacyName || "").trim().toLowerCase();
+        if (!cleanCode && !cleanName) return null;
+
+        return (window.DEMO_DATA.pharmacyOverrides || []).find((o) => {
+          if (o.distributorId !== distributorId) return false;
+
+          let matchesIdentity = false;
+          if (cleanCode && o.pharmacyCode) {
+            matchesIdentity = String(o.pharmacyCode).trim().toLowerCase() === cleanCode;
+          } else if (cleanName && o.pharmacyName) {
+            matchesIdentity = String(o.pharmacyName).trim().toLowerCase() === cleanName;
+          }
+          if (!matchesIdentity) return false;
+
+          // If lineId is specified, ensure this override's target area matches this line
+          if (lineId && o.areaId && store.areas) {
+            const targetArea = store.areas.getById(o.areaId);
+            if (targetArea && targetArea.lineId && targetArea.lineId !== lineId) {
+              return false;
+            }
+          }
+
+          if (!month) return true;
+          if (o.effectiveScope === "future_only") {
+            if (!o.createdMonth) return false;
+            return month >= o.createdMonth;
+          }
+          if (o.effectiveScope === "from_month" && o.effectiveFromMonth) {
+            return month >= o.effectiveFromMonth;
+          }
+          return true; // all_history
+        });
+      },
+      save(overrideObj) {
+        if (!window.DEMO_DATA.pharmacyOverrides) window.DEMO_DATA.pharmacyOverrides = [];
+        const list = window.DEMO_DATA.pharmacyOverrides;
+        const idx = list.findIndex((o) => o.id === overrideObj.id);
+        const item = {
+          ...overrideObj,
+          id: overrideObj.id || `povr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          updatedAt: new Date().toISOString()
+        };
+        if (idx >= 0) {
+          list[idx] = item;
+        } else {
+          item.createdAt = item.createdAt || new Date().toISOString();
+          list.unshift(item);
+        }
+        autoSave("pharmacyOverrides", idx >= 0 ? "update" : "create", item);
+        return item;
+      },
+      delete(id) {
+        const item = this.getById(id);
+        window.DEMO_DATA.pharmacyOverrides = (
+          window.DEMO_DATA.pharmacyOverrides || []
+        ).filter((o) => o.id !== id);
+        autoSave("pharmacyOverrides", "delete", { id });
+        return item;
       },
     },
 
@@ -963,26 +1051,44 @@
        * (distributorId, areaRaw) now has a matching alias -- filling in
        * areaId, repId, and (via the rep's own manager chain) dmId/lmId.
        *
-       * LINE-AWARE MATCHING (Multi-Line Territory):
-       * If the row already has a lineId (from product matching), we find
-       * the area alias scoped to that line's areas using findByAliasTextForLine().
-       * This ensures that a Cardio drug sold in "Nasr City" is attributed to
-       * the Cardio line's rep for Nasr City, not the Neuro line's rep.
-       * If no lineId is set yet, falls back to global alias matching.
+       * LINE-AWARE & PHARMACY-OVERRIDE MATCHING:
+       * 1. High-priority: Checks store.pharmacyOverrides to see if this specific pharmacy
+       *    (by code/name) has a custom territory override assigned for this distributor and month.
+       * 2. Secondary: If no pharmacy override matched, falls back to raw area text alias matching
+       *    (scoped to line if lineId is known).
        */
       applyAreaMatching(forceAll = false, shouldAutoSave = true) {
-        const rows = this.getAll().filter((s) => (forceAll || !s.repId) && s.areaRaw);
+        const rows = this.getAll().filter(
+          (s) => (forceAll || !s.repId) && (s.areaRaw || s.pharmacyCode || s.pharmacyName)
+        );
         let matchedCount = 0;
         rows.forEach((row) => {
-          // Line-aware: if the row's product was already matched to a line,
-          // only look at areas belonging to that same line
           let area = null;
-          if (row.lineId) {
-            area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, row.lineId);
-          } else {
-            // Fallback: global alias match (only if lineId is not yet known)
-            area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
+          const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
+
+          // 1. High-priority check for pharmacy override (line-aware)
+          if (store.pharmacyOverrides) {
+            const override = store.pharmacyOverrides.findMatch(
+              row.distributorId,
+              row.pharmacyCode,
+              row.pharmacyName,
+              rowMonth,
+              row.lineId
+            );
+            if (override && override.areaId) {
+              area = store.areas.getById(override.areaId);
+            }
           }
+
+          // 2. Fallback to raw sheet territory text alias matching
+          if (!area && row.areaRaw) {
+            if (row.lineId) {
+              area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, row.lineId);
+            } else {
+              area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
+            }
+          }
+
           if (!area) return;
           row.areaId = area.id;
           row.repId = area.repId || null;
@@ -998,28 +1104,139 @@
         }
         return matchedCount;
       },
+
+      /**
+       * Retroactively applies a pharmacy territory override to existing sales rows
+       * according to the specified effective retroactive scope.
+       */
+      applyPharmacyOverride(override) {
+        if (!override || !override.distributorId || !override.areaId) return 0;
+        const area = store.areas.getById(override.areaId);
+        if (!area) return 0;
+
+        const rep = area.repId ? store.users.getById(area.repId) : null;
+        const dmId = rep ? rep.managerId || null : null;
+        const dm = dmId ? store.users.getById(dmId) : null;
+        const lmId = dm ? dm.managerId || null : null;
+
+        const cleanCode = String(override.pharmacyCode || "").trim().toLowerCase();
+        const cleanName = String(override.pharmacyName || "").trim().toLowerCase();
+
+        let updatedCount = 0;
+        this.getAll().forEach((row) => {
+          if (row.distributorId !== override.distributorId) return;
+
+          let matches = false;
+          if (cleanCode && row.pharmacyCode) {
+            matches = String(row.pharmacyCode).trim().toLowerCase() === cleanCode;
+          } else if (cleanName && row.pharmacyName) {
+            matches = String(row.pharmacyName).trim().toLowerCase() === cleanName;
+          }
+          if (!matches) return;
+
+          // Only apply override to rows of the same line (if area belongs to a specific line)
+          if (area.lineId && row.lineId && row.lineId !== area.lineId) return;
+
+          // Check effective retroactive scope
+          const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
+          if (override.effectiveScope === "future_only") {
+            return;
+          }
+          if (override.effectiveScope === "from_month" && override.effectiveFromMonth) {
+            if (rowMonth && rowMonth < override.effectiveFromMonth) return;
+          }
+
+          row.areaId = area.id;
+          row.repId = area.repId || null;
+          row.dmId = dmId;
+          row.lmId = lmId;
+          updatedCount++;
+        });
+
+        if (updatedCount > 0) {
+          autoSave("distributorSales", "applyPharmacyOverride", {
+            overrideId: override.id,
+            updatedCount,
+          });
+        }
+        return updatedCount;
+      },
+
+      /**
+       * Reverts sales rows affected by a deleted pharmacy override back to standard alias matching.
+       */
+      revertPharmacyOverride(override) {
+        if (!override || !override.distributorId) return 0;
+        const cleanCode = String(override.pharmacyCode || "").trim().toLowerCase();
+        const cleanName = String(override.pharmacyName || "").trim().toLowerCase();
+        const overrideArea = override.areaId && store.areas ? store.areas.getById(override.areaId) : null;
+
+        let revertedCount = 0;
+        this.getAll().forEach((row) => {
+          if (row.distributorId !== override.distributorId) return;
+
+          let matches = false;
+          if (cleanCode && row.pharmacyCode) {
+            matches = String(row.pharmacyCode).trim().toLowerCase() === cleanCode;
+          } else if (cleanName && row.pharmacyName) {
+            matches = String(row.pharmacyName).trim().toLowerCase() === cleanName;
+          }
+          if (!matches) return;
+
+          // Only revert if row belongs to the overridden line
+          if (overrideArea && overrideArea.lineId && row.lineId && row.lineId !== overrideArea.lineId) return;
+
+          // Only revert rows that match the scope of this override
+          const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
+          if (override.effectiveScope === "future_only") {
+            if (override.createdMonth && rowMonth && rowMonth < override.createdMonth) return;
+          } else if (override.effectiveScope === "from_month" && override.effectiveFromMonth) {
+            if (rowMonth && rowMonth < override.effectiveFromMonth) return;
+          }
+
+          // Only revert if row was assigned to the overridden area
+          if (override.areaId && row.areaId !== override.areaId) return;
+
+          row.areaId = null;
+          row.repId = null;
+          row.dmId = null;
+          row.lmId = null;
+          revertedCount++;
+        });
+
+        // Re-run standard matching on unassigned rows to restore alias mapping
+        this.applyAreaMatching(false, true);
+        return revertedCount;
+      },
       /**
        * Re-attributes all sales rows assigned to an area when that area's assigned
        * medical representative is changed by Admin.
        */
-      rematchAreaSales(areaId, newRepId) {
+      rematchAreaSales(areaId, newRepId, effectiveFromMonth = null) {
         if (!areaId) return 0;
         const rep = newRepId ? store.users.getById(newRepId) : null;
         const dmId = rep ? rep.managerId || null : null;
         const dm = dmId ? store.users.getById(dmId) : null;
         const lmId = dm ? dm.managerId || null : null;
 
+        const currentMonth = (typeof window.getSystemTodayStr === "function" ? window.getSystemTodayStr() : new Date().toISOString().split("T")[0]).slice(0, 7);
+        const cutoffMonth = effectiveFromMonth || currentMonth;
+
         let updatedCount = 0;
         this.getAll().forEach((row) => {
           if (row.areaId === areaId) {
-            row.repId = newRepId || null;
-            row.dmId = dmId;
-            row.lmId = lmId;
-            updatedCount++;
+            const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
+            // Only reattribute sales for the effective month and into the future, protecting past achievements
+            if (!rowMonth || rowMonth >= cutoffMonth) {
+              row.repId = newRepId || null;
+              row.dmId = dmId;
+              row.lmId = lmId;
+              updatedCount++;
+            }
           }
         });
         if (updatedCount) {
-          autoSave("distributorSales", "rematchAreaSales", { areaId, newRepId, updatedCount });
+          autoSave("distributorSales", "rematchAreaSales", { areaId, newRepId, cutoffMonth, updatedCount });
         }
         return updatedCount;
       },

@@ -11,83 +11,7 @@
  * Depends on shared-report.js (must load after it).
  */
 
-/**
- * Parses a numeric string from imported Excel/CSV data.
- * Handles:
- * - Eastern Arabic digits (١٢٣)
- * - Accounting negative notation in parentheses e.g. (1,500.00) or (250)
- * - Trailing negative signs e.g. 1500-
- * - Standard negative signs e.g. -1500
- * - European decimal notation (1.250,50)
- * - Standard thousand-separator format (1,250.50)
- */
-function parseSalesNumber(val) {
-  if (val === null || val === undefined || val === "") return NaN;
-  if (typeof val === "number") return val;
-  let s = String(val).trim();
-  if (!s) return NaN;
-
-  // Check if negative in accounting formats: (1,500) or 1500- or -1500
-  const isAccountingNegative = (s.startsWith("(") && s.endsWith(")")) || s.endsWith("-") || s.startsWith("-");
-
-  // Convert Eastern Arabic-Indic digits ٠١٢٣٤٥٦٧٨٩ to Latin
-  s = s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
-
-  // Clean parentheses and trailing/leading minus
-  s = s.replace(/[\(\)]/g, "");
-
-  // European format: dot as thousands separator, comma as decimal (e.g. 1.250,50)
-  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) {
-    s = s.replace(/\./g, "").replace(",", ".");
-  } else if (/^\d+(,\d{1,2})$/.test(s)) {
-    // European decimal without thousands dots (e.g. 1250,50)
-    s = s.replace(",", ".");
-  } else {
-    // Standard: remove thousand commas
-    s = s.replace(/,/g, "");
-  }
-
-  const num = parseFloat(s.replace(/[^0-9.]/g, ""));
-  if (isNaN(num)) return NaN;
-  return isAccountingNegative ? -Math.abs(num) : num;
-}
-
-/**
- * Parses date strictly from Excel/CSV imports, prioritizing DD/MM/YYYY and YYYY-MM-DD
- */
-function parseDateStrict(dateRaw) {
-  if (!dateRaw && dateRaw !== 0) return null;
-  if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
-    return dateRaw.toISOString().slice(0, 10);
-  }
-  if (typeof dateRaw === "number") {
-    const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
-    return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
-  }
-  const str = String(dateRaw).trim();
-  if (!str) return null;
-
-  // Check DD/MM/YYYY or DD-MM-YYYY
-  const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dmy) {
-    const day = dmy[1].padStart(2, "0");
-    const month = dmy[2].padStart(2, "0");
-    const year = dmy[3];
-    return `${year}-${month}-${day}`;
-  }
-
-  // Check YYYY-MM-DD or YYYY/MM/DD
-  const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-  if (ymd) {
-    const year = ymd[1];
-    const month = ymd[2].padStart(2, "0");
-    const day = ymd[3].padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  const d = new Date(str);
-  return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
-}
+// parseSalesNumber and parseDateStrict are provided globally by app.js
 
 /**
  * Fills the upload bar's Distributor/Month/Year selects. Distributors
@@ -440,9 +364,6 @@ function getFilteredPharmSalesRows() {
   const allowedLineIds = getPharmSalesAllowedLineIds(user);
 
   let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
-  if (rows.length === 0 && typeof REPORTS_DATA !== 'undefined' && Array.isArray(REPORTS_DATA.sales)) {
-    rows = REPORTS_DATA.sales.slice();
-  }
 
   if (selectedMonths.length === 0) {
     return [];
@@ -613,10 +534,16 @@ function renderSalesReport() {
       const areaLabel = area ? area.name : (row.areaRaw || (lang === 'ar' ? 'غير مربوط' : 'Unmatched'));
       const repLabel = rep ? rep.name : (lang === 'ar' ? 'غير مربوط' : 'Unassigned');
 
+      const pharmacyDisplay = row.pharmacyName
+        ? (row.pharmacyCode
+            ? `<div>${window.escapeHtml(row.pharmacyName)} <small class="text-muted" style="font-size:0.8em; font-family:monospace;">(#${window.escapeHtml(row.pharmacyCode)})</small></div>`
+            : window.escapeHtml(row.pharmacyName))
+        : (row.pharmacyCode ? `<small class="text-muted" style="font-family:monospace;">#${window.escapeHtml(row.pharmacyCode)}</small>` : '—');
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="white-space: nowrap;">${window.escapeHtml(row.date || row.month)}</td>
-        <td>${window.escapeHtml(row.pharmacyName || '—')}</td>
+        <td>${pharmacyDisplay}</td>
         <td><span class="sales-product-badge">💊 ${window.escapeHtml(row.product || 'General Product')}</span></td>
         <td style="white-space: nowrap;">${window.escapeHtml(dist ? dist.name : (row.distributorId || '—'))}</td>
         <td style="white-space: nowrap;">${window.escapeHtml(areaLabel)}</td>
@@ -720,10 +647,23 @@ function handleExcelUpload(e) {
     try {
       const data = new Uint8Array(ev.target.result);
       const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      // Keyed by the sheet's own header text, which is exactly what
-      // dist.columnMap's values point to -- no positional guessing.
-      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', cellDates: true });
+      // Detect header row index to skip top banners and align object keys with mapped column names
+      const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: "" });
+      let headerRowIndex = 0;
+      let maxColsCount = 0;
+      const inspectLimit = Math.min(15, rawMatrix.length);
+      for (let i = 0; i < inspectLimit; i++) {
+        const row = rawMatrix[i];
+        if (Array.isArray(row)) {
+          const filledCount = row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length;
+          if (filledCount > maxColsCount) {
+            maxColsCount = filledCount;
+            headerRowIndex = i;
+          }
+        }
+      }
+
+      const rows = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex, defval: '', cellDates: true });
 
       const totalRows = rows.length;
       if (typeof window.openExcelImportProgress === 'function') {
@@ -799,6 +739,7 @@ function handleExcelUpload(e) {
             product,
             value: numericValue,
             quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
+            pharmacyCode: map.pharmacyCode ? String(row[map.pharmacyCode] || '').trim() : '',
             pharmacyName: map.pharmacy ? String(row[map.pharmacy] || '').trim() : '',
             areaRaw: map.area ? String(row[map.area] || '').trim() : '',
             repId: null,
@@ -883,7 +824,7 @@ function exportSalesReport() {
   const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
 
   const safeCsv = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
-  let csv = 'Date,Pharmacy,Product,Distributor,Area,Rep,Quantity,Value\n';
+  let csv = 'Date,Pharmacy,Pharmacy Code,Product,Distributor,Area,Rep,Quantity,Value\n';
   rows.forEach((r) => {
     const rep = r.repId ? allUsers.find((u) => u.id === r.repId) : null;
     const area = r.areaId ? areas.find((a) => a.id === r.areaId) : null;
@@ -892,7 +833,7 @@ function exportSalesReport() {
     const repLabel = rep ? rep.name : '';
     const qty = parseFloat(r.quantity) || 0;
     const value = parseFloat(r.value) || 0;
-    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.product)},${safeCsv(dist ? dist.name : (r.distributorId || ''))},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value}\n`;
+    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.pharmacyCode || '')},${safeCsv(r.product)},${safeCsv(dist ? dist.name : (r.distributorId || ''))},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value}\n`;
   });
 
   const yearSelect = document.getElementById('pharmSalesYearSelect');

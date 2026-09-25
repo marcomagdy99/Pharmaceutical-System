@@ -715,6 +715,8 @@ function setupAdminQuizTools(allReps) {
               totalMarks: totalMarks
             });
           }
+        } else {
+          storedScores = storedScores.filter((s) => !(s.quizId === selectedQuizId && s.userId === repId));
         }
       });
 

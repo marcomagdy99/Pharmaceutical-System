@@ -317,7 +317,7 @@
         allServices.forEach((s) => {
           if (s.isShared && Array.isArray(s.shares)) {
             s.shares.forEach((sh) => {
-              if (sh.lineId === lineId && (sh.repId === rep.id || s.requesterId === rep.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+              if (sh.lineId === lineId && sh.repId === rep.id && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
                 repUtilized += Number(sh.shareAmount || 0);
               }
             });

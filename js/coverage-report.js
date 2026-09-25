@@ -93,12 +93,8 @@ function renderCoverageReport() {
     ? getSharedReportUsers()
     : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
-  const numMonths = Math.max(
-    1,
-    (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth()) +
-      1
-  );
+  const diffDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  const numMonths = Math.max(1, Math.round(diffDays / 30));
 
   const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   let lineObj = null;
@@ -234,8 +230,8 @@ function renderCoverageReport() {
 
     const quarterlyRate = target.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
       ? window.getDoctorCallTarget(target)
-      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : 6)));
-    target._targetFreq = Math.max(1, Math.round((quarterlyRate / 3) * numMonths));
+      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : (target.class === 'C' ? 1 : 6))));
+    target._targetFreq = Math.max(1, Math.round((quarterlyRate / 90) * diffDays));
   });
 
   // Determine scoped reps list for the summary table
@@ -685,12 +681,8 @@ function exportCoverageReport() {
     });
   }
 
-  const numMonths = Math.max(
-    1,
-    (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth()) +
-      1
-  );
+  const diffDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  const numMonths = Math.max(1, Math.round(diffDays / 30));
 
   let totalTarget = 0;
   let totalExecuted = 0;
@@ -708,8 +700,8 @@ function exportCoverageReport() {
     const visitsCount = matchingVisits.length;
     const quarterlyRate = target.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
       ? window.getDoctorCallTarget(target)
-      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : 6)));
-    const targetFreq = Math.max(1, Math.round((quarterlyRate / 3) * numMonths));
+      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : (target.class === 'C' ? 1 : 6))));
+    const targetFreq = Math.max(1, Math.round((quarterlyRate / 90) * diffDays));
     totalTarget += targetFreq;
     totalExecuted += visitsCount;
 

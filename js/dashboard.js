@@ -233,6 +233,9 @@ if (window.translations) {
 }
 
 function isPlannedVisitExpired(dateStr) {
+  if (typeof window.isPlannedVisitExpired === "function") {
+    return window.isPlannedVisitExpired(dateStr);
+  }
   if (!dateStr) return false;
   const parts = dateStr.split("-");
   const now = (window.getSystemDate && window.getSystemDate()) || new Date();
@@ -244,11 +247,13 @@ function isPlannedVisitExpired(dateStr) {
     parseInt(parts[0], 10),
     parseInt(parts[1], 10) - 1,
     parseInt(parts[2], 10),
+    0, 0, 0, 0
   );
   const todayMidnight = new Date(
     now.getFullYear(),
     now.getMonth(),
     now.getDate(),
+    0, 0, 0, 0
   );
   const diffDays =
     (todayMidnight.getTime() - planDate.getTime()) / (1000 * 3600 * 24);
@@ -630,7 +635,7 @@ function renderDashboardChartsMarkup(lang) {
         </div>
         <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
           <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
-            🎯 ${isAr ? "مؤشر قياس التغطية" : "Doctor Coverage Gauge"}
+            🎯 ${isAr ? "نسبة الوصول للأطباء (هذا الشهر)" : "Doctor Reach Gauge (This Month)"}
           </h4>
           <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
             <canvas id="dashCoverageGaugeChart"></canvas>
@@ -833,20 +838,13 @@ function initDashboardCharts(user) {
 
   window.renderDoctorClassesChart("dashDoctorClassesChart", classACount, classBCount, hospitalsCount);
 
-  // 3. Coverage Radial Gauge (Current Quarter)
+  // 3. Monthly Doctor Reach Radial Gauge (Current Month)
   const nowGauge = new Date();
-  const currentQuarterGauge = Math.floor(nowGauge.getMonth() / 3) + 1;
-  const qStartMonthGauge = (currentQuarterGauge - 1) * 3;
-  const qEndMonthGauge = qStartMonthGauge + 2;
+  const currentMonthStr = `${nowGauge.getFullYear()}-${String(nowGauge.getMonth() + 1).padStart(2, "0")}`;
 
   let scopedVisits = allVisits.filter((v) => {
     if (v.status !== "completed" || !v.date) return false;
-    const vDate = new Date(v.date);
-    return (
-      vDate.getFullYear() === nowGauge.getFullYear() &&
-      vDate.getMonth() >= qStartMonthGauge &&
-      vDate.getMonth() <= qEndMonthGauge
-    );
+    return v.date.startsWith(currentMonthStr);
   });
   if (scopedRepIds) {
     scopedVisits = scopedVisits.filter((v) => scopedRepIds.includes(v.repId));
@@ -921,6 +919,9 @@ function renderDashboard() {
   };
   const role = (user.role || "admin").toLowerCase();
   const userName = user.name || "User";
+  if (typeof window.destroyAllCharts === "function") {
+    window.destroyAllCharts();
+  }
 
   container.replaceChildren();
 
@@ -1117,8 +1118,17 @@ function renderRepDashboard(userName, user) {
   // AM Hospitals Quarterly Target: 6 visits per hospital per quarter (2 visits per month * 3 months)
   const quarterlyVisitTargetAM = totalHospitalsCount > 0 ? (totalHospitalsCount * 6) : 6;
 
+  const currentMonthStr = todayStr.slice(0, 7);
+  const currentMonthCompletedVisits = allVisits.filter(
+    (v) =>
+      v.repId === currentUserId &&
+      v.status === "completed" &&
+      v.date &&
+      v.date.startsWith(currentMonthStr),
+  );
+
   const coveredDoctorIds = new Set();
-  currentQuarterCompletedVisits.forEach((v) => {
+  currentMonthCompletedVisits.forEach((v) => {
     if (v.doctorId) {
       coveredDoctorIds.add(v.doctorId);
     } else if (v.doctorName || v.targetName) {
@@ -1197,12 +1207,13 @@ function renderRepDashboard(userName, user) {
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${lang === "ar" ? `نسبة التغطية (${quarterLabel})` : `Overall Coverage (${quarterLabel})`}</div>
+            <div class="stat-label">${lang === "ar" ? "الأطباء الذين تم زيارتهم (هذا الشهر)" : "Doctors Visited (This Month)"}</div>
             <div class="stat-value success">
-              <span class="counter" data-target="${overallCoveragePct}">${overallCoveragePct}</span>%
+              <span class="counter" data-target="${coveredDoctorsCount}">${coveredDoctorsCount}</span>
+              <span style="font-size: 0.95rem; color: var(--gray-500); font-weight: 600;"> / ${totalDoctorsCount}</span>
             </div>
             <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${coveredDoctorsCount} / ${totalDoctorsCount} ${lang === "ar" ? "أطباء" : "Doctors"}
+              ${lang === "ar" ? `نسبة الوصول: ${overallCoveragePct}%` : `Reach: ${overallCoveragePct}%`} • ${lang === "ar" ? `${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} متبقي` : `${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} Left`}
             </div>
           </div>
           <div class="stat-card">

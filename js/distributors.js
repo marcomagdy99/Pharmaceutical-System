@@ -9,84 +9,7 @@
 let distributorModal = null;
 let deleteModal = null;
 
-/**
- * Parses a numeric string from imported Excel/CSV data.
- * Handles:
- * - Eastern Arabic digits (١٢٣)
- * - Accounting negative notation in parentheses e.g. (1,500.00) or (250)
- * - Trailing negative signs e.g. 1500-
- * - Standard negative signs e.g. -1500
- * - European decimal notation (1.250,50)
- * - Standard thousand-separator format (1,250.50)
- */
-function parseSalesNumber(val) {
-  if (val === null || val === undefined || val === "") return NaN;
-  if (typeof val === "number") return val;
-  let s = String(val).trim();
-  if (!s) return NaN;
-
-  // Check if negative in accounting formats: (1,500) or 1500- or -1500
-  const isAccountingNegative = (s.startsWith("(") && s.endsWith(")")) || s.endsWith("-") || s.startsWith("-");
-
-  // Convert Eastern Arabic-Indic digits ٠١٢٣٤٥٦٧٨٩ to Latin
-  s = s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
-
-  // Clean parentheses and trailing/leading minus
-  s = s.replace(/[\(\)]/g, "");
-
-  // European format: dot as thousands separator, comma as decimal (e.g. 1.250,50)
-  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) {
-    s = s.replace(/\./g, "").replace(",", ".");
-  } else if (/^\d+(,\d{1,2})$/.test(s)) {
-    // European decimal without thousands dots (e.g. 1250,50)
-    s = s.replace(",", ".");
-  } else {
-    // Standard: remove thousand commas
-    s = s.replace(/,/g, "");
-  }
-
-  const num = parseFloat(s.replace(/[^0-9.]/g, ""));
-  if (isNaN(num)) return NaN;
-  return isAccountingNegative ? -Math.abs(num) : num;
-}
-
-/**
- * Parses date strictly from Excel/CSV imports, prioritizing DD/MM/YYYY and YYYY-MM-DD
- */
-function parseDateStrict(dateRaw) {
-  if (!dateRaw && dateRaw !== 0) return null;
-  if (dateRaw instanceof Date && !isNaN(dateRaw.getTime())) {
-    return dateRaw.toISOString().slice(0, 10);
-  }
-  if (typeof dateRaw === "number") {
-    const d = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
-    return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
-  }
-  const str = String(dateRaw).trim();
-  if (!str) return null;
-
-  // Check DD/MM/YYYY or DD-MM-YYYY
-  const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (dmy) {
-    const day = dmy[1].padStart(2, "0");
-    const month = dmy[2].padStart(2, "0");
-    const year = dmy[3];
-    return `${year}-${month}-${day}`;
-  }
-
-  // Check YYYY-MM-DD or YYYY/MM/DD
-  const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-  if (ymd) {
-    const year = ymd[1];
-    const month = ymd[2].padStart(2, "0");
-    const day = ymd[3].padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
-  const d = new Date(str);
-  return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : null;
-}
-
+// parseSalesNumber and parseDateStrict are provided globally by app.js
 let mappingModal = null;
 let mappingTargetDistId = null;
 let mappingDetectedHeaders = [];
@@ -107,8 +30,7 @@ const distributorTranslations = {
     edit: "Edit",
     delete: "Delete",
     confirm_delete: "Confirm Delete",
-    delete_distributor_msg:
-      "Are you sure you want to delete this distributor?",
+    delete_distributor_msg: "Are you sure you want to delete this distributor?",
     mapping_status: "Sheet Mapping",
     mapped: "Mapped",
     not_configured: "Not Configured",
@@ -132,6 +54,7 @@ const distributorTranslations = {
     role_date: "Transaction Date (optional)",
     role_area: "Area / Territory (raw text)",
     role_pharmacy: "Pharmacy / Client Name",
+    role_pharmacy_code: "Pharmacy / Client Code",
     supply_type: "Supply Type",
     supply_type_hint:
       'Commercial and Tender business from the same wholesaler (e.g. "Ibn Sina" vs "Tender Ibn Sina") are separate distributor entries.',
@@ -145,7 +68,8 @@ const distributorTranslations = {
     link_to_area: "Link to Area",
     select_area: "-- Select Area --",
     link: "Link",
-    linked_successfully: "Territory linked and matching sales attributed to the rep.",
+    linked_successfully:
+      "Territory linked and matching sales attributed to the rep.",
     select_area_first: "Select an Area first.",
     unmatched_products: "Unmatched Products",
     unmatched_products_desc:
@@ -153,10 +77,12 @@ const distributorTranslations = {
     raw_product_text: "Raw Text",
     link_to_product: "Link to Product",
     select_product: "-- Select Product --",
-    product_linked_successfully: "Product linked and matching sales attributed to its Line.",
+    product_linked_successfully:
+      "Product linked and matching sales attributed to its Line.",
     select_product_first: "Select a product first.",
     import_history: "Import History",
-    import_history_desc: "Every sheet uploaded so far. Deleting a batch removes all the sales rows it created -- use this to undo a mistaken upload (wrong distributor, wrong file, etc.).",
+    import_history_desc:
+      "Every sheet uploaded so far. Deleting a batch removes all the sales rows it created -- use this to undo a mistaken upload (wrong distributor, wrong file, etc.).",
     import_month: "Month",
     import_file: "File",
     import_uploaded_at: "Uploaded",
@@ -167,13 +93,15 @@ const distributorTranslations = {
     tab_distributors_mapping: "Distributors & Mapping",
     tab_sales_import: "Upload Sales Sheets",
     upload_sales_title: "Upload Monthly Sales Sheet",
-    upload_sales_desc: "Select the distributor, month, and year, then upload the official sales spreadsheet.",
+    upload_sales_desc:
+      "Select the distributor, month, and year, then upload the official sales spreadsheet.",
     select_distributor: "-- Select Distributor --",
     label_month: "Month",
     label_year: "Year",
     upload_excel_btn: "Upload Excel Sheet",
     active_aliases_title: "Active Mapped Aliases",
-    active_aliases_desc: "View and manage territory and product aliases mapped to distributors. Unlink any accidental mapping with one click.",
+    active_aliases_desc:
+      "View and manage territory and product aliases mapped to distributors. Unlink any accidental mapping with one click.",
     tab_mapped_territories: "Territories",
     tab_mapped_products: "Products",
     mapped_to_area: "Mapped Area",
@@ -186,9 +114,33 @@ const distributorTranslations = {
     edit_product_mapping: "Edit Product Mapping",
     currently_mapped_to: "Currently Mapped To",
     select_new_target: "Select New Target",
-    alias_updated_successfully: "Mapping updated and sales re-attributed successfully.",
+    alias_updated_successfully:
+      "Mapping updated and sales re-attributed successfully.",
     raw_sheet_text: "Raw Sheet Text",
     save_changes: "Save Changes",
+    tab_pharmacy_overrides: "Pharmacy Overrides",
+    pharmacy_overrides_title: "Pharmacy Territory Overrides",
+    pharmacy_overrides_desc:
+      "Route specific pharmacies to a custom territory regardless of the raw brick text in distributor sheets.",
+    btn_add_pharmacy_override: "Add Pharmacy Override",
+    add_pharmacy_override: "Add Pharmacy Territory Override",
+    edit_pharmacy_override: "Edit Pharmacy Territory Override",
+    target_area: "Target Territory / Area *",
+    col_pharmacy_code: "Pharmacy Code",
+    col_pharmacy_name: "Pharmacy Name",
+    col_rep: "Assigned Rep",
+    col_effective_period: "Effective Scope",
+    scope_all_history: "All Time (Full)",
+    scope_from_month: "From {month} onwards",
+    scope_future_only: "Future Imports Only",
+    no_pharmacy_overrides: "No pharmacy territory overrides configured yet.",
+    save_override: "Save Override",
+    confirm_delete_override:
+      "Are you sure you want to remove this pharmacy override? Matching sales will revert to standard territory matching.",
+    override_saved_success:
+      "Pharmacy override saved. {count} sales rows updated.",
+    override_deleted_success:
+      "Pharmacy override deleted. {count} sales rows reverted.",
   },
   ar: {
     distributor_management: "إدارة الموزعين",
@@ -228,6 +180,7 @@ const distributorTranslations = {
     role_date: "تاريخ العملية (اختياري)",
     role_area: "المنطقة / الإقليم (نص خام)",
     role_pharmacy: "اسم الصيدلية / العميل",
+    role_pharmacy_code: "كود الصيدلية / العميل بالموزع",
     supply_type: "نوع التوريد",
     supply_type_hint:
       'التجاري والمناقصات من نفس الموزّع (زي "ابن سينا" و"Tender ابن سينا") بيتسجلوا كموزّعين منفصلين.',
@@ -249,10 +202,12 @@ const distributorTranslations = {
     raw_product_text: "النص الخام",
     link_to_product: "اربط بمنتج",
     select_product: "-- اختار المنتج --",
-    product_linked_successfully: "اتربط المنتج وحسبنا المبيعات المطابقة على الـ Line بتاعه.",
+    product_linked_successfully:
+      "اتربط المنتج وحسبنا المبيعات المطابقة على الـ Line بتاعه.",
     select_product_first: "اختار منتج الأول.",
     import_history: "سجل الاستيراد",
-    import_history_desc: "كل شيت اترفع لحد دلوقتي. مسح رفعة بيشيل كل صفوف المبيعات اللي اتسجلت منها -- استخدمها عشان تلغي رفعة غلط (موزّع غلط، ملف غلط...).",
+    import_history_desc:
+      "كل شيت اترفع لحد دلوقتي. مسح رفعة بيشيل كل صفوف المبيعات اللي اتسجلت منها -- استخدمها عشان تلغي رفعة غلط (موزّع غلط، ملف غلط...).",
     import_month: "الشهر",
     import_file: "الملف",
     import_uploaded_at: "تاريخ الرفع",
@@ -263,13 +218,15 @@ const distributorTranslations = {
     tab_distributors_mapping: "الموزعين وضبط القوالب",
     tab_sales_import: "رفع شيتات المبيعات",
     upload_sales_title: "رفع شيت المبيعات الشهري",
-    upload_sales_desc: "اختر الموزع والشهر والسنة ثم ارفع شيت المبيعات المعتمد.",
+    upload_sales_desc:
+      "اختر الموزع والشهر والسنة ثم ارفع شيت المبيعات المعتمد.",
     select_distributor: "-- اختر الموزّع --",
     label_month: "الشهر",
     label_year: "السنة",
     upload_excel_btn: "رفع شيت إكسيل",
     active_aliases_title: "الأسماء المربوطة حالياً (Active Aliases)",
-    active_aliases_desc: "عرض وإدارة أسماء المناطق والمنتجات المربوطة بالموزعين. يمكنك إلغاء أي ربط خاطئ بضغطة زر واحدة.",
+    active_aliases_desc:
+      "عرض وإدارة أسماء المناطق والمنتجات المربوطة بالموزعين. يمكنك إلغاء أي ربط خاطئ بضغطة زر واحدة.",
     tab_mapped_territories: "المناطق",
     tab_mapped_products: "المنتجات",
     mapped_to_area: "المنطقة المربوط بها",
@@ -285,6 +242,28 @@ const distributorTranslations = {
     alias_updated_successfully: "تم تعديل الربط وإعادة توجيه المبيعات بنجاح.",
     raw_sheet_text: "النص الخام بالشيت",
     save_changes: "حفظ التعديلات",
+    tab_pharmacy_overrides: "استثناءات الصيدليات",
+    pharmacy_overrides_title: "استثناءات توجيه الصيدليات",
+    pharmacy_overrides_desc:
+      "توجيه صيدليات محددة لمنطقة ومندوب مخصص بغض النظر عن نص المنطقة المسجل بشيت الموزع.",
+    btn_add_pharmacy_override: "إضافة استثناء صيدلية",
+    add_pharmacy_override: "إضافة استثناء لمنطقة صيدلية",
+    edit_pharmacy_override: "تعديل استثناء منطقة صيدلية",
+    target_area: "المنطقة الموجهة إليها *",
+    col_pharmacy_code: "كود الصيدلية",
+    col_pharmacy_name: "اسم الصيدلية",
+    col_rep: "المندوب المسؤول",
+    col_effective_period: "النطاق الزمني",
+    scope_all_history: "كل المبيعات (أثر رجعي كامل)",
+    scope_from_month: "بدءاً من شهر {month} فصاعداً",
+    scope_future_only: "الشيتات القادمة فقط",
+    no_pharmacy_overrides: "لا توجد أي استثناءات مسجلة للصيدليات حتى الآن.",
+    save_override: "حفظ الاستثناء",
+    confirm_delete_override:
+      "هل أنت متأكد من حذف هذا الاستثناء؟ ستعود مبيعات الصيدلية لمناطقها الأصلية بشيت الموزع.",
+    override_saved_success: "تم حفظ الاستثناء بنجاح وتحديث {count} صف مبيعات.",
+    override_deleted_success:
+      "تم حذف الاستثناء وإعادة {count} صف مبيعات لمناطقها الأصلية.",
   },
 };
 
@@ -304,11 +283,22 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  distributorModal = new bootstrap.Modal(
-    document.getElementById("distributorModal"),
-  );
-  deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
-  mappingModal = new bootstrap.Modal(document.getElementById("mappingModal"));
+  try {
+    const elDist = document.getElementById("distributorModal");
+    if (elDist && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+      distributorModal = new bootstrap.Modal(elDist);
+    }
+    const elDel = document.getElementById("deleteModal");
+    if (elDel && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+      deleteModal = new bootstrap.Modal(elDel);
+    }
+    const elMap = document.getElementById("mappingModal");
+    if (elMap && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+      mappingModal = new bootstrap.Modal(elMap);
+    }
+  } catch (err) {
+    console.warn("Bootstrap modal initialization warning:", err);
+  }
 
   if (window.translations) {
     window.translations.en = {
@@ -321,16 +311,25 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  renderDistributors();
-  updateStats();
-  renderPendingAreas();
-  renderPendingProducts();
-  renderMappedAliases();
-  renderImportBatches();
-  populateUploadControls();
+  try { renderDistributors(); } catch (e) { console.error("renderDistributors error:", e); }
+  try { updateStats(); } catch (e) { console.error("updateStats error:", e); }
+  try { renderPendingAreas(); } catch (e) { console.error("renderPendingAreas error:", e); }
+  try { renderPendingProducts(); } catch (e) { console.error("renderPendingProducts error:", e); }
+  try { renderMappedAliases(); } catch (e) { console.error("renderMappedAliases error:", e); }
+  try { renderImportBatches(); } catch (e) { console.error("renderImportBatches error:", e); }
+  try { populateUploadControls(); } catch (e) { console.error("populateUploadControls error:", e); }
+
+  const btnDist = document.getElementById("tabBtn-distributors");
+  const btnImport = document.getElementById("tabBtn-import");
+  if (btnDist) {
+    btnDist.addEventListener("click", () => switchDistTab("distributors"));
+  }
+  if (btnImport) {
+    btnImport.addEventListener("click", () => switchDistTab("import"));
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("tab") === "import") {
+  if (urlParams.get("tab") === "import" || window.location.hash === "#import") {
     switchDistTab("import");
   }
 });
@@ -450,15 +449,20 @@ function openEditModal(id) {
 
 function saveDistributor() {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
-    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+  if (
+    window.hasAnyRole &&
+    !window.hasAnyRole(["admin", "business_unit", "hr"], user)
+  ) {
+    if (typeof showToast === "function")
+      showToast("Permission Denied.", "error");
     return;
   }
   const id = document.getElementById("distributorId").value;
   const name = document.getElementById("distributorName").value.trim();
-  const type = document.getElementById("distributorType").value === "tender"
-    ? "tender"
-    : "commercial";
+  const type =
+    document.getElementById("distributorType").value === "tender"
+      ? "tender"
+      : "commercial";
 
   if (!name) {
     if (typeof showToast === "function")
@@ -497,8 +501,12 @@ function openDeleteModal(id) {
 
 function confirmDelete() {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
-    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+  if (
+    window.hasAnyRole &&
+    !window.hasAnyRole(["admin", "business_unit", "hr"], user)
+  ) {
+    if (typeof showToast === "function")
+      showToast("Permission Denied.", "error");
     return;
   }
   const id = document.getElementById("deleteDistributorId").value;
@@ -525,6 +533,7 @@ function confirmDelete() {
 const MAPPING_ROLES = [
   { value: "", i18nKey: "role_ignore" },
   { value: "pharmacy", i18nKey: "role_pharmacy" },
+  { value: "pharmacyCode", i18nKey: "role_pharmacy_code" },
   { value: "product", i18nKey: "role_product" },
   { value: "value", i18nKey: "role_value" },
   { value: "quantity", i18nKey: "role_quantity" },
@@ -539,7 +548,9 @@ function openMappingModal(id) {
   const isAr = document.documentElement.dir === "rtl";
   const nameEl = document.getElementById("mappingModalDistName");
   if (nameEl && dist) {
-    nameEl.textContent = isAr ? `الموزّع: ${dist.name}` : `Distributor: ${dist.name}`;
+    nameEl.textContent = isAr
+      ? `الموزّع: ${dist.name}`
+      : `Distributor: ${dist.name}`;
   }
   resetMappingUpload();
   mappingModal.show();
@@ -559,7 +570,10 @@ function handleMappingFileSelected(event) {
   if (!file) return;
   if (typeof XLSX === "undefined") {
     if (typeof showToast === "function")
-      showToast("Excel reader library failed to load. Check your connection.", "error");
+      showToast(
+        "Excel reader library failed to load. Check your connection.",
+        "error",
+      );
     return;
   }
   const reader = new FileReader();
@@ -583,7 +597,9 @@ function handleMappingFileSelected(event) {
       for (let i = 0; i < inspectLimit; i++) {
         const row = rows[i];
         if (Array.isArray(row)) {
-          const filledCount = row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length;
+          const filledCount = row.filter(
+            (c) => c !== null && c !== undefined && String(c).trim() !== "",
+          ).length;
           if (filledCount > maxColsCount) {
             maxColsCount = filledCount;
             headerRow = row;
@@ -616,6 +632,170 @@ function handleMappingFileSelected(event) {
   reader.readAsArrayBuffer(file);
 }
 
+function guessRoleFromHeader(header, assignedRoles, allHeaders = []) {
+  if (!header) return "";
+  const h = String(header).trim().toLowerCase();
+  const lowerHeaders = allHeaders.map((x) =>
+    String(x || "")
+      .trim()
+      .toLowerCase(),
+  );
+  const hasValueCol = lowerHeaders.some(
+    (x) =>
+      x === "value" ||
+      x.includes("val") ||
+      x.includes("amount") ||
+      x.includes("قيمة") ||
+      x.includes("مبلغ") ||
+      x.includes("صافي"),
+  );
+  const hasCustomerNameCol = lowerHeaders.some(
+    (x) =>
+      x.includes("customer name") ||
+      x.includes("client name") ||
+      x.includes("اسم العميل") ||
+      x.includes("اسم الصيدلية"),
+  );
+
+  // 1. Pharmacy / Customer Code
+  if (!assignedRoles.has("pharmacyCode")) {
+    if (
+      h.includes("cust_code") ||
+      h.includes("client_code") ||
+      h.includes("customer_code") ||
+      h.includes("pharmacy_code") ||
+      h.includes("cust code") ||
+      h.includes("client code") ||
+      h.includes("customer code") ||
+      h.includes("pharmacy code") ||
+      h.includes("acc_no") ||
+      h.includes("account_no") ||
+      h.includes("account code") ||
+      h.includes("كود العميل") ||
+      h.includes("كود الصيدلية") ||
+      h.includes("رقم العميل") ||
+      h.includes("رقم الصيدلية") ||
+      h.includes("كود الحساب") ||
+      ((h === "customer" || h === "client" || h === "cust") &&
+        hasCustomerNameCol) ||
+      (h.includes("code") && !h.includes("prod") && !h.includes("item")) ||
+      (h.includes("كود") && !h.includes("صنف") && !h.includes("منتج"))
+    ) {
+      return "pharmacyCode";
+    }
+  }
+
+  // 2. Pharmacy / Customer Name
+  if (!assignedRoles.has("pharmacy")) {
+    if (
+      h.includes("customer name") ||
+      h.includes("client name") ||
+      h.includes("pharmacy") ||
+      h.includes("اسم العميل") ||
+      h.includes("اسم الصيدلية") ||
+      (!hasCustomerNameCol &&
+        (h.includes("customer") ||
+          h.includes("client") ||
+          h.includes("account") ||
+          h.includes("صيدلية") ||
+          h.includes("عميل")))
+    ) {
+      return "pharmacy";
+    }
+  }
+
+  // 3. Product / Medicine
+  if (!assignedRoles.has("product")) {
+    if (
+      h.includes("product") ||
+      h.includes("item name") ||
+      h.includes("item") ||
+      h.includes("medicine") ||
+      h.includes("drug") ||
+      h.includes("mat. desc") ||
+      h.includes("mat desc") ||
+      h.includes("material") ||
+      h.includes("صنف") ||
+      h.includes("منتج") ||
+      h.includes("مستحضر") ||
+      h.includes("اسم الصنف") ||
+      h.includes("اسم المنتج")
+    ) {
+      return "product";
+    }
+  }
+
+  // 4. Quantity / Units (Give priority if 'sales' represents units alongside a 'value' column)
+  if (!assignedRoles.has("quantity")) {
+    if (
+      h.includes("qty") ||
+      h.includes("quantity") ||
+      h.includes("units") ||
+      h.includes("pieces") ||
+      h.includes("كمية") ||
+      h.includes("عدد") ||
+      h.includes("الكمية") ||
+      h.includes("الوحدات") ||
+      (h.includes("sales") && hasValueCol)
+    ) {
+      return "quantity";
+    }
+  }
+
+  // 5. Sales Value
+  if (!assignedRoles.has("value")) {
+    if (
+      h.includes("value") ||
+      h.includes("net") ||
+      h.includes("val") ||
+      h.includes("amount") ||
+      h.includes("total") ||
+      h.includes("مبيعات") ||
+      h.includes("قيمة") ||
+      h.includes("صافي") ||
+      h.includes("المبلغ") ||
+      h.includes("الإجمالي") ||
+      h.includes("الاجمالي") ||
+      (h.includes("sales") && !hasValueCol)
+    ) {
+      return "value";
+    }
+  }
+
+  // 6. Date
+  if (!assignedRoles.has("date")) {
+    if (
+      h.includes("date") ||
+      h.includes("تاريخ") ||
+      h.includes("التاريخ") ||
+      h.includes("day") ||
+      h.includes("يوم")
+    ) {
+      return "date";
+    }
+  }
+
+  // 7. Area / Territory
+  if (!assignedRoles.has("area")) {
+    if (
+      h.includes("area") ||
+      h.includes("territory") ||
+      h.includes("brick") ||
+      h.includes("region") ||
+      h.includes("zone") ||
+      h.includes("منطقة") ||
+      h.includes("اقليم") ||
+      h.includes("إقليم") ||
+      h.includes("قطاع") ||
+      h.includes("المنطقة")
+    ) {
+      return "area";
+    }
+  }
+
+  return "";
+}
+
 function buildRolesTable(headers) {
   const tbody = document.getElementById("mappingRolesTableBody");
   if (!tbody) return;
@@ -625,6 +805,14 @@ function buildRolesTable(headers) {
   const existingMap = (dist && dist.columnMap) || {};
 
   tbody.replaceChildren();
+
+  const assignedRoles = new Set();
+  Object.keys(existingMap).forEach((role) => {
+    if (headers.includes(existingMap[role])) {
+      assignedRoles.add(role);
+    }
+  });
+
   headers.forEach((header, idx) => {
     // Pre-select a role if this exact header text was already mapped for
     // this distributor before (e.g. re-configuring after the sheet
@@ -633,6 +821,13 @@ function buildRolesTable(headers) {
     Object.keys(existingMap).forEach((role) => {
       if (existingMap[role] === header) preselected = role;
     });
+
+    if (!preselected) {
+      preselected = guessRoleFromHeader(header, assignedRoles, headers);
+      if (preselected) {
+        assignedRoles.add(preselected);
+      }
+    }
 
     const tr = document.createElement("tr");
     const nameTd = document.createElement("td");
@@ -678,7 +873,7 @@ function saveMapping() {
   if (duplicateRole) {
     if (typeof showToast === "function")
       showToast(
-        "Each role (Product, Value, Area, Pharmacy) can only be assigned to one column.",
+        "Each mapping role can only be assigned to one column.",
         "warning",
       );
     return;
@@ -768,7 +963,8 @@ function linkAreaAlias(distributorId, areaRaw, selectId) {
   const areaId = select ? select.value : "";
 
   if (!areaId) {
-    if (typeof showToast === "function") showToast(t.select_area_first, "warning");
+    if (typeof showToast === "function")
+      showToast(t.select_area_first, "warning");
     return;
   }
 
@@ -781,7 +977,8 @@ function linkAreaAlias(distributorId, areaRaw, selectId) {
 
   renderPendingAreas();
   renderMappedAliases();
-  if (typeof showToast === "function") showToast(t.linked_successfully, "success");
+  if (typeof showToast === "function")
+    showToast(t.linked_successfully, "success");
 }
 
 // ==========================================
@@ -793,7 +990,11 @@ function renderPendingProducts() {
   const section = document.getElementById("pendingProductsSection");
   const tbody = document.getElementById("pendingProductsTableBody");
   if (!section || !tbody) return;
-  if (!window.store || !window.store.distributorSales || !window.store.productLines) {
+  if (
+    !window.store ||
+    !window.store.distributorSales ||
+    !window.store.productLines
+  ) {
     section.style.display = "none";
     return;
   }
@@ -822,7 +1023,10 @@ function renderPendingProducts() {
         const products = Array.isArray(line.products) ? line.products : [];
         if (!products.length) return "";
         const opts = products
-          .map((p) => `<option value="${window.escapeHtml(line.id)}::${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)}${p.dosage ? " " + window.escapeHtml(p.dosage) : ""}</option>`)
+          .map(
+            (p) =>
+              `<option value="${window.escapeHtml(line.id)}::${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)}${p.dosage ? " " + window.escapeHtml(p.dosage) : ""}</option>`,
+          )
           .join("");
         return `<optgroup label="${window.escapeHtml(line.name)}">${opts}</optgroup>`;
       })
@@ -856,13 +1060,19 @@ function linkProductAlias(distributorId, productRaw, selectId) {
   const combined = select ? select.value : "";
 
   if (!combined) {
-    if (typeof showToast === "function") showToast(t.select_product_first, "warning");
+    if (typeof showToast === "function")
+      showToast(t.select_product_first, "warning");
     return;
   }
   const [lineId, productId] = combined.split("::");
 
   if (window.store && window.store.productLines) {
-    window.store.productLines.addProductAlias(lineId, productId, distributorId, productRaw);
+    window.store.productLines.addProductAlias(
+      lineId,
+      productId,
+      distributorId,
+      productRaw,
+    );
   }
   if (window.store && window.store.distributorSales) {
     window.store.distributorSales.applyProductMatching();
@@ -871,7 +1081,8 @@ function linkProductAlias(distributorId, productRaw, selectId) {
 
   renderPendingProducts();
   renderMappedAliases();
-  if (typeof showToast === "function") showToast(t.product_linked_successfully, "success");
+  if (typeof showToast === "function")
+    showToast(t.product_linked_successfully, "success");
 }
 
 // ==========================================
@@ -883,20 +1094,24 @@ function switchAliasTab(tabName) {
   currentAliasTab = tabName;
   const tabAreas = document.getElementById("aliasTabAreas");
   const tabProducts = document.getElementById("aliasTabProducts");
+  const tabPharmacies = document.getElementById("aliasTabPharmacies");
   const areasContainer = document.getElementById("mappedAreasContainer");
   const productsContainer = document.getElementById("mappedProductsContainer");
+  const pharmaciesContainer = document.getElementById(
+    "mappedPharmaciesContainer",
+  );
 
-  if (tabName === "areas") {
-    tabAreas?.classList.add("active");
-    tabProducts?.classList.remove("active");
-    if (areasContainer) areasContainer.style.display = "block";
-    if (productsContainer) productsContainer.style.display = "none";
-  } else {
-    tabProducts?.classList.add("active");
-    tabAreas?.classList.remove("active");
-    if (areasContainer) areasContainer.style.display = "none";
-    if (productsContainer) productsContainer.style.display = "block";
-  }
+  tabAreas?.classList.toggle("active", tabName === "areas");
+  tabProducts?.classList.toggle("active", tabName === "products");
+  tabPharmacies?.classList.toggle("active", tabName === "pharmacies");
+
+  if (areasContainer)
+    areasContainer.style.display = tabName === "areas" ? "block" : "none";
+  if (productsContainer)
+    productsContainer.style.display = tabName === "products" ? "block" : "none";
+  if (pharmaciesContainer)
+    pharmaciesContainer.style.display =
+      tabName === "pharmacies" ? "block" : "none";
 }
 window.switchAliasTab = switchAliasTab;
 
@@ -909,9 +1124,10 @@ function renderMappedAliases() {
   const areasTbody = document.getElementById("mappedAreasTableBody");
   const countAreasEl = document.getElementById("countMappedAreas");
   if (areasTbody && window.store && window.store.areas) {
-    const areaAliases = typeof window.store.areas.getAllAliases === "function"
-      ? window.store.areas.getAllAliases()
-      : [];
+    const areaAliases =
+      typeof window.store.areas.getAllAliases === "function"
+        ? window.store.areas.getAllAliases()
+        : [];
     if (countAreasEl) countAreasEl.textContent = areaAliases.length;
 
     if (areaAliases.length === 0) {
@@ -948,9 +1164,10 @@ function renderMappedAliases() {
   const prodsTbody = document.getElementById("mappedProductsTableBody");
   const countProdsEl = document.getElementById("countMappedProducts");
   if (prodsTbody && window.store && window.store.productLines) {
-    const prodAliases = typeof window.store.productLines.getAllProductAliases === "function"
-      ? window.store.productLines.getAllProductAliases()
-      : [];
+    const prodAliases =
+      typeof window.store.productLines.getAllProductAliases === "function"
+        ? window.store.productLines.getAllProductAliases()
+        : [];
     if (countProdsEl) countProdsEl.textContent = prodAliases.length;
 
     if (prodAliases.length === 0) {
@@ -982,8 +1199,306 @@ function renderMappedAliases() {
       });
     }
   }
+
+  // 3. Render Mapped Pharmacy Overrides
+  const pharmsTbody = document.getElementById("mappedPharmaciesTableBody");
+  const countPharmsEl = document.getElementById("countMappedPharmacies");
+  if (pharmsTbody && window.store && window.store.pharmacyOverrides) {
+    const overrides = window.store.pharmacyOverrides.getAll();
+    if (countPharmsEl) countPharmsEl.textContent = overrides.length;
+
+    if (overrides.length === 0) {
+      pharmsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">${t.no_pharmacy_overrides}</td></tr>`;
+    } else {
+      pharmsTbody.innerHTML = "";
+      const areas = (window.store.areas && window.store.areas.getAll()) || [];
+      const users = (window.store.users && window.store.users.getAll()) || [];
+
+      overrides.forEach((entry) => {
+        const dist = distributors.find((d) => d.id === entry.distributorId);
+        const distName = dist ? dist.name : entry.distributorId;
+        const area = areas.find((a) => a.id === entry.areaId);
+        const rep =
+          area && area.repId ? users.find((u) => u.id === area.repId) : null;
+
+        let scopeLabel = "";
+        let scopeBadgeClass = "bg-primary-subtle text-primary";
+        if (entry.effectiveScope === "from_month") {
+          scopeLabel = t.scope_from_month.replace(
+            "{month}",
+            entry.effectiveFromMonth || "—",
+          );
+          scopeBadgeClass = "bg-warning-subtle text-dark";
+        } else if (entry.effectiveScope === "future_only") {
+          scopeLabel = t.scope_future_only;
+          scopeBadgeClass = "bg-secondary-subtle text-secondary";
+        } else {
+          scopeLabel = t.scope_all_history;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2 fw-medium">${window.escapeHtml(distName)}</td>
+          <td class="px-3 py-2"><span class="badge bg-light text-dark border font-monospace">${window.escapeHtml(entry.pharmacyCode || "—")}</span></td>
+          <td class="px-3 py-2 fw-semibold">${window.escapeHtml(entry.pharmacyName || "—")}</td>
+          <td class="px-3 py-2 text-primary fw-semibold">
+            <i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(area ? area.name : entry.areaId)}
+          </td>
+          <td class="px-3 py-2">${window.escapeHtml(rep ? rep.name : isAr ? "غير معين" : "Unassigned")}</td>
+          <td class="px-3 py-2"><span class="badge ${scopeBadgeClass} border">${window.escapeHtml(scopeLabel)}</span></td>
+          <td class="px-3 py-2 text-end">
+            <div class="d-flex gap-1 justify-content-end">
+              <button class="btn btn-sm btn-outline-primary" onclick="openPharmacyOverrideModal('${window.escapeHtml(entry.id)}')" title="${t.edit}">
+                <i class="fas fa-edit me-1"></i>${t.edit}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deletePharmacyOverride('${window.escapeHtml(entry.id)}')" title="${t.delete}">
+                <i class="fas fa-trash me-1"></i>${t.delete}
+              </button>
+            </div>
+          </td>
+        `;
+        pharmsTbody.appendChild(tr);
+      });
+    }
+  }
 }
 window.renderMappedAliases = renderMappedAliases;
+
+// ==========================================
+// Section: Pharmacy Territory Overrides Controller
+// ==========================================
+let pharmacyOverrideModalInstance = null;
+function getPharmacyOverrideModal() {
+  if (!pharmacyOverrideModalInstance) {
+    const el = document.getElementById("pharmacyOverrideModal");
+    if (el) pharmacyOverrideModalInstance = new bootstrap.Modal(el);
+  }
+  return pharmacyOverrideModalInstance;
+}
+
+function togglePovrMonthPicker() {
+  const fromMonthRadio = document.getElementById("povrScopeFromMonth");
+  const container = document.getElementById("povrMonthPickerContainer");
+  if (container) {
+    container.style.display =
+      fromMonthRadio && fromMonthRadio.checked ? "block" : "none";
+  }
+}
+window.togglePovrMonthPicker = togglePovrMonthPicker;
+
+function openPharmacyOverrideModal(editId = null) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const modal = getPharmacyOverrideModal();
+  if (!modal) return;
+
+  const headingEl = document.getElementById("pharmacyOverrideModalHeading");
+  const editIdInput = document.getElementById("povrEditId");
+  const distSelect = document.getElementById("povrDistributorSelect");
+  const codeInput = document.getElementById("povrPharmacyCodeInput");
+  const nameInput = document.getElementById("povrPharmacyNameInput");
+  const areaSelect = document.getElementById("povrTargetAreaSelect");
+  const radioAll = document.getElementById("povrScopeAll");
+  const radioFromMonth = document.getElementById("povrScopeFromMonth");
+  const radioFuture = document.getElementById("povrScopeFutureOnly");
+  const fromMonthInput = document.getElementById("povrFromMonthInput");
+
+  // Populate distributors
+  const distributors = getDistributorsList();
+  distSelect.innerHTML =
+    `<option value="">${t.select_distributor}</option>` +
+    distributors
+      .map(
+        (d) =>
+          `<option value="${window.escapeHtml(d.id)}">${window.escapeHtml(d.name)}</option>`,
+      )
+      .join("");
+
+  // Populate target areas
+  const areas =
+    window.store && window.store.areas ? window.store.areas.getAll() : [];
+  const lines =
+    window.store && window.store.productLines
+      ? window.store.productLines.getAll()
+      : [];
+  const users =
+    window.store && window.store.users ? window.store.users.getAll() : [];
+
+  areaSelect.innerHTML =
+    `<option value="">${t.select_area}</option>` +
+    areas
+      .map((a) => {
+        const line = lines.find((l) => l.id === a.lineId);
+        const rep = a.repId ? users.find((u) => u.id === a.repId) : null;
+        const meta = [line ? line.name : null, rep ? rep.name : null]
+          .filter(Boolean)
+          .join(" • ");
+        return `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(a.name)}${meta ? ` (${window.escapeHtml(meta)})` : ""}</option>`;
+      })
+      .join("");
+
+  const currentMonth = (
+    typeof window.getSystemTodayStr === "function"
+      ? window.getSystemTodayStr()
+      : new Date().toISOString().split("T")[0]
+  ).slice(0, 7);
+  if (fromMonthInput) fromMonthInput.value = currentMonth;
+
+  if (editId) {
+    const existing = window.store.pharmacyOverrides.getById(editId);
+    if (!existing) return;
+    if (headingEl) headingEl.textContent = t.edit_pharmacy_override;
+    if (editIdInput) editIdInput.value = existing.id;
+    if (distSelect) distSelect.value = existing.distributorId;
+    if (codeInput) codeInput.value = existing.pharmacyCode || "";
+    if (nameInput) nameInput.value = existing.pharmacyName || "";
+    if (areaSelect) areaSelect.value = existing.areaId;
+
+    if (existing.effectiveScope === "from_month") {
+      if (radioFromMonth) radioFromMonth.checked = true;
+      if (fromMonthInput && existing.effectiveFromMonth)
+        fromMonthInput.value = existing.effectiveFromMonth;
+    } else if (existing.effectiveScope === "future_only") {
+      if (radioFuture) radioFuture.checked = true;
+    } else {
+      if (radioAll) radioAll.checked = true;
+    }
+  } else {
+    if (headingEl) headingEl.textContent = t.add_pharmacy_override;
+    if (editIdInput) editIdInput.value = "";
+    if (distSelect) distSelect.value = "";
+    if (codeInput) codeInput.value = "";
+    if (nameInput) nameInput.value = "";
+    if (areaSelect) areaSelect.value = "";
+    if (radioAll) radioAll.checked = true;
+  }
+
+  togglePovrMonthPicker();
+  modal.show();
+}
+window.openPharmacyOverrideModal = openPharmacyOverrideModal;
+
+function savePharmacyOverride() {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+
+  const editId = document.getElementById("povrEditId")?.value;
+  const distributorId = document.getElementById("povrDistributorSelect")?.value;
+  const pharmacyCode = document
+    .getElementById("povrPharmacyCodeInput")
+    ?.value?.trim();
+  const pharmacyName = document
+    .getElementById("povrPharmacyNameInput")
+    ?.value?.trim();
+  const areaId = document.getElementById("povrTargetAreaSelect")?.value;
+  const scopeRadio = document.querySelector(
+    'input[name="povrScopeRadio"]:checked',
+  );
+  const effectiveScope = scopeRadio ? scopeRadio.value : "all_history";
+  const fromMonth = document.getElementById("povrFromMonthInput")?.value;
+
+  if (!distributorId) {
+    if (typeof showToast === "function")
+      showToast(
+        isAr ? "يرجى اختيار الموزع أولاً." : "Please select a distributor.",
+        "warning",
+      );
+    return;
+  }
+  if (!pharmacyCode && !pharmacyName) {
+    if (typeof showToast === "function")
+      showToast(
+        isAr
+          ? "يرجى إدخال كود الصيدلية أو اسمها."
+          : "Please enter pharmacy code or name.",
+        "warning",
+      );
+    return;
+  }
+  if (!areaId) {
+    if (typeof showToast === "function")
+      showToast(
+        isAr ? "يرجى اختيار المنطقة المستهدفة." : "Please select target area.",
+        "warning",
+      );
+    return;
+  }
+  if (effectiveScope === "from_month" && !fromMonth) {
+    if (typeof showToast === "function")
+      showToast(
+        isAr
+          ? "يرجى تحديد شهر بداية التطبيق."
+          : "Please specify the starting month.",
+        "warning",
+      );
+    return;
+  }
+
+  const currentMonth = (
+    typeof window.getSystemTodayStr === "function"
+      ? window.getSystemTodayStr()
+      : new Date().toISOString().split("T")[0]
+  ).slice(0, 7);
+
+  const overrideObj = {
+    id: editId || undefined,
+    distributorId,
+    pharmacyCode: pharmacyCode || "",
+    pharmacyName: pharmacyName || "",
+    areaId,
+    effectiveScope,
+    effectiveFromMonth: effectiveScope === "from_month" ? fromMonth : null,
+    createdMonth: currentMonth,
+  };
+
+  if (!window.store || !window.store.pharmacyOverrides) return;
+
+  const saved = window.store.pharmacyOverrides.save(overrideObj);
+  let updatedCount = 0;
+  if (
+    window.store.distributorSales &&
+    typeof window.store.distributorSales.applyPharmacyOverride === "function"
+  ) {
+    updatedCount = window.store.distributorSales.applyPharmacyOverride(saved);
+  }
+
+  const modal = getPharmacyOverrideModal();
+  if (modal) modal.hide();
+
+  renderMappedAliases();
+
+  const msg = t.override_saved_success.replace("{count}", String(updatedCount));
+  if (typeof showToast === "function") showToast(msg, "success");
+}
+window.savePharmacyOverride = savePharmacyOverride;
+
+function deletePharmacyOverride(id) {
+  const isAr = document.documentElement.dir === "rtl";
+  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  if (!confirm(t.confirm_delete_override)) return;
+
+  if (!window.store || !window.store.pharmacyOverrides) return;
+  const deleted = window.store.pharmacyOverrides.delete(id);
+
+  let revertedCount = 0;
+  if (
+    deleted &&
+    window.store.distributorSales &&
+    typeof window.store.distributorSales.revertPharmacyOverride === "function"
+  ) {
+    revertedCount =
+      window.store.distributorSales.revertPharmacyOverride(deleted);
+  }
+
+  renderMappedAliases();
+
+  const msg = t.override_deleted_success.replace(
+    "{count}",
+    String(revertedCount),
+  );
+  if (typeof showToast === "function") showToast(msg, "info");
+}
+window.deletePharmacyOverride = deletePharmacyOverride;
 
 function unlinkAreaAlias(areaId, distributorId, rawText) {
   const isAr = document.documentElement.dir === "rtl";
@@ -997,7 +1512,9 @@ function unlinkAreaAlias(areaId, distributorId, rawText) {
   }
   renderPendingAreas();
   renderMappedAliases();
-  const successMsg = isAr ? `تم إلغاء ربط "${rawText}" بنجاح.` : `Alias "${rawText}" unlinked successfully.`;
+  const successMsg = isAr
+    ? `تم إلغاء ربط "${rawText}" بنجاح.`
+    : `Alias "${rawText}" unlinked successfully.`;
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 window.unlinkAreaAlias = unlinkAreaAlias;
@@ -1010,11 +1527,18 @@ function unlinkProductAlias(lineId, productId, distributorId, rawText) {
   if (!confirm(confirmMsg)) return;
 
   if (window.store && window.store.productLines) {
-    window.store.productLines.removeProductAlias(lineId, productId, distributorId, rawText);
+    window.store.productLines.removeProductAlias(
+      lineId,
+      productId,
+      distributorId,
+      rawText,
+    );
   }
   renderPendingProducts();
   renderMappedAliases();
-  const successMsg = isAr ? `تم إلغاء ربط الصنف "${rawText}" بنجاح.` : `Product alias "${rawText}" unlinked successfully.`;
+  const successMsg = isAr
+    ? `تم إلغاء ربط الصنف "${rawText}" بنجاح.`
+    : `Product alias "${rawText}" unlinked successfully.`;
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 window.unlinkProductAlias = unlinkProductAlias;
@@ -1037,26 +1561,41 @@ function getEditAliasModal() {
 function openEditAreaAlias(areaId, distributorId, rawText) {
   const isAr = document.documentElement.dir === "rtl";
   const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
-  const dist = (window.store && window.store.distributors ? window.store.distributors.getById(distributorId) : null) || {};
-  const currentArea = (window.store && window.store.areas ? window.store.areas.getById(areaId) : null) || {};
+  const dist =
+    (window.store && window.store.distributors
+      ? window.store.distributors.getById(distributorId)
+      : null) || {};
+  const currentArea =
+    (window.store && window.store.areas
+      ? window.store.areas.getById(areaId)
+      : null) || {};
 
   document.getElementById("editAliasType").value = "area";
   document.getElementById("editAliasDistId").value = distributorId;
   document.getElementById("editAliasRawText").value = rawText;
   document.getElementById("editAliasCurrentTargetId").value = areaId;
-  document.getElementById("editAliasCurrentLineId").value = currentArea.lineId || "";
+  document.getElementById("editAliasCurrentLineId").value =
+    currentArea.lineId || "";
 
-  document.getElementById("editAliasModalHeading").textContent = t.edit_territory_mapping;
-  document.getElementById("editAliasDistName").textContent = dist.name || distributorId;
+  document.getElementById("editAliasModalHeading").textContent =
+    t.edit_territory_mapping;
+  document.getElementById("editAliasDistName").textContent =
+    dist.name || distributorId;
   document.getElementById("editAliasRawBadge").textContent = rawText;
-  document.getElementById("editAliasCurrentName").textContent = `${currentArea.name || areaId} ${currentArea.code ? '(' + currentArea.code + ')' : ''}`;
-  document.getElementById("editAliasTargetLabel").textContent = t.select_new_target;
+  document.getElementById("editAliasCurrentName").textContent =
+    `${currentArea.name || areaId} ${currentArea.code ? "(" + currentArea.code + ")" : ""}`;
+  document.getElementById("editAliasTargetLabel").textContent =
+    t.select_new_target;
 
   const select = document.getElementById("editAliasTargetSelect");
   select.innerHTML = `<option value="">${t.select_area}</option>`;
 
-  const areas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
-  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  const areas =
+    window.store && window.store.areas ? window.store.areas.getAll() : [];
+  const lines =
+    window.store && window.store.productLines
+      ? window.store.productLines.getAll()
+      : [];
 
   if (lines.length > 0) {
     lines.forEach((line) => {
@@ -1067,7 +1606,7 @@ function openEditAreaAlias(areaId, distributorId, rawText) {
         lineAreas.forEach((a) => {
           const opt = document.createElement("option");
           opt.value = a.id;
-          opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${a.repName ? ' - ' + a.repName : ''}`;
+          opt.textContent = `${a.name}${a.code ? " (" + a.code + ")" : ""}${a.repName ? " - " + a.repName : ""}`;
           if (a.id === areaId) opt.selected = true;
           group.appendChild(opt);
         });
@@ -1078,7 +1617,7 @@ function openEditAreaAlias(areaId, distributorId, rawText) {
     areas.forEach((a) => {
       const opt = document.createElement("option");
       opt.value = a.id;
-      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+      opt.textContent = `${a.name}${a.code ? " (" + a.code + ")" : ""}`;
       if (a.id === areaId) opt.selected = true;
       select.appendChild(opt);
     });
@@ -1091,9 +1630,17 @@ function openEditAreaAlias(areaId, distributorId, rawText) {
 function openEditProductAlias(lineId, productId, distributorId, rawText) {
   const isAr = document.documentElement.dir === "rtl";
   const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
-  const dist = (window.store && window.store.distributors ? window.store.distributors.getById(distributorId) : null) || {};
-  const currentLine = (window.store && window.store.productLines ? window.store.productLines.getById(lineId) : null) || {};
-  const currentProd = Array.isArray(currentLine.products) ? currentLine.products.find((p) => p.id === productId) : null;
+  const dist =
+    (window.store && window.store.distributors
+      ? window.store.distributors.getById(distributorId)
+      : null) || {};
+  const currentLine =
+    (window.store && window.store.productLines
+      ? window.store.productLines.getById(lineId)
+      : null) || {};
+  const currentProd = Array.isArray(currentLine.products)
+    ? currentLine.products.find((p) => p.id === productId)
+    : null;
 
   document.getElementById("editAliasType").value = "product";
   document.getElementById("editAliasDistId").value = distributorId;
@@ -1101,16 +1648,23 @@ function openEditProductAlias(lineId, productId, distributorId, rawText) {
   document.getElementById("editAliasCurrentTargetId").value = productId;
   document.getElementById("editAliasCurrentLineId").value = lineId;
 
-  document.getElementById("editAliasModalHeading").textContent = t.edit_product_mapping;
-  document.getElementById("editAliasDistName").textContent = dist.name || distributorId;
+  document.getElementById("editAliasModalHeading").textContent =
+    t.edit_product_mapping;
+  document.getElementById("editAliasDistName").textContent =
+    dist.name || distributorId;
   document.getElementById("editAliasRawBadge").textContent = rawText;
-  document.getElementById("editAliasCurrentName").textContent = `${currentProd ? currentProd.name : productId} (${currentLine.name || lineId})`;
-  document.getElementById("editAliasTargetLabel").textContent = t.select_new_target;
+  document.getElementById("editAliasCurrentName").textContent =
+    `${currentProd ? currentProd.name : productId} (${currentLine.name || lineId})`;
+  document.getElementById("editAliasTargetLabel").textContent =
+    t.select_new_target;
 
   const select = document.getElementById("editAliasTargetSelect");
   select.innerHTML = `<option value="">${t.select_product}</option>`;
 
-  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  const lines =
+    window.store && window.store.productLines
+      ? window.store.productLines.getAll()
+      : [];
   lines.forEach((line) => {
     const products = Array.isArray(line.products) ? line.products : [];
     if (products.length > 0) {
@@ -1119,7 +1673,7 @@ function openEditProductAlias(lineId, productId, distributorId, rawText) {
       products.forEach((p) => {
         const opt = document.createElement("option");
         opt.value = `${line.id}::${p.id}`;
-        opt.textContent = `${p.name}${p.dosage ? ' ' + p.dosage : ''}`;
+        opt.textContent = `${p.name}${p.dosage ? " " + p.dosage : ""}`;
         if (line.id === lineId && p.id === productId) opt.selected = true;
         group.appendChild(opt);
       });
@@ -1144,7 +1698,10 @@ function saveEditedAlias() {
 
   if (!selectedVal) {
     if (typeof showToast === "function") {
-      showToast(type === "area" ? t.select_area_first : t.select_product_first, "warning");
+      showToast(
+        type === "area" ? t.select_area_first : t.select_product_first,
+        "warning",
+      );
     }
     return;
   }
@@ -1173,8 +1730,18 @@ function saveEditedAlias() {
       return;
     }
     if (window.store && window.store.productLines) {
-      window.store.productLines.removeProductAlias(oldLineId, oldTargetId, distId, rawText);
-      window.store.productLines.addProductAlias(newLineId, newProductId, distId, rawText);
+      window.store.productLines.removeProductAlias(
+        oldLineId,
+        oldTargetId,
+        distId,
+        rawText,
+      );
+      window.store.productLines.addProductAlias(
+        newLineId,
+        newProductId,
+        distId,
+        rawText,
+      );
     }
     if (window.store && window.store.distributorSales) {
       window.store.distributorSales.applyProductMatching();
@@ -1208,7 +1775,8 @@ function renderImportBatches() {
   if (!window.store || !window.store.importBatches) return;
 
   const isAr = document.documentElement.dir === "rtl";
-  const batches = window.store.importBatches.getAll()
+  const batches = window.store.importBatches
+    .getAll()
     .slice()
     .sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
   const distributors = getDistributorsList();
@@ -1247,12 +1815,18 @@ function renderImportBatches() {
 function deleteImportBatch(batchId) {
   const isAr = document.documentElement.dir === "rtl";
   const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
-  const batch = window.store && window.store.importBatches
-    ? window.store.importBatches.getById(batchId)
-    : null;
-  const rowCount = batch ? (batch.rowCount || 0) : 0;
+  const batch =
+    window.store && window.store.importBatches
+      ? window.store.importBatches.getById(batchId)
+      : null;
+  const rowCount = batch ? batch.rowCount || 0 : 0;
 
-  if (!confirm(`${t.confirm_delete_batch} ${rowCount} ${t.confirm_delete_batch_suffix}`)) return;
+  if (
+    !confirm(
+      `${t.confirm_delete_batch} ${rowCount} ${t.confirm_delete_batch_suffix}`,
+    )
+  )
+    return;
 
   if (window.store && window.store.distributorSales) {
     window.store.distributorSales.deleteByBatch(batchId);
@@ -1284,19 +1858,19 @@ function switchDistTab(tabKey) {
     if (panelDist) panelDist.style.display = "none";
     if (panelImport) panelImport.style.display = "block";
 
-    populateUploadControls();
-    renderPendingAreas();
-    renderPendingProducts();
-    renderMappedAliases();
-    renderImportBatches();
+    try { populateUploadControls(); } catch (e) { console.error("populateUploadControls error:", e); }
+    try { renderPendingAreas(); } catch (e) { console.error("renderPendingAreas error:", e); }
+    try { renderPendingProducts(); } catch (e) { console.error("renderPendingProducts error:", e); }
+    try { renderMappedAliases(); } catch (e) { console.error("renderMappedAliases error:", e); }
+    try { renderImportBatches(); } catch (e) { console.error("renderImportBatches error:", e); }
   } else {
     if (btnDist) btnDist.classList.add("active");
     if (btnImport) btnImport.classList.remove("active");
     if (panelDist) panelDist.style.display = "block";
     if (panelImport) panelImport.style.display = "none";
 
-    renderDistributors();
-    updateStats();
+    try { renderDistributors(); } catch (e) { console.error("renderDistributors error:", e); }
+    try { updateStats(); } catch (e) { console.error("updateStats error:", e); }
   }
 }
 
@@ -1315,8 +1889,12 @@ function populateUploadControls() {
       opt.value = d.id;
       const isMapped = d.columnMap && d.columnMap.product && d.columnMap.value;
       const mapLabel = isMapped
-        ? (isAr ? " (مربوط)" : " (Mapped)")
-        : (isAr ? " (غير مربوط)" : " (Unmapped)");
+        ? isAr
+          ? " (مربوط)"
+          : " (Mapped)"
+        : isAr
+          ? " (غير مربوط)"
+          : " (Unmapped)";
       opt.textContent = `${d.name}${mapLabel}`;
       distSelect.appendChild(opt);
     });
@@ -1325,19 +1903,41 @@ function populateUploadControls() {
 
   if (monthSelect && monthSelect.options.length === 0) {
     const monthNamesEn = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     const monthNamesAr = [
-      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+      "يناير",
+      "فبراير",
+      "مارس",
+      "أبريل",
+      "مايو",
+      "يونيو",
+      "يوليو",
+      "أغسطس",
+      "سبتمبر",
+      "أكتوبر",
+      "نوفمبر",
+      "ديسمبر",
     ];
     const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
     monthNamesEn.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, "0");
       const opt = document.createElement("option");
       opt.value = val;
-      opt.textContent = isAr ? `${val} - ${monthNamesAr[idx]}` : `${val} - ${m}`;
+      opt.textContent = isAr
+        ? `${val} - ${monthNamesAr[idx]}`
+        : `${val} - ${m}`;
       if (val === currentMonth) opt.selected = true;
       monthSelect.appendChild(opt);
     });
@@ -1345,7 +1945,10 @@ function populateUploadControls() {
 
   if (yearSelect && yearSelect.options.length === 0) {
     const currentYear = String(new Date().getFullYear());
-    const yearsList = typeof window.getDynamicYears === "function" ? window.getDynamicYears() : ["2025", "2026", "2027"];
+    const yearsList =
+      typeof window.getDynamicYears === "function"
+        ? window.getDynamicYears()
+        : ["2025", "2026", "2027"];
     yearsList.forEach((y) => {
       const opt = document.createElement("option");
       opt.value = y;
@@ -1363,20 +1966,27 @@ function triggerExcelUpload() {
 
   if (!distId) {
     if (typeof showToast === "function") {
-      showToast(isAr ? "اختر الموزّع الأول." : "Select a distributor first.", "warning");
+      showToast(
+        isAr ? "اختر الموزّع الأول." : "Select a distributor first.",
+        "warning",
+      );
     }
     return;
   }
 
-  const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
-  const hasMapping = dist && dist.columnMap && dist.columnMap.product && dist.columnMap.value;
+  const dist =
+    window.store && window.store.distributors
+      ? window.store.distributors.getById(distId)
+      : null;
+  const hasMapping =
+    dist && dist.columnMap && dist.columnMap.product && dist.columnMap.value;
   if (!hasMapping) {
     if (typeof showToast === "function") {
       showToast(
         isAr
           ? "الموزّع ده لسه مفيهوش ربط أعمدة. اضبطه من تبويب قائمة الموزعين الأول."
           : "This distributor's sheet columns aren't mapped yet. Configure it from the Distributors tab first.",
-        "error"
+        "error",
       );
     }
     return;
@@ -1397,11 +2007,26 @@ function handleExcelUpload(e) {
   const distId = distSelect ? distSelect.value : "";
   const month = monthSelect ? monthSelect.value : "";
   const year = yearSelect ? yearSelect.value : "";
-  const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
+  const dist =
+    window.store && window.store.distributors
+      ? window.store.distributors.getById(distId)
+      : null;
 
-  if (!dist || !dist.columnMap || !dist.columnMap.product || !dist.columnMap.value || !month || !year) {
+  if (
+    !dist ||
+    !dist.columnMap ||
+    !dist.columnMap.product ||
+    !dist.columnMap.value ||
+    !month ||
+    !year
+  ) {
     if (typeof showToast === "function") {
-      showToast(isAr ? "محتاج تختار الموزّع والشهر والسنة الأول." : "Select a distributor, month, and year first.", "warning");
+      showToast(
+        isAr
+          ? "محتاج تختار الموزّع والشهر والسنة الأول."
+          : "Select a distributor, month, and year first.",
+        "warning",
+      );
     }
     e.target.value = "";
     return;
@@ -1409,23 +2034,31 @@ function handleExcelUpload(e) {
 
   if (typeof XLSX === "undefined") {
     if (typeof showToast === "function") {
-      showToast(isAr ? "مكتبة قراءة الإكسيل غير محملة." : "Excel reader library failed to load.", "error");
+      showToast(
+        isAr
+          ? "مكتبة قراءة الإكسيل غير محملة."
+          : "Excel reader library failed to load.",
+        "error",
+      );
     }
     e.target.value = "";
     return;
   }
 
   const monthKey = `${year}-${month}`;
-  const existingBatch = window.store && window.store.importBatches
-    ? window.store.importBatches.find(distId, monthKey, file.name)
-    : null;
+  const existingBatch =
+    window.store && window.store.importBatches
+      ? window.store.importBatches.find(distId, monthKey, file.name)
+      : null;
   let replacingPreviousBatch = false;
 
   if (existingBatch) {
-    const uploadedDate = existingBatch.uploadedAt ? new Date(existingBatch.uploadedAt).toLocaleString() : "";
+    const uploadedDate = existingBatch.uploadedAt
+      ? new Date(existingBatch.uploadedAt).toLocaleString()
+      : "";
     const confirmMsg = isAr
-      ? `اتعملت رفعة قبل كده لـ "${dist.name}" لشهر ${monthKey} (${existingBatch.rowCount} صف${uploadedDate ? '، بتاريخ ' + uploadedDate : ''}). لو كملت، الرفعة القديمة هتتمسح ويتحل محلها الملف الجديد بالكامل. عايز تكمل؟`
-      : `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ', on ' + uploadedDate : ''}). Continuing will replace that previous upload entirely. Continue?`;
+      ? `اتعملت رفعة قبل كده لـ "${dist.name}" لشهر ${monthKey} (${existingBatch.rowCount} صف${uploadedDate ? "، بتاريخ " + uploadedDate : ""}). لو كملت، الرفعة القديمة هتتمسح ويتحل محلها الملف الجديد بالكامل. عايز تكمل؟`
+      : `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ", on " + uploadedDate : ""}). Continuing will replace that previous upload entirely. Continue?`;
     if (!confirm(confirmMsg)) {
       e.target.value = "";
       return;
@@ -1434,7 +2067,12 @@ function handleExcelUpload(e) {
   }
 
   if (typeof showToast === "function") {
-    showToast(isAr ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, "info");
+    showToast(
+      isAr
+        ? `جاري معالجة الشيت: ${file.name}...`
+        : `Processing file: ${file.name}...`,
+      "info",
+    );
   }
 
   const reader = new FileReader();
@@ -1446,14 +2084,20 @@ function handleExcelUpload(e) {
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
       // Detect header row index to skip top banners and align object keys with mapped column names
-      const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: "" });
+      const rawMatrix = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        blankrows: false,
+        defval: "",
+      });
       let headerRowIndex = 0;
       let maxColsCount = 0;
       const inspectLimit = Math.min(15, rawMatrix.length);
       for (let i = 0; i < inspectLimit; i++) {
         const row = rawMatrix[i];
         if (Array.isArray(row)) {
-          const filledCount = row.filter((c) => c !== null && c !== undefined && String(c).trim() !== "").length;
+          const filledCount = row.filter(
+            (c) => c !== null && c !== undefined && String(c).trim() !== "",
+          ).length;
           if (filledCount > maxColsCount) {
             maxColsCount = filledCount;
             headerRowIndex = i;
@@ -1461,12 +2105,18 @@ function handleExcelUpload(e) {
         }
       }
 
-      const rows = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIndex, defval: "", cellDates: true });
+      const rows = XLSX.utils.sheet_to_json(worksheet, {
+        range: headerRowIndex,
+        defval: "",
+        cellDates: true,
+      });
 
       const totalRows = rows.length;
       if (typeof window.openExcelImportProgress === "function") {
         progress = window.openExcelImportProgress({
-          title: isAr ? `جاري استيراد مبيعات: ${dist.name}` : `Importing Sales: ${dist.name}`,
+          title: isAr
+            ? `جاري استيراد مبيعات: ${dist.name}`
+            : `Importing Sales: ${dist.name}`,
           fileName: file.name,
           totalRows: totalRows,
         });
@@ -1491,12 +2141,21 @@ function handleExcelUpload(e) {
           const product = String(productRaw || "").trim();
 
           const numericValueRaw = parseSalesNumber(valueRaw);
-          let numericQuantity = map.quantity && quantityRaw !== "" && quantityRaw !== null && quantityRaw !== undefined
-            ? parseSalesNumber(quantityRaw)
-            : null;
+          let numericQuantity =
+            map.quantity &&
+            quantityRaw !== "" &&
+            quantityRaw !== null &&
+            quantityRaw !== undefined
+              ? parseSalesNumber(quantityRaw)
+              : null;
 
           let parsedDate = null;
-          if (map.date && dateRaw !== "" && dateRaw !== null && dateRaw !== undefined) {
+          if (
+            map.date &&
+            dateRaw !== "" &&
+            dateRaw !== null &&
+            dateRaw !== undefined
+          ) {
             parsedDate = parseDateStrict(dateRaw);
           }
 
@@ -1508,7 +2167,10 @@ function handleExcelUpload(e) {
           let numericValue = numericValueRaw;
 
           // A row is definitely a return/credit note if either the quantity is negative OR the value is negative
-          const hasNegativeQuantity = numericQuantity !== null && !isNaN(numericQuantity) && numericQuantity < 0;
+          const hasNegativeQuantity =
+            numericQuantity !== null &&
+            !isNaN(numericQuantity) &&
+            numericQuantity < 0;
           const hasNegativeValue = numericValue < 0;
           const isReturn = hasNegativeQuantity || hasNegativeValue;
 
@@ -1533,8 +2195,16 @@ function handleExcelUpload(e) {
             date: parsedDate,
             product,
             value: numericValue,
-            quantity: numericQuantity !== null && !isNaN(numericQuantity) ? numericQuantity : null,
-            pharmacyName: map.pharmacy ? String(row[map.pharmacy] || "").trim() : "",
+            quantity:
+              numericQuantity !== null && !isNaN(numericQuantity)
+                ? numericQuantity
+                : null,
+            pharmacyCode: map.pharmacyCode
+              ? String(row[map.pharmacyCode] || "").trim()
+              : "",
+            pharmacyName: map.pharmacy
+              ? String(row[map.pharmacy] || "").trim()
+              : "",
             areaRaw: map.area ? String(row[map.area] || "").trim() : "",
             repId: null,
             dmId: null,
@@ -1552,10 +2222,19 @@ function handleExcelUpload(e) {
       }
 
       if (progress) {
-        progress.update(totalRows, totalRows, isAr ? "جاري حفظ وتخزين البيانات..." : "Saving imported records...");
+        progress.update(
+          totalRows,
+          totalRows,
+          isAr ? "جاري حفظ وتخزين البيانات..." : "Saving imported records...",
+        );
       }
 
-      if (replacingPreviousBatch && existingBatch && window.store && window.store.distributorSales) {
+      if (
+        replacingPreviousBatch &&
+        existingBatch &&
+        window.store &&
+        window.store.distributorSales
+      ) {
         window.store.distributorSales.deleteByBatch(existingBatch.id);
         window.store.importBatches.delete(existingBatch.id);
       }
@@ -1579,7 +2258,9 @@ function handleExcelUpload(e) {
       if (panel) {
         panel.style.display = "block";
         const replacedNote = replacingPreviousBatch
-          ? (isAr ? " (استبدلت رفعة سابقة لنفس الشهر/الموزّع)" : " (replaced a previous upload for this month/distributor)")
+          ? isAr
+            ? " (استبدلت رفعة سابقة لنفس الشهر/الموزّع)"
+            : " (replaced a previous upload for this month/distributor)"
           : "";
         panel.innerHTML = isAr
           ? `✅ تم تسجيل <strong>${imported.length.toLocaleString()}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب). صافي القيمة: <strong>${totalValue.toLocaleString()}</strong>. تم تجاهل ${skippedInvalid} صف ببيانات غير مكتملة.<br><span class="fw-bold">ملاحظة:</span> يمكنك ربط المناطق والمنتجات غير المربوطة من الجداول بالأسفل مباشرة.`
@@ -1592,7 +2273,11 @@ function handleExcelUpload(e) {
       renderMappedAliases();
 
       if (progress) {
-        progress.finish(isAr ? `تم استيراد ${imported.length.toLocaleString()} سجل بنجاح!` : `Successfully imported ${imported.length.toLocaleString()} rows!`);
+        progress.finish(
+          isAr
+            ? `تم استيراد ${imported.length.toLocaleString()} سجل بنجاح!`
+            : `Successfully imported ${imported.length.toLocaleString()} rows!`,
+        );
       }
 
       if (typeof showToast === "function") {
@@ -1600,7 +2285,7 @@ function handleExcelUpload(e) {
           isAr
             ? `تم استيراد ${imported.length} صف بنجاح.`
             : `Successfully imported ${imported.length} rows.`,
-          "success"
+          "success",
         );
       }
     } catch (err) {
@@ -1611,7 +2296,7 @@ function handleExcelUpload(e) {
           isAr
             ? "تعذرت قراءة الملف. تأكد إنه بنفس شكل الشيت اللي اتعمل عليه الربط."
             : "Could not read this file. Make sure it matches the sheet layout the mapping was configured from.",
-          "error"
+          "error",
         );
       }
     }
@@ -1628,3 +2313,11 @@ window.switchAliasTab = switchAliasTab;
 window.renderMappedAliases = renderMappedAliases;
 window.unlinkAreaAlias = unlinkAreaAlias;
 window.unlinkProductAlias = unlinkProductAlias;
+window.openPharmacyOverrideModal = openPharmacyOverrideModal;
+window.savePharmacyOverride = savePharmacyOverride;
+window.deletePharmacyOverride = deletePharmacyOverride;
+window.togglePovrMonthPicker = togglePovrMonthPicker;
+window.populateUploadControls = populateUploadControls;
+if (typeof updatePovrRepDisplay === "function") {
+  window.updatePovrRepDisplay = updatePovrRepDisplay;
+}

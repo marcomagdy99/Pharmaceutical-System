@@ -237,6 +237,99 @@ function closeRescheduleModal() {
   }
 }
 
+function notifyManagerOnRescheduleOrMissed(options) {
+  const { action, visit, oldDate, newDate, reason, targetRepId, user } = options;
+  const repObj = (window.store && window.store.users) ? window.store.users.getById(targetRepId) : null;
+  const recipientDmId = (repObj && repObj.managerId) || user.managerId || null;
+  const repDisplayName = (repObj && repObj.name) || user.name || "Medical Representative";
+  const doctorDisplayName = visit.doctorName || visit.targetName || "Doctor";
+  const actionDate = action === "reschedule" ? oldDate : visit.date;
+
+  let isAccompanied = false;
+  if (recipientDmId) {
+    try {
+      const rawAcc = localStorage.getItem("pharma_dm_accompaniments");
+      if (rawAcc) {
+        const accMap = JSON.parse(rawAcc);
+        if (accMap[actionDate] === targetRepId || (accMap[recipientDmId] && accMap[recipientDmId][actionDate] === targetRepId)) {
+          isAccompanied = true;
+        }
+      }
+    } catch (e) {}
+  }
+  if (visit.isAccompanied || visit.accompaniedWith || (Array.isArray(visit.managers) && visit.managers.length > 0)) {
+    isAccompanied = true;
+  }
+
+  if (recipientDmId && typeof window.addWorkflowNotification === "function") {
+    if (action === "reschedule") {
+      if (isAccompanied) {
+        window.addWorkflowNotification({
+          userId: recipientDmId,
+          type: "warning",
+          icon: "🚨",
+          badgeClass: "bg-danger",
+          title: "تنبيه نزول مشترك: تأجيل زيارة مجدولة",
+          titleEn: "Joint Visit Alert: Rescheduled",
+          message: `قام المندوب ${repDisplayName} بتأجيل زيارة مشتركة للطبيب ${doctorDisplayName} من تاريخ ${oldDate} إلى ${newDate}. السبب: ${reason}`,
+          messageEn: `Rep ${repDisplayName} rescheduled joint visit with Dr. ${doctorDisplayName} from ${oldDate} to ${newDate}. Reason: ${reason}`,
+          note: reason,
+          link: "visits.html?date=" + newDate,
+          actorName: repDisplayName,
+          action: "reschedule"
+        });
+      } else {
+        window.addWorkflowNotification({
+          userId: recipientDmId,
+          type: "visit",
+          icon: "🗓️",
+          badgeClass: "bg-warning",
+          title: "تأجيل زيارة مجدولة",
+          titleEn: "Visit Rescheduled",
+          message: `قام المندوب ${repDisplayName} بتأجيل زيارة ${doctorDisplayName} إلى ${newDate}. السبب: ${reason}`,
+          messageEn: `Rep ${repDisplayName} rescheduled visit with Dr. ${doctorDisplayName} to ${newDate}. Reason: ${reason}`,
+          note: reason,
+          link: "visits.html?date=" + newDate,
+          actorName: repDisplayName,
+          action: "reschedule"
+        });
+      }
+    } else if (action === "missed") {
+      if (isAccompanied) {
+        window.addWorkflowNotification({
+          userId: recipientDmId,
+          type: "warning",
+          icon: "🚫",
+          badgeClass: "bg-danger",
+          title: "تنبيه نزول مشترك: تعذر مقابلة الطبيب",
+          titleEn: "Joint Visit Alert: Missed Call",
+          message: `سجل المندوب ${repDisplayName} تعذر مقابلة الطبيب ${doctorDisplayName} في زيارة مشتركة بتاريخ ${visit.date}. السبب: ${reason}`,
+          messageEn: `Rep ${repDisplayName} marked joint visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
+          note: reason,
+          link: "visits.html?date=" + visit.date,
+          actorName: repDisplayName,
+          action: "missed"
+        });
+      } else {
+        window.addWorkflowNotification({
+          userId: recipientDmId,
+          type: "visit",
+          icon: "🚫",
+          badgeClass: "bg-warning",
+          title: "تعذر زيارة مجدولة",
+          titleEn: "Missed Call Logged",
+          message: `سجل المندوب ${repDisplayName} تعذر زيارة الطبيب ${doctorDisplayName} بتاريخ ${visit.date}. السبب: ${reason}`,
+          messageEn: `Rep ${repDisplayName} marked visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
+          note: reason,
+          link: "visits.html?date=" + visit.date,
+          actorName: repDisplayName,
+          action: "missed"
+        });
+      }
+    }
+  }
+}
+
 function handleRescheduleSubmit(e) {
   e.preventDefault();
 
@@ -330,12 +423,23 @@ function handleRescheduleSubmit(e) {
       window.saveDataToStorage();
     }
 
+    notifyManagerOnRescheduleOrMissed({
+      action: "reschedule",
+      visit,
+      oldDate,
+      newDate,
+      reason,
+      targetRepId,
+      user
+    });
+
     const successMsg = isAr
       ? `تم تأجيل زيارة "${visit.doctorName || 'العميل'}" بنجاح إلى تاريخ ${newDate}.`
       : `Visit rescheduled successfully to ${newDate}.`;
     if (typeof showToast === "function") showToast(successMsg, "success");
 
   } else if (action === "missed") {
+    const targetRepId = visit.repId || user.id;
     visit.status = "missed";
     visit.missedReason = reason;
     visit.missedAt = new Date().toISOString();
@@ -355,6 +459,16 @@ function handleRescheduleSubmit(e) {
     } else if (window.saveDataToStorage) {
       window.saveDataToStorage();
     }
+
+    notifyManagerOnRescheduleOrMissed({
+      action: "missed",
+      visit,
+      oldDate: visit.date,
+      newDate: null,
+      reason,
+      targetRepId,
+      user
+    });
 
     const successMsg = isAr
       ? `تم تسجيل تعذر المقابلة لـ "${visit.doctorName || 'العميل'}" بنجاح.`

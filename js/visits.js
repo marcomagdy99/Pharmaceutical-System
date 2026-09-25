@@ -241,11 +241,29 @@ if (typeof translations !== "undefined") {
 // Section 2: 7-Day Auto-Expiry Evaluation
 // ============================================================================
 function isPlannedVisitExpired(dateStr) {
+  if (typeof window.isPlannedVisitExpired === "function") {
+    return window.isPlannedVisitExpired(dateStr);
+  }
   if (!dateStr) return false;
-  const planDate = new Date(dateStr);
-  const now = new Date();
-  const diffTime = now.getTime() - planDate.getTime();
-  const diffDays = diffTime / (1000 * 3600 * 24);
+  const parts = String(dateStr).split("T")[0].split("-");
+  const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
+  if (parts.length !== 3) {
+    const planDate = new Date(dateStr);
+    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > 7;
+  }
+  const planDateMidnight = new Date(
+    parseInt(parts[0], 10),
+    parseInt(parts[1], 10) - 1,
+    parseInt(parts[2], 10),
+    0, 0, 0, 0
+  );
+  const todayMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0, 0, 0, 0
+  );
+  const diffDays = (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
   return diffDays > 7;
 }
 
@@ -554,6 +572,10 @@ function renderGpsBadge(v, lang) {
     const text = lang === "ar" ? "✅ تم التحقق (داخل النطاق)" : "✅ Verified (In Range)";
     return `<span class="badge badge-gps-in-range">${text}</span>`;
   }
+  if (v.gpsStatus === "no_target_coords") {
+    const text = lang === "ar" ? "📍 بدون إحداثيات" : "📍 No Target Coords";
+    return `<span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">${text}</span>`;
+  }
   if (v.gpsStatus === "out_of_range") {
     const distText = v.distanceMeters ? ` (${v.distanceMeters}m)` : "";
     const text = lang === "ar" ? `⚠️ خارج النطاق${distText}` : `⚠️ Out of Range${distText}`;
@@ -621,10 +643,25 @@ function triggerManualGpsCheck() {
       const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
 
       let distance = 0;
+      let hasTargetCoords = false;
       if (targetItem && targetItem.lat != null && targetItem.lng != null) {
         distance = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
-      } else {
-        distance = 25; // Default within clinic bounds for demo targets
+        hasTargetCoords = true;
+      }
+
+      if (!hasTargetCoords) {
+        if (badge) {
+          badge.textContent = isAr ? "📍 بدون إحداثيات" : "📍 No Coordinates";
+          badge.style.background = "#f1f5f9";
+          badge.style.color = "#475569";
+        }
+        if (infoText) {
+          infoText.textContent = isAr
+            ? "لم يتم تسجيل إحداثيات جغرافية مسبقة لهذه العيادة أو المستشفى."
+            : "No pre-registered coordinates found for this clinic or hospital.";
+        }
+        if (distText) distText.textContent = "";
+        return;
       }
 
       if (distance <= maxDist) {
@@ -805,14 +842,50 @@ function getMockPharmacies() {
 // ============================================================================
 let demoVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
+function getLiveVisits() {
+  if (window.store && window.store.visits && typeof window.store.visits.getAll === "function") {
+    demoVisits = window.store.visits.getAll();
+  } else if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
+    demoVisits = window.DEMO_DATA.visits;
+  }
+  return demoVisits;
+}
+
 function persistVisits() {
   if (window.DEMO_DATA) {
     window.DEMO_DATA.visits = demoVisits;
     if (typeof window.saveDataToStorage === "function") {
       window.saveDataToStorage();
     }
+    document.dispatchEvent(
+      new CustomEvent("pharma:store:changed", {
+        detail: { entity: "visits", action: "update", payload: demoVisits },
+      })
+    );
   }
 }
+
+window.addEventListener("storage", (e) => {
+  if (e.key === "pharma_master_data") {
+    if (typeof window.loadDataFromStorage === "function") {
+      window.loadDataFromStorage();
+    }
+    getLiveVisits();
+    if (typeof renderCurrentView === "function") {
+      renderCurrentView();
+    } else {
+      if (typeof renderVisitsList === "function") renderVisitsList();
+      if (typeof renderStats === "function") renderStats();
+      if (typeof renderVisitsTimeline === "function") renderVisitsTimeline();
+    }
+  }
+});
+
+document.addEventListener("pharma:store:changed", (e) => {
+  if (e.detail && e.detail.entity === "visits") {
+    getLiveVisits();
+  }
+});
 
 let currentEditVisitId = null;
 const _padZ = (n) => String(n).padStart(2, "0");
@@ -1786,16 +1859,26 @@ const visitsApp = {
       "16:45",
     ];
 
+    const allDocs = getMockDoctors();
+    const allHosps = getMockHospitals();
+    const repLines = typeof window.getUserLines === "function" ? window.getUserLines(targetRepId) : [];
+    const repFallbackLineId = repLines.length > 0 ? repLines[0].id : undefined;
+
+    getLiveVisits();
     validBoxes.forEach((cb, index) => {
       const targetId = cb.value;
       const targetName = cb.getAttribute("data-name") || "Doctor";
       const assignedTime = defaultTimes[index % defaultTimes.length];
+
+      const targetDoc = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+      const visitLineId = (targetDoc && targetDoc.lineId) || repFallbackLineId;
 
       const planUniqueId = "plan_" + Date.now() + "_" + index;
       const newVisit = {
         id: "v_bulk_" + Date.now() + "_" + index,
         planId: planUniqueId,
         repId: targetRepId,
+        lineId: visitLineId,
         doctorId: targetId,
         doctorName: targetName,
         date: planDate,
@@ -3452,8 +3535,7 @@ function saveVisit() {
                 ? { status: "in_range", distanceMeters: dist }
                 : { status: "out_of_range", distanceMeters: dist };
             } else {
-              // Clinic has no pre-registered coordinates: do not override clinic coordinates with rep location (prevents GPS poisoning)
-              gpsPayload = { status: "in_range", distanceMeters: 0 };
+              gpsPayload = { status: "no_target_coords", distanceMeters: null };
             }
           }
           finalizeEdit(gpsPayload);
@@ -3502,9 +3584,19 @@ function saveVisit() {
     let assignedRepId = currentUser.id;
     const isPharmacy = period.toLowerCase() === "pharmacy";
 
+    const allDocs = getMockDoctors();
+    const allHosps = getMockHospitals();
+    const targetDoc = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+    let resolvedLineId = targetDoc ? targetDoc.lineId : undefined;
+    if (!resolvedLineId && typeof window.getUserLines === "function") {
+      const repLines = window.getUserLines(assignedRepId);
+      if (repLines.length > 0) resolvedLineId = repLines[0].id;
+    }
+
     const newVisit = {
       id: "v_" + Date.now(),
       repId: assignedRepId,
+      lineId: resolvedLineId,
       doctorId: targetId,
       doctorName: targetName,
       date: visitDate,
@@ -3534,6 +3626,7 @@ function saveVisit() {
         newVisit.gpsStatus = gpsPayload.status;
         if (gpsPayload.distanceMeters != null) newVisit.distanceMeters = gpsPayload.distanceMeters;
       }
+      getLiveVisits();
       demoVisits.unshift(newVisit);
       persistVisits();
       closeVisitModal();
@@ -3564,8 +3657,7 @@ function saveVisit() {
               ? { status: "in_range", distanceMeters: dist }
               : { status: "out_of_range", distanceMeters: dist };
           } else {
-            // Clinic has no pre-registered coordinates: do not override clinic coordinates with rep location (prevents GPS poisoning)
-            gpsPayload = { status: "in_range", distanceMeters: 0 };
+            gpsPayload = { status: "no_target_coords", distanceMeters: null };
           }
         }
         finalizeNewSave(gpsPayload);

@@ -219,8 +219,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const newPass = document.getElementById("newPassword").value;
     const confirmPass = document.getElementById("confirmPassword").value;
 
-    if (newPass.length < 6) {
-      const msg = isAr ? "يجب ألا تقل كلمة المرور عن 6 أحرف." : "Password must be at least 6 characters.";
+    if (newPass.length < 8) {
+      const msg = isAr ? "يجب ألا تقل كلمة المرور عن 8 أحرف." : "Password must be at least 8 characters.";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPass)) {
+      const msg = isAr ? "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل (A-Z)." : "Password must contain at least one uppercase letter (A-Z).";
+      if (typeof showToast === "function") showToast(msg, "warning");
+      return;
+    }
+
+    if (!/[0-9]/.test(newPass)) {
+      const msg = isAr ? "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (0-9)." : "Password must contain at least one number (0-9).";
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }

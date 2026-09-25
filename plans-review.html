@@ -29,6 +29,23 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/visits.css">
   <style>
+    :root {
+      --card-bg: var(--surface, #ffffff);
+      --plans-muted-text: var(--text-muted, #64748b);
+      --plans-badge-bg: var(--gray-100, #f1f5f9);
+      --plans-badge-color: var(--gray-800, #1e293b);
+      --plans-subtle-badge-bg: rgba(100, 116, 139, 0.12);
+      --plans-subtle-badge-color: #475569;
+    }
+    [data-theme="dark"] {
+      --card-bg: #1e2229;
+      --plans-muted-text: #cbd5e1;
+      --plans-badge-bg: #2d3340;
+      --plans-badge-color: #cbd5e1;
+      --plans-subtle-badge-bg: rgba(148, 163, 184, 0.15);
+      --plans-subtle-badge-color: #cbd5e1;
+    }
+
     .plans-stat-card {
       background: var(--card-bg, #ffffff);
       border: 1px solid var(--border-color, #e2e8f0);
@@ -47,6 +64,18 @@
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
+    }
+    .plans-stat-label {
+      color: var(--plans-muted-text);
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .page-subtitle,
+    .plans-scope-label,
+    .rep-meta-text {
+      color: var(--plans-muted-text);
+      font-size: 0.95rem;
     }
     .plans-rep-card {
       background: var(--card-bg, #ffffff);
@@ -75,6 +104,14 @@
       padding: 4px 10px;
       border-radius: 20px;
     }
+    .plans-count-badge {
+      background: var(--plans-badge-bg);
+      color: var(--plans-badge-color);
+      border: 1px solid var(--border-color, #e2e8f0);
+    }
+    .modal-box {
+      background: var(--surface, #ffffff);
+    }
     .visit-row:hover {
       background: rgba(0,0,0,0.015);
     }
@@ -96,10 +133,6 @@
     [data-theme="dark"] .visit-doctor-title {
       color: #ffffff;
     }
-    [data-theme="dark"] .text-muted,
-    [data-theme="dark"] .rep-meta-text {
-      color: #9da5b1;
-    }
     [data-theme="dark"] .badge-count {
       background: #995c00;
       color: #ffda6a;
@@ -109,7 +142,7 @@
     }
     [data-theme="dark"] .plans-table-head {
       background-color: #232731;
-      color: #9da5b1;
+      color: var(--plans-muted-text);
       border-bottom: 1px solid #2d3340;
     }
     [data-theme="dark"] .table td {
@@ -120,6 +153,11 @@
       background: #1e2229;
       color: #f1f3f5;
       border: 1px solid #2d3340;
+    }
+    [data-theme="dark"] .bg-secondary-subtle {
+      background-color: var(--plans-subtle-badge-bg);
+      color: var(--plans-subtle-badge-color);
+      border-color: rgba(148, 163, 184, 0.25);
     }
 
     /* Sticky Doctor/Hospital Column */
@@ -249,8 +287,8 @@
               <h2 class="fw-bold mb-1 page-main-title" data-i18n="plansReviewTitle">
                 📋 Plans to Review & Approvals
               </h2>
-              <p class="text-muted mb-0" data-i18n="plansReviewSubtitle">
-                Review and approve planned visit schedules submitted by your medical representatives
+              <p class="page-subtitle mb-0" data-i18n="plansReviewSubtitle">
+                Review and approve planned visit schedules submitted by your Medical Representatives
               </p>
             </div>
             <div class="d-flex gap-2">
@@ -271,7 +309,7 @@
                   ⏳
                 </div>
                 <div>
-                  <div class="text-muted small" data-i18n="statPendingVisits">Pending Visits to Review</div>
+                  <div class="plans-stat-label" data-i18n="statPendingVisits">Pending Visits to Review</div>
                   <h3 class="fw-bold mb-0" id="statPendingCount">0</h3>
                 </div>
               </div>
@@ -282,7 +320,7 @@
                   👥
                 </div>
                 <div>
-                  <div class="text-muted small" data-i18n="statPendingReps">Representatives Awaiting Approval</div>
+                  <div class="plans-stat-label" data-i18n="statPendingReps">Representatives Awaiting Approval</div>
                   <h3 class="fw-bold mb-0" id="statPendingRepsCount">0</h3>
                 </div>
               </div>
@@ -293,7 +331,7 @@
                   ✅
                 </div>
                 <div>
-                  <div class="text-muted small" data-i18n="statApprovedToday">Approved Plans Active</div>
+                  <div class="plans-stat-label" data-i18n="statApprovedToday">Approved Plans Active</div>
                   <h3 class="fw-bold mb-0" id="statApprovedCount">0</h3>
                 </div>
               </div>
@@ -301,7 +339,7 @@
           </div>
 
           <!-- Filter Bar -->
-          <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--card-bg, #ffffff);">
+          <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-body p-3">
               <div class="row g-2 align-items-center">
                 <div class="col-md-3" id="plansLineFilterContainer">
@@ -321,7 +359,7 @@
                   </div>
                 </div>
                 <div class="col-md-3 text-end">
-                  <span class="text-muted small" id="plansActiveScopeLabel">Scoping your direct team</span>
+                  <span class="plans-scope-label small" id="plansActiveScopeLabel">Scoping your direct team</span>
                 </div>
               </div>
             </div>
@@ -339,9 +377,9 @@
 
   <!-- Rejection Modal -->
   <div class="modal-backdrop" id="rejectPlanModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
-    <div class="modal-box" style="background: var(--card-bg, #fff); border-radius: 12px; width: 95%; max-width: 480px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <div class="modal-box" style="border-radius: 12px; width: 95%; max-width: 480px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
       <h5 class="fw-bold mb-2" style="color: var(--danger, #dc3545);" data-i18n="modalRejectTitle">Reject / Request Plan Edit</h5>
-      <p class="text-muted small mb-3" data-i18n="modalRejectSubtitle">Please provide a reason or modification guidance for the representative.</p>
+      <p class="page-subtitle small mb-3" data-i18n="modalRejectSubtitle">Please provide a reason or modification guidance for the representative.</p>
       <div class="mb-3">
         <label class="form-label small fw-bold" data-i18n="modalRejectReasonLabel">Rejection Reason / Guidance:</label>
         <textarea id="rejectReasonText" class="form-control" rows="3" placeholder="e.g. Please reschedule Dr. Khaled Omar to next Tuesday or add AM hospital visits..."></textarea>

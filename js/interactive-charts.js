@@ -392,11 +392,32 @@
     });
   }
 
+  /**
+   * Destroys all active chart instances across canvases.
+   */
+  function destroyAllCharts() {
+    Object.keys(activeCharts).forEach((canvasId) => {
+      destroyExistingChart(canvasId);
+    });
+    if (typeof Chart !== 'undefined' && Chart.instances && typeof Chart.instances === 'object') {
+      try {
+        Object.keys(Chart.instances).forEach((id) => {
+          try {
+            if (Chart.instances[id] && typeof Chart.instances[id].destroy === 'function') {
+              Chart.instances[id].destroy();
+            }
+          } catch (e) {}
+        });
+      } catch (e) {}
+    }
+  }
+
   // Export to window
   window.renderSalesTargetTrendChart = renderSalesTargetTrendChart;
   window.renderDoctorClassesChart = renderDoctorClassesChart;
   window.renderCoverageGaugeChart = renderCoverageGaugeChart;
   window.destroyPharmaChart = destroyExistingChart;
+  window.destroyAllCharts = destroyAllCharts;
 
   // Auto-refresh charts on Theme (Dark/Light) or Language changes
   function refreshActiveCharts() {

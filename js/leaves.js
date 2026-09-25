@@ -1078,8 +1078,12 @@ function calculateBalances() {
       ? window.store.leaves.getAll()
       : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves;
 
+  const currentYearStr = String(new Date().getFullYear());
+
   allLeaves.forEach((l) => {
     if (l.userId === currentUser.id) {
+      const leaveYear = l.startDate ? String(l.startDate).slice(0, 4) : "";
+      if (leaveYear && leaveYear !== currentYearStr) return;
       const d = parseFloat(l.days) || 1;
       if (l.status === "approved") {
         if (l.type === "annual") {
@@ -2220,10 +2224,11 @@ Object.assign(leavesApp, {
       window.DEMO_DATA && Array.isArray(window.DEMO_DATA.leaves)
         ? window.DEMO_DATA.leaves
         : demoLeaves;
+    const currentYearStr = String(new Date().getFullYear());
     let used = { annual: 0, casual: 0, sick: 0 };
     leavesList.forEach((l) => {
-      // Only deduct approved leaves whose start date has arrived or passed
-      if (l.userId === user.id && l.status === "approved" && l.startDate && l.startDate <= todayStr) {
+      // Only deduct approved leaves whose start date has arrived or passed in current year
+      if (l.userId === user.id && l.status === "approved" && l.startDate && l.startDate <= todayStr && l.startDate.startsWith(currentYearStr)) {
         const d = parseFloat(l.days) || 1;
         if (l.type === "annual") used.annual += d;
         else if (l.type === "casual" || l.type === "emergency")

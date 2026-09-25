@@ -806,11 +806,26 @@ function confirmTransferProduct() {
     }
   }
 
+  // Update or clean up target quotas for transferred product
+  if (window.store && window.store.targets) {
+    const currentMonth = (typeof window.getSystemTodayStr === "function" ? window.getSystemTodayStr() : new Date().toISOString().split("T")[0]).slice(0, 7);
+    const allTargets = window.store.targets.getAll();
+    const activeTargetsForOldReps = allTargets.filter((t) => t.productId === productId && (!t.month || t.month >= currentMonth));
+    if (activeTargetsForOldReps.length > 0) {
+      activeTargetsForOldReps.forEach((t) => window.store.targets.delete(t.id));
+      if (typeof window.saveDataToStorage === "function") {
+        window.saveDataToStorage();
+      }
+    }
+  }
+
   if (transferProductModal) transferProductModal.hide();
   renderProductLines();
 
-  const successMsg = isAr ? productTranslations.ar.transferSuccess : productTranslations.en.transferSuccess;
-  if (typeof showToast === "function") showToast(successMsg, "success");
+  const successMsg = isAr
+    ? "تم نقل الصنف وتحديث المبيعات بنجاح. تم مسح أهداف الصنف من مناديب الخط القديم، يرجى تعيين الأهداف الجديدة لمناديب الخط الجديد من صفحة التقارير."
+    : "Product transferred successfully. Quotas removed from old line reps; please set new targets for the new line reps in Reports.";
+  if (typeof showToast === "function") showToast(successMsg, "info");
 }
 
 function toggleLanguage() {

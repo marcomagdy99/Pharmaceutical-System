@@ -607,11 +607,18 @@ function confirmDelete() {
       return;
     }
     // Reassign doctors to the destination area
+    const targetRepId = destinationArea.repId || null;
+    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const targetRep = targetRepId ? allUsers.find((u) => u.id === targetRepId) : null;
+    const targetRepName = targetRep ? targetRep.name : (destinationArea.repName || "");
+
     if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.doctors)) {
       window.DEMO_DATA.doctors.forEach((d) => {
         if (d.areaId === id || (d.area && d.area.toLowerCase() === area.name.toLowerCase())) {
           d.areaId = destinationArea.id;
           d.area = destinationArea.name;
+          d.repId = targetRepId;
+          if (targetRepName) d.repName = targetRepName;
         }
       });
     }
@@ -632,6 +639,8 @@ function confirmDelete() {
         if (p.areaId === id || (p.area && p.area.toLowerCase() === area.name.toLowerCase())) {
           p.areaId = destinationArea.id;
           p.area = destinationArea.name;
+          p.repId = targetRepId;
+          if (targetRepName) p.repName = targetRepName;
         }
       });
     }
@@ -642,6 +651,8 @@ function confirmDelete() {
         if (h.areaId === id || (h.area && h.area.toLowerCase() === area.name.toLowerCase())) {
           h.areaId = destinationArea.id;
           h.area = destinationArea.name;
+          h.repId = targetRepId;
+          if (targetRepName) h.repName = targetRepName;
         }
       });
     }
