@@ -1405,7 +1405,6 @@ function handleDoctorsFileSelected(event) {
   }
 
   const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
-  const safeHtml = window.escapeHtml;
 
   const processRows = (rows) => {
     if (!rows || !rows.length) {
@@ -1471,12 +1470,12 @@ function handleDoctorsFileSelected(event) {
         <tr>
           <td>${idx + 1}</td>
           <td>${statusBadge}</td>
-          <td><strong>${safeHtml(name || '-')}</strong></td>
-          <td>${safeHtml(specialty || '-')}</td>
-          <td>${safeHtml(docClass)}</td>
-          <td>${safeHtml(address || '-')}</td>
-          <td>${safeHtml(phone || '-')}</td>
-          <td>${safeHtml(repName)}</td>
+          <td><strong>${window.escapeHtml(name || '-')}</strong></td>
+          <td>${window.escapeHtml(specialty || '-')}</td>
+          <td>${window.escapeHtml(docClass)}</td>
+          <td>${window.escapeHtml(address || '-')}</td>
+          <td>${window.escapeHtml(phone || '-')}</td>
+          <td>${window.escapeHtml(repName)}</td>
         </tr>
       `);
     });
@@ -1644,7 +1643,6 @@ function handlePharmaciesFileSelected(event) {
   }
 
   const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
-  const safeHtml = window.escapeHtml;
 
   const processRows = (rows) => {
     if (!rows || !rows.length) {
@@ -1707,11 +1705,11 @@ function handlePharmaciesFileSelected(event) {
         <tr>
           <td>${idx + 1}</td>
           <td>${statusBadge}</td>
-          <td><strong>${safeHtml(name || '-')}</strong></td>
-          <td>${safeHtml(address || '-')}</td>
-          <td>${safeHtml(contactPerson || '-')}</td>
-          <td>${safeHtml(phone || '-')}</td>
-          <td>${safeHtml(repName)}</td>
+          <td><strong>${window.escapeHtml(name || '-')}</strong></td>
+          <td>${window.escapeHtml(address || '-')}</td>
+          <td>${window.escapeHtml(contactPerson || '-')}</td>
+          <td>${window.escapeHtml(phone || '-')}</td>
+          <td>${window.escapeHtml(repName)}</td>
         </tr>
       `);
     });

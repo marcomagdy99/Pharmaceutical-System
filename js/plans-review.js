@@ -494,7 +494,7 @@ function renderPlansReview(currentUser) {
   }
 
   if (displayedVisits.length === 0) {
-    const isFiltered = Boolean(searchKeyword || (selectedRepId && selectedRepId !== 'all') || (selectedLineId && selectedLineId !== 'all'));
+    const isFiltered = Boolean(searchKeyword || (selectedRepId && selectedRepId !== 'all') || (effectiveLineId && effectiveLineId !== 'all'));
     if (isFiltered) {
       container.innerHTML = `
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">

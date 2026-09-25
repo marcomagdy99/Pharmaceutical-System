@@ -453,10 +453,7 @@
   }
 
   function escapeHTML(str) {
-    if (str == null) return "";
-    return String(str).replace(/[&<>'"]/g, 
-      (tag) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-    );
+    return window.escapeHtml ? window.escapeHtml(str) : (str == null ? "" : String(str));
   }
 
   function safeShowToast(msg, type = "info") {

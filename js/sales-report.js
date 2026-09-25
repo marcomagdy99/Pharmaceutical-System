@@ -647,6 +647,11 @@ function handleExcelUpload(e) {
     try {
       const data = new Uint8Array(ev.target.result);
       const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      const firstSheetName = workbook.SheetNames && workbook.SheetNames[0];
+      const worksheet = firstSheetName ? workbook.Sheets[firstSheetName] : null;
+      if (!worksheet) {
+        throw new Error("No readable worksheet found in the uploaded workbook.");
+      }
       // Detect header row index to skip top banners and align object keys with mapped column names
       const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: "" });
       let headerRowIndex = 0;

@@ -264,6 +264,9 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const keys = Array.isArray(monthKeys) ? monthKeys : [monthKeys];
   if (!keys.length) return [];
 
+  const curUser = (typeof checkAuth === 'function' ? checkAuth() : null) || {};
+  const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+
   const keysSet = new Set(keys);
   const repScopeSet = scopeRepIds ? new Set(scopeRepIds) : null;
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
