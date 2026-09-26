@@ -490,16 +490,22 @@
     Core.safeShowToast(Core.t("successAction") || "تمت العملية بنجاح", "success");
   }
 
-  function openReceiptPreviewModal(imgSrc) {
+  function openReceiptPreviewModal(url) {
+    if (window.ActivitiesExpenses && typeof window.ActivitiesExpenses.openReceiptPreviewModal === "function") {
+      return window.ActivitiesExpenses.openReceiptPreviewModal(url);
+    }
     const modal = document.getElementById("receiptPreviewModal");
     const img = document.getElementById("receiptModalLargeImg");
     if (!modal || !img) return;
-    img.src = imgSrc;
+    img.src = url;
     modal.style.display = "flex";
     modal.classList.add("active");
   }
 
   function closeReceiptPreviewModal() {
+    if (window.ActivitiesExpenses && typeof window.ActivitiesExpenses.closeReceiptPreviewModal === "function") {
+      return window.ActivitiesExpenses.closeReceiptPreviewModal();
+    }
     const modal = document.getElementById("receiptPreviewModal");
     if (modal) {
       modal.style.display = "none";

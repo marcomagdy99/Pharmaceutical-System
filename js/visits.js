@@ -241,9 +241,6 @@ if (typeof translations !== "undefined") {
 // Section 2: 7-Day Auto-Expiry Evaluation
 // ============================================================================
 function isPlannedVisitExpired(dateStr) {
-  if (typeof window.isPlannedVisitExpired === "function") {
-    return window.isPlannedVisitExpired(dateStr);
-  }
   if (!dateStr) return false;
   const parts = String(dateStr).split("T")[0].split("-");
   const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
@@ -876,7 +873,7 @@ window.addEventListener("storage", (e) => {
     } else {
       if (typeof renderVisitsList === "function") renderVisitsList();
       if (typeof renderStats === "function") renderStats();
-      if (typeof renderVisitsTimeline === "function") renderVisitsTimeline();
+      if (typeof renderVisitsTimeline === "function") renderVisitsTimeline(hasLoadedTimelineOnce);
     }
   }
 });
@@ -930,8 +927,9 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           sessionStorage.setItem("pharma_timeline_selected_date", e.target.value);
         } catch (err) {}
-        renderVisitsTimeline(true);
       }
+      hasLoadedTimelineOnce = false;
+      renderVisitsTimeline(false);
     });
     timelineDatePicker.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -941,16 +939,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Reactive filters: auto-update timeline when filters change
+  // Reactive filters: auto-update timeline when filters change only after initial show
   ["timelineAreaFilter", "timelinePeriodFilter", "timelineStatusFilter"].forEach((id) => {
     document.getElementById(id)?.addEventListener("change", () => {
-      renderVisitsTimeline(true);
+      if (hasLoadedTimelineOnce) {
+        renderVisitsTimeline(true);
+      }
     });
   });
 
   setupRoleBasedView();
   populateAreaFilters();
-  renderVisitsTimeline(true);
+  renderVisitsTimeline(false);
   setupModalTargetFilter();
   updateTargetOptions();
 });
@@ -1193,14 +1193,14 @@ function populateManagerRepDropdown(selectedLineId = "all") {
 window.onVisitsLineFilterChange = function (selectedLineId) {
   populateManagerRepDropdown(selectedLineId);
   populateAreaFilters();
-  if (typeof renderVisitsTimeline === "function") {
+  if (hasLoadedTimelineOnce && typeof renderVisitsTimeline === "function") {
     renderVisitsTimeline(true);
   }
 };
 
 window.onVisitsRepFilterChange = function (selectedRepId) {
   populateAreaFilters();
-  if (typeof renderVisitsTimeline === "function") {
+  if (hasLoadedTimelineOnce && typeof renderVisitsTimeline === "function") {
     renderVisitsTimeline(true);
   }
 };

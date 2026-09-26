@@ -628,13 +628,6 @@ function switchReportTab(tabKey) {
   }
   if (tabKey === 'doctors') {
     if (typeof populateDoctorSpecialtyFilter === 'function') populateDoctorSpecialtyFilter();
-    if (typeof renderDoctorsReport === 'function') renderDoctorsReport();
-  }
-  if (tabKey === 'hospitals') {
-    if (typeof renderHospitalsReport === 'function') renderHospitalsReport();
-  }
-  if (tabKey === 'pharmacies') {
-    if (typeof renderPharmaciesReport === 'function') renderPharmaciesReport();
   }
 }
 
@@ -1219,12 +1212,6 @@ window.onHospitalModalDmChange = onHospitalModalDmChange;
 window.onHospitalModalRepChange = onHospitalModalRepChange;
 window.onHospitalModalAreaChange = onHospitalModalAreaChange;
 
-function populateRepModalOptions(selectElement) {
-  if (!selectElement) return;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const reps = allUsers.filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'));
-  renderSelectOptions(selectElement, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || r.code || 'Rep'})`);
-}
 
 // ============================================================================
 // Section 14: Excel / CSV Bulk Import Engine (Admin Only)

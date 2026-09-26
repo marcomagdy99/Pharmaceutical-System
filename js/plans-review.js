@@ -131,7 +131,21 @@ function getDmAccompanimentSchedule(dmId) {
     const cached = localStorage.getItem("pharma_dm_accompaniments");
     if (cached) {
       const data = JSON.parse(cached);
-      if (data && data[dmId]) return data[dmId];
+      if (data && data[dmId]) {
+        let changed = false;
+        Object.keys(data[dmId]).forEach((dateStr) => {
+          if (typeof isPlannedVisitExpired === "function" && isPlannedVisitExpired(dateStr)) {
+            delete data[dmId][dateStr];
+            changed = true;
+          }
+        });
+        if (changed) {
+          try {
+            localStorage.setItem("pharma_dm_accompaniments", JSON.stringify(data));
+          } catch (err) {}
+        }
+        return data[dmId];
+      }
     }
   } catch (e) {}
   return {};

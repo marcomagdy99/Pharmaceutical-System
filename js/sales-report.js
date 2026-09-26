@@ -284,7 +284,7 @@ function initPharmSalesFilters(user) {
   if (areaSelectEl && !areaSelectEl.dataset.listenerBound) {
     areaSelectEl.dataset.listenerBound = 'true';
     areaSelectEl.addEventListener('change', () => {
-      const resContainer = document.getElementById('pharmSalesResultsContainer');
+      const resContainer = document.getElementById('salesResultsContainer') || document.getElementById('pharmSalesResultsContainer');
       if (resContainer && resContainer.style.display !== 'none' && typeof renderSalesReport === 'function') {
         renderSalesReport();
       }

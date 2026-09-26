@@ -233,9 +233,6 @@ if (window.translations) {
 }
 
 function isPlannedVisitExpired(dateStr) {
-  if (typeof window.isPlannedVisitExpired === "function") {
-    return window.isPlannedVisitExpired(dateStr);
-  }
   if (!dateStr) return false;
   const parts = dateStr.split("-");
   const now = (window.getSystemDate && window.getSystemDate()) || new Date();
@@ -286,7 +283,21 @@ function getDmAccompanimentSchedule(dmId) {
     const raw = localStorage.getItem("pharma_dm_accompaniments");
     if (raw) {
       const data = JSON.parse(raw);
-      if (data && data[dmId]) return data[dmId];
+      if (data && data[dmId]) {
+        let changed = false;
+        Object.keys(data[dmId]).forEach((dateStr) => {
+          if (typeof isPlannedVisitExpired === "function" && isPlannedVisitExpired(dateStr)) {
+            delete data[dmId][dateStr];
+            changed = true;
+          }
+        });
+        if (changed) {
+          try {
+            localStorage.setItem("pharma_dm_accompaniments", JSON.stringify(data));
+          } catch (err) {}
+        }
+        return data[dmId];
+      }
     }
   } catch (e) {
     console.error("Error reading DM accompaniment schedule:", e);
@@ -1545,7 +1556,23 @@ function renderDMDashboard(userName, user) {
       : { dayName: "" };
 
   const activeTab = window.dmScheduleActiveTab || "all";
-  const scheduledDates = Object.keys(storedSchedule).sort();
+
+  const scheduledDates = Object.keys(storedSchedule)
+    .filter((dateStr) => {
+      if (isPlannedVisitExpired(dateStr)) return false;
+      const repIdForDate = storedSchedule[dateStr];
+      if (repIdForDate === "none") return dateStr >= todayStr;
+      const hasActiveVisits = allVisits.some(
+        (v) =>
+          v.repId === repIdForDate &&
+          v.date === dateStr &&
+          (v.status === "planned" || v.status === "pending_approval") &&
+          !isPlannedVisitExpired(v.date) &&
+          !isPlanVisitAlreadyCompleted(v, allVisits)
+      );
+      return hasActiveVisits || dateStr >= todayStr;
+    })
+    .sort();
 
   const allScheduledVisits = [];
   scheduledDates.forEach((dateStr) => {

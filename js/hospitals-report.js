@@ -447,7 +447,10 @@ function confirmDeleteHospital() {
 }
 
 function onHospitalFilterChange() {
-  renderHospitalsReport();
+  const results = document.getElementById("hospitalsResultsContainer");
+  if (results && results.style.display !== "none") {
+    renderHospitalsReport();
+  }
 }
 
 function exportHospitalsDirectory() {
