@@ -24,7 +24,8 @@ function getScopedHospitals(respectActiveFilters = true) {
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     hosps = hosps.filter((h) =>
       (h.areaId && repAreaIds.includes(h.areaId)) ||
-      (!h.areaId && h.area && repAreaNames.includes(h.area.toLowerCase().trim()))
+      (!h.areaId && h.area && repAreaNames.includes(h.area.toLowerCase().trim())) ||
+      (!h.areaId && h.repId === currentUser.id)
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -125,7 +126,12 @@ function getScopedHospitals(respectActiveFilters = true) {
           hosps = hosps.filter((h) => h.repId && (repsUnderDM.includes(h.repId) || h.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
         } else {
           const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
-          hosps = hosps.filter((h) => (h.areaId && repAreaIds.includes(h.areaId)) || (h.repId === repId && (!h.areaId || repAreaIds.includes(h.areaId))));
+          const repAreaNames = allAreas.filter((a) => a.repId === repId).map((a) => (a.name || "").toLowerCase().trim());
+          hosps = hosps.filter((h) =>
+            (h.areaId && repAreaIds.includes(h.areaId)) ||
+            (!h.areaId && h.area && repAreaNames.includes(h.area.toLowerCase().trim())) ||
+            (!h.areaId && h.repId === repId)
+          );
         }
       }
     }
@@ -135,6 +141,10 @@ function getScopedHospitals(respectActiveFilters = true) {
   if (selectedLineId !== 'all') {
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     hosps = hosps.filter((h) => {
+      if (h.areaId) {
+        const a = allAreas.find((x) => x.id === h.areaId);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
       if (h.lineId) return h.lineId === selectedLineId;
       if (Array.isArray(h.lineIds) && h.lineIds.length > 0) return h.lineIds.includes(selectedLineId);
       if (h.areaId) {

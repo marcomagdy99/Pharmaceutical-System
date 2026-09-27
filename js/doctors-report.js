@@ -52,7 +52,8 @@ function getScopedDoctors(respectActiveFilters = true) {
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     docs = docs.filter((d) =>
       (d.areaId && repAreaIds.includes(d.areaId)) ||
-      (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+      (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim())) ||
+      (!d.areaId && d.repId === currentUser.id)
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -153,7 +154,12 @@ function getScopedDoctors(respectActiveFilters = true) {
           docs = docs.filter((d) => d.repId && (repsUnderDM.includes(d.repId) || d.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
         } else {
           const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
-          docs = docs.filter((d) => (d.areaId && repAreaIds.includes(d.areaId)) || (d.repId === repId && (!d.areaId || repAreaIds.includes(d.areaId))));
+          const repAreaNames = allAreas.filter((a) => a.repId === repId).map((a) => (a.name || "").toLowerCase().trim());
+          docs = docs.filter((d) =>
+            (d.areaId && repAreaIds.includes(d.areaId)) ||
+            (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim())) ||
+            (!d.areaId && d.repId === repId)
+          );
         }
       }
     }
@@ -163,6 +169,10 @@ function getScopedDoctors(respectActiveFilters = true) {
   if (selectedLineId !== 'all') {
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     docs = docs.filter((d) => {
+      if (d.areaId) {
+        const a = allAreas.find((x) => x.id === d.areaId);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
       if (d.lineId) return d.lineId === selectedLineId;
       if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
       if (d.areaId) {

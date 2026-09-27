@@ -162,6 +162,14 @@
 
         // 3. Keep customer (doctor, pharmacy, hospital) rep and line in sync with their assigned area
         doctors.forEach((d) => {
+          if (!d.areaId && d.area) {
+            const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === d.area.toLowerCase().trim());
+            if (matchArea) d.areaId = matchArea.id;
+          }
+          if (!d.areaId && d.repId) {
+            const repAreas = areas.filter((x) => x.repId === d.repId);
+            if (repAreas.length === 1) d.areaId = repAreas[0].id;
+          }
           if (!d.areaId) return;
           const a = areas.find((x) => x.id === d.areaId);
           if (a) {
@@ -174,6 +182,14 @@
         });
 
         pharmacies.forEach((p) => {
+          if (!p.areaId && p.area) {
+            const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === p.area.toLowerCase().trim());
+            if (matchArea) p.areaId = matchArea.id;
+          }
+          if (!p.areaId && p.repId) {
+            const repAreas = areas.filter((x) => x.repId === p.repId);
+            if (repAreas.length === 1) p.areaId = repAreas[0].id;
+          }
           if (!p.areaId) return;
           const a = areas.find((x) => x.id === p.areaId);
           if (a) {
@@ -186,6 +202,14 @@
         });
 
         hospitals.forEach((h) => {
+          if (!h.areaId && h.area) {
+            const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === h.area.toLowerCase().trim());
+            if (matchArea) h.areaId = matchArea.id;
+          }
+          if (!h.areaId && h.repId) {
+            const repAreas = areas.filter((x) => x.repId === h.repId);
+            if (repAreas.length === 1) h.areaId = repAreas[0].id;
+          }
           if (!h.areaId) return;
           const a = areas.find((x) => x.id === h.areaId);
           if (a) {

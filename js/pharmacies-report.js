@@ -24,7 +24,8 @@ function getScopedPharmacies(respectActiveFilters = true) {
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     pharms = pharms.filter((p) =>
       (p.areaId && repAreaIds.includes(p.areaId)) ||
-      (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
+      (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim())) ||
+      (!p.areaId && p.repId === currentUser.id)
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -125,7 +126,12 @@ function getScopedPharmacies(respectActiveFilters = true) {
           pharms = pharms.filter((p) => p.repId && (repsUnderDM.includes(p.repId) || p.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(p.repId)));
         } else {
           const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
-          pharms = pharms.filter((p) => (p.areaId && repAreaIds.includes(p.areaId)) || (p.repId === repId && (!p.areaId || repAreaIds.includes(p.areaId))));
+          const repAreaNames = allAreas.filter((a) => a.repId === repId).map((a) => (a.name || "").toLowerCase().trim());
+          pharms = pharms.filter((p) =>
+            (p.areaId && repAreaIds.includes(p.areaId)) ||
+            (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim())) ||
+            (!p.areaId && p.repId === repId)
+          );
         }
       }
     }
@@ -135,6 +141,10 @@ function getScopedPharmacies(respectActiveFilters = true) {
   if (selectedLineId !== 'all') {
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     pharms = pharms.filter((p) => {
+      if (p.areaId) {
+        const a = allAreas.find((x) => x.id === p.areaId);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
       if (p.lineId) return p.lineId === selectedLineId;
       if (Array.isArray(p.lineIds) && p.lineIds.length > 0) return p.lineIds.includes(selectedLineId);
       if (p.areaId) {
