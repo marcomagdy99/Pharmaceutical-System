@@ -283,11 +283,11 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const areasMap = new Map(allAreas.map((a) => [a.id, a]));
 
   const getRowEffectiveRepId = (s) => {
-    if (s.repId) return s.repId;
     if (s.areaId) {
       const area = areasMap.get(s.areaId);
       if (area && area.repId) return area.repId;
     }
+    if (s.repId) return s.repId;
     return null;
   };
 

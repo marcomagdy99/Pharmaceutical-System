@@ -381,7 +381,11 @@ function getFilteredPharmSalesRows() {
   if (isRep) {
     const repAreas = (window.store && window.store.areas ? window.store.areas.getByRep(user.id) : []);
     const repAreaIds = repAreas.map((a) => a.id);
-    rows = rows.filter((r) => r.repId === user.id || (r.areaId && repAreaIds.includes(r.areaId)));
+    const repAreaNames = repAreas.map((a) => (a.name || '').toLowerCase().trim());
+    rows = rows.filter((r) =>
+      (r.areaId && repAreaIds.includes(r.areaId)) ||
+      (!r.areaId && r.area && repAreaNames.includes(r.area.toLowerCase().trim()))
+    );
   } else if (role === 'district_manager') {
     const teamRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
     rows = rows.filter((r) => r.dmId === user.id || (r.repId && teamRepIds.includes(r.repId)));
@@ -424,7 +428,14 @@ function getFilteredPharmSalesRows() {
         const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
         rows = rows.filter((r) => r.dmId === selectedRep || (r.repId && repsUnderDM.includes(r.repId)));
       } else {
-        rows = rows.filter((r) => r.repId === selectedRep || r.dmId === selectedRep);
+        const targetRepAreas = (window.store && window.store.areas ? window.store.areas.getByRep(selectedRep) : []);
+        const targetRepAreaIds = targetRepAreas.map((a) => a.id);
+        const targetRepAreaNames = targetRepAreas.map((a) => (a.name || '').toLowerCase().trim());
+        rows = rows.filter((r) =>
+          (r.areaId && targetRepAreaIds.includes(r.areaId)) ||
+          (!r.areaId && r.area && targetRepAreaNames.includes(r.area.toLowerCase().trim())) ||
+          r.dmId === selectedRep
+        );
       }
     }
   }

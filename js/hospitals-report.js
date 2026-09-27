@@ -23,9 +23,8 @@ function getScopedHospitals(respectActiveFilters = true) {
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     hosps = hosps.filter((h) =>
-      h.repId === currentUser.id ||
       (h.areaId && repAreaIds.includes(h.areaId)) ||
-      (h.area && repAreaNames.includes(h.area.toLowerCase().trim()))
+      (!h.areaId && h.area && repAreaNames.includes(h.area.toLowerCase().trim()))
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -125,7 +124,8 @@ function getScopedHospitals(respectActiveFilters = true) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
           hosps = hosps.filter((h) => h.repId && (repsUnderDM.includes(h.repId) || h.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
         } else {
-          hosps = hosps.filter((h) => h.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+          const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
+          hosps = hosps.filter((h) => (h.areaId && repAreaIds.includes(h.areaId)) || (h.repId === repId && (!h.areaId || repAreaIds.includes(h.areaId))));
         }
       }
     }
@@ -205,10 +205,11 @@ function renderHospitalsReport() {
 
   grid.innerHTML = filtered
     .map((h) => {
-      const repObj = allUsers.find((u) => u.id === h.repId);
-      const repName = repObj ? repObj.name : (isAr ? "غير مسند" : "Unassigned");
       const areaObj = allAreas.find((a) => a.id === h.areaId);
       const areaName = areaObj ? (areaObj.name || areaObj.id) : (h.area || (isAr ? "عام" : "General"));
+      const effectiveRepId = areaObj ? (areaObj.repId || null) : (h.repId || null);
+      const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
+      const repName = repObj ? repObj.name : (isAr ? "غير مسند" : "Unassigned");
       const lineObj = allLines.find((l) => l.id === h.lineId);
       const lineName = lineObj ? (isAr ? (lineObj.nameAr || lineObj.name) : lineObj.name) : "";
       const displayName = isAr ? (h.nameAr || h.name) : (h.name || h.nameAr);
@@ -385,14 +386,8 @@ function saveHospital() {
     assignedLineId = areaObj.lineId || "";
   }
 
-  // Automatic repId binding from modal selection, area's assigned rep, or currentUser
-  const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : ((areaObj && areaObj.repId) || currentUser.id);
-
-  if (!assignedLineId && assignedRepId) {
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const rep = allUsers.find((u) => u.id === assignedRepId);
-    if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
-  }
+  // Hospital strictly belongs to Area; representative is whoever is assigned to that Area
+  const assignedRepId = areaObj ? (areaObj.repId || null) : null;
 
   const hospitalObj = {
     id: id || "hosp_" + Date.now(),

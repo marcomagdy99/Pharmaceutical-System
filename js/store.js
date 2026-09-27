@@ -123,13 +123,78 @@
        */
       syncAreasFromStore() {
         const areas = window.DEMO_DATA.areas || [];
-        (window.DEMO_DATA.users || []).forEach((u) => {
+        const users = window.DEMO_DATA.users || [];
+        const doctors = window.DEMO_DATA.doctors || [];
+        const pharmacies = window.DEMO_DATA.pharmacies || [];
+        const hospitals = window.DEMO_DATA.hospitals || [];
+
+        // 1. Clean up invalid/stale area assignments where rep was transferred or no longer in the area's line
+        areas.forEach((a) => {
+          if (!a.repId) return;
+          const rep = users.find((u) => u.id === a.repId);
+          const isRepRole = rep && (rep.role === "medical_rep" || rep.role === "rep" || rep.role === "Rep");
+          const repLines = rep ? (rep.lineIds || (rep.lineId ? [rep.lineId] : [])) : [];
+          const lineMismatch = a.lineId && repLines.length > 0 && !repLines.includes(a.lineId);
+
+          if (!rep || rep.status === "Inactive" || !isRepRole || lineMismatch) {
+            const oldRepId = a.repId;
+            a.repId = null;
+            a.repName = null;
+            if (typeof store.areas.reassignAreaCustomers === "function") {
+              store.areas.reassignAreaCustomers(a.id, null, a.name);
+            }
+            if (store.distributorSales && typeof store.distributorSales.rematchAreaSales === "function") {
+              store.distributorSales.rematchAreaSales(a.id, null);
+            }
+            logTerritoryHistoryChange(a.id, oldRepId, null);
+          }
+        });
+
+        // 2. Recompute each user's area fields from the verified areas list
+        users.forEach((u) => {
           const repAreas = areas.filter((a) => a.repId === u.id);
           u.areaIds = repAreas.map((a) => a.id);
           u.area = repAreas.length
             ? repAreas.map((a) => a.name).join(", ")
             : null;
           u.areaId = repAreas.length ? repAreas[0].id : null;
+        });
+
+        // 3. Keep customer (doctor, pharmacy, hospital) rep and line in sync with their assigned area
+        doctors.forEach((d) => {
+          if (!d.areaId) return;
+          const a = areas.find((x) => x.id === d.areaId);
+          if (a) {
+            if (a.lineId) d.lineId = a.lineId;
+            if (d.repId !== (a.repId || null)) {
+              d.repId = a.repId || null;
+            }
+            if (a.name) d.area = a.name;
+          }
+        });
+
+        pharmacies.forEach((p) => {
+          if (!p.areaId) return;
+          const a = areas.find((x) => x.id === p.areaId);
+          if (a) {
+            if (a.lineId) p.lineId = a.lineId;
+            if (p.repId !== (a.repId || null)) {
+              p.repId = a.repId || null;
+            }
+            if (a.name) p.area = a.name;
+          }
+        });
+
+        hospitals.forEach((h) => {
+          if (!h.areaId) return;
+          const a = areas.find((x) => x.id === h.areaId);
+          if (a) {
+            if (a.lineId) h.lineId = a.lineId;
+            if (h.repId !== (a.repId || null)) {
+              h.repId = a.repId || null;
+            }
+            if (a.name) h.area = a.name;
+          }
         });
       },
     },
@@ -335,6 +400,9 @@
         // Reassign all doctors, pharmacies, and hospitals in this area if rep changed
         if (oldRepId !== newRepId) {
           this.reassignAreaCustomers(currentAreaId, newRepId, areaObj.name || (areas[idx] ? areas[idx].name : null));
+          if (store.distributorSales && typeof store.distributorSales.rematchAreaSales === "function") {
+            store.distributorSales.rematchAreaSales(currentAreaId, newRepId);
+          }
         }
 
         store.users.syncAreasFromStore();
@@ -430,6 +498,9 @@
         area.repName = null;
 
         this.reassignAreaCustomers(areaId, null, area.name);
+        if (store.distributorSales && typeof store.distributorSales.rematchAreaSales === "function") {
+          store.distributorSales.rematchAreaSales(areaId, null);
+        }
         logTerritoryHistoryChange(areaId, oldRepId, null);
         store.users.syncAreasFromStore();
         autoSave("areas", "unassignRep", { areaId });
@@ -441,6 +512,9 @@
         }
         if (area) {
           this.reassignAreaCustomers(areaId, null, area.name);
+          if (store.distributorSales && typeof store.distributorSales.rematchAreaSales === "function") {
+            store.distributorSales.rematchAreaSales(areaId, null);
+          }
         }
         window.DEMO_DATA.areas = (window.DEMO_DATA.areas || []).filter(
           (a) => a.id !== areaId,
@@ -511,6 +585,14 @@
       },
       save(docObj) {
         if (!window.DEMO_DATA.doctors) window.DEMO_DATA.doctors = [];
+        if (docObj.areaId && store.areas) {
+          const a = store.areas.getById(docObj.areaId);
+          if (a) {
+            docObj.repId = a.repId || null;
+            if (a.name) docObj.area = a.name;
+            if (a.lineId) docObj.lineId = a.lineId;
+          }
+        }
         const docs = window.DEMO_DATA.doctors;
         const idx = docs.findIndex((d) => d.id === docObj.id);
         if (idx >= 0) {
@@ -541,6 +623,14 @@
       },
       save(pharmObj) {
         if (!window.DEMO_DATA.pharmacies) window.DEMO_DATA.pharmacies = [];
+        if (pharmObj.areaId && store.areas) {
+          const a = store.areas.getById(pharmObj.areaId);
+          if (a) {
+            pharmObj.repId = a.repId || null;
+            if (a.name) pharmObj.area = a.name;
+            if (a.lineId) pharmObj.lineId = a.lineId;
+          }
+        }
         const pharms = window.DEMO_DATA.pharmacies;
         const idx = pharms.findIndex((p) => p.id === pharmObj.id);
         if (idx >= 0) {
@@ -647,6 +737,14 @@
       },
       save(hospObj) {
         if (!window.DEMO_DATA.hospitals) window.DEMO_DATA.hospitals = [];
+        if (hospObj.areaId && store.areas) {
+          const a = store.areas.getById(hospObj.areaId);
+          if (a) {
+            hospObj.repId = a.repId || null;
+            if (a.name) hospObj.area = a.name;
+            if (a.lineId) hospObj.lineId = a.lineId;
+          }
+        }
         const hosps = window.DEMO_DATA.hospitals;
         const idx = hosps.findIndex((h) => h.id === hospObj.id);
         if (idx >= 0) {
@@ -1736,4 +1834,7 @@
   };
 
   window.store = store;
+  if (store.users && typeof store.users.syncAreasFromStore === "function") {
+    store.users.syncAreasFromStore();
+  }
 })();

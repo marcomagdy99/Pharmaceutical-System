@@ -51,9 +51,8 @@ function getScopedDoctors(respectActiveFilters = true) {
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     docs = docs.filter((d) =>
-      d.repId === currentUser.id ||
       (d.areaId && repAreaIds.includes(d.areaId)) ||
-      (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+      (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -153,7 +152,8 @@ function getScopedDoctors(respectActiveFilters = true) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
           docs = docs.filter((d) => d.repId && (repsUnderDM.includes(d.repId) || d.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
         } else {
-          docs = docs.filter((d) => d.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+          const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
+          docs = docs.filter((d) => (d.areaId && repAreaIds.includes(d.areaId)) || (d.repId === repId && (!d.areaId || repAreaIds.includes(d.areaId))));
         }
       }
     }
@@ -294,11 +294,18 @@ function renderDoctorsReport() {
   const normalizedRole = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase()) : '';
   const isAdmin = normalizedRole === 'admin';
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
   grid.innerHTML = filtered
     .map((d) => {
-      const repObj = allUsers.find((u) => u.id === d.repId);
+      const areaObj = allAreas.find((a) => a.id === d.areaId);
+      const areaName = areaObj ? (areaObj.name || areaObj.id) : (d.area || (lang === "ar" ? "عام" : "General"));
+      const lineObj = allLines.find((l) => l.id === (areaObj?.lineId || d.lineId));
+      const lineName = lineObj ? (lang === "ar" && lineObj.nameAr ? lineObj.nameAr : lineObj.name) : "";
+      const effectiveRepId = areaObj ? (areaObj.repId || null) : (d.repId || null);
+      const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
       const repName = repObj ? repObj.name : (lang === "ar" ? "غير مسند" : "Unassigned");
       const isClassA = d.class === "A";
 
@@ -310,9 +317,12 @@ function renderDoctorsReport() {
             <h4 class="directory-name">${window.escapeHtml(d.name)}</h4>
             <span class="directory-meta-tag specialty">${window.escapeHtml(d.specialty || "General")}</span>
           </div>
-          <span class="badge ${isClassA ? "bg-warning text-dark" : "bg-secondary"} ms-auto" style="font-size: 0.72rem;">
-            Class ${d.class || "B"}
-          </span>
+          <div class="d-flex flex-column align-items-end gap-1 ms-auto">
+            <span class="badge ${isClassA ? "bg-warning text-dark" : "bg-secondary"}" style="font-size: 0.72rem;">
+              Class ${d.class || "B"}
+            </span>
+            ${lineName ? `<span class="badge bg-secondary" style="font-size: 0.68rem;">${window.escapeHtml(lineName)}</span>` : ""}
+          </div>
         </div>
         <div class="directory-card-body">
           <div class="directory-info-row">
@@ -320,12 +330,16 @@ function renderDoctorsReport() {
             <span class="info-text">${window.escapeHtml(d.clinicAddress || d.address || "No address specified")}</span>
           </div>
           <div class="directory-info-row">
+            <span class="info-icon">🏢</span>
+            <span class="info-text">${lang === 'ar' ? 'المنطقة:' : 'Area:'} <strong>${window.escapeHtml(areaName)}</strong></span>
+          </div>
+          <div class="directory-info-row">
             <span class="info-icon">📞</span>
             <span class="info-text">${window.escapeHtml(d.phone || "No phone provided")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👤</span>
-            <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
+            <span class="info-text">${lang === 'ar' ? 'المندوب المسؤول:' : 'Rep:'} <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         ${isAdmin ? `
@@ -495,14 +509,8 @@ function saveDoctor() {
     assignedLineId = areaObj.lineId || "";
   }
 
-  // Automatic repId binding from modal selection, area's assigned rep, or currentUser
-  const assignedRepId = (repSelect && repSelect.value) ? repSelect.value : ((areaObj && areaObj.repId) || currentUser.id);
-
-  if (!assignedLineId && assignedRepId) {
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const rep = allUsers.find((u) => u.id === assignedRepId);
-    if (rep) assignedLineId = (rep.lineIds && rep.lineIds[0]) || rep.lineId || "";
-  }
+  // Doctor strictly belongs to Area; representative is whoever is assigned to that Area
+  const assignedRepId = areaObj ? (areaObj.repId || null) : null;
 
   const existingDocRecord = id ? (getDoctorsData().find((d) => d.id === id) || {}) : {};
 

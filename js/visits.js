@@ -1711,9 +1711,8 @@ const visitsApp = {
       const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
       sourceList = sourceList.filter(
         (d) =>
-          d.repId === currentUser.id ||
           (d.areaId && repAreaIds.includes(d.areaId)) ||
-          (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
+          (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
       );
     } else if (role === "district_manager") {
       const myReps = allUsers
@@ -3252,7 +3251,7 @@ function updateTargetOptions() {
           : [];
       const repAreaIds = repAreas.map((a) => a.id);
       options = allHosps.filter(
-        (h) => h.repId === currentUser.id || (h.areaId && repAreaIds.includes(h.areaId))
+        (h) => (h.areaId && repAreaIds.includes(h.areaId))
       );
     } else if (allowedRepIds) {
       options = allHosps.filter((h) => allowedRepIds.includes(h.repId));
@@ -3286,7 +3285,7 @@ function updateTargetOptions() {
           : [];
       const repAreaIds = repAreas.map((a) => a.id);
       options = allPharms.filter(
-        (p) => p.repId === currentUser.id || (p.areaId && repAreaIds.includes(p.areaId))
+        (p) => (p.areaId && repAreaIds.includes(p.areaId))
       );
     } else if (allowedRepIds) {
       options = allPharms.filter((p) => allowedRepIds.includes(p.repId));
@@ -3302,7 +3301,14 @@ function updateTargetOptions() {
       .map((u) => u.id);
 
     if (!isManager) {
-      options = allDocs.filter((d) => d.repId === currentUser.id);
+      const repAreas =
+        window.store && window.store.areas
+          ? window.store.areas.getByRep(currentUser.id)
+          : [];
+      const repAreaIds = repAreas.map((a) => a.id);
+      options = allDocs.filter(
+        (d) => (d.areaId && repAreaIds.includes(d.areaId))
+      );
     } else if (selectedFilter && selectedFilter.startsWith("vacant:")) {
       const vAreaId = selectedFilter.split(":")[1];
       const vArea = allAreas.find((a) => a.id === vAreaId);

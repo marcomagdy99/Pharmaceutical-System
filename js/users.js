@@ -553,9 +553,7 @@ const userMgmt = {
     const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
     const areaName = isAr && area.nameAr ? area.nameAr : area.name;
 
-    area.repId = null;
-    area.repName = null;
-    window.store.areas.save(area);
+    window.store.areas.unassignRep(areaId);
 
     if (window.store.users && typeof window.store.users.syncAreasFromStore === "function") {
       window.store.users.syncAreasFromStore();
@@ -647,18 +645,43 @@ const userMgmt = {
       return `<span class="badge bg-primary-subtle text-primary">${matched[0].name}</span>`;
     return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => m.name).join(", ")})</span>`;
   },
+  showAreasToast(allNames) {
+    const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
+    const prefix = isAr ? "المناطق المسندة:" : "Assigned Areas:";
+    if (typeof showToast === "function") {
+      showToast(`${prefix} ${allNames}`, "info");
+    }
+  },
+  formatAreasBadges(areas, badgeClass = "bg-light text-dark border") {
+    if (!areas || areas.length === 0) return `<span class="text-muted">-</span>`;
+    const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
+
+    if (areas.length <= 2) {
+      return areas
+        .map(
+          (a) =>
+            `<span class="badge ${badgeClass} me-1" title="${window.escapeHtml(a.code || a.name)}">${window.escapeHtml(a.name)}</span>`,
+        )
+        .join("");
+    }
+
+    const firstOne = areas[0];
+    const remainingCount = areas.length - 1;
+    const allNames = areas.map((a) => a.name).join(", ");
+    const moreText = isAr ? `+${remainingCount} المزيد` : `+${remainingCount} more`;
+    const escapedNames = window.escapeHtml(allNames).replace(/'/g, "\\'");
+
+    return `
+      <span class="badge ${badgeClass} me-1" title="${window.escapeHtml(firstOne.code || firstOne.name)}">${window.escapeHtml(firstOne.name)}</span>
+      <span class="badge bg-secondary-subtle text-secondary border fw-bold" title="${window.escapeHtml(allNames)}" style="cursor: pointer;" onclick="event.stopPropagation(); userMgmt.showAreasToast('${escapedNames}');">${moreText}</span>
+    `;
+  },
   renderAreasSummary(user) {
     if (user.role === "Rep") {
       const assignedAreas = window.store.areas
         ? window.store.areas.getByRep(user.id)
         : [];
-      if (assignedAreas.length === 0) return `<span class="text-muted">-</span>`;
-      return assignedAreas
-        .map(
-          (a) =>
-            `<span class="badge bg-light text-dark border me-1" title="${a.code}">${a.name}</span>`,
-        )
-        .join("");
+      return this.formatAreasBadges(assignedAreas, "bg-light text-dark border");
     }
 
     if (user.role === "DM") {
@@ -676,13 +699,7 @@ const userMgmt = {
           }
         });
       });
-      if (teamAreas.length === 0) return `<span class="text-muted">-</span>`;
-      return teamAreas
-        .map(
-          (a) =>
-            `<span class="badge bg-primary-subtle text-primary border me-1" title="${a.code}">${a.name}</span>`,
-        )
-        .join("");
+      return this.formatAreasBadges(teamAreas, "bg-primary-subtle text-primary border");
     }
 
     if (user.role === "LM") {
@@ -702,13 +719,7 @@ const userMgmt = {
           }
         });
       });
-      if (teamAreas.length === 0) return `<span class="text-muted">-</span>`;
-      return teamAreas
-        .map(
-          (a) =>
-            `<span class="badge bg-info-subtle text-info-emphasis border me-1" title="${a.code}">${a.name}</span>`,
-        )
-        .join("");
+      return this.formatAreasBadges(teamAreas, "bg-info-subtle text-info-emphasis border");
     }
 
     return `<span class="text-muted">-</span>`;
@@ -1168,14 +1179,33 @@ const userMgmt = {
     const selectedAreaId = document.getElementById("uArea")
       ? document.getElementById("uArea").value
       : null;
-    // Multi-area assignments are managed centrally via areas.html.
-    // When saving from users.html, assign the selected area if new without stripping existing assigned areas.
-    if (role === "Rep" && window.store && window.store.areas && selectedAreaId) {
-      const areaObj = window.store.areas.getById(selectedAreaId);
-      if (areaObj && areaObj.repId !== userData.id) {
-        areaObj.repId = userData.id;
-        areaObj.repName = userData.name;
-        window.store.areas.save(areaObj);
+
+    const previousRepAreas = (id && window.store && window.store.areas)
+      ? window.store.areas.getByRep(id)
+      : [];
+
+    if (role !== "Rep") {
+      previousRepAreas.forEach((a) => {
+        window.store.areas.unassignRep(a.id);
+      });
+    } else if (window.store && window.store.areas) {
+      previousRepAreas.forEach((a) => {
+        if (a.lineId && !selectedLineIds.includes(a.lineId)) {
+          window.store.areas.unassignRep(a.id);
+        }
+      });
+
+      if (selectedAreaId && previousRepAreas.length === 1 && previousRepAreas[0].id !== selectedAreaId) {
+        window.store.areas.unassignRep(previousRepAreas[0].id);
+      }
+
+      if (selectedAreaId) {
+        const areaObj = window.store.areas.getById(selectedAreaId);
+        if (areaObj && areaObj.repId !== userData.id) {
+          areaObj.repId = userData.id;
+          areaObj.repName = userData.name;
+          window.store.areas.save(areaObj);
+        }
       }
     }
 
