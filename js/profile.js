@@ -12,6 +12,7 @@ const profileTranslations = {
     email: "Email",
     phone: "Phone",
     employee_code: "Employee Code",
+    hire_date: "Hire Date",
     product_line: "Product Line",
     manager: "Manager",
     save_changes: "Save Changes",
@@ -50,6 +51,19 @@ const profileTranslations = {
     toggleThursdayWeekendHint: "When enabled, Thursday is treated as an official day off alongside Friday across all visits, daily activities, and leave balances. If disabled, only Friday is the statutory rest day.",
     saveCompanyPolicies: "Save Company Policies",
     companyPoliciesSaved: "Company field policies updated successfully!",
+    companyBrandingTitle: "Company Branding & Login Customization",
+    companyBrandingDesc: "Customize the right-hand panel of the login screen with your company logo, slogan, description, and brand colors.",
+    companyLogoLabel: "Company Brand Logo (Login Showcase)",
+    uploadLogo: "Upload Logo",
+    resetDefault: "Reset Default",
+    logoConstraintHint: "PNG, JPG, or SVG. Auto-scaled & optimized to fit perfectly within standard 96x96 box without distortion.",
+    taglineEnLabel: "Slogan / Tagline (English)",
+    taglineArLabel: "Slogan / Tagline (Arabic)",
+    descEnLabel: "Description (English)",
+    descArLabel: "Description (Arabic)",
+    bannerThemeLabel: "Login Panel Theme Color & Gradient",
+    saveBrandingSettings: "Save Branding Settings",
+    brandingSettingsSaved: "Company branding & login appearance saved successfully!",
   },
   ar: {
     upload_photo: "رفع صورة",
@@ -59,6 +73,7 @@ const profileTranslations = {
     email: "البريد الإلكتروني",
     phone: "رقم الهاتف",
     employee_code: "رمز الموظف",
+    hire_date: "تاريخ التعيين",
     product_line: "خط المنتجات",
     manager: "المدير",
     save_changes: "حفظ التغييرات",
@@ -97,6 +112,19 @@ const profileTranslations = {
     toggleThursdayWeekendHint: "عند التفعيل، يُعتبر يوم الخميس راحة أسبوعية رسمية إلى جانب الجمعة في تقارير الزيارات وجداول الأنشطة ورصيد الإجازات. في حال التعطيل، يكون يوم الجمعة فقط هو العطلة الرسمية.",
     saveCompanyPolicies: "حفظ سياسات الشركة",
     companyPoliciesSaved: "تم حفظ وتطبيق سياسات الشركة بنجاح على جميع المستخدمين!",
+    companyBrandingTitle: "تخصيص هوية الشركة وشاشة الدخول",
+    companyBrandingDesc: "تخصيص اللوحة الجانبية لشاشة تسجيل الدخول بشعار الشركة، الشعار اللفظي (السلوجان)، الوصف، وألوان الهوية.",
+    companyLogoLabel: "شعار الشركة (اللوجو المعروض بشاشة الدخول)",
+    uploadLogo: "رفع شعار جديد",
+    resetDefault: "استعادة الافتراضي",
+    logoConstraintHint: "صيغ PNG أو JPG أو SVG. يتم ضبط الحجم والمقاسات تلقائياً ليناسب المربع الموحد 96×96 بدون أي تشويه.",
+    taglineEnLabel: "الشعار اللفظي / السلوجان (بالإنجليزي)",
+    taglineArLabel: "الشعار اللفظي / السلوجان (بالعربي)",
+    descEnLabel: "الوصف التفصيلي (بالإنجليزي)",
+    descArLabel: "الوصف التفصيلي (بالعربي)",
+    bannerThemeLabel: "لون وتدرج لوحة الدخول (Brand Theme)",
+    saveBrandingSettings: "حفظ إعدادات الهوية",
+    brandingSettingsSaved: "تم حفظ وتطبيق هوية الشركة وشاشة تسجيل الدخول بنجاح!",
   },
 };
 
@@ -459,6 +487,7 @@ function loadUserProfile() {
   const email = document.getElementById("email");
   const phone = document.getElementById("phone");
   const empCodeInput = document.getElementById("empCodeInput");
+  const hireDateInput = document.getElementById("hireDateInput");
   const productLineInput = document.getElementById("productLineInput");
   const managerInput = document.getElementById("managerInput");
   const profileInitials = document.getElementById("profileInitials");
@@ -468,6 +497,7 @@ function loadUserProfile() {
   if (email) email.value = user.email || `${user.id}@pharmacare.com`;
   if (phone) phone.value = user.phone || "+201001234567";
   if (empCodeInput) empCodeInput.value = user.employeeCode || user.code || "EMP-001";
+  if (hireDateInput) hireDateInput.value = user.hireDate || "2024-01-15";
 
   const profileRoleBadge = document.getElementById("profileRoleBadge");
   const profileEmpBadge = document.getElementById("profileEmpBadge");
@@ -597,10 +627,15 @@ function loadUserProfile() {
       const rolloverOpts = document.getElementById("leaveRolloverOptionsContainer");
       const thursdayToggle = document.getElementById("toggleThursdayWeekend");
 
+      const backlogSelect = document.getElementById("visitBacklogLimitSelect");
+      const expirySelect = document.getElementById("plannedVisitExpirySelect");
+
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
       if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
       if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
       if (thursdayToggle) thursdayToggle.checked = !!currentSettings.isThursdayWeekend;
+      if (backlogSelect) backlogSelect.value = String(currentSettings.visitBacklogLimitDays !== undefined ? currentSettings.visitBacklogLimitDays : 2);
+      if (expirySelect) expirySelect.value = String(currentSettings.plannedVisitExpiryDays !== undefined ? currentSettings.plannedVisitExpiryDays : 7);
 
       const allowRollover = currentSettings.allowLeaveRollover !== false;
       if (rolloverToggle) rolloverToggle.checked = allowRollover;
@@ -609,6 +644,54 @@ function loadUserProfile() {
       if (rolloverOpts) rolloverOpts.style.display = allowRollover ? "block" : "none";
     } else {
       adminCompanyCard.style.display = "none";
+    }
+  }
+
+  const adminBrandingCard = document.getElementById("adminBrandingCard");
+  if (adminBrandingCard) {
+    const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+    if (isUserAdmin) {
+      adminBrandingCard.style.display = "block";
+      const currentSettings = (window.store && window.store.companySettings)
+        ? window.store.companySettings.get()
+        : {};
+      const branding = currentSettings.branding || {
+        logoUrl: "images/pharma-icon-192.png",
+        taglineEn: "Empowering Medical Representatives",
+        taglineAr: "نمكّن المناديب الطبيين",
+        descEn: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
+        descAr: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+        gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
+      };
+
+      currentBrandLogoData = branding.logoUrl || "images/pharma-icon-192.png";
+      const previewEl = document.getElementById("brandLogoPreview");
+      if (previewEl) previewEl.src = currentBrandLogoData;
+
+      const previewBox = document.getElementById("brandLogoPreviewContainer");
+      if (previewBox && branding.gradient) previewBox.style.background = branding.gradient;
+
+      const taglineEn = document.getElementById("brandTaglineEn");
+      const taglineAr = document.getElementById("brandTaglineAr");
+      const descEn = document.getElementById("brandDescEn");
+      const descAr = document.getElementById("brandDescAr");
+      const gradInput = document.getElementById("brandGradientValue");
+
+      if (taglineEn) taglineEn.value = branding.taglineEn || "";
+      if (taglineAr) taglineAr.value = branding.taglineAr || "";
+      if (descEn) descEn.value = branding.descEn || "";
+      if (descAr) descAr.value = branding.descAr || "";
+      if (gradInput) gradInput.value = branding.gradient || "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)";
+
+      document.querySelectorAll(".gradient-preset-btn").forEach((btn) => {
+        if (btn.getAttribute("data-gradient") === branding.gradient) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+    } else {
+      adminBrandingCard.style.display = "none";
     }
   }
 }
@@ -636,6 +719,8 @@ function handleSaveCompanySettings(e) {
   const rolloverGrace = document.getElementById("leaveRolloverGraceSelect");
   const rolloverMax = document.getElementById("leaveRolloverMaxDaysInput");
   const thursdayToggle = document.getElementById("toggleThursdayWeekend");
+  const backlogSelect = document.getElementById("visitBacklogLimitSelect");
+  const expirySelect = document.getElementById("plannedVisitExpirySelect");
 
   const requireGpsValidation = toggleInput ? toggleInput.checked : true;
   const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
@@ -644,11 +729,13 @@ function handleSaveCompanySettings(e) {
   const leaveRolloverGraceMonths = rolloverGrace ? (parseInt(rolloverGrace.value, 10) || 3) : 3;
   const leaveRolloverMaxDays = rolloverMax ? Math.max(0, parseInt(rolloverMax.value, 10) || 0) : 5;
   const isThursdayWeekend = thursdayToggle ? thursdayToggle.checked : false;
+  const visitBacklogLimitDays = backlogSelect ? Math.max(0, parseInt(backlogSelect.value, 10) || 0) : 2;
+  const plannedVisitExpiryDays = expirySelect ? Math.max(1, parseInt(expirySelect.value, 10) || 7) : 7;
 
-  const prevSettings = (window.store && window.store.companySettings)
+  const rawPrev = (window.store && window.store.companySettings)
     ? window.store.companySettings.get()
     : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
-  const prevThursday = !!prevSettings.isThursdayWeekend;
+  const prevSettings = JSON.parse(JSON.stringify(rawPrev));
 
   if (window.store && window.store.companySettings) {
     window.store.companySettings.update({
@@ -659,33 +746,158 @@ function handleSaveCompanySettings(e) {
       leaveRolloverGraceMonths,
       leaveRolloverMaxDays,
       isThursdayWeekend,
+      visitBacklogLimitDays,
+      plannedVisitExpiryDays,
     });
   }
 
-  // If Thursday weekend status changed, broadcast notification to all employees
-  if (prevThursday !== isThursdayWeekend) {
-    const allUsers = (window.store && window.store.users)
-      ? window.store.users.getAll()
-      : (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  // Broadcast policy update notifications to all employees
+  const allUsers = (window.store && window.store.users)
+    ? window.store.users.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
+  function broadcastPolicyNotification(notifData) {
+    if (typeof window.addWorkflowNotification !== "function") return;
     allUsers.forEach((u) => {
-      if (typeof window.addWorkflowNotification === "function") {
-        window.addWorkflowNotification({
-          userId: u.id,
-          type: "policy_update",
-          icon: "📅",
-          badgeClass: "bg-info",
-          title: "تحديث سياسة أيام العمل والعطلات",
-          titleEn: "Work Schedule Policy Update",
-          message: isThursdayWeekend
-            ? "تنبيه: تم اعتماد يوم الخميس عطلة أسبوعية رسمية للشركة (الخميس والجمعة)."
-            : "تنبيه: تم إلغاء عطلة يوم الخميس واعتباره يوم عمل رسمي للشركة.",
-          messageEn: isThursdayWeekend
-            ? "Notice: Thursday has been officially designated as a weekly day off (Thursday & Friday)."
-            : "Notice: Thursday is now designated as an official working day.",
-          link: "profile.html"
-        });
-      }
+      window.addWorkflowNotification({
+        userId: u.id,
+        type: "policy_update",
+        ...notifData,
+      });
+    });
+  }
+
+  // 1. Visit Backlog Grace Period Change
+  const prevBacklog = prevSettings.visitBacklogLimitDays !== undefined ? prevSettings.visitBacklogLimitDays : 2;
+  if (prevBacklog !== visitBacklogLimitDays) {
+    const backlogLabelsAr = {
+      0: "نفس اليوم فقط (0 يوم)",
+      1: "يوم واحد (24 ساعة)",
+      2: "يومان (48 ساعة)",
+      3: "3 أيام (72 ساعة)",
+      5: "5 أيام عمل",
+      7: "أسبوع كامل (7 أيام)",
+      14: "أسبوعان (14 يوماً)",
+      30: "شهر كامل (30 يوماً)",
+    };
+    const backlogLabelsEn = {
+      0: "Same Day Only (0 Days)",
+      1: "1 Day (24 Hours)",
+      2: "2 Days (48 Hours)",
+      3: "3 Days (72 Hours)",
+      5: "5 Days (Working Week)",
+      7: "7 Days (Full Week)",
+      14: "14 Days (2 Weeks)",
+      30: "30 Days (1 Month)",
+    };
+    const bAr = backlogLabelsAr[visitBacklogLimitDays] || `${visitBacklogLimitDays} يوم`;
+    const bEn = backlogLabelsEn[visitBacklogLimitDays] || `${visitBacklogLimitDays} day(s)`;
+
+    broadcastPolicyNotification({
+      icon: "⏱️",
+      badgeClass: "bg-warning",
+      title: "تحديث سياسة تسجيل الزيارات",
+      titleEn: "Visit Logging Limit Policy Update",
+      message: `تنبيه: تم تعديل مهلة تسجيل الزيارات بأثر رجعي إلى: ${bAr}. لن يُسمح بتسجيل أو إتمام أي زيارة تتعدى هذه المهلة.`,
+      messageEn: `Notice: Past visit logging grace period is now set to: ${bEn}. Visits beyond this window cannot be logged.`,
+      link: "visits.html",
+    });
+  }
+
+  // 2. Planned Visit Expiry Change
+  const prevExpiry = prevSettings.plannedVisitExpiryDays !== undefined ? prevSettings.plannedVisitExpiryDays : 7;
+  if (prevExpiry !== plannedVisitExpiryDays) {
+    broadcastPolicyNotification({
+      icon: "🗓️",
+      badgeClass: "bg-info",
+      title: "تحديث سياسة انتهاء الزيارات المخططة",
+      titleEn: "Planned Visits Expiry Policy Update",
+      message: `تنبيه: تم تعديل مدة انتهاء صلاحية الزيارات المخططة غير المنفذة إلى: ${plannedVisitExpiryDays} يوم.`,
+      messageEn: `Notice: Unexecuted planned visits will automatically expire after ${plannedVisitExpiryDays} days.`,
+      link: "visits.html",
+    });
+  }
+
+  // 3. GPS Validation Change
+  const prevGps = prevSettings.requireGpsValidation !== undefined ? !!prevSettings.requireGpsValidation : true;
+  if (prevGps !== requireGpsValidation) {
+    broadcastPolicyNotification({
+      icon: "📍",
+      badgeClass: requireGpsValidation ? "bg-primary" : "bg-warning",
+      title: "تحديث سياسة التحقق الجغرافي (GPS)",
+      titleEn: "GPS Location Policy Update",
+      message: requireGpsValidation
+        ? "تنبيه: تم تفعيل إلزامية التحقق من الموقع الجغرافي (GPS) عند تسجيل الزيارات الميدانية."
+        : "تنبيه: تم تعطيل إلزامية التحقق من الموقع الجغرافي (GPS) عند تسجيل الزيارات مؤقتاً.",
+      messageEn: requireGpsValidation
+        ? "Notice: GPS geofence verification is now strictly required when recording field visits."
+        : "Notice: Mandatory GPS verification has been temporarily relaxed.",
+      link: "visits.html",
+    });
+  }
+
+  // 4. Geofence Radius Change
+  const prevRadius = prevSettings.gpsMaxDistanceMeters !== undefined ? prevSettings.gpsMaxDistanceMeters : 200;
+  if (prevRadius !== gpsMaxDistanceMeters) {
+    broadcastPolicyNotification({
+      icon: "🎯",
+      badgeClass: "bg-info",
+      title: "تحديث نطاق التواجد الجغرافي (Geofence)",
+      titleEn: "Geofence Radius Policy Update",
+      message: `تنبيه: تم تعديل أقصى نطاق مسموح به لتسجيل الزيارات حول العيادة/المستشفى إلى: ${gpsMaxDistanceMeters} متر.`,
+      messageEn: `Notice: Clinic geofence validation radius has been updated to: ${gpsMaxDistanceMeters} meters.`,
+      link: "visits.html",
+    });
+  }
+
+  // 5. Min PM Visits Target Change
+  const prevMinPm = prevSettings.minPmVisitsPerDay !== undefined ? prevSettings.minPmVisitsPerDay : 4;
+  if (prevMinPm !== minPmVisitsPerDay) {
+    broadcastPolicyNotification({
+      icon: "🩺",
+      badgeClass: "bg-primary",
+      title: "تحديث الحد الأدنى للزيارات المسائية",
+      titleEn: "Daily PM Visits Target Policy Update",
+      message: `تنبيه: تم تعديل الحد الأدنى المطلوب للزيارات المسائية اليومية إلى: ${minPmVisitsPerDay} زيارات/يوم.`,
+      messageEn: `Notice: Daily minimum required evening clinic visits has been updated to: ${minPmVisitsPerDay} visits/day.`,
+      link: "dashboard.html",
+    });
+  }
+
+  // 6. Thursday Weekend Status Change
+  const prevThursday = !!prevSettings.isThursdayWeekend;
+  if (prevThursday !== isThursdayWeekend) {
+    broadcastPolicyNotification({
+      icon: "📅",
+      badgeClass: "bg-info",
+      title: "تحديث سياسة أيام العمل والعطلات",
+      titleEn: "Work Schedule Policy Update",
+      message: isThursdayWeekend
+        ? "تنبيه: تم اعتماد يوم الخميس عطلة أسبوعية رسمية للشركة (الخميس والجمعة)."
+        : "تنبيه: تم إلغاء عطلة يوم الخميس واعتباره يوم عمل رسمي للشركة.",
+      messageEn: isThursdayWeekend
+        ? "Notice: Thursday has been officially designated as a weekly day off (Thursday & Friday)."
+        : "Notice: Thursday is now designated as an official working day.",
+      link: "profile.html",
+    });
+  }
+
+  // 7. Leave Rollover Policy Change
+  const prevRollover = prevSettings.allowLeaveRollover !== undefined ? !!prevSettings.allowLeaveRollover : true;
+  const prevMaxDays = prevSettings.leaveRolloverMaxDays !== undefined ? prevSettings.leaveRolloverMaxDays : 5;
+  if (prevRollover !== allowLeaveRollover || (allowLeaveRollover && prevMaxDays !== leaveRolloverMaxDays)) {
+    broadcastPolicyNotification({
+      icon: "🏖️",
+      badgeClass: "bg-info",
+      title: "تحديث سياسة ترحيل رصيد الإجازات",
+      titleEn: "Leave Balance Rollover Policy Update",
+      message: allowLeaveRollover
+        ? `تنبيه: تم تفعيل ترحيل رصيد الإجازات السنوية بحد أقصى ${leaveRolloverMaxDays} يوم.`
+        : "تنبيه: تم إلغاء ترحيل رصيد الإجازات السنوية للعام القادم.",
+      messageEn: allowLeaveRollover
+        ? `Notice: Annual leave rollover is enabled up to ${leaveRolloverMaxDays} days.`
+        : "Notice: Annual leave balance rollover to next year has been disabled.",
+      link: "leaves.html",
     });
   }
 
@@ -701,3 +913,122 @@ function handleSaveCompanySettings(e) {
 }
 
 window.handleSaveCompanySettings = handleSaveCompanySettings;
+
+let currentBrandLogoData = null;
+
+function handleBrandLogoUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const msg = lang === "ar" ? "يرجى اختيار ملف صورة صالح (PNG, JPG, SVG)." : "Please select a valid image file (PNG, JPG, SVG).";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const img = new Image();
+    img.onload = function() {
+      const maxDim = 256;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const optimizedBase64 = canvas.toDataURL("image/png");
+      currentBrandLogoData = optimizedBase64;
+
+      const previewEl = document.getElementById("brandLogoPreview");
+      if (previewEl) previewEl.src = optimizedBase64;
+
+      const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+      const msg = lang === "ar" ? "تم ضبط وتصغير الشعار تلقائياً بنجاح!" : "Logo auto-scaled and optimized successfully!";
+      if (typeof showToast === "function") showToast(msg, "info");
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetBrandLogoToDefault() {
+  currentBrandLogoData = "images/pharma-icon-192.png";
+  const previewEl = document.getElementById("brandLogoPreview");
+  if (previewEl) previewEl.src = currentBrandLogoData;
+  const fileInput = document.getElementById("brandLogoFileInput");
+  if (fileInput) fileInput.value = "";
+}
+
+function selectGradientPreset(btn) {
+  document.querySelectorAll(".gradient-preset-btn").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+  const grad = btn.getAttribute("data-gradient");
+  const hiddenInput = document.getElementById("brandGradientValue");
+  if (hiddenInput) hiddenInput.value = grad;
+
+  const previewBox = document.getElementById("brandLogoPreviewContainer");
+  if (previewBox) previewBox.style.background = grad;
+}
+
+function handleSaveBrandingSettings(e) {
+  if (e) e.preventDefault();
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+  if (!isUserAdmin) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
+
+  const taglineEn = (document.getElementById("brandTaglineEn")?.value || "").trim();
+  const taglineAr = (document.getElementById("brandTaglineAr")?.value || "").trim();
+  const descEn = (document.getElementById("brandDescEn")?.value || "").trim();
+  const descAr = (document.getElementById("brandDescAr")?.value || "").trim();
+  const gradient = document.getElementById("brandGradientValue")?.value || "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)";
+
+  const brandingObj = {
+    logoUrl: currentBrandLogoData || "images/pharma-icon-192.png",
+    taglineEn: taglineEn || "Empowering Medical Representatives",
+    taglineAr: taglineAr || "نمكّن المناديب الطبيين",
+    descEn: descEn || "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
+    descAr: descAr || "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+    gradient: gradient
+  };
+
+  if (window.store && window.store.companySettings) {
+    window.store.companySettings.update({
+      branding: brandingObj
+    });
+  }
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const t = profileTranslations[lang] || profileTranslations.en;
+  const msg = t.brandingSettingsSaved || "Company branding & login appearance saved successfully!";
+
+  if (typeof showToast === "function") {
+    showToast(msg, "success");
+  } else {
+    alert(msg);
+  }
+}
+
+window.handleBrandLogoUpload = handleBrandLogoUpload;
+window.resetBrandLogoToDefault = resetBrandLogoToDefault;
+window.selectGradientPreset = selectGradientPreset;
+window.handleSaveBrandingSettings = handleSaveBrandingSettings;

@@ -280,8 +280,13 @@ function renderDailyTimeline() {
             <span>${safeSpecialty}</span> • <span>Class: <strong>${safeClass}</strong></span> • <span>Rep: <strong>${safeRepName}</strong></span>
           </div>
         `}
-        <div class="timeline-entry-timestamp" style="font-size: 0.78rem; padding: 6px 10px; border-radius: 6px; display: inline-block;">
-          <strong>${lang === 'ar' ? 'توقيت التسجيل:' : 'Entry Timestamp:'}</strong> ${v.date} at ${v.time || '10:00'} ${period}
+        <div class="timeline-entry-timestamp" style="font-size: 0.78rem; padding: 6px 10px; border-radius: 6px; display: inline-flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;">
+          <span><strong>📅 ${lang === 'ar' ? 'يوم الزيارة:' : 'Visit Day:'}</strong> ${v.date} ${period}</span>
+          <span><strong>⏰ ${lang === 'ar' ? 'وقت الزيارة:' : 'Visit Time:'}</strong> ${v.time || '10:00'}</span>
+          <span style="opacity: 0.95; border-inline-start: 1px solid currentColor; padding-inline-start: 10px;">
+            <strong>📥 ${lang === 'ar' ? 'تاريخ الإدخال:' : 'Insertion Date:'}</strong> ${v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date)}
+            • <strong>${lang === 'ar' ? 'الوقت:' : 'Time:'}</strong> ${v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'))}
+          </span>
         </div>
       </div>
     `;

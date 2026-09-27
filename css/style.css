@@ -1051,10 +1051,18 @@ body[data-theme="dark"],
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select,
+[data-theme="dark"] select,
 [data-theme="dark"] .form-control.bg-light,
 [data-theme="dark"] .form-select.bg-light {
   background-color: #232731;
   border-color: #3d4554;
+  color: #f1f3f5;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .form-select option,
+[data-theme="dark"] select option {
+  background-color: #232731;
   color: #f1f3f5;
 }
 

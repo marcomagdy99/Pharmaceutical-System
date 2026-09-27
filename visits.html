@@ -231,13 +231,25 @@
             </div>
             <div class="visit-modal-grid">
                 <div class="form-group">
-                    <label class="form-label" data-i18n="modalDate">Date</label>
+                    <label class="form-label" data-i18n="modalVisitDay">Visit Day</label>
                     <input type="date" id="visitDate" class="form-control" onchange="updateVisitModalDayDisplay()">
                     <div id="visitModalDayName" class="visit-day-name-label"></div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Visit Time (HH:MM)</label>
+                    <label class="form-label" data-i18n="modalVisitTime">Visit Time (HH:MM)</label>
                     <input type="time" id="visitTime" class="form-control">
+                </div>
+            </div>
+            <div class="form-group" id="visitInsertionMetaContainer" style="display: none; margin-bottom: 12px;">
+                <div style="background: rgba(13, 110, 253, 0.06); border: 1px solid rgba(13, 110, 253, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; color: var(--text-color, var(--gray-700)); display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                    <div>
+                        <strong data-i18n="modalInsertionDate">Insertion Date:</strong>
+                        <span id="visitInsertionDateDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+                    </div>
+                    <div>
+                        <strong data-i18n="modalInsertionTime">Insertion Time:</strong>
+                        <span id="visitInsertionTimeDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+                    </div>
                 </div>
             </div>
             <div class="form-group">

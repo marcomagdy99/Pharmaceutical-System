@@ -128,6 +128,45 @@ function setLanguage(lang) {
   if (selectedDepartment && selectedDeptTitle) {
     selectedDeptTitle.textContent = translations[lang]['selected_dept_' + selectedDepartment];
   }
+
+  applyBrandSettings();
+}
+
+function applyBrandSettings() {
+  let settings = null;
+  try {
+    const raw = localStorage.getItem("pharma_company_settings");
+    if (raw) settings = JSON.parse(raw);
+  } catch (e) {}
+
+  const brand = settings && settings.branding;
+  if (!brand) return;
+
+  const brandLogo = document.getElementById("brandPanelLogo");
+  if (brandLogo && brand.logoUrl) {
+    brandLogo.src = brand.logoUrl;
+  }
+
+  const brandTagline = document.getElementById("brandTagline");
+  if (brandTagline) {
+    const text = currentLang === "ar" ? (brand.taglineAr || brand.taglineEn) : (brand.taglineEn || brand.taglineAr);
+    if (text) {
+      brandTagline.textContent = text;
+    }
+  }
+
+  const brandDesc = document.getElementById("brandDesc");
+  if (brandDesc) {
+    const desc = currentLang === "ar" ? (brand.descAr || brand.descEn) : (brand.descEn || brand.descAr);
+    if (desc) {
+      brandDesc.textContent = desc;
+    }
+  }
+
+  const loginRight = document.getElementById("loginRightPanel") || document.querySelector(".login-right");
+  if (loginRight && brand.gradient) {
+    loginRight.style.background = brand.gradient;
+  }
 }
 
 if (langToggle) {

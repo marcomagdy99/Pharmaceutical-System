@@ -586,13 +586,18 @@ function renderCoverageReportView() {
             timestampsHtml += `
               <div class="visit-timestamp-card ${cardTypeClass}" title="${isAct ? 'Direct Actual Visit' : 'Planned Visit'}">
                 <div class="visit-date-row">
-                  <span>${v.date}</span>
+                  <span>📅 ${v.date}</span>
                   ${isAct ? `<span style="font-size: 0.7rem; color: #d97706;" title="Actual">★</span>` : ''}
                 </div>
                 <div class="visit-time-row">
                   <span>⏰ ${v.time || '10:00'}</span>
                   <span style="opacity: 0.7;">• ${typeLabel}</span>
                 </div>
+                ${(() => {
+                  const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
+                  const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'));
+                  return `<div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;">📥 ${lang === 'ar' ? 'إدخال:' : 'Ins:'} ${insD} ${insT}</div>`;
+                })()}
               </div>
             `;
           });

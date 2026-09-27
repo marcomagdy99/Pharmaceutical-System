@@ -44,6 +44,7 @@ const userTranslations = {
     role: "Role",
     select_role: "Select Role...",
     phone: "Phone",
+    hire_date: "Hire Date",
     manager: "Assign Manager",
     select_manager: "Select Manager...",
     area: "Assigned Area(s)",
@@ -112,6 +113,7 @@ const userTranslations = {
     role: "الدور",
     select_role: "اختر الدور...",
     phone: "رقم الهاتف",
+    hire_date: "تاريخ التعيين",
     manager: "تعيين مدير",
     select_manager: "اختر المدير...",
     area: "المناطق المخصصة",
@@ -294,6 +296,9 @@ const userMgmt = {
   },
 
   closeModal(type) {
+    if (type === "user" && this.pendingUnassignedAreaIds) {
+      this.pendingUnassignedAreaIds.clear();
+    }
     const idMap = {
       user: "userModal",
       resetPwd: "resetPwdModal",
@@ -354,6 +359,8 @@ const userMgmt = {
           role: "business_unit",
           status: "Active",
           managerId: "admin1",
+          lineId: "line1",
+          lineIds: ["line1", "line2"],
         },
         {
           id: "lm1",
@@ -426,7 +433,7 @@ const userMgmt = {
           const lbl = document.createElement("label");
           lbl.className = "d-flex align-items-center gap-2 mb-1 cursor-pointer";
           lbl.innerHTML = `<input type="checkbox" class="user-line-cb form-check-input" value="${window.escapeHtml(l.id)}">
-                         <span class="small fw-semibold text-dark">${window.escapeHtml(l.name)}</span>`;
+                         <span class="small fw-semibold user-line-label">${window.escapeHtml(l.name)}</span>`;
           linesContainer.appendChild(lbl);
         });
       }
@@ -526,7 +533,11 @@ const userMgmt = {
       return;
     }
 
-    const repAreas = window.store && window.store.areas ? window.store.areas.getByRep(userId) : [];
+    let repAreas = window.store && window.store.areas ? window.store.areas.getByRep(userId) : [];
+    if (this.pendingUnassignedAreaIds && this.pendingUnassignedAreaIds.size > 0) {
+      repAreas = repAreas.filter((a) => !this.pendingUnassignedAreaIds.has(a.id));
+    }
+
     if (repAreas.length > 0) {
       areaDisplayEl.innerHTML = repAreas
         .map((a) => {
@@ -546,33 +557,17 @@ const userMgmt = {
   },
 
   unassignArea(areaId, userId) {
-    if (!window.store || !window.store.areas) return;
-    const area = window.store.areas.getById(areaId);
-    if (!area) return;
-
-    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-    const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-
-    window.store.areas.unassignRep(areaId);
-
-    if (window.store.users && typeof window.store.users.syncAreasFromStore === "function") {
-      window.store.users.syncAreasFromStore();
+    if (!areaId) return;
+    if (!this.pendingUnassignedAreaIds) {
+      this.pendingUnassignedAreaIds = new Set();
     }
+    this.pendingUnassignedAreaIds.add(areaId);
 
     this.renderAssignedAreasDisplay(userId);
 
     const selectEl = document.getElementById("uArea");
     const curVal = selectEl ? selectEl.value : "";
     this.updateAreaDropdown(curVal === areaId ? "" : curVal);
-
-    this.render();
-
-    const toastMsg = isAr
-      ? `تم إلغاء إسناد منطقة (${areaName}) من الموظف بنجاح.`
-      : `Area "${areaName}" unassigned from user successfully.`;
-    if (typeof showToast === "function") {
-      showToast(toastMsg, "info");
-    }
   },
 
   // Section: Lines Modal Operations
@@ -638,7 +633,16 @@ const userMgmt = {
     return mgrRaw.name;
   },
   renderLinesSummary(user) {
-    const userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+    let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if ((!userLineIds || userLineIds.length === 0) && typeof window.getUserLines === "function") {
+      const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+      if (role !== "admin" && role !== "hr") {
+        const derived = window.getUserLines(user.id);
+        if (derived && derived.length > 0) {
+          userLineIds = derived.map((l) => l.id);
+        }
+      }
+    }
     const matched = this.lines.filter((l) => userLineIds.includes(l.id));
     if (matched.length === 0) return `<span class="text-muted">-</span>`;
     if (matched.length === 1)
@@ -652,7 +656,7 @@ const userMgmt = {
       showToast(`${prefix} ${allNames}`, "info");
     }
   },
-  formatAreasBadges(areas, badgeClass = "bg-light text-dark border") {
+  formatAreasBadges(areas, badgeClass = "badge-neutral border") {
     if (!areas || areas.length === 0) return `<span class="text-muted">-</span>`;
     const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
 
@@ -681,7 +685,7 @@ const userMgmt = {
       const assignedAreas = window.store.areas
         ? window.store.areas.getByRep(user.id)
         : [];
-      return this.formatAreasBadges(assignedAreas, "bg-light text-dark border");
+      return this.formatAreasBadges(assignedAreas, "badge-neutral border");
     }
 
     if (user.role === "DM") {
@@ -786,11 +790,12 @@ const userMgmt = {
               </div>
             </div>
           </td>
-          <td><span class="badge bg-light text-dark border">${dispCode}</span></td>
+          <td><span class="badge badge-neutral border">${dispCode}</span></td>
           <td><span class="badge rounded-pill role-badge ${this.getRoleBadgeClass(u.role)}" data-i18n="role_${u.role.toLowerCase()}">${u.role}</span></td>
           <td>${this.getManagerNameWithVacant(u.managerId)}</td>
           <td>${this.renderLinesSummary(u)}</td>
           <td>${this.renderAreasSummary(u)}</td>
+          <td><span class="text-muted small" style="white-space: nowrap;">📅 ${u.hireDate || "-"}</span></td>
           <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${dispStatus}</span></td>
           <td class="text-end pe-4 user-actions-cell">
             <button class="btn btn-sm btn-light text-primary me-1" onclick="userMgmt.openEditModal('${u.id}')"><i class="fas fa-edit"></i></button>
@@ -989,6 +994,7 @@ const userMgmt = {
   },
 
   openAddModal() {
+    this.pendingUnassignedAreaIds = new Set();
     document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
     if (document.getElementById("userForm"))
       document.getElementById("userForm").reset();
@@ -1009,6 +1015,10 @@ const userMgmt = {
       document.getElementById("uCasualLeave").value = 6;
     if (document.getElementById("uSickLeave"))
       document.getElementById("uSickLeave").value = 7;
+    const hireDateInput = document.getElementById("uHireDate");
+    if (hireDateInput) {
+      hireDateInput.value = new Date().toISOString().slice(0, 10);
+    }
 
     this.renderAssignedAreasDisplay(null);
 
@@ -1018,6 +1028,7 @@ const userMgmt = {
   },
 
   openEditModal(id) {
+    this.pendingUnassignedAreaIds = new Set();
     document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
     const user = this.users.find((u) => u.id === id);
     if (!user) return;
@@ -1028,12 +1039,25 @@ const userMgmt = {
     document.getElementById("uName").value = user.name || "";
     document.getElementById("uEmail").value = user.email || "";
     document.getElementById("uCode").value = user.employeeCode || user.code || "";
+    const hireDateInput = document.getElementById("uHireDate");
+    if (hireDateInput) {
+      hireDateInput.value = user.hireDate || "";
+    }
     if (document.getElementById("uPhone"))
       document.getElementById("uPhone").value = user.phone || "";
 
     document.getElementById("uRole").value = user.role || "Rep";
 
-    const userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+    let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if ((!userLineIds || userLineIds.length === 0) && typeof window.getUserLines === "function") {
+      const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+      if (role !== "admin" && role !== "hr") {
+        const derived = window.getUserLines(user.id);
+        if (derived && derived.length > 0) {
+          userLineIds = derived.map((l) => l.id);
+        }
+      }
+    }
     document.querySelectorAll(".user-line-cb").forEach((cb) => {
       cb.checked = userLineIds.includes(cb.value);
     });
@@ -1143,6 +1167,11 @@ const userMgmt = {
       phone: document.getElementById("uPhone")
         ? document.getElementById("uPhone").value.trim()
         : "",
+      hireDate: (() => {
+        const hInput = document.getElementById("uHireDate");
+        if (hInput && hInput.value) return hInput.value;
+        return rawExistingUser?.hireDate || new Date().toISOString().slice(0, 10);
+      })(),
       managerId: managerId || null,
       status: rawExistingUser ? rawExistingUser.status : "Active",
       lineIds: selectedLineIds,
@@ -1183,6 +1212,13 @@ const userMgmt = {
     const previousRepAreas = (id && window.store && window.store.areas)
       ? window.store.areas.getByRep(id)
       : [];
+
+    if (this.pendingUnassignedAreaIds && this.pendingUnassignedAreaIds.size > 0) {
+      this.pendingUnassignedAreaIds.forEach((areaId) => {
+        window.store.areas.unassignRep(areaId);
+      });
+      this.pendingUnassignedAreaIds.clear();
+    }
 
     if (role !== "Rep") {
       previousRepAreas.forEach((a) => {

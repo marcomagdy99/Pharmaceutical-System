@@ -201,12 +201,12 @@
                 <div class="row g-3 align-items-center">
                   <div class="col-md-4">
                     <div class="input-group">
-                      <span class="input-group-text bg-light border-end-0"
+                      <span class="input-group-text border-end-0"
                         ><i class="fas fa-search text-muted"></i
                       ></span>
                       <input
                         type="text"
-                        class="form-control bg-light border-start-0"
+                        class="form-control border-start-0"
                         id="searchUser"
                         data-i18n-placeholder="search_user_ph"
                         placeholder="Search by name, email, or code..."
@@ -214,7 +214,7 @@
                     </div>
                   </div>
                   <div class="col-md-3">
-                    <select class="form-select bg-light" id="filterRole">
+                    <select class="form-select" id="filterRole">
                       <option value="All" data-i18n="role_all">
                         All Roles
                       </option>
@@ -284,6 +284,7 @@
                         <th data-i18n="col_manager">Manager</th>
                         <th>Assigned Line(s)</th>
                         <th data-i18n="col_area">Area</th>
+                        <th data-i18n="hire_date">Hire Date</th>
                         <th data-i18n="col_status">Status</th>
                         <th class="text-end pe-4" data-i18n="col_actions">
                           Actions
@@ -326,10 +327,8 @@
           </div>
           <form
             id="userForm"
-            onsubmit="
-              event.preventDefault();
-              userMgmt.saveUser();
-            "
+            onsubmit="event.preventDefault(); return false;"
+            onkeydown="if(event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') { event.preventDefault(); return false; }"
           >
             <div class="modal-body p-4">
               <input type="hidden" id="userId" />
@@ -401,6 +400,12 @@
                   >
                   <input type="text" class="form-control" id="uPhone" />
                 </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" data-i18n="hire_date"
+                    >Hire Date</label
+                  >
+                  <input type="date" class="form-control" id="uHireDate" required />
+                </div>
                 <div class="col-md-6" id="managerGroup">
                   <label class="form-label fw-bold" data-i18n="manager"
                     >Assign Manager</label
@@ -434,7 +439,7 @@
                   </div>
                   <div
                     id="uProductLinesContainer"
-                    class="p-2 border rounded bg-light"
+                    class="p-2 border rounded u-product-lines-box"
                     style="max-height: 120px; overflow-y: auto"
                   ></div>
                   <small class="text-muted" style="font-size: 0.72rem"
@@ -518,9 +523,10 @@
                 Cancel
               </button>
               <button
-                type="submit"
+                type="button"
                 class="btn btn-primary px-4"
                 data-i18n="save"
+                onclick="userMgmt.saveUser()"
               >
                 Save
               </button>

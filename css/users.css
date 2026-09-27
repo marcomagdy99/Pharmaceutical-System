@@ -249,15 +249,24 @@ html[dir="rtl"] .tree-node {
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select,
+[data-theme="dark"] select,
 [data-theme="dark"] .form-control.bg-light,
 [data-theme="dark"] .form-select.bg-light {
   background-color: #232731;
   border-color: #3d4554;
   color: #f1f3f5;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .form-select option,
+[data-theme="dark"] select option {
+  background-color: #232731;
+  color: #f1f3f5;
 }
 
 [data-theme="dark"] .form-control:focus,
-[data-theme="dark"] .form-select:focus {
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] select:focus {
   background-color: #232731;
   border-color: #388bfd;
   color: #ffffff;
@@ -268,11 +277,37 @@ html[dir="rtl"] .tree-node {
   color: #6c757d;
 }
 
+.u-product-lines-box {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.user-line-label {
+  color: #212529;
+}
+
+.badge-neutral {
+  background-color: #f8f9fa;
+  color: #212529;
+  border-color: #dee2e6;
+}
+
 [data-theme="dark"] #uProductLinesContainer,
-[data-theme="dark"] #uProductLinesContainer.bg-light {
+[data-theme="dark"] #uProductLinesContainer.bg-light,
+[data-theme="dark"] .u-product-lines-box {
   background-color: #121418;
   border-color: #3d4554;
   color: #f1f3f5;
+}
+
+[data-theme="dark"] .user-line-label {
+  color: #f1f3f5;
+}
+
+[data-theme="dark"] .badge-neutral {
+  background-color: #21262d;
+  color: #c9d1d9;
+  border-color: #30363d;
 }
 
 [data-theme="dark"] .card.bg-light {

@@ -87,7 +87,9 @@
 
 [data-theme="dark"] .table thead,
 [data-theme="dark"] .table thead th,
-[data-theme="dark"] .table thead.table-light {
+[data-theme="dark"] .table thead.table-light,
+[data-theme="dark"] .product-table-head,
+[data-theme="dark"] .product-table-head th {
     background-color: #232731;
     color: #f1f3f5;
     border-bottom-color: #2d3340;
@@ -120,14 +122,23 @@
 }
 
 [data-theme="dark"] .form-control,
-[data-theme="dark"] .form-select {
+[data-theme="dark"] .form-select,
+[data-theme="dark"] select {
     background-color: #232731;
     border-color: #3d4554;
+    color: #f1f3f5;
+    color-scheme: dark;
+}
+
+[data-theme="dark"] .form-select option,
+[data-theme="dark"] select option {
+    background-color: #232731;
     color: #f1f3f5;
 }
 
 [data-theme="dark"] .form-control:focus,
-[data-theme="dark"] .form-select:focus {
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] select:focus {
     background-color: #232731;
     border-color: #388bfd;
     color: #ffffff;
@@ -213,6 +224,17 @@
     color: #9da5b1;
 }
 
+[data-theme="dark"] #pageContent h2,
+[data-theme="dark"] h2 {
+    color: #f1f3f5;
+}
+
+.line-target-box {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+[data-theme="dark"] .line-target-box,
 [data-theme="dark"] .border.bg-light-subtle {
     background-color: #161a22;
     border-color: #30363d;
@@ -222,6 +244,12 @@
     background-color: #21262d;
     border-color: #30363d;
     color: #8b949e;
+}
+
+.line-freq-badge {
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #dee2e6;
 }
 
 [data-theme="dark"] .line-freq-badge {

@@ -81,6 +81,22 @@ html[dir="rtl"] .language-toggle {
     margin-bottom: 2.5rem;
 }
 
+.login-logo-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 4px 14px rgba(13, 110, 253, 0.25);
+    display: inline-block;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.login-logo-img:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.35);
+}
+
 .logo-icon {
     color: var(--primary);
     width: 48px;
@@ -398,6 +414,38 @@ html[dir="rtl"] .password-toggle {
 .brand-content {
     position: relative;
     z-index: 2;
+}
+
+.brand-logo-wrapper {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 2rem auto;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 22px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.brand-logo-wrapper:hover {
+    transform: scale(1.05);
+}
+
+.brand-panel-logo {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
 }
 
 .brand-icon {

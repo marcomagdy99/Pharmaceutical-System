@@ -1511,6 +1511,16 @@
             leaveRolloverGraceMonths: 3,
             leaveRolloverMaxDays: 5,
             isThursdayWeekend: false,
+            visitBacklogLimitDays: 2,
+            plannedVisitExpiryDays: 7,
+            branding: {
+              logoUrl: "images/pharma-icon-192.png",
+              taglineEn: "Empowering Medical Representatives",
+              taglineAr: "نمكّن المناديب الطبيين",
+              descEn: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
+              descAr: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+              gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
+            }
           };
         } else {
           if (window.DEMO_DATA.companySettings.allowLeaveRollover === undefined) {
@@ -1524,6 +1534,22 @@
           }
           if (window.DEMO_DATA.companySettings.isThursdayWeekend === undefined) {
             window.DEMO_DATA.companySettings.isThursdayWeekend = false;
+          }
+          if (window.DEMO_DATA.companySettings.visitBacklogLimitDays === undefined) {
+            window.DEMO_DATA.companySettings.visitBacklogLimitDays = 2;
+          }
+          if (window.DEMO_DATA.companySettings.plannedVisitExpiryDays === undefined) {
+            window.DEMO_DATA.companySettings.plannedVisitExpiryDays = 7;
+          }
+          if (!window.DEMO_DATA.companySettings.branding) {
+            window.DEMO_DATA.companySettings.branding = {
+              logoUrl: "images/pharma-icon-192.png",
+              taglineEn: "Empowering Medical Representatives",
+              taglineAr: "نمكّن المناديب الطبيين",
+              descEn: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
+              descAr: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+              gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
+            };
           }
         }
         return window.DEMO_DATA.companySettings;

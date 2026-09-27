@@ -18,7 +18,8 @@
       if (allLines.length > 0) buSelect.value = allLines[0].id;
     }
 
-    const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "line1");
+    const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "");
+    if (!lineId) return;
     const budgets = Core.StoreAdapter.getBudgets();
     const lineBudget = budgets[lineId] || { totalBudget: 100000, lmAllocations: {}, dmAllocations: {} };
 
@@ -101,7 +102,9 @@
       return;
     }
     const buSelect = document.getElementById("buBudgetLineSelect") || document.getElementById("buProductLineSelect");
-    const lineId = buSelect?.value || "line1";
+    const allLines = Core.getAllProductLines();
+    const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "");
+    if (!lineId) return;
     const totalInput = document.getElementById("buTotalBudgetInput") || document.getElementById("buTotalLineBudgetInput");
     const total = parseFloat(totalInput?.value || 0);
 
@@ -255,7 +258,7 @@
 
   function calculateLmAllocationPreview() {
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
-    const lineId = lineSelect?.value || "line1";
+    const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
     const budgets = Core.StoreAdapter.getBudgets();
     const lineBudget = budgets[lineId] || { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
     const myLmAlloc = (lineBudget.lmAllocations && Number(lineBudget.lmAllocations[Core._state.currentUser.id])) || 0;
@@ -345,7 +348,7 @@
 
   function calculateDmAllocationPreview() {
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
-    const lineId = lineSelect?.value || "line1";
+    const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
     const budgets = Core.StoreAdapter.getBudgets();
     const lineBudget = budgets[lineId] || { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
     const myDmAlloc = (lineBudget.dmAllocations && Number(lineBudget.dmAllocations[Core._state.currentUser.id])) || 0;
@@ -378,7 +381,7 @@
       return;
     }
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
-    const lineId = lineSelect?.value || "line1";
+    const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
     const budgets = Core.StoreAdapter.getBudgets();
     if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
     if (!budgets[lineId].repAllocations) budgets[lineId].repAllocations = {};
@@ -412,7 +415,7 @@
       return;
     }
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
-    const lineId = lineSelect?.value || "line1";
+    const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
     const budgets = Core.StoreAdapter.getBudgets();
     if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
     if (!budgets[lineId].dmAllocations) budgets[lineId].dmAllocations = {};

@@ -979,10 +979,10 @@ function populateCalendarLineFilter(user = null) {
       lineSelect.disabled = true;
     } else {
       const opt = document.createElement("option");
-      opt.value = "line1";
-      opt.textContent = isAr ? "📦 خط افتراضي" : "📦 Assigned Line";
+      opt.value = "";
+      opt.textContent = isAr ? "📦 لا توجد خطوط معينة" : "📦 No Line Assigned";
       lineSelect.appendChild(opt);
-      window.selectedCalendarLineId = "line1";
+      window.selectedCalendarLineId = "";
       lineSelect.disabled = true;
     }
     return;

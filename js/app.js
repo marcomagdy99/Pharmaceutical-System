@@ -69,6 +69,7 @@ const DEFAULT_DEMO_DATA = {
     lineIds: ["line1"],
     photoURL: "",
     lang: "en",
+    hireDate: "2024-01-15",
     leaveBalance: {
       annual: 21,
       sick: 7,
@@ -87,6 +88,7 @@ const DEFAULT_DEMO_DATA = {
       email: "admin@pharmacare.com",
       phone: "+20100111222",
       status: "Active",
+      hireDate: "2021-01-01",
     },
     {
       id: "bu1",
@@ -97,7 +99,10 @@ const DEFAULT_DEMO_DATA = {
       email: "bu@pharmacare.com",
       phone: "+20100222333",
       managerId: "admin1",
+      lineId: "line1",
+      lineIds: ["line1", "line2"],
       status: "Active",
+      hireDate: "2021-06-01",
     },
     {
       id: "lm1",
@@ -111,6 +116,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1", "line2"],
       status: "Active",
+      hireDate: "2022-01-15",
     },
     {
       id: "lm2",
@@ -124,6 +130,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line2",
       lineIds: ["line2"],
       status: "Active",
+      hireDate: "2022-03-01",
     },
     {
       id: "dm1",
@@ -137,6 +144,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      hireDate: "2023-01-10",
     },
     {
       id: "dm2",
@@ -150,6 +158,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      hireDate: "2023-02-15",
     },
     {
       id: "dm3",
@@ -163,6 +172,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line2",
       lineIds: ["line2"],
       status: "Active",
+      hireDate: "2023-05-01",
     },
     {
       id: "rep1",
@@ -177,6 +187,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      hireDate: "2024-01-15",
       leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
@@ -192,6 +203,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      hireDate: "2024-02-01",
       leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
@@ -206,6 +218,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line1",
       lineIds: ["line1"],
       status: "Active",
+      hireDate: "2024-03-10",
       leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
@@ -220,6 +233,7 @@ const DEFAULT_DEMO_DATA = {
       lineId: "line2",
       lineIds: ["line2"],
       status: "Active",
+      hireDate: "2024-04-01",
       leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
     {
@@ -232,6 +246,7 @@ const DEFAULT_DEMO_DATA = {
       phone: "+20100888999",
       managerId: "admin1",
       status: "Active",
+      hireDate: "2021-02-01",
       leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
   ],
@@ -527,7 +542,7 @@ const DEFAULT_DEMO_DATA = {
       phone: "01122334455",
       contactPerson: "Hoda Sameh",
       areaId: "area2",
-      repId: "rep4",
+      repId: "rep2",
     },
   ],
   visits: [
@@ -1088,6 +1103,16 @@ function loadDataFromStorage() {
               data.users.push(u);
             }
           });
+          data.users.forEach((u) => {
+            if (!u.hireDate) {
+              const def = DEFAULT_DEMO_DATA.users.find((du) => du.id === u.id);
+              u.hireDate = def?.hireDate || "2024-01-15";
+            }
+          });
+        }
+        if (data.currentUser && !data.currentUser.hireDate) {
+          const defCurrent = DEFAULT_DEMO_DATA.users.find((du) => du.id === data.currentUser.id);
+          data.currentUser.hireDate = defCurrent?.hireDate || "2024-01-15";
         }
         if (!Array.isArray(data.distributors) || data.distributors.length === 0) {
           data.distributors = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.distributors));
@@ -1103,7 +1128,7 @@ function loadDataFromStorage() {
         }
         if (Array.isArray(data.areas)) {
           data.areas.forEach((a) => {
-            if (!a.lineId) a.lineId = "line1";
+            if (!a.lineId) a.lineId = "";
           });
           DEFAULT_DEMO_DATA.areas.forEach((da) => {
             if (!data.areas.some((existing) => existing.id === da.id)) {
@@ -1215,6 +1240,12 @@ function loadDataFromStorage() {
           data.visits.forEach((item) => {
             if (item.comment && /supervisory/i.test(item.comment)) {
               item.comment = "";
+            }
+            if (!item.insertionDate) {
+              item.insertionDate = item.createdAt ? item.createdAt.slice(0, 10) : item.date;
+            }
+            if (!item.insertionTime) {
+              item.insertionTime = item.time || "10:00";
             }
           });
           DEFAULT_DEMO_DATA.visits.forEach((v) => {
@@ -1346,6 +1377,15 @@ window.addEventListener("storage", (e) => {
       console.warn("[StorageSync] Failed to sync sales data across tabs:", err);
     }
   }
+  if (e.key === "pharma_company_settings" && e.newValue) {
+    try {
+      const freshCs = JSON.parse(e.newValue);
+      if (window.DEMO_DATA) {
+        window.DEMO_DATA.companySettings = freshCs;
+        document.dispatchEvent(new CustomEvent("pharma:storage:synced", { detail: { key: "pharma_company_settings" } }));
+      }
+    } catch (err) {}
+  }
 });
 
 function getDynamicYears() {
@@ -1362,6 +1402,31 @@ function getDynamicYears() {
   return Array.from(years).sort((a, b) => a - b).map(String);
 }
 window.getDynamicYears = getDynamicYears;
+
+function getVisitBacklogLimitDays() {
+  const cs = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+  return typeof cs.visitBacklogLimitDays === "number" ? cs.visitBacklogLimitDays : 2;
+}
+window.getVisitBacklogLimitDays = getVisitBacklogLimitDays;
+
+function getVisitBacklogMinDateStr() {
+  const days = getVisitBacklogLimitDays();
+  const d = (window.getSystemDate && window.getSystemDate()) || new Date();
+  d.setDate(d.getDate() - days);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+window.getVisitBacklogMinDateStr = getVisitBacklogMinDateStr;
+
+function getPlannedVisitExpiryDays() {
+  const cs = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+  return typeof cs.plannedVisitExpiryDays === "number" ? cs.plannedVisitExpiryDays : 7;
+}
+window.getPlannedVisitExpiryDays = getPlannedVisitExpiryDays;
 
 // ============================================================================
 // Section 3: Recursive Hierarchy & Multi-Line Helpers
@@ -1590,8 +1655,26 @@ function getUserLines(userId) {
     });
   }
 
-  const result = lines.filter((l) => assignedLineIds.includes(l.id));
-  return result.length > 0 ? result : (lines.length > 0 ? [lines[0]] : []);
+  if (assignedLineIds.length === 0 && user.managerId) {
+    const mgr = users.find((u) => u.id === user.managerId);
+    if (mgr) {
+      const mgrLines = mgr.lineIds || (mgr.lineId ? [mgr.lineId] : []);
+      mgrLines.forEach((lId) => {
+        if (!assignedLineIds.includes(lId)) assignedLineIds.push(lId);
+      });
+    }
+  }
+
+  if (assignedLineIds.length === 0) {
+    const areas = (window.store && window.store.areas ? window.store.areas.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+    areas.forEach((a) => {
+      if (a.repId === userId && a.lineId && !assignedLineIds.includes(a.lineId)) {
+        assignedLineIds.push(a.lineId);
+      }
+    });
+  }
+
+  return lines.filter((l) => assignedLineIds.includes(l.id));
 }
 
 window.getUserLines = getUserLines;
@@ -1791,11 +1874,14 @@ window.getDoctorCallTarget = getDoctorCallTarget;
 
 function isPlannedVisitExpired(dateStr) {
   if (!dateStr) return false;
+  const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
+    ? window.getPlannedVisitExpiryDays()
+    : 7;
   const parts = String(dateStr).split("T")[0].split("-");
   const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
   if (parts.length !== 3) {
     const planDate = new Date(dateStr);
-    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > 7;
+    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > expiryDays;
   }
   const planDateMidnight = new Date(
     parseInt(parts[0], 10),
@@ -1810,7 +1896,7 @@ function isPlannedVisitExpired(dateStr) {
     0, 0, 0, 0
   );
   const diffDays = (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
-  return diffDays > 7;
+  return diffDays > expiryDays;
 }
 window.isPlannedVisitExpired = isPlannedVisitExpired;
 
@@ -1835,7 +1921,7 @@ function parseSalesNumber(val) {
   // Check if negative in accounting formats: (1,500) or 1500- or -1500
   const isAccountingNegative = (s.startsWith("(") && s.endsWith(")")) || s.endsWith("-") || s.startsWith("-");
 
-  // Convert Eastern Arabic-Indic digits ٠١٢٣٤٥٦٧٨٩ to Latin
+  // Convert Eastern Arabic-Indic digits (0-9) to Latin
   s = s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
 
   // Clean parentheses and trailing/leading minus

@@ -74,6 +74,10 @@
                                 <input type="text" class="form-control" id="empCodeInput" value="" readonly>
                             </div>
                             <div class="form-group">
+                                <label class="form-label" data-i18n="hire_date">Hire Date</label>
+                                <input type="text" class="form-control" id="hireDateInput" value="" readonly>
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label" data-i18n="product_line">Product Line</label>
                                 <input type="text" class="form-control" id="productLineInput" value="" readonly>
                             </div>
@@ -193,6 +197,34 @@
                                 </div>
                                 <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="minPmVisitsHint">Daily minimum required clinic visits during evening shift.</small>
                             </div>
+                            <div class="grid-2" style="max-width: 650px; gap: 16px; margin-bottom: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="visitBacklogLimitLabel">Past Visit Logging Limit (Grace Period)</label>
+                                    <select class="form-control" id="visitBacklogLimitSelect">
+                                        <option value="0">0 Days - Same Day Only</option>
+                                        <option value="1">1 Day (24 Hours)</option>
+                                        <option value="2" selected>2 Days (48 Hours) - Default</option>
+                                        <option value="3">3 Days (72 Hours)</option>
+                                        <option value="5">5 Days (Working Week)</option>
+                                        <option value="7">7 Days (Full Week)</option>
+                                        <option value="14">14 Days (2 Weeks)</option>
+                                        <option value="30">30 Days (1 Month)</option>
+                                    </select>
+                                    <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="visitBacklogLimitHint">Maximum allowed days in the past a rep or manager can log an actual visit.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="plannedVisitExpiryLabel">Planned Visits Auto-Expiry</label>
+                                    <select class="form-control" id="plannedVisitExpirySelect">
+                                        <option value="3">3 Days</option>
+                                        <option value="5">5 Days</option>
+                                        <option value="7" selected>7 Days (Default)</option>
+                                        <option value="10">10 Days</option>
+                                        <option value="14">14 Days (2 Weeks)</option>
+                                        <option value="30">30 Days (1 Month)</option>
+                                    </select>
+                                    <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="plannedVisitExpiryHint">Unexecuted planned visits expire and become missed after this period.</small>
+                                </div>
+                            </div>
                             <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
                             <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                                 <span>🏖️</span>
@@ -245,6 +277,86 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- START: Admin Company Branding & Login Customization Card -->
+                <div class="card" id="adminBrandingCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
+                    <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700;">🎨 <span data-i18n="companyBrandingTitle">Company Branding & Login Customization</span></span>
+                        <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p class="text-muted small" style="margin-bottom: 16px;" data-i18n="companyBrandingDesc">Customize the right-hand panel of the login screen with your company logo, slogan, description, and brand colors.</p>
+                        <form id="brandingSettingsForm" onsubmit="handleSaveBrandingSettings(event)">
+                            
+                            <!-- Logo Upload & Live Preview -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label class="form-label" style="font-weight: 600;" data-i18n="companyLogoLabel">Company Brand Logo (Login Showcase)</label>
+                                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                                    <div class="brand-preview-box" id="brandLogoPreviewContainer">
+                                        <img id="brandLogoPreview" src="images/pharma-icon-192.png" alt="Logo Preview">
+                                    </div>
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <input type="file" id="brandLogoFileInput" accept="image/png, image/jpeg, image/svg+xml, image/webp" style="display: none;" onchange="handleBrandLogoUpload(event)">
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                                            <button type="button" class="btn-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="document.getElementById('brandLogoFileInput').click()">
+                                                <i class="fas fa-upload" style="margin-inline-end: 6px;"></i><span data-i18n="uploadLogo">Upload Logo</span>
+                                            </button>
+                                            <button type="button" class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem; background: var(--gray-200); color: var(--gray-800); border: none; border-radius: 10px; cursor: pointer; font-weight: 600;" onclick="resetBrandLogoToDefault()">
+                                                <i class="fas fa-undo" style="margin-inline-end: 6px;"></i><span data-i18n="resetDefault">Reset Default</span>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted" style="display: block; font-size: 0.8rem;" data-i18n="logoConstraintHint">PNG, JPG, or SVG. Auto-scaled & optimized to fit perfectly within standard 96x96 box without distortion.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
+
+                            <!-- Slogan / Tagline -->
+                            <div class="grid-2" style="gap: 16px; margin-bottom: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="taglineEnLabel">Slogan / Tagline (English)</label>
+                                    <input type="text" class="form-control" id="brandTaglineEn" placeholder="e.g. Empowering Medical Representatives" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="taglineArLabel">Slogan / Tagline (Arabic)</label>
+                                    <input type="text" class="form-control" id="brandTaglineAr" placeholder="مثال: نمكّن المناديب الطبيين" dir="rtl" required>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="grid-2" style="gap: 16px; margin-bottom: 20px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="descEnLabel">Description (English)</label>
+                                    <textarea class="form-control" id="brandDescEn" rows="3" placeholder="Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution." required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="descArLabel">Description (Arabic)</label>
+                                    <textarea class="form-control" id="brandDescAr" rows="3" placeholder="قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا." dir="rtl" required></textarea>
+                                </div>
+                            </div>
+
+                            <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
+
+                            <!-- Brand Gradient / Color -->
+                            <div class="form-group" style="margin-bottom: 24px;">
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="bannerThemeLabel">Login Panel Theme Color & Gradient</label>
+                                <div class="gradient-preset-picker">
+                                    <button type="button" class="gradient-preset-btn active" data-gradient="linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)" style="background: linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%);" title="Pharma Blue" onclick="selectGradientPreset(this)"></button>
+                                    <button type="button" class="gradient-preset-btn" data-gradient="linear-gradient(135deg, #059669 0%, #34d399 100%)" style="background: linear-gradient(135deg, #059669 0%, #34d399 100%);" title="Medical Emerald" onclick="selectGradientPreset(this)"></button>
+                                    <button type="button" class="gradient-preset-btn" data-gradient="linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);" title="Royal Navy" onclick="selectGradientPreset(this)"></button>
+                                    <button type="button" class="gradient-preset-btn" data-gradient="linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" style="background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);" title="Modern Violet" onclick="selectGradientPreset(this)"></button>
+                                    <button type="button" class="gradient-preset-btn" data-gradient="linear-gradient(135deg, #0891b2 0%, #22d3ee 100%)" style="background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);" title="Cyan Teal" onclick="selectGradientPreset(this)"></button>
+                                    <button type="button" class="gradient-preset-btn" data-gradient="linear-gradient(135deg, #0f172a 0%, #334155 100%)" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);" title="Dark Slate" onclick="selectGradientPreset(this)"></button>
+                                </div>
+                                <input type="hidden" id="brandGradientValue" value="linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)">
+                            </div>
+
+                            <button type="submit" class="btn-primary" data-i18n="saveBrandingSettings">Save Branding Settings</button>
+                        </form>
+                    </div>
+                </div>
+                <!-- END: Admin Company Branding & Login Customization Card -->
 
                 <div class="card">
                     <div class="card-header" data-i18n="change_password">Change Password</div>

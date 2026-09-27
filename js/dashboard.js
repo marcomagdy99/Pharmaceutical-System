@@ -47,7 +47,10 @@ const dashboardTranslations = {
     single_visit: "Single",
     double_visit: "Double",
     accompanied_by: "Accompanied By (Select Companion(s))",
+    visit_day: "Visit Day",
     visit_time: "Visit Time (HH:MM)",
+    insertion_date: "Insertion Date",
+    insertion_time: "Insertion Time",
     products_discussed: "Products Discussed",
     visit_feedback: "Visit Feedback",
     confirm_actual_visit: "Confirm Actual Visit",
@@ -154,7 +157,10 @@ const dashboardTranslations = {
     single_visit: "فردي (Single)",
     double_visit: "مزدوج (Double)",
     accompanied_by: "مرافق مع (اختر المرافقين)",
-    visit_time: "وقت الزيارة (HH:MM)",
+    visit_day: "يوم الزيارة",
+    visit_time: "وقت الزيارة",
+    insertion_date: "تاريخ الإدخال",
+    insertion_time: "وقت الإدخال",
     products_discussed: "المنتجات التي تمت مناقشتها",
     visit_feedback: "ملاحظات الزيارة",
     confirm_actual_visit: "تأكيد الزيارة الفعلية",
@@ -233,12 +239,18 @@ if (window.translations) {
 }
 
 function isPlannedVisitExpired(dateStr) {
+  if (typeof window.isPlannedVisitExpired === "function") {
+    return window.isPlannedVisitExpired(dateStr);
+  }
   if (!dateStr) return false;
+  const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
+    ? window.getPlannedVisitExpiryDays()
+    : 7;
   const parts = dateStr.split("-");
   const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   if (parts.length !== 3) {
     const planDate = new Date(dateStr);
-    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > 7;
+    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > expiryDays;
   }
   const planDate = new Date(
     parseInt(parts[0], 10),
@@ -254,7 +266,7 @@ function isPlannedVisitExpired(dateStr) {
   );
   const diffDays =
     (todayMidnight.getTime() - planDate.getTime()) / (1000 * 3600 * 24);
-  return diffDays > 7;
+  return diffDays > expiryDays;
 }
 
 function isPlanVisitAlreadyCompleted(planVisit, allVisits) {
@@ -1417,8 +1429,13 @@ function renderRepDashboard(userName, user) {
                     <td style="padding: 10px; font-weight: 600;">${window.escapeHtml(v.doctorName || v.targetName)}</td>
                     <td style="padding: 10px; color: var(--gray-700);">
                       <div style="font-weight: 700; color: var(--primary); font-size: 0.82rem; white-space: nowrap;">${dt.dayName}</div>
-                      <div style="font-weight: 600; font-size: 0.8rem; white-space: nowrap;">${v.date}</div>
+                      <div style="font-weight: 600; font-size: 0.8rem; white-space: nowrap;">📅 ${v.date}</div>
                       <div style="font-size: 0.75rem; color: var(--gray-500); font-weight: 600; white-space: nowrap;">⏰ ${dt.time}</div>
+                      ${(() => {
+                        const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
+                        const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00"));
+                        return `<div style="font-size: 0.72rem; color: #0d6efd; font-weight: 600; white-space: nowrap; margin-top: 3px;" title="Insertion Date & Time">📥 ${lang === 'ar' ? 'إدخال:' : 'Ins:'} ${insD} ${insT}</div>`;
+                      })()}
                     </td>
                     <td style="padding: 10px;">
                       <span class="entry-type-badge ${v.source === "actual" ? "actual" : "plan"}">
@@ -2808,13 +2825,23 @@ function attachDashboardModal() {
         <form id="dashCompleteForm" onsubmit="handleDashCompleteSubmit(event)">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
             <div class="form-group">
-              <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashDate">${lang === "ar" ? "تاريخ التنفيذ" : "Execution Date"}</label>
+              <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashDate">${lang === "ar" ? "يوم الزيارة" : "Visit Day"}</label>
               <input type="date" id="dashVisitDate" class="form-control" required style="width: 100%; padding: 8px 12px; border-radius: 8px;" onchange="updateDashModalDayDisplay()">
               <div id="dashModalDayDisplay" style="margin-top: 4px; font-size: 0.82rem; font-weight: 700; color: var(--primary);"></div>
             </div>
             <div class="form-group">
-              <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashTime">${t.visit_time}</label>
+              <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashTime">${lang === "ar" ? "وقت الزيارة" : "Visit Time (HH:MM)"}</label>
               <input type="time" id="dashVisitTime" class="form-control" required style="width: 100%; padding: 8px 12px; border-radius: 8px;">
+            </div>
+          </div>
+          <div id="dashInsertionMetaContainer" style="margin-bottom: 14px; background: rgba(13, 110, 253, 0.06); border: 1px solid rgba(13, 110, 253, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; color: var(--text-color, var(--gray-700)); display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+            <div>
+              <strong>${lang === "ar" ? "تاريخ الإدخال:" : "Insertion Date:"}</strong>
+              <span id="dashInsertionDateDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+            </div>
+            <div>
+              <strong>${lang === "ar" ? "وقت الإدخال:" : "Insertion Time:"}</strong>
+              <span id="dashInsertionTimeDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
             </div>
           </div>
 
@@ -3022,11 +3049,15 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
   const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${pad(twoDaysAgo.getMonth() + 1)}-${pad(twoDaysAgo.getDate())}`;
 
+  const minAllowedBacklog = (typeof window.getVisitBacklogMinDateStr === "function")
+    ? window.getVisitBacklogMinDateStr()
+    : twoDaysAgoISO;
+
   const dateInput = document.getElementById("dashVisitDate");
   if (dateInput) {
     dateInput.max = todayISO;
-    dateInput.min = twoDaysAgoISO;
-    if (target && target.date && target.date >= twoDaysAgoISO && target.date <= todayISO) {
+    dateInput.min = minAllowedBacklog;
+    if (target && target.date && target.date >= minAllowedBacklog && target.date <= todayISO) {
       dateInput.value = target.date;
     } else {
       dateInput.value = todayISO;
@@ -3035,6 +3066,15 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   }
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   document.getElementById("dashVisitTime").value = timeStr;
+
+  const dashInsDateEl = document.getElementById("dashInsertionDateDisplay");
+  const dashInsTimeEl = document.getElementById("dashInsertionTimeDisplay");
+  if (dashInsDateEl) dashInsDateEl.innerText = `${todayISO} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+  if (dashInsTimeEl) dashInsTimeEl.innerText = `${timeStr} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+
+  const lblDate = document.getElementById("lblDashDate");
+  if (lblDate) lblDate.innerText = t.visit_day || (lang === "ar" ? "يوم الزيارة" : "Visit Day");
+
   document.getElementById("dashVisitComment").value =
     (target && target.comment) || "";
   const giveawayInput = document.getElementById("dashVisitGiveawaySamples");
@@ -3045,9 +3085,19 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   const container = document.getElementById("dashProdContainer");
   if (container) {
     container.replaceChildren();
-    const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+    const effectiveRepId = (target && target.repId) || (user && user.id);
+    const repLines = (effectiveRepId && typeof window.getUserLines === "function")
+      ? window.getUserLines(effectiveRepId)
+      : [];
+    const repLineIds = repLines.map((l) => l.id);
+    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+
+    let linesToShow = allLines;
+    if (repLines.length > 0) {
+      linesToShow = allLines.filter((l) => repLineIds.includes(l.id));
+    }
     let productsToShow = [];
-    allLines.forEach((line) => {
+    linesToShow.forEach((line) => {
       if (line.products) productsToShow.push(...line.products);
     });
 
@@ -3137,6 +3187,13 @@ window.handleDashCompleteSubmit = function (e) {
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
   const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${String(twoDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(twoDaysAgo.getDate()).padStart(2, "0")}`;
 
+  const minAllowedBacklog = (typeof window.getVisitBacklogMinDateStr === "function")
+    ? window.getVisitBacklogMinDateStr()
+    : twoDaysAgoISO;
+  const limitDays = (typeof window.getVisitBacklogLimitDays === "function")
+    ? window.getVisitBacklogLimitDays()
+    : 2;
+
   if (dateVal > todayISO) {
     resetSubmitBtn();
     const msg = lang === "ar"
@@ -3146,11 +3203,15 @@ window.handleDashCompleteSubmit = function (e) {
     else alert(msg);
     return;
   }
-  if (dateVal < twoDaysAgoISO) {
+  if (dateVal < minAllowedBacklog) {
     resetSubmitBtn();
     const msg = lang === "ar"
-      ? "لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من يومين على تاريخها."
-      : "Cannot log an actual visit older than 2 days.";
+      ? (limitDays === 0
+          ? "وفقاً لسياسة الشركة، يجب تسجيل الزيارات الفعلية في نفس اليوم فقط."
+          : `وفقاً لسياسة الشركة، لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من ${limitDays} ${limitDays === 1 ? "يوم" : limitDays === 2 ? "يومين" : "أيام"} على تاريخها.`)
+      : (limitDays === 0
+          ? "Company policy requires same-day visit logging only."
+          : `Company policy does not allow logging visits older than ${limitDays} day(s).`);
     if (typeof showToast === "function") showToast(msg, "warning");
     else alert(msg);
     return;
@@ -3255,7 +3316,12 @@ window.handleDashCompleteSubmit = function (e) {
     target.status = "completed";
     target.date = dateVal;
     target.time = timeVal;
-    target.entryDate = dateVal;
+    const nowStamp = new Date();
+    target.insertionDate = nowStamp.toISOString().slice(0, 10);
+    target.insertionTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
+    target.completedAt = nowStamp.toISOString();
+    if (!target.createdAt) target.createdAt = nowStamp.toISOString();
+    target.entryDate = target.insertionDate;
     target.comment = commentVal;
     target.giveawaySamples = giveawayVal;
     target.productIds = selectedProductIds;

@@ -345,7 +345,7 @@ function renderProductLines(activeLineId) {
       productsHtml = `
                 <div class="table-responsive mt-3">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead class="product-table-head">
                             <tr>
                                 <th data-i18n="productName">Product Name</th>
                                 <th data-i18n="dosage">Dosage</th>
@@ -391,7 +391,7 @@ function renderProductLines(activeLineId) {
     const html = `
             <div class="accordion-item border-0 border-bottom">
                 <h2 class="accordion-header" id="heading${line.id}">
-                    <div class="d-flex w-100 bg-white">
+                    <div class="d-flex w-100">
                         <button class="accordion-button ${buttonClass} shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${line.id}" aria-expanded="${isExpanded}" aria-controls="collapse${line.id}">
                             <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
                                 <div class="d-flex flex-column align-items-start gap-1">
@@ -399,7 +399,7 @@ function renderProductLines(activeLineId) {
                                         <span class="fw-bold fs-5 line-title">${window.escapeHtml(line.name)}</span>
                                         <span class="badge bg-primary rounded-pill">${line.products ? line.products.length : 0} <span data-i18n="products">Products</span></span>
                                     </div>
-                                    <span class="badge bg-light text-dark border line-freq-badge" title="Quarterly Target Call Frequency">
+                                    <span class="badge line-freq-badge" title="Quarterly Target Call Frequency">
                                         🎯 A: <strong>${freq.classA ?? 4}</strong> | B: <strong>${freq.classB ?? 3}</strong> | C: <strong>${freq.classC ?? 1}</strong>
                                     </span>
                                 </div>
@@ -411,7 +411,7 @@ function renderProductLines(activeLineId) {
                     </div>
                 </h2>
                 <div id="collapse${line.id}" class="accordion-collapse collapse ${collapseClass}" aria-labelledby="heading${line.id}" data-bs-parent="#productLinesAccordion">
-                    <div class="accordion-body bg-white">
+                    <div class="accordion-body">
                         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                             <div>
                                 <button class="btn btn-sm btn-outline-secondary me-2" onclick="openEditLine('${line.id}')">

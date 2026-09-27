@@ -33,9 +33,17 @@ const visitTranslations = {
     colStatus: "Status",
     colProducts: "Products",
     colActions: "Actions",
+    colVisitDay: "Visit Day",
+    colVisitTime: "Visit Time",
+    colInsertionDate: "Insertion Date",
+    colInsertionTime: "Insertion Time",
     modalAddVisit: "Add New Visit",
     modalCompleteVisit: "Complete Visit",
-    modalDate: "Date",
+    modalDate: "Visit Day",
+    modalVisitDay: "Visit Day",
+    modalVisitTime: "Visit Time (HH:MM)",
+    modalInsertionDate: "Insertion Date:",
+    modalInsertionTime: "Insertion Time:",
     modalPeriod: "Target Type / Period",
     modalAM: "AM (Hospital)",
     modalPM: "PM (Doctor)",
@@ -145,9 +153,17 @@ const visitTranslations = {
     colStatus: "الحالة",
     colProducts: "المنتجات",
     colActions: "إجراءات",
+    colVisitDay: "يوم الزيارة",
+    colVisitTime: "وقت الزيارة",
+    colInsertionDate: "تاريخ الإدخال",
+    colInsertionTime: "وقت الإدخال",
     modalAddVisit: "إضافة زيارة جديدة",
     modalCompleteVisit: "إكمال الزيارة",
-    modalDate: "التاريخ",
+    modalDate: "يوم الزيارة",
+    modalVisitDay: "يوم الزيارة",
+    modalVisitTime: "وقت الزيارة",
+    modalInsertionDate: "تاريخ الإدخال:",
+    modalInsertionTime: "وقت الإدخال:",
     modalPeriod: "نوع الهدف / الفترة",
     modalAM: "صباحاً (مستشفى)",
     modalPM: "مساءً (طبيب)",
@@ -241,12 +257,18 @@ if (typeof translations !== "undefined") {
 // Section 2: 7-Day Auto-Expiry Evaluation
 // ============================================================================
 function isPlannedVisitExpired(dateStr) {
+  if (typeof window.isPlannedVisitExpired === "function") {
+    return window.isPlannedVisitExpired(dateStr);
+  }
   if (!dateStr) return false;
+  const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
+    ? window.getPlannedVisitExpiryDays()
+    : 7;
   const parts = String(dateStr).split("T")[0].split("-");
   const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
   if (parts.length !== 3) {
     const planDate = new Date(dateStr);
-    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > 7;
+    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > expiryDays;
   }
   const planDateMidnight = new Date(
     parseInt(parts[0], 10),
@@ -261,7 +283,7 @@ function isPlannedVisitExpired(dateStr) {
     0, 0, 0, 0
   );
   const diffDays = (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
-  return diffDays > 7;
+  return diffDays > expiryDays;
 }
 
 // ============================================================================
@@ -892,6 +914,9 @@ const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || (()
 })();
 
 function getTwoDaysAgoStr() {
+  if (typeof window.getVisitBacklogMinDateStr === "function") {
+    return window.getVisitBacklogMinDateStr();
+  }
   const d = (window.getSystemDate && window.getSystemDate()) || new Date();
   d.setDate(d.getDate() - 2);
   return `${d.getFullYear()}-${_padZ(d.getMonth() + 1)}-${_padZ(d.getDate())}`;
@@ -1016,48 +1041,60 @@ function populateVisitsLineFilter() {
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const isAr = lang === "ar";
-  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
   const curVal = filterLine.value;
+  const isFullAdmin = currentUserRole === "admin" || currentUserRole === "hr";
 
   filterLine.replaceChildren();
 
-  if (!isManager) {
-    // Rep has 1 line
-    if (userLines.length > 0) {
+  if (isFullAdmin) {
+    const allLines = window.store && window.store.productLines
+      ? window.store.productLines.getAll().filter((l) => (l.status || "Active") === "Active")
+      : (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+
+    const optAll = document.createElement("option");
+    optAll.value = "all";
+    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    filterLine.appendChild(optAll);
+
+    allLines.forEach((l) => {
+      const opt = document.createElement("option");
+      opt.value = l.id;
+      opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+      filterLine.appendChild(opt);
+    });
+    filterLine.disabled = false;
+  } else {
+    const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+
+    if (userLines.length > 1) {
+      const optAll = document.createElement("option");
+      optAll.value = "all";
+      optAll.textContent = isAr ? "🌐 جميع خطوطي" : "🌐 All My Lines";
+      filterLine.appendChild(optAll);
+
       userLines.forEach((l) => {
         const opt = document.createElement("option");
         opt.value = l.id;
         opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
         filterLine.appendChild(opt);
       });
+      filterLine.disabled = false;
+    } else if (userLines.length === 1) {
+      const l = userLines[0];
+      const opt = document.createElement("option");
+      opt.value = l.id;
+      opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+      filterLine.appendChild(opt);
+      filterLine.value = l.id;
       filterLine.disabled = true;
     } else {
       const opt = document.createElement("option");
-      opt.value = "line1";
-      opt.textContent = isAr ? "📦 خط افتراضي" : "📦 Assigned Line";
+      opt.value = "";
+      opt.textContent = isAr ? "📦 لا توجد خطوط معينة" : "📦 No Line Assigned";
       filterLine.appendChild(opt);
       filterLine.disabled = true;
     }
-    return;
   }
-
-  // Managers & Admin
-  filterLine.disabled = false;
-  const isFullAdmin = currentUserRole === "admin" || currentUserRole === "hr";
-
-  if (isFullAdmin || userLines.length > 1) {
-    const optAll = document.createElement("option");
-    optAll.value = "all";
-    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
-    filterLine.appendChild(optAll);
-  }
-
-  userLines.forEach((l) => {
-    const opt = document.createElement("option");
-    opt.value = l.id;
-    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
-    filterLine.appendChild(opt);
-  });
 
   if (curVal && Array.from(filterLine.options).some((o) => o.value === curVal)) {
     filterLine.value = curVal;
@@ -1352,6 +1389,11 @@ function getAvailableAreas() {
       repAreas = repAreas.filter((a) => !a.lineId || repLineIds.includes(a.lineId));
     }
 
+    const filterLineVal = document.getElementById("filterLine")?.value || "all";
+    if (filterLineVal !== "all") {
+      repAreas = repAreas.filter((a) => !a.lineId || a.lineId === filterLineVal);
+    }
+
     return repAreas;
   }
 
@@ -1610,10 +1652,24 @@ function getScopedVisits() {
     const scopedUserIds = window.getScopedTeamForLine
       ? window.getScopedTeamForLine(filterLineVal, currentUser).map((u) => u.id)
       : [];
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const allDocs = getMockDoctors();
+    const allHosps = getMockHospitals();
+    const allPharms = getMockPharmacies();
+
     list = list.filter((v) => {
-      if (v.lineId && v.lineId === filterLineVal) return true;
-      if (v.repId && scopedUserIds.includes(v.repId)) return true;
-      return false;
+      if (v.lineId) {
+        return v.lineId === filterLineVal;
+      }
+      const target = allDocs.find((d) => d.id === v.doctorId) || allHosps.find((h) => h.id === v.doctorId) || allPharms.find((p) => p.id === v.doctorId);
+      if (target && typeof doctorMatchesLine === "function") {
+        return doctorMatchesLine(target, filterLineVal, allAreas);
+      }
+      if (v.areaId) {
+        const a = allAreas.find((x) => x.id === v.areaId);
+        if (a && a.lineId) return a.lineId === filterLineVal;
+      }
+      return !!(v.repId && scopedUserIds.includes(v.repId));
     });
   }
 
@@ -2007,6 +2063,8 @@ const visitsApp = {
         status: "pending_approval",
         source: "plan",
         createdAt: new Date().toISOString(),
+        insertionDate: todayStr,
+        insertionTime: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
         entryDate: todayStr,
       };
 
@@ -2610,9 +2668,20 @@ function renderVisitsTimeline(triggeredByShow = false) {
             ? `<div class="timeline-rescheduled-reason"><strong>${lang === "ar" ? "مؤجلة سابقاً بسبب:" : "Rescheduled Reason:"}</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
             : ""
         }
-        <div class="timeline-timestamp-chip">
-          <strong>${trans.entryTimestamp}</strong> ${v.date} at ${v.time || "10:00"} ${periodDisplay}
-        </div>
+        ${(() => {
+          const insDate = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
+          const insTime = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00"));
+          return `
+            <div class="timeline-timestamp-chip" style="display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;">
+              <span><strong>📅 ${lang === "ar" ? "يوم الزيارة:" : "Visit Day:"}</strong> ${v.date} ${periodDisplay}</span>
+              <span><strong>⏰ ${lang === "ar" ? "وقت الزيارة:" : "Visit Time:"}</strong> ${v.time || "10:00"}</span>
+              <span style="opacity: 0.95; border-inline-start: 1px solid currentColor; padding-inline-start: 10px;">
+                <strong>📥 ${lang === "ar" ? "تاريخ الإدخال:" : "Insertion Date:"}</strong> ${insDate}
+                • <strong>${lang === "ar" ? "الوقت:" : "Time:"}</strong> ${insTime}
+              </span>
+            </div>
+          `;
+        })()}
         ${
           !isActivity &&
           v.status === "planned" &&
@@ -2647,7 +2716,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
   updateAdminGpsButton();
 }
 
-function populateVisitProducts(selectedProducts = []) {
+function populateVisitProducts(selectedProducts = [], targetRepId = null) {
   const container = document.getElementById("visitProducts");
   if (!container) return;
 
@@ -2662,14 +2731,32 @@ function populateVisitProducts(selectedProducts = []) {
     ? window.normalizeRole(currentUser?.role)
     : (currentUser?.role || "").toLowerCase();
 
+  const filterRep = document.getElementById("filterRep");
+  const effectiveRepId = targetRepId ||
+    (currentEditVisitId && window.store && window.store.visits ? window.store.visits.getById(currentEditVisitId)?.repId : null) ||
+    (filterRep && filterRep.value && filterRep.value !== "all" && !filterRep.value.startsWith("vacant:") ? filterRep.value : null) ||
+    currentUser?.id;
+
   let linesToShow = allLines;
-  if (currentUser && role !== "admin") {
+  const repLines = (effectiveRepId && typeof window.getUserLines === "function")
+    ? window.getUserLines(effectiveRepId)
+    : [];
+
+  if (repLines.length > 0) {
+    const allowedLineIds = repLines.map((l) => l.id);
+    linesToShow = allLines.filter((l) => allowedLineIds.includes(l.id));
+  } else if (currentUser && role !== "admin") {
     const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
     if (userLines.length > 0) {
       linesToShow = userLines;
     } else if (["business_unit", "line_manager", "district_manager", "medical_rep", "rep"].includes(role)) {
       linesToShow = [];
     }
+  }
+
+  const activeLineId = document.getElementById("filterLine")?.value || "all";
+  if (activeLineId !== "all") {
+    linesToShow = linesToShow.filter((l) => l.id === activeLineId);
   }
 
   let productsToShow = [];
@@ -2814,8 +2901,10 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
 
 function openVisitModal(isActual = false) {
   currentEditVisitId = null;
-  populateVisitProducts([]);
-  populateVisitCompanions(currentUser.id, []);
+  const filterRep = document.getElementById("filterRep");
+  const repScope = (filterRep && filterRep.value && filterRep.value !== "all" && !filterRep.value.startsWith("vacant:")) ? filterRep.value : currentUser.id;
+  populateVisitProducts([], repScope);
+  populateVisitCompanions(repScope, []);
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const trans = visitTranslations[lang] || visitTranslations.en;
@@ -2855,6 +2944,17 @@ function openVisitModal(isActual = false) {
     timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   }
   updateVisitModalDayDisplay();
+
+  const insertionMeta = document.getElementById("visitInsertionMetaContainer");
+  const insDateEl = document.getElementById("visitInsertionDateDisplay");
+  const insTimeEl = document.getElementById("visitInsertionTimeDisplay");
+  if (insertionMeta) {
+    insertionMeta.style.display = "block";
+    const curDate = now.toISOString().slice(0, 10);
+    const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    if (insDateEl) insDateEl.innerText = `${curDate} (${lang === "ar" ? "تلقائي عند الحفظ" : "Auto on Save"})`;
+    if (insTimeEl) insTimeEl.innerText = `${curTime} (${lang === "ar" ? "تلقائي عند الحفظ" : "Auto on Save"})`;
+  }
 
   document.getElementById("visitComment").value = "";
   const samplesInput = document.getElementById("visitGiveawaySamples");
@@ -2945,12 +3045,18 @@ function setupModalTargetFilter() {
     allOpt.textContent = isAr ? "👥 جميع أطباء فريقي" : "👥 All My Team Doctors";
     filterSelect.appendChild(allOpt);
 
-    const myReps = allUsers.filter(
+    let myReps = allUsers.filter(
       (u) =>
         u.managerId === currentUser.id &&
         u.role === "medical_rep" &&
         u.status !== "Inactive",
     );
+    if (activeLineId !== "all") {
+      myReps = myReps.filter((r) => {
+        const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+        return rLines.some((l) => l.id === activeLineId);
+      });
+    }
     myReps.forEach((rep) => {
       const opt = document.createElement("option");
       opt.value = rep.id;
@@ -2998,12 +3104,23 @@ function setupModalTargetFilter() {
       lmVacant = lmVacant.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
     }
 
-    const myDms = allUsers.filter(
+    let myDms = allUsers.filter(
       (u) =>
         u.managerId === currentUser.id &&
         u.role === "district_manager" &&
         u.status !== "Inactive",
     );
+    if (activeLineId !== "all") {
+      myDms = myDms.filter((dm) => {
+        const dmLines = window.getUserLines ? window.getUserLines(dm.id) : [];
+        if (dmLines.some((l) => l.id === activeLineId)) return true;
+        const dmReps = allUsers.filter((u) => u.managerId === dm.id);
+        return dmReps.some((r) => {
+          const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+          return rLines.some((l) => l.id === activeLineId);
+        });
+      });
+    }
     const assignedVacant = new Set();
     myDms.forEach((dm) => {
       const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
@@ -3012,12 +3129,18 @@ function setupModalTargetFilter() {
       opt.textContent = `👔 ${dmName} (DM)`;
       filterSelect.appendChild(opt);
 
-      const dmReps = allUsers.filter(
+      let dmReps = allUsers.filter(
         (u) =>
           u.managerId === dm.id &&
           u.role === "medical_rep" &&
           u.status !== "Inactive",
       );
+      if (activeLineId !== "all") {
+        dmReps = dmReps.filter((r) => {
+          const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+          return rLines.some((l) => l.id === activeLineId);
+        });
+      }
       dmReps.forEach((rep) => {
         const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
         const repOpt = document.createElement("option");
@@ -3069,7 +3192,7 @@ function setupModalTargetFilter() {
       }
     }
 
-    const lms =
+    let lms =
       role === "business_unit"
         ? allUsers.filter(
             (u) =>
@@ -3080,6 +3203,17 @@ function setupModalTargetFilter() {
         : allUsers.filter(
             (u) => u.role === "line_manager" && u.status !== "Inactive",
           );
+    if (activeLineId !== "all") {
+      lms = lms.filter((lm) => {
+        const lmLines = window.getUserLines ? window.getUserLines(lm.id) : [];
+        if (lmLines.some((l) => l.id === activeLineId)) return true;
+        const downstream = window.getAllSubordinates ? window.getAllSubordinates(lm.id) : [];
+        return downstream.some((sub) => {
+          const sLines = window.getUserLines ? window.getUserLines(sub.id) : [];
+          return sLines.some((l) => l.id === activeLineId);
+        });
+      });
+    }
 
     if (lms.length > 0) {
       const lmGrp = document.createElement("optgroup");
@@ -3095,7 +3229,7 @@ function setupModalTargetFilter() {
     }
 
     const lmIds = lms.map((l) => l.id);
-    const dms =
+    let dms =
       role === "business_unit"
         ? allUsers.filter(
             (u) =>
@@ -3106,6 +3240,17 @@ function setupModalTargetFilter() {
         : allUsers.filter(
             (u) => u.role === "district_manager" && u.status !== "Inactive",
           );
+    if (activeLineId !== "all") {
+      dms = dms.filter((dm) => {
+        const dmLines = window.getUserLines ? window.getUserLines(dm.id) : [];
+        if (dmLines.some((l) => l.id === activeLineId)) return true;
+        const dmReps = allUsers.filter((u) => u.managerId === dm.id);
+        return dmReps.some((r) => {
+          const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+          return rLines.some((l) => l.id === activeLineId);
+        });
+      });
+    }
 
     const assignedVacant = new Set();
     if (dms.length > 0) {
@@ -3503,7 +3648,7 @@ function openCompleteModal(visitId) {
   const visit = demoVisits.find((v) => v.id === visitId);
   if (!visit) return;
   const editSelectedProds = (visit.productIds && visit.productIds.length > 0) ? visit.productIds : (visit.products || []);
-  populateVisitProducts(editSelectedProds);
+  populateVisitProducts(editSelectedProds, visit.repId);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const trans = visitTranslations[lang] || visitTranslations.en;
   document.getElementById("visitModalTitle").innerText =
@@ -3534,6 +3679,18 @@ function openCompleteModal(visitId) {
     timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   }
   updateVisitModalDayDisplay();
+
+  const insertionMeta = document.getElementById("visitInsertionMetaContainer");
+  const insDateEl = document.getElementById("visitInsertionDateDisplay");
+  const insTimeEl = document.getElementById("visitInsertionTimeDisplay");
+  if (insertionMeta) {
+    insertionMeta.style.display = "block";
+    const now = new Date();
+    const curDate = now.toISOString().slice(0, 10);
+    const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    if (insDateEl) insDateEl.innerText = `${curDate} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+    if (insTimeEl) insTimeEl.innerText = `${curTime} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+  }
 
   const periodValue =
     visit.targetType === "pharmacy" ||
@@ -3595,6 +3752,8 @@ function closeVisitModal() {
     modal.classList.remove("active");
     modal.style.display = "none";
   }
+  const insertionMeta = document.getElementById("visitInsertionMetaContainer");
+  if (insertionMeta) insertionMeta.style.display = "none";
   const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
   if (saveBtn) {
     saveBtn.disabled = false;
@@ -3647,11 +3806,22 @@ function saveVisit() {
       else alert(msg);
       return;
     }
-    if (visitDate < twoDaysAgoStr) {
+    const minBacklogDate = (typeof window.getVisitBacklogMinDateStr === "function")
+      ? window.getVisitBacklogMinDateStr()
+      : twoDaysAgoStr;
+    const limitDays = (typeof window.getVisitBacklogLimitDays === "function")
+      ? window.getVisitBacklogLimitDays()
+      : 2;
+
+    if (visitDate < minBacklogDate) {
       resetSaveBtn();
       const msg = lang === "ar"
-        ? "لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من يومين على تاريخها."
-        : "Cannot log an actual visit older than 2 days.";
+        ? (limitDays === 0
+            ? "وفقاً لسياسة الشركة، يجب تسجيل الزيارات الفعلية في نفس اليوم فقط."
+            : `وفقاً لسياسة الشركة، لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من ${limitDays} ${limitDays === 1 ? "يوم" : limitDays === 2 ? "يومين" : "أيام"} على تاريخها.`)
+        : (limitDays === 0
+            ? "Company policy requires same-day visit logging only."
+            : `Company policy does not allow logging visits older than ${limitDays} day(s).`);
       if (typeof showToast === "function") showToast(msg, "warning");
       else alert(msg);
       return;
@@ -3752,7 +3922,12 @@ function saveVisit() {
       visit.status = "completed";
       visit.date = visitDate;
       visit.time = visitTime;
-      visit.entryDate = visitDate;
+      const nowStamp = new Date();
+      visit.insertionDate = nowStamp.toISOString().slice(0, 10);
+      visit.insertionTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
+      visit.completedAt = nowStamp.toISOString();
+      if (!visit.createdAt) visit.createdAt = nowStamp.toISOString();
+      visit.entryDate = visit.insertionDate;
       visit.comment = document.getElementById("visitComment").value;
       visit.giveawaySamples = giveawaySamples;
       visit.visitType = visitType;
@@ -3858,17 +4033,34 @@ function saveVisit() {
 
     const allDocs = getMockDoctors();
     const allHosps = getMockHospitals();
-    const targetDoc = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+    const allPharms = getMockPharmacies();
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const targetDoc = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId) || allPharms.find((p) => p.id === targetId);
+
+    const activeFilterLine = document.getElementById("filterLine")?.value;
     let resolvedLineId = targetDoc ? targetDoc.lineId : undefined;
+    if (!resolvedLineId && targetDoc && targetDoc.areaId) {
+      const a = allAreas.find((x) => x.id === targetDoc.areaId);
+      if (a && a.lineId) resolvedLineId = a.lineId;
+    }
+    if (!resolvedLineId && activeFilterLine && activeFilterLine !== "all") {
+      resolvedLineId = activeFilterLine;
+    }
     if (!resolvedLineId && typeof window.getUserLines === "function") {
       const repLines = window.getUserLines(assignedRepId);
       if (repLines.length > 0) resolvedLineId = repLines[0].id;
     }
 
+    const nowStamp = new Date();
+    const insDate = nowStamp.toISOString().slice(0, 10);
+    const insTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
+
     const newVisit = {
       id: "v_" + Date.now(),
       repId: assignedRepId,
       lineId: resolvedLineId,
+      areaId: targetDoc ? targetDoc.areaId : undefined,
+      area: targetDoc ? (targetDoc.area || targetDoc.clinicAddress || targetDoc.address) : undefined,
       doctorId: targetId,
       doctorName: targetName,
       date: visitDate,
@@ -3888,8 +4080,10 @@ function saveVisit() {
       giveawaySamples: giveawaySamples,
       status: modalSource === "plan" ? "pending_approval" : "completed",
       source: modalSource,
-      createdAt: new Date().toISOString(),
-      entryDate: visitDate,
+      createdAt: nowStamp.toISOString(),
+      insertionDate: insDate,
+      insertionTime: insTime,
+      entryDate: insDate,
     };
 
     const finalizeNewSave = (gpsPayload) => {
@@ -4080,7 +4274,7 @@ function exportVisitsToCSV() {
   }
 
   let csv =
-    "Target Name,Area,Date,Time,Period,Type,Status,Source,Rep ID,Products,Comment\n";
+    "Target Name,Area,Visit Day,Visit Time,Insertion Date,Insertion Time,Period,Type,Status,Source,Rep ID,Products,Comment\n";
   filtered.forEach((v) => {
     let areaName = v.area || "";
     if (!areaName) {
@@ -4096,8 +4290,10 @@ function exportVisitsToCSV() {
         }
       }
     }
+    const insDate = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date) || "";
+    const insTime = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00")) || "";
     const prods = (window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join("; ");
-    csv += `"${(v.doctorName || "").replace(/"/g, '""')}","${(areaName || "").replace(/"/g, '""')}","${v.date || ""}","${v.time || ""}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${v.source || ""}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
+    csv += `"${(v.doctorName || "").replace(/"/g, '""')}","${(areaName || "").replace(/"/g, '""')}","${v.date || ""}","${v.time || ""}","${insDate}","${insTime}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${v.source || ""}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

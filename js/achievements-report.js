@@ -335,6 +335,14 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   const cellMap = {};
   targets.forEach((t) => {
+    const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(t.repId) : [];
+    if (repLines.length > 0) {
+      const prod = productsMap.get(t.productId);
+      const repLineIds = repLines.map((l) => l.id);
+      if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
+        return;
+      }
+    }
     const key = t.repId + '||' + t.productId;
     if (!cellMap[key]) cellMap[key] = { repId: t.repId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     cellMap[key].tUnit += parseFloat(t.targetUnits) || 0;
@@ -346,6 +354,14 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     const rowRepId = getRowEffectiveRepId(s);
     if (!rowRepId) return;
     if (isRep && rowRepId !== curUser.id) return;
+    const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(rowRepId) : [];
+    if (repLines.length > 0) {
+      const prod = productsMap.get(s.productId);
+      const repLineIds = repLines.map((l) => l.id);
+      if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
+        return;
+      }
+    }
     const key = rowRepId + '||' + s.productId;
     if (!cellMap[key]) cellMap[key] = { repId: rowRepId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     cellMap[key].sUnit += parseFloat(s.quantity) || 0;

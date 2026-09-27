@@ -944,7 +944,7 @@
       return allLines;
     }
     const userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
-    if (userLineIds.length === 0) return allLines;
+    if (userLineIds.length === 0) return [];
     return allLines.filter((l) => userLineIds.includes(l.id));
   }
 

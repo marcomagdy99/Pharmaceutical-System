@@ -34,7 +34,7 @@
             <!-- START: Department Selection View -->
             <div class="department-view" id="departmentView">
                 <div class="logo-container">
-                    <i data-feather="activity" class="logo-icon"></i>
+                    <img src="images/pharma-icon-192.png" alt="PharmaCare Logo" class="login-logo-img">
                     <h1 class="logo-title">PharmaCare</h1>
                     <p class="logo-subtitle" data-i18n="login_subtitle">Pharmaceutical CRM System</p>
                 </div>
@@ -73,7 +73,7 @@
                 </button>
                 
                 <div class="logo-container">
-                    <i data-feather="activity" class="logo-icon"></i>
+                    <img src="images/pharma-icon-192.png" alt="PharmaCare Logo" class="login-logo-img">
                     <h1 class="logo-title">PharmaCare</h1>
                     <p class="logo-subtitle" id="selectedDeptTitle">Department Login</p>
                 </div>
@@ -122,15 +122,17 @@
         <!-- END: Left Side (Form Area) -->
 
         <!-- START: Right Side (Brand Panel) -->
-        <div class="login-right">
+        <div class="login-right" id="loginRightPanel">
             <div class="shape shape-1"></div>
             <div class="shape shape-2"></div>
             <div class="shape shape-3"></div>
             
             <div class="brand-content">
-                <i data-feather="hexagon" class="brand-icon"></i>
-                <h2 class="brand-tagline" data-i18n="brand_tagline">Empowering Medical Representatives</h2>
-                <p class="brand-desc" data-i18n="brand_desc">Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.</p>
+                <div class="brand-logo-wrapper" id="brandLogoWrapper">
+                    <img id="brandPanelLogo" src="images/pharma-icon-192.png" alt="Company Logo" class="brand-panel-logo">
+                </div>
+                <h2 class="brand-tagline" id="brandTagline" data-i18n="brand_tagline">Empowering Medical Representatives</h2>
+                <p class="brand-desc" id="brandDesc" data-i18n="brand_desc">Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.</p>
             </div>
         </div>
         <!-- END: Right Side (Brand Panel) -->

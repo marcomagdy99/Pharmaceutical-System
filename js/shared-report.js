@@ -174,6 +174,9 @@ function syncReportsData() {
           targetType: isPharm ? 'pharmacy' : (isHosp ? 'hospital' : 'doctor'),
           date: v.date,
           time: v.time || '10:00',
+          insertionDate: v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date),
+          insertionTime: v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00')),
+          createdAt: v.createdAt || undefined,
           period: isPharm ? 'PHARM' : (v.period || 'PM').toUpperCase(),
           status: 'completed',
           isActual: v.source === 'actual' || Boolean(v.isActual),
@@ -687,10 +690,10 @@ function populateReportLineFilter(user) {
       lineSelect.disabled = true;
     } else {
       const opt = document.createElement('option');
-      opt.value = 'line1';
-      opt.textContent = isAr ? '📦 خط افتراضي' : '📦 Assigned Line';
+      opt.value = '';
+      opt.textContent = isAr ? '📦 لا توجد خطوط معينة' : '📦 No Line Assigned';
       lineSelect.appendChild(opt);
-      window.selectedReportLineId = 'line1';
+      window.selectedReportLineId = '';
       lineSelect.disabled = true;
     }
     return;
@@ -1096,7 +1099,7 @@ function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId
   );
 
   // 2. Resolve selected Line / LM and District / DM from targetAreaId or targetRepId
-  let selectedLineId = lines[0]?.id || 'line1';
+  let selectedLineId = lines[0]?.id || '';
   let selectedDmId = null;
 
   if (targetAreaId) {
@@ -1128,7 +1131,7 @@ function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null
   const lmSelect = document.getElementById(lmSelectId);
   const dmSelect = document.getElementById(dmSelectId);
   if (!dmSelect) return;
-  const currentLineId = lmSelect ? lmSelect.value : 'line1';
+  const currentLineId = lmSelect ? lmSelect.value : (lines[0]?.id || '');
   const lineObj = lines.find((l) => l.id === currentLineId);
   const lmUserId = lineObj ? lineObj.lineManagerId : currentLineId;
 
