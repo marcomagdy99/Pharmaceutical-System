@@ -155,7 +155,6 @@ function initPharmSalesFilters(user) {
   const monthContainer = document.getElementById('pharmSalesMonthCheckboxList');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
-  const lineSelect = document.getElementById('pharmSalesLineSelect');
   const lang = getCurrentLang();
   const now = new Date();
 
@@ -207,30 +206,6 @@ function initPharmSalesFilters(user) {
     });
   }
 
-  const allowedLineIds = getPharmSalesAllowedLineIds(user);
-  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
-  const scopedLines = allowedLineIds === null ? allLines : allLines.filter((l) => allowedLineIds.includes(l.id));
-
-  if (lineSelect) {
-    if (allowedLineIds === null) {
-      const allLabel = lang === 'ar' ? 'كل الخطوط' : 'All Lines';
-      lineSelect.innerHTML = `<option value="all">${allLabel}</option>`;
-      appendSelectOptions(lineSelect, allLines, (l) => l.id, (l) => l.name);
-      lineSelect.disabled = false;
-    } else if (scopedLines.length <= 1) {
-      lineSelect.innerHTML = '';
-      const opt = document.createElement('option');
-      opt.value = scopedLines[0] ? scopedLines[0].id : 'none';
-      opt.textContent = scopedLines[0] ? scopedLines[0].name : (lang === 'ar' ? 'مفيش خط متعين' : 'No line assigned');
-      lineSelect.appendChild(opt);
-      lineSelect.disabled = true;
-    } else {
-      lineSelect.innerHTML = '';
-      renderSelectOptions(lineSelect, scopedLines, (l) => l.id, (l) => l.name);
-      lineSelect.disabled = false;
-    }
-  }
-
   window.populatePharmSalesAreas = function (filterUser) {
     const areaSelect = document.getElementById('pharmSalesAreaSelect');
     if (!areaSelect) return;
@@ -249,12 +224,15 @@ function initPharmSalesFilters(user) {
 
     if (isRep) {
       areasToDisplay = (window.store && window.store.areas ? window.store.areas.getByRep(curUser.id) : allAreas.filter((a) => a.repId === curUser.id));
+    } else if (selectedRepVal && selectedRepVal.startsWith('vacant:')) {
+      const vacantAreaId = selectedRepVal.split(':')[1];
+      areasToDisplay = allAreas.filter((a) => a.id === vacantAreaId);
     } else if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms') {
       areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
       if (areasToDisplay.length === 0) areasToDisplay = allAreas;
     } else {
       const allowedLineIds = getPharmSalesAllowedLineIds(curUser);
-      const effLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || document.getElementById('pharmSalesLineSelect')?.value || 'all';
+      const effLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
       if (effLineId !== 'all' && effLineId !== 'none') {
         areasToDisplay = allAreas.filter((a) => a.lineId === effLineId);
       } else if (allowedLineIds !== null) {
@@ -267,7 +245,9 @@ function initPharmSalesFilters(user) {
     areasToDisplay.forEach((a) => {
       const opt = document.createElement('option');
       opt.value = a.id;
-      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+      const isVacant = !a.repId;
+      const vacantTag = isVacant ? ` [${curLang === 'ar' ? 'شاغرة' : 'Vacant'}]` : '';
+      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${vacantTag}`;
       areaSelect.appendChild(opt);
     });
 
@@ -352,7 +332,7 @@ function getFilteredPharmSalesRows() {
   const productSelect = document.getElementById('pharmSalesProductSelect');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
-  const lineSelect = document.getElementById('reportLineFilter') || document.getElementById('pharmSalesLineSelect');
+  const lineSelect = document.getElementById('reportLineFilter');
   const user = checkAuth();
 
   const selectedProduct = productSelect ? productSelect.value : 'all';
@@ -422,7 +402,12 @@ function getFilteredPharmSalesRows() {
   const selectedRep = repSelect ? repSelect.value : 'all';
 
   if (selectedRep && selectedRep !== 'all') {
-    if (selectedRep === 'all_dms') {
+    if (selectedRep.startsWith('vacant:')) {
+      const vacantAreaId = selectedRep.split(':')[1];
+      const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+      const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+      rows = rows.filter((r) => r.areaId === vacantAreaId || (areaNameLower && r.area && r.area.toLowerCase().trim() === areaNameLower));
+    } else if (selectedRep === 'all_dms') {
       const dms = allUsers.filter((u) => u.role === 'district_manager' || u.role === 'dm').map((u) => u.id);
       rows = rows.filter((r) => (r.dmId && dms.includes(r.dmId)) || (r.repId && dms.some((dId) => allUsers.some((u) => u.id === r.repId && u.managerId === dId))));
     } else if (selectedRep === 'all_reps') {

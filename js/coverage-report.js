@@ -137,7 +137,20 @@ function renderCoverageReport() {
   }
 
   // Scope doctors by user role and rep filter
-  if (isRep) {
+  if (selectedRep && selectedRep.startsWith('vacant:')) {
+    const vacantAreaId = selectedRep.split(':')[1];
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+    const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+    targetList = targetList.filter((d) => {
+      if (d.areaId) return d.areaId === vacantAreaId;
+      if (areaNameLower && d.area && d.area.toLowerCase().trim() === areaNameLower) {
+        if (vacantArea && vacantArea.lineId && d.lineId) return d.lineId === vacantArea.lineId;
+        return true;
+      }
+      return false;
+    });
+  } else if (isRep) {
     targetList = targetList.filter((d) => d.repId === user.id);
   } else if (role === 'district_manager') {
     const teamReps = allUsers.filter((u) => u.managerId === user.id);

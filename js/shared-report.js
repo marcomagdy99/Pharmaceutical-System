@@ -757,6 +757,41 @@ window.onReportLineFilterChange = function (selectedLineId) {
   }
 };
 
+function getAreaManagerId(area, allUsers = []) {
+  if (!area) return null;
+  if (area.dmId) return area.dmId;
+  if (area.managerId) return area.managerId;
+
+  if (area.repId) {
+    const rep = allUsers.find((u) => u.id === area.repId);
+    if (rep && rep.managerId) return rep.managerId;
+  }
+
+  const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+  const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && d.area.toLowerCase() === (area.name || '').toLowerCase())) && d.repId);
+  if (docWithRep) {
+    const docRep = allUsers.find((u) => u.id === docWithRep.repId);
+    if (docRep && docRep.managerId) return docRep.managerId;
+  }
+
+  const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
+  const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && s.area.toLowerCase() === (area.name || '').toLowerCase())) && s.dmId);
+  if (saleWithDm) return saleWithDm.dmId;
+
+  if (area.lineId) {
+    const dmsInLine = allUsers.filter((u) =>
+      (u.role === 'district_manager' || u.role === 'dm') &&
+      ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
+    );
+    if (dmsInLine.length === 1) {
+      return dmsInLine[0].id;
+    }
+  }
+
+  return null;
+}
+window.getAreaManagerId = getAreaManagerId;
+
 function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
   const selects = [
     document.getElementById('pharmSalesRepSelect'),
@@ -798,6 +833,19 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
 
     selectEl.disabled = false;
 
+    // Resolve manager for each vacant area
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    let vacantAreas = allAreas.filter((a) => !a.repId);
+    if (effectiveLineId !== 'all') {
+      vacantAreas = vacantAreas.filter((a) => a.lineId === effectiveLineId);
+    } else if (role !== 'admin' && role !== 'hr') {
+      const userLines = window.getUserLines ? window.getUserLines(user?.id) : [];
+      const userLineIds = userLines.map((l) => l.id);
+      if (userLineIds.length > 0) {
+        vacantAreas = vacantAreas.filter((a) => !a.lineId || userLineIds.includes(a.lineId));
+      }
+    }
+
     if (isDM) {
       const allLabel = isAr ? 'كل مناديب الخط/الفريق' : 'All Team Reps in Line';
       const allOpt = document.createElement('option');
@@ -807,6 +855,19 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
 
       const reps = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'medical_rep' || u.role === 'rep'));
       appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+
+      // Vacant areas under this DM
+      const myVacantAreas = vacantAreas.filter((a) => {
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+        return mgrId === user.id || (!mgrId && (!a.lineId || (user.lineIds && user.lineIds.includes(a.lineId)) || user.lineId === a.lineId));
+      });
+      myVacantAreas.forEach((area) => {
+        const opt = document.createElement('option');
+        opt.value = `vacant:${area.id}`;
+        const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+        opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        selectEl.appendChild(opt);
+      });
     } else {
       const allLabel = isAr ? 'جميع الفريق في الخط (الكل)' : 'All Team in Line';
       const allOpt = document.createElement('option');
@@ -823,27 +884,56 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
         appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `💼 ${dm.name} (${dm.employeeCode || 'DM'})`);
         selectEl.appendChild(dmGroup);
 
+        const assignedVacantIds = new Set();
         dms.forEach((dm) => {
           const dmReps = reps.filter((r) => r.managerId === dm.id);
-          if (dmReps.length > 0) {
+          const dmVacantAreas = vacantAreas.filter((a) => {
+            const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+            return mgrId === dm.id;
+          });
+          dmVacantAreas.forEach((a) => assignedVacantIds.add(a.id));
+
+          if (dmReps.length > 0 || dmVacantAreas.length > 0) {
             const group = document.createElement('optgroup');
             group.label = isAr ? `فريق ${dm.name} (Reps)` : `Team ${dm.name} (Reps)`;
             appendSelectOptions(group, dmReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+            dmVacantAreas.forEach((area) => {
+              const opt = document.createElement('option');
+              opt.value = `vacant:${area.id}`;
+              const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+              opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+              group.appendChild(opt);
+            });
             selectEl.appendChild(group);
           }
         });
 
         const otherReps = reps.filter((r) => !dms.some((dm) => dm.id === r.managerId));
-        if (otherReps.length > 0) {
+        const unassignedVacant = vacantAreas.filter((a) => !assignedVacantIds.has(a.id));
+        if (otherReps.length > 0 || unassignedVacant.length > 0) {
           const group = document.createElement('optgroup');
-          group.label = isAr ? 'مناديب آخرين (Reps)' : 'Other Reps';
+          group.label = isAr ? 'مناديب ومناطق أخرى' : 'Other Reps & Vacant Areas';
           appendSelectOptions(group, otherReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+          unassignedVacant.forEach((area) => {
+            const opt = document.createElement('option');
+            opt.value = `vacant:${area.id}`;
+            const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+            opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+            group.appendChild(opt);
+          });
           selectEl.appendChild(group);
         }
-      } else if (reps.length > 0) {
+      } else if (reps.length > 0 || vacantAreas.length > 0) {
         const repGroup = document.createElement('optgroup');
-        repGroup.label = isAr ? 'المناديب الطبيين (Reps)' : 'Medical Reps (Reps)';
+        repGroup.label = isAr ? 'المناديب والمناطق (Team)' : 'Team Reps & Areas';
         appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+        vacantAreas.forEach((area) => {
+          const opt = document.createElement('option');
+          opt.value = `vacant:${area.id}`;
+          const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+          opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+          repGroup.appendChild(opt);
+        });
         selectEl.appendChild(repGroup);
       }
     }

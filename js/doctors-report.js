@@ -66,12 +66,19 @@ function getScopedDoctors(respectActiveFilters = true) {
       const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...teamRepIds];
 
+      const myVacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a, allUsers) : null;
+        return mgrId === currentUser.id || (!mgrId && (!a.lineId || (currentUser.lineIds && currentUser.lineIds.includes(a.lineId)) || currentUser.lineId === a.lineId));
+      });
+
       const dmAreas = allAreas.filter((a) =>
         (a.repId && teamRepIds.includes(a.repId)) ||
         a.dmId === currentUser.id ||
         a.districtManagerId === currentUser.id ||
         (currentUser.areaIds && currentUser.areaIds.includes(a.id)) ||
-        (currentUser.areaId && currentUser.areaId === a.id)
+        (currentUser.areaId && currentUser.areaId === a.id) ||
+        myVacantAreas.some((va) => va.id === a.id)
       );
       allowedAreaIds = dmAreas.map((a) => a.id);
       allowedAreaNames = dmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
@@ -96,8 +103,15 @@ function getScopedDoctors(respectActiveFilters = true) {
       allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
     }
 
+    const repFilter = document.getElementById("doctorRepSelect");
+    const repId = repFilter ? repFilter.value : "all";
+
     if (allowedTeamIds) {
       docs = docs.filter((d) => {
+        if (repId && repId.startsWith("vacant:")) {
+          const vAreaId = repId.split(":")[1];
+          if (d.areaId === vAreaId) return true;
+        }
         if (d.repId) {
           return allowedTeamIds.includes(d.repId);
         }
@@ -115,32 +129,51 @@ function getScopedDoctors(respectActiveFilters = true) {
       });
     }
 
-    const repFilter = document.getElementById("doctorRepSelect");
-    const repId = repFilter ? repFilter.value : "all";
     if (repId !== "all") {
-      const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
-      const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
-      if (isLM) {
-        const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        docs = docs.filter((d) => d.repId && repsUnderLM.includes(d.repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
-      } else if (isDM) {
-        const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-        docs = docs.filter((d) => d.repId && (repsUnderDM.includes(d.repId) || d.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+      if (repId.startsWith("vacant:")) {
+        const vacantAreaId = repId.split(":")[1];
+        const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+        const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+        docs = docs.filter((d) => {
+          if (d.areaId) return d.areaId === vacantAreaId;
+          if (areaNameLower && d.area && d.area.toLowerCase().trim() === areaNameLower) {
+            if (vacantArea && vacantArea.lineId && d.lineId) return d.lineId === vacantArea.lineId;
+            return true;
+          }
+          return false;
+        });
       } else {
-        docs = docs.filter((d) => d.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+        const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
+        const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
+        if (isLM) {
+          const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
+          const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+          docs = docs.filter((d) => d.repId && repsUnderLM.includes(d.repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+        } else if (isDM) {
+          const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
+          docs = docs.filter((d) => d.repId && (repsUnderDM.includes(d.repId) || d.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+        } else {
+          docs = docs.filter((d) => d.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+        }
       }
     }
   }
 
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   if (selectedLineId !== 'all') {
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     docs = docs.filter((d) => {
       if (d.lineId) return d.lineId === selectedLineId;
       if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
-      if (!d.repId) return role === 'admin' || role === 'hr';
-      const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
-      return repLines.some((l) => l.id === selectedLineId);
+      if (d.areaId) {
+        const a = allAreas.find((x) => x.id === d.areaId);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
+      if (d.repId) {
+        const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
+        if (repLines.some((l) => l.id === selectedLineId)) return true;
+      }
+      return !d.repId && (role === 'admin' || role === 'hr');
     });
   }
 
@@ -224,7 +257,22 @@ function renderDoctorsReport() {
       const repVal = (repFilter && repFilter.value) ? repFilter.value : "all";
       let hospitalsCount = allHospitals.length;
       if (repVal && repVal !== "all") {
-        hospitalsCount = allHospitals.filter((h) => !h.repId || h.repId === repVal).length;
+        if (repVal.startsWith("vacant:")) {
+          const vacantAreaId = repVal.split(":")[1];
+          const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+          const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+          const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+          hospitalsCount = allHospitals.filter((h) => {
+            if (h.areaId) return h.areaId === vacantAreaId;
+            if (areaNameLower && h.area && h.area.toLowerCase().trim() === areaNameLower) {
+              if (vacantArea && vacantArea.lineId && h.lineId) return h.lineId === vacantArea.lineId;
+              return true;
+            }
+            return false;
+          }).length;
+        } else {
+          hospitalsCount = allHospitals.filter((h) => !h.repId || h.repId === repVal).length;
+        }
       }
       hospitalsCount += docs.filter((d) => d.type === "hospital" || d.class === "hospital").length;
       window.renderDoctorClassesChart("repDoctorClassesChart", classACount, classBCount, hospitalsCount);

@@ -432,22 +432,148 @@ const userMgmt = {
       }
 
       document.querySelectorAll(".user-line-cb").forEach((cb) => {
-        cb.addEventListener("change", () => this.updateManagerDropdown());
+        cb.addEventListener("change", () => {
+          this.updateManagerDropdown();
+          this.updateAreaDropdown();
+        });
       });
     }
 
+    this.updateAreaDropdown();
+  },
+
+  updateAreaDropdown(preselectedAreaId) {
     const areaSelect = document.getElementById("uArea");
-    if (areaSelect) {
-      const curVal = areaSelect.value;
-      areaSelect.innerHTML = `<option value="" data-i18n="select_area">Select Area...</option>` +
-        this.areas
-          .map((a) => {
-            const rep = a.repId ? this.users.find((u) => u.id === a.repId) : null;
-            const repNote = rep ? ` (Assigned: ${rep.name})` : " (Unassigned)";
-            return `<option value="${a.id}">${a.name} (${a.code})${repNote}</option>`;
-          })
-          .join("");
-      if (curVal) areaSelect.value = curVal;
+    if (!areaSelect) return;
+
+    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+    const curVal = preselectedAreaId !== undefined ? preselectedAreaId : areaSelect.value;
+
+    const selectedLineIds = Array.from(
+      document.querySelectorAll(".user-line-cb:checked"),
+    ).map((cb) => cb.value);
+
+    if (selectedLineIds.length === 0) {
+      areaSelect.innerHTML = `<option value="">${isAr ? "حدد الخط البيعي أولاً..." : "Select sales line(s) first..."}</option>`;
+      areaSelect.value = "";
+      return;
+    }
+
+    const allAreas = this.areas || [];
+    const filteredAreas = allAreas.filter(
+      (a) => !a.lineId || selectedLineIds.includes(a.lineId),
+    );
+
+    if (filteredAreas.length === 0) {
+      areaSelect.innerHTML = `<option value="">${isAr ? "لا توجد مناطق للخطوط المحددة" : "No areas found for selected line(s)"}</option>`;
+      areaSelect.value = "";
+      return;
+    }
+
+    let html = `<option value="" data-i18n="select_area">${isAr ? "اختر المنطقة..." : "Select Area..."}</option>`;
+
+    selectedLineIds.forEach((lineId) => {
+      const lineObj = (this.lines || []).find((l) => l.id === lineId);
+      const lineName = lineObj
+        ? (isAr && lineObj.nameAr ? lineObj.nameAr : lineObj.name)
+        : lineId;
+      const areasInLine = filteredAreas.filter((a) => a.lineId === lineId);
+
+      if (areasInLine.length > 0) {
+        html += `<optgroup label="📦 ${window.escapeHtml(lineName)}">`;
+        areasInLine.forEach((a) => {
+          const rep = a.repId ? (this.users || []).find((u) => u.id === a.repId) : null;
+          const repNote = rep
+            ? ` (${isAr ? "مسندة لـ" : "Assigned"}: ${window.escapeHtml(rep.name)})`
+            : ` (${isAr ? "غير مسندة" : "Unassigned"})`;
+          const areaDisplayName = isAr && a.nameAr ? a.nameAr : a.name;
+          html += `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(areaDisplayName)} (${window.escapeHtml(a.code || "")}) - [${window.escapeHtml(lineName)}]${repNote}</option>`;
+        });
+        html += `</optgroup>`;
+      }
+    });
+
+    const orphanAreas = filteredAreas.filter((a) => !a.lineId);
+    if (orphanAreas.length > 0) {
+      html += `<optgroup label="📦 ${isAr ? "مناطق أخرى" : "Other Areas"}">`;
+      orphanAreas.forEach((a) => {
+        const rep = a.repId ? (this.users || []).find((u) => u.id === a.repId) : null;
+        const repNote = rep
+          ? ` (${isAr ? "مسندة لـ" : "Assigned"}: ${window.escapeHtml(rep.name)})`
+          : ` (${isAr ? "غير مسندة" : "Unassigned"})`;
+        const areaDisplayName = isAr && a.nameAr ? a.nameAr : a.name;
+        html += `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(areaDisplayName)} (${window.escapeHtml(a.code || "")})${repNote}</option>`;
+      });
+      html += `</optgroup>`;
+    }
+
+    areaSelect.innerHTML = html;
+
+    if (curVal && filteredAreas.some((a) => a.id === curVal)) {
+      areaSelect.value = curVal;
+    } else {
+      areaSelect.value = "";
+    }
+  },
+
+  renderAssignedAreasDisplay(userId) {
+    const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
+    if (!areaDisplayEl) return;
+    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+
+    if (!userId) {
+      areaDisplayEl.innerHTML = `<span class="text-muted small">${isAr ? "اختر منطقة أعلاه أو قم بالتعيين عبر صفحة المناطق" : "Select area above or assign via Areas page"}</span>`;
+      return;
+    }
+
+    const repAreas = window.store && window.store.areas ? window.store.areas.getByRep(userId) : [];
+    if (repAreas.length > 0) {
+      areaDisplayEl.innerHTML = repAreas
+        .map((a) => {
+          const areaName = isAr && a.nameAr ? a.nameAr : a.name;
+          const lineObj = (this.lines || []).find((l) => l.id === a.lineId);
+          const lineBadge = lineObj ? ` [${window.escapeHtml(isAr && lineObj.nameAr ? lineObj.nameAr : lineObj.name)}]` : "";
+          return `<span class="badge bg-primary text-white me-1 mb-1 p-2 d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.82rem;">
+            <span>${window.escapeHtml(areaName)} (${window.escapeHtml(a.code || "")})${lineBadge}</span>
+            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem; padding: 2px; margin-inline-start: 4px; opacity: 0.85;" onclick="userMgmt.unassignArea('${window.escapeHtml(a.id)}', '${window.escapeHtml(userId)}')" title="${isAr ? "إلغاء إسناد هذه المنطقة" : "Unassign this area"}" aria-label="Remove"></button>
+          </span>`;
+        })
+        .join("") +
+        `<div class="mt-2"><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">${isAr ? "إدارة في صفحة المناطق ←" : "Manage in Areas Page →"}</a></div>`;
+    } else {
+      areaDisplayEl.innerHTML = `<span class="badge bg-secondary-subtle text-secondary me-2">${isAr ? "لا توجد مناطق مسندة" : "No areas assigned"}</span><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">${isAr ? "إسناد مناطق ←" : "Assign Areas →"}</a>`;
+    }
+  },
+
+  unassignArea(areaId, userId) {
+    if (!window.store || !window.store.areas) return;
+    const area = window.store.areas.getById(areaId);
+    if (!area) return;
+
+    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+    const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+
+    area.repId = null;
+    area.repName = null;
+    window.store.areas.save(area);
+
+    if (window.store.users && typeof window.store.users.syncAreasFromStore === "function") {
+      window.store.users.syncAreasFromStore();
+    }
+
+    this.renderAssignedAreasDisplay(userId);
+
+    const selectEl = document.getElementById("uArea");
+    const curVal = selectEl ? selectEl.value : "";
+    this.updateAreaDropdown(curVal === areaId ? "" : curVal);
+
+    this.render();
+
+    const toastMsg = isAr
+      ? `تم إلغاء إسناد منطقة (${areaName}) من الموظف بنجاح.`
+      : `Area "${areaName}" unassigned from user successfully.`;
+    if (typeof showToast === "function") {
+      showToast(toastMsg, "info");
     }
   },
 
@@ -873,12 +999,10 @@ const userMgmt = {
     if (document.getElementById("uSickLeave"))
       document.getElementById("uSickLeave").value = 7;
 
-    const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
-    if (areaDisplayEl) {
-      areaDisplayEl.innerHTML = `<span class="text-muted small">Select area above or assign via Areas page</span>`;
-    }
+    this.renderAssignedAreasDisplay(null);
 
     this.onRoleChange();
+    this.updateAreaDropdown();
     this.showModal("user");
   },
 
@@ -910,24 +1034,8 @@ const userMgmt = {
 
     const repAreas = window.store.areas ? window.store.areas.getByRep(user.id) : [];
     const currentAreaId = repAreas.length > 0 ? repAreas[0].id : "";
-    if (document.getElementById("uArea")) {
-      document.getElementById("uArea").value = currentAreaId;
-    }
-
-    const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
-    if (areaDisplayEl) {
-      if (repAreas.length > 0) {
-        areaDisplayEl.innerHTML = repAreas
-          .map(
-            (a) =>
-              `<span class="badge bg-primary text-white me-1 p-2">${a.name} (${a.code})</span>`
-          )
-          .join("") +
-          `<div class="mt-2"><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">Manage in Areas Page →</a></div>`;
-      } else {
-        areaDisplayEl.innerHTML = `<span class="badge bg-secondary-subtle text-secondary me-2">No areas assigned</span><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">Assign Areas →</a>`;
-      }
-    }
+    this.updateAreaDropdown(currentAreaId);
+    this.renderAssignedAreasDisplay(user.id);
 
     const lb = user.leaveBalance || { annual: 21, emergency: 6, sick: 7 };
     if (document.getElementById("uAnnualLeave"))

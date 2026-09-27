@@ -156,6 +156,9 @@ function populateAchAreas(filterUser) {
 
   if (isRep) {
     areasToDisplay = (window.store && window.store.areas ? window.store.areas.getByRep(curUser.id) : allAreas.filter((a) => a.repId === curUser.id));
+  } else if (selectedRepVal && selectedRepVal.startsWith('vacant:')) {
+    const vacantAreaId = selectedRepVal.split(':')[1];
+    areasToDisplay = allAreas.filter((a) => a.id === vacantAreaId);
   } else if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms') {
     areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
     if (areasToDisplay.length === 0) areasToDisplay = allAreas;
@@ -171,7 +174,9 @@ function populateAchAreas(filterUser) {
   areasToDisplay.forEach((a) => {
     const opt = document.createElement('option');
     opt.value = a.id;
-    opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+    const isVacant = !a.repId;
+    const vacantTag = isVacant ? ` [${lang === 'ar' ? 'شاغرة' : 'Vacant'}]` : '';
+    opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${vacantTag}`;
     areaSelect.appendChild(opt);
   });
 
@@ -217,6 +222,9 @@ function getAchievementsScopeRepIds(user) {
   const selectedRep = repSelect ? repSelect.value : 'all';
 
   if (selectedRep && selectedRep !== 'all') {
+    if (selectedRep.startsWith('vacant:')) {
+      return null;
+    }
     if (selectedRep === 'all_reps' || selectedRep === 'all_dms') {
       return allowedRepIds;
     }
@@ -316,7 +324,12 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   const achAreaSelect = document.getElementById('achAreaSelect');
   const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
-  if (selectedArea && selectedArea !== 'all') {
+  const achRepSelect = document.getElementById('achRepSelect');
+  const selectedRepVal = achRepSelect ? achRepSelect.value : 'all';
+  if (selectedRepVal && selectedRepVal.startsWith('vacant:')) {
+    const vAreaId = selectedRepVal.split(':')[1];
+    salesRows = salesRows.filter((s) => s.areaId === vAreaId);
+  } else if (selectedArea && selectedArea !== 'all') {
     salesRows = salesRows.filter((s) => s.areaId === selectedArea);
   }
 

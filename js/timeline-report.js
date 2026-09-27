@@ -65,7 +65,20 @@ function renderDailyTimeline() {
   // Filter visits within the date range (only completed or actual visits)
   let visitsInRange = REPORTS_DATA.visits.filter((v) => (v.status === 'completed' || v.isActual === true || v.source === 'actual') && v.date >= fromDate && v.date <= toDate);
 
-  if (isRep) {
+  if (selectedRep && selectedRep.startsWith('vacant:')) {
+    const vacantAreaId = selectedRep.split(':')[1];
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+    const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+    visitsInRange = visitsInRange.filter((v) => {
+      if (v.areaId) return v.areaId === vacantAreaId;
+      if (areaNameLower && v.area && v.area.toLowerCase().trim() === areaNameLower) {
+        if (vacantArea && vacantArea.lineId && v.lineId) return v.lineId === vacantArea.lineId;
+        return true;
+      }
+      return false;
+    });
+  } else if (isRep) {
     visitsInRange = visitsInRange.filter((v) => v.repId === user.id);
   } else if (selectedRep === 'all') {
     visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));

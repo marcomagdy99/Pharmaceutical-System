@@ -1065,6 +1065,45 @@ function populateVisitsLineFilter() {
 }
 
 /**
+ * Determines the manager ID (typically DM) responsible for an area.
+ */
+function getAreaManagerId(area, allUsers = []) {
+  if (!area) return null;
+  if (area.dmId) return area.dmId;
+  if (area.managerId) return area.managerId;
+
+  if (area.repId) {
+    const rep = allUsers.find((u) => u.id === area.repId);
+    if (rep && rep.managerId) return rep.managerId;
+  }
+
+  const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+  const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && d.area.toLowerCase() === (area.name || '').toLowerCase())) && d.repId);
+  if (docWithRep) {
+    const docRep = allUsers.find((u) => u.id === docWithRep.repId);
+    if (docRep && docRep.managerId) return docRep.managerId;
+  }
+
+  const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
+  const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && s.area.toLowerCase() === (area.name || '').toLowerCase())) && s.dmId);
+  if (saleWithDm) return saleWithDm.dmId;
+
+  if (area.lineId) {
+    const dmsInLine = allUsers.filter((u) =>
+      (u.role === 'district_manager' || u.role === 'dm') &&
+      ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
+    );
+    if (dmsInLine.length === 1) {
+      return dmsInLine[0].id;
+    }
+  }
+
+  return null;
+}
+window.getAreaManagerId = window.getAreaManagerId || getAreaManagerId;
+
+
+/**
  * Populates Team Filter (#filterRep) cascading strictly from the selected product line.
  */
 function populateManagerRepDropdown(selectedLineId = "all") {
@@ -1101,14 +1140,32 @@ function populateManagerRepDropdown(selectedLineId = "all") {
     filterRep.appendChild(optSelf);
   }
 
+  // Vacant Areas for managers and admin
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  let vacantAreas = allAreas.filter((a) => !a.repId);
+  if (selectedLineId !== "all") {
+    vacantAreas = vacantAreas.filter((a) => a.lineId === selectedLineId);
+  } else if (!isAdmin) {
+    const mgrLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+    const mgrLineIds = mgrLines.map((l) => l.id);
+    if (mgrLineIds.length > 0) {
+      vacantAreas = vacantAreas.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
+    }
+  }
+
   if (isDM) {
-    // DM only supervises Medical Reps
+    // DM only supervises Medical Reps and their assigned vacant areas
     const reps = scopedTeam.filter(
       (u) => u.id !== currentUser.id && (u.role === "medical_rep" || u.role === "rep")
     );
-    if (reps.length > 0) {
+    const myVacantAreas = vacantAreas.filter((a) => {
+      const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+      return mgrId === currentUser.id || (!mgrId && (!a.lineId || (currentUser.lineIds && currentUser.lineIds.includes(a.lineId)) || currentUser.lineId === a.lineId));
+    });
+
+    if (reps.length > 0 || myVacantAreas.length > 0) {
       const repGroup = document.createElement("optgroup");
-      repGroup.label = isAr ? "المناديب الطبيين (Reps)" : "Medical Reps (Reps)";
+      repGroup.label = isAr ? "المناديب والمناطق الشاغرة (Team)" : "Team Reps & Vacant Areas";
       reps.forEach((rep) => {
         const opt = document.createElement("option");
         opt.value = rep.id;
@@ -1116,38 +1173,50 @@ function populateManagerRepDropdown(selectedLineId = "all") {
         opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || rep.code || "Rep"})`;
         repGroup.appendChild(opt);
       });
+      myVacantAreas.forEach((area) => {
+        const opt = document.createElement("option");
+        opt.value = `vacant:${area.id}`;
+        opt.className = "filter-opt-vacant";
+        const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+        opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        repGroup.appendChild(opt);
+      });
       filterRep.appendChild(repGroup);
     }
-    return;
-  }
+  } else {
+    // For LM, BU, Admin: Group DMs first, then Reps and Vacant Areas under each DM
+    const dms = scopedTeam.filter(
+      (u) => u.id !== currentUser.id && (u.role === "district_manager" || u.role === "dm")
+    );
+    const reps = scopedTeam.filter(
+      (u) => u.id !== currentUser.id && (u.role === "medical_rep" || u.role === "rep")
+    );
 
-  // For LM, BU, Admin: Group DMs first, then Reps under each DM
-  const dms = scopedTeam.filter(
-    (u) => u.id !== currentUser.id && (u.role === "district_manager" || u.role === "dm")
-  );
-  const reps = scopedTeam.filter(
-    (u) => u.id !== currentUser.id && (u.role === "medical_rep" || u.role === "rep")
-  );
+    if (dms.length > 0) {
+      const dmGroup = document.createElement("optgroup");
+      dmGroup.label = isAr ? "مدراء المناطق (District Managers)" : "District Managers (DMs)";
+      dms.forEach((dm) => {
+        const opt = document.createElement("option");
+        opt.value = dm.id;
+        opt.className = "filter-opt-dm";
+        opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"})`;
+        dmGroup.appendChild(opt);
+      });
+      filterRep.appendChild(dmGroup);
+    }
 
-  if (dms.length > 0) {
-    const dmGroup = document.createElement("optgroup");
-    dmGroup.label = isAr ? "مدراء المناطق (District Managers)" : "District Managers (DMs)";
-    dms.forEach((dm) => {
-      const opt = document.createElement("option");
-      opt.value = dm.id;
-      opt.className = "filter-opt-dm";
-      opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"})`;
-      dmGroup.appendChild(opt);
-    });
-    filterRep.appendChild(dmGroup);
-  }
+    const assignedVacantIds = new Set();
 
-  if (reps.length > 0) {
-    // Group reps by DM for structured clarity
     if (dms.length > 0) {
       dms.forEach((dm) => {
         const dmReps = reps.filter((r) => r.managerId === dm.id);
-        if (dmReps.length > 0) {
+        const dmVacantAreas = vacantAreas.filter((a) => {
+          const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+          return mgrId === dm.id;
+        });
+        dmVacantAreas.forEach((a) => assignedVacantIds.add(a.id));
+
+        if (dmReps.length > 0 || dmVacantAreas.length > 0) {
           const group = document.createElement("optgroup");
           group.label = isAr ? `فريق ${dm.name} (Reps)` : `Team ${dm.name} (Reps)`;
           dmReps.forEach((rep) => {
@@ -1157,15 +1226,24 @@ function populateManagerRepDropdown(selectedLineId = "all") {
             opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
             group.appendChild(opt);
           });
+          dmVacantAreas.forEach((area) => {
+            const opt = document.createElement("option");
+            opt.value = `vacant:${area.id}`;
+            opt.className = "filter-opt-vacant";
+            const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+            opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+            group.appendChild(opt);
+          });
           filterRep.appendChild(group);
         }
       });
 
-      // Reps without matching DM in this line
+      // Reps or vacant areas without matching DM in this line
       const directOrOtherReps = reps.filter((r) => !dms.some((dm) => dm.id === r.managerId));
-      if (directOrOtherReps.length > 0) {
+      const unassignedVacant = vacantAreas.filter((a) => !assignedVacantIds.has(a.id));
+      if (directOrOtherReps.length > 0 || unassignedVacant.length > 0) {
         const group = document.createElement("optgroup");
-        group.label = isAr ? "مناديب آخرين (Reps)" : "Other Reps";
+        group.label = isAr ? "مناديب ومناطق أخرى" : "Other Reps & Vacant Areas";
         directOrOtherReps.forEach((rep) => {
           const opt = document.createElement("option");
           opt.value = rep.id;
@@ -1173,16 +1251,32 @@ function populateManagerRepDropdown(selectedLineId = "all") {
           opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
           group.appendChild(opt);
         });
+        unassignedVacant.forEach((area) => {
+          const opt = document.createElement("option");
+          opt.value = `vacant:${area.id}`;
+          opt.className = "filter-opt-vacant";
+          const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+          opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+          group.appendChild(opt);
+        });
         filterRep.appendChild(group);
       }
     } else {
       const repGroup = document.createElement("optgroup");
-      repGroup.label = isAr ? "المناديب الطبيين (Medical Reps)" : "Medical Representatives (Reps)";
+      repGroup.label = isAr ? "المناديب الطبيين والمناطق الشاغرة" : "Medical Representatives & Vacant Areas";
       reps.forEach((rep) => {
         const opt = document.createElement("option");
         opt.value = rep.id;
         opt.className = "filter-opt-rep";
         opt.textContent = `🩺 ${rep.name} (${rep.employeeCode || "Rep"})`;
+        repGroup.appendChild(opt);
+      });
+      vacantAreas.forEach((area) => {
+        const opt = document.createElement("option");
+        opt.value = `vacant:${area.id}`;
+        opt.className = "filter-opt-vacant";
+        const areaName = isAr && area.nameAr ? area.nameAr : area.name;
+        opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
         repGroup.appendChild(opt);
       });
       filterRep.appendChild(repGroup);
@@ -1263,7 +1357,10 @@ function getAvailableAreas() {
 
   let finalAreas = allAreas;
   const filterRepVal = document.getElementById("filterRep")?.value || "all";
-  if (filterRepVal !== "all" && !filterRepVal.startsWith("all_")) {
+  if (filterRepVal.startsWith("vacant:")) {
+    const vAreaId = filterRepVal.split(":")[1];
+    finalAreas = allAreas.filter((a) => a.id === vAreaId);
+  } else if (filterRepVal !== "all" && !filterRepVal.startsWith("all_")) {
     const repAreas =
       window.store && window.store.areas
         ? window.store.areas.getByRep(filterRepVal)
@@ -1318,7 +1415,9 @@ function populateAreaFilters() {
       html = `<option value="all">${allLabel}</option>`;
       uniqueAreas.forEach((a) => {
         const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
-        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
+        const isVacant = !a.repId;
+        const vacantTag = isVacant ? ` [${isAr ? "شاغرة" : "Vacant"}]` : "";
+        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}${vacantTag}</option>`;
       });
     }
     timelineFilter.innerHTML = html;
@@ -1336,7 +1435,9 @@ function populateAreaFilters() {
       html = `<option value="all">${allLabel}</option>`;
       uniqueAreas.forEach((a) => {
         const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
-        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}</option>`;
+        const isVacant = !a.repId;
+        const vacantTag = isVacant ? ` [${isAr ? "شاغرة" : "Vacant"}]` : "";
+        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}${vacantTag}</option>`;
       });
     }
     bulkFilter.innerHTML = html;
@@ -1356,6 +1457,19 @@ function getScopedVisits() {
         v.doubleWithUserId === currentUser.id ||
         (v.doubleWithUserName && v.doubleWithUserName.includes(currentUser.name)),
     );
+  } else if (document.getElementById("filterRep")?.value?.startsWith("vacant:")) {
+    const vAreaId = document.getElementById("filterRep").value.split(":")[1];
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const vArea = allAreas.find((a) => a.id === vAreaId);
+    const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
+    list = list.filter((v) => {
+      if (v.areaId) return v.areaId === vAreaId;
+      if (vNameLower && v.area && v.area.toLowerCase().trim() === vNameLower) {
+        if (vArea && vArea.lineId && v.lineId) return v.lineId === vArea.lineId;
+        return true;
+      }
+      return false;
+    });
   } else if (currentUserRole === "admin" || currentUserRole === "hr") {
     const selectedRepFilter =
       document.getElementById("filterRep")?.value || "all";
@@ -1628,6 +1742,11 @@ const visitsApp = {
       );
     }
 
+    const activeLineId = document.getElementById("filterLine")?.value || "all";
+    if (activeLineId !== "all") {
+      sourceList = sourceList.filter((d) => doctorMatchesLine(d, activeLineId, allAreas));
+    }
+
     const selectedAreaObj = allAreas.find(
       (a) => a.id === areaFilter || a.name === areaFilter,
     );
@@ -1651,12 +1770,11 @@ const visitsApp = {
       let areaMatch = true;
       if (areaFilter !== "all") {
         const matchId = item.areaId && item.areaId === areaFilter;
-        const matchName = item.area && item.area.toLowerCase().trim() === selectedAreaName;
-        const matchAddr =
-          selectedAreaName &&
-          ((item.clinicAddress && item.clinicAddress.toLowerCase().includes(selectedAreaName)) ||
-            (item.address && item.address.toLowerCase().includes(selectedAreaName)));
-        areaMatch = matchId || matchName || matchAddr;
+        let matchName = item.area && item.area.toLowerCase().trim() === selectedAreaName;
+        if (matchName && selectedAreaObj && selectedAreaObj.lineId) {
+          matchName = doctorMatchesLine(item, selectedAreaObj.lineId, allAreas);
+        }
+        areaMatch = matchId || matchName;
       }
 
       return (nameMatch || specMatch || addrMatch) && classMatch && areaMatch;
@@ -2817,6 +2935,8 @@ function setupModalTargetFilter() {
   const allOpt = document.createElement("option");
   allOpt.value = "all";
 
+  const activeLineId = document.getElementById("filterLine")?.value || "all";
+
   if (role === "district_manager") {
     if (filterLabel) {
       filterLabel.textContent = isAr
@@ -2825,13 +2945,6 @@ function setupModalTargetFilter() {
     }
     allOpt.textContent = isAr ? "👥 جميع أطباء فريقي" : "👥 All My Team Doctors";
     filterSelect.appendChild(allOpt);
-
-    const vacantOpt = document.createElement("option");
-    vacantOpt.value = "vacant";
-    vacantOpt.textContent = isAr
-      ? "📍 أطباء المناطق الشاغرة (بدون مندوب)"
-      : "📍 Vacant / Unassigned Doctors";
-    filterSelect.appendChild(vacantOpt);
 
     const myReps = allUsers.filter(
       (u) =>
@@ -2846,6 +2959,27 @@ function setupModalTargetFilter() {
       opt.textContent = `👤 ${repName}`;
       filterSelect.appendChild(opt);
     });
+
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const mgrLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+    const mgrLineIds = mgrLines.map((l) => l.id);
+    let dmVacant = allAreas.filter((a) => !a.repId);
+    if (activeLineId !== "all") {
+      dmVacant = dmVacant.filter((a) => a.lineId === activeLineId);
+    } else if (mgrLineIds.length > 0) {
+      dmVacant = dmVacant.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
+    }
+    const myVacantAreas = dmVacant.filter((a) => {
+      const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+      return mgrId === currentUser.id || (!mgrId && (!a.lineId || mgrLineIds.includes(a.lineId)));
+    });
+    myVacantAreas.forEach((va) => {
+      const opt = document.createElement("option");
+      opt.value = `vacant:${va.id}`;
+      const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+      opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+      filterSelect.appendChild(opt);
+    });
   } else if (role === "line_manager") {
     if (filterLabel) {
       filterLabel.textContent = isAr
@@ -2855,12 +2989,15 @@ function setupModalTargetFilter() {
     allOpt.textContent = isAr ? "👥 جميع أطباء الخط" : "👥 All Line Doctors";
     filterSelect.appendChild(allOpt);
 
-    const vacantOpt = document.createElement("option");
-    vacantOpt.value = "vacant";
-    vacantOpt.textContent = isAr
-      ? "📍 أطباء المناطق الشاغرة بالخط"
-      : "📍 Vacant / Unassigned Line Doctors";
-    filterSelect.appendChild(vacantOpt);
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const mgrLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+    const mgrLineIds = mgrLines.map((l) => l.id);
+    let lmVacant = allAreas.filter((a) => !a.repId);
+    if (activeLineId !== "all") {
+      lmVacant = lmVacant.filter((a) => a.lineId === activeLineId);
+    } else if (mgrLineIds.length > 0) {
+      lmVacant = lmVacant.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
+    }
 
     const myDms = allUsers.filter(
       (u) =>
@@ -2868,6 +3005,7 @@ function setupModalTargetFilter() {
         u.role === "district_manager" &&
         u.status !== "Inactive",
     );
+    const assignedVacant = new Set();
     myDms.forEach((dm) => {
       const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
       const opt = document.createElement("option");
@@ -2888,6 +3026,28 @@ function setupModalTargetFilter() {
         repOpt.textContent = `　↳ 👤 ${repName}`;
         filterSelect.appendChild(repOpt);
       });
+
+      const dmVacant = lmVacant.filter((a) => {
+        const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+        return mgrId === dm.id;
+      });
+      dmVacant.forEach((va) => {
+        assignedVacant.add(va.id);
+        const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+        const vaOpt = document.createElement("option");
+        vaOpt.value = `vacant:${va.id}`;
+        vaOpt.textContent = `　↳ 📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        filterSelect.appendChild(vaOpt);
+      });
+    });
+
+    const unassignedVacant = lmVacant.filter((a) => !assignedVacant.has(a.id));
+    unassignedVacant.forEach((va) => {
+      const opt = document.createElement("option");
+      opt.value = `vacant:${va.id}`;
+      const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+      opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+      filterSelect.appendChild(opt);
     });
   } else if (role === "business_unit" || role === "admin") {
     if (filterLabel) {
@@ -2898,12 +3058,17 @@ function setupModalTargetFilter() {
     allOpt.textContent = isAr ? "👥 جميع الأطباء" : "👥 All Doctors";
     filterSelect.appendChild(allOpt);
 
-    const vacantOpt = document.createElement("option");
-    vacantOpt.value = "vacant";
-    vacantOpt.textContent = isAr
-      ? "📍 أطباء المناطق الشاغرة بالشركة"
-      : "📍 Vacant / Unassigned Organization Doctors";
-    filterSelect.appendChild(vacantOpt);
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    let buVacant = allAreas.filter((a) => !a.repId);
+    if (activeLineId !== "all") {
+      buVacant = buVacant.filter((a) => a.lineId === activeLineId);
+    } else if (role !== "admin") {
+      const mgrLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+      const mgrLineIds = mgrLines.map((l) => l.id);
+      if (mgrLineIds.length > 0) {
+        buVacant = buVacant.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
+      }
+    }
 
     const lms =
       role === "business_unit"
@@ -2943,6 +3108,7 @@ function setupModalTargetFilter() {
             (u) => u.role === "district_manager" && u.status !== "Inactive",
           );
 
+    const assignedVacant = new Set();
     if (dms.length > 0) {
       const dmGrp = document.createElement("optgroup");
       dmGrp.label = isAr
@@ -2960,11 +3126,54 @@ function setupModalTargetFilter() {
         opt.value = `dm:${dm.id}`;
         opt.textContent = `👔 ${dmName} (DM${parentName ? " - " + parentName : ""})`;
         dmGrp.appendChild(opt);
+
+        const dmVacant = buVacant.filter((a) => {
+          const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+          return mgrId === dm.id;
+        });
+        dmVacant.forEach((va) => {
+          assignedVacant.add(va.id);
+          const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+          const vaOpt = document.createElement("option");
+          vaOpt.value = `vacant:${va.id}`;
+          vaOpt.textContent = `　↳ 📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+          dmGrp.appendChild(vaOpt);
+        });
       });
       filterSelect.appendChild(dmGrp);
     }
+
+    const unassignedVacant = buVacant.filter((a) => !assignedVacant.has(a.id));
+    if (unassignedVacant.length > 0) {
+      const vaGrp = document.createElement("optgroup");
+      vaGrp.label = isAr ? "مناطق شاغرة أخرى" : "Other Vacant Areas";
+      unassignedVacant.forEach((va) => {
+        const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+        const vaOpt = document.createElement("option");
+        vaOpt.value = `vacant:${va.id}`;
+        vaOpt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaGrp.appendChild(vaOpt);
+      });
+      filterSelect.appendChild(vaGrp);
+    }
   }
 }
+
+function doctorMatchesLine(d, lineId, allAreas) {
+  if (!lineId || lineId === "all") return true;
+  if (d.lineId) return d.lineId === lineId;
+  if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(lineId);
+  if (d.areaId && allAreas) {
+    const a = allAreas.find((x) => x.id === d.areaId);
+    if (a && a.lineId) return a.lineId === lineId;
+  }
+  if (d.repId) {
+    const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
+    if (repLines.some((l) => l.id === lineId)) return true;
+  }
+  return false;
+}
+window.doctorMatchesLine = doctorMatchesLine;
 
 function updateTargetOptions() {
   const period =
@@ -2989,8 +3198,7 @@ function updateTargetOptions() {
   ].includes(role);
 
   if (filterContainer) {
-    filterContainer.style.display =
-      period.toLowerCase() === "pm" && isManager ? "block" : "none";
+    filterContainer.style.display = isManager ? "block" : "none";
   }
 
   const allUsers =
@@ -3014,10 +3222,30 @@ function updateTargetOptions() {
   }
 
   let options = [];
+  const selectedFilter = filterSelect ? filterSelect.value : "all";
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+
   if (period.toLowerCase() === "am") {
     const allHosps = getMockHospitals();
     if (targetLabel) targetLabel.textContent = isAr ? "المستشفى" : "Hospital";
-    if (!isManager) {
+    if (selectedFilter && selectedFilter.startsWith("vacant:")) {
+      const vAreaId = selectedFilter.split(":")[1];
+      const vArea = allAreas.find((a) => a.id === vAreaId);
+      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
+      options = allHosps.filter((h) => {
+        let matchesArea = false;
+        if (h.areaId) {
+          matchesArea = h.areaId === vAreaId;
+        } else if (vNameLower && h.area && h.area.toLowerCase().trim() === vNameLower) {
+          matchesArea = true;
+        }
+        if (!matchesArea) return false;
+        if (vArea && vArea.lineId) {
+          return doctorMatchesLine(h, vArea.lineId, allAreas);
+        }
+        return true;
+      });
+    } else if (!isManager) {
       const repAreas =
         window.store && window.store.areas
           ? window.store.areas.getByRep(currentUser.id)
@@ -3034,7 +3262,24 @@ function updateTargetOptions() {
   } else if (period.toLowerCase() === "pharmacy") {
     const allPharms = getMockPharmacies();
     if (targetLabel) targetLabel.textContent = isAr ? "الصيدلية" : "Pharmacy";
-    if (!isManager) {
+    if (selectedFilter && selectedFilter.startsWith("vacant:")) {
+      const vAreaId = selectedFilter.split(":")[1];
+      const vArea = allAreas.find((a) => a.id === vAreaId);
+      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
+      options = allPharms.filter((p) => {
+        let matchesArea = false;
+        if (p.areaId) {
+          matchesArea = p.areaId === vAreaId;
+        } else if (vNameLower && p.area && p.area.toLowerCase().trim() === vNameLower) {
+          matchesArea = true;
+        }
+        if (!matchesArea) return false;
+        if (vArea && vArea.lineId) {
+          return doctorMatchesLine(p, vArea.lineId, allAreas);
+        }
+        return true;
+      });
+    } else if (!isManager) {
       const repAreas =
         window.store && window.store.areas
           ? window.store.areas.getByRep(currentUser.id)
@@ -3051,7 +3296,6 @@ function updateTargetOptions() {
   } else {
     if (targetLabel) targetLabel.textContent = isAr ? "الطبيب" : "Doctor";
     const allDocs = getMockDoctors();
-    const selectedFilter = filterSelect ? filterSelect.value : "all";
 
     const inactiveUserIds = allUsers
       .filter((u) => u.status === "Inactive")
@@ -3059,6 +3303,23 @@ function updateTargetOptions() {
 
     if (!isManager) {
       options = allDocs.filter((d) => d.repId === currentUser.id);
+    } else if (selectedFilter && selectedFilter.startsWith("vacant:")) {
+      const vAreaId = selectedFilter.split(":")[1];
+      const vArea = allAreas.find((a) => a.id === vAreaId);
+      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
+      options = allDocs.filter((d) => {
+        let matchesArea = false;
+        if (d.areaId) {
+          matchesArea = d.areaId === vAreaId;
+        } else if (vNameLower && d.area && d.area.toLowerCase().trim() === vNameLower) {
+          matchesArea = true;
+        }
+        if (!matchesArea) return false;
+        if (vArea && vArea.lineId) {
+          return doctorMatchesLine(d, vArea.lineId, allAreas);
+        }
+        return true;
+      });
     } else if (selectedFilter === "vacant") {
       if (role === "district_manager") {
         const myRepIds = allUsers
@@ -3195,6 +3456,11 @@ function updateTargetOptions() {
     } else {
       options = allDocs;
     }
+  }
+
+  const activeLineId = document.getElementById("filterLine")?.value || "all";
+  if (activeLineId !== "all") {
+    options = options.filter((target) => doctorMatchesLine(target, activeLineId, allAreas));
   }
 
   if (options.length === 0) {

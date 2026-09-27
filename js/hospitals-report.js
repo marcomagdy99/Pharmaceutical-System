@@ -38,12 +38,19 @@ function getScopedHospitals(respectActiveFilters = true) {
       const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...teamRepIds];
 
+      const myVacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a, allUsers) : null;
+        return mgrId === currentUser.id || (!mgrId && (!a.lineId || (currentUser.lineIds && currentUser.lineIds.includes(a.lineId)) || currentUser.lineId === a.lineId));
+      });
+
       const dmAreas = allAreas.filter((a) =>
         (a.repId && teamRepIds.includes(a.repId)) ||
         a.dmId === currentUser.id ||
         a.districtManagerId === currentUser.id ||
         (currentUser.areaIds && currentUser.areaIds.includes(a.id)) ||
-        (currentUser.areaId && currentUser.areaId === a.id)
+        (currentUser.areaId && currentUser.areaId === a.id) ||
+        myVacantAreas.some((va) => va.id === a.id)
       );
       allowedAreaIds = dmAreas.map((a) => a.id);
       allowedAreaNames = dmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
@@ -68,8 +75,15 @@ function getScopedHospitals(respectActiveFilters = true) {
       allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
     }
 
+    const repFilter = document.getElementById("hospitalRepSelect");
+    const repId = (repFilter && repFilter.value) ? repFilter.value : "all";
+
     if (allowedTeamIds) {
       hosps = hosps.filter((h) => {
+        if (repId && repId.startsWith("vacant:")) {
+          const vAreaId = repId.split(":")[1];
+          if (h.areaId === vAreaId) return true;
+        }
         if (h.repId) {
           return allowedTeamIds.includes(h.repId);
         }
@@ -87,32 +101,51 @@ function getScopedHospitals(respectActiveFilters = true) {
       });
     }
 
-    const repFilter = document.getElementById("hospitalRepSelect");
-    const repId = (repFilter && repFilter.value) ? repFilter.value : "all";
     if (repId !== "all") {
-      const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
-      const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
-      if (isLM) {
-        const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        hosps = hosps.filter((h) => h.repId && repsUnderLM.includes(h.repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
-      } else if (isDM) {
-        const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-        hosps = hosps.filter((h) => h.repId && (repsUnderDM.includes(h.repId) || h.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+      if (repId.startsWith("vacant:")) {
+        const vacantAreaId = repId.split(":")[1];
+        const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+        const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+        hosps = hosps.filter((h) => {
+          if (h.areaId) return h.areaId === vacantAreaId;
+          if (areaNameLower && h.area && h.area.toLowerCase().trim() === areaNameLower) {
+            if (vacantArea && vacantArea.lineId && h.lineId) return h.lineId === vacantArea.lineId;
+            return true;
+          }
+          return false;
+        });
       } else {
-        hosps = hosps.filter((h) => h.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+        const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
+        const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
+        if (isLM) {
+          const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
+          const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+          hosps = hosps.filter((h) => h.repId && repsUnderLM.includes(h.repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+        } else if (isDM) {
+          const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
+          hosps = hosps.filter((h) => h.repId && (repsUnderDM.includes(h.repId) || h.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+        } else {
+          hosps = hosps.filter((h) => h.repId === repId && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+        }
       }
     }
   }
 
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   if (selectedLineId !== 'all') {
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     hosps = hosps.filter((h) => {
       if (h.lineId) return h.lineId === selectedLineId;
       if (Array.isArray(h.lineIds) && h.lineIds.length > 0) return h.lineIds.includes(selectedLineId);
-      if (!h.repId) return role === 'admin' || role === 'hr';
-      const repLines = window.getUserLines ? window.getUserLines(h.repId) : [];
-      return repLines.some((l) => l.id === selectedLineId);
+      if (h.areaId) {
+        const a = allAreas.find((x) => x.id === h.areaId);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
+      if (h.repId) {
+        const repLines = window.getUserLines ? window.getUserLines(h.repId) : [];
+        if (repLines.some((l) => l.id === selectedLineId)) return true;
+      }
+      return !h.repId && (role === 'admin' || role === 'hr');
     });
   }
 
