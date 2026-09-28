@@ -1,19 +1,14 @@
-// Firebase Configuration
-// Replace with your actual Firebase project config
+// Firebase Configuration for PharmaCare Production
 const firebaseConfig = {
-  // The API key for authenticating with Firebase services
-  apiKey: 'DEMO_MODE',
-  // The domain used for Firebase authentication
-  authDomain: 'pharmacare-demo.firebaseapp.com',
-  // The unique identifier for the Firebase project
-  projectId: 'pharmacare-demo',
-  // The Cloud Storage bucket URL for storing files
-  storageBucket: 'pharmacare-demo.appspot.com',
-  // The sender ID for Firebase Cloud Messaging
-  messagingSenderId: '000000000000',
-  // The unique application ID within the Firebase project
-  appId: '1:000000000000:web:0000000000000000'
+  apiKey: "AIzaSyCyoVHyxo2iTPP17B4ZD9__2rm75GSQdgU",
+  authDomain: "pharmacare-ab4b6.firebaseapp.com",
+  projectId: "pharmacare-ab4b6",
+  storageBucket: "pharmacare-ab4b6.firebasestorage.app",
+  messagingSenderId: "664099283692",
+  appId: "1:664099283692:web:1d470ac957243305553bc9",
+  measurementId: "G-WT3TE870HM"
 };
 
-// Flag to determine if the application is running in demo mode
-const IS_DEMO_MODE = firebaseConfig.apiKey === 'DEMO_MODE';
+const IS_DEMO_MODE = false;
+window.firebaseConfig = firebaseConfig;
+window.IS_DEMO_MODE = IS_DEMO_MODE;

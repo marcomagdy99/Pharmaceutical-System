@@ -13,6 +13,34 @@
   } catch (err) {}
 })();
 
+// Universal Service Worker cache invalidation across all pages
+(function () {
+  const EXPECTED_SW = "v73";
+  const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
+  try {
+    if (localStorage.getItem(FLAG) !== "1") {
+      if ("caches" in window) {
+        caches.keys().then(function (names) {
+          return Promise.all(
+            names.map(function (n) {
+              if (n.indexOf("pharmacare-") === 0 && n !== "pharmacare-" + EXPECTED_SW) {
+                return caches.delete(n);
+              }
+            })
+          );
+        }).then(function () {
+          localStorage.setItem(FLAG, "1");
+          if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            window.location.reload();
+          }
+        });
+      } else {
+        localStorage.setItem(FLAG, "1");
+      }
+    }
+  } catch (e) {}
+})();
+
 // ============================================================================
 // Section 0: HTML Escaping Utility
 // Use this whenever free-text a user typed (announcement body, visit comment,
@@ -1364,6 +1392,9 @@ function saveDataToStorage() {
     // Exclude distributorSales from pharma_master_data to keep it lightweight and under quota
     const { distributorSales, ...cleanMasterData } = window.DEMO_DATA;
     localStorage.setItem("pharma_master_data", JSON.stringify(cleanMasterData));
+    if (typeof window.pushLocalToCloud === "function" && !window._suppressCloudPush) {
+      window.pushLocalToCloud();
+    }
   } catch (err) {
     console.error("Error saving pharma_master_data to localStorage:", err);
   }
@@ -2886,6 +2917,12 @@ function renderTopbar(force = false) {
           <span class="user-display-code">${codeLabel} <strong>${userCode}</strong></span>
         </div>
         <span class="user-role-tag">${roleBadge}</span>
+      </div>
+      
+      <div id="cloudSyncStatus" style="display: inline-flex; align-items: center; margin-inline: 8px;">
+        <span style="display: inline-flex; align-items: center; gap: 4px; color: #10b981; font-size: 0.75rem; font-weight: 600;" title="Realtime Cloud Sync Active">
+          <span style="font-size: 0.7rem;">●</span> ${lang === "ar" ? "سحابي مباشر" : "Cloud Live"}
+        </span>
       </div>
 
       <div class="pharma-actions-group">

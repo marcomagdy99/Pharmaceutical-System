@@ -299,6 +299,80 @@
     white-space: nowrap;
 }
 
+/* --- Streamlined Line Actions Toolbar --- */
+.line-actions-toolbar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+[data-theme="dark"] .line-actions-toolbar {
+    background: #181b22;
+    border-color: #2b313d;
+}
+
+/* --- High-Contrast Badges (Crisp in Light & Dark Mode) --- */
+.product-dosage-badge {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    color: #0b5ed7 !important;
+    border: 1px solid rgba(13, 110, 253, 0.25) !important;
+    font-weight: 600;
+    font-size: 0.76rem;
+    padding: 3px 8px;
+    letter-spacing: 0.2px;
+}
+
+[data-theme="dark"] .product-dosage-badge {
+    background-color: rgba(56, 139, 253, 0.18) !important;
+    color: #79c0ff !important;
+    border: 1px solid rgba(56, 139, 253, 0.4) !important;
+}
+
+.product-form-badge {
+    background-color: rgba(108, 117, 125, 0.1) !important;
+    color: #495057 !important;
+    border: 1px solid rgba(108, 117, 125, 0.25) !important;
+    font-size: 0.76rem;
+    padding: 3px 8px;
+}
+
+[data-theme="dark"] .product-form-badge {
+    background-color: rgba(157, 165, 177, 0.15) !important;
+    color: #c9d1d9 !important;
+    border: 1px solid rgba(157, 165, 177, 0.3) !important;
+}
+
+/* --- Mobile Product Cards (< 768px) --- */
+.product-mobile-card {
+    background-color: #ffffff;
+    border-color: #e5e7eb !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.product-mobile-card:hover,
+.product-mobile-card:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.product-mobile-name {
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+[data-theme="dark"] .product-mobile-card {
+    background-color: #21252d;
+    border-color: #2f3643 !important;
+}
+
+[data-theme="dark"] .product-mobile-card:hover,
+[data-theme="dark"] .product-mobile-card:active {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .product-mobile-name {
+    color: #f1f5f9;
+}
+
 @media (max-width: 768px) {
     .product-actions-cell {
         white-space: nowrap;
@@ -318,13 +392,11 @@
     }
 
     .accordion-body {
-        padding: 0.5rem 0.25rem;
+        padding: 0.75rem 0.5rem;
     }
 
-    .accordion-body .table th,
-    .accordion-body .table td {
-        padding: 6px 5px;
-        font-size: 0.8rem;
+    .accordion-button {
+        padding: 0.85rem 0.95rem;
     }
 }
 

@@ -371,43 +371,71 @@ function renderProductLines(activeLineId) {
     let productsHtml = "";
     if (line.products && line.products.length > 0) {
       productsHtml = `
-                <div class="table-responsive mt-3">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="product-table-head">
-                            <tr>
-                                <th data-i18n="productName">Product Name</th>
-                                <th data-i18n="dosage">Dosage</th>
-                                <th data-i18n="form">Form</th>
-                                <th data-i18n="price">Value</th>
-                                <th class="text-end" data-i18n="actions">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${line.products.map((prod) => `
-                                <tr>
-                                    <td class="fw-medium">${window.escapeHtml(prod.name)}</td>
-                                    <td><span class="badge bg-secondary">${window.escapeHtml(prod.dosage)}</span></td>
-                                    <td>${window.escapeHtml(prod.form)}</td>
-                                    <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? Number(prod.price).toLocaleString() : "—"}</td>
-                                    <td class="text-end product-actions-cell">
-                                        <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
-                                            <i class="bi bi-arrow-left-right"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditProduct('${line.id}', '${prod.id}')" title="Edit Product">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal('product', '${prod.id}', '${line.id}')" title="Delete Product">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
+        <!-- Desktop Table View (>= 768px) -->
+        <div class="d-none d-md-block table-responsive mt-2">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="product-table-head">
+                    <tr>
+                        <th data-i18n="productName">Product Name</th>
+                        <th data-i18n="dosage">Dosage</th>
+                        <th data-i18n="form">Form</th>
+                        <th data-i18n="price">Value</th>
+                        <th class="text-end" data-i18n="actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${line.products.map((prod) => `
+                        <tr>
+                            <td class="fw-bold text-primary-emphasis">${window.escapeHtml(prod.name)}</td>
+                            <td><span class="badge product-dosage-badge">${window.escapeHtml(prod.dosage)}</span></td>
+                            <td><span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span></td>
+                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}</td>
+                            <td class="text-end product-actions-cell">
+                                <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditProduct('${line.id}', '${prod.id}')" title="Edit Product">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal('product', '${prod.id}', '${line.id}')" title="Delete Product">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Card List View (< 768px) -->
+        <div class="d-md-none product-mobile-cards d-flex flex-column gap-2 mt-2">
+            ${line.products.map((prod) => `
+                <div class="product-mobile-card p-3 rounded-3 border d-flex justify-content-between align-items-center">
+                    <div class="d-flex flex-column gap-1 pe-2" style="min-width: 0;">
+                        <span class="fw-bold fs-6 text-truncate product-mobile-name">${window.escapeHtml(prod.name)}</span>
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                            <span class="badge product-dosage-badge">${window.escapeHtml(prod.dosage)}</span>
+                            <span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span>
+                            ${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">${Number(prod.price).toLocaleString()} EGP</span>` : ""}
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <button class="btn btn-sm btn-outline-info rounded-circle" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="bi bi-arrow-left-right" style="font-size: 0.82rem;"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary rounded-circle" onclick="openEditProduct('${line.id}', '${prod.id}')" title="Edit Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="bi bi-pencil" style="font-size: 0.82rem;"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger rounded-circle" onclick="openDeleteModal('product', '${prod.id}', '${line.id}')" title="Delete Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="bi bi-trash" style="font-size: 0.82rem;"></i>
+                        </button>
+                    </div>
                 </div>
-            `;
+            `).join("")}
+        </div>
+      `;
     } else {
-      productsHtml = `<div class="text-center text-muted py-3">No products in this line yet.</div>`;
+      productsHtml = `<div class="text-center text-muted py-4"><i class="bi bi-box-seam fs-3 d-block mb-1 opacity-50"></i>No products in this line yet.</div>`;
     }
 
     const freq = line.callFrequency || { classA: 4, classB: 3, classC: 1 };
@@ -431,7 +459,7 @@ function renderProductLines(activeLineId) {
             ${targetProdName ? `<span class="badge bg-primary ms-1">📦 ${window.escapeHtml(targetProdName)}</span>` : ""}
             <span class="ms-2" style="font-weight: 500;">${window.escapeHtml(line.cycleCampaignFocus.focusMessage)}</span>
           </div>
-          <button class="btn btn-sm btn-outline-primary" onclick="openCampaignFocusModal('${line.id}')">
+          <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')">
             <i class="bi bi-pencil"></i> ${currentLang === "ar" ? "تعديل التركيز" : "Edit Focus"}
           </button>
         </div>
@@ -462,23 +490,26 @@ function renderProductLines(activeLineId) {
                 </h2>
                 <div id="collapse${line.id}" class="accordion-collapse collapse ${collapseClass}" aria-labelledby="heading${line.id}" data-bs-parent="#productLinesAccordion">
                     <div class="accordion-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                            <div>
-                                ${canManageLine ? `
-                                  <button class="btn btn-sm btn-outline-secondary me-2" onclick="openEditLine('${line.id}')">
-                                      <i class="bi bi-pencil"></i> <span data-i18n="editProductLine">Edit Line</span>
-                                  </button>
-                                  <button class="btn btn-sm btn-outline-danger me-2" onclick="openDeleteModal('line', '${line.id}')">
-                                      <i class="bi bi-trash"></i> <span data-i18n="deleteLine">Delete Line</span>
-                                  </button>
-                                ` : ""}
-                                <button class="btn btn-sm btn-outline-info me-2" onclick="openCampaignFocusModal('${line.id}')" title="Configure Cycle Campaign Focus">
+                        <!-- Modern Streamlined Toolbar -->
+                        <div class="line-actions-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 p-2 rounded-3">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-pill px-3 shadow-sm fw-semibold" onclick="openAddProductModal('${line.id}')">
+                                    <i class="bi bi-plus-circle-fill"></i> <span data-i18n="addProduct">${productTranslations[currentLang].addProduct || "Add Product"}</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')" title="Configure Cycle Campaign Focus">
                                     <i class="bi bi-bullseye"></i> <span data-i18n="cycleCampaignFocusBtn">${productTranslations[currentLang].cycleCampaignFocusBtn}</span>
                                 </button>
                             </div>
-                            <button class="btn btn-sm btn-primary" onclick="openAddProductModal('${line.id}')">
-                                <i class="bi bi-plus-circle"></i> <span data-i18n="addProduct">Add Product</span>
-                            </button>
+                            ${canManageLine ? `
+                            <div class="d-flex align-items-center gap-2 ms-auto">
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 d-inline-flex align-items-center gap-1" onclick="openEditLine('${line.id}')" title="Edit Line">
+                                    <i class="bi bi-pencil"></i> <span class="d-none d-sm-inline" data-i18n="editProductLine">${productTranslations[currentLang].editProductLine || "Edit"}</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-2 d-inline-flex align-items-center gap-1" onclick="openDeleteModal('line', '${line.id}')" title="Delete Line">
+                                    <i class="bi bi-trash"></i> <span class="d-none d-sm-inline" data-i18n="deleteLine">${productTranslations[currentLang].deleteLine || "Delete"}</span>
+                                </button>
+                            </div>
+                            ` : ""}
                         </div>
                         ${focusBannerHtml}
                         ${productsHtml}

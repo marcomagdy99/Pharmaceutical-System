@@ -12,6 +12,7 @@ const userTranslations = {
     logout: "Logout",
     user_management: "User Management",
     total_users_badge: "total users",
+    sync_cloud_now: "Sync Cloud",
     add_user: "Add User",
     edit_user: "Edit User",
     total_users: "Total Users",
@@ -85,6 +86,7 @@ const userTranslations = {
     logout: "تسجيل الخروج",
     user_management: "إدارة المستخدمين",
     total_users_badge: "إجمالي المستخدمين",
+    sync_cloud_now: "مزامنة من السحابة",
     add_user: "إضافة مستخدم",
     edit_user: "تعديل مستخدم",
     total_users: "إجمالي المستخدمين",
@@ -255,6 +257,10 @@ const userMgmt = {
       const lang = e.detail?.lang || e.detail;
       const lbl = document.getElementById("langLabel");
       if (lbl) lbl.textContent = lang === "ar" ? "English" : "عربي";
+      this.render();
+    });
+
+    document.addEventListener("pharma:storage:synced", () => {
       this.render();
     });
 

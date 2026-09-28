@@ -3,7 +3,7 @@
  * @description Service Worker for PharmaCare PWA offline caching and reliable field performance.
  */
 
-const CACHE_VERSION = 'v69';
+const CACHE_VERSION = 'v73';
 const CACHE_NAME = `pharmacare-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   './',
@@ -37,6 +37,7 @@ const ASSETS_TO_CACHE = [
   './css/login.css',
   './css/products.css',
   './js/firebase-config.js',
+  './js/firebase-sync.js',
   './js/app.js',
   './js/store.js',
   './js/login.js',
@@ -73,6 +74,8 @@ const ASSETS_TO_CACHE = [
   './js/profile.js',
   './manifest.json',
   // Essential External CDN Libraries for complete offline UI/functionality
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
@@ -110,6 +113,16 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const reqUrl = event.request.url || '';
+
+  // Do not intercept or cache live Firestore/Firebase backend streams
+  if (
+    reqUrl.includes('firestore.googleapis.com') ||
+    reqUrl.includes('firebaseio.com') ||
+    reqUrl.includes('google.com/recaptcha') ||
+    reqUrl.includes('apis.google.com')
+  ) {
+    return;
+  }
   if (reqUrl.includes('?v=')) {
     event.respondWith(
       fetch(event.request)
