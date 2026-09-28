@@ -257,7 +257,7 @@ if (typeof translations !== "undefined") {
 // Section 2: 7-Day Auto-Expiry Evaluation
 // ============================================================================
 function isPlannedVisitExpired(dateStr) {
-  if (typeof window.isPlannedVisitExpired === "function") {
+  if (typeof window.isPlannedVisitExpired === "function" && window.isPlannedVisitExpired !== isPlannedVisitExpired) {
     return window.isPlannedVisitExpired(dateStr);
   }
   if (!dateStr) return false;

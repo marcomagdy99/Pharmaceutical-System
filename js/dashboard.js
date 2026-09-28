@@ -239,20 +239,20 @@ if (window.translations) {
 }
 
 function isPlannedVisitExpired(dateStr) {
-  if (typeof window.isPlannedVisitExpired === "function") {
+  if (typeof window.isPlannedVisitExpired === "function" && window.isPlannedVisitExpired !== isPlannedVisitExpired) {
     return window.isPlannedVisitExpired(dateStr);
   }
   if (!dateStr) return false;
   const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
     ? window.getPlannedVisitExpiryDays()
     : 7;
-  const parts = dateStr.split("-");
-  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
+  const parts = String(dateStr).split("T")[0].split("-");
+  const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
   if (parts.length !== 3) {
     const planDate = new Date(dateStr);
     return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > expiryDays;
   }
-  const planDate = new Date(
+  const planDateMidnight = new Date(
     parseInt(parts[0], 10),
     parseInt(parts[1], 10) - 1,
     parseInt(parts[2], 10),
@@ -265,7 +265,7 @@ function isPlannedVisitExpired(dateStr) {
     0, 0, 0, 0
   );
   const diffDays =
-    (todayMidnight.getTime() - planDate.getTime()) / (1000 * 3600 * 24);
+    (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
   return diffDays > expiryDays;
 }
 
@@ -1092,15 +1092,17 @@ function renderRepDashboard(userName, user) {
   );
   allRepPlannedVisits.sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.time || "").localeCompare(b.time || ""));
 
-  const todayPlanned = allRepPlannedVisits.filter(
-    (v) => v.date === todayStr || (v.date < todayStr && !isPlannedVisitExpired(v.date)),
+  const overduePlanned = allRepPlannedVisits.filter(
+    (v) => v.date < todayStr && !isPlannedVisitExpired(v.date),
   );
+  const todayPlanned = allRepPlannedVisits.filter((v) => v.date === todayStr);
   const tomorrowPlanned = allRepPlannedVisits.filter((v) => v.date === tomorrowStr);
   const upcomingPlanned = allRepPlannedVisits.filter((v) => v.date > todayStr);
 
   let activeTab = window.currentRepPlanTab || "auto";
   if (activeTab === "auto") {
     if (todayPlanned.length > 0) activeTab = "today";
+    else if (overduePlanned.length > 0) activeTab = "overdue";
     else if (tomorrowPlanned.length > 0) activeTab = "tomorrow";
     else if (upcomingPlanned.length > 0) activeTab = "upcoming";
     else activeTab = "today";
@@ -1109,6 +1111,8 @@ function renderRepDashboard(userName, user) {
   let activePlanned = [];
   if (activeTab === "today") {
     activePlanned = todayPlanned;
+  } else if (activeTab === "overdue") {
+    activePlanned = overduePlanned;
   } else if (activeTab === "tomorrow") {
     activePlanned = tomorrowPlanned;
   } else if (activeTab === "upcoming") {
@@ -1246,6 +1250,26 @@ function renderRepDashboard(userName, user) {
   const userLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
   const lineNames = userLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
 
+  const planSectionTitle =
+    activeTab === "overdue"
+      ? (lang === "ar" ? "الزيارات المستحقة السابقة" : "Overdue Visits")
+      : activeTab === "tomorrow"
+      ? (lang === "ar" ? "خطة زيارات الغد" : "Tomorrow's Plan")
+      : activeTab === "upcoming"
+      ? (lang === "ar" ? "الزيارات القادمة المخططة" : "Upcoming Visits")
+      : activeTab === "all"
+      ? (lang === "ar" ? "كل الزيارات المخططة النشطة" : "All Active Planned Visits")
+      : activeTab === "date"
+      ? (lang === "ar" ? `خطة يوم: ${window.currentRepPlanDate}` : `Plan for: ${window.currentRepPlanDate}`)
+      : t.todays_plan;
+
+  const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
+    ? window.getPlannedVisitExpiryDays()
+    : 7;
+  const planExpiryNote = lang === "ar"
+    ? `تنتهي الصلاحية تلقائياً بعد ${expiryDays} ${expiryDays === 1 ? "يوم" : (expiryDays === 2 ? "يومين" : (expiryDays <= 10 ? "أيام" : "يوماً"))} إذا لم تُنفذ`
+    : `Auto-expires after ${expiryDays} day${expiryDays > 1 ? "s" : ""} if not executed`;
+
   return `
     <div class="flex-col">
       <div class="welcome-banner rep">
@@ -1304,7 +1328,7 @@ function renderRepDashboard(userName, user) {
             <div class="stat-label">${t.active_planned}</div>
             <div class="stat-value danger counter" data-target="${allRepPlannedVisits.length}">${allRepPlannedVisits.length}</div>
             <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${todayPlanned.length} ${lang === "ar" ? "اليوم" : "Today"} • ${upcomingPlanned.length} ${lang === "ar" ? "قادمة" : "Upcoming"}
+              ${todayPlanned.length} ${lang === "ar" ? "اليوم" : "Today"}${overduePlanned.length > 0 ? ` • ${overduePlanned.length} ${lang === "ar" ? "مستحقة سابقة" : "Overdue"}` : ""} • ${upcomingPlanned.length} ${lang === "ar" ? "قادمة" : "Upcoming"}
             </div>
           </div>
         </div>
@@ -1312,8 +1336,8 @@ function renderRepDashboard(userName, user) {
         <div class="dashboard-card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
             <div>
-              <h3 class="card-title" style="margin: 0; font-weight: 700;">${t.todays_plan}</h3>
-              <small style="color: var(--gray-500); font-size: 0.8rem;">⏰ ${t.plan_expiry_note}</small>
+              <h3 class="card-title" style="margin: 0; font-weight: 700;">${planSectionTitle}</h3>
+              <small style="color: var(--gray-500); font-size: 0.8rem;">⏰ ${planExpiryNote}</small>
             </div>
             <a href="visits.html" class="btn btn-sm btn-primary" style="padding: 6px 14px; text-decoration: none; border-radius: 8px;">
               + ${t.new_visit}
@@ -1325,6 +1349,10 @@ function renderRepDashboard(userName, user) {
               <button type="button" class="rep-plan-tab-btn ${activeTab === 'today' ? 'active' : ''}" onclick="switchRepPlanTab('today')">
                 📅 ${t.filter_today} <span class="badge">${todayPlanned.length}</span>
               </button>
+              ${overduePlanned.length > 0 ? `
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'overdue' ? 'active' : ''}" onclick="switchRepPlanTab('overdue')" style="${activeTab === 'overdue' ? 'background: #dc3545; color: white;' : 'color: #dc3545; border-color: rgba(220,53,69,0.3);'}">
+                ⚠️ ${lang === 'ar' ? 'مستحقة سابقة' : 'Overdue'} <span class="badge" style="${activeTab === 'overdue' ? 'background: rgba(255,255,255,0.25); color: white;' : 'background: rgba(220,53,69,0.12); color: #dc3545;'}">${overduePlanned.length}</span>
+              </button>` : ''}
               <button type="button" class="rep-plan-tab-btn ${activeTab === 'tomorrow' ? 'active' : ''}" onclick="switchRepPlanTab('tomorrow')">
                 🌅 ${t.filter_tomorrow} <span class="badge">${tomorrowPlanned.length}</span>
               </button>
@@ -1450,8 +1478,6 @@ function renderRepDashboard(userName, user) {
               </div>
             </div>
             ` : ""}
-          </div>
-        </div>
           </div>
         </div>
 
