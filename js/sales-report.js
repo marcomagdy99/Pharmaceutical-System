@@ -297,6 +297,10 @@ function initPharmSalesFilters(user) {
     } else if (curAllowedLineIds !== null) {
       products = products.filter((p) => curAllowedLineIds.includes(p.lineId));
     }
+    const isPM = window.isPMRole ? window.isPMRole(curUser) : (curUser?.role === 'product_manager' || curUser?.role === 'pm');
+    if (isPM && Array.isArray(curUser.productIds) && curUser.productIds.length > 0) {
+      products = products.filter((p) => curUser.productIds.includes(p.id));
+    }
 
     products.forEach((p) => {
       const opt = document.createElement('option');
@@ -364,6 +368,19 @@ function getFilteredPharmSalesRows() {
       if (prodName && r.product) return r.product.trim().toLowerCase() === prodName;
       return false;
     });
+  } else {
+    const isPM = window.isPMRole ? window.isPMRole(user) : (user?.role === 'product_manager' || user?.role === 'pm');
+    if (isPM && Array.isArray(user.productIds) && user.productIds.length > 0) {
+      const allProds = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
+      const allowedNames = allProds
+        .filter((p) => user.productIds.includes(p.id))
+        .map((p) => p.name.trim().toLowerCase());
+      rows = rows.filter((r) => {
+        if (r.productId) return user.productIds.includes(r.productId);
+        if (r.product) return allowedNames.includes(r.product.trim().toLowerCase());
+        return false;
+      });
+    }
   }
   if (selectedDistributor !== 'all') rows = rows.filter((r) => r.distributorId === selectedDistributor);
   if (selectedLine !== 'all' && selectedLine !== 'none') {

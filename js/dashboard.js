@@ -804,6 +804,11 @@ function initDashboardCharts(user) {
         scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
       }
     }
+  } else if (role === "product_manager" || role === "pm") {
+    if (typeof window.getScopedTeamForLine === "function") {
+      const pmTeam = window.getScopedTeamForLine(user);
+      scopedRepIds = pmTeam.reps.map((u) => u.id);
+    }
   }
 
   // Determine active calendar year (auto-resets every year on January 1st)
@@ -888,9 +893,9 @@ function initDashboardCharts(user) {
 
   window.renderCoverageGaugeChart("dashCoverageGaugeChart", "dashCoverageGaugeLabel", coveragePct);
 
-  // 4. Per-Line Sales Trend Charts (LM & BU dashboards)
+  // 4. Per-Line Sales Trend Charts (LM, BU & PM dashboards)
   const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUserId) : [];
-  if (userLines.length > 0 && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu")) {
+  if (userLines.length > 0 && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "product_manager" || role === "pm")) {
     const monthNames = isAr
       ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
       : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -932,6 +937,51 @@ function initDashboardCharts(user) {
 }
 window.initDashboardCharts = initDashboardCharts;
 
+function getActiveCycleCampaignBanner(user, lang) {
+  if (!user) return "";
+  const lines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+  if (!lines || lines.length === 0) return "";
+
+  const focusedLines = lines.filter(
+    (l) => l.cycleCampaignFocus && l.cycleCampaignFocus.active && l.cycleCampaignFocus.focusMessage
+  );
+  if (focusedLines.length === 0) return "";
+
+  const isAr = lang === "ar";
+  return focusedLines
+    .map((line) => {
+      const focus = line.cycleCampaignFocus;
+      let prodName = "";
+      if (focus.targetProductId && Array.isArray(line.products)) {
+        const prod = line.products.find((p) => p.id === focus.targetProductId);
+        if (prod) prodName = prod.name;
+      }
+      const lineDisplayName = isAr ? (line.nameAr || line.name) : line.name;
+
+      return `
+        <div class="cycle-campaign-banner mb-3 shadow-sm" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.12)); border-inline-start: 5px solid #2563eb; border-radius: 12px; padding: 14px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; position: relative;">
+          <div style="display: flex; align-items: flex-start; gap: 14px;">
+            <div style="font-size: 1.8rem; line-height: 1;">🎯</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge bg-primary" style="font-size: 0.8rem; font-weight: 700;">${window.escapeHtml(lineDisplayName)}</span>
+                <strong style="color: var(--primary); font-size: 0.95rem;">${isAr ? "تركيز الحملة البيعية الحالية (Cycle Focus)" : "Current Cycle Campaign Focus"}</strong>
+                ${prodName ? `<span class="badge bg-success" style="font-size: 0.8rem;">📦 ${window.escapeHtml(prodName)}</span>` : ""}
+              </div>
+              <div style="margin-top: 6px; font-size: 0.9rem; color: var(--text-color, #1e293b); font-weight: 500; line-height: 1.5;">
+                ${window.escapeHtml(focus.focusMessage)}
+              </div>
+              ${focus.updatedBy ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 4px;">👤 ${isAr ? "محدد بواسطة" : "Set by"}: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
+            </div>
+          </div>
+          <button type="button" class="btn-close" style="opacity: 0.6;" onclick="this.closest('.cycle-campaign-banner').remove()" title="${isAr ? "إغلاق الإشعار" : "Dismiss"}"></button>
+        </div>
+      `;
+    })
+    .join("");
+}
+window.getActiveCycleCampaignBanner = getActiveCycleCampaignBanner;
+
 function renderDashboard() {
   const container = document.getElementById("pageContent");
   if (!container) return;
@@ -954,6 +1004,8 @@ function renderDashboard() {
     container.innerHTML = renderDMDashboard(userName, user);
   } else if (role === "line_manager" || role === "lm") {
     container.innerHTML = renderLMDashboard(userName, user);
+  } else if (role === "product_manager" || role === "pm") {
+    container.innerHTML = renderPMDashboard(userName, user);
   } else if (role === "business_unit" || role === "bu") {
     container.innerHTML = renderBUDashboard(userName, user);
   } else if (role === "hr") {
@@ -1200,6 +1252,8 @@ function renderRepDashboard(userName, user) {
         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "المندوب الطبي" : "Medical Representative"} ${userName}!</h2>
         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "المندوب الطبي" : "Medical Representative")}</div>
       </div>
+
+      ${getActiveCycleCampaignBanner(user, lang)}
 
         <div class="stat-grid">
           <div class="stat-card">
@@ -1632,6 +1686,8 @@ function renderDMDashboard(userName, user) {
         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير المنطقة" : "District Manager"} ${userName}!</h2>
         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة المناطق" : "District Management")}</div>
       </div>
+
+      ${getActiveCycleCampaignBanner(user, lang)}
 
       ${
         dmLines.length > 1
@@ -2211,6 +2267,8 @@ function renderLMDashboard(userName, user) {
         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة خط الإنتاج" : "Product Line Management")}</div>
       </div>
 
+      ${getActiveCycleCampaignBanner(user, lang)}
+
       ${
         lmLines.length > 1
           ? `
@@ -2372,6 +2430,234 @@ function renderLMDashboard(userName, user) {
 }
 
 /**
+ * Renders the Product Manager (PM) Dashboard.
+ */
+function renderPMDashboard(userName, user) {
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const isAr = lang === "ar";
+  const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+  const lineNames = pmLines.map((l) => (isAr ? (l.nameAr || l.name) : l.name)).join(isAr ? "، " : ", ");
+
+  const team = typeof window.getScopedTeamForLine === "function"
+    ? window.getScopedTeamForLine(user)
+    : { lms: [], dms: [], reps: [] };
+
+  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
+  const currentMonthPrefix = now.toISOString().slice(0, 7);
+  const repIds = team.reps.map((r) => r.id);
+  const lineVisitsThisMonth = allVisits.filter((v) => {
+    return v.status === "completed" &&
+           v.date && v.date.startsWith(currentMonthPrefix) &&
+           (repIds.includes(v.repId) || v.repId === user.id);
+  }).length;
+
+  let lineProducts = [];
+  pmLines.forEach((l) => {
+    if (Array.isArray(l.products)) {
+      l.products.forEach((p) => {
+        if (!user.productIds || user.productIds.length === 0 || user.productIds.includes(p.id)) {
+          lineProducts.push({ ...p, lineName: l.name, lineId: l.id });
+        }
+      });
+    }
+  });
+
+  const allServices = (window.store && window.store.services ? window.store.services.getAll() : null) || [];
+  const pmLineIds = pmLines.map((l) => l.id);
+  const pendingMarketingRequests = allServices.filter((s) => {
+    return s.department === "marketing" &&
+           (pmLineIds.includes(s.lineId) || (s.isShared && s.shares && s.shares.some((sh) => pmLineIds.includes(sh.lineId)))) &&
+           s.status && s.status.startsWith("pending");
+  }).length;
+
+  return `
+    <div class="flex-col">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #4f46e5 100%);">
+        <h2 class="welcome-title">${isAr ? "مرحباً بك، مدير المنتج (PM)" : "Welcome back, Product Manager"} ${userName}!</h2>
+        <div class="welcome-subtitle">🏷️ ${lineNames || (isAr ? "إدارة خط المنتجات" : "Product Line Management")} • ${isAr ? "نطاق الصلاحية: على مستوى الجمهورية للخط" : "Nationwide Line Scope"}</div>
+      </div>
+
+      ${getActiveCycleCampaignBanner(user, lang)}
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">${isAr ? "أصناف الخط المسندة" : "Assigned Products"}</div>
+          <div class="stat-value primary counter" data-target="${lineProducts.length}">${lineProducts.length}</div>
+          <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+            ${isAr ? "منتجات تحت إشرافك التسويقي" : "Products under your marketing scope"}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">${isAr ? "مندوبو الخط (الجمهورية)" : "Line Medical Reps"}</div>
+          <div class="stat-value success counter" data-target="${team.reps.length}">${team.reps.length}</div>
+          <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+            ${isAr ? "مندوبو المبيعات في الخط" : "Field reps in your line"}
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">${isAr ? "مشرفو ومديرو الخط" : "DMs & LMs in Line"}</div>
+          <div class="stat-value info" style="color: #6366f1;">
+            <span class="counter" data-target="${team.dms.length}">${team.dms.length}</span> DM / <span class="counter" data-target="${team.lms.length}">${team.lms.length}</span> LM
+          </div>
+          <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+            ${isAr ? "فريق الإشراف والإدارة" : "Supervisory & management team"}
+          </div>
+        </div>
+        <a href="visits.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--primary);">
+          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>${isAr ? "زيارات الخط (هذا الشهر)" : "Line Visits (This Month)"}</span>
+            <span>📍</span>
+          </div>
+          <div class="stat-value primary counter" data-target="${lineVisitsThisMonth}">${lineVisitsThisMonth}</div>
+          <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
+            ${isAr ? "عرض سجل الزيارات ←" : "View visits log →"}
+          </div>
+        </a>
+        <a href="activities.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--warning);">
+          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>${isAr ? "طلبات التسويق بانتظار الاعتماد" : "Pending Marketing Requests"}</span>
+            <span>⏳</span>
+          </div>
+          <div class="stat-value warning counter" data-target="${pendingMarketingRequests}">${pendingMarketingRequests}</div>
+          <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
+            ${isAr ? "مراجعة واعتماد الطلبات ←" : "Review & approve requests →"}
+          </div>
+        </a>
+      </div>
+
+      <!-- Quick Action Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+          <a href="visits.html?action=new" class="btn btn-outline-primary w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
+            <span style="font-size: 1.8rem;">🤝</span>
+            <div>
+              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "زيارة ميدانية (Double)" : "Field Double Visit"}</strong>
+              <small class="text-muted">${isAr ? "النزول مع LMs و DMs" : "With line LMs & DMs"}</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <a href="products.html" class="btn btn-outline-info w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
+            <span style="font-size: 1.8rem;">🎯</span>
+            <div>
+              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "تركيز الحملة والمنتجات" : "Campaign & Products"}</strong>
+              <small class="text-muted">${isAr ? "تحديد الـ Cycle Focus" : "Set Cycle Focus"}</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <a href="quizzes.html" class="btn btn-outline-success w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
+            <span style="font-size: 1.8rem;">📝</span>
+            <div>
+              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "الاختبارات العلمية" : "Scientific Quizzes"}</strong>
+              <small class="text-muted">${isAr ? "إنشاء وتقييم اختبارات الخط" : "Create & evaluate quizzes"}</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <a href="activities.html" class="btn btn-outline-warning w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
+            <span style="font-size: 1.8rem;">📋</span>
+            <div>
+              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "الطلبات والميزانية" : "Requests & Budget"}</strong>
+              <small class="text-muted">${isAr ? "اعتماد طلبات التسويق" : "Approve marketing requests"}</small>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Line Products Showcase -->
+      <div class="card shadow-sm border-0 mb-4" style="border-radius: 14px;">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 fw-bold" style="font-size: 1.05rem;">📦 ${isAr ? "أصناف ومنتجات الخط" : "Line Products Portfolio"}</h5>
+          <a href="products.html" class="btn btn-sm btn-primary">
+            <i class="bi bi-box-seam me-1"></i> ${isAr ? "إدارة الأصناف" : "Manage Products"}
+          </a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>${isAr ? "اسم المستحضر" : "Product Name"}</th>
+                <th>${isAr ? "الجرعة" : "Dosage"}</th>
+                <th>${isAr ? "الشكل الدوائي" : "Form"}</th>
+                <th>${isAr ? "الخط" : "Line"}</th>
+                <th>${isAr ? "القيمة التقديرية" : "Value"}</th>
+                <th>${isAr ? "حالة التركيز البيعي" : "Cycle Focus"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lineProducts.length > 0 ? lineProducts.map((p) => {
+                const lineObj = pmLines.find((l) => l.id === p.lineId);
+                const isFocused = lineObj && lineObj.cycleCampaignFocus && lineObj.cycleCampaignFocus.active && lineObj.cycleCampaignFocus.targetProductId === p.id;
+                return `
+                  <tr>
+                    <td class="fw-bold">${window.escapeHtml(p.name)}</td>
+                    <td><span class="badge bg-secondary">${window.escapeHtml(p.dosage || "-")}</span></td>
+                    <td>${window.escapeHtml(p.form || "Tablet")}</td>
+                    <td><span class="badge bg-light text-dark border">${window.escapeHtml(p.lineName)}</span></td>
+                    <td>${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
+                    <td>
+                      ${isFocused ? `<span class="badge bg-success">🎯 ${isAr ? "منتج ذو أولوية" : "Priority Focus"}</span>` : `<span class="text-muted small">${isAr ? "عادي" : "Standard"}</span>`}
+                    </td>
+                  </tr>
+                `;
+              }).join("") : `<tr><td colspan="6" class="text-center text-muted py-4">${isAr ? "لا توجد منتجات مسجلة في هذا الخط حالياً." : "No products registered in this line yet."}</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      ${renderDashboardChartsMarkup(lang)}
+
+      ${(() => {
+        if (!pmLines || pmLines.length === 0) return "";
+        const allSales = (window.DEMO_DATA && window.DEMO_DATA.sales) || [];
+        const activeYear = ((window.getSystemDate && window.getSystemDate()) || new Date()).getFullYear().toString();
+        return `
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: var(--gray-800);">
+            📊 ${isAr ? "مؤشرات المبيعات الشهرية لمنتجات الخط" : "Monthly Sales Trends for Line Products"}
+          </h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+            ${pmLines.map((line) => {
+              const lineSales = allSales.filter((s) => {
+                const matchesLine = s.lineId === line.id;
+                const matchesRep = repIds.length === 0 || repIds.includes(s.repId);
+                const matchesYear = s.month && s.month.startsWith(activeYear);
+                return matchesLine && matchesRep && matchesYear;
+              });
+              const lActual = lineSales.reduce((acc, cur) => acc + (parseFloat(cur.actual) || parseFloat(cur.amount) || 0), 0);
+              const lTarget = lineSales.reduce((acc, cur) => acc + (parseFloat(cur.target) || 0), 0);
+              const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
+              const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#f59e0b" : "#ef4444";
+
+              return `
+              <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+                  <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+                    📦 ${line.name}
+                  </h4>
+                  <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
+                    ${isAr ? "تحقيق:" : "Ach:"} ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
+                  </span>
+                </div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                  <canvas id="dashLineTrend_${line.id}"></canvas>
+                </div>
+              </div>
+              `;
+            }).join("")}
+          </div>
+        </div>`;
+      })()}
+    </div>
+  `;
+}
+window.renderPMDashboard = renderPMDashboard;
+
+/**
  * Renders the Business Unit Head (BU) Dashboard.
  */
 function renderBUDashboard(userName, user) {
@@ -2443,6 +2729,8 @@ function renderBUDashboard(userName, user) {
         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "رئيس وحدة الأعمال" : "Business Unit Head"} ${userName}!</h2>
         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة وحدة الأعمال" : "Business Unit Management")}</div>
       </div>
+
+      ${getActiveCycleCampaignBanner(user, lang)}
 
       ${
         lines.length > 1

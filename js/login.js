@@ -199,16 +199,17 @@ function showLoginForm(dept) {
     selectedDeptTitle.textContent = translations[currentLang]['selected_dept_' + dept];
   }
 
-  // Pre-fill demo credentials for quick access
-  if (dept === 'hr') {
-    if (emailInput) emailInput.value = 'hr@pharmacare.com';
-    if (passwordInput) passwordInput.value = 'hr123';
-  } else if (dept === 'admin') {
-    if (emailInput) emailInput.value = 'admin@pharmacare.com';
-    if (passwordInput) passwordInput.value = 'admin123';
-  } else if (dept === 'sales') {
-    if (emailInput) emailInput.value = 'rep@pharmacare.com';
-    if (passwordInput) passwordInput.value = 'rep123';
+  // Keep inputs empty for clean user entry
+  if (emailInput) {
+    emailInput.value = '';
+    emailInput.classList.remove('is-invalid');
+  }
+  if (passwordInput) {
+    passwordInput.value = '';
+    passwordInput.classList.remove('is-invalid');
+  }
+  if (errorMessage) {
+    errorMessage.classList.remove('show');
   }
 
   setTimeout(() => {
@@ -280,6 +281,8 @@ function getAllAuthenticatableUsers() {
     { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Omar Youssef', dept: 'sales', employeeCode: 'EMP-002', id: 'rep2' },
     { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Ali Mahmoud', dept: 'sales', employeeCode: 'EMP-003', id: 'rep3' },
     { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Nourhan Ezz', dept: 'sales', employeeCode: 'EMP-004', id: 'rep4' },
+    { email: 'pm@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'product_manager', name: 'Nader Khaled', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
+    { email: 'pm2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'product_manager', name: 'Yasmine Mourad', dept: 'sales', employeeCode: 'PM-002', id: 'pm2', lineId: 'line2', lineIds: ['line2'], productIds: ['prod5'] },
     { email: 'hr@pharmacare.com', passwordHash: '070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'hr1' }
   ];
 
@@ -359,14 +362,6 @@ async function handleLogin() {
   setTimeout(() => {
     const allUsers = getAllAuthenticatableUsers();
 
-    // Direct detection for HR login requests
-    const isHrLogin = email.includes('hr') || email.includes('fatma') || selectedDepartment === 'hr';
-    const isAdminLogin = email.includes('admin') || selectedDepartment === 'admin';
-    const isRepLogin = email.includes('rep') || email === 'ahmed';
-    const isDmLogin = email.includes('dm') || email === 'karim';
-    const isLmLogin = email.includes('lm') || email === 'hassan';
-    const isBuLogin = email.includes('bu') || email === 'tarek';
-
     // Flexible user matching by email, id, employeeCode, name, or role shorthand
     let matchedUser = allUsers.find((u) => {
       const uEmail = (u.email || '').toLowerCase().trim();
@@ -394,25 +389,12 @@ async function handleLogin() {
         (email === 'lm' && (uRole === 'line_manager' || uId === 'lm1')) ||
         (email === 'lm1' && (uRole === 'line_manager' || uId === 'lm1')) ||
         (email === 'bu' && (uRole === 'business_unit' || uId === 'bu1')) ||
-        (email === 'bu1' && (uRole === 'business_unit' || uId === 'bu1'))
+        (email === 'bu1' && (uRole === 'business_unit' || uId === 'bu1')) ||
+        (email === 'pm' && (uRole === 'product_manager' || uId === 'pm1')) ||
+        (email === 'pm1' && (uRole === 'product_manager' || uId === 'pm1')) ||
+        (email === 'pm2' && (uRole === 'product_manager' || uId === 'pm2'))
       );
     });
-
-    if (!matchedUser) {
-      if (isHrLogin) {
-        matchedUser = allUsers.find((u) => u.role === 'hr' || u.id === 'hr1') || { id: 'hr1', email: 'hr@pharmacare.com', role: 'hr', name: 'Fatma El-Sherif', employeeCode: 'HR-001', dept: 'hr' };
-      } else if (isAdminLogin) {
-        matchedUser = allUsers.find((u) => u.role === 'admin') || allUsers[0];
-      } else if (isDmLogin) {
-        matchedUser = allUsers.find((u) => u.role === 'district_manager') || allUsers[4];
-      } else if (isLmLogin) {
-        matchedUser = allUsers.find((u) => u.role === 'line_manager') || allUsers[2];
-      } else if (isBuLogin) {
-        matchedUser = allUsers.find((u) => u.role === 'business_unit') || allUsers[1];
-      } else if (isRepLogin) {
-        matchedUser = allUsers.find((u) => u.role === 'medical_rep') || allUsers[7];
-      }
-    }
 
     const isPasswordValid = Boolean(
       matchedUser && (
@@ -422,6 +404,7 @@ async function handleLogin() {
         password === 'hr123' ||
         password === 'admin123' ||
         password === 'rep123' ||
+        password === 'pm123' ||
         password === '123' ||
         password === 'password'
       )
@@ -442,9 +425,23 @@ async function handleLogin() {
       return;
     }
 
-    // Seamless department auto-alignment: never block legitimate logins
-    if (matchedUser.dept) {
-      selectedDepartment = matchedUser.dept;
+    // Strict department verification:
+    // Admin can ONLY log in through 'admin' portal
+    // HR can ONLY log in through 'hr' portal
+    // Sales & Marketing can ONLY log in through 'sales' portal
+    const userDept = matchedUser.dept || (matchedUser.role === 'admin' ? 'admin' : (matchedUser.role === 'hr' ? 'hr' : 'sales'));
+    if (selectedDepartment && userDept !== selectedDepartment) {
+      if (loginBtn) loginBtn.classList.remove('loading');
+      if (emailInput) emailInput.classList.add('is-invalid');
+      if (errorMessage) {
+        errorMessage.textContent = translations[currentLang].error_wrong_dept;
+        errorMessage.classList.add('show');
+      }
+      if (loginBox) {
+        void loginBox.offsetWidth;
+        loginBox.classList.add('shake');
+      }
+      return;
     }
 
     const sessionData = {

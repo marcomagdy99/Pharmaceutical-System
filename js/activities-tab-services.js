@@ -299,6 +299,12 @@
       const directMgr = Core.getUserById(requester.managerId);
       return directMgr && directMgr.managerId === user.id;
     }
+    if (role === Core.ROLES.PM) {
+      const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+      if (userLines.includes(srv.lineId)) return true;
+      if (srv.isShared && Array.isArray(srv.shares) && srv.shares.some((sh) => userLines.includes(sh.lineId))) return true;
+      if (srv.department === "marketing") return true;
+    }
     return false;
   }
 
@@ -483,6 +489,11 @@
         if (srv.shares.some((sh) => sh.lmId === user.id && sh.status === Core.REQUEST_STATUS.PENDING_LM)) {
           canApproveReject = true;
         }
+      } else if (role === Core.ROLES.PM) {
+        const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+        if (srv.department === "marketing" && srv.shares.some((sh) => userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending"))) {
+          canApproveReject = true;
+        }
       }
     } else {
       if (role === Core.ROLES.DM && status === Core.REQUEST_STATUS.PENDING_DM && srv.nextApproverId === user.id) {
@@ -493,6 +504,12 @@
       }
       if ((role === Core.ROLES.ADMIN || role === Core.ROLES.BU) && status.startsWith("pending")) {
         canApproveReject = true;
+      }
+      if (role === Core.ROLES.PM && srv.department === "marketing" && status.startsWith("pending")) {
+        const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+        if (userLines.includes(srv.lineId)) {
+          canApproveReject = true;
+        }
       }
     }
 

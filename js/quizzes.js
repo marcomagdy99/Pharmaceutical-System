@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const userId = (authUser && authUser.id) ? authUser.id : (localStorage.getItem('userId') || 'rep1');
 
   const isRep = (userRole === 'medical_rep' || userRole === 'rep');
-  const isAdminUser = (userRole === 'admin');
+  const isAdminUser = (userRole === 'admin' || userRole === 'product_manager');
 
   // Display appropriate UI view
   if (isRep) {
@@ -429,6 +429,66 @@ function initManagerView(authUser, userRole) {
       handleBuFilterChange();
     }
 
+  } else if (userRole === 'product_manager') {
+    // PM role: Scoped to their Line team (LMs, DMs, Reps)
+    if (buWrapper) buWrapper.style.display = 'none';
+    if (lmWrapper) lmWrapper.style.display = 'flex';
+    if (dmWrapper) dmWrapper.style.display = 'flex';
+
+    const pmLineId = authUser?.lineId || (authUser?.lineIds && authUser?.lineIds[0]);
+    const lineUsers = users.filter((u) => {
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return pmLineId ? uLineIds.includes(pmLineId) : true;
+    });
+
+    const myLMs = lineUsers.filter((u) => getRole(u) === 'line_manager' || getRole(u) === 'lm');
+    const myDMs = lineUsers.filter((u) => getRole(u) === 'district_manager' || getRole(u) === 'dm');
+    const lineReps = lineUsers.filter((u) => getRole(u) === 'medical_rep' || getRole(u) === 'rep');
+
+    if (lmSelect && dmSelect) {
+      lmSelect.innerHTML = `<option value="all">${quizTranslations[currentLang].all_lms || 'All LMs'}</option>`;
+      myLMs.forEach((lm) => {
+        const opt = document.createElement('option');
+        opt.value = lm.id;
+        opt.textContent = getUserName(lm);
+        lmSelect.appendChild(opt);
+      });
+
+      const updatePmDmDropdown = () => {
+        const selLm = lmSelect.value;
+        dmSelect.innerHTML = `<option value="all">${quizTranslations[currentLang].all_dms || 'All DMs'}</option>`;
+        const dmsToShow = selLm === 'all' ? myDMs : myDMs.filter((d) => d.managerId === selLm);
+        dmsToShow.forEach((dm) => {
+          const opt = document.createElement('option');
+          opt.value = dm.id;
+          opt.textContent = getUserName(dm);
+          dmSelect.appendChild(opt);
+        });
+      };
+
+      const handlePmFilterChange = () => {
+        const selLm = lmSelect.value;
+        const selDm = dmSelect.value;
+        let repsToShow = lineReps;
+        if (selDm !== 'all') {
+          repsToShow = repsToShow.filter((r) => r.managerId === selDm);
+        } else if (selLm !== 'all') {
+          const dmsUnderLm = myDMs.filter((d) => d.managerId === selLm).map((d) => d.id);
+          repsToShow = repsToShow.filter((r) => dmsUnderLm.includes(r.managerId));
+        }
+        renderComparisonTable(repsToShow);
+      };
+
+      lmSelect.onchange = () => {
+        updatePmDmDropdown();
+        handlePmFilterChange();
+      };
+      dmSelect.onchange = handlePmFilterChange;
+
+      updatePmDmDropdown();
+      handlePmFilterChange();
+    }
+
   } else {
     // Admin role: Full cascading hierarchy access (BU -> LM -> DM -> Reps)
     if (buWrapper) buWrapper.style.display = 'flex';
@@ -527,9 +587,18 @@ function initManagerView(authUser, userRole) {
     }
   }
 
-  // Setup Admin-only tools if user is admin
-  if (userRole === 'admin') {
-    setupAdminQuizTools(allReps);
+  // Setup Admin/PM tools
+  if (userRole === 'admin' || userRole === 'product_manager') {
+    const repsForTools = userRole === 'product_manager'
+      ? users.filter((u) => {
+          const isRep = getRole(u) === 'medical_rep' || getRole(u) === 'rep';
+          if (!isRep) return false;
+          const pmLineId = authUser?.lineId || (authUser?.lineIds && authUser?.lineIds[0]);
+          const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+          return pmLineId ? uLineIds.includes(pmLineId) : true;
+        })
+      : allReps;
+    setupAdminQuizTools(repsForTools);
   }
 }
 

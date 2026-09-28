@@ -249,6 +249,38 @@ const DEFAULT_DEMO_DATA = {
       hireDate: "2021-02-01",
       leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
     },
+    {
+      id: "pm1",
+      name: "Nader Khaled",
+      nameAr: "نادر خالد",
+      role: "product_manager",
+      employeeCode: "PM-001",
+      email: "pm@pharmacare.com",
+      phone: "+20100999111",
+      managerId: "bu1",
+      lineId: "line1",
+      lineIds: ["line1"],
+      productIds: ["prod1", "prod2", "prod3", "prod4"],
+      status: "Active",
+      hireDate: "2023-01-01",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+    },
+    {
+      id: "pm2",
+      name: "Yasmine Mourad",
+      nameAr: "ياسمين مراد",
+      role: "product_manager",
+      employeeCode: "PM-002",
+      email: "pm2@pharmacare.com",
+      phone: "+20100999222",
+      managerId: "bu1",
+      lineId: "line2",
+      lineIds: ["line2"],
+      productIds: ["prod5"],
+      status: "Active",
+      hireDate: "2023-06-01",
+      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+    },
   ],
   specialties: [
     { id: "spec_internal", code: "IM", name: "Internal Medicine", nameAr: "باطنة" },
@@ -1684,17 +1716,21 @@ window.getUserLines = getUserLines;
  * @param {string} lineId - Selected line ID or 'all'
  * @param {Object} user - Authenticated user object
  */
-function getScopedTeamForLine(lineId, user) {
+function getScopedTeamForLine(lineIdOrUser, maybeUser) {
+  let lineId = lineIdOrUser;
+  let user = maybeUser;
+  if (lineIdOrUser && typeof lineIdOrUser === 'object' && !maybeUser) {
+    user = lineIdOrUser;
+    lineId = 'all';
+  }
   const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   if (!user) return [];
   const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
 
-  if (role === 'medical_rep' || role === 'rep') {
-    return [user];
-  }
-
   let candidateUsers = [];
-  if (role === 'admin' || role === 'hr') {
+  if (role === 'medical_rep' || role === 'rep') {
+    candidateUsers = [user];
+  } else if (role === 'admin' || role === 'hr') {
     candidateUsers = users;
   } else if (role === 'business_unit' || role === 'bu') {
     const subordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
@@ -1705,26 +1741,36 @@ function getScopedTeamForLine(lineId, user) {
   } else if (role === 'district_manager' || role === 'dm') {
     const myReps = users.filter((u) => u.managerId === user.id);
     candidateUsers = [user, ...myReps];
+  } else if (role === 'product_manager' || role === 'pm') {
+    const userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+    const lineUsers = users.filter((u) => {
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return userLineIds.some((lid) => uLineIds.includes(lid));
+    });
+    candidateUsers = [user, ...lineUsers];
   } else {
     candidateUsers = [user];
   }
 
-  if (!lineId || lineId === 'all') {
-    return candidateUsers;
+  let result = candidateUsers;
+  if (lineId && lineId !== 'all') {
+    result = candidateUsers.filter((u) => {
+      if (u.id === user.id) return true;
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      if (uLineIds.includes(lineId)) return true;
+
+      const subs = users.filter((sub) => sub.managerId === u.id);
+      return subs.some((sub) => {
+        const subLines = sub.lineIds || (sub.lineId ? [sub.lineId] : []);
+        return subLines.includes(lineId);
+      });
+    });
   }
 
-  return candidateUsers.filter((u) => {
-    if (u.id === user.id) return true;
-    const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-    if (uLineIds.includes(lineId)) return true;
-
-    // If candidate is a manager, check if any of their subordinates are in this line
-    const subs = users.filter((sub) => sub.managerId === u.id);
-    return subs.some((sub) => {
-      const subLines = sub.lineIds || (sub.lineId ? [sub.lineId] : []);
-      return subLines.includes(lineId);
-    });
-  });
+  result.lms = result.filter((u) => u.role === 'line_manager' || u.role === 'lm');
+  result.dms = result.filter((u) => u.role === 'district_manager' || u.role === 'dm');
+  result.reps = result.filter((u) => u.role === 'medical_rep' || u.role === 'rep');
+  return result;
 }
 
 window.getScopedTeamForLine = getScopedTeamForLine;
@@ -1992,6 +2038,7 @@ function normalizeRole(role) {
   if (r === "lm" || r === "line_manager" || r === "line manager") return "line_manager";
   if (r === "bu" || r === "business_unit" || r === "business unit") return "business_unit";
   if (r === "rep" || r === "medical_rep" || r === "medical rep") return "medical_rep";
+  if (r === "pm" || r === "product_manager" || r === "product manager") return "product_manager";
   if (r === "admin" || r === "administrator") return "admin";
   if (r === "hr" || r === "human_resources" || r === "human resources") return "hr";
   return r;
@@ -2022,12 +2069,18 @@ function isManagerRole(user) {
     "business_unit",
     "line_manager",
     "district_manager",
+    "product_manager",
   ].includes(r);
 }
 
 function isRepRole(user) {
   const u = resolveUserForAuth(user);
   return normalizeRole(u?.role) === "medical_rep";
+}
+
+function isPMRole(user) {
+  const u = resolveUserForAuth(user);
+  return normalizeRole(u?.role) === "product_manager";
 }
 
 function hasAnyRole(allowedRoles = [], user) {
@@ -2040,6 +2093,7 @@ window.normalizeRole = normalizeRole;
 window.isAdmin = isAdmin;
 window.isManagerRole = isManagerRole;
 window.isRepRole = isRepRole;
+window.isPMRole = isPMRole;
 window.hasAnyRole = hasAnyRole;
 
 // ============================================================================
@@ -2390,6 +2444,7 @@ function getRoleBadge(role, lang) {
       line_manager: "Line Manager",
       district_manager: "District Manager",
       medical_rep: "Medical Rep",
+      product_manager: "Product Manager",
       hr: "HR Manager",
     },
     ar: {
@@ -2398,6 +2453,7 @@ function getRoleBadge(role, lang) {
       line_manager: "مدير الخط",
       district_manager: "مدير المنطقة",
       medical_rep: "مندوب طبي",
+      product_manager: "مدير منتج (PM)",
       hr: "مدير الموارد البشرية",
     },
   };
@@ -2443,6 +2499,11 @@ function getNavItemsForRole(role) {
         link: "distributors.html",
       },
       { id: "areas", i18n: "navAreas", link: "areas.html" },
+      { id: "products", i18n: "navProducts", link: "products.html" },
+      { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
+    );
+  } else if (role === "product_manager") {
+    managementNavItems.push(
       { id: "products", i18n: "navProducts", link: "products.html" },
       { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
     );
@@ -3348,9 +3409,9 @@ function enforcePageRoleSecurity() {
     "users.html": ["admin", "hr"],
     "distributors.html": ["admin"],
     "areas.html": ["admin", "hr"],
-    "products.html": ["admin"],
+    "products.html": ["admin", "product_manager"],
     "plans-review.html": ["admin", "district_manager", "line_manager", "business_unit"],
-    "reports.html": ["admin", "business_unit", "line_manager", "district_manager", "medical_rep", "rep"],
+    "reports.html": ["admin", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
   };
 
   if (restrictions[path] && !restrictions[path].includes(role)) {

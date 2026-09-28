@@ -302,6 +302,16 @@
                 sh.approvedBy.push(userId);
               }
             });
+          } else if (userRole === Core.ROLES.PM) {
+            const userLines = Core._state.currentUser.lineIds || (Core._state.currentUser.lineId ? [Core._state.currentUser.lineId] : []);
+            srv.shares.forEach((sh) => {
+              if (userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending")) {
+                sh.status = Core.REQUEST_STATUS.APPROVED;
+                sh.nextApproverId = null;
+                if (!sh.approvedBy) sh.approvedBy = [];
+                sh.approvedBy.push(userId);
+              }
+            });
           }
 
           const allApproved = srv.shares.every((sh) => sh.status === Core.REQUEST_STATUS.APPROVED);
@@ -459,7 +469,8 @@
           } else if (
             srv.status === Core.REQUEST_STATUS.PENDING_LM ||
             Core._state.currentUser.role === Core.ROLES.ADMIN ||
-            Core._state.currentUser.role === Core.ROLES.BU
+            Core._state.currentUser.role === Core.ROLES.BU ||
+            (Core._state.currentUser.role === Core.ROLES.PM && srv.department === "marketing")
           ) {
             Core.StoreAdapter.updateServiceStatus(requestId, Core.REQUEST_STATUS.APPROVED, Core._state.currentUser, comment, null);
             if (srv.requesterId && srv.requesterId !== Core._state.currentUser.id) {

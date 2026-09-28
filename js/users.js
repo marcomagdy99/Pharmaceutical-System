@@ -25,6 +25,10 @@ const userTranslations = {
     role_lm: "Line Manager",
     role_dm: "District Manager",
     role_rep: "Medical Rep",
+    role_pm: "Product Manager",
+    assigned_products: "Managed Products",
+    all_line_products: "All Line Products",
+    pm_products_hint: "Select which products this PM manages in the assigned line.",
     view_table: "Table",
     view_tree: "Hierarchy",
     col_user: "User",
@@ -94,6 +98,10 @@ const userTranslations = {
     role_lm: "مدير خط",
     role_dm: "مدير منطقة",
     role_rep: "مندوب طبي",
+    role_pm: "مدير منتج (PM)",
+    assigned_products: "الأدوية المسندة",
+    all_line_products: "كل أدوية اللاين",
+    pm_products_hint: "حدد الأدوية التي يديرها مدير المنتج في هذا اللاين.",
     view_table: "جدول",
     view_tree: "هيكلية",
     col_user: "المستخدم",
@@ -442,6 +450,9 @@ const userMgmt = {
         cb.addEventListener("change", () => {
           this.updateManagerDropdown();
           this.updateAreaDropdown();
+          if (document.getElementById("uRole")?.value === "PM") {
+            this.renderPmProducts();
+          }
         });
       });
     }
@@ -588,6 +599,7 @@ const userMgmt = {
     if (r === "line_manager" || r === "lm") return "LM";
     if (r === "district_manager" || r === "dm") return "DM";
     if (r === "medical_rep" || r === "rep") return "Rep";
+    if (r === "product_manager" || r === "pm") return "PM";
     if (r === "hr") return "HR";
     return role;
   },
@@ -610,6 +622,7 @@ const userMgmt = {
       LM: "bg-lm",
       DM: "bg-dm",
       Rep: "bg-rep",
+      PM: "bg-pm",
       HR: "bg-hr",
     };
     return map[role] || "bg-secondary";
@@ -724,6 +737,11 @@ const userMgmt = {
         });
       });
       return this.formatAreasBadges(teamAreas, "bg-info-subtle text-info-emphasis border");
+    }
+
+    if (user.role === "PM") {
+      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
+      return `<span class="badge border" style="background:#f3e8ff; color:#7e22ce;">${isAr ? "الجمهورية (اللاين)" : "Nationwide (Line)"}</span>`;
     }
 
     return `<span class="text-muted">-</span>`;
@@ -922,6 +940,7 @@ const userMgmt = {
 
     let targetManagerRole = "";
     if (role === "BU") targetManagerRole = "Admin";
+    else if (role === "PM") targetManagerRole = "BU";
     else if (role === "LM") targetManagerRole = "BU";
     else if (role === "DM") targetManagerRole = "LM";
     else if (role === "Rep") targetManagerRole = "DM";
@@ -940,7 +959,7 @@ const userMgmt = {
       document.querySelectorAll(".user-line-cb:checked"),
     ).map((cb) => cb.value);
 
-    if ((role === "DM" || role === "Rep") && selectedLineIds.length > 0) {
+    if ((role === "DM" || role === "Rep" || role === "PM") && selectedLineIds.length > 0) {
       const lineMatched = possibleManagers.filter((m) => {
         const mgrLines = m.lineIds || (m.lineId ? [m.lineId] : []);
         return mgrLines.some((id) => selectedLineIds.includes(id));
@@ -985,12 +1004,77 @@ const userMgmt = {
     }
     const productLineGroup = document.getElementById("productLineGroup");
     if (productLineGroup) {
-      productLineGroup.style.display = ["BU", "LM", "DM", "Rep"].includes(role)
+      productLineGroup.style.display = ["BU", "LM", "DM", "Rep", "PM"].includes(role)
         ? "block"
         : "none";
     }
+    const pmProductsGroup = document.getElementById("pmProductsGroup");
+    if (pmProductsGroup) {
+      pmProductsGroup.style.display = role === "PM" ? "block" : "none";
+      if (role === "PM") {
+        this.renderPmProducts();
+      }
+    }
 
     this.updateManagerDropdown();
+  },
+
+  renderPmProducts(selectedProductIds = null) {
+    const container = document.getElementById("uPmProductsContainer");
+    const allCb = document.getElementById("uPmAllProducts");
+    if (!container) return;
+
+    const checkedLineCbs = Array.from(document.querySelectorAll(".user-line-cb:checked"));
+    const selectedLineIds = checkedLineCbs.map((cb) => cb.value);
+
+    const allLines = window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+    const relevantLines = allLines.filter((l) => selectedLineIds.includes(l.id));
+
+    let availableProducts = [];
+    relevantLines.forEach((l) => {
+      if (Array.isArray(l.products)) {
+        l.products.forEach((p) => {
+          if (!availableProducts.some((ap) => ap.id === p.id)) {
+            availableProducts.push({ ...p, lineName: l.name });
+          }
+        });
+      }
+    });
+
+    if (availableProducts.length === 0) {
+      const isAr = typeof getCurrentLang === "function" && getCurrentLang() === "ar";
+      container.innerHTML = `<span class="text-muted" style="font-size:0.8rem;">${isAr ? "يرجى تحديد خط مبيعات أولاً لعرض الأدوية" : "Please select a sales line first to view products"}</span>`;
+      return;
+    }
+
+    const isAll = selectedProductIds === null || selectedProductIds === undefined || (Array.isArray(selectedProductIds) && selectedProductIds.length === 0);
+    if (allCb) allCb.checked = isAll;
+
+    container.innerHTML = availableProducts.map((p) => {
+      const checked = isAll || (Array.isArray(selectedProductIds) && selectedProductIds.includes(p.id));
+      return `
+        <div class="form-check form-check-sm mb-1">
+          <input class="form-check-input pm-product-cb" type="checkbox" value="${p.id}" id="pm_prod_${p.id}" ${checked ? 'checked' : ''}>
+          <label class="form-check-label" for="pm_prod_${p.id}" style="font-size: 0.8rem;">
+            ${p.name} <span class="text-muted">(${p.dosage || ''} ${p.form || ''})</span>
+          </label>
+        </div>
+      `;
+    }).join("");
+
+    if (allCb) {
+      allCb.onchange = () => {
+        const cbs = container.querySelectorAll(".pm-product-cb");
+        cbs.forEach((cb) => (cb.checked = allCb.checked));
+      };
+    }
+
+    container.querySelectorAll(".pm-product-cb").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const cbs = Array.from(container.querySelectorAll(".pm-product-cb"));
+        if (allCb) allCb.checked = cbs.length > 0 && cbs.every((c) => c.checked);
+      });
+    });
   },
 
   openAddModal() {
@@ -1046,7 +1130,7 @@ const userMgmt = {
     if (document.getElementById("uPhone"))
       document.getElementById("uPhone").value = user.phone || "";
 
-    document.getElementById("uRole").value = user.role || "Rep";
+    document.getElementById("uRole").value = (user.role === "product_manager" || user.role === "pm" || user.role === "PM") ? "PM" : (user.role || "Rep");
 
     let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
     if ((!userLineIds || userLineIds.length === 0) && typeof window.getUserLines === "function") {
@@ -1063,6 +1147,9 @@ const userMgmt = {
     });
 
     this.onRoleChange();
+    if (document.getElementById("uRole").value === "PM") {
+      this.renderPmProducts(user.productIds);
+    }
 
     if (user.managerId && document.getElementById("uManager"))
       document.getElementById("uManager").value = user.managerId;
@@ -1153,8 +1240,27 @@ const userMgmt = {
       LM: "line_manager",
       DM: "district_manager",
       Rep: "medical_rep",
+      PM: "product_manager",
       HR: "hr",
     };
+
+    let selectedProductIds = [];
+    if (role === "PM") {
+      const allChecked = document.getElementById("uPmAllProducts")?.checked;
+      if (allChecked) {
+        const allLines = window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+        const relevantLines = allLines.filter((l) => selectedLineIds.includes(l.id));
+        relevantLines.forEach((l) => {
+          if (Array.isArray(l.products)) {
+            l.products.forEach((p) => {
+              if (!selectedProductIds.includes(p.id)) selectedProductIds.push(p.id);
+            });
+          }
+        });
+      } else {
+        selectedProductIds = Array.from(document.querySelectorAll(".pm-product-cb:checked")).map((cb) => cb.value);
+      }
+    }
 
     const userData = {
       id: id || "u" + Date.now(),
@@ -1176,6 +1282,7 @@ const userMgmt = {
       status: rawExistingUser ? rawExistingUser.status : "Active",
       lineIds: selectedLineIds,
       lineId: selectedLineIds[0] || null,
+      productIds: selectedProductIds,
       leaveBalance: {
         annual: (() => {
           const val = parseInt(document.getElementById("uAnnualLeave")?.value, 10);

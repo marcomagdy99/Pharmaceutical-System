@@ -152,6 +152,14 @@ const productTranslations = {
     callFrequencyHint: "Configures quarterly target visits per doctor in this sales line for coverage compliance.",
     visitsUnit: "v/q",
     targetFrequencyBadge: "Quarterly Targets",
+    cycleCampaignFocusTitle: "Cycle Campaign Focus",
+    cycleCampaignFocusBtn: "Campaign Focus",
+    focusActiveLabel: "Enable Campaign Focus for this Line",
+    focusTargetProduct: "Priority Target Product (Optional)",
+    focusTargetProductHint: "Choose a specific product as this cycle's hero product or leave general for the entire line.",
+    focusMessageLabel: "Key Campaign Message / Strategic Direction",
+    focusMessageHint: "This message will appear as an optional strategic reminder on the dashboard for your sales team.",
+    focusGeneralProduct: "-- General / All Line Products --",
   },
   ar: {
     productLinesTitle: "خطوط الإنتاج - فارماكير",
@@ -204,28 +212,44 @@ const productTranslations = {
     callFrequencyHint: "تحديد عدد الزيارات الربع سنوية (الكوارتر) الإلزامية لكل طبيب في هذا الخط لحساب نسبة التغطية.",
     visitsUnit: "ز/ك",
     targetFrequencyBadge: "مستهدف الكوارتر",
+    cycleCampaignFocusTitle: "تركيز الحملة البيعية (Cycle Focus)",
+    cycleCampaignFocusBtn: "تركيز الحملة البيعية",
+    focusActiveLabel: "تفعيل تركيز الحملة لهذا الخط",
+    focusTargetProduct: "المنتج المستهدف ذو الأولوية (اختياري)",
+    focusTargetProductHint: "اختر منتجاً رئيسياً كبطل لهذه الدورة البيعية أو اتركه عاماً لكامل منتجات الخط.",
+    focusMessageLabel: "الرسالة الترويجية / التوجه الاستراتيجي",
+    focusMessageHint: "ستظهر هذه الرسالة كإشعار توجيهي اختياري على لوحة تحكم فريق المبيعات في هذا الخط.",
+    focusGeneralProduct: "-- تركيز عام على كامل الخط --",
   },
 };
 
 let currentLang = localStorage.getItem("pharmaLang") || "en";
-let lineModal, productModal, deleteModal, transferProductModal;
+let lineModal, productModal, deleteModal, transferProductModal, campaignFocusModal;
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = (window.checkAuth && window.checkAuth()) || {};
+  const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
   if (
     window.hasAnyRole &&
-    !window.hasAnyRole(["admin"], user)
+    !window.hasAnyRole(["admin", "product_manager", "pm"], user) &&
+    !isPM
   ) {
     if (typeof showToast === "function") {
       showToast(
         (window.getCurrentLang && window.getCurrentLang() === "ar")
-          ? "غير مصرح: إدارة المنتجات وخطوط الإنتاج للأدمن فقط."
-          : "Access Denied: Admins only.",
+          ? "غير مصرح: إدارة المنتجات وخطوط الإنتاج للأدمن ومديري المنتجات فقط."
+          : "Access Denied: Admins and Product Managers only.",
         "error"
       );
     }
     window.location.replace("index.html");
     return;
+  }
+
+  // Hide Add Line button for PM (Only admin can create new company lines)
+  if (isPM && !window.hasAnyRole(["admin"], user)) {
+    const addLineBtn = document.getElementById("add-line-btn");
+    if (addLineBtn) addLineBtn.style.display = "none";
   }
 
   lineModal = new bootstrap.Modal(document.getElementById("lineModal"));
@@ -234,6 +258,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const transferEl = document.getElementById("transferProductModal");
   if (transferEl) {
     transferProductModal = new bootstrap.Modal(transferEl);
+  }
+  const focusEl = document.getElementById("campaignFocusModal");
+  if (focusEl) {
+    campaignFocusModal = new bootstrap.Modal(focusEl);
   }
 
   initProductLinesData();
@@ -388,6 +416,28 @@ function renderProductLines(activeLineId) {
       ? (currentLang === "ar" ? (manager.nameAr || manager.name) : manager.name)
       : (line.lineManagerName || (currentLang === "ar" ? "غير محدد" : "Unassigned"));
 
+    const canManageLine = role === "admin";
+    let focusBannerHtml = "";
+    if (line.cycleCampaignFocus && line.cycleCampaignFocus.active && line.cycleCampaignFocus.focusMessage) {
+      let targetProdName = "";
+      if (line.cycleCampaignFocus.targetProductId && Array.isArray(line.products)) {
+        const tp = line.products.find(p => p.id === line.cycleCampaignFocus.targetProductId);
+        if (tp) targetProdName = tp.name;
+      }
+      focusBannerHtml = `
+        <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-radius: 10px; border-inline-start: 4px solid #2563eb; background: rgba(37, 99, 235, 0.08);">
+          <div>
+            <strong style="color: #1d4ed8;">🎯 ${currentLang === "ar" ? "تركيز الحملة البيعية الحالية:" : "Current Cycle Campaign Focus:"}</strong>
+            ${targetProdName ? `<span class="badge bg-primary ms-1">📦 ${window.escapeHtml(targetProdName)}</span>` : ""}
+            <span class="ms-2" style="font-weight: 500;">${window.escapeHtml(line.cycleCampaignFocus.focusMessage)}</span>
+          </div>
+          <button class="btn btn-sm btn-outline-primary" onclick="openCampaignFocusModal('${line.id}')">
+            <i class="bi bi-pencil"></i> ${currentLang === "ar" ? "تعديل التركيز" : "Edit Focus"}
+          </button>
+        </div>
+      `;
+    }
+
     const html = `
             <div class="accordion-item border-0 border-bottom">
                 <h2 class="accordion-header" id="heading${line.id}">
@@ -414,17 +464,23 @@ function renderProductLines(activeLineId) {
                     <div class="accordion-body">
                         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                             <div>
-                                <button class="btn btn-sm btn-outline-secondary me-2" onclick="openEditLine('${line.id}')">
-                                    <i class="bi bi-pencil"></i> <span data-i18n="editProductLine">Edit Line</span>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal('line', '${line.id}')">
-                                    <i class="bi bi-trash"></i> <span data-i18n="deleteLine">Delete Line</span>
+                                ${canManageLine ? `
+                                  <button class="btn btn-sm btn-outline-secondary me-2" onclick="openEditLine('${line.id}')">
+                                      <i class="bi bi-pencil"></i> <span data-i18n="editProductLine">Edit Line</span>
+                                  </button>
+                                  <button class="btn btn-sm btn-outline-danger me-2" onclick="openDeleteModal('line', '${line.id}')">
+                                      <i class="bi bi-trash"></i> <span data-i18n="deleteLine">Delete Line</span>
+                                  </button>
+                                ` : ""}
+                                <button class="btn btn-sm btn-outline-info me-2" onclick="openCampaignFocusModal('${line.id}')" title="Configure Cycle Campaign Focus">
+                                    <i class="bi bi-bullseye"></i> <span data-i18n="cycleCampaignFocusBtn">${productTranslations[currentLang].cycleCampaignFocusBtn}</span>
                                 </button>
                             </div>
                             <button class="btn btn-sm btn-primary" onclick="openAddProductModal('${line.id}')">
                                 <i class="bi bi-plus-circle"></i> <span data-i18n="addProduct">Add Product</span>
                             </button>
                         </div>
+                        ${focusBannerHtml}
                         ${productsHtml}
                     </div>
                 </div>
@@ -577,11 +633,22 @@ function openEditProduct(lineId, prodId) {
 
 function saveProduct() {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin"], user)) {
-    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+  const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
+  const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : user.role === "admin";
+  const isAr = currentLang === "ar";
+
+  if (!isAdmin && !isPM) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin or Product Manager only.", "error");
     return;
   }
   const targetLineId = document.getElementById("targetLineId").value;
+  if (isPM && !isAdmin) {
+    const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if (!userLines.includes(targetLineId)) {
+      if (typeof showToast === "function") showToast(isAr ? "غير مصرح: يمكنك إدارة منتجات خطك فقط." : "Permission Denied: You can only manage your line.", "error");
+      return;
+    }
+  }
   const prodId = document.getElementById("productId").value;
   const name = (document.getElementById("productName").value || "").trim();
   const dosage = (document.getElementById("productDosage").value || "").trim();
@@ -589,7 +656,6 @@ function saveProduct() {
   const description = (document.getElementById("productDescription").value || "").trim();
   const priceInput = document.getElementById("productPrice").value;
   const price = priceInput === "" ? null : parseFloat(priceInput);
-  const isAr = currentLang === "ar";
 
   if (!targetLineId) {
     const msg = isAr ? "خطأ: لم يتم تحديد الخط المستهدف." : "Error: Target Line not identified.";
@@ -654,10 +720,82 @@ function saveProduct() {
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
+function openCampaignFocusModal(lineId) {
+  const line = window.store.productLines.getById(lineId);
+  if (!line) return;
+
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
+  const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : user.role === "admin";
+  if (!isAdmin && !isPM) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  if (isPM && !isAdmin) {
+    const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if (!userLines.includes(lineId)) {
+      if (typeof showToast === "function") showToast("Permission Denied: You can only configure your assigned line.", "error");
+      return;
+    }
+  }
+
+  document.getElementById("focusLineId").value = lineId;
+  const prodSelect = document.getElementById("focusTargetProductSelect");
+  const genOpt = productTranslations[currentLang]?.focusGeneralProduct || "-- General / All Line Products --";
+
+  prodSelect.innerHTML = `<option value="">${genOpt}</option>`;
+  if (Array.isArray(line.products)) {
+    line.products.forEach((p) => {
+      prodSelect.innerHTML += `<option value="${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)} (${window.escapeHtml(p.dosage || "")})</option>`;
+    });
+  }
+
+  const focus = line.cycleCampaignFocus || {};
+  document.getElementById("focusActiveToggle").checked = !!focus.active;
+  prodSelect.value = focus.targetProductId || "";
+  document.getElementById("focusMessageInput").value = focus.focusMessage || "";
+
+  if (campaignFocusModal) campaignFocusModal.show();
+}
+
+function saveCampaignFocus() {
+  const lineId = document.getElementById("focusLineId").value;
+  const line = window.store.productLines.getById(lineId);
+  if (!line) return;
+
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
+  const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : user.role === "admin";
+  if (!isAdmin && !isPM) return;
+
+  const active = document.getElementById("focusActiveToggle").checked;
+  const targetProductId = document.getElementById("focusTargetProductSelect").value;
+  const focusMessage = (document.getElementById("focusMessageInput").value || "").trim();
+
+  line.cycleCampaignFocus = {
+    active,
+    targetProductId,
+    focusMessage,
+    updatedAt: new Date().toISOString(),
+    updatedBy: user.name || user.username || "Manager"
+  };
+
+  window.store.productLines.save(line);
+
+  if (campaignFocusModal) campaignFocusModal.hide();
+  renderProductLines(lineId);
+
+  const isAr = currentLang === "ar";
+  const msg = isAr ? "تم حفظ تركيز الحملة البيعية بنجاح." : "Cycle Campaign Focus saved successfully.";
+  if (typeof showToast === "function") showToast(msg, "success");
+}
+
 window.openAddLineModal = openAddLineModal;
 window.openEditLine = openEditLine;
 window.openAddProductModal = openAddProductModal;
 window.openEditProduct = openEditProduct;
+window.openCampaignFocusModal = openCampaignFocusModal;
+window.saveCampaignFocus = saveCampaignFocus;
 
 function openDeleteModal(type, targetId, lineId = null) {
   document.getElementById("deleteTargetType").value = type;
@@ -668,13 +806,22 @@ function openDeleteModal(type, targetId, lineId = null) {
 
 function confirmDelete() {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin"], user)) {
-    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
-    return;
-  }
+  const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
   const type = document.getElementById("deleteTargetType").value;
   const targetId = document.getElementById("deleteTargetId").value;
   const lineId = document.getElementById("deleteTargetLineId").value;
+
+  if (!isAdmin && !(isPM && type === "product")) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
+  if (isPM && !isAdmin && type === "product") {
+    const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if (lineId && !userLines.includes(lineId)) {
+      if (typeof showToast === "function") showToast("Permission Denied: You can only delete products in your line.", "error");
+      return;
+    }
+  }
 
   if (type === "line") {
     if (window.store && window.store.productLines) {

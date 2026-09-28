@@ -59,6 +59,7 @@
     BU: "business_unit",
     HR: "hr",
     ADMIN: "admin",
+    PM: "product_manager",
   });
 
   // ============================================================================
@@ -854,6 +855,15 @@
           return resource.shares.some(sh => sh.status && sh.status.startsWith("pending"));
         }
         return resource.status && resource.status.startsWith("pending");
+      }
+      if (role === ROLES.PM) {
+        const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+        if (resource.department === "marketing") {
+          if (resource.isShared && Array.isArray(resource.shares)) {
+            return resource.shares.some(sh => userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending"));
+          }
+          return userLines.includes(resource.lineId) && resource.status && resource.status.startsWith("pending");
+        }
       }
       return false;
     }

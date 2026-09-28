@@ -233,6 +233,9 @@
                       <option value="Rep" data-i18n="role_rep">
                         Medical Rep
                       </option>
+                      <option value="PM" data-i18n="role_pm">
+                        Product Manager
+                      </option>
                     </select>
                   </div>
                   <div class="col-md-5 text-end">
@@ -392,6 +395,9 @@
                     <option value="Rep" data-i18n="role_rep">
                       Medical Rep
                     </option>
+                    <option value="PM" data-i18n="role_pm">
+                      Product Manager (PM)
+                    </option>
                   </select>
                 </div>
                 <div class="col-md-6">
@@ -428,7 +434,7 @@
                   <div id="uAssignedAreasDisplay" class="mt-2"></div>
                 </div>
 
-                <!-- Multi-Line Assignment Checkboxes Container for LM / DM / Rep -->
+                <!-- Multi-Line Assignment Checkboxes Container for LM / DM / Rep / PM -->
                 <div
                   class="col-md-6"
                   id="productLineGroup"
@@ -445,6 +451,29 @@
                   <small class="text-muted" style="font-size: 0.72rem"
                     >Admin can select 1 line (normal) or multiple lines (dual
                     coverage exception).</small
+                  >
+                </div>
+
+                <!-- Product Assignment for Product Manager (PM) -->
+                <div
+                  class="col-md-6"
+                  id="pmProductsGroup"
+                  style="display: none"
+                >
+                  <div class="mb-1 d-flex justify-content-between align-items-center">
+                    <label class="form-label fw-bold mb-0" data-i18n="assigned_products">Managed Products</label>
+                    <label class="form-check-label text-muted" style="font-size: 0.75rem;">
+                      <input type="checkbox" class="form-check-input me-1" id="uPmAllProducts" checked>
+                      <span data-i18n="all_line_products">All Line Products</span>
+                    </label>
+                  </div>
+                  <div
+                    id="uPmProductsContainer"
+                    class="p-2 border rounded"
+                    style="max-height: 120px; overflow-y: auto"
+                  ></div>
+                  <small class="text-muted" style="font-size: 0.72rem" data-i18n="pm_products_hint"
+                    >Select which products this PM manages in the assigned line.</small
                   >
                 </div>
 

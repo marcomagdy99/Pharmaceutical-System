@@ -822,6 +822,15 @@ function getReportingReps() {
       .map((d) => d.id);
     return allUsers.filter((u) => dms.includes(u.managerId));
   }
+  if (currentUserRole === "product_manager") {
+    const pmLineId = currentUser?.lineId || (currentUser?.lineIds && currentUser?.lineIds[0]);
+    return allUsers.filter((u) => {
+      const isRep = window.isRepRole ? window.isRepRole(u) : (u.role === "medical_rep" || u.role === "rep");
+      if (!isRep) return false;
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return pmLineId ? uLineIds.includes(pmLineId) : true;
+    });
+  }
   return allUsers.filter((u) => u.id === currentUser.id);
 }
 
@@ -1616,6 +1625,27 @@ function getScopedVisits() {
         (v) =>
           (v.repId === selectedFilter || v.doubleWithUserId === selectedFilter) &&
           allowedLmFilter.includes(selectedFilter),
+      );
+    }
+  } else if (currentUserRole === "product_manager") {
+    const pmLineId = currentUser?.lineId || (currentUser?.lineIds && currentUser?.lineIds[0]);
+    const lineUsers = allUsers.filter((u) => {
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return pmLineId ? uLineIds.includes(pmLineId) : false;
+    });
+    const lineUserIds = lineUsers.map((u) => u.id);
+    lineUserIds.push(currentUser.id);
+
+    const selectedRepFilter = document.getElementById("filterRep")?.value || "all";
+    if (selectedRepFilter === "all") {
+      list = list.filter(
+        (v) => lineUserIds.includes(v.repId) || lineUserIds.includes(v.doubleWithUserId),
+      );
+    } else {
+      list = list.filter(
+        (v) =>
+          (v.repId === selectedRepFilter || v.doubleWithUserId === selectedRepFilter) &&
+          lineUserIds.includes(selectedRepFilter),
       );
     }
   } else {
@@ -2801,13 +2831,38 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
   const currentUserObj = users.find((u) => u.id === currentUser.id);
   const role = currentUserRole;
 
-  if (role === "business_unit") {
+  if (role === "product_manager") {
+    // Product Manager double visits: LMs, DMs, and BU of the PM's line
+    const pmLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const lmsInLine = users.filter((u) => {
+      if (u.role !== "line_manager") return false;
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return pmLineId ? uLineIds.includes(pmLineId) : true;
+    });
+    const buManagerIds = lmsInLine.map((lm) => lm.managerId).filter(Boolean);
+
+    candidates = users.filter((u) => {
+      if (u.id === currentUser.id || u.status === "Inactive") return false;
+      const uRole = u.role;
+      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      const matchesLine = pmLineId ? uLineIds.includes(pmLineId) : true;
+
+      if (uRole === "line_manager" || uRole === "district_manager") {
+        return matchesLine;
+      }
+      if (uRole === "business_unit") {
+        return matchesLine || buManagerIds.includes(u.id);
+      }
+      return false;
+    });
+  } else if (role === "business_unit") {
+    const buLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
     candidates = users.filter(
       (u) =>
         u.id !== currentUser.id &&
         u.id !== effectiveId &&
         u.status !== "Inactive" &&
-        (u.role === "line_manager" || u.role === "district_manager"),
+        (u.role === "line_manager" || u.role === "district_manager" || u.role === "product_manager"),
     );
   } else if (role === "admin" || role === "hr") {
     candidates = users.filter(
@@ -2829,7 +2884,13 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
     const higherManagers = chain.filter(
       (u) => u.role === "business_unit",
     );
-    candidates = [...dms, ...higherManagers].filter(
+    const lmLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const linePMs = users.filter((u) => {
+      if (u.status === "Inactive" || u.role !== "product_manager" || u.id === currentUser.id) return false;
+      const pmLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return lmLineId && pmLineIds.length > 0 ? pmLineIds.includes(lmLineId) : true;
+    });
+    candidates = [...dms, ...higherManagers, ...linePMs].filter(
       (u, idx, arr) =>
         u.id !== currentUser.id &&
         u.status !== "Inactive" &&
@@ -2842,7 +2903,13 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
     if (typeof window.getManagerChain === "function") {
       chain = window.getManagerChain(currentUser.id);
     }
-    candidates = [...myReps, ...chain].filter(
+    const dmLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const linePMs = users.filter((u) => {
+      if (u.status === "Inactive" || u.role !== "product_manager" || u.id === currentUser.id) return false;
+      const pmLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return dmLineId && pmLineIds.length > 0 ? pmLineIds.includes(dmLineId) : true;
+    });
+    candidates = [...myReps, ...chain, ...linePMs].filter(
       (u, idx, arr) =>
         u.id !== currentUser.id &&
         u.status !== "Inactive" &&
@@ -2861,13 +2928,20 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
         if (curr) chain.push(curr);
       }
     }
-    candidates = chain.filter(
-      (u) =>
+    const repLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const linePMs = users.filter((u) => {
+      if (u.status === "Inactive" || u.role !== "product_manager" || u.id === currentUser.id || u.id === effectiveId) return false;
+      const pmLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return repLineId && pmLineIds.length > 0 ? pmLineIds.includes(repLineId) : true;
+    });
+    candidates = [...chain, ...linePMs].filter(
+      (u, idx, arr) =>
         u.status !== "Inactive" &&
         u.id !== effectiveId &&
         u.id !== currentUser.id &&
         u.role !== "admin" &&
-        u.role !== "hr",
+        u.role !== "hr" &&
+        arr.findIndex((x) => x.id === u.id) === idx,
     );
   }
 
@@ -2883,6 +2957,7 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
     business_unit: "BU",
     medical_rep: "Rep",
     rep: "Rep",
+    product_manager: "PM",
     admin: "Admin",
   };
 

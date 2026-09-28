@@ -212,6 +212,45 @@
     </div>
 </div>
 
+<!-- Campaign Focus Modal -->
+<div class="modal fade" id="campaignFocusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content product-card">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold" id="campaignFocusModalTitle">
+                    <i class="bi bi-bullseye me-2 text-primary"></i><span data-i18n="cycleCampaignFocusTitle">Cycle Campaign Focus</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <form id="campaignFocusForm">
+                    <input type="hidden" id="focusLineId">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="focusActiveToggle">
+                        <label class="form-check-label fw-semibold" for="focusActiveToggle" data-i18n="focusActiveLabel">Enable Campaign Focus for this Line</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" data-i18n="focusTargetProduct">Priority Target Product (Optional)</label>
+                        <select class="form-select" id="focusTargetProductSelect">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                        <div class="form-text small" data-i18n="focusTargetProductHint">Choose a specific product as this cycle's hero product or leave general for the entire line.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" data-i18n="focusMessageLabel">Key Campaign Message / Strategic Direction</label>
+                        <textarea class="form-control" id="focusMessageInput" rows="3" placeholder="Enter key selling message, scientific focus, or campaign direction for your team..."></textarea>
+                        <div class="form-text small" data-i18n="focusMessageHint">This message will appear as an optional strategic reminder on the dashboard for your sales team.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top py-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCampaignFocusBtn" onclick="saveCampaignFocus()" data-i18n="save">Save Campaign Focus</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
