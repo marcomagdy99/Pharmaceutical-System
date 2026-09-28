@@ -25,13 +25,55 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/style.css?v=v69">
+    <link rel="stylesheet" href="css/dashboard.css?v=v69">
     <link rel="manifest" href="manifest.json">
+
+    <!-- Mobile Cache Invalidation & Force Reload helper -->
+    <script>
+      window.forceClearCacheAndReload = async function () {
+        try {
+          if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(function(k) { return caches.delete(k); }));
+          }
+          if ("serviceWorker" in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) { await r.unregister(); }
+          }
+        } catch (e) {}
+        window.location.reload(true);
+      };
+      (function () {
+        var EXPECTED_SW = "v69";
+        var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
+        try {
+          if (localStorage.getItem(FLAG) !== "1") {
+            if ("caches" in window) {
+              caches.keys().then(function (names) {
+                return Promise.all(
+                  names.map(function (n) {
+                    return caches.delete(n);
+                  })
+                );
+              }).then(function() {
+                localStorage.setItem(FLAG, "1");
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                  window.location.reload();
+                }
+              });
+            } else {
+              localStorage.setItem(FLAG, "1");
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/store.js"></script>
+    <script src="js/firebase-config.js?v=v69"></script>
+    <script src="js/app.js?v=v69"></script>
+    <script src="js/store.js?v=v69"></script>
 </head>
 <body>
     <div class="app">
@@ -133,8 +175,8 @@
 
     <!-- Scripts -->
     <script defer src="js/chart.umd.min.js"></script>
-    <script defer src="js/interactive-charts.js"></script>
-    <script defer src="js/reschedule.js"></script>
-    <script defer src="js/dashboard.js"></script>
+    <script defer src="js/interactive-charts.js?v=v69"></script>
+    <script defer src="js/reschedule.js?v=v69"></script>
+    <script defer src="js/dashboard.js?v=v69"></script>
 </body>
 </html>

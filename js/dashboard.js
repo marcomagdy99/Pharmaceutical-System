@@ -998,30 +998,47 @@ function renderDashboard() {
 
   container.replaceChildren();
 
-  if (role === "medical_rep" || role === "rep") {
-    container.innerHTML = renderRepDashboard(userName, user);
-  } else if (role === "district_manager" || role === "dm") {
-    container.innerHTML = renderDMDashboard(userName, user);
-  } else if (role === "line_manager" || role === "lm") {
-    container.innerHTML = renderLMDashboard(userName, user);
-  } else if (role === "product_manager" || role === "pm") {
-    container.innerHTML = renderPMDashboard(userName, user);
-  } else if (role === "business_unit" || role === "bu") {
-    container.innerHTML = renderBUDashboard(userName, user);
-  } else if (role === "hr") {
-    container.innerHTML = renderHRDashboard(userName);
-  } else if (role === "admin") {
-    container.innerHTML = renderAdminDashboard(userName, user);
-  } else {
-    container.innerHTML = renderRepDashboard(userName, user);
-  }
+  try {
+    if (role === "medical_rep" || role === "rep") {
+      container.innerHTML = renderRepDashboard(userName, user);
+    } else if (role === "district_manager" || role === "dm") {
+      container.innerHTML = renderDMDashboard(userName, user);
+    } else if (role === "line_manager" || role === "lm") {
+      container.innerHTML = renderLMDashboard(userName, user);
+    } else if (role === "product_manager" || role === "pm") {
+      container.innerHTML = renderPMDashboard(userName, user);
+    } else if (role === "business_unit" || role === "bu") {
+      container.innerHTML = renderBUDashboard(userName, user);
+    } else if (role === "hr") {
+      container.innerHTML = renderHRDashboard(userName);
+    } else if (role === "admin") {
+      container.innerHTML = renderAdminDashboard(userName, user);
+    } else {
+      container.innerHTML = renderRepDashboard(userName, user);
+    }
 
-  attachDashboardModal();
-  animateCounters();
-  if (window.applyTranslations) window.applyTranslations();
-  setTimeout(() => {
-    initDashboardCharts(user);
-  }, 50);
+    attachDashboardModal();
+    animateCounters();
+    if (window.applyTranslations) window.applyTranslations();
+    setTimeout(() => {
+      initDashboardCharts(user);
+    }, 50);
+  } catch (renderErr) {
+    console.error("Dashboard render failed:", renderErr);
+    const isAr = window.getCurrentLang && window.getCurrentLang() === "ar";
+    container.innerHTML = `
+      <div style="padding: 40px 20px; text-align: center; max-width: 480px; margin: 40px auto; background: var(--card-bg, #ffffff); border-radius: 16px; border: 1px solid var(--gray-200); box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+        <div style="font-size: 3rem; margin-bottom: 12px;">🔄</div>
+        <h3 style="font-weight: 800; margin-bottom: 8px; font-size: 1.2rem;">${isAr ? "تحديث جديد للنظام متاح" : "New App Update Available"}</h3>
+        <p style="color: var(--gray-600); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px;">
+          ${isAr ? "تم إصدار تحديث حديث للنظام يتطلب تحديث الذاكرة المؤقتة (Cache) على هذا الجهاز." : "A new update has been released. Please refresh your browser cache to apply changes."}
+        </p>
+        <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; border-radius: 10px; cursor: pointer;">
+          ⚡ ${isAr ? "تحديث الصفحة وحذف الكاش" : "Refresh & Clear Cache"}
+        </button>
+      </div>
+    `;
+  }
 }
 
 /**
