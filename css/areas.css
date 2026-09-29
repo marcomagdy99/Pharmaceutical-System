@@ -291,6 +291,9 @@ html[dir="rtl"] .area-card.unassigned {
 /* ==========================================================================
    Distributor Mobile Cards
    ========================================================================== */
+.dist-hidden {
+    display: none !important;
+}
 .dist-mobile-card {
     background: var(--card-bg, #fff);
     border: 1px solid var(--border-color, #e5e7eb);

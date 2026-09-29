@@ -351,12 +351,12 @@ function renderDistributors(filterText = "") {
 
   if (filtered.length === 0) {
     if (emptyState) emptyState.style.display = "block";
-    if (tableView) tableView.classList.add("d-none");
-    if (mobileCards) mobileCards.style.display = "none";
+    if (tableView) tableView.classList.add("dist-hidden");
+    if (mobileCards) mobileCards.classList.add("dist-hidden");
   } else {
     if (emptyState) emptyState.style.display = "none";
-    if (tableView) { tableView.classList.remove("d-none"); tableView.classList.add("d-md-block"); }
-    if (mobileCards) mobileCards.style.display = "";
+    if (tableView) tableView.classList.remove("dist-hidden");
+    if (mobileCards) mobileCards.classList.remove("dist-hidden");
   }
 
   filtered.forEach((dist) => {
