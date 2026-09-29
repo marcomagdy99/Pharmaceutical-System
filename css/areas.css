@@ -287,3 +287,52 @@ html[dir="rtl"] .area-card.unassigned {
 [data-theme="dark"] #table-view .table-hover tbody tr:hover td:first-child {
     background-color: #282d38;
 }
+
+/* ==========================================================================
+   Distributor Mobile Cards
+   ========================================================================== */
+.dist-mobile-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.dist-mobile-card:hover {
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1));
+    transform: translateY(-1px);
+}
+.dist-mobile-card h6 {
+    font-size: 0.95rem;
+    color: var(--text-primary, #1e293b);
+}
+.dist-mobile-action {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+.min-width-0 {
+    min-width: 0;
+}
+
+/* Dark mode for distributor mobile cards */
+[data-theme="dark"] .dist-mobile-card {
+    background: #1e2229;
+    border-color: #2d3340;
+}
+[data-theme="dark"] .dist-mobile-card h6 {
+    color: #e5e7eb;
+}
+[data-theme="dark"] .dist-mobile-card .btn-light {
+    background: #2d3340;
+    border-color: #3a4150;
+    color: #9ca3af;
+}
+[data-theme="dark"] .dist-mobile-card .btn-light:hover {
+    background: #3a4150;
+}

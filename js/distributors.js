@@ -336,9 +336,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function renderDistributors(filterText = "") {
   const tableBody = document.getElementById("distributors-table-body");
+  const mobileCards = document.getElementById("mobile-cards-view");
   const emptyState = document.getElementById("empty-state");
   const tableView = document.getElementById("table-view");
   if (tableBody) tableBody.replaceChildren();
+  if (mobileCards) mobileCards.replaceChildren();
 
   const currentDistributors = getDistributorsList();
   const filtered = currentDistributors.filter((d) =>
@@ -349,10 +351,12 @@ function renderDistributors(filterText = "") {
 
   if (filtered.length === 0) {
     if (emptyState) emptyState.style.display = "block";
-    if (tableView) tableView.style.display = "none";
+    if (tableView) tableView.classList.add("d-none");
+    if (mobileCards) mobileCards.style.display = "none";
   } else {
     if (emptyState) emptyState.style.display = "none";
-    if (tableView) tableView.style.display = "block";
+    if (tableView) { tableView.classList.remove("d-none"); tableView.classList.add("d-md-block"); }
+    if (mobileCards) mobileCards.style.display = "";
   }
 
   filtered.forEach((dist) => {
@@ -376,6 +380,7 @@ function renderDistributors(filterText = "") {
         ? distributorTranslations.ar.configure
         : distributorTranslations.en.configure;
 
+    // Desktop table row
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="px-4 py-3 fw-medium">
@@ -402,7 +407,34 @@ function renderDistributors(filterText = "") {
         </button>
       </td>
     `;
-    tableBody.appendChild(tr);
+    if (tableBody) tableBody.appendChild(tr);
+
+    // Mobile card
+    if (mobileCards) {
+      const card = document.createElement("div");
+      card.className = "dist-mobile-card";
+      card.innerHTML = `
+        <div class="d-flex align-items-center mb-3">
+          <div class="avatar-circle me-3" style="width: 42px; height: 42px; font-size: 18px;">${window.escapeHtml((dist.name || "D").charAt(0))}</div>
+          <div class="flex-grow-1 min-width-0">
+            <h6 class="mb-1 fw-bold text-truncate">${window.escapeHtml(dist.name)}</h6>
+            <div class="d-flex flex-wrap gap-1">${typeBadge} ${mappingBadge}</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="openMappingModal('${window.escapeHtml(dist.id)}')">
+            <i class="fas fa-table-columns me-1"></i>${window.escapeHtml(configureLabel)}
+          </button>
+          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.edit : distributorTranslations.en.edit}">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.delete : distributorTranslations.en.delete}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      mobileCards.appendChild(card);
+    }
   });
 
   if (typeof applyTranslations === "function") {
