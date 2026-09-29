@@ -106,15 +106,17 @@ html[dir="rtl"] .language-toggle {
 
 .logo-title {
     font-size: 1.75rem;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
-    color: var(--gray-800);
+    color: #0f172a;
+    letter-spacing: -0.5px;
 }
 
 .logo-subtitle {
-    color: var(--gray-600);
+    color: #64748b;
     margin-top: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 /* --- END: Left Side (Form Area) --- */
 
@@ -127,53 +129,80 @@ html[dir="rtl"] .language-toggle {
 
 .department-title {
     text-align: center;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
     margin-bottom: 2rem;
-    color: var(--gray-800);
+    color: #0f172a;
 }
 
 .dept-cards {
     display: flex;
     gap: 1.5rem;
     justify-content: center;
+    width: 100%;
 }
 
 .dept-card {
     flex: 1;
-    border: 2px solid var(--gray-200);
+    border: 2px solid #cbd5e1;
     border-radius: 14px;
     padding: 2rem 1.5rem;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s;
-    background-color: #fff;
+    transition: all 0.25s ease;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .dept-card:hover {
-    border-color: var(--primary);
-    background-color: var(--primary-light);
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-md);
+    border-color: var(--primary, #0d6efd);
+    background-color: #f0f7ff;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(13, 110, 253, 0.18);
 }
 
-.dept-card i {
-    width: 40px;
-    height: 40px;
-    color: var(--primary);
-    margin-bottom: 1rem;
+.dept-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.25rem auto;
+    border-radius: 16px;
+    background: #e7f1ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s ease;
+    color: var(--primary, #0d6efd);
+}
+
+.dept-card:hover .dept-icon-wrapper {
+    transform: scale(1.1);
+    background: #d0e4ff;
+}
+
+.dept-card i,
+.dept-card svg {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    color: inherit;
+    stroke: currentColor;
+    display: inline-block;
 }
 
 .dept-card h3 {
     margin: 0 0 0.5rem 0;
-    font-size: 1.1rem;
-    color: var(--gray-800);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
 }
 
 .dept-card p {
     margin: 0;
     font-size: 0.85rem;
-    color: var(--gray-600);
+    color: #475569;
+    line-height: 1.4;
 }
 
 @media (max-width: 600px) {
@@ -526,3 +555,198 @@ html[dir="rtl"] .password-toggle {
     animation: shake 0.5s;
 }
 /* --- END: Animations --- */
+
+/* ==========================================================================
+   Quick Demo Login Chips
+   ========================================================================== */
+.quick-login-wrapper {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.quick-login-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quick-chips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quick-user-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.9rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
+}
+
+html[dir="rtl"] .quick-user-chip {
+    text-align: right;
+}
+
+.quick-user-chip:hover {
+    background: #e7f1ff;
+    border-color: #3b82f6;
+    transform: translateX(4px);
+}
+
+html[dir="rtl"] .quick-user-chip:hover {
+    transform: translateX(-4px);
+}
+
+.quick-chip-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.quick-chip-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.quick-chip-role {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.quick-chip-arrow {
+    font-size: 0.85rem;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   Dark Mode Engine for Login Page
+   ========================================================================== */
+[data-theme="dark"] body {
+    background-color: #121418;
+    color: #f1f3f5;
+}
+
+[data-theme="dark"] .login-left {
+    background-color: #181b21 !important;
+    color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .logo-title,
+[data-theme="dark"] .department-title,
+[data-theme="dark"] .dept-card h3 {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .logo-subtitle,
+[data-theme="dark"] .dept-card p,
+[data-theme="dark"] .login-footer {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .dept-card {
+    background-color: #232731 !important;
+    border-color: #3d4554 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .dept-card:hover {
+    background-color: #2d3340 !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .dept-icon-wrapper {
+    background: #162a4a !important;
+}
+
+[data-theme="dark"] .dept-card:hover .dept-icon-wrapper {
+    background: #1d3b66 !important;
+}
+
+[data-theme="dark"] .dept-card i,
+[data-theme="dark"] .dept-card svg {
+    color: #58a6ff !important;
+}
+
+[data-theme="dark"] .language-toggle {
+    border-color: #3d4554;
+    color: #dee2e6;
+    background-color: #232731;
+}
+
+[data-theme="dark"] .language-toggle:hover {
+    border-color: #3b82f6;
+    color: #ffffff;
+    background-color: #162a4a;
+}
+
+[data-theme="dark"] .form-label {
+    color: #dee2e6 !important;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .form-control:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .back-btn {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .back-btn:hover {
+    color: #58a6ff !important;
+}
+
+[data-theme="dark"] .forgot-password,
+[data-theme="dark"] .remember-me span {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .quick-login-wrapper {
+    border-top-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .quick-login-title {
+    color: #9da5b1 !important;
+}
+
+[data-theme="dark"] .quick-user-chip {
+    background: #232731 !important;
+    border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .quick-user-chip:hover {
+    background: #282d38 !important;
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .quick-chip-name {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .quick-chip-role {
+    color: #9da5b1 !important;
+}
+

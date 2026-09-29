@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    PharmaCare Reports & Analytics Stylesheet
    Fully responsive on mobile devices with cascading hierarchy filters,
    multi-select product dropdown, zero overflow, and high-contrast Dark Mode.
@@ -643,6 +643,105 @@
     vertical-align: middle;
 }
 
+/* --- Sales Performance / Pharmacy Sales Table Column Styling --- */
+#salesResultsContainer .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    background: var(--white);
+    padding: 0;
+}
+
+#salesResultsContainer .report-table {
+    min-width: 950px;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#salesResultsContainer .report-table th,
+#salesResultsContainer .report-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+}
+
+#salesResultsContainer .report-table th {
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.2px;
+}
+
+/* Col 1: Date */
+#salesResultsContainer .report-table th:nth-child(1),
+#salesResultsContainer .report-table td:nth-child(1) {
+    min-width: 105px;
+    width: 105px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Col 2: Pharmacy */
+#salesResultsContainer .report-table th:nth-child(2),
+#salesResultsContainer .report-table td:nth-child(2) {
+    min-width: 180px;
+    max-width: 240px;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Col 3: Product / Medicine */
+#salesResultsContainer .report-table th:nth-child(3),
+#salesResultsContainer .report-table td:nth-child(3) {
+    min-width: 190px;
+    max-width: 250px;
+    white-space: normal;
+}
+
+/* Col 4: Distributor */
+#salesResultsContainer .report-table th:nth-child(4),
+#salesResultsContainer .report-table td:nth-child(4) {
+    min-width: 135px;
+    white-space: nowrap;
+}
+
+/* Col 5: Area / Territory */
+#salesResultsContainer .report-table th:nth-child(5),
+#salesResultsContainer .report-table td:nth-child(5) {
+    min-width: 125px;
+    white-space: nowrap;
+}
+
+/* Col 6: Rep */
+#salesResultsContainer .report-table th:nth-child(6),
+#salesResultsContainer .report-table td:nth-child(6) {
+    min-width: 130px;
+    white-space: nowrap;
+}
+
+/* Col 7: Quantity */
+#salesResultsContainer .report-table th:nth-child(7),
+#salesResultsContainer .report-table td:nth-child(7) {
+    min-width: 75px;
+    width: 75px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Col 8: Value */
+#salesResultsContainer .report-table th:nth-child(8),
+#salesResultsContainer .report-table td:nth-child(8) {
+    min-width: 95px;
+    width: 95px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+[dir="rtl"] #salesResultsContainer .report-table th:nth-child(8),
+[dir="rtl"] #salesResultsContainer .report-table td:nth-child(8) {
+    text-align: left;
+}
+
 /* --- Coverage Report Table Column Proportions --- */
 #tabPanel-coverage .report-table th:nth-child(1),
 #tabPanel-coverage .report-table td:nth-child(1) {
@@ -1227,12 +1326,20 @@
         -webkit-overflow-scrolling: touch;
     }
     .report-table {
-        min-width: 560px;
+        min-width: 600px;
+    }
+    #salesResultsContainer .report-table {
+        min-width: 950px !important;
     }
     .report-table th,
     .report-table td {
         padding: 8px 6px;
         font-size: 0.8rem;
+    }
+    #salesResultsContainer .report-table th,
+    #salesResultsContainer .report-table td {
+        padding: 10px 12px !important;
+        font-size: 0.82rem !important;
     }
     .report-table th {
         white-space: nowrap;

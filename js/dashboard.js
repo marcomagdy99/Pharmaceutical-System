@@ -3805,21 +3805,30 @@ window.switchDemoUser = function (role) {
     dm: "district_manager",
     rep: "medical_rep",
     hr: "hr",
+    pm: "product_manager",
   };
   const targetRole = roleMap[role] || role;
+  const usersList =
+    window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users) && window.DEMO_DATA.users.length > 0
+      ? window.DEMO_DATA.users
+      : (typeof DEFAULT_DEMO_DATA !== "undefined" ? DEFAULT_DEMO_DATA.users : []);
+
   const user =
-    window.DEMO_DATA && window.DEMO_DATA.users
-      ? window.DEMO_DATA.users.find((u) => u.role === targetRole)
-      : { role: targetRole, name: targetRole.toUpperCase() };
+    usersList.find((u) => u.role === targetRole) ||
+    usersList.find((u) => u.id === role) ||
+    { role: targetRole, name: targetRole.toUpperCase(), id: role + "1" };
 
   if (user) {
     sessionStorage.removeItem("pharma_logged_out");
     sessionStorage.setItem("pharmaUser", JSON.stringify(user));
-    localStorage.setItem("userRole", targetRole);
+    localStorage.setItem("pharmaUser", JSON.stringify(user));
+    localStorage.setItem("userRole", user.role || targetRole);
     localStorage.setItem("userId", user.id);
+    window.currentUser = user;
     window.location.reload();
   }
 };
+
 
 window.currentRepPlanTab = window.currentRepPlanTab || "auto";
 window.currentRepPlanDate = window.currentRepPlanDate || null;

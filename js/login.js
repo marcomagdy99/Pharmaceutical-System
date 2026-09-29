@@ -17,9 +17,13 @@
   } catch (e) {}
 })();
 
-// Initialize Feather icons
-if (typeof feather !== 'undefined') {
-  feather.replace();
+// Initialize Feather icons safely
+try {
+  if (typeof feather !== 'undefined' && typeof feather.replace === 'function') {
+    feather.replace();
+  }
+} catch (e) {
+  console.warn("Feather replace skipped:", e);
 }
 
 const translations = {
@@ -190,14 +194,72 @@ if (togglePassword && passwordInput) {
   });
 }
 
+function renderQuickDemoAccounts(dept) {
+  const container = document.getElementById('quickLoginSection');
+  if (!container) return;
+
+  const isAr = currentLang === 'ar';
+  let accounts = [];
+
+  if (dept === 'admin') {
+    accounts = [
+      { name: isAr ? 'مسؤول النظام (Admin)' : 'System Administrator', role: 'System Admin', email: 'admin@pharmacare.com', pass: 'admin123', icon: 'fa-shield-alt' }
+    ];
+  } else if (dept === 'sales') {
+    accounts = [
+      { name: 'Marco Magdy', role: isAr ? 'مندوب دعاية - المهندسين' : 'Medical Rep - Mohndseen', email: 'rep@pharmacare.com', pass: 'rep123', icon: 'fa-user-md' },
+      { name: 'Amir Ayoup', role: isAr ? 'مدير منطقة (District Manager)' : 'District Manager', email: 'dm@pharmacare.com', pass: 'dm123', icon: 'fa-user-tie' },
+      { name: 'John Mahfouz', role: isAr ? 'مدير خط (Line Manager)' : 'Line Manager', email: 'lm@pharmacare.com', pass: 'lm123', icon: 'fa-briefcase' },
+      { name: 'George Marzok', role: isAr ? 'مدير وحدة أعمال (Business Unit)' : 'Business Unit Head', email: 'bu@pharmacare.com', pass: 'bu123', icon: 'fa-building' }
+    ];
+  } else if (dept === 'hr') {
+    accounts = [
+      { name: 'Fatma El-Sherif', role: isAr ? 'مدير الموارد البشرية (HR)' : 'HR Director', email: 'hr@pharmacare.com', pass: 'hr123', icon: 'fa-user-check' }
+    ];
+  }
+
+  const titleText = isAr ? 'دخول سريع تجريبي بضغطة واحدة:' : 'Quick 1-Click Demo Login:';
+
+  let html = `
+    <div class="quick-login-title">
+      <i class="fas fa-bolt text-warning"></i>
+      <span>${titleText}</span>
+    </div>
+    <div class="quick-chips-grid">
+  `;
+
+  accounts.forEach((acc) => {
+    html += `
+      <button type="button" class="quick-user-chip" onclick="quickLoginAs('${acc.email}', '${acc.pass}')">
+        <div class="quick-chip-info">
+          <span class="quick-chip-name"><i class="fas ${acc.icon} me-1 text-primary"></i> ${acc.name}</span>
+          <span class="quick-chip-role">${acc.role}</span>
+        </div>
+        <span class="quick-chip-arrow">${isAr ? '←' : '→'}</span>
+      </button>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+window.quickLoginAs = function(email, pass) {
+  if (emailInput) emailInput.value = email;
+  if (passwordInput) passwordInput.value = pass;
+  handleLogin();
+};
+
 function showLoginForm(dept) {
   selectedDepartment = dept;
   if (departmentView) departmentView.style.display = 'none';
   if (loginBox) loginBox.style.display = 'block';
 
-  if (selectedDeptTitle && translations[currentLang]['selected_dept_' + dept]) {
+  if (selectedDeptTitle && translations[currentLang] && translations[currentLang]['selected_dept_' + dept]) {
     selectedDeptTitle.textContent = translations[currentLang]['selected_dept_' + dept];
   }
+
+  renderQuickDemoAccounts(dept);
 
   // Keep inputs empty for clean user entry
   if (emailInput) {
@@ -216,6 +278,12 @@ function showLoginForm(dept) {
     if (emailInput) emailInput.focus();
   }, 50);
 }
+
+window.showLoginForm = showLoginForm;
+window.showDepartmentSelection = showDepartmentSelection;
+window.onDeptSelected = function(dept) {
+  showLoginForm(dept);
+};
 
 function showDepartmentSelection() {
   selectedDepartment = null;
@@ -271,18 +339,18 @@ async function hashPassword(str) {
 function getAllAuthenticatableUsers() {
   const defaultAccounts = [
     { email: 'admin@pharmacare.com', passwordHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'admin1' },
-    { email: 'bu@pharmacare.com', passwordHash: 'd041f6dd2d671f68144bd4d667f96a6146dbf2ed0f71f19b532ce1e2826f8f92', role: 'business_unit', name: 'Tarek Saad', dept: 'sales', employeeCode: 'BU-001', id: 'bu1' },
-    { email: 'lm@pharmacare.com', passwordHash: '89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b', role: 'line_manager', name: 'Hassan Ali', dept: 'sales', employeeCode: 'LM-001', id: 'lm1' },
-    { email: 'lm2@pharmacare.com', passwordHash: '89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b', role: 'line_manager', name: 'Sayed Ibrahim', dept: 'sales', employeeCode: 'LM-002', id: 'lm2' },
-    { email: 'dm@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Karim Nasser', dept: 'sales', employeeCode: 'DM-001', id: 'dm1' },
-    { email: 'dm2@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Mona Adel', dept: 'sales', employeeCode: 'DM-002', id: 'dm2' },
-    { email: 'dm3@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Rami Samir', dept: 'sales', employeeCode: 'DM-003', id: 'dm3' },
-    { email: 'rep@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Ahmed Mostafa', dept: 'sales', employeeCode: 'EMP-001', id: 'rep1' },
-    { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Omar Youssef', dept: 'sales', employeeCode: 'EMP-002', id: 'rep2' },
-    { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Ali Mahmoud', dept: 'sales', employeeCode: 'EMP-003', id: 'rep3' },
-    { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Nourhan Ezz', dept: 'sales', employeeCode: 'EMP-004', id: 'rep4' },
-    { email: 'pm@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'product_manager', name: 'Nader Khaled', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
-    { email: 'pm2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'product_manager', name: 'Yasmine Mourad', dept: 'sales', employeeCode: 'PM-002', id: 'pm2', lineId: 'line2', lineIds: ['line2'], productIds: ['prod5'] },
+    { email: 'bu@pharmacare.com', passwordHash: 'd041f6dd2d671f68144bd4d667f96a6146dbf2ed0f71f19b532ce1e2826f8f92', role: 'business_unit', name: 'George Marzok', dept: 'sales', employeeCode: 'BU-001', id: 'bu1' },
+    { email: 'lm@pharmacare.com', passwordHash: '89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b', role: 'line_manager', name: 'John Mahfouz', dept: 'sales', employeeCode: 'LM-001', id: 'lm1' },
+    { email: 'lm2@pharmacare.com', passwordHash: '89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b', role: 'line_manager', name: 'Mario Magdy', dept: 'sales', employeeCode: 'LM-002', id: 'lm2' },
+    { email: 'dm@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'dm1' },
+    { email: 'dm2@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'dm2' },
+    { email: 'dm3@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'dm3' },
+    { email: 'rep@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'EMP-001', id: 'rep1' },
+    { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'EMP-002', id: 'rep2' },
+    { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'EMP-003', id: 'rep3' },
+    { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'EMP-004', id: 'rep4' },
+    { email: 'pm@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
+    { email: 'pm2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'EMP-005', id: 'pm2' },
     { email: 'hr@pharmacare.com', passwordHash: '070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'hr1' }
   ];
 
@@ -457,16 +525,10 @@ async function handleLogin() {
 
     sessionStorage.removeItem('pharma_logged_out');
     sessionStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-
-    if (rememberMe) {
-      localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-      localStorage.setItem('userRole', matchedUser.role);
-      localStorage.setItem('userId', matchedUser.id);
-    } else {
-      localStorage.removeItem('pharmaUser');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userId');
-    }
+    localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
+    localStorage.setItem('userRole', matchedUser.role);
+    localStorage.setItem('userId', matchedUser.id);
+    window.currentUser = sessionData;
 
     window.location.replace('index.html');
   }, 400);

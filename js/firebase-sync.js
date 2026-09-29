@@ -13,6 +13,10 @@
   let isLocalPushInProgress = false;
   let pushDebounceTimer = null;
   let lastCloudTimestamp = 0;
+  let isSalesListening = false;
+  let isLocalSalesPushInProgress = false;
+  let salesPushDebounceTimer = null;
+  let lastCloudSalesTimestamp = 0;
 
   // Initialize Firebase & Firestore directly (No conflicting IndexedDB persistence layer)
   function initFirestore() {
@@ -57,7 +61,9 @@
       "areas",
       "productLines",
       "distributors",
-      "territoryHistory"
+      "territoryHistory",
+      "importBatches",
+      "pharmacyOverrides"
     ];
 
     arrayCollections.forEach((collKey) => {
@@ -65,11 +71,25 @@
         if (!Array.isArray(window.DEMO_DATA[collKey])) {
           window.DEMO_DATA[collKey] = [];
         }
+        const isMock = (it) => {
+          if (!it || !it.id) return false;
+          const id = String(it.id);
+          if (collKey === "doctors" && id.startsWith("d")) return true;
+          if (collKey === "pharmacies" && id.startsWith("ph")) return true;
+          if (collKey === "hospitals" && id.startsWith("h")) return true;
+          if (collKey === "visits" && (id.startsWith("v") || id.startsWith("today_v"))) return true;
+          if (collKey === "sales" && (id.startsWith("s") || id.startsWith("ds_s"))) return true;
+          if (collKey === "leaves" && id.startsWith("l")) return true;
+          return false;
+        };
+
+        // Filter local list of any legacy mock records
+        window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => !isMock(it));
         const localList = window.DEMO_DATA[collKey];
 
-        // Merge or append items by ID
+        // Merge or append real items by ID
         cloudData[collKey].forEach((cloudItem) => {
-          if (!cloudItem) return;
+          if (!cloudItem || isMock(cloudItem)) return;
           const itemId = cloudItem.id;
           if (itemId) {
             const localIdx = localList.findIndex((it) => it && it.id === itemId);
@@ -127,6 +147,8 @@
         isLocalPushInProgress = true;
         updateSyncStatusUI("syncing");
 
+
+
         const { distributorSales, ...cleanMasterData } = window.DEMO_DATA;
         const payloadString = JSON.stringify(cleanMasterData);
 
@@ -140,6 +162,7 @@
         lastCloudTimestamp = Date.now();
         console.log("[FirebaseSync] Master data successfully synced to Cloud Firestore.");
         updateSyncStatusUI("synced");
+
       } catch (err) {
         console.error("[FirebaseSync] Error syncing to Firestore:", err);
         updateSyncStatusUI("error");
@@ -155,6 +178,41 @@
     } else {
       pushDebounceTimer = setTimeout(executePush, 350);
     }
+  }
+
+
+  // Trigger distributor & sales specific views
+  function notifyDistributorViews() {
+    if (typeof window.renderImportBatches === "function") {
+      try { window.renderImportBatches(); } catch (e) {}
+    }
+    if (typeof window.renderPendingAreas === "function") {
+      try { window.renderPendingAreas(); } catch (e) {}
+    }
+    if (typeof window.renderPendingProducts === "function") {
+      try { window.renderPendingProducts(); } catch (e) {}
+    }
+    if (typeof window.renderMappedAliases === "function") {
+      try { window.renderMappedAliases(); } catch (e) {}
+    }
+    if (typeof window.renderDistributors === "function") {
+      try { window.renderDistributors(); } catch (e) {}
+    }
+    if (typeof window.updateStats === "function") {
+      try { window.updateStats(); } catch (e) {}
+    }
+    if (typeof window.renderDashboard === "function") {
+      try { window.renderDashboard(); } catch (e) {}
+    }
+    if (typeof window.renderSalesReport === "function") {
+      try { window.renderSalesReport(); } catch (e) {}
+    }
+    if (typeof window.renderAchievementsReport === "function") {
+      try { window.renderAchievementsReport(); } catch (e) {}
+    }
+    document.dispatchEvent(new CustomEvent("pharma:storage:synced", {
+      detail: { key: "pharma_sales_data", source: "cloud" }
+    }));
   }
 
   // Trigger UI updates across known view components
@@ -213,6 +271,9 @@
       }
     }
 
+    // 6b. Distributor & Sales views
+    notifyDistributorViews();
+
     // 7. General event bus
     document.dispatchEvent(new CustomEvent("pharma:storage:synced", {
       detail: { key: "pharma_master_data", source: "cloud" }
@@ -220,6 +281,112 @@
     document.dispatchEvent(new CustomEvent("pharma:store:changed", {
       detail: { entity: "all", action: "cloud_sync", payload: parsedData }
     }));
+  }
+
+
+  // Push distributor sales data to its own dedicated Firestore document
+  async function pushSalesToCloud(immediate = false) {
+    if (window._suppressCloudPush) return;
+    if (!db) {
+      db = initFirestore();
+      if (!db) return;
+    }
+    if (!window.DEMO_DATA) return;
+
+    clearTimeout(salesPushDebounceTimer);
+
+    const executeSalesPush = async () => {
+      try {
+        isLocalSalesPushInProgress = true;
+        updateSyncStatusUI("syncing");
+
+        const sales = window.DEMO_DATA.distributorSales || [];
+        const payloadString = JSON.stringify(sales);
+
+        await db.collection("app_state").doc("distributor_sales").set({
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAtMs: Date.now(),
+          rowCount: sales.length,
+          payload: payloadString
+        }, { merge: true });
+
+        lastCloudSalesTimestamp = Date.now();
+        console.log(`[FirebaseSync] Pushed ${sales.length} distributor sales records to Cloud Firestore.`);
+        updateSyncStatusUI("synced");
+      } catch (err) {
+        console.error("[FirebaseSync] Error syncing sales to Firestore:", err);
+        updateSyncStatusUI("error");
+      } finally {
+        setTimeout(() => {
+          isLocalSalesPushInProgress = false;
+        }, 300);
+      }
+    };
+
+    if (immediate) {
+      await executeSalesPush();
+    } else {
+      salesPushDebounceTimer = setTimeout(executeSalesPush, 400);
+    }
+  }
+
+  // Realtime listener for distributor sales sheets
+  function startSalesCloudListener() {
+    if (isSalesListening || !db) return;
+    isSalesListening = true;
+
+    try {
+      db.collection("app_state").doc("distributor_sales").onSnapshot((snapshot) => {
+        if (!snapshot.exists) {
+          // If cloud has no sales yet, but local laptop has sales, push local to cloud!
+          if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.distributorSales) && window.DEMO_DATA.distributorSales.length > 0) {
+            console.info("[FirebaseSync] Cloud distributor_sales empty. Pushing local sales to cloud...");
+            pushSalesToCloud(true);
+          }
+          return;
+        }
+
+        if (isLocalSalesPushInProgress) return;
+
+        const data = snapshot.data();
+        if (!data || !data.payload) return;
+
+        const cloudMs = data.updatedAtMs || 0;
+        if (cloudMs > 0 && cloudMs <= lastCloudSalesTimestamp) {
+          return;
+        }
+        lastCloudSalesTimestamp = cloudMs;
+
+        try {
+          let parsed = typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload;
+          if (Array.isArray(parsed)) {
+            parsed = parsed.filter((s) => s && s.id && !s.id.startsWith("ds_s"));
+            if (!window.DEMO_DATA) window.DEMO_DATA = {};
+            const localCount = (window.DEMO_DATA.distributorSales || []).length;
+
+            if (parsed.length === 0 && localCount > 0) {
+              console.info("[FirebaseSync] Local sales exist but cloud is empty. Uploading local sales to cloud...");
+              pushSalesToCloud(true);
+              return;
+            }
+
+            if (JSON.stringify(window.DEMO_DATA.distributorSales) !== JSON.stringify(parsed)) {
+              window.DEMO_DATA.distributorSales = parsed;
+              localStorage.setItem("pharma_sales_data", JSON.stringify(parsed));
+              console.log(`[FirebaseSync] Synced ${parsed.length} distributor sales rows from Cloud (was ${localCount}).`);
+              updateSyncStatusUI("synced");
+              notifyDistributorViews();
+            }
+          }
+        } catch (err) {
+          console.warn("[FirebaseSync] Failed to parse cloud sales payload:", err);
+        }
+      }, (error) => {
+        console.warn("[FirebaseSync] Sales listener warning:", error);
+      });
+    } catch (err) {
+      console.warn("[FirebaseSync] Sales listener setup error:", err);
+    }
   }
 
   // Start Realtime Listener from Cloud Firestore
@@ -378,6 +545,42 @@
           );
         }
       }
+
+      // Also fetch distributor sales from Cloud
+      try {
+        const salesDoc = await db.collection("app_state").doc("distributor_sales").get();
+        if (salesDoc.exists) {
+          const sData = salesDoc.data();
+          if (sData && sData.payload) {
+            let parsedSales = typeof sData.payload === "string" ? JSON.parse(sData.payload) : sData.payload;
+            if (Array.isArray(parsedSales)) {
+              parsedSales = parsedSales.filter((s) => s && s.id && !s.id.startsWith("ds_s"));
+              if (!window.DEMO_DATA) window.DEMO_DATA = {};
+              const currentLocalSales = (window.DEMO_DATA.distributorSales || []).filter((s) => s && s.id && !s.id.startsWith("ds_s"));
+              window.DEMO_DATA.distributorSales = parsedSales.length > 0 ? parsedSales : currentLocalSales;
+              localStorage.setItem("pharma_sales_data", JSON.stringify(window.DEMO_DATA.distributorSales));
+              if (parsedSales.length > 0) {
+                lastCloudSalesTimestamp = sData.updatedAtMs || Date.now();
+                console.log(`[FirebaseSync] Loaded ${parsedSales.length} distributor sales records from Cloud.`);
+                notifyDistributorViews();
+              } else if (currentLocalSales.length > 0) {
+                pushSalesToCloud(true);
+              }
+            }
+          }
+        } else {
+          // Cloud distributor_sales doc doesn't exist yet: push local sales if we have any
+          if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.distributorSales)) {
+            window.DEMO_DATA.distributorSales = window.DEMO_DATA.distributorSales.filter((s) => s && s.id && !s.id.startsWith("ds_s"));
+            if (window.DEMO_DATA.distributorSales.length > 0) {
+              console.info("[FirebaseSync] Pushing local sales to cloud...");
+              pushSalesToCloud(true);
+            }
+          }
+        }
+      } catch (salesErr) {
+        console.warn("[FirebaseSync] Error fetching distributor_sales in fetchCloudInitial:", salesErr);
+      }
     } catch (err) {
       console.warn("[FirebaseSync] Fetch error:", err);
       updateSyncStatusUI("offline");
@@ -398,6 +601,7 @@
 
   // Hook into global scope
   window.pushLocalToCloud = pushLocalToCloud;
+  window.pushSalesToCloud = pushSalesToCloud;
   window.syncFromCloudNow = fetchCloudInitial;
 
   // Initialize on load
@@ -406,6 +610,7 @@
     if (db) {
       fetchCloudInitial(false);
       startCloudListener();
+      startSalesCloudListener();
     }
   }
 

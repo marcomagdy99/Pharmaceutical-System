@@ -384,9 +384,31 @@ function getFilteredPharmSalesRows() {
   }
   if (selectedDistributor !== 'all') rows = rows.filter((r) => r.distributorId === selectedDistributor);
   if (selectedLine !== 'all' && selectedLine !== 'none') {
-    rows = rows.filter((r) => r.lineId === selectedLine);
+    rows = rows.filter((r) => {
+      if (r.lineId) return r.lineId === selectedLine;
+      if (r.areaId) {
+        const a = (window.store && window.store.areas) ? window.store.areas.getById(r.areaId) : null;
+        if (a && a.lineId) return a.lineId === selectedLine;
+      }
+      return false;
+    });
   } else if (allowedLineIds !== null) {
-    rows = rows.filter((r) => r.lineId && allowedLineIds.includes(r.lineId));
+    rows = rows.filter((r) => {
+      if (r.lineId) return allowedLineIds.includes(r.lineId);
+      if (r.areaId) {
+        const a = (window.store && window.store.areas) ? window.store.areas.getById(r.areaId) : null;
+        if (a && a.lineId) return allowedLineIds.includes(a.lineId);
+      }
+      if (r.repId) {
+        const u = (window.store && window.store.users) ? window.store.users.getById(r.repId) : null;
+        if (u) {
+          const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+          if (uLines.some((lid) => allowedLineIds.includes(lid))) return true;
+        }
+      }
+      if (r.dmId && r.dmId === user.id) return true;
+      return false;
+    });
   }
 
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
@@ -394,18 +416,28 @@ function getFilteredPharmSalesRows() {
   const allUsers = typeof getSharedReportUsers === 'function'
     ? getSharedReportUsers()
     : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
 
   if (isRep) {
     const repAreas = (window.store && window.store.areas ? window.store.areas.getByRep(user.id) : []);
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || '').toLowerCase().trim());
     rows = rows.filter((r) =>
+      r.repId === user.id ||
       (r.areaId && repAreaIds.includes(r.areaId)) ||
       (!r.areaId && r.area && repAreaNames.includes(r.area.toLowerCase().trim()))
     );
   } else if (role === 'district_manager') {
     const teamRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
-    rows = rows.filter((r) => r.dmId === user.id || (r.repId && teamRepIds.includes(r.repId)));
+    const myAreas = (window.store && window.store.areas ? window.store.areas.getAll() : []).filter(
+      (a) => (a.repId && teamRepIds.includes(a.repId)) || a.dmId === user.id || a.districtManagerId === user.id
+    );
+    const myAreaIds = myAreas.map((a) => a.id);
+    rows = rows.filter((r) =>
+      r.dmId === user.id ||
+      (r.repId && teamRepIds.includes(r.repId)) ||
+      (r.areaId && myAreaIds.includes(r.areaId))
+    );
   } else if (role === 'line_manager') {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
@@ -449,6 +481,7 @@ function getFilteredPharmSalesRows() {
         const targetRepAreaIds = targetRepAreas.map((a) => a.id);
         const targetRepAreaNames = targetRepAreas.map((a) => (a.name || '').toLowerCase().trim());
         rows = rows.filter((r) =>
+          r.repId === selectedRep ||
           (r.areaId && targetRepAreaIds.includes(r.areaId)) ||
           (!r.areaId && r.area && targetRepAreaNames.includes(r.area.toLowerCase().trim())) ||
           r.dmId === selectedRep
@@ -459,19 +492,49 @@ function getFilteredPharmSalesRows() {
 
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   if (selectedLineId !== 'all') {
-    rows = rows.filter((r) => r.lineId === selectedLineId);
+    rows = rows.filter((r) => {
+      if (r.lineId) return r.lineId === selectedLineId;
+      if (r.areaId) {
+        const a = (window.store && window.store.areas) ? window.store.areas.getById(r.areaId) : null;
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
+      if (r.repId) {
+        const u = (window.store && window.store.users) ? window.store.users.getById(r.repId) : null;
+        if (u) {
+          const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+          if (uLines.includes(selectedLineId)) return true;
+        }
+      }
+      return false;
+    });
   }
 
   const areaSelect = document.getElementById('pharmSalesAreaSelect');
   const selectedArea = areaSelect ? areaSelect.value : 'all';
   if (selectedArea && selectedArea !== 'all') {
-    rows = rows.filter((r) => r.areaId === selectedArea);
+    const chosenArea = (window.store && window.store.areas) ? window.store.areas.getById(selectedArea) : null;
+    const chosenName = chosenArea && chosenArea.name ? chosenArea.name.trim().toLowerCase() : null;
+    rows = rows.filter((r) => {
+      if (r.areaId === selectedArea) return true;
+      if (chosenName) {
+        if (r.areaId && window.store && window.store.areas) {
+          const a = window.store.areas.getById(r.areaId);
+          if (a && a.name && a.name.trim().toLowerCase() === chosenName) return true;
+        }
+        if (r.area && r.area.trim().toLowerCase() === chosenName) return true;
+        if (r.areaRaw && r.areaRaw.trim().toLowerCase() === chosenName) return true;
+      }
+      return false;
+    });
   }
 
   return rows;
 }
 
 function renderSalesReport() {
+  if (window.store && window.store.distributorSales && typeof window.store.distributorSales.applyAreaMatching === "function") {
+    try { window.store.distributorSales.applyAreaMatching(true, false); } catch (e) {}
+  }
   const prompt = document.getElementById('salesPromptContainer');
   const results = document.getElementById('salesResultsContainer');
   if (prompt) prompt.style.display = 'none';

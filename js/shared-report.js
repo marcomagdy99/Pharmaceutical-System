@@ -57,48 +57,9 @@ function appendSelectOptions(selectEl, items, getValue, getLabel) {
 // (Sales numbers are formatted without currency symbols throughout, by design)
 // ============================================================================
 const REPORTS_DATA = {
-  sales: [
-    // September 2026 (2026-09) - Cardio Line (line1 / lm1) - Cairo District (dm1)
-    { id: 's1', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 20000, actual: 22500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's2', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 13000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's3', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 10000, actual: 9500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's4', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 8000, actual: 7000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's5', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 19000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's6', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 11000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's7', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 7500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's8', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 3500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    // August 2026 (2026-08)
-    { id: 's9', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 21000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's10', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 14000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 17000, actual: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 11000, actual: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    // September 2026 (2026-09) - Neuro Line (line2 / lm2) - Alex District (dm3)
-    { id: 's15', month: '2026-09', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Pregabalin 75mg', productId: 'prod5', target: 25000, actual: 27000, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' },
-    { id: 's16', month: '2026-09', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Carbamazepine 200mg', productId: 'prod6', target: 15000, actual: 14200, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' },
-    // August 2026 (2026-08) - Neuro Line (line2 / lm2)
-    { id: 's17', month: '2026-08', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Pregabalin 75mg', productId: 'prod5', target: 22000, actual: 24500, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' },
-    { id: 's18', month: '2026-08', repName: 'Nourhan Ezz', area: 'Alexandria', product: 'Carbamazepine 200mg', productId: 'prod6', target: 14000, actual: 13800, repId: 'rep4', dmId: 'dm3', lmId: 'lm2', lineId: 'line2' }
-  ],
-  visits: [
-    { id: 'v1', targetName: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', type: 'doctor', date: '2026-09-02', time: '11:30', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1'], products: ['Amoxicillin 500mg'] },
-    { id: 'v2', targetName: 'Sara Abdullah', class: 'A', specialty: 'Pediatrics', type: 'doctor', date: '2026-09-02', time: '14:15', period: 'PM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod2'], products: ['Vitamin D Drops 1000IU'] },
-    { id: 'v3', targetName: 'Al-Salam Hospital', class: 'Hospital', specialty: 'General & Surgery', type: 'hospital', date: '2026-09-02', time: '09:45', period: 'AM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: [], products: [] },
-    { id: 'v4', targetName: 'Mohamed Hassan', class: 'B', specialty: 'Dermatology', type: 'doctor', date: '2026-09-02', time: '16:00', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod3'], products: ['Omeprazole 20mg'] },
-    { id: 'v5', targetName: 'Youssef Fathy', class: 'B', specialty: 'Orthopedics', type: 'doctor', date: '2026-09-01', time: '14:20', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod4'], products: ['Azithromycin 250mg'] },
-    { id: 'v6', targetName: 'Nasser Institute', class: 'Hospital', specialty: 'Oncology & Surgery', type: 'hospital', date: '2026-09-01', time: '10:15', period: 'AM', status: 'completed', isActual: false, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: [], products: [] },
-    { id: 'v7', targetName: 'Khaled Omar', class: 'A', specialty: 'Cardiology', type: 'doctor', date: '2026-09-02', time: '13:00', period: 'PM', status: 'completed', isActual: false, repId: 'rep2', repName: 'Omar Youssef', productIds: ['prod1'], products: ['Amoxicillin 500mg'] }
-  ],
-  doctors: [
-    { id: 'd1', name: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', area: 'Nasr City', repId: 'rep1', targetQuarterly: 4 },
-    { id: 'd2', name: 'Sara Abdullah', class: 'A', specialty: 'Pediatrics', area: 'Nasr City', repId: 'rep1', targetQuarterly: 4 },
-    { id: 'd3', name: 'Mohamed Hassan', class: 'B', specialty: 'Dermatology', area: 'Nasr City', repId: 'rep1', targetQuarterly: 3 },
-    { id: 'd4', name: 'Noura Mahmoud', class: 'B', specialty: 'Ophthalmology', area: 'Nasr City', repId: 'rep1', targetQuarterly: 3 },
-    { id: 'd5', name: 'Khaled Omar', class: 'A', specialty: 'Cardiology', area: 'Heliopolis', repId: 'rep2', targetQuarterly: 4 },
-    { id: 'h1', name: 'Al-Salam Hospital', class: 'hospital', specialty: 'Hospital (AM)', area: 'Nasr City', repId: 'rep1', targetQuarterly: 6 },
-    { id: 'h2', name: 'Nasser Institute', class: 'hospital', specialty: 'Hospital (AM)', area: 'Nasr City', repId: 'rep1', targetQuarterly: 6 }
-  ]
+  sales: [],
+  visits: [],
+  doctors: []
 };
 
 // ============================================================================
@@ -194,55 +155,34 @@ function syncReportsData() {
       });
     }
 
-    // Ensure sample visits exist for today's date so today searches are populated
-    const _now = new Date();
-    const _pad = (n) => String(n).padStart(2, '0');
-    const _todayDate = `${_now.getFullYear()}-${_pad(_now.getMonth() + 1)}-${_pad(_now.getDate())}`;
-    const hasTodayVisits = REPORTS_DATA.visits.some((v) => v.date === _todayDate);
-    if (!hasTodayVisits) {
-      REPORTS_DATA.visits.push(
-        { id: 'today_v1', targetName: 'Ahmed Mostafa', class: 'A', specialty: 'Internal Medicine', type: 'doctor', date: _todayDate, time: '10:30', period: 'AM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1'], products: ['Amoxicillin 500mg'] },
-        { id: 'today_v2', targetName: 'Sara Abdullah', class: 'A', specialty: 'Pediatrics', type: 'doctor', date: _todayDate, time: '13:15', period: 'PM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod2'], products: ['Vitamin D Drops 1000IU'] },
-        { id: 'today_v3', targetName: 'Al-Ezaby Pharmacy', class: 'Pharmacy', specialty: 'Pharmacy', type: 'pharmacy', date: _todayDate, time: '15:00', period: 'PHARM', status: 'completed', isActual: true, repId: 'rep1', repName: 'Ahmed Mostafa', productIds: ['prod1', 'prod3'], products: ['Amoxicillin 500mg', 'Omeprazole 20mg'] }
-      );
-    }
+    // Purge any legacy mock visits
+    REPORTS_DATA.visits = REPORTS_DATA.visits.filter((rv) => {
+      const isMock = rv.id && (rv.id.startsWith('v') || rv.id.startsWith('today_v')) && (rv.targetName === 'Ahmed Mostafa' || rv.repName === 'Ahmed Mostafa' || rv.targetName === 'Sara Abdullah' || rv.targetName === 'Al-Salam Hospital' || rv.targetName === 'Al-Ezaby Pharmacy');
+      return !isMock && (rv.status === 'completed' || rv.isActual === true || rv.source === 'actual');
+    });
 
-    // Guarantee REPORTS_DATA.visits contains only completed or actual visits
-    REPORTS_DATA.visits = REPORTS_DATA.visits.filter((rv) => rv.status === 'completed' || rv.isActual === true || rv.source === 'actual');
-
-    // 3. Sync Targets and Distributor Sales from REPORTS_DATA.sales if missing in DEMO_DATA
-    if (!window.DEMO_DATA.targets || window.DEMO_DATA.targets.length === 0) {
-      window.DEMO_DATA.targets = REPORTS_DATA.sales.map((s) => ({
-        id: 'target_' + s.id,
-        repId: s.repId,
-        productId: s.productId,
-        month: s.month,
-        target: s.target,
-        targetUnits: Math.round(s.target / 100),
-        unitPrice: 100
-      }));
+    // 3. Purge any legacy mock distributor sales (ds_s...) if present
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.distributorSales)) {
+      const initialCount = window.DEMO_DATA.distributorSales.length;
+      window.DEMO_DATA.distributorSales = window.DEMO_DATA.distributorSales.filter((s) => {
+        return s && s.id && !s.id.startsWith('ds_s');
+      });
+      if (window.DEMO_DATA.distributorSales.length !== initialCount) {
+        if (typeof window.saveSalesDataToStorage === 'function') {
+          window.saveSalesDataToStorage();
+        }
+      }
     }
-    if (!window.DEMO_DATA.distributorSales || window.DEMO_DATA.distributorSales.length === 0) {
-      window.DEMO_DATA.distributorSales = REPORTS_DATA.sales.map((s) => ({
-        id: 'ds_' + s.id,
-        month: s.month,
-        date: s.month + '-15',
-        repId: s.repId,
-        repName: s.repName,
-        dmId: s.dmId,
-        lmId: s.lmId,
-        lineId: s.lineId,
-        productId: s.productId,
-        product: s.product,
-        quantity: Math.round(s.actual / 100),
-        value: s.actual,
-        distributorId: 'dist1',
-        distributor: 'Ibn Sina',
-        pharmacyName: 'Al-Ezaby Pharmacy',
-        area: s.area
-      }));
-      if (typeof window.saveSalesDataToStorage === 'function') {
-        window.saveSalesDataToStorage();
+    // 4. Purge any legacy mock targets (target_s...) if present
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.targets)) {
+      const initialTargetCount = window.DEMO_DATA.targets.length;
+      window.DEMO_DATA.targets = window.DEMO_DATA.targets.filter((t) => {
+        return t && t.id && !t.id.startsWith('target_s');
+      });
+      if (window.DEMO_DATA.targets.length !== initialTargetCount) {
+        if (typeof window.saveDataToStorage === 'function') {
+          window.saveDataToStorage();
+        }
       }
     }
   }

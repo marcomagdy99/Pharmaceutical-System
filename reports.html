@@ -16,6 +16,33 @@
         } catch (e) {}
       })();
     </script>
+    <!-- Aggressive Service Worker cache clearing for new releases -->
+    <script>
+      (function () {
+        var EXPECTED_SW = "v86";
+        var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
+        try {
+          if (localStorage.getItem(FLAG) !== "1") {
+            if ("caches" in window) {
+              caches.keys().then(function (names) {
+                return Promise.all(
+                  names.map(function (n) {
+                    return caches.delete(n);
+                  })
+                );
+              }).then(function() {
+                localStorage.setItem(FLAG, "1");
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                  window.location.reload();
+                }
+              });
+            } else {
+              localStorage.setItem(FLAG, "1");
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,13 +55,13 @@
     <link rel="stylesheet" href="css/reports.css" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v77"></script>
-    <script src="js/store.js?v=v77"></script>
+    <script src="js/app.js?v=v86"></script>
+    <script src="js/store.js?v=v86"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v72"></script>
-    <script src="js/firebase-sync.js?v=v72"></script>
+    <script src="js/firebase-config.js?v=v86"></script>
+    <script src="js/firebase-sync.js?v=v86"></script>
   </head>
   <body>
     <div class="app">
@@ -330,6 +357,11 @@
                     📤 Upload Sheets ↗
                   </a>
                 </div>
+              </div>
+              <!-- Mobile Horizontal Scroll Hint -->
+              <div class="d-md-none px-2 py-1 mb-2 rounded" style="background: rgba(13,110,253,0.08); border: 1px dashed rgba(13,110,253,0.3); font-size: 0.78rem; display: flex; align-items: center; justify-content: space-between; color: var(--primary);">
+                <span><i class="fas fa-arrows-alt-h me-1"></i> <span data-i18n="scrollHintTable">مرر أفقياً لعرض جميع بيانات الجدول (8 أعمدة) ↔</span></span>
+                <span class="badge bg-primary text-white" style="font-size: 0.7rem;">8 أعمدة</span>
               </div>
               <!-- Pharmacy Sales Table (raw rows) -->
               <div class="table-container">
@@ -2544,13 +2576,13 @@
     <script src="js/interactive-charts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/excel-templates-data.js"></script>
-    <script src="js/shared-report.js?v=8.0.0"></script>
-    <script src="js/sales-report.js"></script>
+    <script src="js/shared-report.js?v=v86"></script>
+    <script src="js/sales-report.js?v=v86"></script>
     <script src="js/achievements-report.js"></script>
     <script src="js/timeline-report.js"></script>
     <script src="js/coverage-report.js"></script>
     <script src="js/doctors-report.js"></script>
-    <script src="js/hospitals-report.js?v=8.0.0"></script>
+    <script src="js/hospitals-report.js?v=v86"></script>
     <script src="js/pharmacies-report.js"></script>
   </body>
 </html>

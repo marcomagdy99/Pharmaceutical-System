@@ -402,7 +402,7 @@
       findByAliasText(distributorId, rawText) {
         if (!rawText) return null;
         const normalized = String(rawText).trim().toLowerCase();
-        return (window.DEMO_DATA.areas || []).find(
+        const matches = (window.DEMO_DATA.areas || []).filter(
           (a) =>
             Array.isArray(a.aliases) &&
             a.aliases.some(
@@ -411,6 +411,9 @@
                 String(al.rawText).trim().toLowerCase() === normalized,
             ),
         );
+        if (!matches.length) return null;
+        // Prefer an area that has an assigned rep over a vacant one
+        return matches.find((a) => a.repId) || matches[0];
       },
       save(areaObj) {
         if (!window.DEMO_DATA.areas) window.DEMO_DATA.areas = [];
@@ -1230,14 +1233,23 @@
           if (!area && row.areaRaw) {
             if (row.lineId) {
               area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, row.lineId);
-            } else {
+            }
+            if (!area) {
               area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
             }
+          }
+
+          // 3. Fallback: If row already has areaId, resolve area directly
+          if (!area && row.areaId) {
+            area = store.areas.getById(row.areaId);
           }
 
           if (!area) return;
           row.areaId = area.id;
           row.repId = area.repId || null;
+          if (!row.lineId && area.lineId) {
+            row.lineId = area.lineId;
+          }
           const rep = area.repId ? store.users.getById(area.repId) : null;
           const dmId = rep ? rep.managerId || null : null;
           row.dmId = dmId;
@@ -1372,8 +1384,7 @@
         this.getAll().forEach((row) => {
           if (row.areaId === areaId) {
             const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
-            // Only reattribute sales for the effective month and into the future, protecting past achievements
-            if (!rowMonth || rowMonth >= cutoffMonth) {
+            if (!effectiveFromMonth || !rowMonth || rowMonth >= effectiveFromMonth) {
               row.repId = newRepId || null;
               row.dmId = dmId;
               row.lmId = lmId;
@@ -1382,7 +1393,7 @@
           }
         });
         if (updatedCount) {
-          autoSave("distributorSales", "rematchAreaSales", { areaId, newRepId, cutoffMonth, updatedCount });
+          autoSave("distributorSales", "rematchAreaSales", { areaId, newRepId, updatedCount });
         }
         return updatedCount;
       },

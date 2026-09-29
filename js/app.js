@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v77";
+  const EXPECTED_SW = "v85";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -85,19 +85,15 @@ window.getSystemTodayStr = getSystemTodayStr;
 // ============================================================================
 const DEFAULT_DEMO_DATA = {
   currentUser: {
-    id: "rep1",
-    email: "ahmed@pharmacare.com",
-    name: "Ahmed Mostafa",
-    nameAr: "أحمد مصطفى",
-    role: "medical_rep",
-    employeeCode: "EMP-001",
-    managerId: "dm1",
-    areaId: "area1",
-    lineId: "line1",
-    lineIds: ["line1"],
+    id: "admin1",
+    email: "admin@pharmacare.com",
+    name: "System Admin",
+    nameAr: "مدير النظام",
+    role: "admin",
+    employeeCode: "ADM-001",
     photoURL: "",
     lang: "en",
-    hireDate: "2024-01-15",
+    hireDate: "2021-01-01",
     leaveBalance: {
       annual: 21,
       sick: 7,
@@ -108,208 +104,607 @@ const DEFAULT_DEMO_DATA = {
   },
   users: [
     {
-      id: "admin1",
-      name: "System Admin",
-      nameAr: "مدير النظام",
-      role: "admin",
-      employeeCode: "ADM-001",
-      email: "admin@pharmacare.com",
-      phone: "+20100111222",
-      status: "Active",
-      hireDate: "2021-01-01",
+        "id": "admin1",
+        "name": "System Admin",
+        "nameAr": "مدير النظام",
+        "role": "admin",
+        "employeeCode": "ADM-001",
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2021-01-01",
+        "email": "admin@pharmacare.com",
+        "phone": "+20100111222",
+        "status": "Active"
     },
     {
-      id: "bu1",
-      name: "Tarek Saad",
-      nameAr: "طارق سعد",
-      role: "business_unit",
-      employeeCode: "BU-001",
-      email: "bu@pharmacare.com",
-      phone: "+20100222333",
-      managerId: "admin1",
-      lineId: "line1",
-      lineIds: ["line1", "line2"],
-      status: "Active",
-      hireDate: "2021-06-01",
+        "id": "bu1",
+        "name": "George Marzok",
+        "nameAr": "طارق سعد",
+        "role": "business_unit",
+        "employeeCode": "BU-001",
+        "managerId": "admin1",
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2021-06-01",
+        "email": "bu@pharmacare.com",
+        "phone": "+20100222333",
+        "lineId": "line1",
+        "lineIds": [
+            "line1",
+            "line2"
+        ],
+        "status": "Active",
+        "code": "BU-001",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        }
     },
     {
-      id: "lm1",
-      name: "Hassan Ali",
-      nameAr: "حسن علي",
-      role: "line_manager",
-      employeeCode: "LM-001",
-      email: "lm@pharmacare.com",
-      phone: "+20100333444",
-      managerId: "bu1",
-      lineId: "line1",
-      lineIds: ["line1", "line2"],
-      status: "Active",
-      hireDate: "2022-01-15",
+        "id": "lm1",
+        "name": "John Mahfouz",
+        "nameAr": "حسن علي",
+        "role": "line_manager",
+        "employeeCode": "LM-001",
+        "managerId": "bu1",
+        "lineId": "line1",
+        "lineIds": [
+            "line1",
+            "line2"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2022-01-15",
+        "email": "lm@pharmacare.com",
+        "phone": "+20100333444",
+        "status": "Active",
+        "code": "LM-001",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        }
     },
     {
-      id: "lm2",
-      name: "Sayed Ibrahim",
-      nameAr: "سيد إبراهيم",
-      role: "line_manager",
-      employeeCode: "LM-002",
-      email: "lm2@pharmacare.com",
-      phone: "+20100444555",
-      managerId: "bu1",
-      lineId: "line2",
-      lineIds: ["line2"],
-      status: "Active",
-      hireDate: "2022-03-01",
+        "id": "lm2",
+        "name": "Mario Magdy",
+        "nameAr": "سيد إبراهيم",
+        "role": "line_manager",
+        "employeeCode": "LM-002",
+        "managerId": "bu1",
+        "lineId": "line_1790626036368",
+        "lineIds": [
+            "line_1790626036368"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "email": "lm2@pharmacare.com",
+        "code": "LM-002",
+        "phone": "+20100444555",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "hireDate": "2022-03-01",
+        "status": "Active",
+        "productIds": []
     },
     {
-      id: "dm1",
-      name: "Karim Nasser",
-      nameAr: "كريم ناصر",
-      role: "district_manager",
-      employeeCode: "DM-001",
-      email: "dm@pharmacare.com",
-      phone: "+20100555666",
-      managerId: "lm1",
-      lineId: "line1",
-      lineIds: ["line1"],
-      status: "Active",
-      hireDate: "2023-01-10",
+        "id": "dm1",
+        "name": "Amir Ayoup",
+        "nameAr": "كريم ناصر",
+        "role": "district_manager",
+        "employeeCode": "DM-001",
+        "managerId": "lm1",
+        "lineId": "line1",
+        "lineIds": [
+            "line1",
+            "line2"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2023-01-10",
+        "email": "dm@pharmacare.com",
+        "phone": "+20100555666",
+        "status": "Active",
+        "code": "DM-001",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        }
     },
     {
-      id: "dm2",
-      name: "Mona Adel",
-      nameAr: "منى عادل",
-      role: "district_manager",
-      employeeCode: "DM-002",
-      email: "dm2@pharmacare.com",
-      phone: "+20100666777",
-      managerId: "lm1",
-      lineId: "line1",
-      lineIds: ["line1"],
-      status: "Active",
-      hireDate: "2023-02-15",
+        "id": "dm2",
+        "name": "Jonathan Erian",
+        "nameAr": "منى عادل",
+        "role": "district_manager",
+        "employeeCode": "DM-002",
+        "managerId": "lm1",
+        "lineId": "line1",
+        "lineIds": [
+            "line1",
+            "line2"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2023-02-15",
+        "email": "dm2@pharmacare.com",
+        "phone": "+20100666777",
+        "status": "Active",
+        "code": "DM-002",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        }
     },
     {
-      id: "dm3",
-      name: "Rami Samir",
-      nameAr: "رامي سمير",
-      role: "district_manager",
-      employeeCode: "DM-003",
-      email: "dm3@pharmacare.com",
-      phone: "+20100777888",
-      managerId: "lm2",
-      lineId: "line2",
-      lineIds: ["line2"],
-      status: "Active",
-      hireDate: "2023-05-01",
+        "id": "dm3",
+        "name": "Marian Magdy",
+        "nameAr": "رامي سمير",
+        "role": "district_manager",
+        "employeeCode": "DM-003",
+        "managerId": "lm2",
+        "lineId": "line_1790626036368",
+        "lineIds": [
+            "line_1790626036368"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "email": "dm3@pharmacare.com",
+        "code": "DM-003",
+        "phone": "+20100777888",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "hireDate": "2023-05-01",
+        "status": "Active",
+        "productIds": []
     },
     {
-      id: "rep1",
-      name: "Ahmed Mostafa",
-      nameAr: "أحمد مصطفى",
-      role: "medical_rep",
-      employeeCode: "EMP-001",
-      email: "rep@pharmacare.com",
-      phone: "+201001234567",
-      managerId: "dm1",
-      areaId: "area1",
-      lineId: "line1",
-      lineIds: ["line1"],
-      status: "Active",
-      hireDate: "2024-01-15",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "rep1",
+        "name": "Marco Magdy",
+        "nameAr": "أحمد مصطفى",
+        "role": "medical_rep",
+        "employeeCode": "EMP-001",
+        "managerId": "dm1",
+        "areaId": "area1",
+        "lineId": "line1",
+        "lineIds": [
+            "line1"
+        ],
+        "email": "rep@pharmacare.com",
+        "code": "EMP-001",
+        "phone": "+201001234567",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Mohndseen, Bolak El Dakror",
+        "areaIds": [
+            "area1",
+            "area_line1_1790688157353"
+        ],
+        "hireDate": "2024-01-15",
+        "status": "Active",
+        "productIds": []
     },
     {
-      id: "rep2",
-      name: "Omar Youssef",
-      nameAr: "عمر يوسف",
-      role: "medical_rep",
-      employeeCode: "EMP-002",
-      email: "rep2@pharmacare.com",
-      phone: "+201001234568",
-      managerId: "dm1",
-      areaId: "area2",
-      lineId: "line1",
-      lineIds: ["line1"],
-      status: "Active",
-      hireDate: "2024-02-01",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "rep2",
+        "name": "Kerolos Boules",
+        "nameAr": "عمر يوسف",
+        "role": "medical_rep",
+        "employeeCode": "EMP-002",
+        "managerId": "dm2",
+        "areaId": "area_line1_1790674637363",
+        "lineId": "line1",
+        "lineIds": [
+            "line1"
+        ],
+        "areaIds": [
+            "area_line1_1790674637363"
+        ],
+        "area": "Giza",
+        "hireDate": "2024-02-01",
+        "email": "rep2@pharmacare.com",
+        "phone": "+201001234568",
+        "status": "Active",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "code": "EMP-002",
+        "productIds": []
     },
     {
-      id: "rep3",
-      name: "Ali Mahmoud",
-      nameAr: "علي محمود",
-      role: "medical_rep",
-      employeeCode: "EMP-003",
-      email: "rep3@pharmacare.com",
-      phone: "+201001234569",
-      managerId: "dm2",
-      lineId: "line1",
-      lineIds: ["line1"],
-      status: "Active",
-      hireDate: "2024-03-10",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "rep3",
+        "name": "Mina Mikhael",
+        "nameAr": "علي محمود",
+        "role": "medical_rep",
+        "employeeCode": "EMP-003",
+        "managerId": "dm2",
+        "areaId": "area_line1_1790674718201",
+        "lineId": "line1",
+        "lineIds": [
+            "line1"
+        ],
+        "areaIds": [
+            "area_line1_1790674718201"
+        ],
+        "area": "Fisal",
+        "hireDate": "2024-03-10",
+        "email": "rep3@pharmacare.com",
+        "phone": "+201001234569",
+        "status": "Active",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "code": "EMP-003",
+        "productIds": []
     },
     {
-      id: "rep4",
-      name: "Nourhan Ezz",
-      nameAr: "نورهان عز",
-      role: "medical_rep",
-      employeeCode: "EMP-004",
-      email: "rep4@pharmacare.com",
-      phone: "+201001234570",
-      managerId: "dm3",
-      lineId: "line2",
-      lineIds: ["line2"],
-      status: "Active",
-      hireDate: "2024-04-01",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "rep4",
+        "name": "David Emad",
+        "nameAr": "نورهان عز",
+        "role": "medical_rep",
+        "employeeCode": "EMP-004",
+        "managerId": "dm1",
+        "areaId": "area_line2_1790674745627",
+        "lineId": "line2",
+        "lineIds": [
+            "line2"
+        ],
+        "areaIds": [
+            "area_line2_1790674745627",
+            "area_line2_1790688168385"
+        ],
+        "area": "Mohndseen, Bolak El Dakror",
+        "hireDate": "2024-04-01",
+        "email": "rep4@pharmacare.com",
+        "phone": "+201001234570",
+        "status": "Active",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "code": "EMP-004",
+        "productIds": []
     },
     {
-      id: "hr1",
-      name: "Fatma El-Sherif",
-      nameAr: "فاطمة الشريف",
-      role: "hr",
-      employeeCode: "HR-001",
-      email: "hr@pharmacare.com",
-      phone: "+20100888999",
-      managerId: "admin1",
-      status: "Active",
-      hireDate: "2021-02-01",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "hr1",
+        "name": "Fatma El-Sherif",
+        "nameAr": "فاطمة الشريف",
+        "role": "hr",
+        "employeeCode": "HR-001",
+        "email": "hr@pharmacare.com",
+        "managerId": "admin1",
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2021-02-01",
+        "phone": "+20100888999",
+        "status": "Active",
+        "leaveBalance": {
+            "annual": 21,
+            "sick": 7,
+            "emergency": 6,
+            "unpaid": 0,
+            "maternity": 90
+        }
     },
     {
-      id: "pm1",
-      name: "Nader Khaled",
-      nameAr: "نادر خالد",
-      role: "product_manager",
-      employeeCode: "PM-001",
-      email: "pm@pharmacare.com",
-      phone: "+20100999111",
-      managerId: "bu1",
-      lineId: "line1",
-      lineIds: ["line1"],
-      productIds: ["prod1", "prod2", "prod3", "prod4"],
-      status: "Active",
-      hireDate: "2023-01-01",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "pm1",
+        "name": "Mina Kadry",
+        "nameAr": "نادر خالد",
+        "role": "product_manager",
+        "employeeCode": "PM-001",
+        "email": "pm@pharmacare.com",
+        "phone": "+20100999111",
+        "managerId": "bu1",
+        "lineId": "line1",
+        "lineIds": [
+            "line1"
+        ],
+        "productIds": [
+            "prod1",
+            "prod2",
+            "prod3",
+            "prod4",
+            "prod_1790625546491",
+            "prod_1790625561525",
+            "prod_1790625585077",
+            "prod_1790625595399",
+            "prod_1790625604666",
+            "prod_1790625614666",
+            "prod_1790625622736",
+            "prod_1790625631058"
+        ],
+        "status": "Active",
+        "hireDate": "2023-01-01",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "code": "PM-001"
     },
     {
-      id: "pm2",
-      name: "Yasmine Mourad",
-      nameAr: "ياسمين مراد",
-      role: "product_manager",
-      employeeCode: "PM-002",
-      email: "pm2@pharmacare.com",
-      phone: "+20100999222",
-      managerId: "bu1",
-      lineId: "line2",
-      lineIds: ["line2"],
-      productIds: ["prod5"],
-      status: "Active",
-      hireDate: "2023-06-01",
-      leaveBalance: { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 },
+        "id": "pm2",
+        "name": "Mohamed Ramadan",
+        "nameAr": "ياسمين مراد",
+        "role": "medical_rep",
+        "employeeCode": "EMP-005",
+        "email": "rep5@pharmacare.com",
+        "phone": "+20100999222",
+        "managerId": "dm2",
+        "lineId": "line1",
+        "lineIds": [
+            "line1"
+        ],
+        "productIds": [],
+        "status": "Active",
+        "hireDate": "2023-06-01",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "areaIds": [
+            "area_line1_1790674592471",
+            "area_line1_1790688137857"
+        ],
+        "area": "Dokki, Haram",
+        "areaId": "area_line1_1790674592471",
+        "code": "EMP-005"
     },
-  ],
+    {
+        "id": "u1790626731729",
+        "name": "Fady Adel",
+        "email": "pm2@pharmacare.com",
+        "code": "PM-002",
+        "employeeCode": "PM-002",
+        "role": "product_manager",
+        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "phone": "",
+        "hireDate": "2026-09-28",
+        "managerId": "bu1",
+        "status": "Active",
+        "lineIds": [
+            "line2"
+        ],
+        "lineId": "line2",
+        "productIds": [
+            "prod5",
+            "prod6"
+        ],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": null,
+        "areaId": null,
+        "areaIds": []
+    },
+    {
+        "id": "u1790626669586",
+        "name": "Mark Michel",
+        "email": "rep7@pharmacare.com",
+        "code": "EMP-007",
+        "employeeCode": "EMP-007",
+        "role": "medical_rep",
+        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "phone": "",
+        "hireDate": "2026-09-28",
+        "managerId": "dm3",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626036368"
+        ],
+        "lineId": "line_1790626036368",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Shobra",
+        "areaId": "area_line_1790626036368_1790674874231",
+        "areaIds": [
+            "area_line_1790626036368_1790674874231"
+        ]
+    },
+    {
+        "id": "u1790626607816",
+        "name": "Ahmed Harb",
+        "email": "rep6@pharmacare.com",
+        "code": "EMP-006",
+        "employeeCode": "EMP-006",
+        "role": "medical_rep",
+        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "phone": "01202379833",
+        "hireDate": "2026-09-28",
+        "managerId": "dm2",
+        "status": "Active",
+        "lineIds": [
+            "line2"
+        ],
+        "lineId": "line2",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Giza",
+        "areaId": "area_line2_1790674781879",
+        "areaIds": [
+            "area_line2_1790674781879"
+        ]
+    },
+    {
+        "id": "u1790687949946",
+        "name": "Mina Samir",
+        "email": "rep9@pharmacare.com",
+        "code": "EMP-009",
+        "employeeCode": "EMP-009",
+        "role": "medical_rep",
+        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "phone": "+201001234567",
+        "hireDate": "2026-09-29",
+        "managerId": "dm3",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626036368"
+        ],
+        "lineId": "line_1790626036368",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Mohndseen",
+        "areaId": "area_line_1790626036368_1790687909664",
+        "areaIds": [
+            "area_line_1790626036368_1790687909664"
+        ]
+    },
+    {
+        "id": "u1790688369929",
+        "name": "Marina Shobra",
+        "email": "rep11@pharmacare.com",
+        "code": "EMP-011",
+        "employeeCode": "EMP-011",
+        "role": "medical_rep",
+        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "phone": "",
+        "hireDate": "2026-09-29",
+        "managerId": "dm1",
+        "status": "Active",
+        "lineIds": [
+            "line1"
+        ],
+        "lineId": "line1",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Shobra",
+        "areaId": "area_line1_1790688305597",
+        "areaIds": [
+            "area_line1_1790688305597"
+        ]
+    },
+    {
+        "id": "u1790688412219",
+        "name": "Monica Shobra",
+        "email": "rep12@pharmacare.com",
+        "code": "EMP-012",
+        "employeeCode": "EMP-012",
+        "role": "medical_rep",
+        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "phone": "",
+        "hireDate": "2026-09-29",
+        "managerId": "dm1",
+        "status": "Active",
+        "lineIds": [
+            "line2"
+        ],
+        "lineId": "line2",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Shobra",
+        "areaId": "area_line2_1790688317554",
+        "areaIds": [
+            "area_line2_1790688317554"
+        ]
+    }
+],
   specialties: [
     { id: "spec_internal", code: "IM", name: "Internal Medicine", nameAr: "باطنة" },
     { id: "spec_pediatrics", code: "PED", name: "Pediatrics", nameAr: "أطفال" },
@@ -359,649 +754,12 @@ const DEFAULT_DEMO_DATA = {
       ],
     },
   ],
-  doctors: [
-    {
-      id: "d1",
-      name: "Ahmed Mostafa",
-      nameAr: "د. أحمد مصطفى",
-      specialtyId: "spec_internal",
-      specialty: "Internal Medicine",
-      specialtyAr: "باطنة",
-      class: "A",
-      type: "doctor",
-      clinicAddress: "15 Makram Ebeid, Nasr City",
-      phone: "01001234567",
-      repId: "rep1",
-      areaId: "area1",
-    },
-    {
-      id: "d2",
-      name: "Sara Abdullah",
-      nameAr: "د. سارة عبدالله",
-      specialtyId: "spec_pediatrics",
-      specialty: "Pediatrics",
-      specialtyAr: "أطفال",
-      class: "A",
-      type: "doctor",
-      clinicAddress: "22 Abbas Al-Akkad, Nasr City",
-      phone: "01112345678",
-      repId: "rep1",
-      areaId: "area1",
-    },
-    {
-      id: "d3",
-      name: "Mohamed Hassan",
-      nameAr: "د. محمد حسن",
-      specialtyId: "spec_dermatology",
-      specialty: "Dermatology",
-      specialtyAr: "جلدية",
-      class: "B",
-      type: "doctor",
-      clinicAddress: "8 Mostafa El Nahas, Nasr City",
-      phone: "01223456789",
-      repId: "rep1",
-      areaId: "area1",
-    },
-    {
-      id: "d4",
-      name: "Noura Mahmoud",
-      nameAr: "د. نورا محمود",
-      specialtyId: "spec_ophthalmology",
-      specialty: "Ophthalmology",
-      specialtyAr: "عيون",
-      class: "B",
-      type: "doctor",
-      clinicAddress: "3 Al Tayaran St, Nasr City",
-      phone: "01098765432",
-      repId: "rep1",
-      areaId: "area1",
-    },
-    {
-      id: "d5",
-      name: "Khaled Omar",
-      nameAr: "د. خالد عمر",
-      specialtyId: "spec_cardiology",
-      specialty: "Cardiology",
-      specialtyAr: "قلب وأوعية",
-      class: "A",
-      type: "doctor",
-      clinicAddress: "12 Nozha St, Heliopolis",
-      phone: "01234567890",
-      repId: "rep1",
-      areaId: "area1",
-    },
-    {
-      id: "d6",
-      name: "Mona Wagdy",
-      nameAr: "د. منى وجدي",
-      specialtyId: "spec_cardiology",
-      specialty: "Cardiology",
-      specialtyAr: "قلب وأوعية",
-      class: "A",
-      type: "doctor",
-      clinicAddress: "45 Al-Horreya St, Heliopolis",
-      phone: "01144556677",
-      repId: "rep2",
-      areaId: "area2",
-    },
-    {
-      id: "d7",
-      name: "Tamer Shawky",
-      nameAr: "د. تامر شوقي",
-      specialtyId: "spec_internal",
-      specialty: "Internal Medicine",
-      specialtyAr: "باطنة",
-      class: "B",
-      type: "doctor",
-      clinicAddress: "30 Nozha St, Heliopolis",
-      phone: "01088776655",
-      repId: "rep2",
-      areaId: "area2",
-    },
-    {
-      id: "d8",
-      name: "Essam Badawy",
-      nameAr: "د. عصام بدوي",
-      specialtyId: "spec_pediatrics",
-      specialty: "Pediatrics",
-      specialtyAr: "أطفال",
-      class: "A",
-      type: "doctor",
-      clinicAddress: "14 Abbas Al-Akkad, Nasr City",
-      phone: "01211223344",
-      repId: "rep3",
-      areaId: "area1",
-    },
-    {
-      id: "d9",
-      name: "Rania Helmy",
-      nameAr: "د. رانيا حلمي",
-      specialtyId: "spec_dermatology",
-      specialty: "Dermatology",
-      specialtyAr: "جلدية",
-      class: "B",
-      type: "doctor",
-      clinicAddress: "19 Merghany St, Heliopolis",
-      phone: "01066778899",
-      repId: "rep4",
-      areaId: "area3",
-    },
-  ],
-  hospitals: [
-    {
-      id: "h1",
-      name: "Al-Salam International Hospital",
-      nameAr: "مستشفى السلام الدولي",
-      type: "hospital",
-      address: "15 Makram Ebeid, Nasr City",
-      phone: "0225240250",
-      repId: "rep1",
-      areaId: "area1",
-      lineId: "line1",
-    },
-    {
-      id: "h2",
-      name: "Nasser Institute",
-      nameAr: "معهد ناصر",
-      type: "hospital",
-      address: "Corniche El Nil, Nasr City",
-      phone: "0222039164",
-      repId: "rep1",
-      areaId: "area1",
-      lineId: "line1",
-    },
-    {
-      id: "h3",
-      name: "Cleopatra Hospital",
-      nameAr: "مستشفى كليوباترا",
-      type: "hospital",
-      address: "39 Cleopatra St, Heliopolis",
-      phone: "0224143931",
-      repId: "rep2",
-      areaId: "area2",
-      lineId: "line1",
-    },
-    {
-      id: "h4",
-      name: "Dar Al Fouad Hospital",
-      nameAr: "مستشفى دار الفؤاد",
-      type: "hospital",
-      address: "26th of July Corridor, Nasr City",
-      phone: "0238247247",
-      repId: "rep4",
-      areaId: "area3",
-      lineId: "line2",
-    },
-  ],
-  pharmacies: [
-    {
-      id: "p1",
-      name: "Al-Ezaby Pharmacy",
-      nameAr: "صيدلية العزبي",
-      address: "15 Abbas Al-Akkad, Nasr City",
-      phone: "01001112233",
-      contactPerson: "Mohamed Ibrahim",
-      areaId: "area1",
-      repId: "rep1",
-    },
-    {
-      id: "p2",
-      name: "Seif Pharmacy",
-      nameAr: "صيدلية سيف",
-      address: "28 Mostafa El-Nahas, Nasr City",
-      phone: "01009998877",
-      contactPerson: "Youssef Ahmed",
-      areaId: "area1",
-      repId: "rep1",
-    },
-    {
-      id: "p3",
-      name: "Roshdy Pharmacy",
-      nameAr: "صيدلية رشدي",
-      address: "5 Tayaran St, Nasr City",
-      phone: "01155566677",
-      contactPerson: "Ramy Adel",
-      areaId: "area1",
-      repId: "rep1",
-    },
-    {
-      id: "p4",
-      name: "19011 Pharmacy",
-      nameAr: "صيدلية 19011",
-      address: "42 Makram Ebeid, Nasr City",
-      phone: "01234567890",
-      contactPerson: "Sara Maher",
-      areaId: "area1",
-      repId: "rep1",
-    },
-    {
-      id: "p5",
-      name: "Misr Pharmacy",
-      nameAr: "صيدلية مصر",
-      address: "18 Al-Ahram St, Heliopolis",
-      phone: "01099887766",
-      contactPerson: "Hazem Tarek",
-      areaId: "area2",
-      repId: "rep2",
-    },
-    {
-      id: "p6",
-      name: "El-Tarshouby Pharmacy",
-      nameAr: "صيدلية الطرشوبي",
-      address: "10 Abbas Al-Akkad, Nasr City",
-      phone: "01223344556",
-      contactPerson: "Mina Magdy",
-      areaId: "area1",
-      repId: "rep3",
-    },
-    {
-      id: "p7",
-      name: "Dawaee Pharmacy",
-      nameAr: "صيدلية دوائي",
-      address: "25 Beirut St, Heliopolis",
-      phone: "01122334455",
-      contactPerson: "Hoda Sameh",
-      areaId: "area2",
-      repId: "rep2",
-    },
-  ],
-  visits: [
-    {
-      id: "v1",
-      repId: "rep1",
-      doctorId: "d1",
-      doctorName: "Ahmed Mostafa",
-      date: "2026-09-02",
-      time: "11:30",
-      period: "pm",
-      visitType: "single",
-      productIds: ["prod1"],
-      products: ["Amoxicillin 500mg"],
-      comment: "Discussed new formulation",
-      status: "completed",
-      source: "plan",
-    },
-    {
-      id: "v2",
-      repId: "rep1",
-      doctorId: "d2",
-      doctorName: "Sara Abdullah",
-      date: "2026-09-02",
-      time: "14:15",
-      period: "pm",
-      visitType: "double",
-      doubleWithUserId: "dm1",
-      doubleWithUserName: "Karim Nasser",
-      productIds: ["prod2"],
-      products: ["Vitamin D Drops 1000IU"],
-      comment: "Joint visit with DM",
-      status: "completed",
-      source: "plan",
-    },
-    {
-      id: "v3",
-      repId: "rep1",
-      doctorId: "h1",
-      doctorName: "Al-Salam Hospital",
-      date: "2026-09-02",
-      time: "09:45",
-      period: "am",
-      visitType: "single",
-      productIds: [],
-      products: [],
-      comment: "Morning rounds",
-      status: "completed",
-      source: "plan",
-    },
-    {
-      id: "v4",
-      repId: "rep1",
-      doctorId: "d3",
-      doctorName: "Mohamed Hassan",
-      date: "2026-09-02",
-      time: "16:00",
-      period: "pm",
-      visitType: "single",
-      productIds: ["prod3"],
-      products: ["Omeprazole 20mg"],
-      comment: "Urgent visit",
-      status: "completed",
-      source: "actual",
-    },
-    {
-      id: "v5",
-      repId: "rep1",
-      doctorId: "h2",
-      doctorName: "Nasser Institute",
-      date: "2026-09-03",
-      time: "10:00",
-      period: "am",
-      visitType: "single",
-      productIds: [],
-      products: [],
-      comment: "",
-      status: "planned",
-      source: "plan",
-    },
-    {
-      id: "v6",
-      repId: "rep1",
-      doctorId: "d4",
-      doctorName: "Ali Mahmoud",
-      date: "2026-09-03",
-      time: "13:00",
-      period: "pm",
-      visitType: "single",
-      productIds: [],
-      products: [],
-      comment: "",
-      status: "planned",
-      source: "plan",
-    },
-    {
-      id: "v7",
-      repId: "rep2",
-      doctorId: "d5",
-      doctorName: "Khaled Omar",
-      date: "2026-09-02",
-      time: "13:00",
-      period: "pm",
-      visitType: "single",
-      productIds: [],
-      products: [],
-      comment: "",
-      status: "planned",
-      source: "plan",
-    },
-    {
-      id: "v8",
-      repId: "rep2",
-      doctorId: "d6",
-      doctorName: "Youssef Fathy",
-      date: "2026-09-01",
-      time: "14:20",
-      period: "pm",
-      visitType: "single",
-      productIds: ["prod4"],
-      products: ["Azithromycin 250mg"],
-      comment: "Sample dropped",
-      status: "completed",
-      source: "actual",
-    },
-    {
-      id: "v9",
-      repId: "lm1",
-      doctorId: "h3",
-      doctorName: "Dar Al Fouad",
-      date: "2026-09-02",
-      time: "10:30",
-      period: "am",
-      visitType: "single",
-      productIds: ["prod1"],
-      products: ["Amoxicillin 500mg"],
-      comment: "Key account hospital follow-up",
-      status: "completed",
-      source: "actual",
-    },
-    {
-      id: "v10",
-      repId: "lm1",
-      doctorId: "d7",
-      doctorName: "Tamer Shawky",
-      date: "2026-09-02",
-      time: "15:00",
-      period: "pm",
-      visitType: "single",
-      productIds: ["prod3"],
-      products: ["Omeprazole 20mg"],
-      comment: "Quarterly review",
-      status: "planned",
-      source: "plan",
-    },
-    {
-      id: "v11",
-      repId: "dm1",
-      doctorId: "h4",
-      doctorName: "Cleopatra Hospital",
-      date: "2026-09-02",
-      time: "09:30",
-      period: "am",
-      visitType: "single",
-      productIds: ["prod4"],
-      products: ["Azithromycin 250mg"],
-      comment: "",
-      status: "completed",
-      source: "actual",
-    },
-    {
-      id: "v12",
-      repId: "dm2",
-      doctorId: "d8",
-      doctorName: "Essam Badawy",
-      date: "2026-09-02",
-      time: "14:00",
-      period: "pm",
-      visitType: "single",
-      productIds: ["prod2"],
-      products: ["Vitamin D Drops 1000IU"],
-      comment: "",
-      status: "planned",
-      source: "plan",
-    },
-    {
-      id: "v13",
-      repId: "rep3",
-      doctorId: "d9",
-      doctorName: "Rania Helmy",
-      date: "2026-09-02",
-      time: "16:30",
-      period: "pm",
-      visitType: "single",
-      productIds: ["prod3"],
-      products: ["Omeprazole 20mg"],
-      comment: "Product presentation",
-      status: "completed",
-      source: "actual",
-    },
-    {
-      id: "v14",
-      repId: "rep1",
-      doctorId: "d5",
-      doctorName: "Khaled Omar",
-      date: "2026-09-06",
-      time: "11:00",
-      period: "pm",
-      status: "pending_approval",
-      productIds: [],
-      products: [],
-      comment: "Monthly regular visit plan",
-      source: "plan",
-    },
-    {
-      id: "v15",
-      repId: "rep1",
-      doctorId: "h2",
-      doctorName: "Nasser Institute",
-      date: "2026-09-06",
-      time: "09:30",
-      period: "am",
-      status: "pending_approval",
-      productIds: [],
-      products: [],
-      comment: "Morning clinical rounds",
-      source: "plan",
-    },
-    {
-      id: "v16",
-      repId: "rep1",
-      doctorId: "d2",
-      doctorName: "Sara Abdullah",
-      date: "2026-09-07",
-      time: "13:30",
-      period: "pm",
-      status: "pending_approval",
-      productIds: [],
-      products: [],
-      comment: "Follow-up discussion",
-      source: "plan",
-    },
-    {
-      id: "v17",
-      repId: "rep2",
-      doctorId: "d6",
-      doctorName: "Mona Wagdy",
-      date: "2026-09-06",
-      time: "12:15",
-      period: "pm",
-      status: "pending_approval",
-      productIds: [],
-      products: [],
-      comment: "Cardio line product update",
-      source: "plan",
-    },
-    {
-      id: "v18",
-      repId: "rep2",
-      doctorId: "d7",
-      doctorName: "Tamer Shawky",
-      date: "2026-09-07",
-      time: "15:00",
-      period: "pm",
-      status: "pending_approval",
-      productIds: [],
-      products: [],
-      comment: "Quarterly sampling",
-      source: "plan",
-    },
-    {
-      id: "v19",
-      repId: "rep3",
-      doctorId: "d8",
-      doctorName: "Essam Badawy",
-      date: "2026-09-08",
-      time: "10:30",
-      period: "pm",
-      status: "pending_approval",
-      productIds: [],
-      products: [],
-      comment: "Pediatrics field plan",
-      source: "plan",
-    },
-    {
-      id: "v20",
-      repId: "rep2",
-      doctorId: "d6",
-      doctorName: "Mona Wagdy",
-      date: "2026-09-08",
-      time: "11:00",
-      period: "pm",
-      status: "planned",
-      productIds: [],
-      products: [],
-      comment: "Cardiology follow-up & product presentation",
-      source: "plan",
-    },
-    {
-      id: "v21",
-      repId: "rep2",
-      doctorId: "d7",
-      doctorName: "Tamer Shawky",
-      date: "2026-09-08",
-      time: "13:30",
-      period: "pm",
-      status: "planned",
-      productIds: [],
-      products: [],
-      comment: "Internal medicine sampling & discussion",
-      source: "plan",
-    },
-  ],
-  leaves: [
-    {
-      id: "l1",
-      userId: "rep1",
-      userName: "Ahmed Mostafa",
-      userRole: "medical_rep",
-      type: "annual",
-      dayDuration: "full",
-      days: 5,
-      startDate: "2026-08-01",
-      endDate: "2026-08-05",
-      reason: "Family vacation",
-      attachmentName: "flight_tickets.pdf",
-      status: "approved",
-      approvals: {
-        dm: {
-          status: "approved",
-          approverName: "Karim Nasser",
-          updatedAt: "2026-07-28 10:30 AM",
-        },
-        lm: {
-          status: "approved",
-          approverName: "Hassan Ali",
-          updatedAt: "2026-07-28 02:15 PM",
-        },
-        hr: {
-          status: "approved",
-          approverName: "Fatma El-Sherif",
-          updatedAt: "2026-07-29 09:00 AM",
-        },
-      },
-    },
-    {
-      id: "l2",
-      userId: "rep1",
-      userName: "Ahmed Mostafa",
-      userRole: "medical_rep",
-      type: "sick",
-      dayDuration: "full",
-      days: 2,
-      startDate: "2026-09-10",
-      endDate: "2026-09-11",
-      reason: "Medical rest",
-      attachmentName: "doctor_prescription.pdf",
-      status: "pending",
-      approvals: {
-        dm: { status: "pending", approverName: null, updatedAt: null },
-        lm: { status: "pending", approverName: null, updatedAt: null },
-        hr: { status: "pending", approverName: null, updatedAt: null },
-      },
-    },
-    {
-      id: "l3",
-      userId: "dm1",
-      userName: "Karim Nasser",
-      userRole: "district_manager",
-      type: "casual",
-      dayDuration: "full",
-      days: 1,
-      startDate: "2026-09-15",
-      endDate: "2026-09-15",
-      reason: "Urgent family matter",
-      attachmentName: null,
-      status: "pending",
-      approvals: {
-        lm: { status: "pending", approverName: null, updatedAt: null },
-        hr: { status: "pending", approverName: null, updatedAt: null },
-      },
-    },
-  ],
-  sales: [
-    { id: 's1', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 20000, actual: 22500, amount: 22500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's2', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 13000, amount: 13000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's3', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 10000, actual: 9500, amount: 9500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's4', month: '2026-09', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 8000, actual: 7000, amount: 7000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's5', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 19000, amount: 19000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's6', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 11000, amount: 11000, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's7', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 7500, amount: 7500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's8', month: '2026-09', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 3500, amount: 3500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's9', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Amoxicillin 500mg', productId: 'prod1', target: 18000, actual: 21000, amount: 21000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's10', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 12000, actual: 14000, amount: 14000, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's11', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Omeprazole 20mg', productId: 'prod3', target: 9000, actual: 8500, amount: 8500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's12', month: '2026-08', repName: 'Ahmed Mostafa', area: 'Nasr City', product: 'Azithromycin 250mg', productId: 'prod4', target: 6000, actual: 6500, amount: 6500, repId: 'rep1', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's13', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Amoxicillin 500mg', productId: 'prod1', target: 17000, actual: 18500, amount: 18500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' },
-    { id: 's14', month: '2026-08', repName: 'Omar Youssef', area: 'Heliopolis', product: 'Vitamin D Drops 1000IU', productId: 'prod2', target: 11000, actual: 11500, amount: 11500, repId: 'rep2', dmId: 'dm1', lmId: 'lm1', lineId: 'line1' }
-  ],
+  doctors: [],
+  hospitals: [],
+  pharmacies: [],
+  visits: [],
+  leaves: [],
+  sales: [],
   announcements: [
     {
       id: "ann1",
@@ -1207,137 +965,37 @@ function loadDataFromStorage() {
         } else {
           data.productLines = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.productLines));
         }
-        if (Array.isArray(data.doctors)) {
-          // Add any missing default doctors, but KEEP localStorage edits (name, areaId, etc.)
-          DEFAULT_DEMO_DATA.doctors.forEach((d) => {
-            const existing = data.doctors.find((ed) => ed.id === d.id);
-            if (!existing) {
-              // Doctor was deleted — don't re-add from defaults
-              // data.doctors.push(d);
-            } else {
-              // Merge missing fields from defaults without overwriting localStorage edits
-              if (!existing.specialtyId && d.specialtyId) existing.specialtyId = d.specialtyId;
-              if (!existing.areaId && d.areaId) existing.areaId = d.areaId;
-              if (!existing.lineId && d.lineId) existing.lineId = d.lineId;
-            }
-          });
-        } else {
-          data.doctors = [...DEFAULT_DEMO_DATA.doctors];
-        }
-        if (Array.isArray(data.pharmacies) && data.pharmacies.length > 0) {
-          DEFAULT_DEMO_DATA.pharmacies.forEach((p) => {
-            if (!data.pharmacies.some((existing) => existing.id === p.id)) {
-              data.pharmacies.push(p);
-            }
-          });
-        } else {
-          data.pharmacies = [...DEFAULT_DEMO_DATA.pharmacies];
-        }
-        if (Array.isArray(data.hospitals)) {
-          DEFAULT_DEMO_DATA.hospitals.forEach((h) => {
-            const existing = data.hospitals.find((eh) => eh.id === h.id);
-            if (existing) {
-              if (!existing.areaId && h.areaId) existing.areaId = h.areaId;
-              if (!existing.lineId && h.lineId) existing.lineId = h.lineId;
-              if (!existing.address && h.address) existing.address = h.address;
-              if (!existing.phone && h.phone) existing.phone = h.phone;
-            }
-          });
-        } else {
-          data.hospitals = [...DEFAULT_DEMO_DATA.hospitals];
-        }
-        if (Array.isArray(data.leaves)) {
-          DEFAULT_DEMO_DATA.leaves.forEach((l) => {
-            const existingIdx = data.leaves.findIndex(
-              (existing) => existing.id === l.id,
-            );
-            if (existingIdx === -1) {
-              data.leaves.push(l);
-            } else if (!data.leaves[existingIdx].approvals) {
-              data.leaves[existingIdx] = {
-                ...l,
-                ...data.leaves[existingIdx],
-                approvals: l.approvals,
-              };
-            } else if (l.id === "l2" && data.leaves[existingIdx].approvals?.dm?.updatedAt === "2026-09-02 11:30 AM") {
-              data.leaves[existingIdx].approvals.dm = { status: "pending", approverName: null, updatedAt: null };
-            }
-          });
-          data.leaves.forEach((lv) => {
-            const isDM = lv.userRole === "district_manager" || lv.userRole === "dm" || lv.userId === "dm1";
-            if (isDM && lv.approvals && lv.approvals.dm) {
-              delete lv.approvals.dm;
-            }
-            if (lv.approvals) {
-              ["dm", "lm", "hr"].forEach((tier) => {
-                if (lv.approvals[tier] && lv.approvals[tier].approverName) {
-                  lv.approvals[tier].approverName = lv.approvals[
-                    tier
-                  ].approverName
-                    .replace(/\s*\((?:DM|LM|HR|Self)\)/gi, "")
-                    .trim();
-                  if (
-                    lv.approvals[tier].approverName.toLowerCase() === "self"
-                  ) {
-                    delete lv.approvals[tier];
-                  }
-                }
-              });
-            }
-          });
-        } else {
-          data.leaves = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.leaves));
-        }
-        if (
-          !Array.isArray(data.publicHolidays) ||
-          data.publicHolidays.length === 0
-        ) {
-          data.publicHolidays = JSON.parse(
-            JSON.stringify(DEFAULT_DEMO_DATA.publicHolidays),
-          );
-        }
-        if (Array.isArray(data.visits)) {
-          data.visits.forEach((item) => {
-            if (item.comment && /supervisory/i.test(item.comment)) {
-              item.comment = "";
-            }
-            if (!item.insertionDate) {
-              item.insertionDate = item.createdAt ? item.createdAt.slice(0, 10) : item.date;
-            }
-            if (!item.insertionTime) {
-              item.insertionTime = item.time || "10:00";
-            }
-          });
-          DEFAULT_DEMO_DATA.visits.forEach((v) => {
-            const existingIdx = data.visits.findIndex((existing) => existing.id === v.id);
-            if (existingIdx === -1) {
-              data.visits.push(v);
-            } else if (v.id === "v2" || v.id === "v11" || v.id === "v12" || v.id === "v20" || v.id === "v21") {
-              data.visits[existingIdx] = { ...v };
-            }
-          });
-        } else {
-          data.visits = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.visits));
-        }
-        // Ensure synchronized sales seed
-        if (!Array.isArray(data.sales) || data.sales.length === 0) {
-          data.sales = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.sales));
-        }
-        if (!Array.isArray(data.pharmacyOverrides)) {
-          data.pharmacyOverrides = [];
-        }
-        // Ensure synchronized live workflow notifications seed
-        if (!Array.isArray(data.notifications) || data.notifications.length === 0) {
-          data.notifications = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.notifications));
-        } else {
-          const hasRepNotifs = data.notifications.some((n) => n.userId === "rep1");
-          if (!hasRepNotifs) {
-            DEFAULT_DEMO_DATA.notifications.forEach((dn) => {
-              if (dn.userId === "rep1") data.notifications.unshift(dn);
-            });
-          }
-        }
+        // Ensure clean collections and purge all legacy demo data
+        const demoUserIds = ["rep1", "rep2", "rep3", "rep4", "dm1", "dm2", "dm3", "lm1", "lm2", "bu1", "pm1", "pm2", "hr1"];
 
+        if (!Array.isArray(data.doctors)) data.doctors = [];
+        data.doctors = data.doctors.filter((d) => d && d.id && !d.id.startsWith("d"));
+
+        if (!Array.isArray(data.pharmacies)) data.pharmacies = [];
+        data.pharmacies = data.pharmacies.filter((p) => p && p.id && !p.id.startsWith("ph"));
+
+        if (!Array.isArray(data.hospitals)) data.hospitals = [];
+        data.hospitals = data.hospitals.filter((h) => h && h.id && !h.id.startsWith("h"));
+
+        if (!Array.isArray(data.visits)) data.visits = [];
+        data.visits = data.visits.filter((v) => v && v.id && !v.id.startsWith("v") && !v.id.startsWith("today_v"));
+
+        if (!Array.isArray(data.sales)) data.sales = [];
+        data.sales = data.sales.filter((s) => s && s.id && !s.id.startsWith("s") && !s.id.startsWith("ds_s"));
+
+        if (!Array.isArray(data.leaves)) data.leaves = [];
+        data.leaves = data.leaves.filter((l) => l && l.id && !l.id.startsWith("l"));
+
+        if (!Array.isArray(data.pharmacyOverrides)) data.pharmacyOverrides = [];
+        if (!Array.isArray(data.notifications)) data.notifications = [];
+        data.notifications = data.notifications.filter((n) => n && n.userId && !demoUserIds.includes(n.userId));
+
+        if (!Array.isArray(data.users)) data.users = [];
+        DEFAULT_DEMO_DATA.users.forEach((defUser) => {
+          if (!data.users.some((u) => u.id === defUser.id)) {
+            data.users.push(defUser);
+          }
+        });
         // Auto-migration: If pharma_master_data still contains distributorSales, extract it to pharma_sales_data
         if ("distributorSales" in data) {
           if (Array.isArray(data.distributorSales) && data.distributorSales.length > 0) {
@@ -1366,7 +1024,14 @@ function loadDataFromStorage() {
       } catch (err) {
         console.error("Error loading pharma_sales_data from localStorage:", err);
       }
+      if (Array.isArray(salesData)) {
+        salesData = salesData.filter((s) => s && s.id && !s.id.startsWith("ds_s"));
+      }
       data.distributorSales = Array.isArray(salesData) ? salesData : [];
+
+      if (Array.isArray(data.targets)) {
+        data.targets = data.targets.filter((t) => t && t.id && !t.id.startsWith("target_s"));
+      }
 
       return data;
     }
@@ -1405,6 +1070,9 @@ function saveSalesDataToStorage() {
     if (!window.DEMO_DATA) return;
     const sales = window.DEMO_DATA.distributorSales || [];
     localStorage.setItem("pharma_sales_data", JSON.stringify(sales));
+    if (typeof window.pushSalesToCloud === "function" && !window._suppressCloudPush) {
+      window.pushSalesToCloud();
+    }
   } catch (err) {
     console.error("Error saving pharma_sales_data to localStorage:", err);
   }
@@ -3404,8 +3072,9 @@ if (!window._workflowNotifListenersAttached) {
 // Section 9: Authentication & Session
 // ============================================================================
 function checkAuth() {
-  const userStr =
-    sessionStorage.getItem("pharmaUser") || localStorage.getItem("pharmaUser");
+  const sessionStr = sessionStorage.getItem("pharmaUser");
+  const localStr = localStorage.getItem("pharmaUser");
+  const userStr = sessionStr || localStr;
   if (userStr) {
     try {
       const parsed = JSON.parse(userStr);
@@ -3419,10 +3088,19 @@ function checkAuth() {
         if (freshUser) {
           const merged = { ...parsed, ...freshUser };
           sessionStorage.setItem("pharmaUser", JSON.stringify(merged));
+          localStorage.setItem("pharmaUser", JSON.stringify(merged));
+          localStorage.setItem("userRole", merged.role);
+          localStorage.setItem("userId", merged.id);
           return merged;
         }
       }
-      return parsed;
+      if (parsed && parsed.id) {
+        sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
+        localStorage.setItem("pharmaUser", JSON.stringify(parsed));
+        if (parsed.role) localStorage.setItem("userRole", parsed.role);
+        localStorage.setItem("userId", parsed.id);
+        return parsed;
+      }
     } catch (e) {}
   }
   const savedUserId = localStorage.getItem("userId");
@@ -3430,6 +3108,9 @@ function checkAuth() {
     const user = DEMO_DATA.users.find((u) => u.id === savedUserId);
     if (user) {
       sessionStorage.setItem("pharmaUser", JSON.stringify(user));
+      localStorage.setItem("pharmaUser", JSON.stringify(user));
+      localStorage.setItem("userRole", user.role);
+      localStorage.setItem("userId", user.id);
       return user;
     }
   }
@@ -3499,13 +3180,18 @@ function switchDemoUser(role) {
     dm: "district_manager",
     rep: "medical_rep",
     hr: "hr",
+    pm: "product_manager",
   };
   const targetRole = roleMap[role] || role;
-  const user = DEMO_DATA.users.find((u) => u.role === targetRole);
+  const usersList = (typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users) && DEMO_DATA.users.length > 0)
+    ? DEMO_DATA.users
+    : DEFAULT_DEMO_DATA.users;
+  const user = usersList.find((u) => u.role === targetRole) || usersList.find((u) => u.id === role);
   if (user) {
     sessionStorage.removeItem("pharma_logged_out");
     sessionStorage.setItem("pharmaUser", JSON.stringify(user));
-    localStorage.setItem("userRole", targetRole);
+    localStorage.setItem("pharmaUser", JSON.stringify(user));
+    localStorage.setItem("userRole", user.role);
     localStorage.setItem("userId", user.id);
     window.location.reload();
   }

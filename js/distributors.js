@@ -1020,7 +1020,7 @@ function linkAreaAlias(distributorId, areaRaw, selectId) {
     window.store.areas.addAlias(areaId, distributorId, areaRaw);
   }
   if (window.store && window.store.distributorSales) {
-    window.store.distributorSales.applyAreaMatching();
+    window.store.distributorSales.applyAreaMatching(true);
   }
 
   renderPendingAreas();
@@ -2359,3 +2359,15 @@ window.populateUploadControls = populateUploadControls;
 if (typeof updatePovrRepDisplay === "function") {
   window.updatePovrRepDisplay = updatePovrRepDisplay;
 }
+
+// Auto-refresh distributor views when new data syncs from Cloud Firestore
+document.addEventListener("pharma:storage:synced", (e) => {
+  if (e.detail && (e.detail.key === "pharma_sales_data" || e.detail.key === "pharma_master_data")) {
+    try { if (typeof renderImportBatches === "function") renderImportBatches(); } catch (e) {}
+    try { if (typeof renderPendingAreas === "function") renderPendingAreas(); } catch (e) {}
+    try { if (typeof renderPendingProducts === "function") renderPendingProducts(); } catch (e) {}
+    try { if (typeof renderMappedAliases === "function") renderMappedAliases(); } catch (e) {}
+    try { if (typeof renderDistributors === "function") renderDistributors(); } catch (e) {}
+    try { if (typeof updateStats === "function") updateStats(); } catch (e) {}
+  }
+});
