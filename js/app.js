@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v73";
+  const EXPECTED_SW = "v77";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2936,7 +2936,7 @@ function renderTopbar(force = false) {
           <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
         </div>
 
-        <button class="pharma-action-btn" onclick="switchLanguage('${lang === "ar" ? "en" : "ar"}')" title="Language">
+        <button class="pharma-action-btn" style= "display: none;" onclick="switchLanguage('${lang === "ar" ? "en" : "ar"}')" title="Language">
           &#127760; <span id="langLabel">${lang === "ar" ? "English" : "عربي"}</span>
         </button>
         

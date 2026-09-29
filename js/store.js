@@ -306,10 +306,13 @@
         const area = this.getById(areaId);
         if (!area || !rawText) return;
         const normalized = String(rawText).trim().toLowerCase();
+        const targetNameNormalized = String(area.name).trim().toLowerCase();
 
         const allAreas = window.DEMO_DATA && Array.isArray(window.DEMO_DATA.areas) ? window.DEMO_DATA.areas : [];
+        
+        // 1. Remove this alias from any area with a different geographic name
         allAreas.forEach((otherArea) => {
-          if (otherArea.id !== areaId && Array.isArray(otherArea.aliases)) {
+          if (String(otherArea.name).trim().toLowerCase() !== targetNameNormalized && Array.isArray(otherArea.aliases)) {
             otherArea.aliases = otherArea.aliases.filter(
               (al) =>
                 !(al.distributorId === distributorId &&
@@ -318,54 +321,75 @@
           }
         });
 
-        if (!Array.isArray(area.aliases)) area.aliases = [];
-        const exists = area.aliases.some(
-          (al) =>
-            al.distributorId === distributorId &&
-            String(al.rawText).trim().toLowerCase() === normalized,
-        );
-        if (!exists) {
-          area.aliases.push({ distributorId, rawText: String(rawText).trim() });
-        }
-        autoSave("areas", "addAlias", { areaId, distributorId, rawText });
+        // 2. Add alias to ALL areas matching this geographic name across all lines
+        allAreas.forEach((matchingArea) => {
+          if (String(matchingArea.name).trim().toLowerCase() === targetNameNormalized) {
+            if (!Array.isArray(matchingArea.aliases)) matchingArea.aliases = [];
+            const exists = matchingArea.aliases.some(
+              (al) =>
+                al.distributorId === distributorId &&
+                String(al.rawText).trim().toLowerCase() === normalized,
+            );
+            if (!exists) {
+              matchingArea.aliases.push({ distributorId, rawText: String(rawText).trim() });
+            }
+          }
+        });
+
+        autoSave("areas", "addAlias", { areaId, areaName: area.name, distributorId, rawText });
       },
       /**
-       * Removes an alias mapping from an area and clears sales row attribution for that raw text.
+       * Removes an alias mapping from an area and clears sales row attribution for that raw text across all lines.
        */
       removeAlias(areaId, distributorId, rawText) {
         const area = this.getById(areaId);
-        if (!area || !rawText || !Array.isArray(area.aliases)) return false;
+        if (!area || !rawText) return false;
         const normalized = String(rawText).trim().toLowerCase();
-        const initialLen = area.aliases.length;
-        area.aliases = area.aliases.filter(
-          (al) =>
-            !(al.distributorId === distributorId && String(al.rawText).trim().toLowerCase() === normalized)
-        );
-        const removed = area.aliases.length < initialLen;
-        if (removed) {
+        const targetNameNormalized = String(area.name).trim().toLowerCase();
+
+        const allAreas = window.DEMO_DATA && Array.isArray(window.DEMO_DATA.areas) ? window.DEMO_DATA.areas : [];
+        let anyRemoved = false;
+
+        allAreas.forEach((matchingArea) => {
+          if (String(matchingArea.name).trim().toLowerCase() === targetNameNormalized && Array.isArray(matchingArea.aliases)) {
+            const initialLen = matchingArea.aliases.length;
+            matchingArea.aliases = matchingArea.aliases.filter(
+              (al) =>
+                !(al.distributorId === distributorId && String(al.rawText).trim().toLowerCase() === normalized)
+            );
+            if (matchingArea.aliases.length < initialLen) anyRemoved = true;
+          }
+        });
+
+        if (anyRemoved) {
           if (store.distributorSales && typeof store.distributorSales.unmatchAliasRows === "function") {
             store.distributorSales.unmatchAliasRows(distributorId, rawText);
           }
-          autoSave("areas", "removeAlias", { areaId, distributorId, rawText });
+          autoSave("areas", "removeAlias", { areaId, areaName: area.name, distributorId, rawText });
         }
-        return removed;
+        return anyRemoved;
       },
       /**
-       * Returns all active mapped area aliases across all areas.
+       * Returns all active mapped area aliases across all areas (deduplicated by geographic area).
        */
       getAllAliases() {
         const result = [];
+        const seen = new Set();
         (window.DEMO_DATA.areas || []).forEach((a) => {
           if (Array.isArray(a.aliases)) {
             a.aliases.forEach((al) => {
-              result.push({
-                areaId: a.id,
-                areaName: a.name,
-                areaCode: a.code || "",
-                lineId: a.lineId || null,
-                distributorId: al.distributorId,
-                rawText: al.rawText,
-              });
+              const key = `${al.distributorId}||${String(al.rawText).trim().toLowerCase()}||${String(a.name).trim().toLowerCase()}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                result.push({
+                  areaId: a.id,
+                  areaName: a.name,
+                  areaCode: a.code || "",
+                  lineId: a.lineId || null,
+                  distributorId: al.distributorId,
+                  rawText: al.rawText,
+                });
+              }
             });
           }
         });

@@ -3001,23 +3001,130 @@ function renderBUDashboard(userName, user) {
 }
 
 /**
+ * Generates dynamic recent system activities for the Admin dashboard from live store entities.
+ * @param {string} lang - 'ar' or 'en'
+ * @returns {Array<{text: string, type: string}>}
+ */
+function getSystemRecentActivities(lang) {
+  const isAr = lang === "ar";
+  const activities = [];
+
+  const allUsers = (window.store && window.store.users) ? window.store.users.getAll() : (window.DEMO_DATA?.users || []);
+  const allAreas = (window.store && window.store.areas) ? window.store.areas.getAll() : (window.DEMO_DATA?.areas || []);
+  const allLines = (window.store && window.store.productLines) ? window.store.productLines.getAll() : (window.DEMO_DATA?.productLines || []);
+  const allDistributors = (window.store && window.store.distributors) ? window.store.distributors.getAll() : (window.DEMO_DATA?.distributors || []);
+  const allSales = (window.store && window.store.distributorSales) ? window.store.distributorSales.getAll() : [];
+  const allAnnouncements = (window.store && window.store.announcements) ? window.store.announcements.getAll() : (window.DEMO_DATA?.announcements || []);
+
+  // 1. Cloud Sync / Database state
+  const isCloudLive = typeof window.pushLocalToCloud === "function";
+  if (isCloudLive) {
+    activities.push({
+      type: "primary",
+      text: isAr
+        ? "مزامنة السحابة المباشرة (Cloud Live) نشطة ومتصلة بقاعدة البيانات."
+        : "Live Cloud Synchronization (Cloud Live) active and connected to Firestore."
+    });
+  } else {
+    activities.push({
+      type: "primary",
+      text: isAr
+        ? "النظام يعمل في وضع التخزين المحلي الآمن (Local Storage Active)."
+        : "System operating in reliable local storage mode."
+    });
+  }
+
+  // 2. Distributor Sales or Configuration
+  if (allSales.length > 0) {
+    activities.push({
+      type: "success",
+      text: isAr
+        ? `شيتات المبيعات: تم تسجيل ${allSales.length} حركة بيع للموزعين في النظام.`
+        : `Distributor Sales: ${allSales.length} distributor sales records registered in system.`
+    });
+  } else if (allDistributors.length > 0) {
+    const configuredCount = allDistributors.filter(d => d.columnMap && d.columnMap.product && d.columnMap.value).length;
+    activities.push({
+      type: "success",
+      text: isAr
+        ? `إدارة الموزعين: تم تسجيل ${allDistributors.length} موزعين (${configuredCount} مهيئين للمطابقة).`
+        : `Distributors: ${allDistributors.length} distributors registered (${configuredCount} configured for mapping).`
+    });
+  }
+
+  // 3. Product Lines
+  if (allLines.length > 0) {
+    const firstLine = allLines[0];
+    const prodCount = Array.isArray(firstLine.products) ? firstLine.products.length : 0;
+    activities.push({
+      type: "success",
+      text: isAr
+        ? `خط الإنتاج "${firstLine.name}": معتمد ويضم ${prodCount} أصناف دوائية.`
+        : `Product Line "${firstLine.name}": Verified with ${prodCount} pharmaceutical products.`
+    });
+  }
+
+  // 4. Territory Coverage
+  if (allAreas.length > 0) {
+    const sampleArea = allAreas.find(a => a.assignedRepId || a.assignedRep || a.repId) || allAreas[0];
+    const repName = sampleArea.assignedRepName || sampleArea.assignedRep || sampleArea.repId || (isAr ? "مندوب" : "Rep");
+    activities.push({
+      type: "warning",
+      text: isAr
+        ? `تغطية المناطق: المنطقة "${sampleArea.name} (${sampleArea.code || ''})" مسندة للمندوب (${repName}).`
+        : `Territory Coverage: Area "${sampleArea.name} (${sampleArea.code || ''})" assigned to (${repName}).`
+    });
+  }
+
+  // 5. Staff & Users
+  if (allUsers.length > 0) {
+    const reps = allUsers.filter(u => u.role === "rep").length;
+    const managers = allUsers.filter(u => ["dm", "manager", "bu", "business_unit"].includes(u.role)).length;
+    activities.push({
+      type: "primary",
+      text: isAr
+        ? `فريق العمل: إجمالي ${allUsers.length} مستخدمين (${reps} مندوبين، ${managers} مشرفين).`
+        : `Staff Directory: Total ${allUsers.length} users (${reps} reps, ${managers} managers active).`
+    });
+  }
+
+  // 6. Recent Announcements
+  if (allAnnouncements.length > 0) {
+    const latest = allAnnouncements[0];
+    activities.push({
+      type: "primary",
+      text: isAr
+        ? `إعلان عام: "${latest.title || 'إشعار إداري'}" منشور لفريق العمل.`
+        : `Announcement: "${latest.title || 'Notice'}" published to team.`
+    });
+  }
+
+  // Fallback if empty
+  if (activities.length === 0) {
+    activities.push({
+      type: "primary",
+      text: isAr ? "النظام يعمل بشكل سليم ومستقر." : "System operating normally."
+    });
+  }
+
+  return activities.slice(0, 5);
+}
+
+/**
  * Renders the Admin Dashboard.
  */
 function renderAdminDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const usersCount =
-    window.DEMO_DATA && window.DEMO_DATA.users
-      ? window.DEMO_DATA.users.length
-      : 0;
-  const areasCount =
-    window.DEMO_DATA && window.DEMO_DATA.areas
-      ? window.DEMO_DATA.areas.length
-      : 0;
-  const linesCount =
-    window.DEMO_DATA && window.DEMO_DATA.productLines
-      ? window.DEMO_DATA.productLines.length
-      : 0;
+  const usersCount = (window.store && window.store.users)
+    ? window.store.users.getAll().length
+    : (window.DEMO_DATA?.users?.length || 0);
+  const areasCount = (window.store && window.store.areas)
+    ? window.store.areas.getAll().length
+    : (window.DEMO_DATA?.areas?.length || 0);
+  const linesCount = (window.store && window.store.productLines)
+    ? window.store.productLines.getAll().length
+    : (window.DEMO_DATA?.productLines?.length || 0);
 
   // Single Source of Truth for sales records
   const allSales = getDashboardSalesData();
@@ -3040,6 +3147,13 @@ function renderAdminDashboard(userName, user) {
       ? Math.round(totalAdminSales / 1000)
       : totalAdminSales;
   const displayAdminSuffix = totalAdminSales >= 1000 ? "K" : "";
+
+  const recentActivities = getSystemRecentActivities(lang);
+  const activitiesListHtml = recentActivities
+    .map(
+      (act) => `<li class="activity-item ${act.type}">${window.escapeHtml ? window.escapeHtml(act.text) : act.text}</li>`
+    )
+    .join("");
 
   return `
     <div class="flex-col">
@@ -3081,9 +3195,7 @@ function renderAdminDashboard(userName, user) {
         <div class="dashboard-card">
           <h3 class="card-title">${t.recent_activity}</h3>
           <ul class="activity-list">
-            <li class="activity-item primary">System Admin initialized database synchronization.</li>
-            <li class="activity-item success">Product Line "Cardio Line" verified with 4 products.</li>
-            <li class="activity-item warning">Territory Area "Nasr City (CAI-N01)" assigned to rep1.</li>
+            ${activitiesListHtml}
           </ul>
         </div>
       </div>

@@ -3,7 +3,7 @@
  * @description Service Worker for PharmaCare PWA offline caching and reliable field performance.
  */
 
-const CACHE_VERSION = 'v73';
+const CACHE_VERSION = 'v77';
 const CACHE_NAME = `pharmacare-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   './',
@@ -123,45 +123,27 @@ self.addEventListener('fetch', (event) => {
   ) {
     return;
   }
-  if (reqUrl.includes('?v=')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkResponse;
-        })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }))
-    );
-    return;
-  }
-
+  // Network-First Strategy for all assets:
+  // Always fetch latest version from server first when online.
+  // Fall back to cache only when offline or network fails.
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Return cached version, but update cache in background (Stale-While-Revalidate)
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-
-      // Not in cache yet: fetch from network and dynamically cache valid/opaque GET responses
-      return fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
         if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
           const clone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return networkResponse;
-      }).catch(() => {
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html', { ignoreSearch: true });
-        }
-      });
-    })
+      })
+      .catch(() => {
+        // Network failed (offline) -> serve from cache
+        return caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          // Fallback to index.html for page navigation if offline
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('./index.html', { ignoreSearch: true });
+          }
+        });
+      })
   );
 });

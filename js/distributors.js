@@ -961,7 +961,23 @@ function renderPendingAreas() {
   tbody.replaceChildren();
 
   const distributors = getDistributorsList();
-  const areas = (window.store.areas && window.store.areas.getAll()) || [];
+  const rawAreas = (window.store.areas && window.store.areas.getAll()) || [];
+
+  // Deduplicate areas by geographic name so each territory appears exactly once
+  const uniqueAreas = [];
+  const seenAreaNames = new Set();
+  rawAreas.forEach((a) => {
+    const cleanName = String(a.name || "").trim();
+    if (cleanName && !seenAreaNames.has(cleanName.toLowerCase())) {
+      seenAreaNames.add(cleanName.toLowerCase());
+      uniqueAreas.push({ id: a.id, name: cleanName, code: a.code || "" });
+    }
+  });
+  uniqueAreas.sort((a, b) => a.name.localeCompare(b.name));
+
+  const areaOptionsHtml = uniqueAreas
+    .map((a) => `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(a.name)}${a.code ? ` (${window.escapeHtml(a.code)})` : ""}</option>`)
+    .join("");
 
   pending.forEach((entry, idx) => {
     const dist = distributors.find((d) => d.id === entry.distributorId);
@@ -975,7 +991,7 @@ function renderPendingAreas() {
       <td class="px-3 py-2">
         <select class="form-select form-select-sm" id="${rowId}_select">
           <option value="">${window.escapeHtml(t.select_area)}</option>
-          ${areas.map((a) => `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(a.name)}</option>`).join("")}
+          ${areaOptionsHtml}
         </select>
       </td>
       <td class="px-3 py-2">
@@ -1622,38 +1638,28 @@ function openEditAreaAlias(areaId, distributorId, rawText) {
   const select = document.getElementById("editAliasTargetSelect");
   select.innerHTML = `<option value="">${t.select_area}</option>`;
 
-  const areas =
+  const rawAreas =
     window.store && window.store.areas ? window.store.areas.getAll() : [];
-  const lines =
-    window.store && window.store.productLines
-      ? window.store.productLines.getAll()
-      : [];
+  const uniqueAreas = [];
+  const seenAreaNames = new Set();
+  rawAreas.forEach((a) => {
+    const cleanName = String(a.name || "").trim();
+    if (cleanName && !seenAreaNames.has(cleanName.toLowerCase())) {
+      seenAreaNames.add(cleanName.toLowerCase());
+      uniqueAreas.push({ id: a.id, name: cleanName, code: a.code || "" });
+    }
+  });
+  uniqueAreas.sort((a, b) => a.name.localeCompare(b.name));
 
-  if (lines.length > 0) {
-    lines.forEach((line) => {
-      const lineAreas = areas.filter((a) => a.lineId === line.id);
-      if (lineAreas.length > 0) {
-        const group = document.createElement("optgroup");
-        group.label = line.name;
-        lineAreas.forEach((a) => {
-          const opt = document.createElement("option");
-          opt.value = a.id;
-          opt.textContent = `${a.name}${a.code ? " (" + a.code + ")" : ""}${a.repName ? " - " + a.repName : ""}`;
-          if (a.id === areaId) opt.selected = true;
-          group.appendChild(opt);
-        });
-        select.appendChild(group);
-      }
-    });
-  } else {
-    areas.forEach((a) => {
-      const opt = document.createElement("option");
-      opt.value = a.id;
-      opt.textContent = `${a.name}${a.code ? " (" + a.code + ")" : ""}`;
-      if (a.id === areaId) opt.selected = true;
-      select.appendChild(opt);
-    });
-  }
+  uniqueAreas.forEach((a) => {
+    const opt = document.createElement("option");
+    opt.value = a.id;
+    opt.textContent = `${a.name}${a.code ? " (" + a.code + ")" : ""}`;
+    if (String(a.name).trim().toLowerCase() === String(currentArea.name).trim().toLowerCase()) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  });
 
   const modal = getEditAliasModal();
   if (modal) modal.show();

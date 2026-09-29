@@ -447,9 +447,9 @@ html[dir="rtl"] .data-table {
     align-items: center;
     border-radius: 8px;
 }
-.activity-item.primary { border-left: 3px solid var(--primary); }
-.activity-item.success { border-left: 3px solid var(--success); }
-.activity-item.warning { border-left: 3px solid var(--warning); }
+.activity-item.primary { border-inline-start: 3px solid var(--primary); }
+.activity-item.success { border-inline-start: 3px solid var(--success); }
+.activity-item.warning { border-inline-start: 3px solid var(--warning); }
 /* --- END: Components --- */
 
 /* --- START: Demo Switcher --- */
