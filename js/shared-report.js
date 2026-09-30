@@ -308,7 +308,14 @@ const directoryTranslations = {
     colArea: 'Area / Territory',
     allAreas: 'All Areas',
     assignedArea: 'Territory / Area',
-    selectArea: '-- Select Territory / Area --'
+    selectArea: '-- Select Territory / Area --',
+    labelSalesType: 'Sales Type:',
+    salesTypeAll: 'All',
+    salesTypePrivate: 'Private',
+    salesTypeBulk: 'Bulk',
+    colType: 'Type',
+    labelAchSalesType: 'Sales Type:',
+    achSalesTypeTotal: 'Total',
   },
   ar: {
     tabDoctorsList: 'قائمة الأطباء',
@@ -423,7 +430,14 @@ const directoryTranslations = {
     colArea: 'المنطقة البيعية',
     allAreas: 'جميع المناطق',
     assignedArea: 'المنطقة البيعية',
-    selectArea: '-- اختر المنطقة البيعية --'
+    selectArea: '-- اختر المنطقة البيعية --',
+    labelSalesType: 'نوع البيع:',
+    salesTypeAll: 'الكل',
+    salesTypePrivate: 'Private',
+    salesTypeBulk: 'Bulk',
+    colType: 'النوع',
+    labelAchSalesType: 'نوع البيع:',
+    achSalesTypeTotal: 'الإجمالي',
   }
 };
 

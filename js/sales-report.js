@@ -13,6 +13,16 @@
 
 // parseSalesNumber and parseDateStrict are provided globally by app.js
 
+// Current selected salesType filter for Pharmacies Sales tab
+let currentPharmSalesType = "all"; // "all" | "private" | "bulk"
+
+function setPharmSalesType(type) {
+  currentPharmSalesType = type;
+  const select = document.getElementById("pharmSalesTypeSelect");
+  if (select) select.value = type;
+}
+
+
 /**
  * Fills the upload bar's Distributor/Month/Year selects. Distributors
  * without a saved column mapping are still listed (so the admin can see
@@ -383,31 +393,33 @@ function getFilteredPharmSalesRows() {
     }
   }
   if (selectedDistributor !== 'all') rows = rows.filter((r) => r.distributorId === selectedDistributor);
+  const allProdsList = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
+  const prodLineIdMap = new Map(allProdsList.map((p) => [p.id, p.lineId]));
+  const prodNameLineIdMap = new Map(allProdsList.map((p) => [p.name.trim().toLowerCase(), p.lineId]));
+
+  const getEffectiveRowLineId = (r) => {
+    if (r.productId && prodLineIdMap.has(r.productId)) {
+      return prodLineIdMap.get(r.productId);
+    }
+    if (r.product) {
+      const pName = r.product.trim().toLowerCase();
+      if (prodNameLineIdMap.has(pName)) return prodNameLineIdMap.get(pName);
+    }
+    if (r.lineId) return r.lineId;
+    return null;
+  };
+
+  // 🔹 Strict Product-Line Filter: If a specific line is selected, ONLY medicines belonging to this line are allowed
   if (selectedLine !== 'all' && selectedLine !== 'none') {
     rows = rows.filter((r) => {
-      if (r.lineId) return r.lineId === selectedLine;
-      if (r.areaId) {
-        const a = (window.store && window.store.areas) ? window.store.areas.getById(r.areaId) : null;
-        if (a && a.lineId) return a.lineId === selectedLine;
-      }
-      return false;
+      const rLine = getEffectiveRowLineId(r);
+      return rLine === selectedLine;
     });
   } else if (allowedLineIds !== null) {
+    // 🔹 Strict Allowed-Lines Filter: Employees with restricted lines can ONLY see medicines in their assigned lines
     rows = rows.filter((r) => {
-      if (r.lineId) return allowedLineIds.includes(r.lineId);
-      if (r.areaId) {
-        const a = (window.store && window.store.areas) ? window.store.areas.getById(r.areaId) : null;
-        if (a && a.lineId) return allowedLineIds.includes(a.lineId);
-      }
-      if (r.repId) {
-        const u = (window.store && window.store.users) ? window.store.users.getById(r.repId) : null;
-        if (u) {
-          const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-          if (uLines.some((lid) => allowedLineIds.includes(lid))) return true;
-        }
-      }
-      if (r.dmId && r.dmId === user.id) return true;
-      return false;
+      const rLine = getEffectiveRowLineId(r);
+      return rLine && allowedLineIds.includes(rLine);
     });
   }
 
@@ -528,6 +540,15 @@ function getFilteredPharmSalesRows() {
     });
   }
 
+  // 🔹 Sales Type filter (All / Private / Bulk)
+  const salesTypeSelect = document.getElementById('pharmSalesTypeSelect');
+  const activeSalesType = salesTypeSelect ? salesTypeSelect.value : (currentPharmSalesType || 'all');
+  if (activeSalesType === "private") {
+    rows = rows.filter((r) => r.salesType === "private" || !r.salesType || r.salesType !== "bulk");
+  } else if (activeSalesType === "bulk") {
+    rows = rows.filter((r) => r.salesType === "bulk");
+  }
+
   return rows;
 }
 
@@ -560,7 +581,7 @@ function renderSalesReport() {
   if (selectedMonths.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
+        <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
           ${lang === 'ar' ? 'يرجى اختيار شهر واحد على الأقل.' : 'Please select at least one month.'}
         </td>
       </tr>
@@ -585,7 +606,7 @@ function renderSalesReport() {
   if (rows.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
+        <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
           ${lang === 'ar' ? 'لا توجد بيانات مبيعات صيدليات لهذا الاختيار.' : 'No pharmacy sales found for this selection.'}
         </td>
       </tr>
@@ -616,6 +637,14 @@ function renderSalesReport() {
             : window.escapeHtml(row.pharmacyName))
         : (row.pharmacyCode ? `<small class="text-muted" style="font-family:monospace;">#${window.escapeHtml(row.pharmacyCode)}</small>` : '—');
 
+      // Build Type badge
+      let typeBadge = '';
+      if (row.salesType === "bulk") {
+        typeBadge = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Bulk (${row.bulkWeight || 0}%)</span>`;
+      } else {
+        typeBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle">Private</span>`;
+      }
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="white-space: nowrap;">${window.escapeHtml(row.date || row.month)}</td>
@@ -626,6 +655,7 @@ function renderSalesReport() {
         <td style="white-space: nowrap;">${window.escapeHtml(repLabel)}</td>
         <td style="font-weight: 600;">${qty.toLocaleString()}</td>
         <td style="font-weight: 700; color: var(--primary);">${value.toLocaleString()}</td>
+        <td>${typeBadge}</td>
       `;
       tbody.appendChild(tr);
     });

@@ -160,6 +160,18 @@ const productTranslations = {
     focusMessageLabel: "Key Campaign Message / Strategic Direction",
     focusMessageHint: "This message will appear as an optional strategic reminder on the dashboard for your sales team.",
     focusGeneralProduct: "-- General / All Line Products --",
+    cutPointLabel: "⚡ Monthly Cut Point (Ceiling)",
+    cutPointPlaceholder: "e.g., 200",
+    cutPointHint: "Maximum allowed pharmacy pull per month. Surplus above this is distributed as Bulk to all bricks by weight. Set 0 or leave empty to disable.",
+    brickWeightsBtn: "Brick Weights",
+    brickWeightsTitle: "Brick Weights",
+    bwAreaName: "Area / Brick",
+    bwAreaCode: "Code",
+    bwRep: "Representative",
+    bwWeight: "Weight (%)",
+    bwTotal: "📊 Total",
+    brickWeightsSaved: "Brick weights saved successfully.",
+    brickWeightsRecalc: "Bulk distribution recalculated.",
   },
   ar: {
     productLinesTitle: "خطوط الإنتاج - فارماكير",
@@ -220,6 +232,18 @@ const productTranslations = {
     focusMessageLabel: "الرسالة الترويجية / التوجه الاستراتيجي",
     focusMessageHint: "ستظهر هذه الرسالة كإشعار توجيهي اختياري على لوحة تحكم فريق المبيعات في هذا الخط.",
     focusGeneralProduct: "-- تركيز عام على كامل الخط --",
+    cutPointLabel: "⚡ سقف السحب الشهري (Cut Point)",
+    cutPointPlaceholder: "مثال: 200",
+    cutPointHint: "الحد الأقصى المسموح لسحب الصيدلية شهرياً. الزيادة فوقه تُوزع كـ Bulk على كل البريكات بالنسبة. اتركه 0 أو فارغ لتعطيل السقف.",
+    brickWeightsBtn: "أوزان البريكات",
+    brickWeightsTitle: "أوزان البريكات",
+    bwAreaName: "المنطقة / البريك",
+    bwAreaCode: "الكود",
+    bwRep: "المندوب",
+    bwWeight: "الوزن (%)",
+    bwTotal: "📊 الإجمالي",
+    brickWeightsSaved: "تم حفظ أوزان البريكات بنجاح.",
+    brickWeightsRecalc: "تم إعادة حساب توزيع الـ Bulk.",
   },
 };
 
@@ -389,8 +413,11 @@ function renderProductLines(activeLineId) {
                             <td class="fw-bold text-primary-emphasis">${window.escapeHtml(prod.name)}</td>
                             <td><span class="badge product-dosage-badge">${window.escapeHtml(prod.dosage)}</span></td>
                             <td><span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span></td>
-                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}</td>
+                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}${prod.cutPoint ? ` <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7em;">⚡CP: ${prod.cutPoint}</span>` : ""}</td>
                             <td class="text-end product-actions-cell">
+                                <button class="btn btn-sm btn-outline-warning me-1" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights">
+                                    ⚖️
+                                </button>
                                 <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
                                     <i class="bi bi-arrow-left-right"></i>
                                 </button>
@@ -417,9 +444,13 @@ function renderProductLines(activeLineId) {
                             <span class="badge product-dosage-badge">${window.escapeHtml(prod.dosage)}</span>
                             <span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span>
                             ${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">${Number(prod.price).toLocaleString()} EGP</span>` : ""}
+                            ${prod.cutPoint ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">⚡CP: ${prod.cutPoint}</span>` : ""}
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <button class="btn btn-sm btn-outline-warning rounded-circle" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            ⚖️
+                        </button>
                         <button class="btn btn-sm btn-outline-info rounded-circle" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
                             <i class="bi bi-arrow-left-right" style="font-size: 0.82rem;"></i>
                         </button>
@@ -628,6 +659,7 @@ function openAddProductModal(lineId) {
   document.getElementById("targetLineId").value = lineId;
   document.getElementById("productId").value = "";
   document.getElementById("productPrice").value = "";
+  document.getElementById("productCutPoint").value = "";
 
   const titleEl = document.getElementById("productModalTitle");
   if (titleEl) {
@@ -650,6 +682,7 @@ function openEditProduct(lineId, prodId) {
       document.getElementById("productFormSelect").value = prod.form || "Tablet";
       document.getElementById("productDescription").value = prod.description || "";
       document.getElementById("productPrice").value = prod.price !== undefined && prod.price !== null ? prod.price : "";
+      document.getElementById("productCutPoint").value = prod.cutPoint ? prod.cutPoint : "";
 
       const titleEl = document.getElementById("productModalTitle");
       if (titleEl) {
@@ -687,6 +720,8 @@ function saveProduct() {
   const description = (document.getElementById("productDescription").value || "").trim();
   const priceInput = document.getElementById("productPrice").value;
   const price = priceInput === "" ? null : parseFloat(priceInput);
+  const cutPointInput = document.getElementById("productCutPoint").value;
+  const cutPoint = cutPointInput === "" ? 0 : parseInt(cutPointInput, 10) || 0;
 
   if (!targetLineId) {
     const msg = isAr ? "خطأ: لم يتم تحديد الخط المستهدف." : "Error: Target Line not identified.";
@@ -729,6 +764,7 @@ function saveProduct() {
       prod.form = form;
       prod.description = description;
       prod.price = price;
+      prod.cutPoint = cutPoint;
     }
   } else {
     line.products.push({
@@ -738,6 +774,7 @@ function saveProduct() {
       form,
       description,
       price,
+      cutPoint,
     });
   }
 
@@ -1041,3 +1078,112 @@ function applyProductTranslations(lang) {
     if (t[key]) el.placeholder = t[key];
   });
 }
+
+// ============================================================================
+// Brick Weights Modal Controller
+// ============================================================================
+
+let brickWeightsModal = null;
+
+function openBrickWeightsModal(lineId, prodId) {
+  const line = window.store.productLines.getById(lineId);
+  if (!line || !Array.isArray(line.products)) return;
+  const prod = line.products.find((p) => p.id === prodId);
+  if (!prod) return;
+
+  document.getElementById("brickWeightsProductId").value = prodId;
+  document.getElementById("brickWeightsLineId").value = lineId;
+  document.getElementById("brickWeightsProdName").textContent = prod.name + " " + (prod.dosage || "");
+
+  populateBrickWeightsTable(lineId, prodId);
+
+  if (!brickWeightsModal) {
+    const el = document.getElementById("brickWeightsModal");
+    if (el) brickWeightsModal = new bootstrap.Modal(el);
+  }
+  if (brickWeightsModal) brickWeightsModal.show();
+}
+
+function populateBrickWeightsTable(lineId, productId) {
+  const tbody = document.getElementById("brickWeightsTbody");
+  if (!tbody) return;
+  tbody.replaceChildren();
+
+  // Get all areas for this line
+  const areas = window.store && window.store.areas ? window.store.areas.getByLine(lineId) : [];
+  // Get existing weights for this product
+  const existingWeights = window.store && window.store.bulkWeights
+    ? window.store.bulkWeights.getByProduct(productId)
+    : [];
+
+  areas.forEach((area) => {
+    const existing = existingWeights.find((w) => w.areaId === area.id);
+    const weight = existing ? existing.weight : 0;
+    const rep = area.repId ? (window.store.users.getById(area.repId)) : null;
+    const repName = rep ? rep.name : (currentLang === "ar" ? "شاغر" : "Vacant");
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${window.escapeHtml ? window.escapeHtml(area.name) : area.name}</td>
+      <td><code>${window.escapeHtml ? window.escapeHtml(area.code || "—") : (area.code || "—")}</code></td>
+      <td>${window.escapeHtml ? window.escapeHtml(repName) : repName}</td>
+      <td>
+        <input type="number" class="form-control form-control-sm bw-weight-input"
+               data-area-id="${area.id}" data-line-id="${area.lineId || lineId}"
+               value="${weight}" min="0" max="100" step="0.01"
+               oninput="updateBrickWeightsTotal()">
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateBrickWeightsTotal();
+}
+
+function updateBrickWeightsTotal() {
+  const inputs = document.querySelectorAll(".bw-weight-input");
+  let total = 0;
+  inputs.forEach((inp) => { total += parseFloat(inp.value) || 0; });
+  const el = document.getElementById("brickWeightsTotalPct");
+  if (el) el.textContent = total.toFixed(2) + "%";
+}
+
+function saveBrickWeights() {
+  const productId = document.getElementById("brickWeightsProductId").value;
+  if (!productId) return;
+
+  const inputs = document.querySelectorAll(".bw-weight-input");
+  const entries = [];
+  inputs.forEach((inp) => {
+    const areaId = inp.getAttribute("data-area-id");
+    const lineId = inp.getAttribute("data-line-id");
+    const weight = parseFloat(inp.value) || 0;
+    entries.push({ areaId, weight, lineId });
+  });
+
+  if (window.store && window.store.bulkWeights) {
+    window.store.bulkWeights.saveAll(productId, entries);
+  }
+
+  // Recalculate Bulk distribution
+  if (window.store && window.store.distributorSales &&
+      typeof window.store.distributorSales.applyCutPointAndBulk === "function") {
+    window.store.distributorSales.applyCutPointAndBulk();
+  }
+
+  if (brickWeightsModal) brickWeightsModal.hide();
+
+  const isAr = currentLang === "ar";
+  if (typeof showToast === "function") {
+    showToast(productTranslations[currentLang].brickWeightsSaved || "Saved.", "success");
+  }
+}
+
+// Attach saveBrickWeights to button
+document.addEventListener("DOMContentLoaded", () => {
+  const saveBtn = document.getElementById("saveBrickWeightsBtn");
+  if (saveBtn) saveBtn.addEventListener("click", saveBrickWeights);
+});
+
+// Make openBrickWeightsModal globally accessible
+window.openBrickWeightsModal = openBrickWeightsModal;

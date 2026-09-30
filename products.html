@@ -24,20 +24,20 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/products.css?v=v86">
+    <link rel="stylesheet" href="css/products.css?v=v93">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v86"></script>
-    <script src="js/store.js?v=v86"></script>
+    <script src="js/app.js?v=v93"></script>
+    <script src="js/store.js?v=v93"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v86"></script>
-    <script src="js/firebase-sync.js?v=v86"></script>
+    <script src="js/firebase-config.js?v=v93"></script>
+    <script src="js/firebase-sync.js?v=v93"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v86";
+        var EXPECTED_SW = "v93";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -192,6 +192,11 @@
                         <div class="form-text" data-i18n="priceHint">Used to auto-fill Unit Value when this product is picked in Manage Targets -- still editable per rep there as an exception.</div>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-semibold" data-i18n="cutPointLabel">⚡ Monthly Cut Point (Ceiling)</label>
+                        <input type="number" class="form-control" id="productCutPoint" min="0" step="1" data-i18n-placeholder="cutPointPlaceholder" placeholder="e.g., 200">
+                        <div class="form-text" data-i18n="cutPointHint">Maximum allowed pharmacy pull per month. Surplus above this is distributed as Bulk to all bricks by weight. Set 0 or leave empty to disable.</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-semibold" data-i18n="description">Description (Optional)</label>
                         <textarea class="form-control" id="productDescription" rows="3" data-i18n-placeholder="descriptionPlaceholder" placeholder="Enter product description"></textarea>
                     </div>
@@ -306,11 +311,51 @@
     </div>
 </div>
 
+<!-- Brick Weights Modal -->
+<div class="modal fade" id="brickWeightsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content product-card">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold" id="brickWeightsTitle">⚖️ <span data-i18n="brickWeightsTitle">Brick Weights</span> — <span id="brickWeightsProdName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <input type="hidden" id="brickWeightsProductId">
+                <input type="hidden" id="brickWeightsLineId">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="brickWeightsTable">
+                        <thead>
+                            <tr>
+                                <th data-i18n="bwAreaName">Area / Brick</th>
+                                <th data-i18n="bwAreaCode">Code</th>
+                                <th data-i18n="bwRep">Representative</th>
+                                <th style="width: 140px;" data-i18n="bwWeight">Weight (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="brickWeightsTbody">
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light fw-bold">
+                                <td colspan="3" data-i18n="bwTotal">📊 Total</td>
+                                <td id="brickWeightsTotalPct">0.00%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBrickWeightsBtn" data-i18n="save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Bootstrap Bundle JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Firebase Config (mock) -->
 <!-- Main App JS (mock logic/auth/i18n) -->
 <!-- Products Page JS -->
-<script src="js/products.js?v=v86"></script>
+<script src="js/products.js?v=v93"></script>
 </body>
 </html>

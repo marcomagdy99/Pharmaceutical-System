@@ -19,7 +19,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v86";
+        var EXPECTED_SW = "v93";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -55,13 +55,13 @@
     <link rel="stylesheet" href="css/reports.css" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v86"></script>
-    <script src="js/store.js?v=v86"></script>
+    <script src="js/app.js?v=v93"></script>
+    <script src="js/store.js?v=v93"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v86"></script>
-    <script src="js/firebase-sync.js?v=v86"></script>
+    <script src="js/firebase-config.js?v=v93"></script>
+    <script src="js/firebase-sync.js?v=v93"></script>
   </head>
   <body>
     <div class="app">
@@ -256,6 +256,18 @@
                     class="form-control"
                   ></select>
                 </div>
+                <!-- Sales Type Filter (All / Private / Bulk) -->
+                <div class="sales-filter-field col-sales-type">
+                  <label data-i18n="labelSalesType">Sales Type:</label>
+                  <select
+                    id="pharmSalesTypeSelect"
+                    class="form-control"
+                  >
+                    <option value="all" data-i18n="salesTypeAll">All</option>
+                    <option value="private" data-i18n="salesTypePrivate">Private</option>
+                    <option value="bulk" data-i18n="salesTypeBulk">Bulk</option>
+                  </select>
+                </div>
                 <!-- Show Button -->
                 <div class="sales-filter-field col-btn">
                   <button
@@ -358,11 +370,6 @@
                   </a>
                 </div>
               </div>
-              <!-- Mobile Horizontal Scroll Hint -->
-              <div class="d-md-none px-2 py-1 mb-2 rounded" style="background: rgba(13,110,253,0.08); border: 1px dashed rgba(13,110,253,0.3); font-size: 0.78rem; display: flex; align-items: center; justify-content: space-between; color: var(--primary);">
-                <span><i class="fas fa-arrows-alt-h me-1"></i> <span data-i18n="scrollHintTable">مرر أفقياً لعرض جميع بيانات الجدول (8 أعمدة) ↔</span></span>
-                <span class="badge bg-primary text-white" style="font-size: 0.7rem;">8 أعمدة</span>
-              </div>
               <!-- Pharmacy Sales Table (raw rows) -->
               <div class="table-container">
                 <table class="report-table">
@@ -376,6 +383,7 @@
                       <th data-i18n="colRep">Rep</th>
                       <th data-i18n="colQuantity">Quantity</th>
                       <th data-i18n="colValue">Value</th>
+                      <th data-i18n="colType">Type</th>
                     </tr>
                   </thead>
                   <tbody id="salesReportTbody"></tbody>
@@ -446,6 +454,18 @@
                       <option value="2025">2025</option>
                       <option value="2026" selected>2026</option>
                       <option value="2027">2027</option>
+                    </select>
+                  </div>
+                  <!-- Sales Type Filter (Total / Private / Bulk) -->
+                  <div class="sales-filter-field col-sales-type">
+                    <label data-i18n="labelAchSalesType">Sales Type:</label>
+                    <select
+                      id="achSalesTypeSelect"
+                      class="form-control"
+                    >
+                      <option value="all" data-i18n="achSalesTypeTotal">Total</option>
+                      <option value="private" data-i18n="salesTypePrivate">Private</option>
+                      <option value="bulk" data-i18n="salesTypeBulk">Bulk</option>
                     </select>
                   </div>
                   <div class="sales-filter-field col-btn">
@@ -2576,13 +2596,13 @@
     <script src="js/interactive-charts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/excel-templates-data.js"></script>
-    <script src="js/shared-report.js?v=v86"></script>
-    <script src="js/sales-report.js?v=v86"></script>
+    <script src="js/shared-report.js?v=v93"></script>
+    <script src="js/sales-report.js?v=v93"></script>
     <script src="js/achievements-report.js"></script>
     <script src="js/timeline-report.js"></script>
     <script src="js/coverage-report.js"></script>
     <script src="js/doctors-report.js"></script>
-    <script src="js/hospitals-report.js?v=v86"></script>
+    <script src="js/hospitals-report.js?v=v93"></script>
     <script src="js/pharmacies-report.js"></script>
   </body>
 </html>

@@ -1012,9 +1012,19 @@ function handleSaveBrandingSettings(e) {
   };
 
   if (window.store && window.store.companySettings) {
-    window.store.companySettings.update({
+    const updatedSettings = window.store.companySettings.update({
       branding: brandingObj
     });
+    try {
+      localStorage.setItem("pharma_company_settings", JSON.stringify(updatedSettings));
+    } catch (e) {}
+  }
+
+  if (typeof window.pushLocalToCloud === "function") {
+    window.pushLocalToCloud(true);
+  }
+  if (typeof window.applyBrandSettings === "function") {
+    try { window.applyBrandSettings(); } catch (e) {}
   }
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";

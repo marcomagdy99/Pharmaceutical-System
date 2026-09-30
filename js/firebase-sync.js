@@ -126,6 +126,9 @@
         );
         hasChanges = true;
       }
+      try {
+        localStorage.setItem("pharma_company_settings", JSON.stringify(window.DEMO_DATA.companySettings));
+      } catch (e) {}
     }
 
     return hasChanges;
@@ -273,6 +276,15 @@
 
     // 6b. Distributor & Sales views
     notifyDistributorViews();
+
+    // 6c. Apply branding settings if on login page or any branded view
+    if (typeof window.applyBrandSettings === "function") {
+      try {
+        window.applyBrandSettings();
+      } catch (e) {
+        console.warn("[FirebaseSync] applyBrandSettings error:", e);
+      }
+    }
 
     // 7. General event bus
     document.dispatchEvent(new CustomEvent("pharma:storage:synced", {

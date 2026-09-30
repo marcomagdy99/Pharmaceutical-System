@@ -953,6 +953,71 @@
     },
 
     // ==========================================
+    // Section: Bulk Weights Module (Brick Weight % per Product per Area)
+    // Stores the weight percentage each brick/area receives from surplus
+    // (Ceiling/Bulk) sales. Each record maps a (productId, areaId) pair
+    // to a weight %. Used by distributorSales.applyCutPointAndBulk().
+    // ==========================================
+    bulkWeights: {
+      getAll() {
+        return window.DEMO_DATA.bulkWeights || [];
+      },
+      getByProduct(productId) {
+        return this.getAll().filter((w) => w.productId === productId);
+      },
+      getByArea(areaId) {
+        return this.getAll().filter((w) => w.areaId === areaId);
+      },
+      find(productId, areaId) {
+        return this.getAll().find(
+          (w) => w.productId === productId && w.areaId === areaId,
+        );
+      },
+      save(weightObj) {
+        if (!window.DEMO_DATA.bulkWeights) window.DEMO_DATA.bulkWeights = [];
+        const weights = window.DEMO_DATA.bulkWeights;
+        const idx = weights.findIndex((w) => w.id === weightObj.id);
+        if (idx >= 0) {
+          weights[idx] = { ...weights[idx], ...weightObj };
+        } else {
+          if (!weightObj.id) weightObj.id = "bw_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+          weights.push(weightObj);
+        }
+        autoSave("bulkWeights", idx >= 0 ? "update" : "create", weightObj);
+        return weightObj;
+      },
+      saveAll(productId, entries) {
+        // entries = [{ areaId, weight, lineId }]
+        if (!window.DEMO_DATA.bulkWeights) window.DEMO_DATA.bulkWeights = [];
+        // Remove existing weights for this product
+        window.DEMO_DATA.bulkWeights = window.DEMO_DATA.bulkWeights.filter(
+          (w) => w.productId !== productId,
+        );
+        // Add new weights
+        entries.forEach((e) => {
+          if (e.weight > 0) {
+            window.DEMO_DATA.bulkWeights.push({
+              id: "bw_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+              productId: productId,
+              areaId: e.areaId,
+              weight: parseFloat(e.weight) || 0,
+              lineId: e.lineId || null,
+            });
+          }
+        });
+        autoSave("bulkWeights", "saveAll", { productId, count: entries.length });
+      },
+      delete(id) {
+        if (!window.DEMO_DATA.bulkWeights) return false;
+        const before = window.DEMO_DATA.bulkWeights.length;
+        window.DEMO_DATA.bulkWeights = window.DEMO_DATA.bulkWeights.filter((w) => w.id !== id);
+        const changed = window.DEMO_DATA.bulkWeights.length !== before;
+        if (changed) autoSave("bulkWeights", "delete", { id });
+        return changed;
+      },
+    },
+
+    // ==========================================
     // Section: Specialties Module
     // ==========================================
     specialties: {
@@ -1171,6 +1236,8 @@
         window.DEMO_DATA.distributorSales.push(...rows);
         this.applyProductMatching(false);
         this.applyAreaMatching(false, false);
+        // Apply Bulk/Ceiling distribution after matching
+        this.applyCutPointAndBulk();
         autoSave("distributorSales", "importBatch", { count: rows.length });
       },
       /**
@@ -1208,12 +1275,21 @@
        */
       applyAreaMatching(forceAll = false, shouldAutoSave = true) {
         const rows = this.getAll().filter(
-          (s) => (forceAll || !s.repId) && (s.areaRaw || s.pharmacyCode || s.pharmacyName)
+          (s) => (forceAll || !s.repId || (s.productId && s.lineId && s.areaId)) && (s.areaRaw || s.pharmacyCode || s.pharmacyName)
         );
         let matchedCount = 0;
         rows.forEach((row) => {
           let area = null;
           const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
+
+          // Synchronize row.lineId with product if productId is present
+          if (row.productId) {
+            const pMatch = store.productLines.findProductById(row.productId);
+            if (pMatch && pMatch.line) {
+              row.lineId = pMatch.line.id;
+            }
+          }
+          const rowLineId = row.lineId || null;
 
           // 1. High-priority check for pharmacy override (line-aware)
           if (store.pharmacyOverrides) {
@@ -1222,29 +1298,52 @@
               row.pharmacyCode,
               row.pharmacyName,
               rowMonth,
-              row.lineId
+              rowLineId
             );
             if (override && override.areaId) {
-              area = store.areas.getById(override.areaId);
+              const candArea = store.areas.getById(override.areaId);
+              if (candArea && (!rowLineId || candArea.lineId === rowLineId)) {
+                area = candArea;
+              }
             }
           }
 
-          // 2. Fallback to raw sheet territory text alias matching
+          // 2. Fallback to raw sheet territory text alias matching (MUST stay within line if known)
           if (!area && row.areaRaw) {
-            if (row.lineId) {
-              area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, row.lineId);
-            }
-            if (!area) {
+            if (rowLineId) {
+              area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, rowLineId);
+            } else {
               area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
             }
           }
 
-          // 3. Fallback: If row already has areaId, resolve area directly
+          // 3. Fallback: If row already has areaId, verify line match
           if (!area && row.areaId) {
-            area = store.areas.getById(row.areaId);
+            const candArea = store.areas.getById(row.areaId);
+            if (candArea && (!rowLineId || candArea.lineId === rowLineId)) {
+              area = candArea;
+            }
           }
 
-          if (!area) return;
+          if (!area) {
+            // Clean up any historical mismatch where row was assigned to an area of a different line
+            if (row.areaId && rowLineId) {
+              const prevArea = store.areas.getById(row.areaId);
+              if (prevArea && prevArea.lineId && prevArea.lineId !== rowLineId) {
+                row.areaId = null;
+                row.repId = null;
+                row.dmId = null;
+                row.lmId = null;
+              }
+            }
+            return;
+          }
+
+          // Strict line guard: never assign an area from a different line
+          if (rowLineId && area.lineId && area.lineId !== rowLineId) {
+            return;
+          }
+
           row.areaId = area.id;
           row.repId = area.repId || null;
           if (!row.lineId && area.lineId) {
@@ -1475,19 +1574,235 @@
        * resolve in either order.
        */
       applyProductMatching(shouldAutoSave = true) {
-        const rows = this.getAll().filter((s) => !s.lineId && s.product);
+        const rows = this.getAll().filter((s) => (!s.productId || !s.lineId) && s.product);
         let matchedCount = 0;
         rows.forEach((row) => {
           const match = store.productLines.findProductByAlias(row.distributorId, row.product);
           if (!match) return;
           row.lineId = match.line.id;
           row.productId = match.product.id;
+
+          // If row was previously assigned to an area from a different line, clear it
+          if (row.areaId) {
+            const assignedArea = store.areas.getById(row.areaId);
+            if (assignedArea && assignedArea.lineId && assignedArea.lineId !== match.line.id) {
+              row.areaId = null;
+              row.repId = null;
+              row.dmId = null;
+              row.lmId = null;
+            }
+          }
           matchedCount++;
         });
         if (matchedCount && shouldAutoSave) {
           autoSave("distributorSales", "applyProductMatching", { matchedCount });
         }
         return matchedCount;
+      },
+
+      /**
+       * Removes all previously generated Bulk rows so they can be
+       * recalculated cleanly. Bulk rows are identified by salesType === "bulk".
+       */
+      removeBulkRows() {
+        if (!window.DEMO_DATA.distributorSales) return 0;
+        const before = window.DEMO_DATA.distributorSales.length;
+        window.DEMO_DATA.distributorSales = window.DEMO_DATA.distributorSales.filter(
+          (s) => s.salesType !== "bulk",
+        );
+        // Reset salesType markers on remaining private rows
+        window.DEMO_DATA.distributorSales.forEach((s) => {
+          delete s.salesType;
+          delete s.bulkWeight;
+          delete s.originalSaleId;
+          delete s.cappedQty;
+        });
+        return before - window.DEMO_DATA.distributorSales.length;
+      },
+
+      /**
+       * Core Bulk/Ceiling Engine.
+       * For each product with a cutPoint > 0:
+       *   1. Groups sales by (pharmacyCode+pharmacyName, month) to find total.
+       *   2. If total > cutPoint: caps at cutPoint (Private), surplus is distributed
+       *      to all bricks in the same line by their weight percentage (Bulk).
+       *   3. If total <= cutPoint: marks as Private (Normal).
+       *
+       * Generated Bulk rows carry salesType:"bulk", bulkWeight, originalSaleId.
+       * Original rows carry salesType:"private".
+       */
+      applyCutPointAndBulk() {
+        const allSales = this.getAll();
+        if (!allSales.length) return { processedProducts: 0, bulkRowsCreated: 0 };
+
+        // 1. Remove any previously generated bulk rows
+        this.removeBulkRows();
+
+        const sales = this.getAll(); // re-read after cleanup
+        const allLines = store.productLines.getAll();
+        const allWeights = store.bulkWeights.getAll();
+        const allAreas = store.areas.getAll();
+
+        // Build product map: productId -> { cutPoint, lineId }
+        const productMap = {};
+        allLines.forEach((line) => {
+          if (!Array.isArray(line.products)) return;
+          line.products.forEach((prod) => {
+            productMap[prod.id] = {
+              cutPoint: parseFloat(prod.cutPoint) || 0,
+              lineId: line.id,
+              name: prod.name,
+            };
+          });
+        });
+
+        let processedProducts = 0;
+        let bulkRowsCreated = 0;
+        const newBulkRows = [];
+
+        // 2. For each product that has a cutPoint > 0
+        Object.entries(productMap).forEach(([productId, pInfo]) => {
+          if (pInfo.cutPoint <= 0) return;
+
+          // Get weights for this product
+          const weights = allWeights.filter((w) => w.productId === productId);
+          if (!weights.length) return; // No weights configured, skip
+
+          processedProducts++;
+
+          // 3. Filter sales rows for this product
+          const prodSales = sales.filter((s) => s.productId === productId);
+          if (!prodSales.length) return;
+
+          // 4. Group by (pharmacy identity + month) to find total per pharmacy per month
+          const pharmacyMonthGroups = {};
+          prodSales.forEach((s) => {
+            // Build pharmacy key from code+name for reliable identity
+            const pharmKey = (s.pharmacyCode || "").trim().toLowerCase() + "||" +
+                             (s.pharmacyName || "").trim().toLowerCase();
+            const groupKey = pharmKey + "||" + (s.month || "");
+            if (!pharmacyMonthGroups[groupKey]) {
+              pharmacyMonthGroups[groupKey] = {
+                rows: [],
+                totalQty: 0,
+                totalValue: 0,
+                month: s.month,
+              };
+            }
+            const g = pharmacyMonthGroups[groupKey];
+            g.rows.push(s);
+            g.totalQty += parseFloat(s.quantity) || 0;
+            g.totalValue += parseFloat(s.value) || 0;
+          });
+
+          // 5. Process each pharmacy-month group
+          Object.values(pharmacyMonthGroups).forEach((group) => {
+            const { rows, totalQty, totalValue } = group;
+            // Skip groups with negative or zero totals (returns/credits)
+            if (totalQty <= 0 && totalValue <= 0) {
+              rows.forEach((r) => { r.salesType = "private"; });
+              return;
+            }
+
+            // Determine if the pharmacy exceeded the cutPoint
+            // cutPoint is compared against quantity (units) when available, otherwise value
+            const hasQty = rows.some((r) => r.quantity !== null && r.quantity !== undefined);
+            const comparisonValue = hasQty ? totalQty : totalValue;
+            const cutPoint = pInfo.cutPoint;
+
+            if (comparisonValue <= cutPoint) {
+              // Within cutPoint — all Private
+              rows.forEach((r) => { r.salesType = "private"; });
+              return;
+            }
+
+            // 6. Exceeds cutPoint — calculate surplus
+            const surplus = comparisonValue - cutPoint;
+            const surplusRatio = surplus / comparisonValue;
+
+            // Mark original rows as Private with capped quantities
+            rows.forEach((r) => {
+              r.salesType = "private";
+              const rowQty = parseFloat(r.quantity) || 0;
+              const rowValue = parseFloat(r.value) || 0;
+              if (hasQty) {
+                r.cappedQty = r.quantity;
+                r.quantity = Math.round((rowQty * (1 - surplusRatio)) * 100) / 100;
+                r.value = Math.round((rowValue * (1 - surplusRatio)) * 100) / 100;
+              } else {
+                r.cappedQty = r.value;
+                r.value = Math.round((rowValue * (1 - surplusRatio)) * 100) / 100;
+              }
+            });
+
+            // 7. Distribute surplus to each brick by weight %
+            weights.forEach((w) => {
+              const targetArea = allAreas.find((a) => a.id === w.areaId);
+              const shareQty = hasQty ? Math.round((surplus * (w.weight / 100)) * 100) / 100 : null;
+              const shareValue = hasQty
+                ? Math.round(((totalValue * surplusRatio) * (w.weight / 100)) * 100) / 100
+                : Math.round((surplus * (w.weight / 100)) * 100) / 100;
+
+              if ((shareQty !== null && shareQty === 0) && shareValue === 0) return;
+
+              newBulkRows.push({
+                id: "bulk_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+                salesType: "bulk",
+                bulkWeight: w.weight,
+                originalSaleId: rows[0].id,
+                batchId: rows[0].batchId,
+                distributorId: rows[0].distributorId,
+                month: group.month,
+                date: rows[0].date,
+                product: pInfo.name,
+                productId: productId,
+                lineId: pInfo.lineId,
+                pharmacyCode: rows[0].pharmacyCode,
+                pharmacyName: rows[0].pharmacyName,
+                areaRaw: targetArea ? targetArea.name : "",
+                areaId: w.areaId,
+                repId: targetArea ? (targetArea.repId || null) : null,
+                dmId: null,
+                lmId: null,
+                quantity: shareQty,
+                value: shareValue,
+              });
+              bulkRowsCreated++;
+            });
+          });
+        });
+
+        // 8. Mark remaining rows that have no salesType as private
+        this.getAll().forEach((s) => {
+          if (!s.salesType) s.salesType = "private";
+        });
+
+        // 9. Append all generated Bulk rows
+        if (newBulkRows.length > 0) {
+          if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
+          window.DEMO_DATA.distributorSales.push(...newBulkRows);
+
+          // Resolve DM/LM hierarchy for bulk rows
+          newBulkRows.forEach((r) => {
+            if (r.repId) {
+              const rep = store.users.getById(r.repId);
+              if (rep) {
+                r.dmId = rep.managerId || null;
+                if (r.dmId) {
+                  const dm = store.users.getById(r.dmId);
+                  r.lmId = dm ? (dm.managerId || null) : null;
+                }
+              }
+            }
+          });
+        }
+
+        autoSave("distributorSales", "applyCutPointAndBulk", {
+          processedProducts,
+          bulkRowsCreated,
+        });
+
+        return { processedProducts, bulkRowsCreated };
       },
     },
 

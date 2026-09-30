@@ -14,6 +14,15 @@
  * they carry no productId, so they can't be placed in this breakdown.
  */
 
+// Current selected salesType filter for Achievements tab
+let currentAchSalesType = "all"; // "all" | "private" | "bulk"
+
+function setAchSalesType(type) {
+  currentAchSalesType = type;
+  const select = document.getElementById("achSalesTypeSelect");
+  if (select) select.value = type;
+}
+
 const ACH_MONTHS = (typeof window !== 'undefined' && Array.isArray(window.MONTH_NAMES) && window.MONTH_NAMES.length === 12)
   ? window.MONTH_NAMES
   : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -308,7 +317,9 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   // O(1) Hash Map indices to replace repetitive O(N) .find searches in large datasets
   const usersMap = new Map(allUsers.map((u) => [u.id, u]));
-  const productsMap = new Map(allProducts.map((p) => [p.id, p]));
+  const curAllowedLineIds = (typeof getPharmSalesAllowedLineIds === 'function')
+    ? getPharmSalesAllowedLineIds(curUser)
+    : null;
 
   if (selectedLineId !== 'all') {
     targets = targets.filter((t) => {
@@ -316,10 +327,27 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       return prod && prod.lineId === selectedLineId;
     });
     salesRows = salesRows.filter((s) => {
-      if (s.lineId) return s.lineId === selectedLineId;
       const prod = productsMap.get(s.productId);
       return prod && prod.lineId === selectedLineId;
     });
+  } else if (curAllowedLineIds !== null) {
+    targets = targets.filter((t) => {
+      const prod = productsMap.get(t.productId);
+      return prod && curAllowedLineIds.includes(prod.lineId);
+    });
+    salesRows = salesRows.filter((s) => {
+      const prod = productsMap.get(s.productId);
+      return prod && curAllowedLineIds.includes(prod.lineId);
+    });
+  }
+
+  // 🔹 Sales Type filter (Total / Private / Bulk)
+  const achSalesTypeSelect = document.getElementById('achSalesTypeSelect');
+  const activeAchType = achSalesTypeSelect ? achSalesTypeSelect.value : (currentAchSalesType || 'all');
+  if (activeAchType === "private") {
+    salesRows = salesRows.filter((s) => s.salesType === "private" || !s.salesType || s.salesType !== "bulk");
+  } else if (activeAchType === "bulk") {
+    salesRows = salesRows.filter((s) => s.salesType === "bulk");
   }
 
   const achAreaSelect = document.getElementById('achAreaSelect');
@@ -567,6 +595,11 @@ function renderAchievementsReport() {
           const p = productsMap.get(t.productId);
           return p && p.lineId === selectedLineId;
         });
+      } else if (curAllowedLineIds !== null) {
+        mTargets = mTargets.filter((t) => {
+          const p = productsMap.get(t.productId);
+          return p && curAllowedLineIds.includes(p.lineId);
+        });
       }
       return mTargets.reduce((sum, t) => {
         return sum + (t.target != null ? (parseFloat(t.target) || 0) : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0)));
@@ -582,9 +615,13 @@ function renderAchievementsReport() {
       }
       if (selectedLineId !== 'all') {
         mSales = mSales.filter((s) => {
-          if (s.lineId) return s.lineId === selectedLineId;
           const p = productsMap.get(s.productId);
           return p && p.lineId === selectedLineId;
+        });
+      } else if (curAllowedLineIds !== null) {
+        mSales = mSales.filter((s) => {
+          const p = productsMap.get(s.productId);
+          return p && curAllowedLineIds.includes(p.lineId);
         });
       }
       return mSales.reduce((sum, s) => sum + (parseFloat(s.value) || 0), 0);

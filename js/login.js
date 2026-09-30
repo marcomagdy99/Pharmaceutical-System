@@ -26,7 +26,10 @@ try {
   console.warn("Feather replace skipped:", e);
 }
 
-const translations = {
+(function (window, document) {
+  "use strict";
+
+  const translations = {
   en: {
     login_subtitle: "Pharmaceutical CRM System",
     select_department: "Select Your Department",
@@ -54,7 +57,9 @@ const translations = {
     demo_accounts_title: "Quick Demo Accounts:",
     selected_dept_admin: "Admin Portal",
     selected_dept_sales: "Sales & Marketing Portal",
-    selected_dept_hr: "Human Resources Portal"
+    selected_dept_hr: "Human Resources Portal",
+    dark_mode: "Dark",
+    light_mode: "Light"
   },
   ar: {
     login_subtitle: "نظام إدارة علاقات العملاء الصيدلانية",
@@ -83,7 +88,9 @@ const translations = {
     demo_accounts_title: "تسجيل تجريبي سريع:",
     selected_dept_admin: "بوابة الإدارة",
     selected_dept_sales: "بوابة المبيعات والتسويق",
-    selected_dept_hr: "بوابة الموارد البشرية"
+    selected_dept_hr: "بوابة الموارد البشرية",
+    dark_mode: "داكن",
+    light_mode: "فاتح"
   }
 };
 
@@ -105,6 +112,22 @@ const cardSales = document.getElementById('cardSales');
 const cardHR = document.getElementById('cardHR');
 const backToDept = document.getElementById('backToDept');
 const selectedDeptTitle = document.getElementById('selectedDeptTitle');
+
+  function showLoginError(msg) {
+    const errEl = document.getElementById('errorMessage');
+    if (!errEl) return;
+    const textEl = document.getElementById('errorMessageText') || errEl;
+    textEl.textContent = msg;
+    errEl.style.display = 'flex';
+    errEl.classList.add('show');
+  }
+
+  function hideLoginError() {
+    const errEl = document.getElementById('errorMessage');
+    if (!errEl) return;
+    errEl.style.display = 'none';
+    errEl.classList.remove('show');
+  }
 
 function setLanguage(lang) {
   currentLang = lang;
@@ -133,6 +156,11 @@ function setLanguage(lang) {
     selectedDeptTitle.textContent = translations[lang]['selected_dept_' + selectedDepartment];
   }
 
+  if (typeof window.updateLoginThemeUI === 'function') {
+    const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    window.updateLoginThemeUI(curTheme);
+  }
+
   applyBrandSettings();
 }
 
@@ -143,35 +171,71 @@ function applyBrandSettings() {
     if (raw) settings = JSON.parse(raw);
   } catch (e) {}
 
+  if (!settings && window.DEMO_DATA && window.DEMO_DATA.companySettings) {
+    settings = window.DEMO_DATA.companySettings;
+  }
+
+  if (!settings) {
+    try {
+      const rawMaster = localStorage.getItem("pharma_master_data");
+      if (rawMaster) {
+        const parsed = JSON.parse(rawMaster);
+        if (parsed && parsed.companySettings) settings = parsed.companySettings;
+      }
+    } catch (e) {}
+  }
+
   const brand = settings && settings.branding;
   if (!brand) return;
 
-  const brandLogo = document.getElementById("brandPanelLogo");
-  if (brandLogo && brand.logoUrl) {
-    brandLogo.src = brand.logoUrl;
+  // Persist locally for immediate availability on subsequent paints
+  try {
+    localStorage.setItem("pharma_company_settings", JSON.stringify(settings));
+  } catch (e) {}
+
+  // 1. Update all logo instances (Right panel & Left panel logos)
+  if (brand.logoUrl) {
+    document.querySelectorAll(".login-logo-img, .brand-panel-logo").forEach((img) => {
+      img.src = brand.logoUrl;
+    });
   }
 
+  // 2. Update Tagline (both right panel and left subtitle if customized)
+  const isAr = currentLang === "ar";
+  const taglineText = isAr ? (brand.taglineAr || brand.taglineEn) : (brand.taglineEn || brand.taglineAr);
   const brandTagline = document.getElementById("brandTagline");
-  if (brandTagline) {
-    const text = currentLang === "ar" ? (brand.taglineAr || brand.taglineEn) : (brand.taglineEn || brand.taglineAr);
-    if (text) {
-      brandTagline.textContent = text;
-    }
+  if (brandTagline && taglineText) {
+    brandTagline.textContent = taglineText;
   }
 
+  // 3. Update Description
+  const descText = isAr ? (brand.descAr || brand.descEn) : (brand.descEn || brand.descAr);
   const brandDesc = document.getElementById("brandDesc");
-  if (brandDesc) {
-    const desc = currentLang === "ar" ? (brand.descAr || brand.descEn) : (brand.descEn || brand.descAr);
-    if (desc) {
-      brandDesc.textContent = desc;
-    }
+  if (brandDesc && descText) {
+    brandDesc.textContent = descText;
   }
 
+  // 4. Update Right Panel Background Gradient
   const loginRight = document.getElementById("loginRightPanel") || document.querySelector(".login-right");
   if (loginRight && brand.gradient) {
     loginRight.style.background = brand.gradient;
   }
 }
+
+window.applyBrandSettings = applyBrandSettings;
+
+// Listen for cross-tab or Firebase cloud sync updates to instantly reflect branding changes
+document.addEventListener("pharma:storage:synced", () => {
+  applyBrandSettings();
+});
+document.addEventListener("pharma:store:changed", () => {
+  applyBrandSettings();
+});
+window.addEventListener("storage", (e) => {
+  if (e.key === "pharma_company_settings" || e.key === "pharma_master_data") {
+    applyBrandSettings();
+  }
+});
 
 if (langToggle) {
   langToggle.addEventListener('click', () => {
@@ -196,52 +260,7 @@ if (togglePassword && passwordInput) {
 
 function renderQuickDemoAccounts(dept) {
   const container = document.getElementById('quickLoginSection');
-  if (!container) return;
-
-  const isAr = currentLang === 'ar';
-  let accounts = [];
-
-  if (dept === 'admin') {
-    accounts = [
-      { name: isAr ? 'مسؤول النظام (Admin)' : 'System Administrator', role: 'System Admin', email: 'admin@pharmacare.com', pass: 'admin123', icon: 'fa-shield-alt' }
-    ];
-  } else if (dept === 'sales') {
-    accounts = [
-      { name: 'Marco Magdy', role: isAr ? 'مندوب دعاية - المهندسين' : 'Medical Rep - Mohndseen', email: 'rep@pharmacare.com', pass: 'rep123', icon: 'fa-user-md' },
-      { name: 'Amir Ayoup', role: isAr ? 'مدير منطقة (District Manager)' : 'District Manager', email: 'dm@pharmacare.com', pass: 'dm123', icon: 'fa-user-tie' },
-      { name: 'John Mahfouz', role: isAr ? 'مدير خط (Line Manager)' : 'Line Manager', email: 'lm@pharmacare.com', pass: 'lm123', icon: 'fa-briefcase' },
-      { name: 'George Marzok', role: isAr ? 'مدير وحدة أعمال (Business Unit)' : 'Business Unit Head', email: 'bu@pharmacare.com', pass: 'bu123', icon: 'fa-building' }
-    ];
-  } else if (dept === 'hr') {
-    accounts = [
-      { name: 'Fatma El-Sherif', role: isAr ? 'مدير الموارد البشرية (HR)' : 'HR Director', email: 'hr@pharmacare.com', pass: 'hr123', icon: 'fa-user-check' }
-    ];
-  }
-
-  const titleText = isAr ? 'دخول سريع تجريبي بضغطة واحدة:' : 'Quick 1-Click Demo Login:';
-
-  let html = `
-    <div class="quick-login-title">
-      <i class="fas fa-bolt text-warning"></i>
-      <span>${titleText}</span>
-    </div>
-    <div class="quick-chips-grid">
-  `;
-
-  accounts.forEach((acc) => {
-    html += `
-      <button type="button" class="quick-user-chip" onclick="quickLoginAs('${acc.email}', '${acc.pass}')">
-        <div class="quick-chip-info">
-          <span class="quick-chip-name"><i class="fas ${acc.icon} me-1 text-primary"></i> ${acc.name}</span>
-          <span class="quick-chip-role">${acc.role}</span>
-        </div>
-        <span class="quick-chip-arrow">${isAr ? '←' : '→'}</span>
-      </button>
-    `;
-  });
-
-  html += `</div>`;
-  container.innerHTML = html;
+  if (container) container.innerHTML = '';
 }
 
 window.quickLoginAs = function(email, pass) {
@@ -259,8 +278,6 @@ function showLoginForm(dept) {
     selectedDeptTitle.textContent = translations[currentLang]['selected_dept_' + dept];
   }
 
-  renderQuickDemoAccounts(dept);
-
   // Keep inputs empty for clean user entry
   if (emailInput) {
     emailInput.value = '';
@@ -270,9 +287,7 @@ function showLoginForm(dept) {
     passwordInput.value = '';
     passwordInput.classList.remove('is-invalid');
   }
-  if (errorMessage) {
-    errorMessage.classList.remove('show');
-  }
+  hideLoginError();
 
   setTimeout(() => {
     if (emailInput) emailInput.focus();
@@ -298,9 +313,7 @@ function showDepartmentSelection() {
     passwordInput.value = '';
     passwordInput.classList.remove('is-invalid');
   }
-  if (errorMessage) {
-    errorMessage.classList.remove('show');
-  }
+  hideLoginError();
 }
 
 if (cardAdmin) cardAdmin.addEventListener('click', () => showLoginForm('admin'));
@@ -398,140 +411,147 @@ function getAllAuthenticatableUsers() {
  * Handles login submission with dynamic user resolution and department validation.
  */
 async function handleLogin() {
-  const rawInput = emailInput ? emailInput.value.trim() : '';
-  const email = rawInput.toLowerCase();
-  const password = passwordInput ? passwordInput.value : '';
+  try {
+    const rawInput = emailInput ? emailInput.value.trim() : '';
+    const email = rawInput.toLowerCase();
+    const password = passwordInput ? passwordInput.value : '';
 
-  if (emailInput) emailInput.classList.remove('is-invalid');
-  if (passwordInput) passwordInput.classList.remove('is-invalid');
-  if (errorMessage) errorMessage.classList.remove('show');
-  if (loginBox) loginBox.classList.remove('shake');
+    if (emailInput) emailInput.classList.remove('is-invalid');
+    if (passwordInput) passwordInput.classList.remove('is-invalid');
+    hideLoginError();
+    if (loginBox) loginBox.classList.remove('shake');
 
-  if (!email || !password) {
-    if (!email && emailInput) emailInput.classList.add('is-invalid');
-    if (!password && passwordInput) passwordInput.classList.add('is-invalid');
+    if (!email || !password) {
+      if (!email && emailInput) emailInput.classList.add('is-invalid');
+      if (!password && passwordInput) passwordInput.classList.add('is-invalid');
 
-    if (errorMessage) {
-      errorMessage.textContent = translations[currentLang].error_empty;
-      errorMessage.classList.add('show');
+      const emptyMsg = (translations[currentLang] && translations[currentLang].error_empty) || 
+                       (currentLang === 'ar' ? "يرجى ملء جميع الحقول." : "Please fill in all fields.");
+      showLoginError(emptyMsg);
+
+      if (loginBox) {
+        void loginBox.offsetWidth;
+        loginBox.classList.add('shake');
+      }
+      return;
     }
 
-    if (loginBox) {
-      void loginBox.offsetWidth;
-      loginBox.classList.add('shake');
-    }
-    return;
+    if (loginBtn) loginBtn.classList.add('loading');
+
+    const enteredHash = await hashPassword(password);
+
+    setTimeout(() => {
+      try {
+        const allUsers = getAllAuthenticatableUsers();
+
+        // Flexible user matching by email, id, employeeCode, name, or role shorthand
+        let matchedUser = allUsers.find((u) => {
+          if (!u) return false;
+          const uEmail = (u.email || '').toLowerCase().trim();
+          const uId = (u.id || '').toLowerCase().trim();
+          const uRole = (u.role || '').toLowerCase().trim();
+          const uName = (u.name || '').toLowerCase().trim();
+          const uCode = (u.employeeCode || u.code || '').toLowerCase().trim();
+          const emailPrefix = uEmail.split('@')[0];
+
+          return (
+            uEmail === email ||
+            uId === email ||
+            uCode === email ||
+            emailPrefix === email ||
+            uName === email ||
+            (email === 'hr' && (uRole === 'hr' || uId === 'hr1')) ||
+            (email === 'hr1' && (uRole === 'hr' || uId === 'hr1')) ||
+            (email === 'fatma' && (uRole === 'hr' || uId === 'hr1')) ||
+            (email === 'admin' && (uRole === 'admin' || uId === 'admin1')) ||
+            (email === 'admin1' && (uRole === 'admin' || uId === 'admin1')) ||
+            (email === 'rep' && (uRole === 'medical_rep' || uId === 'rep1')) ||
+            (email === 'rep1' && (uRole === 'medical_rep' || uId === 'rep1')) ||
+            (email === 'dm' && (uRole === 'district_manager' || uId === 'dm1')) ||
+            (email === 'dm1' && (uRole === 'district_manager' || uId === 'dm1')) ||
+            (email === 'lm' && (uRole === 'line_manager' || uId === 'lm1')) ||
+            (email === 'lm1' && (uRole === 'line_manager' || uId === 'lm1')) ||
+            (email === 'bu' && (uRole === 'business_unit' || uId === 'bu1')) ||
+            (email === 'bu1' && (uRole === 'business_unit' || uId === 'bu1')) ||
+            (email === 'pm' && (uRole === 'product_manager' || uId === 'pm1')) ||
+            (email === 'pm1' && (uRole === 'product_manager' || uId === 'pm1')) ||
+            (email === 'pm2' && (uRole === 'product_manager' || uId === 'pm2'))
+          );
+        });
+
+        const isPasswordValid = Boolean(
+          matchedUser && (
+            (matchedUser.passwordHash && matchedUser.passwordHash === enteredHash) ||
+            (matchedUser.password && (matchedUser.password === password || matchedUser.password === enteredHash)) ||
+            password === '123456' ||
+            password === 'hr123' ||
+            password === 'admin123' ||
+            password === 'rep123' ||
+            password === 'pm123' ||
+            password === '123' ||
+            password === 'password'
+          )
+        );
+
+        if (!matchedUser || !isPasswordValid) {
+          if (loginBtn) loginBtn.classList.remove('loading');
+          if (emailInput) emailInput.classList.add('is-invalid');
+          if (passwordInput) passwordInput.classList.add('is-invalid');
+          const invalidMsg = (translations[currentLang] && translations[currentLang].error_invalid) ||
+                             (currentLang === 'ar' ? "البريد الإلكتروني أو كلمة المرور غير صحيحة." : "Invalid email or password.");
+          showLoginError(invalidMsg);
+          if (loginBox) {
+            void loginBox.offsetWidth;
+            loginBox.classList.add('shake');
+          }
+          return;
+        }
+
+        // Strict department verification:
+        // Admin can ONLY log in through 'admin' portal
+        // HR can ONLY log in through 'hr' portal
+        // Sales & Marketing can ONLY log in through 'sales' portal
+        const userDept = matchedUser.dept || (matchedUser.role === 'admin' ? 'admin' : (matchedUser.role === 'hr' ? 'hr' : 'sales'));
+        if (selectedDepartment && userDept !== selectedDepartment) {
+          if (loginBtn) loginBtn.classList.remove('loading');
+          if (emailInput) emailInput.classList.add('is-invalid');
+          const deptMsg = (translations[currentLang] && translations[currentLang].error_wrong_dept) ||
+                          (currentLang === 'ar' ? "هذا الحساب لا ينتمي للقسم المختار. يرجى اختيار القسم الصحيح." : "This account does not belong to the selected department.");
+          showLoginError(deptMsg);
+          if (loginBox) {
+            void loginBox.offsetWidth;
+            loginBox.classList.add('shake');
+          }
+          return;
+        }
+
+        const sessionData = {
+          id: matchedUser.id,
+          email: matchedUser.email,
+          role: matchedUser.role,
+          name: matchedUser.name,
+          employeeCode: matchedUser.employeeCode,
+          token: 'token_' + Date.now()
+        };
+
+        sessionStorage.removeItem('pharma_logged_out');
+        sessionStorage.setItem('pharmaUser', JSON.stringify(sessionData));
+        localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
+        localStorage.setItem('userRole', matchedUser.role);
+        localStorage.setItem('userId', matchedUser.id);
+        window.currentUser = sessionData;
+
+        window.location.replace('index.html');
+      } catch (err) {
+        console.error("Login processing error:", err);
+        if (loginBtn) loginBtn.classList.remove('loading');
+        showLoginError(currentLang === 'ar' ? "حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة مجدداً." : "An error occurred during login. Please try again.");
+      }
+    }, 300);
+  } catch (outerErr) {
+    console.error("handleLogin outer error:", outerErr);
+    if (loginBtn) loginBtn.classList.remove('loading');
   }
-
-  if (loginBtn) loginBtn.classList.add('loading');
-
-  const enteredHash = await hashPassword(password);
-
-  setTimeout(() => {
-    const allUsers = getAllAuthenticatableUsers();
-
-    // Flexible user matching by email, id, employeeCode, name, or role shorthand
-    let matchedUser = allUsers.find((u) => {
-      const uEmail = (u.email || '').toLowerCase().trim();
-      const uId = (u.id || '').toLowerCase().trim();
-      const uRole = (u.role || '').toLowerCase().trim();
-      const uName = (u.name || '').toLowerCase().trim();
-      const uCode = (u.employeeCode || '').toLowerCase().trim();
-      const emailPrefix = uEmail.split('@')[0];
-
-      return (
-        uEmail === email ||
-        uId === email ||
-        uCode === email ||
-        emailPrefix === email ||
-        uName === email ||
-        (email === 'hr' && (uRole === 'hr' || uId === 'hr1')) ||
-        (email === 'hr1' && (uRole === 'hr' || uId === 'hr1')) ||
-        (email === 'fatma' && (uRole === 'hr' || uId === 'hr1')) ||
-        (email === 'admin' && (uRole === 'admin' || uId === 'admin1')) ||
-        (email === 'admin1' && (uRole === 'admin' || uId === 'admin1')) ||
-        (email === 'rep' && (uRole === 'medical_rep' || uId === 'rep1')) ||
-        (email === 'rep1' && (uRole === 'medical_rep' || uId === 'rep1')) ||
-        (email === 'dm' && (uRole === 'district_manager' || uId === 'dm1')) ||
-        (email === 'dm1' && (uRole === 'district_manager' || uId === 'dm1')) ||
-        (email === 'lm' && (uRole === 'line_manager' || uId === 'lm1')) ||
-        (email === 'lm1' && (uRole === 'line_manager' || uId === 'lm1')) ||
-        (email === 'bu' && (uRole === 'business_unit' || uId === 'bu1')) ||
-        (email === 'bu1' && (uRole === 'business_unit' || uId === 'bu1')) ||
-        (email === 'pm' && (uRole === 'product_manager' || uId === 'pm1')) ||
-        (email === 'pm1' && (uRole === 'product_manager' || uId === 'pm1')) ||
-        (email === 'pm2' && (uRole === 'product_manager' || uId === 'pm2'))
-      );
-    });
-
-    const isPasswordValid = Boolean(
-      matchedUser && (
-        (matchedUser.passwordHash && matchedUser.passwordHash === enteredHash) ||
-        (matchedUser.password && (matchedUser.password === password || matchedUser.password === enteredHash)) ||
-        password === '123456' ||
-        password === 'hr123' ||
-        password === 'admin123' ||
-        password === 'rep123' ||
-        password === 'pm123' ||
-        password === '123' ||
-        password === 'password'
-      )
-    );
-
-    if (!matchedUser || !isPasswordValid) {
-      if (loginBtn) loginBtn.classList.remove('loading');
-      if (emailInput) emailInput.classList.add('is-invalid');
-      if (passwordInput) passwordInput.classList.add('is-invalid');
-      if (errorMessage) {
-        errorMessage.textContent = translations[currentLang].error_invalid;
-        errorMessage.classList.add('show');
-      }
-      if (loginBox) {
-        void loginBox.offsetWidth;
-        loginBox.classList.add('shake');
-      }
-      return;
-    }
-
-    // Strict department verification:
-    // Admin can ONLY log in through 'admin' portal
-    // HR can ONLY log in through 'hr' portal
-    // Sales & Marketing can ONLY log in through 'sales' portal
-    const userDept = matchedUser.dept || (matchedUser.role === 'admin' ? 'admin' : (matchedUser.role === 'hr' ? 'hr' : 'sales'));
-    if (selectedDepartment && userDept !== selectedDepartment) {
-      if (loginBtn) loginBtn.classList.remove('loading');
-      if (emailInput) emailInput.classList.add('is-invalid');
-      if (errorMessage) {
-        errorMessage.textContent = translations[currentLang].error_wrong_dept;
-        errorMessage.classList.add('show');
-      }
-      if (loginBox) {
-        void loginBox.offsetWidth;
-        loginBox.classList.add('shake');
-      }
-      return;
-    }
-
-    const sessionData = {
-      id: matchedUser.id,
-      email: matchedUser.email,
-      role: matchedUser.role,
-      name: matchedUser.name,
-      employeeCode: matchedUser.employeeCode,
-      token: 'token_' + Date.now()
-    };
-
-    const rememberMe = !!document.getElementById('remember')?.checked;
-
-    sessionStorage.removeItem('pharma_logged_out');
-    sessionStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-    localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-    localStorage.setItem('userRole', matchedUser.role);
-    localStorage.setItem('userId', matchedUser.id);
-    window.currentUser = sessionData;
-
-    window.location.replace('index.html');
-  }, 400);
 }
 
 if (loginBtn) {
@@ -540,14 +560,24 @@ if (loginBtn) {
 
 [emailInput, passwordInput].forEach((input) => {
   if (!input) return;
-  input.addEventListener('keypress', (e) => {
+  input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleLogin();
   });
 
   input.addEventListener('input', () => {
     input.classList.remove('is-invalid');
-    if (errorMessage) errorMessage.classList.remove('show');
+    hideLoginError();
   });
 });
 
+window.handleLogin = handleLogin;
+window.showLoginForm = showLoginForm;
+window.showDepartmentSelection = showDepartmentSelection;
+window.quickLoginAs = quickLoginAs;
+window.applyBrandSettings = applyBrandSettings;
+window.setLanguage = setLanguage;
+window.showLoginError = showLoginError;
+window.hideLoginError = hideLoginError;
+
 setLanguage(currentLang);
+})(window, document);

@@ -48,32 +48,46 @@ html[dir="rtl"] body {
     position: relative;
 }
 
-.language-toggle {
+.login-top-actions {
     position: absolute;
-    top: 2rem;
-    right: 2rem;
-    background: none;
-    border: 1px solid var(--gray-400);
-    border-radius: 10px;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--gray-600);
-    transition: all 0.3s;
+    top: 1.5rem;
+    right: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    z-index: 50;
 }
 
-html[dir="rtl"] .language-toggle {
+html[dir="rtl"] .login-top-actions {
     right: auto;
-    left: 2rem;
+    left: 1.5rem;
 }
 
+.theme-toggle,
+.language-toggle {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.45rem 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: #334155;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    user-select: none;
+}
+
+.theme-toggle:hover,
 .language-toggle:hover {
-    color: var(--primary);
-    border-color: var(--primary);
-    background-color: var(--primary-light);
+    color: var(--primary, #0d6efd);
+    border-color: var(--primary, #0d6efd);
+    background-color: var(--primary-light, #e7f1ff);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.15);
 }
 
 .logo-container {
@@ -405,16 +419,31 @@ html[dir="rtl"] .password-toggle {
 }
 
 .error-message {
-    color: var(--danger);
-    font-size: 0.875rem;
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.08);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
     margin-top: 0.5rem;
+    margin-bottom: 1.25rem;
     display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     text-align: center;
-    margin-bottom: 1rem;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+[data-theme="dark"] .error-message {
+    color: #ff6b6b;
+    background: rgba(220, 53, 69, 0.15);
+    border-color: rgba(220, 53, 69, 0.4);
 }
 
 .error-message.show {
-    display: block;
+    display: flex !important;
 }
 
 .login-footer {
@@ -684,12 +713,15 @@ html[dir="rtl"] .quick-user-chip:hover {
     color: #58a6ff !important;
 }
 
+[data-theme="dark"] .theme-toggle,
 [data-theme="dark"] .language-toggle {
     border-color: #3d4554;
-    color: #dee2e6;
+    color: #e2e8f0;
     background-color: #232731;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
+[data-theme="dark"] .theme-toggle:hover,
 [data-theme="dark"] .language-toggle:hover {
     border-color: #3b82f6;
     color: #ffffff;
