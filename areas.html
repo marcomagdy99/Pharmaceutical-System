@@ -32,20 +32,20 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/areas.css?v=v93" />
+    <link rel="stylesheet" href="css/areas.css?v=v98" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v93"></script>
-    <script src="js/store.js?v=v93"></script>
+    <script src="js/app.js?v=v98"></script>
+    <script src="js/store.js?v=v98"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v93"></script>
-    <script src="js/firebase-sync.js?v=v93"></script>
+    <script src="js/firebase-config.js?v=v98"></script>
+    <script src="js/firebase-sync.js?v=v98"></script>
       <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v93";
+        var EXPECTED_SW = "v98";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -249,6 +249,9 @@
                       <th class="border-0 px-4 py-3" data-i18n="area_name">
                         Area Name
                       </th>
+                      <th class="border-0 px-4 py-3" data-i18n="assigned_bricks">
+                        IMS Bricks
+                      </th>
                       <th class="border-0 px-4 py-3" data-i18n="assigned_rep">
                         Assigned Rep
                       </th>
@@ -281,7 +284,7 @@
 
     <!-- Add/Edit Area Modal -->
     <div class="modal fade" id="areaModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content rounded-4 border-0 shadow">
           <div class="modal-header border-bottom py-3">
             <h5 class="modal-title" id="areaModalTitle" data-i18n="add_area">
@@ -305,36 +308,60 @@
                 </div>
               </div>
 
-              <div class="mb-3">
-                <label class="form-label fw-semibold" data-i18n="area_name"
-                  >Area Name <span class="text-danger">*</span></label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="areaName"
-                  list="existingAreaNamesList"
-                  oninput="onAreaNameInput()"
-                  required
-                />
-                <datalist id="existingAreaNamesList">
-                  <!-- Populated dynamically with unique existing area names -->
-                </datalist>
+              <div class="row g-3 mb-3">
+                <div class="col-md-7">
+                  <label class="form-label fw-semibold" data-i18n="area_name"
+                    >Area Name <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="areaName"
+                    list="existingAreaNamesList"
+                    oninput="onAreaNameInput()"
+                    required
+                  />
+                  <datalist id="existingAreaNamesList">
+                    <!-- Populated dynamically with unique existing area names -->
+                  </datalist>
+                </div>
+
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold" data-i18n="area_code"
+                    >Area Code <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    class="form-control text-uppercase"
+                    id="areaCode"
+                    placeholder="e.g. GZA-B01"
+                    required
+                  />
+                  <div class="form-text" data-i18n="area_code_hint">
+                    Format hint: GZA-B01. Must be unique.
+                  </div>
+                </div>
               </div>
 
+              <!-- IMS Bricks Multi-Selector -->
               <div class="mb-3">
-                <label class="form-label fw-semibold" data-i18n="area_code"
-                  >Area Code <span class="text-danger">*</span></label
-                >
-                <input
-                  type="text"
-                  class="form-control text-uppercase"
-                  id="areaCode"
-                  placeholder="e.g. CAI-N01"
-                  required
-                />
-                <div class="form-text" data-i18n="area_code_hint">
-                  Format hint: CAI-N01. Must be unique.
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label fw-semibold mb-0">
+                    <i class="fas fa-cubes text-primary me-1"></i> <span data-i18n="assigned_bricks_label">IMS Bricks (Territory Coverage)</span>
+                  </label>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="selectedBricksCountBadge">0 bricks selected</span>
+                </div>
+                <div class="input-group input-group-sm mb-2">
+                  <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                  <input type="text" class="form-control" id="searchBricksInput" data-i18n-placeholder="search_bricks" placeholder="Search brick name..." oninput="filterModalBricks()" />
+                  <button class="btn btn-outline-secondary" type="button" onclick="selectAllFilteredBricks(true)"><i class="fas fa-check-double me-1"></i> <span data-i18n="select_all">Select All</span></button>
+                  <button class="btn btn-outline-secondary" type="button" onclick="selectAllFilteredBricks(false)"><i class="fas fa-times me-1"></i> <span data-i18n="clear">Clear</span></button>
+                </div>
+                <div class="border rounded-3 p-2 bg-light" id="modalBricksContainer" style="max-height: 220px; overflow-y: auto;">
+                  <!-- Populated dynamically by JS -->
+                </div>
+                <div class="form-text small text-muted" data-i18n="assigned_bricks_hint">
+                  Select geographical IMS bricks covered by the representative in this area (to automatically map distributor sales invoices and distribute sales).
                 </div>
               </div>
 
@@ -422,6 +449,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/areas.js"></script>
+    <script src="js/egypt-bricks-data.js?v=v98"></script>
+    <script src="js/areas.js?v=v98"></script>
   </body>
 </html>

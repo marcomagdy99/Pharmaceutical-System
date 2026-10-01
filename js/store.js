@@ -415,6 +415,102 @@
         // Prefer an area that has an assigned rep over a vacant one
         return matches.find((a) => a.repId) || matches[0];
       },
+      /**
+       * Checks whether an assigned IMS brick matches the raw sheet territory text,
+       * handling Arabic normalization (hamzas, taa-marbuta, etc.) and English aliases.
+       */
+      _brickMatchesText(brickName, sheetText) {
+        if (!brickName || !sheetText) return false;
+        const norm = (s) =>
+          String(s || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[أإآ]/g, "ا")
+            .replace(/ة/g, "ه")
+            .replace(/ى/g, "ي")
+            .replace(/[ًٌٍَُِّْـ]/g, "")
+            .replace(/[-\\/,]/g, " ")
+            .replace(/\s+/g, " ");
+
+        const nb = norm(brickName);
+        const ns = norm(sheetText);
+        if (nb === ns) return true;
+        if (ns.length >= 3 && nb.includes(ns)) return true;
+        if (nb.length >= 3 && ns.includes(nb)) return true;
+
+        const aliases = {
+          nasr: "نصر",
+          dokki: "دقي",
+          maadi: "معادي",
+          giza: "جيزه",
+          october: "اكتوبر",
+          helwan: "حلوان",
+          heliopolis: "مصر الجديده",
+          alex: "اسكندر",
+          alexandria: "اسكندر",
+          tanta: "طنطا",
+          mansoura: "منصور",
+          shubra: "شبرا",
+          faisal: "فيصل",
+          haram: "هرم",
+          zamalek: "زمالك",
+          mohandessin: "مهندسين",
+          aswan: "اسوان",
+          assiut: "اسيوط",
+          sohag: "سوهاج",
+          qena: "قنا",
+          luxor: "اقصر",
+          hurghada: "غردقه",
+          sharm: "شرم",
+          ismailia: "اسماعيلي",
+          suez: "سويس",
+          "port said": "بورسعيد",
+          damietta: "دمياط",
+          zagazig: "زقازيق",
+          banha: "بنها",
+        };
+
+        for (const [enKey, arVal] of Object.entries(aliases)) {
+          if (ns.includes(enKey) && nb.includes(norm(arVal))) return true;
+        }
+        return false;
+      },
+      /**
+       * Finds the Area that has this official IMS brick assigned.
+       */
+      findByBrickName(brickName) {
+        if (!brickName) return null;
+        const matches = (window.DEMO_DATA.areas || []).filter(
+          (a) =>
+            Array.isArray(a.bricks) &&
+            a.bricks.some((b) => {
+              const bName = typeof b === "string" ? b : (b && b.name ? b.name : "");
+              return this._brickMatchesText(bName, brickName);
+            })
+        );
+        if (!matches.length) return null;
+        return matches.find((a) => a.repId) || matches[0];
+      },
+      /**
+       * Finds an area by assigned IMS brick name, scoped to a specific product line.
+       */
+      findByBrickNameForLine(brickName, lineId) {
+        if (!brickName) return null;
+        const defaultLine = this._defaultLineId();
+        return (window.DEMO_DATA.areas || []).find((a) => {
+          if (lineId) {
+            const areaLine = a.lineId || defaultLine;
+            if (areaLine !== lineId) return false;
+          }
+          return (
+            Array.isArray(a.bricks) &&
+            a.bricks.some((b) => {
+              const bName = typeof b === "string" ? b : (b && b.name ? b.name : "");
+              return this._brickMatchesText(bName, brickName);
+            })
+          );
+        });
+      },
       save(areaObj) {
         if (!window.DEMO_DATA.areas) window.DEMO_DATA.areas = [];
         const areas = window.DEMO_DATA.areas;
@@ -1251,6 +1347,7 @@
         const pending = [];
         rows.forEach((row) => {
           if (store.areas.findByAliasText(row.distributorId, row.areaRaw)) return;
+          if (typeof store.areas.findByBrickName === "function" && store.areas.findByBrickName(row.areaRaw)) return;
           const key = row.distributorId + "||" + row.areaRaw.trim().toLowerCase();
           if (seen[key]) {
             seen[key].count++;
@@ -1314,6 +1411,15 @@
               area = store.areas.findByAliasTextForLine(row.distributorId, row.areaRaw, rowLineId);
             } else {
               area = store.areas.findByAliasText(row.distributorId, row.areaRaw);
+            }
+          }
+
+          // 2b. Fallback to assigned IMS Bricks matching (line-aware)
+          if (!area && row.areaRaw && typeof store.areas.findByBrickNameForLine === "function") {
+            if (rowLineId) {
+              area = store.areas.findByBrickNameForLine(row.areaRaw, rowLineId);
+            } else {
+              area = store.areas.findByBrickName(row.areaRaw);
             }
           }
 

@@ -3,7 +3,7 @@
  * @description Service Worker for PharmaCare PWA offline caching and reliable field performance.
  */
 
-const CACHE_VERSION = 'v93';
+const CACHE_VERSION = 'v98';
 const CACHE_NAME = `pharmacare-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   './',
@@ -63,6 +63,7 @@ const ASSETS_TO_CACHE = [
   './js/quizzes.js',
   './js/users.js',
   './js/areas.js',
+  './js/egypt-bricks-data.js',
   './js/activities-core.js',
   './js/activities-tab-daily.js',
   './js/activities-tab-expenses.js',

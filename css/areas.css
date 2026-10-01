@@ -339,3 +339,39 @@ html[dir="rtl"] .area-card.unassigned {
 [data-theme="dark"] .dist-mobile-card .btn-light:hover {
     background: #3a4150;
 }
+
+/* --- START: IMS Bricks Selector --- */
+#modalBricksContainer {
+    background-color: var(--bs-gray-100, #f8f9fa);
+    border-color: #dee2e6;
+}
+.brick-checkbox-card {
+    transition: all 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+}
+.brick-checkbox-card:hover {
+    border-color: var(--primary, #0d6efd) !important;
+}
+.brick-checkbox-card.selected {
+    background-color: rgba(13, 110, 253, 0.08) !important;
+    border-color: rgba(13, 110, 253, 0.4) !important;
+}
+[data-theme="dark"] #modalBricksContainer {
+    background-color: #1a1e24 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] .brick-checkbox-card {
+    background-color: #232731 !important;
+    border-color: #2d3340 !important;
+    color: #e2e8f0;
+}
+[data-theme="dark"] .brick-checkbox-card:hover {
+    background-color: #2a303d !important;
+}
+[data-theme="dark"] .brick-checkbox-card.selected {
+    background-color: rgba(13, 110, 253, 0.25) !important;
+    border-color: #3b82f6 !important;
+    color: #93c5fd;
+}
+/* --- END: IMS Bricks Selector --- */

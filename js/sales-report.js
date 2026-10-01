@@ -342,6 +342,49 @@ function initPharmSalesFilters(user) {
  * Shared by renderSalesReport() and exportSalesReport() so they can never
  * drift out of sync with each other.
  */
+function getLmScopedAreaIds(lmUser, allUsers, allAreas) {
+  if (!lmUser) return new Set();
+  const lmId = lmUser.id;
+  const dms = allUsers.filter((u) => u.managerId === lmId && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+  const dmIds = dms.map((d) => d.id);
+  const teamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+
+  const userLineIds = (lmUser.lineIds && lmUser.lineIds.length > 0) ? lmUser.lineIds : (lmUser.lineId ? [lmUser.lineId] : []);
+  const lmsInLine = allUsers.filter((u) =>
+    (window.normalizeRole ? window.normalizeRole(u.role) === 'line_manager' : (u.role === 'line_manager' || u.role === 'lm')) &&
+    userLineIds.some((lid) => (u.lineIds && u.lineIds.includes(lid)) || u.lineId === lid)
+  );
+  const isSingleLMForLine = lmsInLine.length <= 1;
+
+  const scopedAreaIds = new Set();
+  allAreas.forEach((a) => {
+    const areaMatchesLine = !a.lineId || userLineIds.length === 0 || userLineIds.includes(a.lineId);
+    if (!areaMatchesLine) return;
+
+    if (a.lmId === lmId || a.lineManagerId === lmId || (Array.isArray(lmUser.assignedAreas) && lmUser.assignedAreas.includes(a.id))) {
+      scopedAreaIds.add(a.id);
+      return;
+    }
+    if (a.repId && teamRepIds.includes(a.repId)) {
+      scopedAreaIds.add(a.id);
+      return;
+    }
+    if (a.dmId && dmIds.includes(a.dmId)) {
+      scopedAreaIds.add(a.id);
+      return;
+    }
+    const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+    if (mgrId && (mgrId === lmId || dmIds.includes(mgrId))) {
+      scopedAreaIds.add(a.id);
+      return;
+    }
+    if (!a.repId && isSingleLMForLine) {
+      scopedAreaIds.add(a.id);
+    }
+  });
+  return scopedAreaIds;
+}
+
 function getFilteredPharmSalesRows() {
   const productSelect = document.getElementById('pharmSalesProductSelect');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
@@ -358,6 +401,9 @@ function getFilteredPharmSalesRows() {
   const allowedLineIds = getPharmSalesAllowedLineIds(user);
 
   let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
+
+  // 🔹 Strict Product Mapping Check: Unmapped products from distributor sheets are excluded from sales reports
+  rows = rows.filter((r) => Boolean(r.productId));
 
   if (selectedMonths.length === 0) {
     return [];
@@ -432,12 +478,10 @@ function getFilteredPharmSalesRows() {
 
   if (isRep) {
     const repAreas = (window.store && window.store.areas ? window.store.areas.getByRep(user.id) : []);
-    const repAreaIds = repAreas.map((a) => a.id);
-    const repAreaNames = repAreas.map((a) => (a.name || '').toLowerCase().trim());
+    const repAreaIds = new Set(repAreas.map((a) => a.id));
     rows = rows.filter((r) =>
       r.repId === user.id ||
-      (r.areaId && repAreaIds.includes(r.areaId)) ||
-      (!r.areaId && r.area && repAreaNames.includes(r.area.toLowerCase().trim()))
+      (r.areaId && repAreaIds.has(r.areaId))
     );
   } else if (role === 'district_manager') {
     const teamRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
@@ -454,7 +498,13 @@ function getFilteredPharmSalesRows() {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
     const teamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
-    rows = rows.filter((r) => r.lmId === user.id || (r.dmId && dmIds.includes(r.dmId)) || (r.repId && teamRepIds.includes(r.repId)));
+    const lmAreaIds = getLmScopedAreaIds(user, allUsers, allAreas);
+    rows = rows.filter((r) =>
+      r.lmId === user.id ||
+      (r.dmId && dmIds.includes(r.dmId)) ||
+      (r.repId && teamRepIds.includes(r.repId)) ||
+      (r.areaId && lmAreaIds.has(r.areaId))
+    );
   } else if (role === 'business_unit') {
     const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
     const subIds = subs.map((s) => s.id);
@@ -482,20 +532,25 @@ function getFilteredPharmSalesRows() {
       const isLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
       const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
       if (isLM) {
+        const targetLmUser = allUsers.find((u) => u.id === selectedRep);
         const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
         const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        rows = rows.filter((r) => r.lmId === selectedRep || (r.dmId && dmsUnderLM.includes(r.dmId)) || (r.repId && repsUnderLM.includes(r.repId)));
+        const lmAreaIds = getLmScopedAreaIds(targetLmUser, allUsers, allAreas);
+        rows = rows.filter((r) =>
+          r.lmId === selectedRep ||
+          (r.dmId && dmsUnderLM.includes(r.dmId)) ||
+          (r.repId && repsUnderLM.includes(r.repId)) ||
+          (r.areaId && lmAreaIds.has(r.areaId))
+        );
       } else if (isDM) {
         const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
         rows = rows.filter((r) => r.dmId === selectedRep || (r.repId && repsUnderDM.includes(r.repId)));
       } else {
         const targetRepAreas = (window.store && window.store.areas ? window.store.areas.getByRep(selectedRep) : []);
-        const targetRepAreaIds = targetRepAreas.map((a) => a.id);
-        const targetRepAreaNames = targetRepAreas.map((a) => (a.name || '').toLowerCase().trim());
+        const targetRepAreaIds = new Set(targetRepAreas.map((a) => a.id));
         rows = rows.filter((r) =>
           r.repId === selectedRep ||
-          (r.areaId && targetRepAreaIds.includes(r.areaId)) ||
-          (!r.areaId && r.area && targetRepAreaNames.includes(r.area.toLowerCase().trim())) ||
+          (r.areaId && targetRepAreaIds.has(r.areaId)) ||
           r.dmId === selectedRep
         );
       }
@@ -986,34 +1041,59 @@ function getAllProductsFlat() {
   return out;
 }
 
+function updateTargetProductSelectForRep(selectedRepId) {
+  const productSelect = document.getElementById('targetProductSelect');
+  if (!productSelect) return;
+  const prevVal = productSelect.value;
+  productSelect.replaceChildren();
+
+  const repLines = (selectedRepId && typeof window.getUserLines === 'function')
+    ? window.getUserLines(selectedRepId)
+    : [];
+  const repLineIds = repLines.map((l) => l.id);
+
+  let lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  if (repLineIds.length > 0) {
+    lines = lines.filter((l) => repLineIds.includes(l.id));
+  }
+
+  lines.forEach((line) => {
+    const products = line.products || [];
+    if (!products.length) return;
+    const group = document.createElement('optgroup');
+    group.label = line.name;
+    products.forEach((p) => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name + (p.dosage ? ' ' + p.dosage : '');
+      group.appendChild(opt);
+    });
+    productSelect.appendChild(group);
+  });
+
+  if (prevVal && Array.from(productSelect.options).some((o) => o.value === prevVal)) {
+    productSelect.value = prevVal;
+  }
+  onTargetProductSelectChange();
+}
+
 function populateTargetFormSelects() {
   const repSelect = document.getElementById('targetRepSelect');
-  const productSelect = document.getElementById('targetProductSelect');
   const monthSelect = document.getElementById('targetMonthSelect');
   const yearSelect = document.getElementById('targetYearSelect');
 
   if (repSelect) {
     const reps = (window.store && window.store.users ? window.store.users.getReps() : []);
     renderSelectOptions(repSelect, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+    if (!repSelect.dataset.targetRepBound) {
+      repSelect.dataset.targetRepBound = 'true';
+      repSelect.addEventListener('change', () => {
+        updateTargetProductSelectForRep(repSelect.value);
+      });
+    }
   }
 
-  if (productSelect) {
-    productSelect.replaceChildren();
-    const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
-    lines.forEach((line) => {
-      const products = line.products || [];
-      if (!products.length) return;
-      const group = document.createElement('optgroup');
-      group.label = line.name;
-      products.forEach((p) => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.name + (p.dosage ? ' ' + p.dosage : '');
-        group.appendChild(opt);
-      });
-      productSelect.appendChild(group);
-    });
-  }
+  updateTargetProductSelectForRep(repSelect ? repSelect.value : null);
 
   if (monthSelect && !monthSelect.dataset.populated) {
     const now = new Date();
@@ -1117,6 +1197,8 @@ function resetTargetForm() {
   if (label) label.textContent = 'Add Target';
   const cancelBtn = document.getElementById('cancelTargetEditBtn');
   if (cancelBtn) cancelBtn.style.display = 'none';
+  const repSelect = document.getElementById('targetRepSelect');
+  updateTargetProductSelectForRep(repSelect ? repSelect.value : null);
 }
 
 function onTargetProductSelectChange() {
@@ -1144,6 +1226,7 @@ function editTarget(id) {
   if (!t) return;
   document.getElementById('targetEditId').value = t.id;
   document.getElementById('targetRepSelect').value = t.repId;
+  updateTargetProductSelectForRep(t.repId);
   document.getElementById('targetProductSelect').value = t.productId;
   document.getElementById('targetMonthSelect').value = t.month.split('-')[1];
   document.getElementById('targetYearSelect').value = t.month.split('-')[0];
@@ -1178,6 +1261,18 @@ function saveTarget() {
   if (!repId || !productId || !month || !year || isNaN(units) || units < 0 || isNaN(unitPrice) || unitPrice < 0 || isNaN(targetValue) || targetValue < 0) {
     if (typeof showToast === 'function') showToast('Fill in Rep, Product, Month, Year, Target Units, Unit Price, and a valid Target Value (all non-negative).', 'warning');
     return;
+  }
+
+  const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(repId) : [];
+  if (repLines.length > 0) {
+    const repLineIds = repLines.map((l) => l.id);
+    const prod = getAllProductsFlat().find((p) => p.id === productId);
+    if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
+      if (typeof showToast === 'function') {
+        showToast(getCurrentLang() === 'ar' ? 'خطأ: الصنف المختار لا ينتمي لخط الإنتاج المخصص لهذا المندوب.' : 'Error: Selected product does not belong to this rep\'s assigned line.', 'error');
+      }
+      return;
+    }
   }
 
   if (window.store && window.store.targets) {

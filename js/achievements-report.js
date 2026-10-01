@@ -232,7 +232,7 @@ function getAchievementsScopeRepIds(user) {
 
   if (selectedRep && selectedRep !== 'all') {
     if (selectedRep.startsWith('vacant:')) {
-      return null;
+      return [];
     }
     if (selectedRep === 'all_reps' || selectedRep === 'all_dms') {
       return allowedRepIds;

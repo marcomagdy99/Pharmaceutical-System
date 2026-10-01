@@ -34,6 +34,15 @@ const areaTranslations = {
     delete_area_msg: "Are you sure you want to delete this area?",
     select_line: "Product Line:",
     all_lines: "All Lines",
+    assigned_bricks: "IMS Bricks",
+    assigned_bricks_label: "IMS Bricks (Territory Coverage)",
+    search_bricks: "Search brick name...",
+    select_all: "Select All",
+    clear: "Clear",
+    assigned_bricks_hint: "Select geographical IMS bricks covered by the representative in this area (to automatically map distributor sales invoices and distribute sales).",
+    selected_bricks: "bricks selected",
+    no_bricks_assigned: "No bricks assigned",
+    no_matching_bricks: "No matching bricks found",
   },
   ar: {
     area_management: "إدارة المناطق",
@@ -60,6 +69,15 @@ const areaTranslations = {
     delete_area_msg: "هل أنت متأكد أنك تريد حذف هذه المنطقة؟",
     select_line: "الخط الإنتاجي:",
     all_lines: "كل الخطوط",
+    assigned_bricks: "البريكات التابعة",
+    assigned_bricks_label: "البريكات التابعة للمنطقة (IMS Bricks)",
+    search_bricks: "ابحث عن اسم البريكة...",
+    select_all: "تحديد الكل",
+    clear: "مسح",
+    assigned_bricks_hint: "اختر البريكات الجغرافية التي يغطيها المندوب في هذه المنطقة (لربط فواتير الموزعين وتوزيع المبيعات تلقائياً).",
+    selected_bricks: "بريكة مختارة",
+    no_bricks_assigned: "لا توجد بريكات مرتبطة",
+    no_matching_bricks: "لا توجد بريكات مطابقة للبحث",
   },
 };
 
@@ -93,6 +111,7 @@ function getAreasList() {
       repId: rId,
       repName: rName,
       lineId: a.lineId || null,
+      bricks: Array.isArray(a.bricks) ? a.bricks : [],
     };
   });
 }
@@ -100,7 +119,7 @@ function getAreasList() {
 function populateRepDropdown(selectedRepId = "", targetLineId = null) {
   const repSelect = document.getElementById("assignRep");
   if (!repSelect) return;
-  const isAr = document.documentElement.dir === "rtl";
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const unassignedLabel = isAr
     ? "-- غير معيّنة (شاغرة) --"
     : "-- Unassigned (Vacant) --";
@@ -130,7 +149,7 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
 function populateLineSelector() {
   const select = document.getElementById("lineSelector");
   if (!select) return;
-  const isAr = document.documentElement.dir === "rtl";
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
 
@@ -199,7 +218,266 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderAreas();
   updateStats();
+
+  // Listen to language changes across the app
+  document.addEventListener("languageChanged", (e) => {
+    const lang = e.detail?.lang || (typeof getCurrentLang === "function" ? getCurrentLang() : "en");
+    if (typeof applyTranslations === "function") applyTranslations(lang);
+    renderAreas();
+    updateStats();
+    updateSelectedBricksCount();
+  });
 });
+
+// ============================================================================
+// IMS Bricks Multi-Selector Engine
+// ============================================================================
+let selectedBrickNames = new Set();
+let currentBricksLimit = 200;
+
+const englishToArabicBrickMap = {
+  nasr: "نصر",
+  dokki: "دقي",
+  maadi: "معادي",
+  giza: "جيزه",
+  october: "اكتوبر",
+  helwan: "حلوان",
+  heliopolis: "مصر الجديده",
+  alex: "اسكندر",
+  alexandria: "اسكندر",
+  tanta: "طنطا",
+  mansoura: "منصور",
+  shubra: "شبرا",
+  faisal: "فيصل",
+  haram: "هرم",
+  zamalek: "زمالك",
+  mohandessin: "مهندسين",
+  aswan: "اسوان",
+  assiut: "اسيوط",
+  sohag: "سوهاج",
+  qena: "قنا",
+  luxor: "اقصر",
+  hurghada: "غردقه",
+  sharm: "شرم",
+  ismailia: "اسماعيلي",
+  suez: "سويس",
+  "port said": "بورسعيد",
+  damietta: "دمياط",
+  zagazig: "زقازيق",
+  banha: "بنها",
+  damanhour: "دمنهور",
+  "kafr el sheikh": "كفر الشيخ",
+  menoufia: "منوف",
+  shebin: "شبين",
+  matrouh: "مطروح",
+  arish: "عريش",
+  obour: "عبور",
+  badr: "بدر",
+  shorouk: "شروق",
+  katameya: "قطاميه",
+  tagamoa: "تجمع",
+  rehab: "رحاب",
+  madinaty: "مدينتي",
+};
+
+function normalizeArabicText(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[ًٌٍَُِّْـ]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function searchMasterBricks(allMaster, rawQuery) {
+  const nq = normalizeArabicText(rawQuery);
+  if (!nq) return allMaster;
+
+  // Check if query matches any English alias
+  let alias = null;
+  for (const [k, v] of Object.entries(englishToArabicBrickMap)) {
+    if (nq.includes(k)) {
+      alias = normalizeArabicText(v);
+      break;
+    }
+  }
+
+  return allMaster.filter((b) => {
+    const nb = normalizeArabicText(b.name);
+    return nb.includes(nq) || (alias && nb.includes(alias));
+  });
+}
+
+function populateBricksSelector(existingBricks = []) {
+  selectedBrickNames = new Set(
+    (Array.isArray(existingBricks) ? existingBricks : [])
+      .map((b) => (typeof b === "string" ? b.trim() : (b && b.name ? b.name.trim() : "")))
+      .filter(Boolean)
+  );
+
+  currentBricksLimit = 200;
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
+  const searchInput = document.getElementById("searchBricksInput");
+  if (searchInput) {
+    searchInput.value = "";
+    searchInput.placeholder = isAr ? areaTranslations.ar.search_bricks : areaTranslations.en.search_bricks;
+  }
+
+  renderModalBricksList("");
+  updateSelectedBricksCount();
+}
+
+function renderModalBricksList(filterQuery = "") {
+  const container = document.getElementById("modalBricksContainer");
+  if (!container) return;
+
+  const allMaster = (window.getMasterBricks && window.getMasterBricks()) || (window.EGYPT_MASTER_BRICKS || []);
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
+  const rawQ = (filterQuery || "").trim();
+  const isFiltered = Boolean(rawQ);
+
+  let displayBricks = [];
+  if (!isFiltered) {
+    // Show all currently selected bricks first (always visible at top), plus unselected bricks up to currentBricksLimit
+    const selectedList = [];
+    const unselectedList = [];
+    allMaster.forEach((b) => {
+      if (selectedBrickNames.has(b.name)) {
+        selectedList.push(b);
+      } else if (unselectedList.length < currentBricksLimit) {
+        unselectedList.push(b);
+      }
+    });
+    displayBricks = [...selectedList, ...unselectedList];
+  } else {
+    // Search with Arabic normalization and English aliases (up to 300 results)
+    displayBricks = searchMasterBricks(allMaster, rawQ).slice(0, 300);
+  }
+
+  const totalMasterCount = allMaster.length;
+  let headerHtml = `
+    <div class="d-flex justify-content-between align-items-center mb-2 px-1 text-muted small border-bottom pb-1">
+      <span><i class="fas fa-database text-primary me-1"></i> ${isAr ? 'إجمالي البريكات في النظام:' : 'Total in Database:'} <strong>${totalMasterCount.toLocaleString()}</strong></span>
+      <span>${isFiltered ? (isAr ? `المطابقة: ${displayBricks.length}` : `Matches: ${displayBricks.length}`) : (isAr ? `المعروض: ${displayBricks.length}` : `Showing: ${displayBricks.length}`)}</span>
+    </div>
+  `;
+
+  if (displayBricks.length === 0) {
+    const noMatchText = isAr ? areaTranslations.ar.no_matching_bricks : areaTranslations.en.no_matching_bricks;
+    container.innerHTML = headerHtml + `
+      <div class="text-center text-muted py-3">
+        <i class="fas fa-search me-1"></i> ${window.escapeHtml(noMatchText)}
+      </div>
+    `;
+    return;
+  }
+
+  let html = headerHtml + `<div class="row g-2">`;
+  displayBricks.forEach((b, idx) => {
+    const isChecked = selectedBrickNames.has(b.name);
+    const escapedName = window.escapeHtml ? window.escapeHtml(b.name) : b.name;
+    const inputId = `brick_chk_${idx}`;
+    html += `
+      <div class="col-12 col-sm-6">
+        <div class="p-2 border rounded-2 brick-checkbox-card ${isChecked ? 'selected' : 'bg-white'} d-flex align-items-center gap-2">
+          <input class="form-check-input ms-0 me-2" type="checkbox" id="${inputId}" value="${escapedName}" ${isChecked ? 'checked' : ''} onchange="onBrickCheckboxChange(this)">
+          <label class="form-check-label text-truncate mb-0 flex-grow-1 cursor-pointer small fw-semibold" for="${inputId}" title="${escapedName}">
+            ${escapedName}
+          </label>
+        </div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+
+  if (!isFiltered && displayBricks.length < totalMasterCount) {
+    html += `
+      <div class="text-center pt-3 pb-1">
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="loadMoreModalBricks()">
+          <i class="fas fa-chevron-down me-1"></i> ${isAr ? "عرض المزيد من البريكات (+200)" : "Load More Bricks (+200)"}
+        </button>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function loadMoreModalBricks() {
+  currentBricksLimit += 300;
+  const q = document.getElementById("searchBricksInput")?.value || "";
+  renderModalBricksList(q);
+}
+
+function onBrickCheckboxChange(el) {
+  const brickName = el.value;
+  const parentCard = el.closest(".brick-checkbox-card");
+  if (el.checked) {
+    selectedBrickNames.add(brickName);
+    if (parentCard) {
+      parentCard.classList.add("selected");
+      parentCard.classList.remove("bg-white");
+    }
+  } else {
+    selectedBrickNames.delete(brickName);
+    if (parentCard) {
+      parentCard.classList.remove("selected");
+      parentCard.classList.add("bg-white");
+    }
+  }
+  updateSelectedBricksCount();
+}
+
+function filterModalBricks() {
+  const q = document.getElementById("searchBricksInput")?.value || "";
+  renderModalBricksList(q);
+}
+
+function selectAllFilteredBricks(selectState) {
+  const rawQ = (document.getElementById("searchBricksInput")?.value || "").trim();
+  const allMaster = (window.getMasterBricks && window.getMasterBricks()) || (window.EGYPT_MASTER_BRICKS || []);
+
+  if (selectState) {
+    if (rawQ) {
+      const targets = searchMasterBricks(allMaster, rawQ);
+      targets.forEach((b) => selectedBrickNames.add(b.name));
+    } else {
+      const container = document.getElementById("modalBricksContainer");
+      if (container) {
+        const checkboxes = container.querySelectorAll("input[type='checkbox']");
+        checkboxes.forEach((cb) => selectedBrickNames.add(cb.value));
+      }
+    }
+  } else {
+    if (rawQ) {
+      const targets = searchMasterBricks(allMaster, rawQ);
+      targets.forEach((b) => selectedBrickNames.delete(b.name));
+    } else {
+      selectedBrickNames.clear();
+    }
+  }
+  renderModalBricksList(rawQ);
+  updateSelectedBricksCount();
+}
+
+function updateSelectedBricksCount() {
+  const badge = document.getElementById("selectedBricksCountBadge");
+  if (!badge) return;
+  const count = selectedBrickNames.size;
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
+  const word = isAr ? areaTranslations.ar.selected_bricks : areaTranslations.en.selected_bricks;
+  badge.textContent = `${count} ${word}`;
+}
+
+window.populateBricksSelector = populateBricksSelector;
+window.renderModalBricksList = renderModalBricksList;
+window.loadMoreModalBricks = loadMoreModalBricks;
+window.onBrickCheckboxChange = onBrickCheckboxChange;
+window.filterModalBricks = filterModalBricks;
+window.selectAllFilteredBricks = selectAllFilteredBricks;
+window.updateSelectedBricksCount = updateSelectedBricksCount;
 
 function renderAreas(filterText = "") {
   const tableBody = document.getElementById("areas-table-body");
@@ -215,7 +493,7 @@ function renderAreas(filterText = "") {
       a.code.toLowerCase().includes(filterText.toLowerCase()),
   );
 
-  const isAr = document.documentElement.dir === "rtl";
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const assignedText = isAr
     ? areaTranslations.ar.assigned
     : areaTranslations.en.assigned;
@@ -236,10 +514,24 @@ function renderAreas(filterText = "") {
          </div>`
       : `<span class="text-muted fst-italic">${unassignedText}</span>`;
 
+    const bricksList = Array.isArray(area.bricks) ? area.bricks : [];
+    const bricksCount = bricksList.length;
+    const separator = isAr ? "، " : ", ";
+    const bricksTooltip = bricksCount > 0
+      ? (bricksCount > 15 ? bricksList.slice(0, 15).join(separator) + ` ... (+${bricksCount - 15})` : bricksList.join(separator))
+      : (isAr ? areaTranslations.ar.no_bricks_assigned : areaTranslations.en.no_bricks_assigned);
+
+    const bricksBadge = bricksCount > 0
+      ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}" style="cursor:help;">
+           <i class="fas fa-cubes me-1"></i>${bricksCount} ${isAr ? "بريكة" : "bricks"}
+         </span>`
+      : `<span class="badge bg-light text-muted border px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}">0</span>`;
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="px-4 py-3"><span class="area-code-badge">${window.escapeHtml(area.code)}</span></td>
       <td class="px-4 py-3 fw-medium">${window.escapeHtml(area.name)}</td>
+      <td class="px-4 py-3">${bricksBadge}</td>
       <td class="px-4 py-3">${repDisplay}</td>
       <td class="px-4 py-3">${statusBadge}</td>
       <td class="px-4 py-3 text-end area-actions-cell">
@@ -271,7 +563,11 @@ function renderAreas(filterText = "") {
               </ul>
             </div>
           </div>
-          <h5 class="card-title fw-bold mb-3">${window.escapeHtml(area.name)}</h5>
+          <h5 class="card-title fw-bold mb-2">${window.escapeHtml(area.name)}</h5>
+          <div class="mb-3 d-flex align-items-center justify-content-between">
+            <small class="text-muted"><i class="fas fa-cubes me-1"></i>${isAr ? areaTranslations.ar.assigned_bricks : areaTranslations.en.assigned_bricks}:</small>
+            ${bricksBadge}
+          </div>
           <div class="mt-auto pt-3 border-top">
             <small class="text-muted d-block mb-1">${isAr ? areaTranslations.ar.assigned_rep : areaTranslations.en.assigned_rep}</small>
             ${repDisplay}
@@ -371,10 +667,15 @@ function openAddModal() {
   document.getElementById("areaId").value = "";
   populateRepDropdown("", currentSelectedLineId);
   populateAreaNamesDatalist();
+  populateBricksSelector([]);
 
-  const isAr = document.documentElement.dir === "rtl";
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   document.getElementById("areaModalTitle").textContent =
     isAr ? areaTranslations.ar.add_area : areaTranslations.en.add_area;
+
+  if (typeof applyTranslations === "function") {
+    applyTranslations(isAr ? "ar" : "en");
+  }
 
   // Update line label in modal
   const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
@@ -400,10 +701,15 @@ function openEditModal(id) {
     const areaLineId = area.lineId || currentSelectedLineId;
     populateRepDropdown(area.repId || "", areaLineId);
     populateAreaNamesDatalist();
+    populateBricksSelector(area.bricks || []);
 
-    const isAr = document.documentElement.dir === "rtl";
+    const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
     document.getElementById("areaModalTitle").textContent =
       isAr ? areaTranslations.ar.edit : areaTranslations.en.edit;
+
+    if (typeof applyTranslations === "function") {
+      applyTranslations(isAr ? "ar" : "en");
+    }
 
     // Update line label in modal
     const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
@@ -436,7 +742,7 @@ function saveArea() {
     repName = rep ? rep.name : null;
   }
 
-  const isAr = document.documentElement.dir === "rtl";
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
 
   if (!name || !code) {
     const msg = isAr ? "يرجى إدخال اسم المنطقة والرمز." : "Area Name and Code are required.";
@@ -467,6 +773,8 @@ function saveArea() {
     return;
   }
 
+  const bricks = Array.from(selectedBrickNames);
+
   let reassignResult = null;
   if (window.store && window.store.areas) {
     window.store.areas.save({
@@ -476,6 +784,7 @@ function saveArea() {
       repId,
       repName,
       lineId: effectiveLineId,
+      bricks,
     });
     if (typeof window.store.areas.reassignAreaCustomers === "function") {
       reassignResult = window.store.areas.reassignAreaCustomers(targetId, repId, name);
@@ -485,6 +794,9 @@ function saveArea() {
   // Automatically rematch distributor sales rows to the newly assigned representative
   if (window.store && window.store.distributorSales && typeof window.store.distributorSales.rematchAreaSales === "function") {
     window.store.distributorSales.rematchAreaSales(targetId, repId);
+  }
+  if (window.store && window.store.distributorSales && typeof window.store.distributorSales.applyAreaMatching === "function") {
+    window.store.distributorSales.applyAreaMatching(false, false);
   }
 
   areaModal.hide();
