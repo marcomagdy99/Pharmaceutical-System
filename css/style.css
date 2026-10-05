@@ -1478,3 +1478,106 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: #f1f5f9;
   border-color: #3d4554;
 }
+
+/* ==========================================================================
+   Impersonation Banner Styling (Responsive & Dark Mode Compatible)
+   ========================================================================== */
+.pharma-impersonation-top-alert {
+  background: linear-gradient(90deg, #d97706, #b45309);
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 3px 12px rgba(180, 83, 9, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.pharma-impersonation-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pharma-impersonation-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pharma-impersonation-text {
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.pharma-impersonation-btn {
+  background: #ffffff;
+  color: #b45309;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pharma-impersonation-btn:hover {
+  background: #fef3c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.pharma-impersonation-btn:active {
+  transform: translateY(0);
+}
+
+/* Mobile & Tablet Responsive Layout */
+@media (max-width: 768px) {
+  .pharma-impersonation-top-alert {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding-top: max(16px, env(safe-area-inset-top, 16px)) !important;
+    padding-bottom: 12px !important;
+    padding-inline-start: 16px !important;
+    padding-inline-end: 16px !important;
+    font-size: 13px !important;
+    text-align: start !important;
+    line-height: 1.5 !important;
+    border-radius: 0 0 10px 10px !important;
+  }
+
+  .pharma-impersonation-content {
+    align-items: flex-start !important;
+    gap: 9px !important;
+    width: 100% !important;
+  }
+
+  .pharma-impersonation-icon {
+    margin-top: 1px !important;
+  }
+
+  .pharma-impersonation-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 16px !important;
+    font-size: 13.5px !important;
+  }
+}

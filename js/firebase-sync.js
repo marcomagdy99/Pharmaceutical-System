@@ -73,13 +73,13 @@
         }
         const isMock = (it) => {
           if (!it || !it.id) return false;
-          const id = String(it.id);
-          if (collKey === "doctors" && id.startsWith("d")) return true;
-          if (collKey === "pharmacies" && id.startsWith("ph")) return true;
-          if (collKey === "hospitals" && id.startsWith("h")) return true;
-          if (collKey === "visits" && (id.startsWith("v") || id.startsWith("today_v"))) return true;
-          if (collKey === "sales" && (id.startsWith("s") || id.startsWith("ds_s"))) return true;
-          if (collKey === "leaves" && id.startsWith("l")) return true;
+          const id = String(it.id).trim();
+          if (collKey === "doctors" && /^d\d+$/i.test(id)) return true;
+          if (collKey === "pharmacies" && /^ph\d+$/i.test(id)) return true;
+          if (collKey === "hospitals" && /^h\d+$/i.test(id)) return true;
+          if (collKey === "visits" && (/^v\d+$/i.test(id) || /^today_v\d+$/i.test(id))) return true;
+          if (collKey === "sales" && (/^s\d+$/i.test(id) || /^ds_s\d+$/i.test(id))) return true;
+          if (collKey === "leaves" && /^l\d+$/i.test(id)) return true;
           return false;
         };
 
@@ -87,12 +87,21 @@
         window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => !isMock(it));
         const localList = window.DEMO_DATA[collKey];
 
-        // Merge or append real items by ID
+        // Merge or append real items by ID (or email for users)
         cloudData[collKey].forEach((cloudItem) => {
           if (!cloudItem || isMock(cloudItem)) return;
           const itemId = cloudItem.id;
           if (itemId) {
-            const localIdx = localList.findIndex((it) => it && it.id === itemId);
+            const localIdx = localList.findIndex((it) => {
+              if (!it) return false;
+              if (it.id === itemId) return true;
+              if (collKey === "users") {
+                const itEmail = (it.email || "").toLowerCase().trim();
+                const cloudEmail = (cloudItem.email || "").toLowerCase().trim();
+                if (itEmail && cloudEmail && itEmail === cloudEmail) return true;
+              }
+              return false;
+            });
             if (localIdx >= 0) {
               const localStr = JSON.stringify(localList[localIdx]);
               const cloudStr = JSON.stringify(cloudItem);
@@ -106,6 +115,24 @@
             }
           }
         });
+
+        // Ensure users list is strictly unique by email and ID
+        if (collKey === "users") {
+          const seenIds = new Set();
+          const seenEmails = new Set();
+          window.DEMO_DATA.users = localList.filter((u) => {
+            if (!u) return false;
+            const idKey = String(u.id);
+            const emailKey = (u.email || "").toLowerCase().trim();
+            if (seenIds.has(idKey) || (emailKey && seenEmails.has(emailKey))) {
+              hasChanges = true;
+              return false;
+            }
+            seenIds.add(idKey);
+            if (emailKey) seenEmails.add(emailKey);
+            return true;
+          });
+        }
 
         // If cloud collection has more items than local, mark changes
         if (cloudData[collKey].length > localList.length) {

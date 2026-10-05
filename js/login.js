@@ -105,7 +105,6 @@ const passwordInput = document.getElementById('password');
 const togglePassword = document.getElementById('togglePassword');
 const loginBtn = document.getElementById('loginBtn');
 const loginBox = document.getElementById('loginBox');
-const errorMessage = document.getElementById('errorMessage');
 const departmentView = document.getElementById('departmentView');
 const cardAdmin = document.getElementById('cardAdmin');
 const cardSales = document.getElementById('cardSales');
@@ -258,17 +257,6 @@ if (togglePassword && passwordInput) {
   });
 }
 
-function renderQuickDemoAccounts(dept) {
-  const container = document.getElementById('quickLoginSection');
-  if (container) container.innerHTML = '';
-}
-
-window.quickLoginAs = function(email, pass) {
-  if (emailInput) emailInput.value = email;
-  if (passwordInput) passwordInput.value = pass;
-  handleLogin();
-};
-
 function showLoginForm(dept) {
   selectedDepartment = dept;
   if (departmentView) departmentView.style.display = 'none';
@@ -322,30 +310,6 @@ if (cardHR) cardHR.addEventListener('click', () => showLoginForm('hr'));
 if (backToDept) backToDept.addEventListener('click', showDepartmentSelection);
 
 /**
- * Computes SHA-256 hash of a string using Web Crypto API with fallback.
- * @param {string} str
- * @returns {Promise<string>}
- */
-async function hashPassword(str) {
-  if (window.crypto && window.crypto.subtle) {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-    } catch (e) {}
-  }
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return 'fallback_' + Math.abs(hash).toString(16);
-}
-
-/**
  * Resolves all eligible users (default accounts + newly registered admin users).
  * @returns {Array} Complete list of registered users.
  */
@@ -362,8 +326,9 @@ function getAllAuthenticatableUsers() {
     { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'EMP-002', id: 'rep2' },
     { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'EMP-003', id: 'rep3' },
     { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'EMP-004', id: 'rep4' },
-    { email: 'pm@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
-    { email: 'pm2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'EMP-005', id: 'pm2' },
+    { email: 'rep5@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'EMP-005', id: 'rep5' },
+    { email: 'pm@pharmacare.com', passwordHash: 'ae087349bb953601482c9c52169257c0cb0371cbac3d921b5896a9aba8cc8a43', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
+    { email: 'pm2@pharmacare.com', passwordHash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'pm2', lineId: 'line2', lineIds: ['line2'], productIds: ['prod5', 'prod6'] },
     { email: 'hr@pharmacare.com', passwordHash: '070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'hr1' }
   ];
 
@@ -384,23 +349,53 @@ function getAllAuthenticatableUsers() {
     if (u.role === 'admin') dept = 'admin';
     else if (u.role === 'hr') dept = 'hr';
 
+    let uRole = u.role || 'medical_rep';
+    let uId = u.id;
+    let uEmail = (u.email || '').toLowerCase().trim();
+
+    // Stale data repair: if pm2 was recorded as medical_rep or has EMP-005
+    if (uEmail === 'pm2@pharmacare.com' || uId === 'pm2' || u.code === 'PM-002') {
+      if (u.employeeCode === 'EMP-005' || u.name === 'Mohamed Ramadan') {
+        uId = 'rep5';
+        uEmail = 'rep5@pharmacare.com';
+        uRole = 'medical_rep';
+      } else {
+        uRole = 'product_manager';
+        uId = 'pm2';
+      }
+    }
+
+    const defaultAcc = defaultAccounts.find((da) => (da.email || '').toLowerCase() === uEmail || da.id === uId);
+    const resolvedHash = u.passwordHash || (defaultAcc ? defaultAcc.passwordHash : '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92');
+
     return {
-      email: (u.email || '').toLowerCase().trim(),
-      passwordHash: u.passwordHash || null,
+      email: uEmail,
+      passwordHash: resolvedHash,
       password: u.password || null,
-      role: u.role || 'medical_rep',
+      role: uRole,
       name: u.name || 'User',
       dept: dept,
       employeeCode: u.employeeCode || u.code || 'EMP-000',
-      id: u.id
+      id: uId,
+      lineId: u.lineId || null,
+      lineIds: u.lineIds || [],
+      productIds: u.productIds || []
     };
   });
 
-  // Combine and deduplicate by email
-  const combined = [...defaultAccounts];
-  mappedStored.forEach((su) => {
-    if (!combined.some((cu) => cu.email === su.email)) {
-      combined.push(su);
+  // Primary Source of Truth: LIVE ADMIN DATABASE (mappedStored)
+  // Whatever the Admin creates or edits in the system MUST always take precedence!
+  const combined = [...mappedStored];
+
+  // Only fall back to defaultAccounts for seed demo accounts that do not exist in the database
+  defaultAccounts.forEach((da) => {
+    const daEmail = (da.email || '').toLowerCase().trim();
+    const exists = combined.some((u) => {
+      const uEmail = (u.email || '').toLowerCase().trim();
+      return (uEmail && uEmail === daEmail) || (u.id && u.id === da.id);
+    });
+    if (!exists) {
+      combined.push(da);
     }
   });
 
@@ -438,7 +433,7 @@ async function handleLogin() {
 
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const enteredHash = await hashPassword(password);
+    const enteredHash = await window.hashPassword(password);
 
     setTimeout(() => {
       try {
@@ -467,6 +462,10 @@ async function handleLogin() {
             (email === 'admin1' && (uRole === 'admin' || uId === 'admin1')) ||
             (email === 'rep' && (uRole === 'medical_rep' || uId === 'rep1')) ||
             (email === 'rep1' && (uRole === 'medical_rep' || uId === 'rep1')) ||
+            (email === 'rep2' && (uRole === 'medical_rep' || uId === 'rep2')) ||
+            (email === 'rep3' && (uRole === 'medical_rep' || uId === 'rep3')) ||
+            (email === 'rep4' && (uRole === 'medical_rep' || uId === 'rep4')) ||
+            (email === 'rep5' && (uRole === 'medical_rep' || uId === 'rep5')) ||
             (email === 'dm' && (uRole === 'district_manager' || uId === 'dm1')) ||
             (email === 'dm1' && (uRole === 'district_manager' || uId === 'dm1')) ||
             (email === 'lm' && (uRole === 'line_manager' || uId === 'lm1')) ||
@@ -482,14 +481,7 @@ async function handleLogin() {
         const isPasswordValid = Boolean(
           matchedUser && (
             (matchedUser.passwordHash && matchedUser.passwordHash === enteredHash) ||
-            (matchedUser.password && (matchedUser.password === password || matchedUser.password === enteredHash)) ||
-            password === '123456' ||
-            password === 'hr123' ||
-            password === 'admin123' ||
-            password === 'rep123' ||
-            password === 'pm123' ||
-            password === '123' ||
-            password === 'password'
+            (matchedUser.password && (matchedUser.password === password || matchedUser.password === enteredHash))
           )
         );
 
@@ -531,6 +523,9 @@ async function handleLogin() {
           role: matchedUser.role,
           name: matchedUser.name,
           employeeCode: matchedUser.employeeCode,
+          lineId: matchedUser.lineId || null,
+          lineIds: matchedUser.lineIds || [],
+          productIds: matchedUser.productIds || [],
           token: 'token_' + Date.now()
         };
 
@@ -573,11 +568,11 @@ if (loginBtn) {
 window.handleLogin = handleLogin;
 window.showLoginForm = showLoginForm;
 window.showDepartmentSelection = showDepartmentSelection;
-window.quickLoginAs = quickLoginAs;
 window.applyBrandSettings = applyBrandSettings;
 window.setLanguage = setLanguage;
 window.showLoginError = showLoginError;
 window.hideLoginError = hideLoginError;
+window.getAllAuthenticatableUsers = getAllAuthenticatableUsers;
 
 setLanguage(currentLang);
 })(window, document);

@@ -750,7 +750,6 @@ function saveArea() {
     return;
   }
 
-  const currentAreas = getAreasList();
   const existingArea = id ? (window.store && window.store.areas ? window.store.areas.getById(id) : null) : null;
   const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line1");
   const targetId = id || `area_${effectiveLineId}_${Date.now()}`;

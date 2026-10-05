@@ -172,11 +172,7 @@ function openRescheduleModal(visitId) {
     const quotaMsg = isAr
       ? "⚠️ عفواً، لقد بلغت الحد الأقصى المسموح به لتأجيل أو تسجيل تعذر الزيارات اليوم (زيارتان فقط في اليوم الواحد). يرجى التواصل مع مديرك المباشر."
       : "⚠️ Sorry, you have reached the maximum daily limit for rescheduling or marking visits as missed (max 2 visits per day). Please consult your direct manager.";
-    if (typeof showToast === "function") {
-      showToast(quotaMsg, "warning");
-    } else {
-      alert(quotaMsg);
-    }
+    showToast(quotaMsg, "warning");
     return;
   }
 
@@ -481,9 +477,6 @@ function handleRescheduleSubmit(e) {
   // Refresh UI
   if (typeof renderVisitsTimeline === "function") {
     renderVisitsTimeline();
-  }
-  if (typeof renderStats === "function") {
-    renderStats();
   }
   if (typeof renderDashboard === "function") {
     renderDashboard();

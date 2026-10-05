@@ -355,7 +355,6 @@ function saveHospital() {
   const nameArInput = document.getElementById("hospitalNameArInput");
   const addressInput = document.getElementById("hospitalAddressInput");
   const phoneInput = document.getElementById("hospitalPhoneInput");
-  const repSelect = document.getElementById("hospitalRepInput");
   const areaSelect = document.getElementById("hospitalAreaInput");
 
   if (!nameInput || !addressInput) return;
@@ -485,10 +484,7 @@ function confirmDeleteHospital() {
 }
 
 function onHospitalFilterChange() {
-  const results = document.getElementById("hospitalsResultsContainer");
-  if (results && results.style.display !== "none") {
-    renderHospitalsReport();
-  }
+  // Only render on Show button click
 }
 
 function exportHospitalsDirectory() {

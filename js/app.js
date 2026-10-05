@@ -486,9 +486,9 @@ const DEFAULT_DEMO_DATA = {
         "code": "PM-001"
     },
     {
-        "id": "pm2",
+        "id": "rep5",
         "name": "Mohamed Ramadan",
-        "nameAr": "ياسمين مراد",
+        "nameAr": "محمد رمضان",
         "role": "medical_rep",
         "employeeCode": "EMP-005",
         "email": "rep5@pharmacare.com",
@@ -518,8 +518,9 @@ const DEFAULT_DEMO_DATA = {
         "code": "EMP-005"
     },
     {
-        "id": "u1790626731729",
+        "id": "pm2",
         "name": "Fady Adel",
+        "nameAr": "فادي عادل",
         "email": "pm2@pharmacare.com",
         "code": "PM-002",
         "employeeCode": "PM-002",
@@ -756,7 +757,92 @@ const DEFAULT_DEMO_DATA = {
   ],
   doctors: [],
   hospitals: [],
-  pharmacies: [],
+  pharmacies: [
+  {
+    "id": "p1",
+    "name": "Al-Ezaby Pharmacy",
+    "nameAr": "صيدلية العزبي",
+    "address": "15 Abbas Al-Akkad, Nasr City",
+    "phone": "01001112233",
+    "contactPerson": "Mohamed Ibrahim",
+    "areaId": "area1",
+    "repId": "rep1",
+    "lineId": "line1",
+    "area": "Mohndseen"
+  },
+  {
+    "id": "p2",
+    "name": "Seif Pharmacy",
+    "nameAr": "صيدلية سيف",
+    "address": "28 Mostafa El-Nahas, Nasr City",
+    "phone": "01009998877",
+    "contactPerson": "Youssef Ahmed",
+    "areaId": "area1",
+    "repId": "rep1",
+    "lineId": "line1",
+    "area": "Mohndseen"
+  },
+  {
+    "id": "p3",
+    "name": "Roshdy Pharmacy",
+    "nameAr": "صيدلية رشدي",
+    "address": "5 Tayaran St, Nasr City",
+    "phone": "01155566677",
+    "contactPerson": "Ramy Adel",
+    "areaId": "area1",
+    "repId": "rep1",
+    "lineId": "line1",
+    "area": "Mohndseen"
+  },
+  {
+    "id": "p4",
+    "name": "19011 Pharmacy",
+    "nameAr": "صيدلية 19011",
+    "address": "42 Makram Ebeid, Nasr City",
+    "phone": "01234567890",
+    "contactPerson": "Sara Maher",
+    "areaId": "area1",
+    "repId": "rep1",
+    "lineId": "line1",
+    "area": "Mohndseen"
+  },
+  {
+    "id": "p5",
+    "name": "Misr Pharmacy",
+    "nameAr": "صيدلية مصر",
+    "address": "18 Al-Ahram St, Heliopolis",
+    "phone": "01099887766",
+    "contactPerson": "Hazem Tarek",
+    "areaId": "area2",
+    "repId": null,
+    "lineId": "line1",
+    "area": "Heliopolis"
+  },
+  {
+    "id": "p6",
+    "name": "El-Tarshouby Pharmacy",
+    "nameAr": "صيدلية الطرشوبي",
+    "address": "10 Abbas Al-Akkad, Nasr City",
+    "phone": "01223344556",
+    "contactPerson": "Mina Magdy",
+    "areaId": "area1",
+    "repId": "rep1",
+    "lineId": "line1",
+    "area": "Mohndseen"
+  },
+  {
+    "id": "p7",
+    "name": "Dawaee Pharmacy",
+    "nameAr": "صيدلية دوائي",
+    "address": "25 Beirut St, Heliopolis",
+    "phone": "01122334455",
+    "contactPerson": "Hoda Sameh",
+    "areaId": "area2",
+    "repId": null,
+    "lineId": "line1",
+    "area": "Heliopolis"
+  }
+],
   visits: [],
   leaves: [],
   sales: [],
@@ -903,7 +989,7 @@ const DEFAULT_DEMO_DATA = {
     { id: "dist3", name: "Overseas", type: "commercial", columnMap: null },
   ],
   pharmacyOverrides: [],
-  publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day" }],
+  publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day", titleAr: "عيد القوات المسلحة" }],
 };
 
 // ============================================================================
@@ -916,11 +1002,64 @@ function loadDataFromStorage() {
       const data = JSON.parse(cached);
       if (data) {
         if (Array.isArray(data.users)) {
+          // Normalize Mohamed Ramadan and Fady Adel IDs
+          data.users.forEach((u) => {
+            if (u.email === "rep5@pharmacare.com" || u.code === "EMP-005" || u.employeeCode === "EMP-005") {
+              u.id = "rep5";
+              u.email = "rep5@pharmacare.com";
+              u.employeeCode = "EMP-005";
+              u.code = "EMP-005";
+              u.name = "Mohamed Ramadan";
+              u.role = "medical_rep";
+            }
+            if (u.email === "pm2@pharmacare.com" || u.code === "PM-002" || u.employeeCode === "PM-002") {
+              u.id = "pm2";
+              u.role = "product_manager";
+              u.email = "pm2@pharmacare.com";
+              u.code = "PM-002";
+              u.employeeCode = "PM-002";
+              u.name = "Fady Adel";
+              u.lineId = "line2";
+              u.lineIds = ["line2"];
+              if (!Array.isArray(u.productIds) || u.productIds.length === 0) {
+                u.productIds = ["prod5", "prod6"];
+              }
+            }
+          });
+
+          // Strictly deduplicate users by ID and email, keeping the most complete record (with areas/lines)
+          data.users.sort((a, b) => {
+            const aScore = (a.area ? 2 : 0) + (a.lineId ? 1 : 0);
+            const bScore = (b.area ? 2 : 0) + (b.lineId ? 1 : 0);
+            return bScore - aScore;
+          });
+
+          const uniqueUsers = [];
+          const seenIds = new Set();
+          const seenEmails = new Set();
+
+          data.users.forEach((u) => {
+            if (!u || !u.id) return;
+            const idKey = String(u.id);
+            const emailKey = (u.email || "").toLowerCase().trim();
+
+            if (seenIds.has(idKey)) return;
+            if (emailKey && seenEmails.has(emailKey)) return;
+
+            seenIds.add(idKey);
+            if (emailKey) seenEmails.add(emailKey);
+            uniqueUsers.push(u);
+          });
+
+          data.users = uniqueUsers;
+
           DEFAULT_DEMO_DATA.users.forEach((u) => {
-            if (!data.users.some((existing) => existing.id === u.id)) {
+            const emailKey = (u.email || "").toLowerCase().trim();
+            if (!data.users.some((existing) => existing.id === u.id || (emailKey && (existing.email || "").toLowerCase().trim() === emailKey))) {
               data.users.push(u);
             }
           });
+
           data.users.forEach((u) => {
             if (!u.hireDate) {
               const def = DEFAULT_DEMO_DATA.users.find((du) => du.id === u.id);
@@ -966,7 +1105,7 @@ function loadDataFromStorage() {
           data.productLines = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.productLines));
         }
         // Ensure clean collections and purge all legacy demo data
-        const demoUserIds = ["rep1", "rep2", "rep3", "rep4", "dm1", "dm2", "dm3", "lm1", "lm2", "bu1", "pm1", "pm2", "hr1"];
+        const demoUserIds = ["rep1", "rep2", "rep3", "rep4", "rep5", "dm1", "dm2", "dm3", "lm1", "lm2", "bu1", "pm1", "pm2", "hr1"];
 
         if (!Array.isArray(data.doctors)) data.doctors = [];
         data.doctors = data.doctors.filter((d) => d && d.id && !d.id.startsWith("d"));
@@ -992,7 +1131,8 @@ function loadDataFromStorage() {
 
         if (!Array.isArray(data.users)) data.users = [];
         DEFAULT_DEMO_DATA.users.forEach((defUser) => {
-          if (!data.users.some((u) => u.id === defUser.id)) {
+          const emailKey = (defUser.email || "").toLowerCase().trim();
+          if (!data.users.some((u) => u.id === defUser.id || (emailKey && (u.email || "").toLowerCase().trim() === emailKey))) {
             data.users.push(defUser);
           }
         });
@@ -1276,10 +1416,10 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
 
   const holiday = holidays.find((h) => h.date === dateStr);
   if (holiday) {
-    const hTitle = holiday.title || (isAr ? "عطلة رسمية عامة" : "Public Holiday");
+    const hTitle = (isAr && holiday.titleAr) ? holiday.titleAr : (holiday.title || (isAr ? "عطلة رسمية" : "Public Holiday"));
     const msg = isAr
-      ? `⚠️ التاريخ المحدد (${dateStr}) يوافق عطلة رسمية عامة (${hTitle}). لا يُسمح بتسجيل أو تخطيط زيارات في العطلات الرسمية.`
-      : `⚠️ The selected date (${dateStr}) is an official public holiday (${hTitle}). Recording or planning visits on public holidays is not permitted.`;
+      ? `⚠️ غير مسموح بتسجيل أو حفظ زيارة في يوم إجازة: التاريخ المحدد (${dateStr}) يوافق عطلة رسمية (${hTitle}).`
+      : `⚠️ Recording or saving visits on holidays is not permitted: The selected date (${dateStr}) is an official holiday (${hTitle}).`;
     return { allowed: false, reason: "public_holiday", message: msg };
   }
 
@@ -1644,6 +1784,207 @@ function isPlannedVisitExpired(dateStr) {
   return diffDays > expiryDays;
 }
 window.isPlannedVisitExpired = isPlannedVisitExpired;
+
+// ============================================================================
+// Section 3.4a: Shared Core Utilities (Single Source of Truth)
+// ============================================================================
+/**
+ * Hashes a plaintext password string using Web Crypto SHA-256 with fallback.
+ * @param {string} str - Plaintext password to hash.
+ * @returns {Promise<string>} Hexadecimal SHA-256 hash or fallback hash.
+ */
+async function hashPassword(str) {
+  if (window.crypto && window.crypto.subtle) {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(str);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    } catch (e) {}
+  }
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return "fallback_" + Math.abs(hash).toString(16);
+}
+window.hashPassword = hashPassword;
+
+/**
+ * Dynamically computes employee rollover balance from previous year based on companySettings.
+ * @param {string} userId - Employee ID.
+ * @param {number} [targetYear] - Target year to compute rollover for.
+ * @returns {object} Rollover summary and balances.
+ */
+function getEmployeeLeaveRollover(userId, targetYear) {
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+
+  if (companySettings.allowLeaveRollover === false) {
+    return {
+      initialCarriedOver: 0,
+      consumedFromRollover: 0,
+      remainingRollover: 0,
+      carriedOver: 0,
+      isValid: false,
+      isExpired: false,
+      expiryDate: null,
+      maxCap: 0,
+      graceMonths: 0,
+      consumedFromNewAnnual: 0,
+    };
+  }
+
+  const allUsers = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
+    ? window.DEMO_DATA.users
+    : [];
+  const userObj = allUsers.find((u) => u.id === userId) || {};
+  const userBalance = userObj.leaveBalance || {};
+  const annualTotal = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
+
+  const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
+  const prevYearStr = String(currentYear - 1);
+  const currentYearStr = String(currentYear);
+  const todayStr = (typeof window.getSystemTodayStr === "function")
+    ? window.getSystemTodayStr()
+    : new Date().toISOString().slice(0, 10);
+
+  const allLeaves = (window.store && window.store.leaves
+    ? window.store.leaves.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || (typeof demoLeaves !== "undefined" ? demoLeaves : []) || [];
+
+  let prevYearUsed = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(prevYearStr)) {
+      prevYearUsed += (parseFloat(l.days) || 1);
+    }
+  });
+
+  const leftover = Math.max(0, annualTotal - prevYearUsed);
+  const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
+  const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
+
+  const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
+  let expiryDate = `${currentYear}-03-31`;
+  if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
+  else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
+  else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
+  else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
+
+  let gracePeriodApprovedTaken = 0;
+  let postGraceApprovedTaken = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr)) {
+      const days = parseFloat(l.days) || 1;
+      if (l.startDate <= expiryDate) {
+        gracePeriodApprovedTaken += days;
+      } else {
+        postGraceApprovedTaken += days;
+      }
+    }
+  });
+
+  const consumedFromRollover = Math.min(initialCarriedOver, gracePeriodApprovedTaken);
+  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
+  const consumedFromNewAnnual = Math.max(0, gracePeriodApprovedTaken - initialCarriedOver) + postGraceApprovedTaken;
+
+  const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
+  const isExpired = remainingRollover > 0 && todayStr > expiryDate;
+
+  return {
+    initialCarriedOver,
+    consumedFromRollover,
+    remainingRollover,
+    carriedOver: remainingRollover,
+    isValid,
+    isExpired,
+    expiryDate,
+    maxCap,
+    graceMonths,
+    consumedFromNewAnnual,
+  };
+}
+window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
+
+/**
+ * Resolves the District Manager ID assigned to an area directly or via its representative.
+ * @param {object} area - Area data object.
+ * @param {Array} [allUsers] - Array of all users for relationship resolution.
+ * @returns {string|null} District Manager user ID or null.
+ */
+function getAreaManagerId(area, allUsers = []) {
+  if (!area) return null;
+  if (area.dmId) return area.dmId;
+  if (area.managerId) return area.managerId;
+
+  const userList = (Array.isArray(allUsers) && allUsers.length > 0)
+    ? allUsers
+    : ((window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+  if (area.repId) {
+    const rep = userList.find((u) => u.id === area.repId);
+    if (rep && rep.managerId) return rep.managerId;
+  }
+
+  const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+  const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && d.area.toLowerCase() === (area.name || "").toLowerCase())) && d.repId);
+  if (docWithRep) {
+    const docRep = userList.find((u) => u.id === docWithRep.repId);
+    if (docRep && docRep.managerId) return docRep.managerId;
+  }
+
+  const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
+  const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && s.area.toLowerCase() === (area.name || "").toLowerCase())) && s.dmId);
+  if (saleWithDm) return saleWithDm.dmId;
+
+  if (area.lineId) {
+    const dmsInLine = userList.filter((u) =>
+      (u.role === "district_manager" || u.role === "dm") &&
+      ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
+    );
+    if (dmsInLine.length === 1) {
+      return dmsInLine[0].id;
+    }
+  }
+
+  return null;
+}
+window.getAreaManagerId = getAreaManagerId;
+
+/**
+ * Retrieves the DM accompaniment schedule mapping from local cache.
+ * @param {string} dmId - District Manager ID.
+ * @returns {object} Map of accompaniment schedule entries by date.
+ */
+function getDmAccompanimentSchedule(dmId) {
+  try {
+    const raw = localStorage.getItem("pharma_dm_accompaniments");
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data[dmId]) {
+        let changed = false;
+        Object.keys(data[dmId]).forEach((dateStr) => {
+          if (typeof isPlannedVisitExpired === "function" && isPlannedVisitExpired(dateStr)) {
+            delete data[dmId][dateStr];
+            changed = true;
+          }
+        });
+        if (changed) {
+          try {
+            localStorage.setItem("pharma_dm_accompaniments", JSON.stringify(data));
+          } catch (err) {}
+        }
+        return data[dmId];
+      }
+    }
+  } catch (e) {}
+  return {};
+}
+window.getDmAccompanimentSchedule = getDmAccompanimentSchedule;
 
 // ============================================================================
 // Section 3.4b: Excel & Sales Parsing Helpers (Single Source of Truth)
@@ -2203,7 +2544,6 @@ function getNavItemsForRole(role) {
     );
   } else if (role === "product_manager") {
     managementNavItems.push(
-      { id: "products", i18n: "navProducts", link: "products.html" },
       { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
     );
   } else {
@@ -2425,6 +2765,20 @@ function renderSidebar(activePage) {
   if (sidebarEl) sidebarEl.innerHTML = html;
 }
 
+function getImpersonationInfo() {
+  try {
+    const raw = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
+    const originalAdmin = raw ? JSON.parse(raw) : null;
+    return {
+      isImpersonating: Boolean(originalAdmin),
+      originalAdmin: originalAdmin
+    };
+  } catch (e) {
+    return { isImpersonating: false, originalAdmin: null };
+  }
+}
+window.getImpersonationInfo = getImpersonationInfo;
+
 function renderTopbar(force = false) {
   const topbarEl = document.getElementById("topbar");
   if (!topbarEl) return;
@@ -2437,7 +2791,10 @@ function renderTopbar(force = false) {
   const activePage = window.currentActivePage || resolveActivePage();
   const theme = document.documentElement.getAttribute("data-theme") || "light";
 
-  const renderStateKey = `${user.id}_${user.role}_${lang}_${activePage}_${theme}`;
+  const { isImpersonating, originalAdmin } = getImpersonationInfo();
+  const originalAdminName = originalAdmin ? (lang === "ar" ? (originalAdmin.nameAr || originalAdmin.name) : originalAdmin.name) || "Admin" : "";
+
+  const renderStateKey = `${user.id}_${user.role}_${lang}_${activePage}_${theme}_${isImpersonating ? "imp" : "norm"}`;
   if (!force && topbarEl.dataset.renderedState === renderStateKey && topbarEl.querySelector(".pharma-topbar-top-row")) {
     if (typeof window.updateWorkflowNotifUI === "function") {
       window.updateWorkflowNotifUI();
@@ -2466,6 +2823,34 @@ function renderTopbar(force = false) {
   const navStrip = topbarEl.querySelector(".pharma-navbar-strip");
 
   if (topRow && navStrip) {
+    // Incremental impersonation banner update
+    let bannerEl = topbarEl.querySelector("#pharmaImpersonationBanner");
+    if (isImpersonating) {
+      if (!bannerEl) {
+        bannerEl = document.createElement("div");
+        bannerEl.id = "pharmaImpersonationBanner";
+        topbarEl.insertBefore(bannerEl, topbarEl.firstChild);
+      }
+      bannerEl.className = "pharma-impersonation-top-alert";
+      bannerEl.style.cssText = "";
+      bannerEl.innerHTML = `
+        <div class="pharma-impersonation-content">
+          <span class="pharma-impersonation-icon">⚠️</span>
+          <span class="pharma-impersonation-text">
+            ${lang === "ar" 
+              ? `<strong>وضع المعاينة (Log in as):</strong> أنت تتصفح حالياً بصفتك <strong>${userName}</strong> (${roleBadge}) — مسجل بواسطة الأدمن <strong>${originalAdminName}</strong>`
+              : `<strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>`}
+          </span>
+        </div>
+        <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
+          <span>↩️</span>
+          <span>${lang === "ar" ? "إنهاء المعاينة والعودة للأدمن" : "Exit & Return to Admin"}</span>
+        </button>
+      `;
+    } else if (bannerEl) {
+      bannerEl.remove();
+    }
+
     topbarEl.querySelectorAll(".user-display-name").forEach((el) => {
       if (el.textContent !== userName) el.textContent = userName;
     });
@@ -2566,7 +2951,25 @@ function renderTopbar(force = false) {
   });
   topNavLinksHtml += "</div>";
 
+  const impersonationBannerHtml = isImpersonating ? `
+    <div id="pharmaImpersonationBanner" class="pharma-impersonation-top-alert">
+      <div class="pharma-impersonation-content">
+        <span class="pharma-impersonation-icon">⚠️</span>
+        <span class="pharma-impersonation-text">
+          ${lang === "ar" 
+            ? `<strong>وضع المعاينة (Log in as):</strong> أنت تتصفح حالياً بصفتك <strong>${userName}</strong> (${roleBadge}) — مسجل بواسطة الأدمن <strong>${originalAdminName}</strong>`
+            : `<strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>`}
+        </span>
+      </div>
+      <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
+        <span>↩️</span>
+        <span>${lang === "ar" ? "إنهاء المعاينة والعودة للأدمن" : "Exit & Return to Admin"}</span>
+      </button>
+    </div>
+  ` : "";
+
   let html = `
+    ${impersonationBannerHtml}
     <div class="pharma-topbar-top-row">
       <div class="pharma-brand-group">
         <button class="pharma-mobile-btn" onclick="toggleMobileSidebar()" title="Toggle Menu">
@@ -3078,6 +3481,21 @@ function checkAuth() {
   if (userStr) {
     try {
       const parsed = JSON.parse(userStr);
+      if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "pm2") && parsed.role === "medical_rep") {
+        parsed.id = "pm2";
+        parsed.name = "Fady Adel";
+        parsed.nameAr = "فادي عادل";
+        parsed.role = "product_manager";
+        parsed.employeeCode = "PM-002";
+        parsed.code = "PM-002";
+        parsed.lineId = "line2";
+        parsed.lineIds = ["line2"];
+        parsed.productIds = ["prod5", "prod6"];
+        sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
+        localStorage.setItem("pharmaUser", JSON.stringify(parsed));
+        localStorage.setItem("userRole", "product_manager");
+        localStorage.setItem("userId", "pm2");
+      }
       if (
         parsed &&
         parsed.id &&
@@ -3127,7 +3545,7 @@ function enforcePageRoleSecurity() {
     "users.html": ["admin", "hr"],
     "distributors.html": ["admin"],
     "areas.html": ["admin", "hr"],
-    "products.html": ["admin", "product_manager"],
+    "products.html": ["admin"],
     "plans-review.html": ["admin", "district_manager", "line_manager", "business_unit"],
     "reports.html": ["admin", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
   };
@@ -3168,33 +3586,9 @@ function logout() {
   localStorage.removeItem("pharmaUser");
   localStorage.removeItem("userRole");
   localStorage.removeItem("userId");
+  localStorage.removeItem("impersonating_admin");
   sessionStorage.setItem("pharma_logged_out", "true");
   window.location.replace("login.html");
-}
-
-function switchDemoUser(role) {
-  const roleMap = {
-    admin: "admin",
-    bu: "business_unit",
-    lm: "line_manager",
-    dm: "district_manager",
-    rep: "medical_rep",
-    hr: "hr",
-    pm: "product_manager",
-  };
-  const targetRole = roleMap[role] || role;
-  const usersList = (typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users) && DEMO_DATA.users.length > 0)
-    ? DEMO_DATA.users
-    : DEFAULT_DEMO_DATA.users;
-  const user = usersList.find((u) => u.role === targetRole) || usersList.find((u) => u.id === role);
-  if (user) {
-    sessionStorage.removeItem("pharma_logged_out");
-    sessionStorage.setItem("pharmaUser", JSON.stringify(user));
-    localStorage.setItem("pharmaUser", JSON.stringify(user));
-    localStorage.setItem("userRole", user.role);
-    localStorage.setItem("userId", user.id);
-    window.location.reload();
-  }
 }
 
 function showToast(message, type = "info") {
@@ -3344,6 +3738,86 @@ function openExcelImportProgress(options = {}) {
 }
 window.openExcelImportProgress = openExcelImportProgress;
 
+// ============================================================================
+// Section: User Impersonation Engine ("Log in as")
+// ============================================================================
+function checkAndRenderImpersonationBanner() {
+  const { isImpersonating, originalAdmin } = getImpersonationInfo();
+  if (!isImpersonating || !originalAdmin) {
+    const existing = document.getElementById("pharmaImpersonationBanner");
+    if (existing) existing.remove();
+    return;
+  }
+
+  const topbar = document.getElementById("topbar");
+  if (topbar) {
+    if (!document.getElementById("pharmaImpersonationBanner")) {
+      renderTopbar(true);
+    }
+    return;
+  }
+
+  if (document.getElementById("pharmaImpersonationBanner")) return;
+
+  const currentUser = (typeof checkAuth === "function" ? checkAuth() : null) || {};
+  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
+  const roleLabel = (currentUser.role || "").toUpperCase();
+  const userName = (isAr && currentUser.nameAr) ? currentUser.nameAr : (currentUser.name || currentUser.email || "");
+  const adminName = originalAdmin.name || "Admin";
+
+  const banner = document.createElement("div");
+  banner.id = "pharmaImpersonationBanner";
+  banner.className = "pharma-impersonation-top-alert";
+  banner.style.cssText = "position: sticky; top: 0; left: 0; right: 0; z-index: 999999;";
+
+  banner.innerHTML = `
+    <div class="pharma-impersonation-content">
+      <span class="pharma-impersonation-icon">⚠️</span>
+      <span class="pharma-impersonation-text">
+        ${isAr
+          ? `<strong>وضع المعاينة (Log in as):</strong> أنت تتصفح حالياً بصفتك <strong>${userName}</strong> (${roleLabel}) — مسجل بواسطة الأدمن <strong>${adminName}</strong>`
+          : `<strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleLabel}) — logged in by Admin <strong>${adminName}</strong>`}
+      </span>
+    </div>
+    <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
+      <span>↩️</span>
+      <span>${isAr ? "الخروج والعودة للأدمن" : "Exit & Return to Admin"}</span>
+    </button>
+  `;
+
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) {
+    mainContent.prepend(banner);
+  } else {
+    document.body.prepend(banner);
+  }
+}
+
+window.exitImpersonation = function () {
+  const impersonatingAdminStr = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
+  if (!impersonatingAdminStr) {
+    window.location.replace("users.html");
+    return;
+  }
+
+  let originalAdmin = null;
+  try {
+    originalAdmin = JSON.parse(impersonatingAdminStr);
+  } catch (e) {}
+
+  if (originalAdmin) {
+    sessionStorage.setItem("pharmaUser", JSON.stringify(originalAdmin));
+    localStorage.setItem("pharmaUser", JSON.stringify(originalAdmin));
+    localStorage.setItem("userRole", originalAdmin.role || "admin");
+    localStorage.setItem("userId", originalAdmin.id);
+    window.currentUser = originalAdmin;
+  }
+
+  sessionStorage.removeItem("impersonating_admin");
+  localStorage.removeItem("impersonating_admin");
+  window.location.replace("users.html");
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const currentPath = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
   if (currentPath !== "login.html") {
@@ -3354,6 +3828,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.initTheme();
+  checkAndRenderImpersonationBanner();
 
   const topbar = document.getElementById("topbar");
   if (topbar) {
@@ -3384,10 +3859,25 @@ document.addEventListener("DOMContentLoaded", () => {
     "serviceWorker" in navigator &&
     window.location.protocol.startsWith("http")
   ) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch((err) => {
-        console.warn("SW registration skipped:", err);
-      });
+      navigator.serviceWorker
+        .register("./sw.js")
+        .then((reg) => {
+          if (reg) {
+            reg.update().catch(() => {});
+          }
+        })
+        .catch((err) => {
+          console.warn("SW registration skipped:", err);
+        });
     });
   }
 });

@@ -744,8 +744,8 @@ function calcDays() {
     return;
   }
 
-  const start = document.getElementById("startDate").value;
-  const end = document.getElementById("endDate").value;
+  const start = document.getElementById("startDate")?.value || "";
+  const end = document.getElementById("endDate")?.value || "";
 
   if (start && end) {
     const res = resolveLeaveDaysDetailed(start, end);
@@ -947,15 +947,14 @@ function updateUIForUser() {
 }
 
 /**
+/**
  * Dynamically computes employee rollover balance from previous year based on companySettings.
+ * (Delegated to centralized utility in app.js)
  */
 function getEmployeeLeaveRollover(userId, targetYear) {
-  const companySettings = (window.store && window.store.companySettings)
-    ? window.store.companySettings.get()
-    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
-
-  if (companySettings.allowLeaveRollover === false) {
-    return {
+  return window.getEmployeeLeaveRollover
+    ? window.getEmployeeLeaveRollover(userId, targetYear)
+    : {
       initialCarriedOver: 0,
       consumedFromRollover: 0,
       remainingRollover: 0,
@@ -967,79 +966,7 @@ function getEmployeeLeaveRollover(userId, targetYear) {
       graceMonths: 0,
       consumedFromNewAnnual: 0,
     };
-  }
-
-  const allUsers = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
-    ? window.DEMO_DATA.users
-    : [];
-  const userObj = allUsers.find((u) => u.id === userId) || {};
-  const userBalance = userObj.leaveBalance || {};
-  const annualTotal = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
-
-  const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
-  const prevYearStr = String(currentYear - 1);
-  const currentYearStr = String(currentYear);
-  const todayStr = getSysToday();
-
-  // 1. Calculate used annual leaves in previous year
-  let prevYearUsed = 0;
-  (demoLeaves || []).forEach((l) => {
-    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(prevYearStr)) {
-      prevYearUsed += (parseFloat(l.days) || 1);
-    }
-  });
-
-  const leftover = Math.max(0, annualTotal - prevYearUsed);
-  const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
-  const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
-
-  const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
-  let expiryDate = `${currentYear}-03-31`;
-  if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
-  else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
-  else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
-  else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
-
-  const allLeaves =
-    (window.store && window.store.leaves
-      ? window.store.leaves.getAll()
-      : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves || [];
-
-  // 2. FIFO: Only approved leaves taken during the active grace period can consume carried-over days
-  let gracePeriodApprovedTaken = 0;
-  let postGraceApprovedTaken = 0;
-  allLeaves.forEach((l) => {
-    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr)) {
-      const days = parseFloat(l.days) || 1;
-      if (l.startDate <= expiryDate) {
-        gracePeriodApprovedTaken += days;
-      } else {
-        postGraceApprovedTaken += days;
-      }
-    }
-  });
-
-  const consumedFromRollover = Math.min(initialCarriedOver, gracePeriodApprovedTaken);
-  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
-  const consumedFromNewAnnual = Math.max(0, gracePeriodApprovedTaken - initialCarriedOver) + postGraceApprovedTaken;
-
-  const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
-  const isExpired = remainingRollover > 0 && todayStr > expiryDate;
-
-  return {
-    initialCarriedOver,
-    consumedFromRollover,
-    remainingRollover,
-    carriedOver: remainingRollover,
-    isValid,
-    isExpired,
-    expiryDate,
-    maxCap,
-    graceMonths,
-    consumedFromNewAnnual,
-  };
 }
-window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
 
 /**
  * Dynamically computes and updates leave balances based on approved leaves.
@@ -1053,7 +980,6 @@ function calculateBalances() {
       : [];
   const userObj = allUsers.find((u) => u.id === currentUser.id) || currentUser;
   const userBalance = userObj.leaveBalance || currentUser.leaveBalance || {};
-  const todayStr = getSysToday();
   const rollover = getEmployeeLeaveRollover(currentUser.id);
   const baseAnnual = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
 
@@ -1282,7 +1208,6 @@ function renderHistory() {
     const typeKey = l.type + "Leave";
     const typeLabel = leaveTranslations[lang]?.[typeKey] || l.type;
     const durationLabel = formatLeaveDurationText(l, lang);
-    const dateRangeStr = formatLeaveDateRange(l.startDate, l.endDate, lang);
 
     const app = l.approvals || {};
     let stepsHtml = "";
@@ -1375,7 +1300,6 @@ function renderHistory() {
 }
 
 window.deleteMyLeave = function(leaveId) {
-  const lang = getSysLang();
   const isAr = isSysAr();
   const todayStr = getSysToday();
 
@@ -1415,7 +1339,6 @@ window.deleteMyLeave = function(leaveId) {
 
   renderHistory();
   calculateBalances();
-  if (typeof updateNavPendingBadges === "function") updateNavPendingBadges();
 
   showToast(
     isAr ? "تم حذف الإجازة بنجاح وتحديث رصيدك." : "Leave deleted successfully and balance updated.",
@@ -1725,7 +1648,6 @@ function renderHrAllLeaves() {
       const typeKey = (l.type || "annual") + "Leave";
       const typeLabel = leaveTranslations[lang]?.[typeKey] || (l.type ? l.type.toUpperCase() : "ANNUAL");
       const durationLabel = formatLeaveDurationText(l, lang);
-      const dateRangeStr = formatLeaveDateRange(l.startDate, l.endDate, lang);
       const roleLabel = formatLeaveUserRole(l.userRole, lang);
 
       const app = l.approvals || {};

@@ -238,36 +238,9 @@ if (window.translations) {
   window.translations = dashboardTranslations;
 }
 
-function isPlannedVisitExpired(dateStr) {
-  if (typeof window.isPlannedVisitExpired === "function" && window.isPlannedVisitExpired !== isPlannedVisitExpired) {
-    return window.isPlannedVisitExpired(dateStr);
-  }
-  if (!dateStr) return false;
-  const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
-    ? window.getPlannedVisitExpiryDays()
-    : 7;
-  const parts = String(dateStr).split("T")[0].split("-");
-  const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
-  if (parts.length !== 3) {
-    const planDate = new Date(dateStr);
-    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > expiryDays;
-  }
-  const planDateMidnight = new Date(
-    parseInt(parts[0], 10),
-    parseInt(parts[1], 10) - 1,
-    parseInt(parts[2], 10),
-    0, 0, 0, 0
-  );
-  const todayMidnight = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    0, 0, 0, 0
-  );
-  const diffDays =
-    (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
-  return diffDays > expiryDays;
-}
+var isPlannedVisitExpired = (typeof window !== "undefined" && window.isPlannedVisitExpired) || function (dateStr) {
+  return false;
+};
 
 function isPlanVisitAlreadyCompleted(planVisit, allVisits) {
   if (!planVisit) return false;
@@ -290,32 +263,16 @@ function isPlanVisitAlreadyCompleted(planVisit, allVisits) {
   });
 }
 
-function getDmAccompanimentSchedule(dmId) {
+var getDmAccompanimentSchedule = (typeof window !== "undefined" && window.getDmAccompanimentSchedule) || function (dmId) {
   try {
     const raw = localStorage.getItem("pharma_dm_accompaniments");
     if (raw) {
       const data = JSON.parse(raw);
-      if (data && data[dmId]) {
-        let changed = false;
-        Object.keys(data[dmId]).forEach((dateStr) => {
-          if (typeof isPlannedVisitExpired === "function" && isPlannedVisitExpired(dateStr)) {
-            delete data[dmId][dateStr];
-            changed = true;
-          }
-        });
-        if (changed) {
-          try {
-            localStorage.setItem("pharma_dm_accompaniments", JSON.stringify(data));
-          } catch (err) {}
-        }
-        return data[dmId];
-      }
+      if (data && data[dmId]) return data[dmId];
     }
-  } catch (e) {
-    console.error("Error reading DM accompaniment schedule:", e);
-  }
+  } catch (e) {}
   return {};
-}
+};
 
 function setDmAccompaniment(dmId, dateStr, repId) {
   try {
@@ -392,29 +349,6 @@ window.onDmChangeDate = function (newDate) {
   window.currentDmConfirmedDate = null;
   window.currentDmConfirmedRepId = null;
   window.currentDmSelectedRepId = "";
-  renderDashboard();
-};
-
-window.deleteDmAccompanimentDate = function (dateStr) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "dm1",
-    name: "Karim Nasser",
-  };
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  setDmAccompaniment(currentUser.id, dateStr, null);
-  if (window.currentDmConfirmedDate === dateStr) {
-    window.currentDmConfirmedDate = null;
-    window.currentDmConfirmedRepId = null;
-    window.currentDmSelectedRepId = "";
-  }
-  if (typeof window.showToast === "function") {
-    window.showToast(
-      lang === "ar"
-        ? `تم حذف النزول الميداني لتاريخ ${dateStr}`
-        : `Accompaniment removed for ${dateStr}`,
-      "info",
-    );
-  }
   renderDashboard();
 };
 
@@ -1027,10 +961,10 @@ function renderDashboard() {
     console.error("Dashboard render failed:", renderErr);
     const isAr = window.getCurrentLang && window.getCurrentLang() === "ar";
     container.innerHTML = `
-      <div style="padding: 40px 20px; text-align: center; max-width: 480px; margin: 40px auto; background: var(--card-bg, #ffffff); border-radius: 16px; border: 1px solid var(--gray-200); box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+      <div class="card" style="padding: 40px 20px; text-align: center; max-width: 480px; margin: 40px auto; border-radius: 16px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: var(--card-bg, #ffffff);">
         <div style="font-size: 3rem; margin-bottom: 12px;">🔄</div>
-        <h3 style="font-weight: 800; margin-bottom: 8px; font-size: 1.2rem;">${isAr ? "تحديث جديد للنظام متاح" : "New App Update Available"}</h3>
-        <p style="color: var(--gray-600); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px;">
+        <h3 style="font-weight: 800; margin-bottom: 8px; font-size: 1.2rem; color: var(--text-color, #1e293b);">${isAr ? "تحديث جديد للنظام متاح" : "New App Update Available"}</h3>
+        <p style="color: var(--text-muted, #64748b); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px;">
           ${isAr ? "تم إصدار تحديث حديث للنظام يتطلب تحديث الذاكرة المؤقتة (Cache) على هذا الجهاز." : "A new update has been released. Please refresh your browser cache to apply changes."}
         </p>
         <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; border-radius: 10px; cursor: pointer;">
@@ -2570,63 +2504,63 @@ function renderPMDashboard(userName, user) {
       </div>
 
       <!-- Quick Action Cards -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-3 col-sm-6">
-          <a href="visits.html?action=new" class="btn btn-outline-primary w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
-            <span style="font-size: 1.8rem;">🤝</span>
-            <div>
-              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "زيارة ميدانية (Double)" : "Field Double Visit"}</strong>
-              <small class="text-muted">${isAr ? "النزول مع LMs و DMs" : "With line LMs & DMs"}</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <a href="products.html" class="btn btn-outline-info w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
-            <span style="font-size: 1.8rem;">🎯</span>
-            <div>
-              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "تركيز الحملة والمنتجات" : "Campaign & Products"}</strong>
-              <small class="text-muted">${isAr ? "تحديد الـ Cycle Focus" : "Set Cycle Focus"}</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <a href="quizzes.html" class="btn btn-outline-success w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
-            <span style="font-size: 1.8rem;">📝</span>
-            <div>
-              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "الاختبارات العلمية" : "Scientific Quizzes"}</strong>
-              <small class="text-muted">${isAr ? "إنشاء وتقييم اختبارات الخط" : "Create & evaluate quizzes"}</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <a href="activities.html" class="btn btn-outline-warning w-100 p-3 text-start d-flex align-items-center gap-3 shadow-sm bg-white" style="border-radius: 12px; text-decoration: none;">
-            <span style="font-size: 1.8rem;">📋</span>
-            <div>
-              <strong class="d-block" style="font-size: 0.95rem;">${isAr ? "الطلبات والميزانية" : "Requests & Budget"}</strong>
-              <small class="text-muted">${isAr ? "اعتماد طلبات التسويق" : "Approve marketing requests"}</small>
-            </div>
-          </a>
-        </div>
+      <div class="pm-quick-actions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
+        <a href="visits.html?action=new" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(13, 110, 253, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+            🤝
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "زيارة ميدانية (Double)" : "Field Double Visit"}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "النزول مع LMs و DMs" : "With line LMs & DMs"}</div>
+          </div>
+        </a>
+        <a href="reports.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(13, 202, 240, 0.12); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+            📊
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "مبيعات وإنجاز الخط" : "Line Sales & Target"}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "تقارير الصيدليات والموزعين" : "Pharmacies & distributor sales"}</div>
+          </div>
+        </a>
+        <a href="quizzes.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(25, 135, 84, 0.12); color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+            📝
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "الاختبارات العلمية" : "Scientific Quizzes"}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "إنشاء وتقييم اختبارات الخط" : "Create & evaluate quizzes"}</div>
+          </div>
+        </a>
+        <a href="activities.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(253, 126, 20, 0.12); color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+            📋
+          </div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "الطلبات والميزانية" : "Requests & Budget"}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "اعتماد طلبات التسويق" : "Approve marketing requests"}</div>
+          </div>
+        </a>
       </div>
 
       <!-- Line Products Showcase -->
-      <div class="card shadow-sm border-0 mb-4" style="border-radius: 14px;">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-          <h5 class="mb-0 fw-bold" style="font-size: 1.05rem;">📦 ${isAr ? "أصناف ومنتجات الخط" : "Line Products Portfolio"}</h5>
-          <a href="products.html" class="btn btn-sm btn-primary">
-            <i class="bi bi-box-seam me-1"></i> ${isAr ? "إدارة الأصناف" : "Manage Products"}
-          </a>
+      <div class="pm-portfolio-card" style="background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 14px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+        <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #dee2e6); background: var(--surface-hover, rgba(0,0,0,0.02));">
+          <h5 style="margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--gray-800);">📦 ${isAr ? "أصناف ومنتجات الخط" : "Line Products Portfolio"}</h5>
+          <span style="background: rgba(13, 110, 253, 0.1); color: var(--primary); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;">
+            ${lineProducts.length} ${isAr ? "مستحضر مسجل" : "Registered Products"}
+          </span>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>${isAr ? "اسم المستحضر" : "Product Name"}</th>
-                <th>${isAr ? "الجرعة" : "Dosage"}</th>
-                <th>${isAr ? "الشكل الدوائي" : "Form"}</th>
-                <th>${isAr ? "الخط" : "Line"}</th>
-                <th>${isAr ? "القيمة التقديرية" : "Value"}</th>
-                <th>${isAr ? "حالة التركيز البيعي" : "Cycle Focus"}</th>
+        <div style="overflow-x: auto; width: 100%;">
+          <table style="width: 100%; border-collapse: collapse; text-align: ${isAr ? "right" : "left"}; font-size: 0.9rem;">
+            <thead>
+              <tr style="background: var(--surface-dim, #f8f9fa); border-bottom: 2px solid var(--border-color, #dee2e6); color: var(--gray-700);">
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "اسم المستحضر" : "Product Name"}</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "الجرعة" : "Dosage"}</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "الشكل الدوائي" : "Form"}</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "الخط" : "Line"}</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "القيمة التقديرية" : "Value"}</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "حالة التركيز البيعي" : "Cycle Focus"}</th>
               </tr>
             </thead>
             <tbody>
@@ -2634,18 +2568,26 @@ function renderPMDashboard(userName, user) {
                 const lineObj = pmLines.find((l) => l.id === p.lineId);
                 const isFocused = lineObj && lineObj.cycleCampaignFocus && lineObj.cycleCampaignFocus.active && lineObj.cycleCampaignFocus.targetProductId === p.id;
                 return `
-                  <tr>
-                    <td class="fw-bold">${window.escapeHtml(p.name)}</td>
-                    <td><span class="badge bg-secondary">${window.escapeHtml(p.dosage || "-")}</span></td>
-                    <td>${window.escapeHtml(p.form || "Tablet")}</td>
-                    <td><span class="badge bg-light text-dark border">${window.escapeHtml(p.lineName)}</span></td>
-                    <td>${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
-                    <td>
-                      ${isFocused ? `<span class="badge bg-success">🎯 ${isAr ? "منتج ذو أولوية" : "Priority Focus"}</span>` : `<span class="text-muted small">${isAr ? "عادي" : "Standard"}</span>`}
+                  <tr style="border-bottom: 1px solid var(--border-color, #dee2e6); transition: background 0.15s ease;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 12px 18px; font-weight: 700; color: var(--gray-800);">${window.escapeHtml(p.name)}</td>
+                    <td style="padding: 12px 18px;"><span style="background: rgba(100,116,139,0.12); color: var(--gray-800); padding: 4px 9px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; display: inline-block;">${window.escapeHtml(p.dosage || "-")}</span></td>
+                    <td style="padding: 12px 18px; color: var(--gray-700);">${window.escapeHtml(p.form || "Tablet")}</td>
+                    <td style="padding: 12px 18px;"><span style="background: rgba(14,165,233,0.1); color: #0284c7; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; border: 1px solid rgba(14,165,233,0.25); display: inline-block;">${window.escapeHtml(p.lineName)}</span></td>
+                    <td style="padding: 12px 18px; font-weight: 700; color: var(--gray-800);">${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
+                    <td style="padding: 12px 18px;">
+                      ${isFocused 
+                        ? `<span style="background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">🎯 ${isAr ? "منتج ذو أولوية" : "Priority Focus"}</span>` 
+                        : `<span style="color: var(--text-muted); font-size: 0.84rem;">${isAr ? "عادي" : "Standard"}</span>`}
                     </td>
                   </tr>
                 `;
-              }).join("") : `<tr><td colspan="6" class="text-center text-muted py-4">${isAr ? "لا توجد منتجات مسجلة في هذا الخط حالياً." : "No products registered in this line yet."}</td></tr>`}
+              }).join("") : `
+                <tr>
+                  <td colspan="6" style="padding: 24px; text-align: center; color: var(--text-muted);">
+                    ${isAr ? "لا توجد منتجات مسجلة في هذا الخط حالياً." : "No products registered in this line yet."}
+                  </td>
+                </tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -3642,8 +3584,7 @@ window.handleDashCompleteSubmit = function (e) {
     const msg = lang === "ar"
       ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
       : "Cannot log an actual visit in a future date.";
-    if (typeof showToast === "function") showToast(msg, "warning");
-    else alert(msg);
+    showToast(msg, "warning");
     return;
   }
   if (dateVal < minAllowedBacklog) {
@@ -3655,8 +3596,7 @@ window.handleDashCompleteSubmit = function (e) {
       : (limitDays === 0
           ? "Company policy requires same-day visit logging only."
           : `Company policy does not allow logging visits older than ${limitDays} day(s).`);
-    if (typeof showToast === "function") showToast(msg, "warning");
-    else alert(msg);
+    showToast(msg, "warning");
     return;
   }
   const timeVal =
@@ -3697,8 +3637,7 @@ window.handleDashCompleteSubmit = function (e) {
         const msg = lang === "ar"
           ? "يرجى تحديد المرافق في الزيارة المزدوجة."
           : "Please select at least one companion for the double visit.";
-        if (typeof showToast === "function") showToast(msg, "warning");
-        else alert(msg);
+        showToast(msg, "warning");
         return;
       }
       doubleWithUserName = companions.join(", ");
@@ -3729,8 +3668,7 @@ window.handleDashCompleteSubmit = function (e) {
     const dateCheck = window.checkVisitDateAllowed(dateVal, targetRepId, lang);
     if (!dateCheck.allowed) {
       resetSubmitBtn();
-      if (typeof showToast === "function") showToast(dateCheck.message, "warning");
-      else alert(dateCheck.message);
+      showToast(dateCheck.message, "warning");
       return;
     }
   }
@@ -3749,8 +3687,7 @@ window.handleDashCompleteSubmit = function (e) {
         : (lang === "ar"
             ? `⚠️ الفارق الزمني بين الزيارات يجب ألا يقل عن ${timeConflict.minRequired} دقائق عند تفعيل تسجيل الزيارات بالموقع (GPS). توجد زيارة أخرى في (${conflictingTime}) لـ (${conflictingTarget}).`
             : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`);
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
   }
@@ -3797,37 +3734,6 @@ function animateCounters() {
   });
 }
 
-window.switchDemoUser = function (role) {
-  const roleMap = {
-    admin: "admin",
-    bu: "business_unit",
-    lm: "line_manager",
-    dm: "district_manager",
-    rep: "medical_rep",
-    hr: "hr",
-    pm: "product_manager",
-  };
-  const targetRole = roleMap[role] || role;
-  const usersList =
-    window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users) && window.DEMO_DATA.users.length > 0
-      ? window.DEMO_DATA.users
-      : (typeof DEFAULT_DEMO_DATA !== "undefined" ? DEFAULT_DEMO_DATA.users : []);
-
-  const user =
-    usersList.find((u) => u.role === targetRole) ||
-    usersList.find((u) => u.id === role) ||
-    { role: targetRole, name: targetRole.toUpperCase(), id: role + "1" };
-
-  if (user) {
-    sessionStorage.removeItem("pharma_logged_out");
-    sessionStorage.setItem("pharmaUser", JSON.stringify(user));
-    localStorage.setItem("pharmaUser", JSON.stringify(user));
-    localStorage.setItem("userRole", user.role || targetRole);
-    localStorage.setItem("userId", user.id);
-    window.currentUser = user;
-    window.location.reload();
-  }
-};
 
 
 window.currentRepPlanTab = window.currentRepPlanTab || "auto";

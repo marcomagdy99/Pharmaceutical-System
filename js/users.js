@@ -79,6 +79,7 @@ const userTranslations = {
     annualDaysLabel: "Annual (Days)",
     casualDaysLabel: "Casual (Days)",
     sickDaysLabel: "Sick (Days)",
+    login_as: "Log in as (Preview)",
   },
   ar: {
     menu_users: "المستخدمين",
@@ -153,27 +154,9 @@ const userTranslations = {
     annualDaysLabel: "الاعتيادية (أيام)",
     casualDaysLabel: "العارضة (أيام)",
     sickDaysLabel: "المرضية (أيام)",
+    login_as: "تسجيل الدخول كـ (معاينة)",
   },
 };
-
-async function hashPassword(str) {
-  if (window.crypto && window.crypto.subtle) {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-    } catch (e) {}
-  }
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return "fallback_" + Math.abs(hash).toString(16);
-}
 
 const userMgmt = {
   get users() {
@@ -796,11 +779,19 @@ const userMgmt = {
   renderTable() {
     const tbody = document.getElementById("usersTableBody");
     const filtered = this.getFilteredUsers();
+    const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
+    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+
     tbody.innerHTML = filtered
       .map((u) => {
         const dispCode = u.employeeCode || u.code || "-";
         const dispEmail = u.email || "-";
         const dispStatus = u.status || "Active";
+        const canImpersonate = isRealAdmin && String(u.id) !== String(authUser.id) && dispStatus === "Active";
+        const loginAsTooltip = isAr ? `تسجيل الدخول كـ ${u.name}` : `Log in as ${u.name}`;
+
         return `
         <tr>
           <td class="ps-4">
@@ -822,6 +813,7 @@ const userMgmt = {
           <td><span class="text-muted small" style="white-space: nowrap;">📅 ${u.hireDate || "-"}</span></td>
           <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${dispStatus}</span></td>
           <td class="text-end pe-4 user-actions-cell">
+            ${canImpersonate ? `<button class="btn btn-sm btn-info text-white me-1" title="${loginAsTooltip}" onclick="userMgmt.impersonateUser('${u.id}')" style="background-color: #0284c7; border-color: #0284c7;"><i class="fas fa-sign-in-alt"></i></button>` : ""}
             <button class="btn btn-sm btn-light text-primary me-1" onclick="userMgmt.openEditModal('${u.id}')"><i class="fas fa-edit"></i></button>
             <button class="btn btn-sm btn-light text-warning me-1" onclick="userMgmt.openResetPwdModal('${u.id}')"><i class="fas fa-key"></i></button>
             <button class="btn btn-sm btn-light text-${dispStatus === "Active" ? "danger" : "success"}" onclick="userMgmt.openDeactivateModal('${u.id}')"><i class="fas fa-${dispStatus === "Active" ? "ban" : "check"}"></i></button>
@@ -836,6 +828,10 @@ const userMgmt = {
     const nextVisited = new Set(visited);
     nextVisited.add(parentId);
 
+    const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    const isRealAdmin = (authUser.role === "admin") || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+
     const children = this.users.filter((u) => u.managerId === parentId && !nextVisited.has(u.id));
     if (children.length === 0) return "";
     return `<div class="tree-children">
@@ -843,6 +839,12 @@ const userMgmt = {
         .map((u) => {
           const isInactive = u.status === "Inactive";
           const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1" style="font-size:0.65em">${u.role}</span>`;
+          const canImpersonate = isRealAdmin && u.id !== authUser.id && !isInactive;
+          const loginAsTooltip = isAr ? `تسجيل الدخول كـ ${u.name}` : `Log in as ${u.name}`;
+          const treeImpersonateBtn = canImpersonate
+            ? `<button class="btn btn-sm btn-light text-info py-0 px-2 ms-2" title="${loginAsTooltip}" onclick="event.stopPropagation(); userMgmt.impersonateUser('${u.id}')"><i class="fas fa-sign-in-alt"></i></button>`
+            : "";
+
           if (isInactive) {
             const areaName = u.vacantArea || u.area;
             const repAreaTag = areaName ? ` • Area: ${areaName}` : "";
@@ -863,7 +865,7 @@ const userMgmt = {
             <div class="node-content shadow-sm">
               <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">${u.name.charAt(0)}</div>
               <div class="flex-grow-1">
-                <div class="fw-bold small mb-0 user-name-text">${u.name} ${roleBadge}</div>
+                <div class="fw-bold small mb-0 user-name-text">${u.name} ${roleBadge} ${treeImpersonateBtn}</div>
                 <small class="text-muted" style="font-size:0.75rem;">${u.code} ${u.area ? `• Area: ${u.area}` : ""}</small>
               </div>
             </div>
@@ -1237,8 +1239,8 @@ const userMgmt = {
       : "";
 
     let passwordHash = rawExistingUser ? rawExistingUser.passwordHash : null;
-    if (enteredPwd) passwordHash = await hashPassword(enteredPwd);
-    else if (!rawExistingUser) passwordHash = await hashPassword("123456");
+    if (enteredPwd) passwordHash = await window.hashPassword(enteredPwd);
+    else if (!rawExistingUser) passwordHash = await window.hashPassword("123456");
 
     const storeRoleMap = {
       Admin: "admin",
@@ -1479,6 +1481,63 @@ const userMgmt = {
       showToast(msg, "info");
     }
     this.closeModal("deactivate");
+  },
+
+  impersonateUser(targetUserId) {
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
+    const originalAdmin = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
+    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(originalAdmin);
+
+    if (!isRealAdmin) {
+      if (typeof showToast === "function") {
+        showToast("Permission Denied: Only Admins can log in as other users.", "error");
+      }
+      return;
+    }
+
+    if (authUser.id === targetUserId) {
+      if (typeof showToast === "function") {
+        showToast("You are already viewing this account.", "info");
+      }
+      return;
+    }
+
+    const targetUser = window.store && window.store.users ? window.store.users.getById(targetUserId) : null;
+    if (!targetUser) {
+      if (typeof showToast === "function") {
+        showToast("Target user not found.", "error");
+      }
+      return;
+    }
+
+    // Save the original admin session if not already in impersonation mode
+    if (!originalAdmin) {
+      sessionStorage.setItem("impersonating_admin", JSON.stringify(authUser));
+      localStorage.setItem("impersonating_admin", JSON.stringify(authUser));
+    }
+
+    const targetSession = {
+      id: targetUser.id,
+      email: targetUser.email,
+      role: targetUser.role,
+      name: targetUser.name,
+      nameAr: targetUser.nameAr,
+      employeeCode: targetUser.employeeCode || targetUser.code,
+      lineId: targetUser.lineId || null,
+      lineIds: targetUser.lineIds || [],
+      productIds: targetUser.productIds || [],
+      token: "impersonated_" + Date.now()
+    };
+
+    sessionStorage.removeItem("pharma_logged_out");
+    sessionStorage.setItem("pharmaUser", JSON.stringify(targetSession));
+    localStorage.setItem("pharmaUser", JSON.stringify(targetSession));
+    localStorage.setItem("userRole", targetUser.role);
+    localStorage.setItem("userId", targetUser.id);
+    window.currentUser = targetSession;
+
+    window.location.href = "index.html";
   },
 };
 

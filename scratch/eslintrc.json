@@ -1,0 +1,27 @@
+{
+  "root": true,
+  "env": { "browser": true, "es2022": true, "serviceworker": true },
+  "parserOptions": { "ecmaVersion": 2022, "sourceType": "script" },
+  "globals": { "firebase": "readonly", "XLSX": "readonly", "bootstrap": "readonly", "Chart": "readonly", "feather": "readonly", "module": "readonly" },
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": ["warn", { "args": "none", "vars": "local", "caughtErrors": "none" }],
+    "no-dupe-keys": "error",
+    "no-dupe-else-if": "error",
+    "no-duplicate-case": "error",
+    "no-unreachable": "error",
+    "no-redeclare": "error",
+    "no-empty": ["warn", { "allowEmptyCatch": true }],
+    "no-debugger": "error",
+    "no-self-assign": "error",
+    "no-cond-assign": "error",
+    "no-func-assign": "error",
+    "no-const-assign": "error",
+    "no-unsafe-negation": "error",
+    "no-sparse-arrays": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "no-unused-labels": "error",
+    "no-useless-escape": "warn"
+  }
+}

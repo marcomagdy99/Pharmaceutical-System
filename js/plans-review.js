@@ -126,30 +126,16 @@ const plansReviewTranslations = {
 // ============================================================================
 let activeRejectTarget = { visitId: null, repId: null };
 
-function getDmAccompanimentSchedule(dmId) {
+var getDmAccompanimentSchedule = (typeof window !== "undefined" && window.getDmAccompanimentSchedule) || function (dmId) {
   try {
-    const cached = localStorage.getItem("pharma_dm_accompaniments");
-    if (cached) {
-      const data = JSON.parse(cached);
-      if (data && data[dmId]) {
-        let changed = false;
-        Object.keys(data[dmId]).forEach((dateStr) => {
-          if (typeof isPlannedVisitExpired === "function" && isPlannedVisitExpired(dateStr)) {
-            delete data[dmId][dateStr];
-            changed = true;
-          }
-        });
-        if (changed) {
-          try {
-            localStorage.setItem("pharma_dm_accompaniments", JSON.stringify(data));
-          } catch (err) {}
-        }
-        return data[dmId];
-      }
+    const raw = localStorage.getItem("pharma_dm_accompaniments");
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data[dmId]) return data[dmId];
     }
   } catch (e) {}
   return {};
-}
+};
 
 function getMasterVisits() {
   if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
@@ -435,9 +421,6 @@ function renderPlansReview(currentUser) {
     return;
   }
 
-  const isDM = role === "district_manager" || role === "dm";
-  const isAdmin = role === "admin";
-  const isSupervisorOnly = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
 
   const effectiveLineId = window.selectedPlansLineId || document.getElementById("plansLineFilter")?.value || "all";
   let scopedReps = getScopedSubordinateReps(currentUser);

@@ -128,25 +128,6 @@ const profileTranslations = {
   },
 };
 
-async function hashPassword(str) {
-  if (window.crypto && window.crypto.subtle) {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-    } catch (e) {}
-  }
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return "fallback_" + Math.abs(hash).toString(16);
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   if (window.translations) {
     Object.keys(profileTranslations).forEach((lang) => {
@@ -276,14 +257,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const userObj = window.store.users.getById(currentUser.id);
       if (userObj) {
         if (currentPass && userObj.passwordHash) {
-          const checkHash = await hashPassword(currentPass);
+          const checkHash = await window.hashPassword(currentPass);
           if (checkHash !== userObj.passwordHash && (!userObj.password || userObj.password !== currentPass)) {
             const msg = isAr ? "كلمة المرور الحالية غير صحيحة." : "Current password is incorrect.";
             if (typeof showToast === "function") showToast(msg, "error");
             return;
           }
         }
-        userObj.passwordHash = await hashPassword(newPass);
+        userObj.passwordHash = await window.hashPassword(newPass);
         if (userObj.password) userObj.password = newPass;
         window.store.users.save(userObj);
 
@@ -370,101 +351,24 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * Computes employee rollover balance dynamically from previous year based on companySettings.
+ * Computes employee rollover balance dynamically using centralized utility in app.js.
+ * @param {string} userId - Employee ID.
+ * @param {number} [targetYear] - Target year.
+ * @returns {object} Rollover summary and balances.
  */
-function getEmployeeLeaveRollover(userId, targetYear) {
-  if (typeof window.getEmployeeLeaveRollover === "function" && window.getEmployeeLeaveRollover !== getEmployeeLeaveRollover) {
-    return window.getEmployeeLeaveRollover(userId, targetYear);
-  }
-  const companySettings = (window.store && window.store.companySettings)
-    ? window.store.companySettings.get()
-    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
-
-  if (companySettings.allowLeaveRollover === false) {
-    return {
-      initialCarriedOver: 0,
-      consumedFromRollover: 0,
-      remainingRollover: 0,
-      carriedOver: 0,
-      isValid: false,
-      isExpired: false,
-      expiryDate: null,
-      maxCap: 0,
-      graceMonths: 0,
-      consumedFromNewAnnual: 0,
-    };
-  }
-
-  const allUsers = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
-    ? window.DEMO_DATA.users
-    : [];
-  const userObj = allUsers.find((u) => u.id === userId) || {};
-  const userBalance = userObj.leaveBalance || {};
-  const annualTotal = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
-
-  const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
-  const prevYearStr = String(currentYear - 1);
-  const currentYearStr = String(currentYear);
-  const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || (new Date()).toISOString().slice(0, 10);
-
-  const allLeaves = (window.store && window.store.leaves
-    ? window.store.leaves.getAll()
-    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
-
-  let prevYearUsed = 0;
-  allLeaves.forEach((l) => {
-    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(prevYearStr)) {
-      prevYearUsed += (parseFloat(l.days) || 1);
-    }
-  });
-
-  const leftover = Math.max(0, annualTotal - prevYearUsed);
-  const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
-  const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
-
-  const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
-  let expiryDate = `${currentYear}-03-31`;
-  if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
-  else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
-  else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
-  else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
-
-  let gracePeriodApprovedTaken = 0;
-  let postGraceApprovedTaken = 0;
-  allLeaves.forEach((l) => {
-    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr)) {
-      const days = parseFloat(l.days) || 1;
-      if (l.startDate <= expiryDate) {
-        gracePeriodApprovedTaken += days;
-      } else {
-        postGraceApprovedTaken += days;
-      }
-    }
-  });
-
-  const consumedFromRollover = Math.min(initialCarriedOver, gracePeriodApprovedTaken);
-  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
-  const consumedFromNewAnnual = Math.max(0, gracePeriodApprovedTaken - initialCarriedOver) + postGraceApprovedTaken;
-
-  const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
-  const isExpired = remainingRollover > 0 && todayStr > expiryDate;
-
+var getEmployeeLeaveRollover = (typeof window !== "undefined" && window.getEmployeeLeaveRollover) || function (userId, targetYear) {
   return {
-    initialCarriedOver,
-    consumedFromRollover,
-    remainingRollover,
-    carriedOver: remainingRollover,
-    isValid,
-    isExpired,
-    expiryDate,
-    maxCap,
-    graceMonths,
-    consumedFromNewAnnual,
+    initialCarriedOver: 0,
+    consumedFromRollover: 0,
+    remainingRollover: 0,
+    carriedOver: 0,
+    isValid: false,
+    isExpired: false,
+    expiryDate: null,
+    maxCap: 0,
+    graceMonths: 0,
+    consumedFromNewAnnual: 0,
   };
-}
-
-if (!window.getEmployeeLeaveRollover) {
-  window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
 }
 
 /**
@@ -905,11 +809,7 @@ function handleSaveCompanySettings(e) {
   const t = profileTranslations[lang] || profileTranslations.en;
   const msg = t.companyPoliciesSaved || "Company field policies updated successfully!";
 
-  if (typeof showToast === "function") {
-    showToast(msg, "success");
-  } else {
-    alert(msg);
-  }
+  showToast(msg, "success");
 }
 
 window.handleSaveCompanySettings = handleSaveCompanySettings;
@@ -1031,11 +931,7 @@ function handleSaveBrandingSettings(e) {
   const t = profileTranslations[lang] || profileTranslations.en;
   const msg = t.brandingSettingsSaved || "Company branding & login appearance saved successfully!";
 
-  if (typeof showToast === "function") {
-    showToast(msg, "success");
-  } else {
-    alert(msg);
-  }
+  showToast(msg, "success");
 }
 
 window.handleBrandLogoUpload = handleBrandLogoUpload;

@@ -14,15 +14,6 @@
  * they carry no productId, so they can't be placed in this breakdown.
  */
 
-// Current selected salesType filter for Achievements tab
-let currentAchSalesType = "all"; // "all" | "private" | "bulk"
-
-function setAchSalesType(type) {
-  currentAchSalesType = type;
-  const select = document.getElementById("achSalesTypeSelect");
-  if (select) select.value = type;
-}
-
 const ACH_MONTHS = (typeof window !== 'undefined' && Array.isArray(window.MONTH_NAMES) && window.MONTH_NAMES.length === 12)
   ? window.MONTH_NAMES
   : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -312,7 +303,6 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       return true;
     });
 
-  const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
 
   // O(1) Hash Map indices to replace repetitive O(N) .find searches in large datasets
@@ -343,9 +333,9 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   // 🔹 Sales Type filter (Total / Private / Bulk)
   const achSalesTypeSelect = document.getElementById('achSalesTypeSelect');
-  const activeAchType = achSalesTypeSelect ? achSalesTypeSelect.value : (currentAchSalesType || 'all');
+  const activeAchType = achSalesTypeSelect ? achSalesTypeSelect.value : 'all';
   if (activeAchType === "private") {
-    salesRows = salesRows.filter((s) => s.salesType === "private" || !s.salesType || s.salesType !== "bulk");
+    salesRows = salesRows.filter((s) => s.salesType !== "bulk");
   } else if (activeAchType === "bulk") {
     salesRows = salesRows.filter((s) => s.salesType === "bulk");
   }

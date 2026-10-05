@@ -128,7 +128,6 @@
     const user = Core._state.currentUser;
     const userVisible = allList.filter((e) => canUserViewExpense(e, user));
 
-    let pendingCount = 0;
     let pendingTotal = 0;
     let approvedTotal = 0;
     let disbursedTotal = 0;
@@ -136,7 +135,6 @@
     userVisible.forEach((e) => {
       const amt = Number(e.amount) || 0;
       if (e.status && e.status.startsWith("pending")) {
-        pendingCount++;
         pendingTotal += amt;
       }
       if (e.status === Core.REQUEST_STATUS.APPROVED) approvedTotal += amt;

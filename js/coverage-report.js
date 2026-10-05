@@ -700,7 +700,6 @@ function exportCoverageReport() {
   }
 
   const diffDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-  const numMonths = Math.max(1, Math.round(diffDays / 30));
 
   let totalTarget = 0;
   let totalExecuted = 0;

@@ -289,7 +289,6 @@ function openPharmacyModal(pharmId = null) {
   const addressInput = document.getElementById("pharmacyAddressInput");
   const contactInput = document.getElementById("pharmacyContactInput");
   const phoneInput = document.getElementById("pharmacyPhoneInput");
-  const repInput = document.getElementById("pharmacyRepInput");
   const areaInput = document.getElementById("pharmacyAreaInput");
 
   const existingPharm = pharmId ? (getPharmaciesData().find((p) => p.id === pharmId) || {}) : {};
@@ -355,7 +354,6 @@ function savePharmacy() {
   const addressInput = document.getElementById("pharmacyAddressInput");
   const contactInput = document.getElementById("pharmacyContactInput");
   const phoneInput = document.getElementById("pharmacyPhoneInput");
-  const repSelect = document.getElementById("pharmacyRepInput");
   const areaSelect = document.getElementById("pharmacyAreaInput");
 
   if (!nameInput || !addressInput) return;
@@ -484,10 +482,7 @@ function confirmDeletePharmacy() {
 }
 
 function onPharmacyFilterChange() {
-  const results = document.getElementById("pharmaciesResultsContainer");
-  if (results && results.style.display !== "none") {
-    renderPharmaciesReport();
-  }
+  // Only render on Show button click
 }
 
 function onPharmacyLmChange() {}

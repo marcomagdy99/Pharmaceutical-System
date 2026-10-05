@@ -252,28 +252,18 @@ let lineModal, productModal, deleteModal, transferProductModal, campaignFocusMod
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
-  if (
-    window.hasAnyRole &&
-    !window.hasAnyRole(["admin", "product_manager", "pm"], user) &&
-    !isPM
-  ) {
+  const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : (user.role === "admin");
+  if (!isAdmin) {
     if (typeof showToast === "function") {
       showToast(
         (window.getCurrentLang && window.getCurrentLang() === "ar")
-          ? "غير مصرح: إدارة المنتجات وخطوط الإنتاج للأدمن ومديري المنتجات فقط."
-          : "Access Denied: Admins and Product Managers only.",
+          ? "غير مصرح: إدارة المنتجات وخطوط الإنتاج مخصصة لمسؤول النظام (الأدمن) فقط."
+          : "Access Denied: Product Lines & Products management is for Admins only.",
         "error"
       );
     }
     window.location.replace("index.html");
     return;
-  }
-
-  // Hide Add Line button for PM (Only admin can create new company lines)
-  if (isPM && !window.hasAnyRole(["admin"], user)) {
-    const addLineBtn = document.getElementById("add-line-btn");
-    if (addLineBtn) addLineBtn.style.display = "none";
   }
 
   lineModal = new bootstrap.Modal(document.getElementById("lineModal"));
@@ -574,7 +564,8 @@ function saveLine() {
 
   if (!name) {
     const msg = isAr ? "يرجى إدخال اسم الخط." : "Please enter Line Name.";
-    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+    showToast(msg, "warning");
+    return;
   }
 
   const manager = managerId ? getActiveLineManagers().find((m) => m.id === managerId) : null;
@@ -650,7 +641,8 @@ function openAddProductModal(lineId) {
   if (!line) {
     const isAr = currentLang === "ar";
     const msg = isAr ? "تعذر العثور على هذا الخط." : "Target line not found.";
-    return typeof showToast === "function" ? showToast(msg, "danger") : alert(msg);
+    showToast(msg, "error");
+    return;
   }
 
   const form = document.getElementById("productForm");
@@ -725,23 +717,27 @@ function saveProduct() {
 
   if (!targetLineId) {
     const msg = isAr ? "خطأ: لم يتم تحديد الخط المستهدف." : "Error: Target Line not identified.";
-    return typeof showToast === "function" ? showToast(msg, "danger") : alert(msg);
+    showToast(msg, "error");
+    return;
   }
 
   if (!name) {
     const msg = isAr ? "يرجى إدخال اسم الدواء/المنتج." : "Please enter Product Name.";
-    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+    showToast(msg, "warning");
+    return;
   }
 
   if (!dosage) {
     const msg = isAr ? "يرجى إدخال الجرعة (مثل 500mg)." : "Please enter Dosage.";
-    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+    showToast(msg, "warning");
+    return;
   }
 
   const line = window.store.productLines.getById(targetLineId);
   if (!line) {
     const msg = isAr ? "تعذر العثور على هذا الخط." : "Target line not found.";
-    return typeof showToast === "function" ? showToast(msg, "danger") : alert(msg);
+    showToast(msg, "error");
+    return;
   }
 
   if (!Array.isArray(line.products)) line.products = [];
@@ -753,7 +749,8 @@ function saveProduct() {
   );
   if (isDuplicate) {
     const msg = isAr ? "هذا الصنف بنفس الجرعة مسجل بالفعل في هذا الخط." : "This product with the same dosage already exists in this line.";
-    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+    showToast(msg, "warning");
+    return;
   }
 
   if (prodId) {
@@ -984,12 +981,14 @@ function confirmTransferProduct() {
 
   if (!targetLineId) {
     const msg = isAr ? "يرجى اختيار الخط الجديد." : "Please select a destination line.";
-    return typeof showToast === "function" ? showToast(msg, "warning") : alert(msg);
+    showToast(msg, "warning");
+    return;
   }
 
   if (sourceLineId === targetLineId) {
     const errMsg = isAr ? productTranslations.ar.transferErrorSameLine : productTranslations.en.transferErrorSameLine;
-    return typeof showToast === "function" ? showToast(errMsg, "warning") : alert(errMsg);
+    showToast(errMsg, "warning");
+    return;
   }
 
   const sourceLine = window.store.productLines.getById(sourceLineId);
@@ -1173,7 +1172,6 @@ function saveBrickWeights() {
 
   if (brickWeightsModal) brickWeightsModal.hide();
 
-  const isAr = currentLang === "ar";
   if (typeof showToast === "function") {
     showToast(productTranslations[currentLang].brickWeightsSaved || "Saved.", "success");
   }

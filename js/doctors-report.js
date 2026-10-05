@@ -387,7 +387,6 @@ function openDoctorModal(docId = null) {
   const classInput = document.getElementById("doctorClassInput");
   const addressInput = document.getElementById("doctorAddressInput");
   const phoneInput = document.getElementById("doctorPhoneInput");
-  const repInput = document.getElementById("doctorRepInput");
   const areaInput = document.getElementById("doctorAreaInput");
 
   const existingDoc = docId ? (getDoctorsData().find((d) => d.id === docId) || {}) : {};
@@ -470,7 +469,6 @@ function saveDoctor() {
   const classInput = document.getElementById("doctorClassInput");
   const addressInput = document.getElementById("doctorAddressInput");
   const phoneInput = document.getElementById("doctorPhoneInput");
-  const repSelect = document.getElementById("doctorRepInput");
   const areaSelect = document.getElementById("doctorAreaInput");
 
   if (!nameInput || !addressInput) return;
@@ -614,10 +612,7 @@ function confirmDeleteDoctor() {
 }
 
 function onDoctorFilterChange() {
-  const results = document.getElementById("doctorsResultsContainer");
-  if (results && results.style.display !== "none") {
-    renderDoctorsReport();
-  }
+  // Only render on Show button click
 }
 
 function onDoctorLmChange() {}

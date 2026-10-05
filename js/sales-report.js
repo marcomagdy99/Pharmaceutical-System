@@ -13,15 +13,6 @@
 
 // parseSalesNumber and parseDateStrict are provided globally by app.js
 
-// Current selected salesType filter for Pharmacies Sales tab
-let currentPharmSalesType = "all"; // "all" | "private" | "bulk"
-
-function setPharmSalesType(type) {
-  currentPharmSalesType = type;
-  const select = document.getElementById("pharmSalesTypeSelect");
-  if (select) select.value = type;
-}
-
 
 /**
  * Fills the upload bar's Distributor/Month/Year selects. Distributors
@@ -161,7 +152,6 @@ function getSelectedPharmSalesMonths() {
  * own line(s) for Rep/DM/LM, fully open for BU/Admin/HR).
  */
 function initPharmSalesFilters(user) {
-  const productSelect = document.getElementById('pharmSalesProductSelect');
   const monthContainer = document.getElementById('pharmSalesMonthCheckboxList');
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
@@ -269,17 +259,6 @@ function initPharmSalesFilters(user) {
   };
 
   window.populatePharmSalesAreas(user);
-
-  const areaSelectEl = document.getElementById('pharmSalesAreaSelect');
-  if (areaSelectEl && !areaSelectEl.dataset.listenerBound) {
-    areaSelectEl.dataset.listenerBound = 'true';
-    areaSelectEl.addEventListener('change', () => {
-      const resContainer = document.getElementById('salesResultsContainer') || document.getElementById('pharmSalesResultsContainer');
-      if (resContainer && resContainer.style.display !== 'none' && typeof renderSalesReport === 'function') {
-        renderSalesReport();
-      }
-    });
-  }
 
   const pharmRepSelectEl = document.getElementById('pharmSalesRepSelect');
   if (pharmRepSelectEl && !pharmRepSelectEl.dataset.areaListenerBound) {
@@ -597,9 +576,9 @@ function getFilteredPharmSalesRows() {
 
   // 🔹 Sales Type filter (All / Private / Bulk)
   const salesTypeSelect = document.getElementById('pharmSalesTypeSelect');
-  const activeSalesType = salesTypeSelect ? salesTypeSelect.value : (currentPharmSalesType || 'all');
+  const activeSalesType = salesTypeSelect ? salesTypeSelect.value : 'all';
   if (activeSalesType === "private") {
-    rows = rows.filter((r) => r.salesType === "private" || !r.salesType || r.salesType !== "bulk");
+    rows = rows.filter((r) => r.salesType !== "bulk");
   } else if (activeSalesType === "bulk") {
     rows = rows.filter((r) => r.salesType === "bulk");
   }

@@ -254,211 +254,29 @@ if (typeof translations !== "undefined") {
 }
 
 // ============================================================================
-// Section 2: 7-Day Auto-Expiry Evaluation
+// Section 2: Visit Governance & Validation (Single Source of Truth in app.js)
 // ============================================================================
-function isPlannedVisitExpired(dateStr) {
-  if (typeof window.isPlannedVisitExpired === "function" && window.isPlannedVisitExpired !== isPlannedVisitExpired) {
-    return window.isPlannedVisitExpired(dateStr);
-  }
-  if (!dateStr) return false;
-  const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
-    ? window.getPlannedVisitExpiryDays()
-    : 7;
-  const parts = String(dateStr).split("T")[0].split("-");
-  const now = (typeof window.getSystemDate === "function" && window.getSystemDate()) || new Date();
-  if (parts.length !== 3) {
-    const planDate = new Date(dateStr);
-    return (now.getTime() - planDate.getTime()) / (1000 * 3600 * 24) > expiryDays;
-  }
-  const planDateMidnight = new Date(
-    parseInt(parts[0], 10),
-    parseInt(parts[1], 10) - 1,
-    parseInt(parts[2], 10),
-    0, 0, 0, 0
-  );
-  const todayMidnight = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    0, 0, 0, 0
-  );
-  const diffDays = (todayMidnight.getTime() - planDateMidnight.getTime()) / (1000 * 3600 * 24);
-  return diffDays > expiryDays;
-}
+var isPlannedVisitExpired = (typeof window !== "undefined" && window.isPlannedVisitExpired) || function (dateStr) {
+  return false;
+};
 
-// ============================================================================
-// Section 2B: Field Governance (Duplicate Check, Min PM Visits & GPS Geofencing)
-// ============================================================================
-function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId = null) {
-  if (!doctorId || !visitDate) return false;
-  const list = (window.store && window.store.visits)
-    ? window.store.visits.getAll()
-    : (typeof demoVisits !== "undefined" && Array.isArray(demoVisits))
-      ? demoVisits
-      : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+var isDoctorAlreadyVisitedToday = (typeof window !== "undefined" && window.isDoctorAlreadyVisitedToday) || function (doctorId, visitDate, repId, currentVisitId = null) {
+  return false;
+};
 
-  return list.some((v) =>
-    String(v.id) !== String(currentVisitId) &&
-    v.repId === repId &&
-    (v.doctorId === doctorId || v.targetId === doctorId) &&
-    v.date === visitDate &&
-    v.status !== "rejected" &&
-    v.status !== "missed"
-  );
-}
-window.isDoctorAlreadyVisitedToday = isDoctorAlreadyVisitedToday;
+var parseTimeToMinutes = (typeof window !== "undefined" && window.parseTimeToMinutes) || function (timeStr) {
+  if (!timeStr) return null;
+  const parts = timeStr.split(":");
+  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+};
 
-// ============================================================================
-// Time Conflict Check Configuration (SFE Audit Rule)
-// ============================================================================
-// MIN_MINUTES_BETWEEN_VISITS: Minimum buffer (in minutes) required between visits
-// when Location/GPS validation is enabled (declared in app.js / exposed on window).
-
-/**
- * Converts a time string (e.g. "14:00", "02:30 PM", "9:15") to total minutes from midnight.
- */
-function parseTimeToMinutes(timeStr) {
-  if (!timeStr || typeof timeStr !== "string") return null;
-  const clean = timeStr.trim();
-  const match = clean.match(/^(\d{1,2}):(\d{2})/);
-  if (!match) return null;
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  if (isNaN(hours) || isNaN(minutes)) return null;
-
-  if (/pm/i.test(clean) && hours < 12) hours += 12;
-  if (/am/i.test(clean) && hours === 12) hours = 0;
-  return hours * 60 + minutes;
-}
-
-/**
- * Checks if a proposed visit time conflicts with an existing visit for the same rep on the same date.
- * Active ONLY when the company location/GPS validation setting is enabled (requireGpsValidation === true).
- * Enforces a minimum gap of MIN_MINUTES_BETWEEN_VISITS (default 10 minutes).
- */
-function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = null) {
-  const companySettings = (window.store && window.store.companySettings)
-    ? window.store.companySettings.get()
-    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
-
-  // Only active when location/GPS validation is enabled by Admin
-  if (!companySettings || !companySettings.requireGpsValidation) {
-    return { hasConflict: false };
-  }
-
-  const targetMinutes = parseTimeToMinutes(visitTime);
-  if (targetMinutes === null) return { hasConflict: false };
-
-  const minGapMinutes = window.MIN_MINUTES_BETWEEN_VISITS || 10;
-  const list = typeof demoVisits !== "undefined" && Array.isArray(demoVisits)
-    ? demoVisits
-    : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
-
-  for (const v of list) {
-    if (v.id === currentVisitId) continue;
-    if (v.repId !== repId) continue;
-    if (v.date !== visitDate) continue;
-    if (v.status === "rejected" || v.status === "missed") continue;
-
-    const existingMinutes = parseTimeToMinutes(v.time);
-    if (existingMinutes === null) continue;
-
-    const diff = Math.abs(targetMinutes - existingMinutes);
-    if (diff < minGapMinutes) {
-      return {
-        hasConflict: true,
-        exactMatch: diff === 0,
-        diffMinutes: diff,
-        conflictingVisit: v,
-        minRequired: minGapMinutes,
-      };
-    }
-  }
-
+var checkVisitTimeConflict = (typeof window !== "undefined" && window.checkVisitTimeConflict) || function (repId, visitDate, visitTime, currentVisitId = null) {
   return { hasConflict: false };
-}
-window.checkVisitTimeConflict = checkVisitTimeConflict;
+};
 
-function checkVisitDateAllowed(dateStr, repId, lang) {
-  if (!dateStr) return { allowed: true };
-  const isAr = lang === "ar";
-
-  // 1. Official public holidays check
-  const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays)
-    ? [...window.DEMO_DATA.publicHolidays]
-    : [];
-  try {
-    const cachedHolidays = localStorage.getItem("pharma_public_holidays");
-    if (cachedHolidays) {
-      const parsed = JSON.parse(cachedHolidays);
-      if (Array.isArray(parsed)) holidays.push(...parsed);
-    }
-  } catch (e) {}
-
-  const holiday = holidays.find((h) => h.date === dateStr);
-  if (holiday) {
-    const hTitle = holiday.title || (isAr ? "عطلة رسمية عامة" : "Public Holiday");
-    const msg = isAr
-      ? `⚠️ التاريخ المحدد (${dateStr}) يوافق عطلة رسمية عامة (${hTitle}). لا يُسمح بتسجيل أو تخطيط زيارات في العطلات الرسمية.`
-      : `⚠️ The selected date (${dateStr}) is an official public holiday (${hTitle}). Recording or planning visits on public holidays is not permitted.`;
-    return { allowed: false, reason: "public_holiday", message: msg };
-  }
-
-  // 2. Employee leaves check (both approved and pending, non-rejected)
-  const leaves = (window.store && window.store.leaves
-    ? window.store.leaves.getAll()
-    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
-
-  const matchedLeave = leaves.find((l) => {
-    if (l.userId !== repId) return false;
-    if (l.status === "rejected") return false;
-    const lStart = l.startDate || l.endDate;
-    const lEnd = l.endDate || l.startDate;
-    if (!lStart || !lEnd) return false;
-    return dateStr >= lStart && dateStr <= lEnd;
-  });
-
-  if (matchedLeave) {
-    const typeNamesAr = {
-      annual: "اعتيادية",
-      casual: "عارضة",
-      sick: "مرضية",
-      emergency: "عارضة/طارئة",
-      unpaid: "بدون راتب",
-    };
-    const typeNamesEn = {
-      annual: "Annual",
-      casual: "Casual",
-      sick: "Sick",
-      emergency: "Casual",
-      unpaid: "Unpaid",
-    };
-    const statusLabelsAr = {
-      approved: "معتمدة",
-      pending: "قيد الانتظار",
-    };
-    const statusLabelsEn = {
-      approved: "Approved",
-      pending: "Pending Approval",
-    };
-
-    const lType = isAr
-      ? (typeNamesAr[matchedLeave.type] || matchedLeave.type)
-      : (typeNamesEn[matchedLeave.type] || matchedLeave.type);
-    const lStatus = isAr
-      ? (statusLabelsAr[matchedLeave.status] || matchedLeave.status)
-      : (statusLabelsEn[matchedLeave.status] || matchedLeave.status);
-
-    const msg = isAr
-      ? `⚠️ لديك طلب إجازة مسجل (${lStatus}: ${lType}) في هذا التاريخ (${dateStr}). لا يُسمح بتسجيل أو تخطيط زيارات أثناء الإجازات.`
-      : `⚠️ You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
-
-    return { allowed: false, reason: "employee_leave", message: msg };
-  }
-
+var checkVisitDateAllowed = (typeof window !== "undefined" && window.checkVisitDateAllowed) || function (dateStr, repId, lang) {
   return { allowed: true };
-}
-window.checkVisitDateAllowed = checkVisitDateAllowed;
+};
 
 function isWorkdayExemptFromMinVisits(dateStr, repId) {
   if (!dateStr) return { exempt: false };
@@ -885,11 +703,13 @@ function persistVisits() {
     if (typeof window.saveDataToStorage === "function") {
       window.saveDataToStorage();
     }
-    document.dispatchEvent(
-      new CustomEvent("pharma:store:changed", {
-        detail: { entity: "visits", action: "update", payload: demoVisits },
-      })
-    );
+    if (typeof CustomEvent !== "undefined" && typeof document !== "undefined" && typeof document.dispatchEvent === "function") {
+      document.dispatchEvent(
+        new CustomEvent("pharma:store:changed", {
+          detail: { entity: "visits", action: "update", payload: demoVisits },
+        })
+      );
+    }
   }
 }
 
@@ -899,13 +719,7 @@ window.addEventListener("storage", (e) => {
       window.loadDataFromStorage();
     }
     getLiveVisits();
-    if (typeof renderCurrentView === "function") {
-      renderCurrentView();
-    } else {
-      if (typeof renderVisitsList === "function") renderVisitsList();
-      if (typeof renderStats === "function") renderStats();
-      if (typeof renderVisitsTimeline === "function") renderVisitsTimeline(hasLoadedTimelineOnce);
-    }
+    if (typeof renderVisitsTimeline === "function") renderVisitsTimeline(hasLoadedTimelineOnce);
   }
 });
 
@@ -1111,42 +925,11 @@ function populateVisitsLineFilter() {
 }
 
 /**
- * Determines the manager ID (typically DM) responsible for an area.
+ * Determines the manager ID (typically DM) responsible for an area (delegated to app.js).
  */
 function getAreaManagerId(area, allUsers = []) {
-  if (!area) return null;
-  if (area.dmId) return area.dmId;
-  if (area.managerId) return area.managerId;
-
-  if (area.repId) {
-    const rep = allUsers.find((u) => u.id === area.repId);
-    if (rep && rep.managerId) return rep.managerId;
-  }
-
-  const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-  const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && d.area.toLowerCase() === (area.name || '').toLowerCase())) && d.repId);
-  if (docWithRep) {
-    const docRep = allUsers.find((u) => u.id === docWithRep.repId);
-    if (docRep && docRep.managerId) return docRep.managerId;
-  }
-
-  const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
-  const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && s.area.toLowerCase() === (area.name || '').toLowerCase())) && s.dmId);
-  if (saleWithDm) return saleWithDm.dmId;
-
-  if (area.lineId) {
-    const dmsInLine = allUsers.filter((u) =>
-      (u.role === 'district_manager' || u.role === 'dm') &&
-      ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
-    );
-    if (dmsInLine.length === 1) {
-      return dmsInLine[0].id;
-    }
-  }
-
-  return null;
+  return window.getAreaManagerId ? window.getAreaManagerId(area, allUsers) : null;
 }
-window.getAreaManagerId = window.getAreaManagerId || getAreaManagerId;
 
 
 /**
@@ -1165,9 +948,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
 
   filterRep.replaceChildren();
 
-  const isLM = currentUserRole === "line_manager" || currentUserRole === "lm";
   const isDM = currentUserRole === "district_manager" || currentUserRole === "dm";
-  const isBU = currentUserRole === "business_unit" || currentUserRole === "bu";
   const isAdmin = currentUserRole === "admin" || currentUserRole === "hr";
 
   // Option: All Team in this line
@@ -1969,8 +1750,7 @@ const visitsApp = {
       const msg = lang === "ar"
         ? "يرجى اختيار طبيب أو مستشفى واحد على الأقل."
         : "Please select at least one doctor or hospital.";
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
 
@@ -1980,8 +1760,7 @@ const visitsApp = {
       const msg = lang === "ar"
         ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
         : "Cannot plan visits in the past. Please select today or a future date.";
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
 
@@ -1989,8 +1768,7 @@ const visitsApp = {
     const dateCheck = checkVisitDateAllowed(planDate, targetRepId, lang);
     if (!dateCheck.allowed) {
       resetSaveBtn();
-      if (typeof showToast === "function") showToast(dateCheck.message, "warning");
-      else alert(dateCheck.message);
+      showToast(dateCheck.message, "warning");
       return;
     }
 
@@ -2015,8 +1793,7 @@ const visitsApp = {
       const msg = lang === "ar"
         ? `الأهداف المحددة مسجلة بالفعل في هذا اليوم: (${duplicateTargets.join("، ")}). لا يمكن تكرار الزيارة لنفس الطبيب مرتين في نفس اليوم.`
         : `Selected targets are already scheduled/visited today: (${duplicateTargets.join(", ")}). Duplicate visits on the same day are not permitted.`;
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
 
@@ -2041,7 +1818,6 @@ const visitsApp = {
         ).length;
         const totalPm = existingPmCount + validBoxes.length;
         if (totalPm < minPmRequired) {
-          const needed = minPmRequired - totalPm;
           pmReminder = lang === "ar"
             ? ` (تذكير: مستهدف اليوم ${minPmRequired} زيارات مسائية، تم تخطيط ${totalPm} حتى الآن)`
             : ` (Note: Daily target is ${minPmRequired} PM visits, ${totalPm} planned so far)`;
@@ -2157,51 +1933,10 @@ window.saveBulkPlanVisits = function () {
 };
 
 function formatVisitDateTime(dateStr, timeStr, lang) {
-  const currentLang =
-    lang || (window.getCurrentLang && window.getCurrentLang()) || "ar";
-  const isAr = currentLang === "ar";
-  const arDays = [
-    "الأحد",
-    "الاثنين",
-    "الثلاثاء",
-    "الأربعاء",
-    "الخميس",
-    "الجمعة",
-    "السبت",
-  ];
-  const enDays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-
-  let dayName = "";
-  let validDate = dateStr || "";
-
-  if (dateStr) {
-    const d = new Date(dateStr + "T00:00:00");
-    const dayIndex = isNaN(d.getDay()) ? 0 : d.getDay();
-    dayName = isAr ? arDays[dayIndex] : enDays[dayIndex];
-  }
-
-  const safeTime = timeStr || "10:00";
-
-  return {
-    dayName: dayName,
-    date: validDate,
-    time: safeTime,
-    displayWithDay: dayName
-      ? `${dayName} - ${validDate} (⏰ ${safeTime})`
-      : `${validDate} (⏰ ${safeTime})`,
-    dayAndTime: dayName ? `${dayName} • ⏰ ${safeTime}` : `⏰ ${safeTime}`,
-  };
+  return window.formatVisitDateTime
+    ? window.formatVisitDateTime(dateStr, timeStr, lang)
+    : { dayName: "", date: dateStr || "", time: timeStr || "10:00", displayWithDay: dateStr || "", dayAndTime: timeStr || "" };
 }
-
-window.formatVisitDateTime = formatVisitDateTime;
 
 function updateVisitModalDayDisplay() {
   const dateInput = document.getElementById("visitDate");
@@ -2409,9 +2144,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
     } else if (selectedRepFilter && selectedRepFilter !== "all") {
       targetActUserIds = [selectedRepFilter];
     } else {
-      targetActUserIds = (typeof reportingReps !== "undefined" && reportingReps.length > 0)
-        ? reportingReps.map((r) => r.id)
-        : allUsers.map((u) => u.id);
+      targetActUserIds = allUsers.map((u) => u.id);
       if (!targetActUserIds.includes(currentUser.id)) targetActUserIds.push(currentUser.id);
     }
 
@@ -2561,22 +2294,6 @@ function renderVisitsTimeline(triggeredByShow = false) {
       dotClass = "actual";
       badgeClass = "actual";
       badgeLabel = trans.directActual;
-    }
-
-    let icon = "👨‍⚕️";
-    if (isActivity) {
-      icon = "📝";
-    } else if (
-      v.targetType === "hospital" ||
-      (v.period && v.period.toLowerCase() === "am") ||
-      (v.doctorId && v.doctorId.toString().startsWith("h"))
-    ) {
-      icon = "🏥";
-    } else if (
-      v.targetType === "pharmacy" ||
-      (v.doctorId && v.doctorId.toString().startsWith("pharm"))
-    ) {
-      icon = "💊";
     }
 
     const allDocs = getMockDoctors();
@@ -2847,7 +2564,7 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
       const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
       const matchesLine = pmLineId ? uLineIds.includes(pmLineId) : true;
 
-      if (uRole === "line_manager" || uRole === "district_manager") {
+      if (uRole === "line_manager" || uRole === "district_manager" || uRole === "medical_rep" || uRole === "rep") {
         return matchesLine;
       }
       if (uRole === "business_unit") {
@@ -2856,7 +2573,6 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
       return false;
     });
   } else if (role === "business_unit") {
-    const buLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
     candidates = users.filter(
       (u) =>
         u.id !== currentUser.id &&
@@ -2976,10 +2692,14 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
 
 function openVisitModal(isActual = false) {
   currentEditVisitId = null;
-  const filterRep = document.getElementById("filterRep");
-  const repScope = (filterRep && filterRep.value && filterRep.value !== "all" && !filterRep.value.startsWith("vacant:")) ? filterRep.value : currentUser.id;
-  populateVisitProducts([], repScope);
-  populateVisitCompanions(repScope, []);
+
+  // 1. Immediately open modal so user gets instant visual response
+  const modal = document.getElementById("visitModal");
+  if (modal) {
+    modal.dataset.source = isActual ? "actual" : "plan";
+    modal.classList.add("active");
+    modal.style.display = "flex";
+  }
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const trans = visitTranslations[lang] || visitTranslations.en;
@@ -3018,7 +2738,9 @@ function openVisitModal(isActual = false) {
   if (timeInput) {
     timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   }
-  updateVisitModalDayDisplay();
+  try {
+    updateVisitModalDayDisplay();
+  } catch (e) {}
 
   const insertionMeta = document.getElementById("visitInsertionMetaContainer");
   const insDateEl = document.getElementById("visitInsertionDateDisplay");
@@ -3031,7 +2753,8 @@ function openVisitModal(isActual = false) {
     if (insTimeEl) insTimeEl.innerText = `${curTime} (${lang === "ar" ? "تلقائي عند الحفظ" : "Auto on Save"})`;
   }
 
-  document.getElementById("visitComment").value = "";
+  const commentEl = document.getElementById("visitComment");
+  if (commentEl) commentEl.value = "";
   const samplesInput = document.getElementById("visitGiveawaySamples");
   if (samplesInput) samplesInput.value = "";
   document
@@ -3042,7 +2765,9 @@ function openVisitModal(isActual = false) {
     'input[name="visitType"][value="single"]',
   );
   if (singleRadio) singleRadio.checked = true;
-  toggleDoubleVisit();
+  try {
+    toggleDoubleVisit();
+  } catch (e) {}
 
   const radioPharm = document.getElementById("radioPharmacyLabel");
   if (radioPharm) {
@@ -3054,14 +2779,29 @@ function openVisitModal(isActual = false) {
   );
   if (pmRadio) pmRadio.checked = true;
 
-  setupModalTargetFilter();
-  updateTargetOptions();
+  const filterRep = document.getElementById("filterRep");
+  const repScope = (filterRep && filterRep.value && filterRep.value !== "all" && !filterRep.value.startsWith("vacant:")) ? filterRep.value : currentUser.id;
 
-  const modal = document.getElementById("visitModal");
-  if (modal) {
-    modal.dataset.source = isActual ? "actual" : "plan";
-    modal.classList.add("active");
-    modal.style.display = "flex";
+  try {
+    populateVisitProducts([], repScope);
+  } catch (e) {
+    console.error("Error populating visit products:", e);
+  }
+  try {
+    populateVisitCompanions(repScope, []);
+  } catch (e) {
+    console.error("Error populating visit companions:", e);
+  }
+
+  try {
+    setupModalTargetFilter();
+  } catch (e) {
+    console.error("Error in setupModalTargetFilter:", e);
+  }
+  try {
+    updateTargetOptions();
+  } catch (e) {
+    console.error("Error in updateTargetOptions:", e);
   }
 
   const companySettings = (window.store && window.store.companySettings)
@@ -3072,7 +2812,11 @@ function openVisitModal(isActual = false) {
   const gpsSec = document.getElementById("visitGpsSection");
   if (gpsSec) {
     gpsSec.style.display = (isActual && isGpsActive) ? "block" : "none";
-    if (isActual && isGpsActive) triggerManualGpsCheck();
+    if (isActual && isGpsActive) {
+      try {
+        triggerManualGpsCheck();
+      } catch (e) {}
+    }
   }
 }
 
@@ -3089,6 +2833,7 @@ function setupModalTargetFilter() {
     "district_manager",
     "line_manager",
     "business_unit",
+    "product_manager",
     "admin",
   ].includes(role);
 
@@ -3375,6 +3120,94 @@ function setupModalTargetFilter() {
       });
       filterSelect.appendChild(vaGrp);
     }
+  } else if (role === "product_manager") {
+    if (filterLabel) {
+      filterLabel.textContent = isAr
+        ? "تصفية الأهداف حسب عضو الفريق في الخط:"
+        : "Filter Targets by Line Team Member:";
+    }
+    allOpt.textContent = isAr ? "👥 جميع أهداف الخط" : "👥 All Line Targets";
+    filterSelect.appendChild(allOpt);
+
+    const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
+    const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
+    const effectiveLines = (activeLineId !== "all") ? [activeLineId] : pmLineIds;
+
+    // 1. Line Managers in PM's line
+    const lineLMs = allUsers.filter((u) => {
+      if (u.status === "Inactive" || (u.role !== "line_manager" && u.role !== "lm")) return false;
+      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return effectiveLines.length > 0 ? uLines.some((l) => effectiveLines.includes(l)) : true;
+    });
+    if (lineLMs.length > 0) {
+      const lmGrp = document.createElement("optgroup");
+      lmGrp.label = isAr ? "مديرو الخطوط (Line Managers)" : "Line Managers (LMs)";
+      lineLMs.forEach((lm) => {
+        const lmName = isAr && lm.nameAr ? lm.nameAr : lm.name;
+        const opt = document.createElement("option");
+        opt.value = `lm:${lm.id}`;
+        opt.textContent = `👔 ${lmName} (LM)`;
+        lmGrp.appendChild(opt);
+      });
+      filterSelect.appendChild(lmGrp);
+    }
+
+    // 2. District Managers in PM's line
+    const lineDMs = allUsers.filter((u) => {
+      if (u.status === "Inactive" || (u.role !== "district_manager" && u.role !== "dm")) return false;
+      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return effectiveLines.length > 0 ? uLines.some((l) => effectiveLines.includes(l)) : true;
+    });
+    if (lineDMs.length > 0) {
+      const dmGrp = document.createElement("optgroup");
+      dmGrp.label = isAr ? "مديرو المناطق (District Managers)" : "District Managers (DMs)";
+      lineDMs.forEach((dm) => {
+        const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
+        const opt = document.createElement("option");
+        opt.value = `dm:${dm.id}`;
+        opt.textContent = `👔 ${dmName} (DM)`;
+        dmGrp.appendChild(opt);
+      });
+      filterSelect.appendChild(dmGrp);
+    }
+
+    // 3. Medical Reps in PM's line
+    const lineReps = allUsers.filter((u) => {
+      if (u.status === "Inactive" || (u.role !== "medical_rep" && u.role !== "rep")) return false;
+      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return effectiveLines.length > 0 ? uLines.some((l) => effectiveLines.includes(l)) : true;
+    });
+    if (lineReps.length > 0) {
+      const repGrp = document.createElement("optgroup");
+      repGrp.label = isAr ? "المندوبون (Medical Reps)" : "Medical Reps";
+      lineReps.forEach((rep) => {
+        const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
+        const opt = document.createElement("option");
+        opt.value = `rep:${rep.id}`;
+        opt.textContent = `👤 ${repName}`;
+        repGrp.appendChild(opt);
+      });
+      filterSelect.appendChild(repGrp);
+    }
+
+    // 4. Vacant areas in PM's line
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    let pmVacant = allAreas.filter((a) => !a.repId);
+    if (effectiveLines.length > 0) {
+      pmVacant = pmVacant.filter((a) => !a.lineId || effectiveLines.includes(a.lineId));
+    }
+    if (pmVacant.length > 0) {
+      const vaGrp = document.createElement("optgroup");
+      vaGrp.label = isAr ? "مناطق شاغرة (Vacant Areas)" : "Vacant Areas";
+      pmVacant.forEach((va) => {
+        const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+        const vaOpt = document.createElement("option");
+        vaOpt.value = `vacant:${va.id}`;
+        vaOpt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaGrp.appendChild(vaOpt);
+      });
+      filterSelect.appendChild(vaGrp);
+    }
   }
 }
 
@@ -3413,6 +3246,7 @@ function updateTargetOptions() {
     "district_manager",
     "line_manager",
     "business_unit",
+    "product_manager",
     "admin",
   ].includes(role);
 
@@ -3428,6 +3262,14 @@ function updateTargetOptions() {
   let allowedRepIds = [currentUser.id];
   if (role === "admin" || role === "hr") {
     allowedRepIds = null;
+  } else if (role === "product_manager") {
+    const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
+    const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
+    const lineUsers = allUsers.filter((u) => {
+      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
+      return pmLineIds.length > 0 ? uLines.some((l) => pmLineIds.includes(l)) : true;
+    });
+    allowedRepIds = [currentUser.id, ...lineUsers.map((u) => u.id)];
   } else if (role === "district_manager") {
     const myRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
     allowedRepIds = [currentUser.id, ...myRepIds];
@@ -3464,6 +3306,26 @@ function updateTargetOptions() {
         }
         return true;
       });
+    } else if (role === "product_manager") {
+      const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
+      const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
+      if (selectedFilter && selectedFilter.startsWith("rep:")) {
+        const repId = selectedFilter.split(":")[1];
+        options = allHosps.filter((h) => h.repId === repId);
+      } else if (selectedFilter && selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+        const allowed = [dmId, ...dmReps];
+        options = allHosps.filter((h) => allowed.includes(h.repId));
+      } else if (selectedFilter && selectedFilter.startsWith("lm:")) {
+        const lmId = selectedFilter.split(":")[1];
+        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(lmId) : [];
+        const allowed = [lmId, ...downstream.map((u) => u.id)];
+        options = allHosps.filter((h) => allowed.includes(h.repId));
+      } else {
+        options = allHosps.filter((h) => pmLineIds.length === 0 || pmLineIds.some((lId) => doctorMatchesLine(h, lId, allAreas)));
+        if (options.length === 0 && allHosps.length > 0) options = allHosps;
+      }
     } else if (!isManager) {
       const repAreas =
         window.store && window.store.areas
@@ -3498,6 +3360,26 @@ function updateTargetOptions() {
         }
         return true;
       });
+    } else if (role === "product_manager") {
+      const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
+      const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
+      if (selectedFilter && selectedFilter.startsWith("rep:")) {
+        const repId = selectedFilter.split(":")[1];
+        options = allPharms.filter((p) => p.repId === repId);
+      } else if (selectedFilter && selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+        const allowed = [dmId, ...dmReps];
+        options = allPharms.filter((p) => allowed.includes(p.repId));
+      } else if (selectedFilter && selectedFilter.startsWith("lm:")) {
+        const lmId = selectedFilter.split(":")[1];
+        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(lmId) : [];
+        const allowed = [lmId, ...downstream.map((u) => u.id)];
+        options = allPharms.filter((p) => allowed.includes(p.repId));
+      } else {
+        options = allPharms.filter((p) => pmLineIds.length === 0 || pmLineIds.some((lId) => doctorMatchesLine(p, lId, allAreas)));
+        if (options.length === 0 && allPharms.length > 0) options = allPharms;
+      }
     } else if (!isManager) {
       const repAreas =
         window.store && window.store.areas
@@ -3654,6 +3536,33 @@ function updateTargetOptions() {
       } else {
         options = allDocs.filter((d) => allowedTeamIds.includes(d.repId));
       }
+    } else if (role === "product_manager") {
+      const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
+      const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
+      if (!selectedFilter || selectedFilter === "all") {
+        options = allDocs.filter((d) => pmLineIds.length === 0 || pmLineIds.some((lId) => doctorMatchesLine(d, lId, allAreas)));
+        if (options.length === 0 && allDocs.length > 0) options = allDocs;
+      } else if (selectedFilter === "vacant") {
+        options = allDocs.filter((d) => !d.repId);
+      } else if (selectedFilter.startsWith("vacant:")) {
+        const vAreaId = selectedFilter.split(":")[1];
+        options = allDocs.filter((d) => d.areaId === vAreaId);
+      } else if (selectedFilter.startsWith("rep:")) {
+        const repId = selectedFilter.split(":")[1];
+        options = allDocs.filter((d) => d.repId === repId);
+      } else if (selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+        const allowed = [dmId, ...dmReps];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else if (selectedFilter.startsWith("lm:")) {
+        const lmId = selectedFilter.split(":")[1];
+        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(lmId) : [];
+        const allowed = [lmId, ...downstream.map((u) => u.id)];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
+      } else {
+        options = allDocs.filter((d) => d.repId === selectedFilter);
+      }
     } else if (role === "admin") {
       if (!selectedFilter || selectedFilter === "all") {
         options = allDocs;
@@ -3686,7 +3595,10 @@ function updateTargetOptions() {
 
   const activeLineId = document.getElementById("filterLine")?.value || "all";
   if (activeLineId !== "all") {
-    options = options.filter((target) => doctorMatchesLine(target, activeLineId, allAreas));
+    const lineFiltered = options.filter((target) => doctorMatchesLine(target, activeLineId, allAreas));
+    if (lineFiltered.length > 0 || options.length === 0) {
+      options = lineFiltered;
+    }
   }
 
   if (options.length === 0) {
@@ -3866,8 +3778,7 @@ function saveVisit() {
       const msg = lang === "ar"
         ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
         : "Cannot plan visits in the past. Please select today or a future date.";
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
   } else {
@@ -3877,8 +3788,7 @@ function saveVisit() {
       const msg = lang === "ar"
         ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
         : "Cannot log an actual visit in a future date.";
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
     const minBacklogDate = (typeof window.getVisitBacklogMinDateStr === "function")
@@ -3897,8 +3807,7 @@ function saveVisit() {
         : (limitDays === 0
             ? "Company policy requires same-day visit logging only."
             : `Company policy does not allow logging visits older than ${limitDays} day(s).`);
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
   }
@@ -3910,8 +3819,7 @@ function saveVisit() {
   const dateCheck = checkVisitDateAllowed(visitDate, targetRepId, lang);
   if (!dateCheck.allowed) {
     resetSaveBtn();
-    if (typeof showToast === "function") showToast(dateCheck.message, "warning");
-    else alert(dateCheck.message);
+    showToast(dateCheck.message, "warning");
     return;
   }
 
@@ -3931,8 +3839,7 @@ function saveVisit() {
         ? `⚠️ الفارق الزمني بين الزيارات يجب ألا يقل عن ${timeConflict.minRequired} دقائق عند تفعيل تسجيل الزيارات بالموقع (GPS). توجد زيارة أخرى في (${conflictingTime}) لـ (${conflictingTarget}).`
         : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
     }
-    if (typeof showToast === "function") showToast(conflictMsg, "warning");
-    else alert(conflictMsg);
+    showToast(conflictMsg, "warning");
     return;
   }
 
@@ -3950,8 +3857,7 @@ function saveVisit() {
       const msg = lang === "ar"
         ? "يرجى تحديد المرافق في الزيارة المزدوجة."
         : "Please select at least one companion for the double visit.";
-      if (typeof showToast === "function") showToast(msg, "warning");
-      else alert(msg);
+      showToast(msg, "warning");
       return;
     }
     doubleWithUserName = companionCbs.map((cb) => cb.value).join(", ");
@@ -3973,8 +3879,7 @@ function saveVisit() {
         const cMsg = lang === "ar"
           ? `⚠️ المرافق المحدد في الزيارة المشتركة لديه إجازة مسجلة أو عطلة في هذا التاريخ (${visitDate}).`
           : `⚠️ The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
-        if (typeof showToast === "function") showToast(cMsg, "warning");
-        else alert(cMsg);
+        showToast(cMsg, "warning");
         return;
       }
     }
@@ -4076,7 +3981,7 @@ function saveVisit() {
     if (!targetId) {
       resetSaveBtn();
       const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-      alert(isAr ? "يرجى اختيار الهدف أولاً" : "Please select a target first");
+      showToast(isAr ? "يرجى اختيار الهدف أولاً" : "Please select a target first", "warning");
       return;
     }
 
@@ -4482,3 +4387,7 @@ window.exportVisitsToCSV = exportVisitsToCSV;
 window.printVisitsReport = printVisitsReport;
 window.renderVisits = renderVisits;
 window.renderVisitsTimeline = renderVisitsTimeline;
+window.updateTargetOptions = updateTargetOptions;
+window.setupModalTargetFilter = setupModalTargetFilter;
+window.toggleDoubleVisit = toggleDoubleVisit;
+window.updateVisitModalDayDisplay = updateVisitModalDayDisplay;

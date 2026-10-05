@@ -105,7 +105,6 @@
       wed: "Wed",
       thu: "Thu",
       fri: "Fri",
-      dayOff: "Day Off",
 
       // Expenses Tab
       expensesTitle: "Travel & Field Expenses",
@@ -143,7 +142,6 @@
       allocatedBudgetOverview: "Allocated Promo Budget",
       lineFilterLabel: "Line:",
       filterEmployee: "Employee:",
-      allEmployees: "All Employees",
       totalAllocatedBudget: "Total Budget",
       districtBudget: "District Budget",
       distributedToDms: "Distributed to DMs",
@@ -293,7 +291,6 @@
       wed: "الأربعاء",
       thu: "الخميس",
       fri: "الجمعة",
-      dayOff: "إجازة أسبوعية",
 
       // Expenses Tab
       expensesTitle: "نفقات ومصاريف الميدان والسفر",
@@ -331,7 +328,6 @@
       allocatedBudgetOverview: "الميزانية المخصصة للترويج",
       lineFilterLabel: "اللاين:",
       filterEmployee: "الموظف:",
-      allEmployees: "كل الموظفين",
       totalAllocatedBudget: "إجمالي الميزانية",
       districtBudget: "ميزانية المنطقة",
       distributedToDms: "الموزع على الـ DMs",
@@ -463,7 +459,7 @@
     } else if (typeof window.showToast === "function") {
       window.showToast(msg, type);
     } else {
-      alert(msg);
+      console.warn(msg);
     }
   }
 

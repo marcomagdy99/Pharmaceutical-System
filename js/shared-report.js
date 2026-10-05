@@ -508,14 +508,6 @@ document.addEventListener('click', (e) => {
   if (pharmSalesMonthContainer && !pharmSalesMonthContainer.contains(e.target) && typeof closePharmSalesMonthDropdown === 'function') {
     closePharmSalesMonthDropdown();
   }
-  const productContainer = document.getElementById('productMultiSelectContainer');
-  if (productContainer && !productContainer.contains(e.target) && typeof closeProductDropdown === 'function') {
-    closeProductDropdown();
-  }
-  const monthContainer = document.getElementById('monthMultiSelectContainer');
-  if (monthContainer && !monthContainer.contains(e.target) && typeof closeMonthDropdown === 'function') {
-    closeMonthDropdown();
-  }
 });
 
 // ============================================================================
@@ -686,68 +678,14 @@ window.onReportLineFilterChange = function (selectedLineId) {
   if (typeof window.updatePharmSalesProductsForLine === 'function') {
     window.updatePharmSalesProductsForLine(selectedLineId);
   }
-
-  const activeTabBtn = document.querySelector('.report-tab-btn.active');
-  const activeTab = activeTabBtn ? activeTabBtn.dataset.tab : 'sales';
-
-  if (activeTab === 'sales' && typeof renderSalesReport === 'function') {
-    const results = document.getElementById('salesResultsContainer');
-    if (results && results.style.display !== 'none') renderSalesReport();
-  } else if (activeTab === 'achievements' && typeof renderAchievementsReport === 'function') {
-    const results = document.getElementById('achievementsResultsContainer');
-    if (results && results.style.display !== 'none') renderAchievementsReport();
-  } else if (activeTab === 'timeline' && typeof renderDailyTimeline === 'function') {
-    const results = document.getElementById('timelineResultsContainer');
-    if (results && results.style.display !== 'none') renderDailyTimeline();
-  } else if (activeTab === 'coverage' && typeof renderCoverageReport === 'function') {
-    const results = document.getElementById('coverageResultsContainer');
-    if (results && results.style.display !== 'none') renderCoverageReport();
-  } else if (activeTab === 'doctors' && typeof renderDoctorsReport === 'function') {
-    const results = document.getElementById('doctorsResultsContainer');
-    if (results && results.style.display !== 'none') renderDoctorsReport();
-  } else if (activeTab === 'hospitals' && typeof renderHospitalsReport === 'function') {
-    const results = document.getElementById('hospitalsResultsContainer');
-    if (results && results.style.display !== 'none') renderHospitalsReport();
-  } else if (activeTab === 'pharmacies' && typeof renderPharmaciesReport === 'function') {
-    const results = document.getElementById('pharmaciesResultsContainer');
-    if (results && results.style.display !== 'none') renderPharmaciesReport();
-  }
 };
 
+/**
+ * Determines the manager ID (typically DM) responsible for an area (delegated to app.js).
+ */
 function getAreaManagerId(area, allUsers = []) {
-  if (!area) return null;
-  if (area.dmId) return area.dmId;
-  if (area.managerId) return area.managerId;
-
-  if (area.repId) {
-    const rep = allUsers.find((u) => u.id === area.repId);
-    if (rep && rep.managerId) return rep.managerId;
-  }
-
-  const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-  const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && d.area.toLowerCase() === (area.name || '').toLowerCase())) && d.repId);
-  if (docWithRep) {
-    const docRep = allUsers.find((u) => u.id === docWithRep.repId);
-    if (docRep && docRep.managerId) return docRep.managerId;
-  }
-
-  const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
-  const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && s.area.toLowerCase() === (area.name || '').toLowerCase())) && s.dmId);
-  if (saleWithDm) return saleWithDm.dmId;
-
-  if (area.lineId) {
-    const dmsInLine = allUsers.filter((u) =>
-      (u.role === 'district_manager' || u.role === 'dm') &&
-      ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
-    );
-    if (dmsInLine.length === 1) {
-      return dmsInLine[0].id;
-    }
-  }
-
-  return null;
+  return window.getAreaManagerId ? window.getAreaManagerId(area, allUsers) : null;
 }
-window.getAreaManagerId = getAreaManagerId;
 
 function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
   const selects = [
@@ -994,37 +932,6 @@ function populateRepsFilter(repSelect, dmId = null, lineId = null) {
   }
   appendSelectOptions(repSelect, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || r.code || 'Rep'})`);
 }
-
-window.onSalesLineChange = function() {
-  const lineSelect = document.getElementById('salesLineSelect');
-  const dmSelect = document.getElementById('salesDmSelect');
-  const repSelect = document.getElementById('salesRepSelect');
-  const user = checkAuth();
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const selectedLineId = lineSelect ? lineSelect.value : 'all';
-  if (role === 'district_manager') {
-    populateRepsFilter(repSelect, user.id, selectedLineId);
-  } else if (role === 'line_manager') {
-    populateDMsFilter(dmSelect, user.id, selectedLineId);
-    populateRepsFilter(repSelect, null, selectedLineId);
-  } else {
-    const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
-    const lineObj = lines.find((l) => l.id === selectedLineId);
-    const lmUserId = lineObj ? lineObj.lineManagerId : null;
-    populateDMsFilter(dmSelect, lmUserId, selectedLineId);
-    populateRepsFilter(repSelect, null, selectedLineId);
-  }
-  populateProductCheckboxes(selectedLineId);
-};
-
-window.onSalesDmChange = function() {
-  const lineSelect = document.getElementById('salesLineSelect');
-  const dmSelect = document.getElementById('salesDmSelect');
-  const repSelect = document.getElementById('salesRepSelect');
-  const selectedLineId = lineSelect ? lineSelect.value : 'all';
-  const selectedDmId = dmSelect ? dmSelect.value : 'all';
-  populateRepsFilter(repSelect, selectedDmId, selectedLineId);
-};
 
 // ============================================================================
 function printCurrentReport() {
