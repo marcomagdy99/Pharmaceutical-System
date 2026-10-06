@@ -4,7 +4,7 @@ const path = require("path");
 const baseDir = path.resolve(__dirname, "..");
 const files = fs.readdirSync(baseDir).filter(f => f.endsWith(".html"));
 
-const targetVersion = "v120";
+const targetVersion = "v133";
 let updatedCount = 0;
 
 for (const file of files) {
@@ -46,6 +46,9 @@ if (fs.existsSync(swPath)) {
 }
 
 console.log(`Successfully bumped all assets to ${targetVersion} in ${updatedCount} HTML files and sw.js.`);
+
+
+
 
 
 

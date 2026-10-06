@@ -979,6 +979,9 @@ function renderPendingAreas() {
     .map((a) => `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(a.name)}${a.code ? ` (${window.escapeHtml(a.code)})` : ""}</option>`)
     .join("");
 
+  const mobileContainer = document.getElementById("pendingAreasMobileCards");
+  if (mobileContainer) mobileContainer.replaceChildren();
+
   pending.forEach((entry, idx) => {
     const dist = distributors.find((d) => d.id === entry.distributorId);
     const rowId = `pendingArea_${idx}`;
@@ -1001,6 +1004,30 @@ function renderPendingAreas() {
       </td>
     `;
     tbody.appendChild(tr);
+
+    if (mobileContainer) {
+      const card = document.createElement("div");
+      card.className = "dist-mobile-card mb-2";
+      card.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(dist ? dist.name : entry.distributorId)}</span>
+          <span class="badge bg-light text-dark border">${entry.count} rows</span>
+        </div>
+        <div class="fw-bold mb-2 text-primary">
+          <i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(entry.areaRaw)}
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <select class="form-select form-select-sm flex-grow-1" id="${rowId}_mobile_select">
+            <option value="">${window.escapeHtml(t.select_area)}</option>
+            ${areaOptionsHtml}
+          </select>
+          <button class="btn btn-sm btn-primary px-3 text-nowrap" onclick="linkAreaAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.areaRaw).replace(/'/g, "&#39;")}', '${rowId}_mobile_select')">
+            <i class="fas fa-link me-1"></i>${window.escapeHtml(t.link)}
+          </button>
+        </div>
+      `;
+      mobileContainer.appendChild(card);
+    }
   });
 }
 
@@ -1051,13 +1078,16 @@ function renderPendingProducts() {
   const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
   const pending = window.store.distributorSales.getPendingProductTexts();
 
+  const mobileContainer = document.getElementById("pendingProductsMobileCards");
   if (!pending.length) {
     section.style.display = "none";
     tbody.replaceChildren();
+    if (mobileContainer) mobileContainer.replaceChildren();
     return;
   }
   section.style.display = "block";
   tbody.replaceChildren();
+  if (mobileContainer) mobileContainer.replaceChildren();
 
   const distributors = getDistributorsList();
   const lines = window.store.productLines.getAll();
@@ -1098,6 +1128,30 @@ function renderPendingProducts() {
       </td>
     `;
     tbody.appendChild(tr);
+
+    if (mobileContainer) {
+      const card = document.createElement("div");
+      card.className = "dist-mobile-card mb-2";
+      card.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(dist ? dist.name : entry.distributorId)}</span>
+          <span class="badge bg-light text-dark border">${entry.count} rows</span>
+        </div>
+        <div class="fw-bold mb-2 text-primary">
+          <i class="fas fa-pills me-1 text-warning"></i>${window.escapeHtml(entry.productRaw)}
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <select class="form-select form-select-sm flex-grow-1" id="${rowId}_mobile_select">
+            <option value="">${window.escapeHtml(t.select_product)}</option>
+            ${optionsHtml}
+          </select>
+          <button class="btn btn-sm btn-primary px-3 text-nowrap" onclick="linkProductAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.productRaw).replace(/'/g, "&#39;")}', '${rowId}_mobile_select')">
+            <i class="fas fa-link me-1"></i>${window.escapeHtml(t.link)}
+          </button>
+        </div>
+      `;
+      mobileContainer.appendChild(card);
+    }
   });
 }
 
@@ -1228,8 +1282,14 @@ function renderMappedAliases() {
         : `Showing ${areaAliases.length} of ${allAreaAliases.length}`;
     }
 
+    const areasMobileContainer = document.getElementById("mappedAreasMobileCards");
+    if (areasMobileContainer) areasMobileContainer.replaceChildren();
+
     if (areaAliases.length === 0) {
       areasTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allAreaAliases.length === 0 ? t.no_mapped_territories : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
+      if (areasMobileContainer) {
+        areasMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allAreaAliases.length === 0 ? t.no_mapped_territories : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</div>`;
+      }
     } else {
       areasTbody.innerHTML = "";
       areaAliases.forEach((entry) => {
@@ -1254,6 +1314,31 @@ function renderMappedAliases() {
           </td>
         `;
         areasTbody.appendChild(tr);
+
+        if (areasMobileContainer) {
+          const card = document.createElement("div");
+          card.className = "dist-mobile-card mb-2";
+          card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(distName)}</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" onclick="openEditAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+                  <i class="fas fa-edit me-1"></i><span>${t.edit}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" onclick="unlinkAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+                  <i class="fas fa-unlink me-1"></i><span>${t.unlink}</span>
+                </button>
+              </div>
+            </div>
+            <div class="fw-bold mb-1 text-dark">
+              <span class="badge bg-light text-dark border font-monospace me-1">${window.escapeHtml(entry.rawText)}</span>
+            </div>
+            <div class="small fw-semibold text-primary">
+              <i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(entry.areaName)} ${entry.areaCode ? `(${window.escapeHtml(entry.areaCode)})` : ""}
+            </div>
+          `;
+          areasMobileContainer.appendChild(card);
+        }
       });
     }
   }
@@ -1291,8 +1376,14 @@ function renderMappedAliases() {
         : `Showing ${prodAliases.length} of ${allProdAliases.length}`;
     }
 
+    const prodsMobileContainer = document.getElementById("mappedProductsMobileCards");
+    if (prodsMobileContainer) prodsMobileContainer.replaceChildren();
+
     if (prodAliases.length === 0) {
       prodsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allProdAliases.length === 0 ? t.no_mapped_products : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
+      if (prodsMobileContainer) {
+        prodsMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allProdAliases.length === 0 ? t.no_mapped_products : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</div>`;
+      }
     } else {
       prodsTbody.innerHTML = "";
       prodAliases.forEach((entry) => {
@@ -1317,6 +1408,31 @@ function renderMappedAliases() {
           </td>
         `;
         prodsTbody.appendChild(tr);
+
+        if (prodsMobileContainer) {
+          const card = document.createElement("div");
+          card.className = "dist-mobile-card mb-2";
+          card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(distName)}</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" onclick="openEditProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+                  <i class="fas fa-edit me-1"></i><span>${t.edit}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" onclick="unlinkProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+                  <i class="fas fa-unlink me-1"></i><span>${t.unlink}</span>
+                </button>
+              </div>
+            </div>
+            <div class="fw-bold mb-1">
+              <span class="badge bg-light text-dark border font-monospace text-wrap text-start">${window.escapeHtml(entry.rawText)}</span>
+            </div>
+            <div class="small fw-semibold text-success mt-1">
+              <i class="fas fa-pills me-1"></i>${window.escapeHtml(entry.productName)} <small class="text-muted">(${window.escapeHtml(entry.lineName)})</small>
+            </div>
+          `;
+          prodsMobileContainer.appendChild(card);
+        }
       });
     }
   }
@@ -1350,8 +1466,14 @@ function renderMappedAliases() {
         : `Showing ${overrides.length} of ${allOverrides.length}`;
     }
 
+    const pharmsMobileContainer = document.getElementById("mappedPharmaciesMobileCards");
+    if (pharmsMobileContainer) pharmsMobileContainer.replaceChildren();
+
     if (overrides.length === 0) {
       pharmsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">${allOverrides.length === 0 ? t.no_pharmacy_overrides : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
+      if (pharmsMobileContainer) {
+        pharmsMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allOverrides.length === 0 ? t.no_pharmacy_overrides : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</div>`;
+      }
     } else {
       pharmsTbody.innerHTML = "";
       const areas = (window.store.areas && window.store.areas.getAll()) || [];
@@ -1426,6 +1548,36 @@ function renderMappedAliases() {
           </td>
         `;
         pharmsTbody.appendChild(tr);
+
+        if (pharmsMobileContainer) {
+          const card = document.createElement("div");
+          card.className = "dist-mobile-card mb-2";
+          card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(distName)}</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" onclick="openPharmacyOverrideModal('${window.escapeHtml(entry.id)}')" title="${t.edit}">
+                  <i class="fas fa-edit me-1"></i><span>${t.edit}</span>
+                </button>
+                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" onclick="deletePharmacyOverride('${window.escapeHtml(entry.id)}')" title="${t.delete}">
+                  <i class="fas fa-trash me-1"></i><span>${t.delete}</span>
+                </button>
+              </div>
+            </div>
+            <div class="fw-bold mb-1 text-dark d-flex align-items-center gap-1">
+              <span class="badge bg-light text-dark border font-monospace">${window.escapeHtml(entry.pharmacyCode || "—")}</span>
+              <span>${window.escapeHtml(entry.pharmacyName || "—")}</span>
+            </div>
+            <div class="small fw-semibold text-primary mt-1">
+              ${areaCellHtml}
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+              <span class="text-muted small"><i class="fas fa-user me-1"></i>${repCellHtml}</span>
+              <span class="badge ${scopeBadgeClass} border">${window.escapeHtml(scopeLabel)}</span>
+            </div>
+          `;
+          pharmsMobileContainer.appendChild(card);
+        }
       });
     }
   }
@@ -2143,6 +2295,21 @@ window.saveEditedAlias = saveEditedAlias;
 // delete one entirely -- e.g. to undo a mistaken upload -- removing
 // every distributorSales row it created (store.distributorSales.deleteByBatch).
 // ==========================================
+let historySearchQuery = "";
+let historySelectedDistributor = "";
+
+function handleHistorySearch(query) {
+  historySearchQuery = String(query || "").trim().toLowerCase();
+  renderImportBatches();
+}
+window.handleHistorySearch = handleHistorySearch;
+
+function handleHistoryDistFilter(distId) {
+  historySelectedDistributor = String(distId || "").trim();
+  renderImportBatches();
+}
+window.handleHistoryDistFilter = handleHistoryDistFilter;
+
 function renderImportBatches() {
   const tbody = document.getElementById("importBatchesTableBody");
   const emptyMsg = document.getElementById("importBatchesEmptyMsg");
@@ -2156,15 +2323,53 @@ function renderImportBatches() {
     .sort((a, b) => (b.uploadedAt || "").localeCompare(a.uploadedAt || ""));
   const distributors = getDistributorsList();
 
+  // Populate distributor filter dropdown once or keep in sync
+  const distFilterSelect = document.getElementById("historyDistributorFilter");
+  if (distFilterSelect && distFilterSelect.options.length <= 1) {
+    const currentVal = distFilterSelect.value;
+    distFilterSelect.innerHTML = `<option value="">${isAr ? "كل الموزعين" : "All Distributors"}</option>` +
+      distributors.map(d => `<option value="${window.escapeHtml(d.id)}">${window.escapeHtml(d.name)}</option>`).join("");
+    if (currentVal) distFilterSelect.value = currentVal;
+  }
+
+  const query = historySearchQuery;
+  const filterDist = historySelectedDistributor;
+  const countLabelEl = document.getElementById("historyFilteredCountText");
+
+  let filteredBatches = batches;
+  if (filterDist) {
+    filteredBatches = filteredBatches.filter(b => b.distributorId === filterDist);
+  }
+  if (query) {
+    filteredBatches = filteredBatches.filter(b => {
+      const dist = distributors.find(d => d.id === b.distributorId);
+      const distName = dist ? dist.name.toLowerCase() : "";
+      return (
+        distName.includes(query) ||
+        String(b.fileName || "").toLowerCase().includes(query) ||
+        String(b.month || "").toLowerCase().includes(query)
+      );
+    });
+  }
+
+  if (countLabelEl) {
+    countLabelEl.textContent = isAr
+      ? `عرض ${filteredBatches.length} من إجمالي ${batches.length}`
+      : `Showing ${filteredBatches.length} of ${batches.length}`;
+  }
+
   tbody.replaceChildren();
 
-  if (!batches.length) {
-    if (emptyMsg) emptyMsg.style.display = "block";
+  if (!filteredBatches.length) {
+    if (emptyMsg) {
+      emptyMsg.style.display = "block";
+      emptyMsg.textContent = batches.length === 0 ? (isAr ? "لم يتم رفع أي شيتات بعد." : "No sheets uploaded yet.") : (isAr ? "لا توجد شيتات مطابقة للبحث." : "No matching import sheets found.");
+    }
     return;
   }
   if (emptyMsg) emptyMsg.style.display = "none";
 
-  batches.forEach((b) => {
+  filteredBatches.forEach((b) => {
     const dist = distributors.find((d) => d.id === b.distributorId);
     const uploadedLabel = b.uploadedAt
       ? new Date(b.uploadedAt).toLocaleString(isAr ? "ar-EG" : "en-US")

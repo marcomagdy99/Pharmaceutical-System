@@ -331,6 +331,9 @@ html[dir="rtl"] .area-card.unassigned {
 [data-theme="dark"] .dist-mobile-card h6 {
     color: #e5e7eb;
 }
+[data-theme="dark"] .dist-mobile-card .text-dark {
+    color: #f1f5f9 !important;
+}
 [data-theme="dark"] .dist-mobile-card .btn-light {
     background: #2d3340;
     border-color: #3a4150;
@@ -338,6 +341,51 @@ html[dir="rtl"] .area-card.unassigned {
 }
 [data-theme="dark"] .dist-mobile-card .btn-light:hover {
     background: #3a4150;
+}
+[data-theme="dark"] .dist-mobile-card .border-top {
+    border-top-color: #2d3340 !important;
+}
+
+/* Badge styling in dark mode for areas page and mobile cards */
+[data-theme="dark"] .dist-mobile-card .badge.bg-light.text-dark,
+[data-theme="dark"] .badge.bg-light.text-dark {
+    background-color: #282d38 !important;
+    color: #f1f3f5 !important;
+    border-color: #3d4554 !important;
+}
+[data-theme="dark"] .dist-mobile-card .badge.bg-secondary-subtle,
+[data-theme="dark"] .badge.bg-secondary-subtle {
+    background-color: rgba(148, 163, 184, 0.15) !important;
+    color: #cbd5e1 !important;
+    border-color: #3d4554 !important;
+}
+[data-theme="dark"] .dist-mobile-card .badge.bg-primary-subtle,
+[data-theme="dark"] .badge.bg-primary-subtle {
+    background-color: rgba(56, 139, 253, 0.2) !important;
+    color: #79c0ff !important;
+    border-color: rgba(56, 139, 253, 0.35) !important;
+}
+[data-theme="dark"] .dist-mobile-card .badge.bg-warning-subtle,
+[data-theme="dark"] .badge.bg-warning-subtle {
+    background-color: rgba(210, 153, 34, 0.2) !important;
+    color: #e3b341 !important;
+    border-color: rgba(210, 153, 34, 0.35) !important;
+}
+[data-theme="dark"] .dist-mobile-card .btn-outline-primary {
+    color: #58a6ff;
+    border-color: #388bfd;
+}
+[data-theme="dark"] .dist-mobile-card .btn-outline-primary:hover {
+    background-color: #388bfd;
+    color: #ffffff;
+}
+[data-theme="dark"] .dist-mobile-card .btn-outline-danger {
+    color: #f85149;
+    border-color: #da3633;
+}
+[data-theme="dark"] .dist-mobile-card .btn-outline-danger:hover {
+    background-color: #da3633;
+    color: #ffffff;
 }
 
 /* --- START: IMS Bricks Selector --- */
@@ -375,3 +423,77 @@ html[dir="rtl"] .area-card.unassigned {
     color: #93c5fd;
 }
 /* --- END: IMS Bricks Selector --- */
+/* --- Active Mapped Aliases Segmented Tabs --- */
+.alias-tabs-wrapper {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.alias-tabs-wrapper::-webkit-scrollbar {
+    display: none;
+}
+.alias-tabs-wrapper .nav-pills {
+    margin-bottom: 0;
+}
+.alias-tabs-wrapper .nav-pills .nav-link {
+    color: #64748b;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.alias-tabs-wrapper .nav-pills .nav-link:hover {
+    color: #1e293b;
+    background-color: rgba(0, 0, 0, 0.04);
+}
+.alias-tabs-wrapper .nav-pills .nav-link.active {
+    background-color: var(--primary, #0d6efd) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
+}
+
+@media (max-width: 768px) {
+    .alias-tabs-wrapper {
+        width: 100%;
+        display: block !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        padding: 4px !important;
+    }
+    .alias-tabs-wrapper .nav-pills {
+        display: inline-flex !important;
+        flex-wrap: nowrap !important;
+        width: auto !important;
+        gap: 6px !important;
+    }
+    .alias-tabs-wrapper .nav-pills .nav-item {
+        flex: 0 0 auto !important;
+    }
+    .alias-tabs-wrapper .nav-pills .nav-link {
+        white-space: nowrap !important;
+        padding: 6px 14px !important;
+        font-size: 0.82rem !important;
+    }
+}
+
+[data-theme="dark"] .alias-tabs-wrapper {
+    background-color: #181b20 !important;
+    border: 1px solid #2d3340 !important;
+}
+[data-theme="dark"] .alias-tabs-wrapper .nav-pills .nav-link {
+    color: #94a3b8 !important;
+    background: transparent !important;
+}
+[data-theme="dark"] .alias-tabs-wrapper .nav-pills .nav-link:hover {
+    color: #f1f5f9 !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+[data-theme="dark"] .alias-tabs-wrapper .nav-pills .nav-link.active {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
+}

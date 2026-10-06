@@ -163,11 +163,16 @@ const announcementTranslations = {
     salesMarketing: "Sales & Marketing",
     hrAdmin: "HR & Admin",
     targetAll: "All Company",
+    targetLineTeam: "All Line Team (Reps, DMs, LMs, BU, PM)",
     targetDmLmBu: "District Manager, Line Manager & Business Unit Head",
     targetLmBu: "Line Manager & Business Unit Head",
     targetBu: "Business Unit Head Only",
     targetRep: "Medical Representative Only",
     targetHrAdmin: "Human Resources & Administration Only",
+    targetLine: "Product Line Scope",
+    allLines: "All Lines (Company-wide)",
+    lineScopeBadge: "Line: {0}",
+    pmLineNotice: "This announcement will only be visible to team members within your product line ({0}).",
     timeAgo: "{0} ago",
     justNow: "Just now",
     mins: "mins",
@@ -210,6 +215,10 @@ const announcementTranslations = {
     bodyAr: "المحتوى (عربي)",
     priority: "الأولوية",
     targetAudience: "الجمهور المستهدف",
+    targetLine: "نطاق خط الإنتاج",
+    allLines: "كل الخطوط (على مستوى الشركة)",
+    lineScopeBadge: "خط: {0}",
+    pmLineNotice: "هذا الإعلان سيظهر حصرياً لأعضاء فريق خط الإنتاج الخاص بك ({0}).",
     publishNow: "نشر فوراً",
     save: "حفظ",
     cancel: "إلغاء",
@@ -219,6 +228,7 @@ const announcementTranslations = {
     salesMarketing: "المبيعات والتسويق",
     hrAdmin: "الموارد البشرية والإدارة",
     targetAll: "كل الشركة",
+    targetLineTeam: "كامل فريق الخط (المناديب، المشرفين، مديري الخطوط، رؤساء القطاعات، مدير المنتج)",
     targetDmLmBu: "مدير المنطقة ومدير الخط ورئيس القطاع",
     targetLmBu: "مدير الخط ورئيس القطاع",
     targetBu: "رئيس القطاع فقط",
@@ -279,13 +289,78 @@ function saveAnnouncementsToStorage() {
 /* --- START STATE --- */
 let announcements = loadAnnouncements();
 let currentFilter = "all"; // all, unread, high, normal, low
+let currentAuthUser = null;
 let currentUserRole = "medical_rep";
 let currentUserId = "";
 let currentUserName = "";
+let currentUserLineIds = [];
 let expandedCards = new Set();
 let editAnnouncementId = null;
 let currentAnnouncementImage = null;
 /* --- END STATE --- */
+
+/* --- START LINE & ROLE HELPERS --- */
+function isPMUser(user) {
+  if (!user) return false;
+  const r = (user.role || "").toLowerCase();
+  return r === "product_manager" || r === "pm";
+}
+
+function isAdminOrHrUser(user) {
+  if (!user) return false;
+  const r = (user.role || "").toLowerCase();
+  return r === "admin" || r === "hr";
+}
+
+function canUserCreateAnnouncements(user) {
+  return isAdminOrHrUser(user) || isPMUser(user);
+}
+
+function getAllProductLines() {
+  if (window.store && window.store.productLines && typeof window.store.productLines.getAll === "function") {
+    return window.store.productLines.getAll();
+  }
+  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.lines)) {
+    return window.DEMO_DATA.lines;
+  }
+  return [];
+}
+
+function getProductLineName(lineId) {
+  if (!lineId) return "";
+  const lines = getAllProductLines();
+  const found = lines.find((l) => l.id === lineId);
+  if (!found) return lineId;
+  const lang = window.i18n ? window.i18n.currentLang : "en";
+  if (lang === "ar" && found.nameAr) return found.nameAr;
+  return found.name || lineId;
+}
+
+function getUserLineIds(user) {
+  if (!user) return [];
+  const lines = new Set();
+  if (Array.isArray(user.lineIds)) {
+    user.lineIds.forEach((l) => { if (l) lines.add(l); });
+  }
+  if (user.lineId) lines.add(user.lineId);
+  if (user.assignedLineId) lines.add(user.assignedLineId);
+
+  // If rep or manager with assigned areas, check the lines linked to those areas
+  const allAreas = (window.store && window.store.areas && typeof window.store.areas.getAll === "function")
+    ? window.store.areas.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+
+  const areaIds = Array.isArray(user.areaIds) ? user.areaIds : (user.areaId ? [user.areaId] : []);
+  areaIds.forEach((aId) => {
+    const areaObj = allAreas.find((a) => a.id === aId);
+    if (areaObj && areaObj.lineId) {
+      lines.add(areaObj.lineId);
+    }
+  });
+
+  return Array.from(lines);
+}
+/* --- END LINE & ROLE HELPERS --- */
 
 /* --- START INITIALIZATION --- */
 /**
@@ -300,9 +375,11 @@ function initAnnouncementsPage() {
         : (typeof checkAuth === "function" ? checkAuth() : (window.checkAuth ? window.checkAuth() : null)));
   if (!authUser) return;
 
+  currentAuthUser = authUser;
   currentUserRole = authUser.role || "medical_rep";
   currentUserId = authUser.id || "";
   currentUserName = authUser.name || "";
+  currentUserLineIds = getUserLineIds(authUser);
 
   if (window.i18n) {
     window.i18n.translations = {
@@ -344,24 +421,26 @@ function timeAgo(dateString) {
  */
 function renderPage() {
   const content = document.getElementById("pageContent");
-  const isHR = currentUserRole === "hr" || currentUserRole === "admin";
+  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
+  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  const canCreate = canUserCreateAnnouncements(currentAuthUser || { role: currentUserRole });
 
   let html = `
         <div class="announcements-header">
             <h1 data-i18n="announcements">Announcements</h1>
-            ${isHR ? `<button class="btn btn-primary btn-new-announcement" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> <span data-i18n="newAnnouncement">New Announcement</span></button>` : ""}
+            ${canCreate ? `<button class="btn btn-primary btn-new-announcement" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> <span data-i18n="newAnnouncement">New Announcement</span></button>` : ""}
         </div>
     `;
 
-  if (isHR) {
-    html += renderHRStats();
+  if (isHR || isPM) {
+    html += renderUserStats(isPM);
   }
 
   html += `
         <div class="announcements-controls">
             <select class="filter-select" onchange="setFilter(this.value)">
                 <option value="all" data-i18n="filterAll">All</option>
-                ${!isHR ? `<option value="unread" data-i18n="filterUnread">Unread Only</option>` : ""}
+                ${!canCreate ? `<option value="unread" data-i18n="filterUnread">Unread Only</option>` : ""}
                 <option value="high" data-i18n="filterHigh">High Priority</option>
                 <option value="normal" data-i18n="filterNormal">Normal Priority</option>
                 <option value="low" data-i18n="filterLow">Low Priority</option>
@@ -377,7 +456,7 @@ function renderPage() {
   const modalContainer = document.getElementById("modalContainer");
   if (!document.getElementById("announcementModal")) {
     let modalsHtml = renderLightboxModal();
-    if (isHR) {
+    if (canCreate) {
       modalsHtml += renderModals();
     }
 
@@ -390,17 +469,17 @@ function renderPage() {
 }
 
 /**
- * Renders HR Statistics cards.
+ * Renders Statistics cards for HR or PM.
+ * @param {boolean} isPM
  * @returns {string} HTML string for stats
  */
-function renderHRStats() {
-  const total = announcements.length;
-  const highPriority = announcements.filter(
-    (a) => a.priority === "high",
-  ).length;
+function renderUserStats(isPM = false) {
+  const visible = getVisibleAnnouncements();
+  const total = visible.length;
+  const highPriority = visible.filter((a) => a.priority === "high").length;
 
   const now = new Date();
-  const thisMonth = announcements.filter((a) => {
+  const thisMonth = visible.filter((a) => {
     const d = new Date(a.createdAt);
     return (
       d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
@@ -426,17 +505,25 @@ function renderHRStats() {
 }
 
 /**
+ * Backwards compatibility for renderHRStats
+ */
+function renderHRStats() {
+  return renderUserStats(false);
+}
+
+/**
  * Evaluates whether a given user role is included in the announcement target scope.
  * @param {string} annTarget Target audience identifier
  * @param {string} userRole Current user's role
- * @returns {boolean} True if the user can view the announcement
+ * @returns {boolean} True if the user can view the announcement based on role
  */
 function isUserInTargetAudience(annTarget, userRole) {
-  if (!annTarget || annTarget === "all") return true;
+  if (!annTarget || annTarget === "all" || annTarget === "line_team") return true;
 
   const r = (userRole || "").toLowerCase();
   const isHR = (r === "hr");
   const isAdmin = (r === "admin");
+  const isPM = (r === "product_manager" || r === "pm");
 
   if (annTarget === "hr_admin" || annTarget === "hr") {
     return isHR || isAdmin;
@@ -466,32 +553,73 @@ function isUserInTargetAudience(annTarget, userRole) {
 }
 
 /**
+ * Checks whether an announcement is visible to the given user,
+ * taking into account publication status, line scoping, and role target.
+ * @param {Object} ann Announcement object
+ * @param {Object} user User object
+ * @returns {boolean}
+ */
+function isAnnouncementVisibleToUser(ann, user) {
+  if (!ann || !user) return false;
+
+  const role = (user.role || "").toLowerCase();
+  const isAdmin = (role === "admin");
+  const isHR = (role === "hr");
+  const isAuthor = (ann.createdBy && ann.createdBy === user.id);
+
+  // Draft check: only author or Admin/HR can see unpublished announcements
+  if (!ann.published && !isAuthor && !isAdmin && !isHR) {
+    return false;
+  }
+
+  // 1. Line Scoping Check:
+  // If announcement is scoped to a specific product line (targetLineId):
+  if (ann.targetLineId) {
+    // Admin and HR always have global oversight
+    if (!isAdmin && !isHR) {
+      const uLines = getUserLineIds(user);
+      // Strictly hidden if the user does NOT belong to this product line
+      if (!uLines.includes(ann.targetLineId)) {
+        return false;
+      }
+    }
+  }
+
+  // 2. Target Audience Check (Reps, DMs, LMs, BU, HR, etc.)
+  if (!isAdmin && !isHR && !isAuthor) {
+    if (!isUserInTargetAudience(ann.target, role)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Returns all announcements visible to currentAuthUser.
+ * @returns {Array}
+ */
+function getVisibleAnnouncements() {
+  const user = currentAuthUser || { id: currentUserId, role: currentUserRole, name: currentUserName };
+  return announcements.filter((a) => isAnnouncementVisibleToUser(a, user));
+}
+
+/**
  * Renders the list of announcements.
  * @returns {string} HTML string for announcement list
  */
 function renderAnnouncementsList() {
-  let filtered = announcements.filter((a) => {
-    if (
-      currentUserRole !== "hr" &&
-      currentUserRole !== "admin" &&
-      !a.published
-    ) {
-      return false;
-    }
-    if (
-      currentUserRole !== "hr" &&
-      currentUserRole !== "admin" &&
-      !isUserInTargetAudience(a.target, currentUserRole)
-    ) {
-      return false;
-    }
+  const visible = getVisibleAnnouncements();
+
+  let filtered = visible.filter((a) => {
     if (currentFilter === "unread") return !a.readBy.includes(currentUserId);
     if (
       currentFilter === "high" ||
       currentFilter === "normal" ||
       currentFilter === "low"
-    )
+    ) {
       return a.priority === currentFilter;
+    }
     return true;
   });
 
@@ -510,7 +638,9 @@ function renderAnnouncementsList() {
  * @returns {string} HTML string for the card
  */
 function renderAnnouncementCard(ann) {
-  const isHR = currentUserRole === "hr" || currentUserRole === "admin";
+  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
+  const isAuthor = (ann.createdBy && ann.createdBy === currentUserId);
+  const canManageCard = isHR || isAuthor;
   const isRead = ann.readBy.includes(currentUserId);
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
@@ -532,6 +662,7 @@ function renderAnnouncementCard(ann) {
 
   const targetKeyMap = {
     all: "targetAll",
+    line_team: "targetLineTeam",
     dm_lm_bu: "targetDmLmBu",
     lm_bu: "targetLmBu",
     bu: "targetBu",
@@ -543,6 +674,13 @@ function renderAnnouncementCard(ann) {
   const targetKey = targetKeyMap[ann.target] || "targetAll";
   const targetLabel = (announcementTranslations[lang] && announcementTranslations[lang][targetKey]) || (announcementTranslations.en && announcementTranslations.en[targetKey]) || "All Company";
 
+  let lineBadgeHtml = "";
+  if (ann.targetLineId) {
+    const lineName = getProductLineName(ann.targetLineId);
+    const scopeTpl = (announcementTranslations[lang] && announcementTranslations[lang].lineScopeBadge) || "Line: {0}";
+    lineBadgeHtml = `<span class="badge badge-line"><i class="fas fa-layer-group"></i> ${scopeTpl.replace("{0}", escapeHtml(lineName))}</span>`;
+  }
+
   return `
         <div class="announcement-card ${priorityClass} ${unreadClass}" id="card-${ann.id}">
             <div class="card-header">
@@ -550,6 +688,7 @@ function renderAnnouncementCard(ann) {
                     <span class="badge badge-${ann.priority}">
                         <i class="fas fa-${priorityIcon}"></i> <span data-i18n="priority${ann.priority.charAt(0).toUpperCase() + ann.priority.slice(1)}">${ann.priority}</span>
                     </span>
+                    ${lineBadgeHtml}
                     <span class="badge badge-target">
                         <i class="fas fa-bullseye"></i> ${targetLabel}
                     </span>
@@ -557,7 +696,7 @@ function renderAnnouncementCard(ann) {
                     ${!isRead && !isHR ? `<span class="badge badge-new" data-i18n="new">NEW</span>` : ""}
                 </div>
                 ${
-                  isHR
+                  canManageCard
                     ? `
                 <div class="actions">
                     <button class="btn-icon" onclick="openAnnouncementModal('${ann.id}')" title="Edit"><i class="fas fa-edit"></i></button>
@@ -571,7 +710,7 @@ function renderAnnouncementCard(ann) {
             <div class="card-meta">
                 <span><i class="fas fa-user"></i> ${authorName}</span>
                 <span><i class="fas fa-clock"></i> ${timeAgo(ann.createdAt)}</span>
-                ${isHR ? `<span title="Read by"><i class="fas fa-eye"></i> ${ann.readBy.length}</span>` : ""}
+                ${canManageCard ? `<span title="Read by"><i class="fas fa-eye"></i> ${ann.readBy.length}</span>` : ""}
             </div>
             ${
               safeImage
@@ -642,6 +781,7 @@ function renderModals() {
                                 <label data-i18n="targetAudience">Target Audience</label>
                                 <select id="annTarget" class="form-control">
                                     <option value="all" data-i18n="targetAll">All Company</option>
+                                    <option value="line_team" data-i18n="targetLineTeam">All Line Team (Reps, DMs, LMs, BU, PM)</option>
                                     <option value="dm_lm_bu" data-i18n="targetDmLmBu">District Manager, Line Manager & Business Unit Head</option>
                                     <option value="lm_bu" data-i18n="targetLmBu">Line Manager & Business Unit Head</option>
                                     <option value="bu" data-i18n="targetBu">Business Unit Head Only</option>
@@ -649,6 +789,13 @@ function renderModals() {
                                     <option value="hr_admin" data-i18n="targetHrAdmin">Human Resources & Administration Only</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="form-group" id="annLineGroup">
+                            <label data-i18n="targetLine">Product Line Scope</label>
+                            <select id="annTargetLine" class="form-control">
+                                <option value="" data-i18n="allLines">All Lines (Company-wide)</option>
+                            </select>
+                            <small class="form-text text-muted" id="annLineHint" style="display:block; margin-top:4px; font-size:0.8rem;"></small>
                         </div>
                         <div class="form-group">
                             <label data-i18n="imageOptional">Announcement Image (Optional)</label>
@@ -759,38 +906,94 @@ function markAsRead(id) {
  * @param {string|null} id Announcement ID to edit, or null for new
  */
 function openAnnouncementModal(id = null) {
-  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
-  if (!isHR) {
-    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin only.", "error");
+  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
+  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+
+  if (!isHR && !isPM) {
+    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
+
+  // If editing, check if user is allowed to edit this announcement
+  let existingAnn = null;
+  if (id) {
+    existingAnn = announcements.find((a) => a.id === id);
+    if (!existingAnn) return;
+    const isAuthor = (existingAnn.createdBy && existingAnn.createdBy === currentUserId);
+    if (!isHR && !isAuthor) {
+      if (typeof showToast === "function") showToast("Permission Denied: You can only edit your own announcements.", "error");
+      return;
+    }
+  }
+
   editAnnouncementId = id;
   const modal = document.getElementById("announcementModal");
   const titleEl = document.getElementById("modalTitle");
 
-  if (id) {
-    const ann = announcements.find((a) => a.id === id);
-    if (ann) {
-      document.getElementById("annTitle").value = ann.title;
-      document.getElementById("annTitleAr").value = ann.titleAr;
-      document.getElementById("annBody").value = ann.body;
-      document.getElementById("annBodyAr").value = ann.bodyAr;
-      document.getElementById("annPriority").value = ann.priority;
-      document.getElementById("annTarget").value = ann.target;
-      document.getElementById("annPublish").checked = ann.published;
-      currentAnnouncementImage = ann.image || null;
-      titleEl.setAttribute("data-i18n", "editAnnouncement");
-      if (window.i18n)
-        titleEl.textContent =
-          announcementTranslations[window.i18n.currentLang].editAnnouncement;
+  // Populate line selection dropdown
+  const lineSelect = document.getElementById("annTargetLine");
+  const lineHint = document.getElementById("annLineHint");
+  const allLines = getAllProductLines();
+  const lang = window.i18n ? window.i18n.currentLang : "en";
+
+  if (lineSelect) {
+    const allLinesLabel = (announcementTranslations[lang] && announcementTranslations[lang].allLines) || "All Lines (Company-wide)";
+    lineSelect.innerHTML = `<option value="">${allLinesLabel}</option>` +
+      allLines.map((l) => `<option value="${l.id}">${escapeHtml((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
+  }
+
+  // Enforce PM line scoping rules:
+  if (isPM && !isHR) {
+    // PM can only publish to their line
+    const pmLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || "";
+    const pmLineName = getProductLineName(pmLineId);
+
+    if (lineSelect) {
+      lineSelect.value = pmLineId;
+      lineSelect.disabled = true; // Locked to PM line
+    }
+    if (lineHint) {
+      const pmNotice = (announcementTranslations[lang] && announcementTranslations[lang].pmLineNotice) || "This announcement will only be visible to team members within your product line ({0}).";
+      lineHint.textContent = pmNotice.replace("{0}", pmLineName || pmLineId);
+      lineHint.style.color = "var(--primary, #0d6efd)";
+    }
+  } else {
+    // HR / Admin can choose any line or company-wide
+    if (lineSelect) {
+      lineSelect.disabled = false;
+    }
+    if (lineHint) {
+      lineHint.textContent = "";
+    }
+  }
+
+  if (existingAnn) {
+    document.getElementById("annTitle").value = existingAnn.title || "";
+    document.getElementById("annTitleAr").value = existingAnn.titleAr || "";
+    document.getElementById("annBody").value = existingAnn.body || "";
+    document.getElementById("annBodyAr").value = existingAnn.bodyAr || "";
+    document.getElementById("annPriority").value = existingAnn.priority || "normal";
+    document.getElementById("annTarget").value = existingAnn.target || "all";
+    if (lineSelect && !isPM) {
+      lineSelect.value = existingAnn.targetLineId || "";
+    }
+    document.getElementById("annPublish").checked = existingAnn.published !== false;
+    currentAnnouncementImage = existingAnn.image || null;
+    titleEl.setAttribute("data-i18n", "editAnnouncement");
+    if (window.i18n) {
+      titleEl.textContent = announcementTranslations[window.i18n.currentLang].editAnnouncement;
     }
   } else {
     document.getElementById("announcementForm").reset();
     currentAnnouncementImage = null;
+    if (isPM && lineSelect) {
+      const pmLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || "";
+      lineSelect.value = pmLineId;
+    }
     titleEl.setAttribute("data-i18n", "createAnnouncement");
-    if (window.i18n)
-      titleEl.textContent =
-        announcementTranslations[window.i18n.currentLang].createAnnouncement;
+    if (window.i18n) {
+      titleEl.textContent = announcementTranslations[window.i18n.currentLang].createAnnouncement;
+    }
   }
 
   const fileInput = document.getElementById("annImageInput");
@@ -911,7 +1114,7 @@ function setupDragAndDrop() {
 
 /**
  * Opens image lightbox for viewing full-size announcement image.
- * @param {string} imgSrc Image source URL / DataURL
+ * @param {string} idOrSrc Image source URL / DataURL or Announcement ID
  */
 function openImageLightbox(idOrSrc) {
   const lightbox = document.getElementById("imageLightboxModal");
@@ -960,18 +1163,31 @@ function closeModal(modalId) {
  * Saves announcement (create or update).
  */
 function saveAnnouncement() {
-  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
-  if (!isHR) {
-    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin only.", "error");
+  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
+  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+
+  if (!isHR && !isPM) {
+    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
-  const title = document.getElementById("annTitle").value;
-  const titleAr = document.getElementById("annTitleAr").value;
-  const body = document.getElementById("annBody").value;
-  const bodyAr = document.getElementById("annBodyAr").value;
+
+  const title = (document.getElementById("annTitle").value || "").trim();
+  const titleAr = (document.getElementById("annTitleAr").value || "").trim();
+  const body = (document.getElementById("annBody").value || "").trim();
+  const bodyAr = (document.getElementById("annBodyAr").value || "").trim();
   const priority = document.getElementById("annPriority").value;
   const target = document.getElementById("annTarget").value;
   const published = document.getElementById("annPublish").checked;
+
+  let targetLineId = null;
+  if (isPM && !isHR) {
+    // PM announcements are STRICTLY scoped to their product line
+    targetLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || null;
+  } else {
+    // HR / Admin can target a specific line or leave null for all lines
+    const lineVal = document.getElementById("annTargetLine") ? document.getElementById("annTargetLine").value : "";
+    targetLineId = lineVal || null;
+  }
 
   if (!title || !titleAr || !body || !bodyAr) {
     const msg = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar')
@@ -985,14 +1201,21 @@ function saveAnnouncement() {
   if (editAnnouncementId) {
     const index = announcements.findIndex((a) => a.id === editAnnouncementId);
     if (index > -1) {
+      const existing = announcements[index];
+      const isAuthor = (existing.createdBy && existing.createdBy === currentUserId);
+      if (!isHR && !isAuthor) {
+        if (typeof showToast === "function") showToast("Permission Denied: You cannot modify this announcement.", "error");
+        return;
+      }
       announcements[index] = {
-        ...announcements[index],
+        ...existing,
         title,
         titleAr,
         body,
         bodyAr,
         priority,
         target,
+        targetLineId: isPM ? targetLineId : (targetLineId || null),
         published,
         image: currentAnnouncementImage,
       };
@@ -1006,10 +1229,12 @@ function saveAnnouncement() {
       bodyAr,
       priority,
       target,
+      targetLineId: targetLineId,
       published,
       image: currentAnnouncementImage,
       createdBy: currentUserId,
       createdByName: currentUserName || "Fatma El-Sherif",
+      createdByRole: currentUserRole,
       createdAt: new Date().toISOString(),
       readBy: [],
     };
@@ -1027,11 +1252,22 @@ function saveAnnouncement() {
  * @param {string} id Announcement ID
  */
 function openDeleteModal(id) {
-  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
-  if (!isHR) {
-    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin only.", "error");
+  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
+  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+
+  if (!isHR && !isPM) {
+    if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
+
+  const ann = announcements.find((a) => a.id === id);
+  if (!ann) return;
+  const isAuthor = (ann.createdBy && ann.createdBy === currentUserId);
+  if (!isHR && !isAuthor) {
+    if (typeof showToast === "function") showToast("Permission Denied: You can only delete your own announcements.", "error");
+    return;
+  }
+
   editAnnouncementId = id;
   const modal = document.getElementById("deleteModal");
   if (modal) {
@@ -1046,9 +1282,15 @@ function openDeleteModal(id) {
  * Confirms deletion of announcement.
  */
 function confirmDelete() {
-  const isHR = (currentUserRole === "hr" || currentUserRole === "admin");
-  if (!isHR) return;
+  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
+  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  if (!isHR && !isPM) return;
+
   if (editAnnouncementId) {
+    const ann = announcements.find((a) => a.id === editAnnouncementId);
+    const isAuthor = ann && (ann.createdBy === currentUserId);
+    if (!isHR && !isAuthor) return;
+
     announcements = announcements.filter((a) => a.id !== editAnnouncementId);
     saveAnnouncementsToStorage();
     closeModal("deleteModal");
