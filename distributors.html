@@ -16,7 +16,7 @@
       })();
       // Force-clear stale SW caches once after a code update
       (function () {
-        var EXPECTED_SW = "v117";
+        var EXPECTED_SW = "v120";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (
@@ -50,7 +50,7 @@
       rel="stylesheet"
     />
     <!-- Custom CSS -->
-    <link href="css/style.css?v=v117" rel="stylesheet" />
+    <link href="css/style.css?v=v120" rel="stylesheet" />
     <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap"
@@ -59,15 +59,15 @@
     <!-- Reuses the Areas page's card/table styling (same visual language:
          area-code-badge, avatar-circle, etc.) so Distributors looks and
          behaves consistently without a brand-new stylesheet. -->
-    <link rel="stylesheet" href="css/areas.css?v=v117" />
+    <link rel="stylesheet" href="css/areas.css?v=v120" />
         <!-- Core Application & Store -->
-    <script src="js/app.js?v=v117"></script>
-    <script src="js/store.js?v=v117"></script>
+    <script src="js/app.js?v=v120"></script>
+    <script src="js/store.js?v=v120"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v117"></script>
-    <script src="js/firebase-sync.js?v=v117"></script>
+    <script src="js/firebase-config.js?v=v120"></script>
+    <script src="js/firebase-sync.js?v=v120"></script>
     <!-- SheetJS: used only to read the header row of a sample sheet when
          configuring a distributor's column mapping below. -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -423,6 +423,24 @@
                 </div>
 
                 <!-- Mapped Areas Table View -->
+                                <!-- Mapped Aliases Filter Bar -->
+                <div class="row g-2 mb-3 align-items-center">
+                  <div class="col-12 col-md-4">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                      <input type="text" class="form-control border-start-0" id="aliasSearchInput" placeholder="Search by name, raw text, or code..." oninput="handleAliasSearch(this.value)" />
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <select class="form-select form-select-sm" id="aliasDistributorFilter" onchange="handleAliasDistFilter(this.value)">
+                      <option value="">All Distributors</option>
+                    </select>
+                  </div>
+                  <div class="col-6 col-md-5 text-md-end text-muted small" id="aliasFilteredCountText">
+                    <!-- e.g. Showing 24 items -->
+                  </div>
+                </div>
+
                 <div id="mappedAreasContainer">
                   <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -819,10 +837,41 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label fw-bold small d-block" id="povrModeLabel">Distribution Mode</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="povrModeRadio" id="povrModeSingle" value="single" checked onchange="togglePovrMode()" />
+                <label class="btn btn-outline-primary btn-sm" for="povrModeSingle" id="povrModeSingleLbl">Single area</label>
+                <input type="radio" class="btn-check" name="povrModeRadio" id="povrModeSplit" value="split" onchange="togglePovrMode()" />
+                <label class="btn btn-outline-primary btn-sm" for="povrModeSplit" id="povrModeSplitLbl">Split by %</label>
+                <input type="radio" class="btn-check" name="povrModeRadio" id="povrModeBulk" value="bulk" onchange="togglePovrMode()" />
+                <label class="btn btn-outline-primary btn-sm" for="povrModeBulk" id="povrModeBulkLbl">All as Bulk</label>
+              </div>
+            </div>
+
+            <div class="mb-3" id="povrSingleGroup">
               <label class="form-label fw-bold small" data-i18n="target_area">Target Territory / Area *</label>
               <select class="form-select" id="povrTargetAreaSelect" required>
                 <!-- Populated dynamically with all areas and their reps -->
               </select>
+            </div>
+
+            <div class="mb-3" id="povrSplitGroup" style="display: none;">
+              <label class="form-label fw-bold small" id="povrSplitLabel">Split sales across areas (total must be 100%)</label>
+              <div id="povrSplitRows"></div>
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="povrSplitAddBtn" onclick="addPovrSplitRow()">
+                  <i class="fas fa-plus me-1"></i><span id="povrSplitAddTxt">Add area</span>
+                </button>
+                <span class="badge bg-secondary fs-6" id="povrSplitTotal">0%</span>
+              </div>
+            </div>
+
+            <div class="mb-3" id="povrBulkGroup" style="display: none;">
+              <label class="form-label fw-bold small" id="povrBulkLineLabel">Product Line *</label>
+              <select class="form-select" id="povrBulkLineSelect"></select>
+              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;" id="povrBulkHint">
+                All sales of this pharmacy are treated as Bulk and distributed across bricks by the Brick Weights of each product.
+              </small>
             </div>
 
             <div class="mb-3 p-3 rounded-3 border povr-scope-card">
@@ -885,6 +934,6 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/distributors.js?v=v117"></script>
+    <script src="js/distributors.js?v=v120"></script>
   </body>
 </html>

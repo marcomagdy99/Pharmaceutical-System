@@ -1137,6 +1137,20 @@ function linkProductAlias(distributorId, productRaw, selectId) {
 // Section: Active Mapped Aliases (View & Unlink)
 // ==========================================
 let currentAliasTab = "areas";
+let aliasSearchQuery = "";
+let aliasSelectedDistributor = "";
+
+function handleAliasSearch(query) {
+  aliasSearchQuery = String(query || "").trim().toLowerCase();
+  renderMappedAliases();
+}
+window.handleAliasSearch = handleAliasSearch;
+
+function handleAliasDistFilter(distId) {
+  aliasSelectedDistributor = String(distId || "").trim();
+  renderMappedAliases();
+}
+window.handleAliasDistFilter = handleAliasDistFilter;
 
 function switchAliasTab(tabName) {
   currentAliasTab = tabName;
@@ -1145,9 +1159,7 @@ function switchAliasTab(tabName) {
   const tabPharmacies = document.getElementById("aliasTabPharmacies");
   const areasContainer = document.getElementById("mappedAreasContainer");
   const productsContainer = document.getElementById("mappedProductsContainer");
-  const pharmaciesContainer = document.getElementById(
-    "mappedPharmaciesContainer",
-  );
+  const pharmaciesContainer = document.getElementById("mappedPharmaciesContainer");
 
   tabAreas?.classList.toggle("active", tabName === "areas");
   tabProducts?.classList.toggle("active", tabName === "products");
@@ -1160,6 +1172,8 @@ function switchAliasTab(tabName) {
   if (pharmaciesContainer)
     pharmaciesContainer.style.display =
       tabName === "pharmacies" ? "block" : "none";
+
+  renderMappedAliases();
 }
 window.switchAliasTab = switchAliasTab;
 
@@ -1168,18 +1182,54 @@ function renderMappedAliases() {
   const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
   const distributors = getDistributorsList();
 
+  // Populate distributor filter dropdown once or keep in sync
+  const distFilterSelect = document.getElementById("aliasDistributorFilter");
+  if (distFilterSelect && distFilterSelect.options.length <= 1) {
+    const currentVal = distFilterSelect.value;
+    distFilterSelect.innerHTML = `<option value="">${isAr ? "كل الموزعين" : "All Distributors"}</option>` +
+      distributors.map(d => `<option value="${window.escapeHtml(d.id)}">${window.escapeHtml(d.name)}</option>`).join("");
+    if (currentVal) distFilterSelect.value = currentVal;
+  }
+
+  const query = aliasSearchQuery;
+  const filterDist = aliasSelectedDistributor;
+  const countLabelEl = document.getElementById("aliasFilteredCountText");
+
   // 1. Render Mapped Areas
   const areasTbody = document.getElementById("mappedAreasTableBody");
   const countAreasEl = document.getElementById("countMappedAreas");
   if (areasTbody && window.store && window.store.areas) {
-    const areaAliases =
+    const allAreaAliases =
       typeof window.store.areas.getAllAliases === "function"
         ? window.store.areas.getAllAliases()
         : [];
-    if (countAreasEl) countAreasEl.textContent = areaAliases.length;
+    if (countAreasEl) countAreasEl.textContent = allAreaAliases.length;
+
+    let areaAliases = allAreaAliases;
+    if (filterDist) {
+      areaAliases = areaAliases.filter(a => a.distributorId === filterDist);
+    }
+    if (query) {
+      areaAliases = areaAliases.filter(a => {
+        const d = distributors.find(dist => dist.id === a.distributorId);
+        const dName = d ? d.name.toLowerCase() : "";
+        return (
+          dName.includes(query) ||
+          String(a.rawText || "").toLowerCase().includes(query) ||
+          String(a.areaName || "").toLowerCase().includes(query) ||
+          String(a.areaCode || "").toLowerCase().includes(query)
+        );
+      });
+    }
+
+    if (currentAliasTab === "areas" && countLabelEl) {
+      countLabelEl.textContent = isAr
+        ? `عرض ${areaAliases.length} من إجمالي ${allAreaAliases.length}`
+        : `Showing ${areaAliases.length} of ${allAreaAliases.length}`;
+    }
 
     if (areaAliases.length === 0) {
-      areasTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${t.no_mapped_territories}</td></tr>`;
+      areasTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allAreaAliases.length === 0 ? t.no_mapped_territories : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
     } else {
       areasTbody.innerHTML = "";
       areaAliases.forEach((entry) => {
@@ -1212,14 +1262,37 @@ function renderMappedAliases() {
   const prodsTbody = document.getElementById("mappedProductsTableBody");
   const countProdsEl = document.getElementById("countMappedProducts");
   if (prodsTbody && window.store && window.store.productLines) {
-    const prodAliases =
+    const allProdAliases =
       typeof window.store.productLines.getAllProductAliases === "function"
         ? window.store.productLines.getAllProductAliases()
         : [];
-    if (countProdsEl) countProdsEl.textContent = prodAliases.length;
+    if (countProdsEl) countProdsEl.textContent = allProdAliases.length;
+
+    let prodAliases = allProdAliases;
+    if (filterDist) {
+      prodAliases = prodAliases.filter(p => p.distributorId === filterDist);
+    }
+    if (query) {
+      prodAliases = prodAliases.filter(p => {
+        const d = distributors.find(dist => dist.id === p.distributorId);
+        const dName = d ? d.name.toLowerCase() : "";
+        return (
+          dName.includes(query) ||
+          String(p.rawText || "").toLowerCase().includes(query) ||
+          String(p.productName || "").toLowerCase().includes(query) ||
+          String(p.lineName || "").toLowerCase().includes(query)
+        );
+      });
+    }
+
+    if (currentAliasTab === "products" && countLabelEl) {
+      countLabelEl.textContent = isAr
+        ? `عرض ${prodAliases.length} من إجمالي ${allProdAliases.length}`
+        : `Showing ${prodAliases.length} of ${allProdAliases.length}`;
+    }
 
     if (prodAliases.length === 0) {
-      prodsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${t.no_mapped_products}</td></tr>`;
+      prodsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allProdAliases.length === 0 ? t.no_mapped_products : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
     } else {
       prodsTbody.innerHTML = "";
       prodAliases.forEach((entry) => {
@@ -1252,11 +1325,33 @@ function renderMappedAliases() {
   const pharmsTbody = document.getElementById("mappedPharmaciesTableBody");
   const countPharmsEl = document.getElementById("countMappedPharmacies");
   if (pharmsTbody && window.store && window.store.pharmacyOverrides) {
-    const overrides = window.store.pharmacyOverrides.getAll();
-    if (countPharmsEl) countPharmsEl.textContent = overrides.length;
+    const allOverrides = window.store.pharmacyOverrides.getAll();
+    if (countPharmsEl) countPharmsEl.textContent = allOverrides.length;
+
+    let overrides = allOverrides;
+    if (filterDist) {
+      overrides = overrides.filter(o => o.distributorId === filterDist);
+    }
+    if (query) {
+      overrides = overrides.filter(o => {
+        const d = distributors.find(dist => dist.id === o.distributorId);
+        const dName = d ? d.name.toLowerCase() : "";
+        return (
+          dName.includes(query) ||
+          String(o.pharmacyCode || "").toLowerCase().includes(query) ||
+          String(o.pharmacyName || "").toLowerCase().includes(query)
+        );
+      });
+    }
+
+    if (currentAliasTab === "pharmacies" && countLabelEl) {
+      countLabelEl.textContent = isAr
+        ? `عرض ${overrides.length} من إجمالي ${allOverrides.length}`
+        : `Showing ${overrides.length} of ${allOverrides.length}`;
+    }
 
     if (overrides.length === 0) {
-      pharmsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">${t.no_pharmacy_overrides}</td></tr>`;
+      pharmsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">${allOverrides.length === 0 ? t.no_pharmacy_overrides : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
     } else {
       pharmsTbody.innerHTML = "";
       const areas = (window.store.areas && window.store.areas.getAll()) || [];
@@ -1268,6 +1363,33 @@ function renderMappedAliases() {
         const area = areas.find((a) => a.id === entry.areaId);
         const rep =
           area && area.repId ? users.find((u) => u.id === area.repId) : null;
+        const povrTx = getPovrTexts(isAr);
+        const entryMode = entry.mode || "single";
+        let areaCellHtml;
+        let repCellHtml;
+        if (entryMode === "split" && Array.isArray(entry.splits)) {
+          areaCellHtml = entry.splits
+            .map((sp) => {
+              const a = areas.find((x) => x.id === sp.areaId);
+              return `<div><i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(a ? a.name : sp.areaId)} <span class="badge bg-primary-subtle text-primary border">${window.escapeHtml(String(sp.percent))}%</span></div>`;
+            })
+            .join("");
+          repCellHtml = entry.splits
+            .map((sp) => {
+              const a = areas.find((x) => x.id === sp.areaId);
+              const r = a && a.repId ? users.find((u) => u.id === a.repId) : null;
+              return `<div>${window.escapeHtml(r ? r.name : isAr ? "غير معين" : "Unassigned")}</div>`;
+            })
+            .join("");
+        } else if (entryMode === "bulk") {
+          const allLines = (window.store.productLines && window.store.productLines.getAll()) || [];
+          const bl = allLines.find((l) => l.id === entry.lineId);
+          areaCellHtml = `<span class="badge bg-warning-subtle text-dark border"><i class="fas fa-boxes me-1"></i>${window.escapeHtml(povrTx.mode_bulk_badge)}</span>${bl ? ` <small class="text-muted">${window.escapeHtml(bl.name)}</small>` : ""}`;
+          repCellHtml = "—";
+        } else {
+          areaCellHtml = `<i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(area ? area.name : entry.areaId || "—")}`;
+          repCellHtml = window.escapeHtml(rep ? rep.name : isAr ? "غير معين" : "Unassigned");
+        }
 
         let scopeLabel = "";
         let scopeBadgeClass = "bg-primary-subtle text-primary";
@@ -1289,10 +1411,8 @@ function renderMappedAliases() {
           <td class="px-3 py-2 fw-medium">${window.escapeHtml(distName)}</td>
           <td class="px-3 py-2"><span class="badge bg-light text-dark border font-monospace">${window.escapeHtml(entry.pharmacyCode || "—")}</span></td>
           <td class="px-3 py-2 fw-semibold">${window.escapeHtml(entry.pharmacyName || "—")}</td>
-          <td class="px-3 py-2 text-primary fw-semibold">
-            <i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(area ? area.name : entry.areaId)}
-          </td>
-          <td class="px-3 py-2">${window.escapeHtml(rep ? rep.name : isAr ? "غير معين" : "Unassigned")}</td>
+          <td class="px-3 py-2 text-primary fw-semibold">${areaCellHtml}</td>
+          <td class="px-3 py-2">${repCellHtml}</td>
           <td class="px-3 py-2"><span class="badge ${scopeBadgeClass} border">${window.escapeHtml(scopeLabel)}</span></td>
           <td class="px-3 py-2 text-end">
             <div class="d-flex gap-1 justify-content-end">
@@ -1322,6 +1442,155 @@ function getPharmacyOverrideModal() {
     if (el) pharmacyOverrideModalInstance = new bootstrap.Modal(el);
   }
   return pharmacyOverrideModalInstance;
+}
+
+// Texts for the split / all-bulk modes of the Pharmacy Override modal
+function getPovrTexts(isAr) {
+  return isAr
+    ? {
+        mode_label: "طريقة التوزيع",
+        mode_single: "منطقة واحدة",
+        mode_split: "تقسيم بالنسبة",
+        mode_bulk: "الكل بلك",
+        mode_bulk_badge: "الكل بلك (حسب أوزان البريكات)",
+        split_label: "قسّم مسحوبات الصيدلية على عدة مناطق (المجموع لازم 100%)",
+        split_add: "إضافة منطقة",
+        split_area: "اختر المنطقة",
+        split_remove: "حذف",
+        split_total: "المجموع",
+        bulk_line: "الخط *",
+        bulk_select_line: "اختر الخط",
+        bulk_hint: "كل مسحوبات الصيدلية تُعتبر بلك وتتوزع على البريكات حسب أوزان البريكات لكل منتج (من صفحة المنتجات). المنتجات بدون أوزان تظل Private.",
+        err_split_min: "لازم تختار منطقتين على الأقل.",
+        err_split_area: "اختر المنطقة في كل صف.",
+        err_split_dup: "لا يمكن تكرار نفس المنطقة.",
+        err_split_pct: "كل نسبة لازم تكون أكبر من 0.",
+        err_split_sum: "مجموع النسب لازم يساوي 100%.",
+        err_split_line: "كل المناطق لازم تكون من نفس الخط.",
+        err_bulk_line: "يرجى اختيار الخط.",
+        warn_no_weights: "تنبيه: {n} مجموعة منتجات بدون أوزان بريكات، فظلت Private. حدد الأوزان من صفحة المنتجات.",
+      }
+    : {
+        mode_label: "Distribution Mode",
+        mode_single: "Single area",
+        mode_split: "Split by %",
+        mode_bulk: "All as Bulk",
+        mode_bulk_badge: "All Bulk (by brick weights)",
+        split_label: "Split this pharmacy's sales across areas (total must be 100%)",
+        split_add: "Add area",
+        split_area: "Select area",
+        split_remove: "Remove",
+        split_total: "Total",
+        bulk_line: "Product Line *",
+        bulk_select_line: "Select line",
+        bulk_hint: "All sales of this pharmacy are treated as Bulk and spread across bricks by each product's Brick Weights (Products page). Products without weights stay Private.",
+        err_split_min: "Select at least two areas.",
+        err_split_area: "Select an area in every row.",
+        err_split_dup: "The same area cannot be used twice.",
+        err_split_pct: "Every percentage must be greater than 0.",
+        err_split_sum: "Percentages must add up to 100%.",
+        err_split_line: "All areas must belong to the same line.",
+        err_bulk_line: "Please select a line.",
+        warn_no_weights: "Note: {n} product group(s) have no brick weights and stayed Private. Set weights in the Products page.",
+      };
+}
+
+let povrAreaOptionsHtml = "";
+
+function applyPovrLabels() {
+  const isAr = document.documentElement.dir === "rtl";
+  const tx = getPovrTexts(isAr);
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+  set("povrModeLabel", tx.mode_label);
+  set("povrModeSingleLbl", tx.mode_single);
+  set("povrModeSplitLbl", tx.mode_split);
+  set("povrModeBulkLbl", tx.mode_bulk);
+  set("povrSplitLabel", tx.split_label);
+  set("povrSplitAddTxt", tx.split_add);
+  set("povrBulkLineLabel", tx.bulk_line);
+  set("povrBulkHint", tx.bulk_hint);
+}
+
+function getPovrMode() {
+  const r = document.querySelector('input[name="povrModeRadio"]:checked');
+  return r ? r.value : "single";
+}
+
+function togglePovrMode() {
+  const mode = getPovrMode();
+  const show = (id, on) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? "" : "none";
+  };
+  show("povrSingleGroup", mode === "single");
+  show("povrSplitGroup", mode === "split");
+  show("povrBulkGroup", mode === "bulk");
+  if (mode === "split") {
+    const rows = document.querySelectorAll("#povrSplitRows .povr-split-row");
+    if (rows.length === 0) {
+      addPovrSplitRow("", "");
+      addPovrSplitRow("", "");
+    }
+    updatePovrSplitTotal();
+  }
+}
+window.togglePovrMode = togglePovrMode;
+
+function addPovrSplitRow(areaId = "", percent = "") {
+  const isAr = document.documentElement.dir === "rtl";
+  const tx = getPovrTexts(isAr);
+  const wrap = document.getElementById("povrSplitRows");
+  if (!wrap) return;
+  const row = document.createElement("div");
+  row.className = "povr-split-row row g-2 align-items-center mb-2";
+  row.innerHTML = `
+    <div class="col-12 col-sm-7">
+      <select class="form-select form-select-sm povr-split-area">
+        <option value="">${window.escapeHtml(tx.split_area)}</option>${povrAreaOptionsHtml}
+      </select>
+    </div>
+    <div class="col-8 col-sm-3">
+      <div class="input-group input-group-sm">
+        <input type="number" class="form-control povr-split-pct" min="0" max="100" step="0.01" inputmode="decimal" />
+        <span class="input-group-text">%</span>
+      </div>
+    </div>
+    <div class="col-4 col-sm-2 text-end">
+      <button type="button" class="btn btn-sm btn-outline-danger povr-split-remove" title="${window.escapeHtml(tx.split_remove)}"><i class="fas fa-trash"></i></button>
+    </div>`;
+  wrap.appendChild(row);
+  const sel = row.querySelector(".povr-split-area");
+  const inp = row.querySelector(".povr-split-pct");
+  if (areaId) sel.value = areaId;
+  if (percent !== "" && percent !== null && percent !== undefined) inp.value = percent;
+  inp.addEventListener("input", updatePovrSplitTotal);
+  row.querySelector(".povr-split-remove").addEventListener("click", () => {
+    row.remove();
+    updatePovrSplitTotal();
+  });
+  updatePovrSplitTotal();
+}
+window.addPovrSplitRow = addPovrSplitRow;
+
+function readPovrSplitRows() {
+  return Array.from(document.querySelectorAll("#povrSplitRows .povr-split-row")).map((row) => ({
+    areaId: row.querySelector(".povr-split-area").value,
+    percent: parseFloat(row.querySelector(".povr-split-pct").value),
+  }));
+}
+
+function updatePovrSplitTotal() {
+  const isAr = document.documentElement.dir === "rtl";
+  const tx = getPovrTexts(isAr);
+  const total = readPovrSplitRows().reduce((a, r) => a + (isNaN(r.percent) ? 0 : r.percent), 0);
+  const rounded = Math.round(total * 100) / 100;
+  const el = document.getElementById("povrSplitTotal");
+  if (!el) return;
+  el.textContent = `${tx.split_total}: ${rounded}%`;
+  el.className = "badge fs-6 " + (Math.abs(rounded - 100) < 0.01 ? "bg-success" : "bg-danger");
 }
 
 function togglePovrMonthPicker() {
@@ -1385,6 +1654,24 @@ function openPharmacyOverrideModal(editId = null) {
       })
       .join("");
 
+  // Split rows share the same area options; bulk mode needs a line selector
+  povrAreaOptionsHtml = areaSelect.innerHTML.replace(/^<option value="">[^<]*<\/option>/, "");
+  const bulkLineSelect = document.getElementById("povrBulkLineSelect");
+  const povrTx = getPovrTexts(isAr);
+  if (bulkLineSelect) {
+    bulkLineSelect.innerHTML =
+      `<option value="">${window.escapeHtml(povrTx.bulk_select_line)}</option>` +
+      lines
+        .map((l) => `<option value="${window.escapeHtml(l.id)}">${window.escapeHtml(l.name)}</option>`)
+        .join("");
+  }
+  applyPovrLabels();
+  const splitWrap = document.getElementById("povrSplitRows");
+  if (splitWrap) splitWrap.innerHTML = "";
+  const modeRadioSingle = document.getElementById("povrModeSingle");
+  const modeRadioSplit = document.getElementById("povrModeSplit");
+  const modeRadioBulk = document.getElementById("povrModeBulk");
+
   const currentMonth = (
     typeof window.getSystemTodayStr === "function"
       ? window.getSystemTodayStr()
@@ -1400,7 +1687,19 @@ function openPharmacyOverrideModal(editId = null) {
     if (distSelect) distSelect.value = existing.distributorId;
     if (codeInput) codeInput.value = existing.pharmacyCode || "";
     if (nameInput) nameInput.value = existing.pharmacyName || "";
-    if (areaSelect) areaSelect.value = existing.areaId;
+    const existingMode = existing.mode || "single";
+    if (existingMode === "split" && Array.isArray(existing.splits)) {
+      if (modeRadioSplit) modeRadioSplit.checked = true;
+      if (areaSelect) areaSelect.value = "";
+      existing.splits.forEach((sp) => addPovrSplitRow(sp.areaId, sp.percent));
+    } else if (existingMode === "bulk") {
+      if (modeRadioBulk) modeRadioBulk.checked = true;
+      if (areaSelect) areaSelect.value = "";
+      if (bulkLineSelect) bulkLineSelect.value = existing.lineId || "";
+    } else {
+      if (modeRadioSingle) modeRadioSingle.checked = true;
+      if (areaSelect) areaSelect.value = existing.areaId || "";
+    }
 
     if (existing.effectiveScope === "from_month") {
       if (radioFromMonth) radioFromMonth.checked = true;
@@ -1418,9 +1717,12 @@ function openPharmacyOverrideModal(editId = null) {
     if (codeInput) codeInput.value = "";
     if (nameInput) nameInput.value = "";
     if (areaSelect) areaSelect.value = "";
+    if (modeRadioSingle) modeRadioSingle.checked = true;
+    if (bulkLineSelect) bulkLineSelect.value = "";
     if (radioAll) radioAll.checked = true;
   }
 
+  togglePovrMode();
   togglePovrMonthPicker();
   modal.show();
 }
@@ -1463,13 +1765,37 @@ function savePharmacyOverride() {
       );
     return;
   }
-  if (!areaId) {
-    if (typeof showToast === "function")
-      showToast(
-        isAr ? "يرجى اختيار المنطقة المستهدفة." : "Please select target area.",
-        "warning",
-      );
-    return;
+  const povrTx = getPovrTexts(isAr);
+  const mode = getPovrMode();
+  const warn = (m) => {
+    if (typeof showToast === "function") showToast(m, "warning");
+  };
+  let splits = [];
+  let bulkLineId = "";
+  if (mode === "single") {
+    if (!areaId) {
+      warn(isAr ? "يرجى اختيار المنطقة المستهدفة." : "Please select target area.");
+      return;
+    }
+  } else if (mode === "split") {
+    splits = readPovrSplitRows();
+    if (splits.length < 2) return warn(povrTx.err_split_min);
+    if (splits.some((s) => !s.areaId)) return warn(povrTx.err_split_area);
+    if (new Set(splits.map((s) => s.areaId)).size !== splits.length) return warn(povrTx.err_split_dup);
+    if (splits.some((s) => isNaN(s.percent) || s.percent <= 0)) return warn(povrTx.err_split_pct);
+    const sum = splits.reduce((a, s) => a + s.percent, 0);
+    if (Math.abs(sum - 100) > 0.01) return warn(povrTx.err_split_sum);
+    const allAreasList = (window.store.areas && window.store.areas.getAll()) || [];
+    const lineIds = new Set(
+      splits.map((s) => {
+        const a = allAreasList.find((x) => x.id === s.areaId);
+        return a ? a.lineId || "" : "";
+      }),
+    );
+    if (lineIds.size > 1) return warn(povrTx.err_split_line);
+  } else {
+    bulkLineId = document.getElementById("povrBulkLineSelect")?.value || "";
+    if (!bulkLineId) return warn(povrTx.err_bulk_line);
   }
   if (effectiveScope === "from_month" && !fromMonth) {
     if (typeof showToast === "function")
@@ -1493,11 +1819,18 @@ function savePharmacyOverride() {
     distributorId,
     pharmacyCode: pharmacyCode || "",
     pharmacyName: pharmacyName || "",
-    areaId,
+    mode,
+    areaId: mode === "single" ? areaId : mode === "split" ? splits[0].areaId : null,
+    splits: mode === "split" ? splits : undefined,
+    lineId: mode === "bulk" ? bulkLineId : undefined,
     effectiveScope,
     effectiveFromMonth: effectiveScope === "from_month" ? fromMonth : null,
     createdMonth: currentMonth,
   };
+  if (editId) {
+    const prev = window.store.pharmacyOverrides.getById(editId);
+    if (prev && prev.createdAt) overrideObj.createdAt = prev.createdAt;
+  }
 
   if (!window.store || !window.store.pharmacyOverrides) return;
 
@@ -1517,6 +1850,10 @@ function savePharmacyOverride() {
 
   const msg = t.override_saved_success.replace("{count}", String(updatedCount));
   if (typeof showToast === "function") showToast(msg, "success");
+  const engineSummary = window.store.distributorSales && window.store.distributorSales.lastEngineSummary;
+  if (mode === "bulk" && engineSummary && engineSummary.skippedNoWeights > 0 && typeof showToast === "function") {
+    showToast(povrTx.warn_no_weights.replace("{n}", String(engineSummary.skippedNoWeights)), "warning");
+  }
 }
 window.savePharmacyOverride = savePharmacyOverride;
 

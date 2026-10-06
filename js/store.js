@@ -833,6 +833,9 @@
             }
           }
 
+          // "All Bulk" overrides have no area; they are scoped to a product line instead
+          if (!o.areaId && o.lineId && lineId && o.lineId !== lineId) return false;
+
           if (!month) return true;
           if (o.effectiveScope === "future_only") {
             if (!o.createdMonth) return false;
@@ -844,6 +847,29 @@
           return true; // all_history
         });
       },
+      /**
+       * Finds the override that applies to a concrete sales row. Same as findMatch,
+       * but for "future_only" scope it also compares the row's import timestamp
+       * (parsed from its id "dsale_<ts>_") with the override creation time.
+       */
+      findMatchForRow(row) {
+        if (!row) return null;
+        const month = row.month || (row.date ? String(row.date).slice(0, 7) : null);
+        let lineId = row.lineId || null;
+        if (!lineId && row.productId && store.productLines && store.productLines.findProductById) {
+          const pm = store.productLines.findProductById(row.productId);
+          if (pm && pm.line) lineId = pm.line.id;
+        }
+        const o = this.findMatch(row.distributorId, row.pharmacyCode, row.pharmacyName, month, lineId);
+        if (!o) return null;
+        if (o.effectiveScope === "future_only") {
+          const m = /^dsale_(\d{10,})_/.exec(String(row.id || ""));
+          const ts = m ? Number(m[1]) : NaN;
+          const created = Date.parse(o.createdAt || "");
+          if (!isNaN(ts) && !isNaN(created) && ts < created) return null;
+        }
+        return o;
+      },
       save(overrideObj) {
         if (!window.DEMO_DATA.pharmacyOverrides) window.DEMO_DATA.pharmacyOverrides = [];
         const list = window.DEMO_DATA.pharmacyOverrides;
@@ -853,6 +879,20 @@
           id: overrideObj.id || `povr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
           updatedAt: new Date().toISOString()
         };
+        // Normalize mode-specific fields (missing mode = legacy single-area override)
+        item.mode = item.mode === "split" || item.mode === "bulk" ? item.mode : "single";
+        if (item.mode === "split") {
+          item.splits = (Array.isArray(item.splits) ? item.splits : []).map((sp) => ({
+            areaId: sp.areaId,
+            percent: Number(sp.percent),
+          }));
+          item.areaId = item.splits.length ? item.splits[0].areaId : null;
+        } else if (item.mode === "bulk") {
+          item.areaId = null;
+          delete item.splits;
+        } else {
+          delete item.splits;
+        }
         if (idx >= 0) {
           list[idx] = item;
         } else {
@@ -1372,7 +1412,7 @@
        */
       applyAreaMatching(forceAll = false, shouldAutoSave = true) {
         const rows = this.getAll().filter(
-          (s) => (forceAll || !s.repId || (s.productId && s.lineId && s.areaId)) && (s.areaRaw || s.pharmacyCode || s.pharmacyName)
+          (s) => s.salesType !== "bulk" && !s.splitParentId && (forceAll || !s.repId || (s.productId && s.lineId && s.areaId)) && (s.areaRaw || s.pharmacyCode || s.pharmacyName)
         );
         let matchedCount = 0;
         rows.forEach((row) => {
@@ -1473,11 +1513,25 @@
        * according to the specified effective retroactive scope.
        */
       applyPharmacyOverride(override) {
-        if (!override || !override.distributorId || !override.areaId) return 0;
-        const area = store.areas.getById(override.areaId);
-        if (!area) return 0;
+        if (!override || !override.distributorId) return 0;
+        const mode = override.mode || "single";
 
-        const rep = area.repId ? store.users.getById(area.repId) : null;
+        let area = null;
+        let targetLineId = null;
+        if (mode === "bulk") {
+          targetLineId = override.lineId || null;
+          if (!targetLineId) return 0;
+        } else {
+          area = store.areas.getById(override.areaId);
+          if (!area) return 0;
+          targetLineId = area.lineId || null;
+        }
+
+        // Derived rows (split children / bulk) are rebuilt from scratch below
+        this.removeBulkRows();
+        this.removeSplitRows();
+
+        const rep = area && area.repId ? store.users.getById(area.repId) : null;
         const dmId = rep ? rep.managerId || null : null;
         const dm = dmId ? store.users.getById(dmId) : null;
         const lmId = dm ? dm.managerId || null : null;
@@ -1497,8 +1551,8 @@
           }
           if (!matches) return;
 
-          // Only apply override to rows of the same line (if area belongs to a specific line)
-          if (area.lineId && row.lineId && row.lineId !== area.lineId) return;
+          // Only apply override to rows of the same line (if the override targets a specific line)
+          if (targetLineId && row.lineId && row.lineId !== targetLineId) return;
 
           // Check effective retroactive scope
           const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
@@ -1509,13 +1563,27 @@
             if (rowMonth && rowMonth < override.effectiveFromMonth) return;
           }
 
-          row.areaId = area.id;
-          row.repId = area.repId || null;
-          row.dmId = dmId;
-          row.lmId = lmId;
+          if (mode === "bulk") {
+            // Drop the old attribution; standard alias matching re-assigns it below
+            row.areaId = null;
+            row.repId = null;
+            row.dmId = null;
+            row.lmId = null;
+          } else {
+            row.areaId = area.id;
+            row.repId = area.repId || null;
+            row.dmId = dmId;
+            row.lmId = lmId;
+          }
           updatedCount++;
         });
 
+        if (mode === "bulk" && updatedCount > 0) {
+          this.applyAreaMatching(false, false);
+        }
+
+        // Rebuild split children + bulk rows (also autosaves)
+        this.applyCutPointAndBulk();
         if (updatedCount > 0) {
           autoSave("distributorSales", "applyPharmacyOverride", {
             overrideId: override.id,
@@ -1533,6 +1601,11 @@
         const cleanCode = String(override.pharmacyCode || "").trim().toLowerCase();
         const cleanName = String(override.pharmacyName || "").trim().toLowerCase();
         const overrideArea = override.areaId && store.areas ? store.areas.getById(override.areaId) : null;
+        const revertLineId = overrideArea ? overrideArea.lineId : override.lineId || null;
+
+        // Restore split parents / capped rows and drop derived rows first
+        this.removeBulkRows();
+        this.removeSplitRows();
 
         let revertedCount = 0;
         this.getAll().forEach((row) => {
@@ -1547,7 +1620,7 @@
           if (!matches) return;
 
           // Only revert if row belongs to the overridden line
-          if (overrideArea && overrideArea.lineId && row.lineId && row.lineId !== overrideArea.lineId) return;
+          if (revertLineId && row.lineId && row.lineId !== revertLineId) return;
 
           // Only revert rows that match the scope of this override
           const rowMonth = row.month || (row.date ? String(row.date).slice(0, 7) : null);
@@ -1568,7 +1641,8 @@
         });
 
         // Re-run standard matching on unassigned rows to restore alias mapping
-        this.applyAreaMatching(false, true);
+        this.applyAreaMatching(false, false);
+        this.applyCutPointAndBulk();
         return revertedCount;
       },
       /**
@@ -1657,7 +1731,7 @@
        * productLines.addProductAlias().
        */
       getPendingProductTexts() {
-        const rows = this.getAll().filter((s) => !s.lineId && s.product);
+        const rows = this.getAll().filter((s) => (!s.productId || !s.lineId) && s.product);
         const seen = {};
         const pending = [];
         rows.forEach((row) => {
@@ -1716,33 +1790,179 @@
         window.DEMO_DATA.distributorSales = window.DEMO_DATA.distributorSales.filter(
           (s) => s.salesType !== "bulk",
         );
-        // Reset salesType markers on remaining private rows
+        // Restore capped quantities/values, then reset markers on remaining rows
         window.DEMO_DATA.distributorSales.forEach((s) => {
+          if ("cappedOrigValue" in s || "cappedOrigQuantity" in s) {
+            if ("cappedOrigQuantity" in s) s.quantity = s.cappedOrigQuantity;
+            if ("cappedOrigValue" in s) s.value = s.cappedOrigValue;
+          } else if (s.cappedQty !== undefined && s.cappedQty !== null) {
+            // Legacy rows capped before the original values were stored
+            const q = parseFloat(s.quantity);
+            if (s.quantity === null || s.quantity === undefined) {
+              s.value = parseFloat(s.cappedQty) || 0;
+            } else if (q > 0) {
+              s.value = Math.round(((parseFloat(s.value) || 0) * parseFloat(s.cappedQty) / q) * 100) / 100;
+              s.quantity = s.cappedQty;
+            }
+          }
           delete s.salesType;
           delete s.bulkWeight;
           delete s.originalSaleId;
           delete s.cappedQty;
+          delete s.cappedOrigQuantity;
+          delete s.cappedOrigValue;
+          delete s.forcedBulk;
+          delete s.zeroedByBulk;
         });
         return before - window.DEMO_DATA.distributorSales.length;
       },
 
       /**
+       * Removes rows generated by a "split across areas" override and restores the
+       * original quantity/value on the parent rows.
+       */
+      removeSplitRows() {
+        if (!window.DEMO_DATA.distributorSales) return 0;
+        const before = window.DEMO_DATA.distributorSales.length;
+        window.DEMO_DATA.distributorSales = window.DEMO_DATA.distributorSales.filter(
+          (s) => !s.splitParentId,
+        );
+        window.DEMO_DATA.distributorSales.forEach((s) => {
+          if (s.isSplitParent) {
+            s.quantity = s.splitOrigQuantity;
+            s.value = s.splitOrigValue;
+            delete s.isSplitParent;
+            delete s.splitOrigQuantity;
+            delete s.splitOrigValue;
+            delete s.splitPercent;
+          }
+        });
+        return before - window.DEMO_DATA.distributorSales.length;
+      },
+
+      /**
+       * Applies "split" pharmacy overrides: each matching row keeps its first area's
+       * percentage share and one child row is generated per extra area. Totals are
+       * preserved exactly (last share takes the rounding remainder).
+       * Must run on a clean state (after removeBulkRows + removeSplitRows).
+       * Returns the number of child rows created. Does not autosave.
+       */
+      applyPharmacySplits() {
+        if (!store.pharmacyOverrides) return 0;
+        const splitOverrides = store.pharmacyOverrides
+          .getAll()
+          .filter((o) => o.mode === "split" && Array.isArray(o.splits) && o.splits.length >= 2);
+        if (!splitOverrides.length) return 0;
+
+        const round2 = (n) => Math.round(n * 100) / 100;
+        const chain = (area) => {
+          const rep = area.repId ? store.users.getById(area.repId) : null;
+          const dmId = rep ? rep.managerId || null : null;
+          const dm = dmId ? store.users.getById(dmId) : null;
+          return {
+            areaId: area.id,
+            repId: area.repId || null,
+            dmId,
+            lmId: dm ? dm.managerId || null : null,
+          };
+        };
+
+        const children = [];
+        this.getAll().forEach((row) => {
+          if (row.salesType === "bulk" || row.splitParentId || row.isSplitParent) return;
+          const o = store.pharmacyOverrides.findMatchForRow(row);
+          if (!o || o.mode !== "split" || !Array.isArray(o.splits) || o.splits.length < 2) return;
+
+          const parts = o.splits.map((sp) => ({
+            area: store.areas.getById(sp.areaId),
+            pct: Number(sp.percent),
+          }));
+          if (parts.some((p) => !p.area || !(p.pct > 0))) return;
+          const total = parts.reduce((a, p) => a + p.pct, 0);
+          if (Math.abs(total - 100) > 0.01) return;
+
+          let rowLine = row.lineId || null;
+          if (!rowLine && row.productId) {
+            const pm = store.productLines.findProductById(row.productId);
+            if (pm && pm.line) rowLine = pm.line.id;
+          }
+          if (parts.some((p) => rowLine && p.area.lineId && p.area.lineId !== rowLine)) return;
+
+          const hasQty = row.quantity !== null && row.quantity !== undefined;
+          const origQty = hasQty ? parseFloat(row.quantity) || 0 : null;
+          const origVal = parseFloat(row.value) || 0;
+          const snapshot = { ...row };
+
+          let usedQty = 0;
+          let usedVal = 0;
+          const shares = parts.map((p, i) => {
+            const last = i === parts.length - 1;
+            const q = hasQty ? (last ? round2(origQty - usedQty) : round2((origQty * p.pct) / 100)) : null;
+            const v = last ? round2(origVal - usedVal) : round2((origVal * p.pct) / 100);
+            if (hasQty) usedQty += q;
+            usedVal += v;
+            return { q, v };
+          });
+
+          // Parent row keeps the first share
+          row.isSplitParent = true;
+          row.splitOrigQuantity = hasQty ? snapshot.quantity : null;
+          row.splitOrigValue = snapshot.value;
+          row.splitPercent = parts[0].pct;
+          row.quantity = shares[0].q;
+          row.value = shares[0].v;
+          Object.assign(row, chain(parts[0].area));
+          if (!row.lineId && parts[0].area.lineId) row.lineId = parts[0].area.lineId;
+
+          for (let i = 1; i < parts.length; i++) {
+            const child = { ...snapshot };
+            delete child.isSplitParent;
+            delete child.splitOrigQuantity;
+            delete child.splitOrigValue;
+            child.id = row.id + "__s" + i;
+            child.splitParentId = row.id;
+            child.splitPercent = parts[i].pct;
+            child.quantity = shares[i].q;
+            child.value = shares[i].v;
+            Object.assign(child, chain(parts[i].area));
+            if (!child.lineId && parts[i].area.lineId) child.lineId = parts[i].area.lineId;
+            children.push(child);
+          }
+        });
+
+        if (children.length) {
+          if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
+          window.DEMO_DATA.distributorSales.push(...children);
+        }
+        return children.length;
+      },
+
+      /**
        * Core Bulk/Ceiling Engine.
-       * For each product with a cutPoint > 0:
-       *   1. Groups sales by (pharmacyCode+pharmacyName, month) to find total.
-       *   2. If total > cutPoint: caps at cutPoint (Private), surplus is distributed
-       *      to all bricks in the same line by their weight percentage (Bulk).
-       *   3. If total <= cutPoint: marks as Private (Normal).
+       * Order: remove old bulk rows -> remove old split rows -> apply split overrides -> bulk.
+       * For each product:
+       *   - Rows of pharmacies flagged "All Bulk" (override mode "bulk") are treated with
+       *     cutPoint 0: everything becomes Bulk, spread over bricks by their weights.
+       *     (If the product has no brick weights, the rows simply stay Private.)
+       *   - Other rows: if cutPoint > 0 and weights exist, the pharmacy-month total above the
+       *     cutPoint is capped (Private) and the surplus spread by weight % (Bulk).
        *
        * Generated Bulk rows carry salesType:"bulk", bulkWeight, originalSaleId.
        * Original rows carry salesType:"private".
        */
       applyCutPointAndBulk() {
-        const allSales = this.getAll();
-        if (!allSales.length) return { processedProducts: 0, bulkRowsCreated: 0 };
+        const emptySummary = { processedProducts: 0, bulkRowsCreated: 0, splitRowsCreated: 0, skippedNoWeights: 0 };
+        if (!this.getAll().length) {
+          this.lastEngineSummary = emptySummary;
+          return { ...emptySummary };
+        }
 
-        // 1. Remove any previously generated bulk rows
+        // 1. Remove previously generated derived rows (restores original values)
         this.removeBulkRows();
+        this.removeSplitRows();
+
+        // 2. Apply pharmacy split overrides
+        const splitRowsCreated = this.applyPharmacySplits();
 
         const sales = this.getAll(); // re-read after cleanup
         const allLines = store.productLines.getAll();
@@ -1764,126 +1984,142 @@
 
         let processedProducts = 0;
         let bulkRowsCreated = 0;
+        let skippedNoWeights = 0;
+        let seq = 0;
+        const stamp = Date.now();
         const newBulkRows = [];
 
-        // 2. For each product that has a cutPoint > 0
+        const processGroup = (rows, month, productId, pInfo, weights, cutPoint, forced) => {
+          if (!rows.length) return;
+          const totalQty = rows.reduce((a, r) => a + (parseFloat(r.quantity) || 0), 0);
+          const totalValue = rows.reduce((a, r) => a + (parseFloat(r.value) || 0), 0);
+          // Skip groups with negative or zero totals (returns/credits)
+          if (totalQty <= 0 && totalValue <= 0) {
+            rows.forEach((r) => { r.salesType = "private"; });
+            return;
+          }
+          if (forced && !weights.length) {
+            skippedNoWeights++;
+            rows.forEach((r) => { r.salesType = "private"; });
+            return;
+          }
+
+          // cutPoint is compared against quantity (units) when available, otherwise value
+          const hasQty = rows.some((r) => r.quantity !== null && r.quantity !== undefined);
+          const comparisonValue = hasQty ? totalQty : totalValue;
+          if (comparisonValue <= 0) {
+            rows.forEach((r) => { r.salesType = "private"; });
+            return;
+          }
+          if (!forced && comparisonValue <= cutPoint) {
+            rows.forEach((r) => { r.salesType = "private"; });
+            return;
+          }
+
+          const surplus = forced ? comparisonValue : comparisonValue - cutPoint;
+          const surplusRatio = surplus / comparisonValue;
+
+          // Mark original rows as Private with capped quantities (originals kept for restore)
+          rows.forEach((r) => {
+            r.salesType = "private";
+            const rowQty = parseFloat(r.quantity) || 0;
+            const rowValue = parseFloat(r.value) || 0;
+            r.cappedOrigQuantity = r.quantity === undefined ? null : r.quantity;
+            r.cappedOrigValue = r.value;
+            if (hasQty) {
+              r.cappedQty = r.quantity;
+              r.quantity = Math.round(rowQty * (1 - surplusRatio) * 100) / 100;
+              r.value = Math.round(rowValue * (1 - surplusRatio) * 100) / 100;
+            } else {
+              r.cappedQty = r.value;
+              r.value = Math.round(rowValue * (1 - surplusRatio) * 100) / 100;
+            }
+            if (forced) {
+              r.forcedBulk = true;
+              r.zeroedByBulk = true;
+            }
+          });
+
+          // Distribute surplus to each brick by weight %
+          weights.forEach((w) => {
+            const targetArea = allAreas.find((a) => a.id === w.areaId);
+            const shareQty = hasQty ? Math.round(surplus * (w.weight / 100) * 100) / 100 : null;
+            const shareValue = hasQty
+              ? Math.round(totalValue * surplusRatio * (w.weight / 100) * 100) / 100
+              : Math.round(surplus * (w.weight / 100) * 100) / 100;
+
+            if (shareQty !== null && shareQty === 0 && shareValue === 0) return;
+
+            const bulkRow = {
+              id: "bulk_" + stamp + "_" + seq++ + "_" + Math.floor(Math.random() * 100000),
+              salesType: "bulk",
+              bulkWeight: w.weight,
+              originalSaleId: rows[0].id,
+              batchId: rows[0].batchId,
+              distributorId: rows[0].distributorId,
+              month: month,
+              date: rows[0].date,
+              product: pInfo.name,
+              productId: productId,
+              lineId: pInfo.lineId,
+              pharmacyCode: rows[0].pharmacyCode,
+              pharmacyName: rows[0].pharmacyName,
+              areaRaw: targetArea ? targetArea.name : "",
+              areaId: w.areaId,
+              repId: targetArea ? targetArea.repId || null : null,
+              dmId: null,
+              lmId: null,
+              quantity: shareQty,
+              value: shareValue,
+            };
+            if (forced) bulkRow.forcedBulk = true;
+            newBulkRows.push(bulkRow);
+            bulkRowsCreated++;
+          });
+        };
+
+        // 3. Per product
         Object.entries(productMap).forEach(([productId, pInfo]) => {
-          if (pInfo.cutPoint <= 0) return;
-
-          // Get weights for this product
           const weights = allWeights.filter((w) => w.productId === productId);
-          if (!weights.length) return; // No weights configured, skip
-
-          processedProducts++;
-
-          // 3. Filter sales rows for this product
           const prodSales = sales.filter((s) => s.productId === productId);
           if (!prodSales.length) return;
 
-          // 4. Group by (pharmacy identity + month) to find total per pharmacy per month
-          const pharmacyMonthGroups = {};
+          // Group by (distributor + pharmacy identity + month); split forced-bulk rows apart
+          const groups = {};
           prodSales.forEach((s) => {
-            // Build pharmacy key from code+name for reliable identity
-            const pharmKey = (s.pharmacyCode || "").trim().toLowerCase() + "||" +
-                             (s.pharmacyName || "").trim().toLowerCase();
+            const pharmKey =
+              (s.distributorId || "") + "||" +
+              (s.pharmacyCode || "").trim().toLowerCase() + "||" +
+              (s.pharmacyName || "").trim().toLowerCase();
             const groupKey = pharmKey + "||" + (s.month || "");
-            if (!pharmacyMonthGroups[groupKey]) {
-              pharmacyMonthGroups[groupKey] = {
-                rows: [],
-                totalQty: 0,
-                totalValue: 0,
-                month: s.month,
-              };
-            }
-            const g = pharmacyMonthGroups[groupKey];
-            g.rows.push(s);
-            g.totalQty += parseFloat(s.quantity) || 0;
-            g.totalValue += parseFloat(s.value) || 0;
+            if (!groups[groupKey]) groups[groupKey] = { month: s.month, forcedRows: [], normalRows: [] };
+            const ov = store.pharmacyOverrides ? store.pharmacyOverrides.findMatchForRow(s) : null;
+            if (ov && ov.mode === "bulk") groups[groupKey].forcedRows.push(s);
+            else groups[groupKey].normalRows.push(s);
           });
 
-          // 5. Process each pharmacy-month group
-          Object.values(pharmacyMonthGroups).forEach((group) => {
-            const { rows, totalQty, totalValue } = group;
-            // Skip groups with negative or zero totals (returns/credits)
-            if (totalQty <= 0 && totalValue <= 0) {
-              rows.forEach((r) => { r.salesType = "private"; });
-              return;
+          let touched = false;
+          Object.values(groups).forEach((g) => {
+            if (g.forcedRows.length) {
+              touched = touched || weights.length > 0;
+              processGroup(g.forcedRows, g.month, productId, pInfo, weights, 0, true);
             }
-
-            // Determine if the pharmacy exceeded the cutPoint
-            // cutPoint is compared against quantity (units) when available, otherwise value
-            const hasQty = rows.some((r) => r.quantity !== null && r.quantity !== undefined);
-            const comparisonValue = hasQty ? totalQty : totalValue;
-            const cutPoint = pInfo.cutPoint;
-
-            if (comparisonValue <= cutPoint) {
-              // Within cutPoint — all Private
-              rows.forEach((r) => { r.salesType = "private"; });
-              return;
-            }
-
-            // 6. Exceeds cutPoint — calculate surplus
-            const surplus = comparisonValue - cutPoint;
-            const surplusRatio = surplus / comparisonValue;
-
-            // Mark original rows as Private with capped quantities
-            rows.forEach((r) => {
-              r.salesType = "private";
-              const rowQty = parseFloat(r.quantity) || 0;
-              const rowValue = parseFloat(r.value) || 0;
-              if (hasQty) {
-                r.cappedQty = r.quantity;
-                r.quantity = Math.round((rowQty * (1 - surplusRatio)) * 100) / 100;
-                r.value = Math.round((rowValue * (1 - surplusRatio)) * 100) / 100;
-              } else {
-                r.cappedQty = r.value;
-                r.value = Math.round((rowValue * (1 - surplusRatio)) * 100) / 100;
+            if (g.normalRows.length) {
+              if (pInfo.cutPoint > 0 && weights.length) {
+                touched = true;
+                processGroup(g.normalRows, g.month, productId, pInfo, weights, pInfo.cutPoint, false);
               }
-            });
-
-            // 7. Distribute surplus to each brick by weight %
-            weights.forEach((w) => {
-              const targetArea = allAreas.find((a) => a.id === w.areaId);
-              const shareQty = hasQty ? Math.round((surplus * (w.weight / 100)) * 100) / 100 : null;
-              const shareValue = hasQty
-                ? Math.round(((totalValue * surplusRatio) * (w.weight / 100)) * 100) / 100
-                : Math.round((surplus * (w.weight / 100)) * 100) / 100;
-
-              if ((shareQty !== null && shareQty === 0) && shareValue === 0) return;
-
-              newBulkRows.push({
-                id: "bulk_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
-                salesType: "bulk",
-                bulkWeight: w.weight,
-                originalSaleId: rows[0].id,
-                batchId: rows[0].batchId,
-                distributorId: rows[0].distributorId,
-                month: group.month,
-                date: rows[0].date,
-                product: pInfo.name,
-                productId: productId,
-                lineId: pInfo.lineId,
-                pharmacyCode: rows[0].pharmacyCode,
-                pharmacyName: rows[0].pharmacyName,
-                areaRaw: targetArea ? targetArea.name : "",
-                areaId: w.areaId,
-                repId: targetArea ? (targetArea.repId || null) : null,
-                dmId: null,
-                lmId: null,
-                quantity: shareQty,
-                value: shareValue,
-              });
-              bulkRowsCreated++;
-            });
+            }
           });
+          if (touched) processedProducts++;
         });
 
-        // 8. Mark remaining rows that have no salesType as private
+        // 4. Mark remaining rows that have no salesType as private
         this.getAll().forEach((s) => {
           if (!s.salesType) s.salesType = "private";
         });
 
-        // 9. Append all generated Bulk rows
+        // 5. Append all generated Bulk rows
         if (newBulkRows.length > 0) {
           if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
           window.DEMO_DATA.distributorSales.push(...newBulkRows);
@@ -1896,7 +2132,7 @@
                 r.dmId = rep.managerId || null;
                 if (r.dmId) {
                   const dm = store.users.getById(r.dmId);
-                  r.lmId = dm ? (dm.managerId || null) : null;
+                  r.lmId = dm ? dm.managerId || null : null;
                 }
               }
             }
@@ -1906,9 +2142,12 @@
         autoSave("distributorSales", "applyCutPointAndBulk", {
           processedProducts,
           bulkRowsCreated,
+          splitRowsCreated,
         });
 
-        return { processedProducts, bulkRowsCreated };
+        const summary = { processedProducts, bulkRowsCreated, splitRowsCreated, skippedNoWeights };
+        this.lastEngineSummary = summary;
+        return { ...summary };
       },
     },
 

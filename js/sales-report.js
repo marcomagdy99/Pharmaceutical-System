@@ -583,6 +583,9 @@ function getFilteredPharmSalesRows() {
     rows = rows.filter((r) => r.salesType === "bulk");
   }
 
+  // Rows of "All Bulk" pharmacies are zeroed in place (their sales live in the bulk rows) - hide them
+  rows = rows.filter((r) => !r.zeroedByBulk);
+
   return rows;
 }
 
@@ -677,6 +680,9 @@ function renderSalesReport() {
         typeBadge = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Bulk (${row.bulkWeight || 0}%)</span>`;
       } else {
         typeBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle">Private</span>`;
+      }
+      if (row.splitPercent) {
+        typeBadge += ` <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">Split ${window.escapeHtml(String(row.splitPercent))}%</span>`;
       }
 
       const tr = document.createElement('tr');
