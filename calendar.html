@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -24,21 +24,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v133">
-    <link rel="stylesheet" href="css/calendar.css?v=v133">
+    <link rel="stylesheet" href="css/style.css?v=v162">
+    <link rel="stylesheet" href="css/calendar.css?v=v145">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v133"></script>
-    <script src="js/store.js?v=v133"></script>
+    <script src="js/app.js?v=v159"></script>
+    <script src="js/store.js?v=v145"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v133"></script>
-    <script src="js/firebase-sync.js?v=v133"></script>
+    <script src="js/firebase-config.js?v=v145"></script>
+    <script src="js/firebase-sync.js?v=v157"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v133";
+        var EXPECTED_SW = "v159";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -80,7 +80,7 @@
                     <div class="manager-filter-inner" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                         <div id="calendarLineFilterContainer" style="display: flex; align-items: center; gap: 8px;">
                             <label for="calendarLineFilter" class="fw-bold mb-0" style="font-size: 0.88rem;">
-                                <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
+                                <span>??</span> <span data-i18n="lineFilterLabel">Product Line:</span>
                             </label>
                             <select id="calendarLineFilter" class="form-control" style="min-width: 170px; height: 34px; padding: 4px 10px; font-size: 0.85rem;" onchange="onCalendarLineChange(this.value)">
                                 <option value="all" data-i18n="allLines">All Lines</option>
@@ -92,10 +92,10 @@
                             <span class="target-name fw-bold" id="targetNameDisplay">All Subordinates (Team View)</span>
                         </div>
                         <button class="btn btn-sm btn-primary" onclick="openOrgTreeModal()" id="btnOpenTreePicker">
-                            🌳 <span data-i18n="browseOrgTree">Browse Org Hierarchy</span>
+                            ?? <span data-i18n="browseOrgTree">Browse Org Hierarchy</span>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary" onclick="resetCalendarToAll()" id="btnResetCalendar" style="display: none;">
-                            👥 <span data-i18n="viewAllTeam">View All Team</span>
+                            ?? <span data-i18n="viewAllTeam">View All Team</span>
                         </button>
                     </div>
                 </div>
@@ -148,7 +148,7 @@
     <div class="org-tree-modal" id="orgTreeModal" style="display: none;">
         <div class="org-tree-modal-header">
             <div>
-                <h4 class="mb-1 fw-bold" data-i18n="orgTreeTitle">🏢 Select Team Member / Branch</h4>
+                <h4 class="mb-1 fw-bold" data-i18n="orgTreeTitle">?? Select Team Member / Branch</h4>
                 <p class="text-muted small mb-0" data-i18n="orgTreeSubtitle">Pick any Level (BU, LM, DM, or Rep) or search directly</p>
             </div>
             <button class="btn-close-tree" onclick="closeOrgTreeModal()">&times;</button>
@@ -161,12 +161,12 @@
         </div>
         <div class="org-tree-modal-footer">
             <button class="btn btn-outline-secondary btn-sm" onclick="resetCalendarToAll()">
-                👥 <span data-i18n="selectAllTeam">Select Entire Team</span>
+                ?? <span data-i18n="selectAllTeam">Select Entire Team</span>
             </button>
             <button class="btn btn-secondary btn-sm" onclick="closeOrgTreeModal()" data-i18n="close">Close</button>
         </div>
     </div>
-    <script src="js/reschedule.js?v=v133"></script>
-    <script src="js/calendar.js?v=v133"></script>
+    <script src="js/reschedule.js?v=v145"></script>
+    <script src="js/calendar.js?v=v145"></script>
 </body>
 </html>

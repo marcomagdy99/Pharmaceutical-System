@@ -88,7 +88,7 @@ const visitTranslations = {
     filterPendingApproval: "Pending Approval",
     typeSingle: "Single",
     typeDouble: "Double",
-    directActual: "Direct Actual",
+    directActual: "Actual without Plan",
     fromPlan: "From Plan",
     selectAll: "Select All",
     btnExportCSV: "Export CSV",
@@ -124,132 +124,13 @@ const visitTranslations = {
     allStatuses: "All Statuses",
     statusExecuted: "Executed / Actual",
     statusPlannedOnly: "Planned",
-  },
-  ar: {
-    visitsTitle: "الزيارات",
-    addVisit: "إضافة زيارة",
-    logActualVisit: "إدخال زيارة فعلية",
-    planVisit: "تخطيط زيارات (مجمع)",
-    statTotal: "الإجمالي:",
-    statCompleted: "مكتمل:",
-    statPending: "قيد الانتظار النشط:",
-    tabToday: "خطة اليوم",
-    tabDailyTimeline: "الخط الزمني للزيارات اليومية",
-    tabAll: "كل الزيارات",
-    amHospitals: "المستشفيات",
-    pmDoctors: "الأطباء",
-    filterAll: "كل الحالات",
-    filterPlanned: "مخطط",
-    filterCompleted: "مكتمل",
-    filterAllPeriod: "كل الفترات",
-    filterAM: "صباحاً",
-    filterPM: "مساءً",
-    allReps: "كل مناديب الفريق",
-    teamFilterLabel: "تصفية الفريق:",
-    colDocHosp: "الطبيب/المستشفى/الصيدلية",
-    colDate: "التاريخ",
-    colPeriod: "الفترة",
-    colType: "النوع",
-    colStatus: "الحالة",
-    colProducts: "المنتجات",
-    colActions: "إجراءات",
-    colVisitDay: "يوم الزيارة",
-    colVisitTime: "وقت الزيارة",
-    colInsertionDate: "تاريخ الإدخال",
-    colInsertionTime: "وقت الإدخال",
-    modalAddVisit: "إضافة زيارة جديدة",
-    modalCompleteVisit: "إكمال الزيارة",
-    modalDate: "يوم الزيارة",
-    modalVisitDay: "يوم الزيارة",
-    modalVisitTime: "وقت الزيارة",
-    modalInsertionDate: "تاريخ الإدخال:",
-    modalInsertionTime: "وقت الإدخال:",
-    modalPeriod: "نوع الهدف / الفترة",
-    modalAM: "صباحاً (مستشفى)",
-    modalPM: "مساءً (طبيب)",
-    modalPharmacy: "💊 صيدلية",
-    filterPharmacies: "الصيدليات",
-    targetPharmacy: "صيدلية",
-    targetHospital: "مستشفى",
-    targetDoctor: "طبيب",
-    modalTarget: "الطبيب/المستشفى/الصيدلية",
-    modalFilterDoctor: "تصفية الأطباء حسب أعضاء الفريق",
-    modalAccompaniedRep: "المندوب المرافق",
-    modalType: "نوع الزيارة",
-    modalSingle: "فردي",
-    modalDouble: "مزدوج",
-    modalSelectManager: "مرافق مع",
-    modalProducts: "المنتجات التي تمت مناقشتها",
-    modalGiveawaySamples: "عينات ومواد دعائية (Giveaway Samples)",
-    modalComment: "تعليق",
-    modalGpsTitle: "التحقق الجغرافي (GPS Geofencing)",
-    gpsBadgePending: "بانتظار الفحص",
-    gpsBadgeChecking: "جاري الفحص... 🛰️",
-    gpsBadgeInRange: "✅ داخل النطاق",
-    gpsBadgeOutOfRange: "⚠️ خارج النطاق",
-    gpsBadgeDenied: "⚠️ GPS معطل",
-    gpsInfoDefault: "يتم التحقق من تواجدك داخل نطاق العيادة المسموح به (200 متر).",
-    gpsInfoInRange: "أنت متواجد داخل نطاق العيادة المعتمد (أقل من 200 متر).",
-    gpsInfoOutOfRange: "أنت خارج نطاق العيادة المعتمد. سيتم تسجيل الزيارة مع تنبيه تدقيق للمدير.",
-    gpsInfoDenied: "تم تعطيل إذن الموقع أو إيقاف الـ GPS. سيتم تسجيل الزيارة مع وضع علامة تدقيق للإدارة.",
-    btnCheckGps: "📡 فحص موقعي الآن",
-    btnCancel: "إلغاء",
-    btnSaveVisit: "حفظ الزيارة",
-    btnComplete: "إكمال الزيارة",
-    btnDelete: "حذف",
-    confirmDeleteVisitPrompt: "هل أنت متأكد من رغبتك في حذف هذا السجل نهائياً؟",
-    visitDeletedSuccess: "تم حذف الزيارة بنجاح.",
-    noDeletePermission: "ليس لديك صلاحية لحذف هذه الزيارة.",
-    statusPlanned: "مخطط",
-    statusPending_approval: "قيد المراجعة",
-    statusCompleted: "مكتمل",
-    statusRejected: "مرفوض",
-    filterPendingApproval: "قيد المراجعة",
-    typeSingle: "فردي",
-    typeDouble: "مزدوج",
-    directActual: "فعلية مباشرة",
-    fromPlan: "من الخطة",
-    selectAll: "تحديد الكل",
-    btnExportCSV: "تصدير CSV",
-    btnPrint: "طباعة",
-    filterAllClasses: "كل فئات الأهداف",
-    timelineSelectDate: "اختر التاريخ:",
-    btnShow: "عرض",
-    plannedExecuted: "زيارة من الخطة ومسجلة",
-    jointVisitBadge: "زيارة مشتركة (نزول ميداني)",
-    totalEventsToday: "إجمالي الأحداث اليوم:",
-    actualActivities: "فعلية / أنشطة:",
-    fromPlanStat: "من الخطة:",
-    jointVisitsCount: "نزول مشترك:",
-    noTimelineEvents: "لا توجد زيارات أو أنشطة مسجلة في هذا اليوم",
-    selectAnotherDate: "اختر تاريخاً آخر مثل 2026-09-02 أو 2026-09-03",
-    entryTimestamp: "توقيت التسجيل:",
-    loggedActivity: "نشاط مسجل",
-    supervisoryVisit: "DM Single",
-    jointVisitWithRep: "زيارة مشتركة (نزول ميداني مع المندوب)",
-    promptSelectDateAndShow: "حدد التاريخ واضغط على «عرض» لعرض الزيارات",
-    promptSelectDateSub:
-      "اختر التاريخ المطلوب وفلتر الفريق أعلاه، ثم اضغط على زر «عرض» لتحميل الخط الزمني لزيارات اليوم.",
-    filterArea: "المنطقة:",
-    allAreas: "جميع المناطق",
-    filterPeriod: "الفترة:",
-    allPeriods: "كل الفترات",
-    periodAM: "AM (مستشفيات)",
-    periodPM: "PM (عيادات أطباء)",
-    periodPharm: "💊 صيدليات",
-    filterStatus: "الحالة:",
-    allStatuses: "كل الحالات",
-    statusExecuted: "منفذة / فعلية",
-    statusPlannedOnly: "مخططة",
-  },
+  }
 };
 
 if (typeof translations !== "undefined") {
   if (translations.en && visitTranslations.en)
     Object.assign(translations.en, visitTranslations.en);
-  if (translations.ar && visitTranslations.ar)
-    Object.assign(translations.ar, visitTranslations.ar);
-} else {
+  } else {
   window.translations = visitTranslations;
 }
 
@@ -281,16 +162,25 @@ var checkVisitDateAllowed = (typeof window !== "undefined" && window.checkVisitD
 function isWorkdayExemptFromMinVisits(dateStr, repId) {
   if (!dateStr) return { exempt: false };
 
-  // 1. Weekend check: Friday (5) is statutory; Thursday (4) is optional based on company settings
+  // 1. Weekend check: Friday (5) is statutory; Saturday (6) or Thursday (4) configurable
   const dateObj = new Date(dateStr + "T00:00:00");
   const dayOfWeek = dateObj.getDay();
   const companySettings = (window.store && window.store.companySettings)
     ? window.store.companySettings.get()
     : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
-  const isThursdayWeekend = !!companySettings.isThursdayWeekend;
 
-  if (dayOfWeek === 5 || (dayOfWeek === 4 && isThursdayWeekend)) {
-    return { exempt: true, reason: "weekend" };
+  const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? "thursday" : "none");
+  const secMode = companySettings.secondaryWeekendMode || "full_day";
+
+  // Friday is statutory full weekend
+  if (dayOfWeek === 5) {
+    return { exempt: true, reason: "weekend", mode: "full_day" };
+  }
+
+  // Check Secondary Day
+  const isSecondaryDay = (secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4);
+  if (isSecondaryDay) {
+    return { exempt: true, reason: "secondary_weekend", mode: secMode };
   }
 
   // 2. Official public holidays check
@@ -401,22 +291,73 @@ function captureVisitLocation(callback) {
 
 function renderGpsBadge(v, lang) {
   if (!v || !v.gpsStatus) return "";
+  // Pharmacies are strictly exempt from GPS tracking & location requirements
+  if (v.targetType === "pharmacy" || v.period === "pharmacy" || (v.doctorId && String(v.doctorId).startsWith("pharm"))) {
+    return "";
+  }
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+  // If GPS validation is globally disabled by Admin, don't show badges
+  if (!companySettings.requireGpsValidation) return "";
+
   if (v.gpsStatus === "permission_denied") {
-    const text = lang === "ar" ? "⚠️ تم تعطيل الـ GPS من المندوب" : "⚠️ GPS Disabled by Rep";
+    const text = "⚠️ GPS Disabled by Rep";
     return `<span class="badge badge-gps-denied">${text}</span>`;
   }
-  if (v.gpsStatus === "in_range") {
-    const text = lang === "ar" ? "✅ تم التحقق (داخل النطاق)" : "✅ Verified (In Range)";
-    return `<span class="badge badge-gps-in-range">${text}</span>`;
-  }
   if (v.gpsStatus === "no_target_coords") {
-    const text = lang === "ar" ? "📍 بدون إحداثيات" : "📍 No Target Coords";
-    return `<span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">${text}</span>`;
+    const text = "📍 No Target Coords";
+    return `<span class="badge badge-gps-no-coords">${text}</span>`;
+  }
+
+  // Calculate or retrieve deviation distance
+  const dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : null;
+  const distStr = dist != null ? ` (${dist}m)` : "";
+
+  // Build map link if coordinates are present
+  let mapLinkHtml = "";
+  let dLat = v.deviceLat;
+  let dLng = v.deviceLng;
+  let tLat = v.targetLat;
+  let tLng = v.targetLng;
+
+  if (tLat == null || tLng == null) {
+    const allDocs = getMockDoctors();
+    const allHosps = getMockHospitals();
+    const allPharms = getMockPharmacies();
+    const foundTarget = (allDocs && allDocs.find((d) => d.id === v.doctorId || d.name === v.doctorName)) ||
+                        (allHosps && allHosps.find((h) => h.id === v.doctorId || h.name === v.doctorName)) ||
+                        (allPharms && allPharms.find((p) => p.id === v.doctorId || p.name === v.doctorName));
+    if (foundTarget && foundTarget.lat != null && foundTarget.lng != null) {
+      tLat = foundTarget.lat;
+      tLng = foundTarget.lng;
+    }
+  }
+
+  if (dLat != null && dLng != null) {
+    let mapUrl = "";
+    if (tLat != null && tLng != null) {
+      // Directions from target to rep location to compare both points
+      mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${tLat},${tLng}&destination=${dLat},${dLng}`;
+    } else {
+      mapUrl = `https://www.google.com/maps/search/?api=1&query=${dLat},${dLng}`;
+    }
+    const mapTitle = "View Location & Deviation on Google Maps";
+    mapLinkHtml = ` <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="badge-gps-map-link" title="${mapTitle}" onclick="event.stopPropagation();">🗺️</a>`;
+  } else if (tLat != null && tLng != null) {
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${tLat},${tLng}`;
+    const mapTitle = "View Clinic Target on Google Maps";
+    mapLinkHtml = ` <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="badge-gps-map-link" title="${mapTitle}" onclick="event.stopPropagation();">🗺️</a>`;
+  }
+
+  if (v.gpsStatus === "in_range") {
+    const text = `✅ Verified${distStr}`;
+    return `<span class="badge badge-gps-in-range" title="In Range">${text}${mapLinkHtml}</span>`;
   }
   if (v.gpsStatus === "out_of_range") {
-    const distText = v.distanceMeters ? ` (${v.distanceMeters}m)` : "";
-    const text = lang === "ar" ? `⚠️ خارج النطاق${distText}` : `⚠️ Out of Range${distText}`;
-    return `<span class="badge badge-gps-out-of-range">${text}</span>`;
+    const text = `⚠️ Out of Range${distStr}`;
+    return `<span class="badge badge-gps-out-of-range" title="Out of Range">${text}${mapLinkHtml}</span>`;
   }
   return "";
 }
@@ -428,8 +369,7 @@ function triggerManualGpsCheck() {
   const infoText = document.getElementById("visitGpsInfoText");
   const distText = document.getElementById("visitGpsDistanceText");
   const btn = document.getElementById("btnCheckMyGps");
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
+
 
   const companySettings = (window.store && window.store.companySettings)
     ? window.store.companySettings.get()
@@ -442,7 +382,7 @@ function triggerManualGpsCheck() {
   }
 
   if (badge) {
-    badge.textContent = isAr ? "جاري الفحص... 🛰️" : "Checking GPS... 🛰️";
+    badge.textContent = "Checking GPS... 🛰️";
     badge.style.background = "#e0f2fe";
     badge.style.color = "#0369a1";
   }
@@ -459,14 +399,12 @@ function triggerManualGpsCheck() {
 
     if (loc.status === "permission_denied") {
       if (badge) {
-        badge.textContent = isAr ? "⚠️ GPS معطل" : "⚠️ GPS Denied";
+        badge.textContent = "⚠️ GPS Denied";
         badge.style.background = "#fef3c7";
         badge.style.color = "#92400e";
       }
       if (infoText) {
-        infoText.textContent = isAr
-          ? "⚠️ تم تعطيل إذن الموقع أو إيقاف الـ GPS. سيتم تسجيل الزيارة مع وضع علامة تدقيق للإدارة."
-          : "⚠️ Location permission denied. Visit will be recorded with an audit flag for your manager.";
+        infoText.textContent = "⚠️ Location permission denied. Visit will be recorded with an audit flag for your manager.";
       }
       if (distText) distText.textContent = "";
       return;
@@ -477,7 +415,8 @@ function triggerManualGpsCheck() {
       const targetId = targetSelect ? targetSelect.value : null;
       const allDocs = getMockDoctors();
       const allHosps = getMockHospitals();
-      const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+      const allPharms = getMockPharmacies();
+      const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId) || allPharms.find((p) => p.id === targetId);
 
       let distance = 0;
       let hasTargetCoords = false;
@@ -488,53 +427,180 @@ function triggerManualGpsCheck() {
 
       if (!hasTargetCoords) {
         if (badge) {
-          badge.textContent = isAr ? "📍 بدون إحداثيات" : "📍 No Coordinates";
+          badge.textContent = "📍 No Coordinates";
           badge.style.background = "#f1f5f9";
           badge.style.color = "#475569";
         }
         if (infoText) {
-          infoText.textContent = isAr
-            ? "لم يتم تسجيل إحداثيات جغرافية مسبقة لهذه العيادة أو المستشفى."
-            : "No pre-registered coordinates found for this clinic or hospital.";
+          infoText.textContent = "No pre-registered coordinates found. You can pin your current location as verified clinic coords.";
         }
         if (distText) distText.textContent = "";
+
+        // Show Pin button, hide Relocate button
+        const pinBar = document.getElementById("visitGpsPinBar");
+        const btnPin = document.getElementById("btnPinClinicLocation");
+        const btnRelocate = document.getElementById("btnRelocateClinicLocation");
+        if (pinBar) pinBar.style.display = "flex";
+        if (btnPin) btnPin.style.display = "inline-flex";
+        if (btnRelocate) btnRelocate.style.display = "none";
         return;
       }
 
       if (distance <= maxDist) {
         if (badge) {
-          badge.textContent = isAr ? "✅ داخل النطاق" : "✅ In Range";
+          badge.textContent = "✅ In Range";
           badge.style.background = "#dcfce7";
           badge.style.color = "#166534";
         }
         if (infoText) {
-          infoText.textContent = isAr
-            ? `أنت متواجد داخل نطاق العيادة المعتمد (أقل من ${maxDist} متر).`
-            : `You are verified within the clinic radius (less than ${maxDist}m).`;
+          infoText.textContent = `You are verified within the clinic radius (less than ${maxDist}m).`;
         }
         if (distText) {
-          distText.textContent = isAr ? `المسافة الحالية: ${distance} متر` : `Current Distance: ${distance}m`;
+          distText.textContent = `Current Distance: ${distance}m`;
           distText.style.color = "#10b981";
         }
+        // Hide Pin bar if already in range
+        const pinBar = document.getElementById("visitGpsPinBar");
+        if (pinBar) pinBar.style.display = "none";
       } else {
         if (badge) {
-          badge.textContent = isAr ? `⚠️ خارج النطاق (${distance}m)` : `⚠️ Out of Range (${distance}m)`;
+          badge.textContent = `⚠️ Out of Range (${distance}m)`;
           badge.style.background = "#fee2e2";
           badge.style.color = "#991b1b";
         }
         if (infoText) {
-          infoText.textContent = isAr
-            ? `⚠️ أنت تبعد ${distance} متر عن العيادة (الحد المسموح ${maxDist}م). يمكنك المتابعة وسيتم تنبيه المدير.`
-            : `⚠️ You are ${distance}m away from clinic (max allowed ${maxDist}m). Manager will be notified.`;
+          infoText.textContent = `⚠️ You are ${distance}m away (max allowed ${maxDist}m). If clinic relocated, you can request re-pin.`;
         }
         if (distText) {
-          distText.textContent = isAr ? `المسافة الحالية: ${distance} متر` : `Current Distance: ${distance}m`;
+          distText.textContent = `Current Distance: ${distance}m`;
           distText.style.color = "#ef4444";
         }
+        // Show Relocate button, hide Pin button
+        const pinBar = document.getElementById("visitGpsPinBar");
+        const btnPin = document.getElementById("btnPinClinicLocation");
+        const btnRelocate = document.getElementById("btnRelocateClinicLocation");
+        if (pinBar) pinBar.style.display = "flex";
+        if (btnPin) btnPin.style.display = "none";
+        if (btnRelocate) btnRelocate.style.display = "inline-flex";
       }
     }
   });
 }
+
+function handlePinClinicLocation() {
+  const targetSelect = document.getElementById("visitTarget");
+  const targetId = targetSelect ? targetSelect.value : null;
+  if (!targetId) {
+    showToast("Please select target account first.", "warning");
+    return;
+  }
+  const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+  if (!targetItem) {
+    showToast("Pharmacies are exempt from location pinning.", "info");
+    return;
+  }
+  const targetName = targetItem.name || "Target";
+  const targetType = targetItem.address ? (targetItem.class ? "doctor" : "hospital") : "doctor";
+
+  if (!lastCapturedGpsResult || lastCapturedGpsResult.status !== "obtained" || lastCapturedGpsResult.lat == null) {
+    showToast("Please capture your GPS location first.", "warning");
+    return;
+  }
+
+  const confirmMsg = `Are you currently at "${targetName}" to pin this as the verified location?`;
+
+  if (!window.confirm(confirmMsg)) return;
+
+  if (window.store && window.store.accountLocationRequests) {
+    window.store.accountLocationRequests.submit({
+      targetId: targetId,
+      targetType: targetType,
+      targetName: targetName,
+      requestType: "initial_pin",
+      newLat: lastCapturedGpsResult.lat,
+      newLng: lastCapturedGpsResult.lng,
+      repId: currentUser.id,
+      repName: currentUser.name,
+      reason: "Initial GPS Pin on first visit"
+    });
+    showToast("Location pin request submitted for manager approval!", "success");
+    const pinBar = document.getElementById("visitGpsPinBar");
+    if (pinBar) pinBar.style.display = "none";
+  }
+}
+
+function openRelocationModal() {
+  const targetSelect = document.getElementById("visitTarget");
+  const targetId = targetSelect ? targetSelect.value : null;
+  const allDocs = getMockDoctors();
+  const allHosps = getMockHospitals();
+  const allPharms = getMockPharmacies();
+  const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId) || allPharms.find((p) => p.id === targetId);
+  if (!targetItem) return;
+
+  const modal = document.getElementById("relocationModal");
+  const nameDisp = document.getElementById("relocateTargetNameDisplay");
+  const addrInput = document.getElementById("relocateNewAddressInput");
+  const reasonInput = document.getElementById("relocateReasonInput");
+
+  if (nameDisp) nameDisp.value = targetItem.name || "";
+  if (addrInput) addrInput.value = targetItem.clinicAddress || targetItem.address || "";
+  if (reasonInput) reasonInput.value = "";
+  if (modal) modal.style.display = "flex";
+}
+
+function closeRelocationModal() {
+  const modal = document.getElementById("relocationModal");
+  if (modal) modal.style.display = "none";
+}
+
+function submitRelocationRequest() {
+  const targetSelect = document.getElementById("visitTarget");
+  const targetId = targetSelect ? targetSelect.value : null;
+  const allDocs = getMockDoctors();
+  const allHosps = getMockHospitals();
+  const allPharms = getMockPharmacies();
+  const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId) || allPharms.find((p) => p.id === targetId);
+  if (!targetItem) return;
+
+  if (!lastCapturedGpsResult || lastCapturedGpsResult.status !== "obtained" || lastCapturedGpsResult.lat == null) {
+    showToast("Please capture your GPS location first.", "warning");
+    return;
+  }
+
+  const newAddress = document.getElementById("relocateNewAddressInput")?.value.trim() || "";
+  const reason = document.getElementById("relocateReasonInput")?.value.trim() || "";
+
+  if (window.store && window.store.accountLocationRequests) {
+    const dist = (targetItem.lat != null && targetItem.lng != null)
+      ? calculateDistanceMeters(lastCapturedGpsResult.lat, lastCapturedGpsResult.lng, targetItem.lat, targetItem.lng)
+      : null;
+
+    window.store.accountLocationRequests.submit({
+      targetId: targetId,
+      targetType: targetItem.class ? "doctor" : (targetItem.address ? "hospital" : "pharmacy"),
+      targetName: targetItem.name,
+      requestType: "relocation",
+      newLat: lastCapturedGpsResult.lat,
+      newLng: lastCapturedGpsResult.lng,
+      oldLat: targetItem.lat || null,
+      oldLng: targetItem.lng || null,
+      distanceMeters: dist,
+      newAddress: newAddress,
+      reason: reason,
+      repId: currentUser.id,
+      repName: currentUser.name
+    });
+
+    closeRelocationModal();
+    showToast("Relocation request submitted to manager successfully!", "success");
+  }
+}
+
+window.handlePinClinicLocation = handlePinClinicLocation;
+window.openRelocationModal = openRelocationModal;
+window.closeRelocationModal = closeRelocationModal;
+window.submitRelocationRequest = submitRelocationRequest;
 
 function onVisitTargetChange() {
   const modal = document.getElementById("visitModal");
@@ -562,10 +628,9 @@ function toggleCompanyGpsPolicy() {
   }
 
   updateAdminGpsButton();
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const msg = updatedVal
-    ? (lang === "ar" ? "تم تفعيل سياسة التحقق الجغرافي بالـ GPS لجميع المناديب!" : "GPS verification policy enabled for all reps!")
-    : (lang === "ar" ? "تم تعطيل سياسة التحقق بالـ GPS للشركة." : "GPS verification policy disabled for the company.");
+    ? "GPS verification policy enabled for all reps!"
+    : "GPS verification policy disabled for the company.";
 
   if (typeof showToast === "function") showToast(msg, "info");
 }
@@ -586,14 +651,13 @@ function updateAdminGpsButton() {
     ? window.store.companySettings.get()
     : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   if (current.requireGpsValidation) {
-    label.textContent = lang === "ar" ? "سياسة الـ GPS: مفعلة ✅" : "GPS Policy: Active ✅";
+    label.textContent = "GPS Policy: Active ✅";
     btn.style.borderColor = "#166534";
     btn.style.color = "#166534";
     btn.style.background = "#dcfce7";
   } else {
-    label.textContent = lang === "ar" ? "سياسة الـ GPS: معطلة ⏸️" : "GPS Policy: Paused ⏸️";
+    label.textContent = "GPS Policy: Paused ⏸️";
     btn.style.borderColor = "#6b7280";
     btn.style.color = "#4b5563";
     btn.style.background = "#f3f4f6";
@@ -746,7 +810,7 @@ function getTwoDaysAgoStr() {
 }
 
 const getSysLang = () => (window.getCurrentLang && window.getCurrentLang()) || "en";
-const isSysAr = () => getSysLang() === "ar";
+const isSysAr = () => false;
 
 let hasLoadedTimelineOnce = false;
 
@@ -814,13 +878,9 @@ function setupRoleBasedView() {
   const planVisitBtn = document.getElementById("planVisitBtn");
   const addActualVisitBtn = document.getElementById("addActualVisitBtn");
   const titleSpan = document.getElementById("visitsPageTitle");
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
   if (titleSpan) {
     titleSpan.setAttribute("data-i18n", "tabDailyTimeline");
-    titleSpan.textContent =
-      isAr ? "الخط الزمني للزيارات اليومية" : "Daily Visits Timeline";
+    titleSpan.textContent = "Daily Visits Timeline";
   }
 
   // Always initialize the Line Filter for all authenticated users
@@ -862,8 +922,7 @@ function populateVisitsLineFilter() {
   const filterLine = document.getElementById("filterLine");
   if (!filterLine) return;
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
+
   const curVal = filterLine.value;
   const isFullAdmin = currentUserRole === "admin" || currentUserRole === "hr";
 
@@ -876,13 +935,13 @@ function populateVisitsLineFilter() {
 
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    optAll.textContent = "🌐 All Product Lines";
     filterLine.appendChild(optAll);
 
     allLines.forEach((l) => {
       const opt = document.createElement("option");
       opt.value = l.id;
-      opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+      opt.textContent = `📦 ${l.name}`;
       filterLine.appendChild(opt);
     });
     filterLine.disabled = false;
@@ -892,13 +951,13 @@ function populateVisitsLineFilter() {
     if (userLines.length > 1) {
       const optAll = document.createElement("option");
       optAll.value = "all";
-      optAll.textContent = isAr ? "🌐 جميع خطوطي" : "🌐 All My Lines";
+      optAll.textContent = "🌐 All My Lines";
       filterLine.appendChild(optAll);
 
       userLines.forEach((l) => {
         const opt = document.createElement("option");
         opt.value = l.id;
-        opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+        opt.textContent = `📦 ${l.name}`;
         filterLine.appendChild(opt);
       });
       filterLine.disabled = false;
@@ -906,14 +965,14 @@ function populateVisitsLineFilter() {
       const l = userLines[0];
       const opt = document.createElement("option");
       opt.value = l.id;
-      opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+      opt.textContent = `📦 ${l.name}`;
       filterLine.appendChild(opt);
       filterLine.value = l.id;
       filterLine.disabled = true;
     } else {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = isAr ? "📦 لا توجد خطوط معينة" : "📦 No Line Assigned";
+      opt.textContent = "📦 No Line Assigned";
       filterLine.appendChild(opt);
       filterLine.disabled = true;
     }
@@ -939,8 +998,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
   const filterRep = document.getElementById("filterRep");
   if (!filterRep) return;
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
+
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const scopedTeam = window.getScopedTeamForLine
     ? window.getScopedTeamForLine(selectedLineId, currentUser)
@@ -954,16 +1012,14 @@ function populateManagerRepDropdown(selectedLineId = "all") {
   // Option: All Team in this line
   const optAll = document.createElement("option");
   optAll.value = "all";
-  optAll.textContent = isAr ? "🌐 كل الفريق في هذا الخط" : "🌐 All Team in Line";
+  optAll.textContent = "🌐 All Team in Line";
   filterRep.appendChild(optAll);
 
   // Self Option
   if (isManager && !isAdmin) {
     const optSelf = document.createElement("option");
     optSelf.value = currentUser.id;
-    optSelf.textContent = isAr
-      ? `👔 ${currentUser.name} (زياراتي الشخصية)`
-      : `👔 ${currentUser.name} (My Visits)`;
+    optSelf.textContent = `👔 ${currentUser.name} (My Visits)`;
     filterRep.appendChild(optSelf);
   }
 
@@ -992,7 +1048,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
 
     if (reps.length > 0 || myVacantAreas.length > 0) {
       const repGroup = document.createElement("optgroup");
-      repGroup.label = isAr ? "المناديب والمناطق الشاغرة (Team)" : "Team Reps & Vacant Areas";
+      repGroup.label = "Team Reps & Vacant Areas";
       reps.forEach((rep) => {
         const opt = document.createElement("option");
         opt.value = rep.id;
@@ -1004,8 +1060,8 @@ function populateManagerRepDropdown(selectedLineId = "all") {
         const opt = document.createElement("option");
         opt.value = `vacant:${area.id}`;
         opt.className = "filter-opt-vacant";
-        const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-        opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        const areaName = area.name;
+        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
         repGroup.appendChild(opt);
       });
       filterRep.appendChild(repGroup);
@@ -1021,7 +1077,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
 
     if (dms.length > 0) {
       const dmGroup = document.createElement("optgroup");
-      dmGroup.label = isAr ? "مدراء المناطق (District Managers)" : "District Managers (DMs)";
+      dmGroup.label = "District Managers (DMs)";
       dms.forEach((dm) => {
         const opt = document.createElement("option");
         opt.value = dm.id;
@@ -1045,7 +1101,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
 
         if (dmReps.length > 0 || dmVacantAreas.length > 0) {
           const group = document.createElement("optgroup");
-          group.label = isAr ? `فريق ${dm.name} (Reps)` : `Team ${dm.name} (Reps)`;
+          group.label = `Team ${dm.name} (Reps)`;
           dmReps.forEach((rep) => {
             const opt = document.createElement("option");
             opt.value = rep.id;
@@ -1057,8 +1113,8 @@ function populateManagerRepDropdown(selectedLineId = "all") {
             const opt = document.createElement("option");
             opt.value = `vacant:${area.id}`;
             opt.className = "filter-opt-vacant";
-            const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-            opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+            const areaName = area.name;
+            opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
             group.appendChild(opt);
           });
           filterRep.appendChild(group);
@@ -1070,7 +1126,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
       const unassignedVacant = vacantAreas.filter((a) => !assignedVacantIds.has(a.id));
       if (directOrOtherReps.length > 0 || unassignedVacant.length > 0) {
         const group = document.createElement("optgroup");
-        group.label = isAr ? "مناديب ومناطق أخرى" : "Other Reps & Vacant Areas";
+        group.label = "Other Reps & Vacant Areas";
         directOrOtherReps.forEach((rep) => {
           const opt = document.createElement("option");
           opt.value = rep.id;
@@ -1082,15 +1138,15 @@ function populateManagerRepDropdown(selectedLineId = "all") {
           const opt = document.createElement("option");
           opt.value = `vacant:${area.id}`;
           opt.className = "filter-opt-vacant";
-          const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-          opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+          const areaName = area.name;
+          opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
           group.appendChild(opt);
         });
         filterRep.appendChild(group);
       }
     } else {
       const repGroup = document.createElement("optgroup");
-      repGroup.label = isAr ? "المناديب الطبيين والمناطق الشاغرة" : "Medical Representatives & Vacant Areas";
+      repGroup.label = "Medical Representatives & Vacant Areas";
       reps.forEach((rep) => {
         const opt = document.createElement("option");
         opt.value = rep.id;
@@ -1102,8 +1158,8 @@ function populateManagerRepDropdown(selectedLineId = "all") {
         const opt = document.createElement("option");
         opt.value = `vacant:${area.id}`;
         opt.className = "filter-opt-vacant";
-        const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-        opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        const areaName = area.name;
+        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
         repGroup.appendChild(opt);
       });
       filterRep.appendChild(repGroup);
@@ -1220,8 +1276,7 @@ function getAvailableAreas() {
 }
 
 function populateAreaFilters() {
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
+
   const areas = getAvailableAreas();
 
   // Deduplicate by normalized area name to prevent duplicate labels (e.g. across lines)
@@ -1240,15 +1295,15 @@ function populateAreaFilters() {
     const curVal = timelineFilter.value || "all";
     let html = "";
     if (uniqueAreas.length === 0) {
-      const noAreasLabel = isAr ? "لا توجد مناطق معينة" : "No Assigned Areas";
+      const noAreasLabel = "No Assigned Areas";
       html = `<option value="" disabled selected>${noAreasLabel}</option>`;
     } else {
-      const allLabel = isAr ? "جميع المناطق" : "All Areas";
+      const allLabel = "All Areas";
       html = `<option value="all">${allLabel}</option>`;
       uniqueAreas.forEach((a) => {
         const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
         const isVacant = !a.repId;
-        const vacantTag = isVacant ? ` [${isAr ? "شاغرة" : "Vacant"}]` : "";
+        const vacantTag = isVacant ? " [Vacant]" : "";
         html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}${vacantTag}</option>`;
       });
     }
@@ -1260,15 +1315,15 @@ function populateAreaFilters() {
     const curVal = bulkFilter.value || "all";
     let html = "";
     if (uniqueAreas.length === 0) {
-      const noAreasLabel = isAr ? "لا توجد مناطق معينة" : "No Assigned Areas";
+      const noAreasLabel = "No Assigned Areas";
       html = `<option value="" disabled selected>${noAreasLabel}</option>`;
     } else {
-      const allLabel = isAr ? "جميع المناطق" : "All Areas";
+      const allLabel = "All Areas";
       html = `<option value="all">${allLabel}</option>`;
       uniqueAreas.forEach((a) => {
         const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
         const isVacant = !a.repId;
-        const vacantTag = isVacant ? ` [${isAr ? "شاغرة" : "Vacant"}]` : "";
+        const vacantTag = isVacant ? " [Vacant]" : "";
         html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}${vacantTag}</option>`;
       });
     }
@@ -1646,6 +1701,8 @@ const visitsApp = {
       return (nameMatch || specMatch || addrMatch) && classMatch && areaMatch;
     });
 
+    filtered.sort(window.sortBilingualByName || ((a, b) => (a.name || "").localeCompare(b.name || "")));
+
     if (filtered.length === 0) {
       container.innerHTML = `<div class="bulk-targets-empty">No matching targets found.</div>`;
       this.updateBulkCounter();
@@ -1655,8 +1712,6 @@ const visitsApp = {
     const planDateInput = document.getElementById("bulkPlanDate");
     const currentPlanDate = (planDateInput && planDateInput.value) || todayStr;
     const targetRepId = (currentUser && currentUser.id) || "rep1";
-    const isAr = isSysAr();
-
     filtered.forEach((target) => {
       let targetArea = target.area;
       if (!targetArea && target.areaId) {
@@ -1669,13 +1724,13 @@ const visitsApp = {
 
       const isAlready = isDoctorAlreadyVisitedToday(target.id, currentPlanDate, targetRepId);
       const scheduledBadge = isAlready
-        ? `<span class="badge bulk-target-already-badge">✓ ${isAr ? "مجدول بالفعل" : "Already Scheduled"}</span>`
+        ? `<span class="badge bulk-target-already-badge">✓ Already Scheduled</span>`
         : "";
 
       const itemDiv = document.createElement("label");
       itemDiv.className = `bulk-target-item${isAlready ? " bulk-target-already-scheduled" : ""}`;
       itemDiv.innerHTML = `
-        <input type="checkbox" class="bulk-target-cb" value="${target.id}" data-name="${target.name}" ${isAlready ? "disabled" : 'onchange="visitsApp.updateBulkCounter()"'} title="${isAlready ? (isAr ? 'مجدول بالفعل في هذا اليوم' : 'Already scheduled today') : ''}">
+        <input type="checkbox" class="bulk-target-cb" value="${target.id}" data-name="${target.name}" ${isAlready ? "disabled" : 'onchange="visitsApp.updateBulkCounter()"'} title="${isAlready ? 'Already scheduled today' : ''}">
         <div class="bulk-target-info">
           <div class="bulk-target-name">${target.name}${areaBadge}${scheduledBadge}</div>
           <div class="bulk-target-meta">
@@ -1709,17 +1764,13 @@ const visitsApp = {
     const counterEl = document.getElementById("bulkSelectionCounter");
     const saveBtn = document.getElementById("btnSaveBulkPlan");
     const selectAllCb = document.getElementById("bulkSelectAllToggle");
-    const isAr = isSysAr();
 
     const count = checkedBoxes.length;
     if (counterEl) {
-      counterEl.textContent = isAr ? `المحدد: ${count} أهداف` : `Selected: ${count} Targets`;
+      counterEl.textContent = `Selected: ${count} Targets`;
     }
     if (saveBtn) {
-      saveBtn.textContent =
-        count > 0
-          ? (isAr ? `حفظ ${count} زيارة مخططة` : `Save ${count} Planned Visits`)
-          : (isAr ? "حفظ الزيارات المخططة" : "Save Planned Visits");
+      saveBtn.textContent = count > 0 ? `Save ${count} Planned Visits` : "Save Planned Visits";
     }
     if (selectAllCb && allCheckboxes.length > 0) {
       selectAllCb.checked = checkedBoxes.length === allCheckboxes.length;
@@ -1732,13 +1783,13 @@ const visitsApp = {
     const originalBtnText = saveBtn ? saveBtn.textContent : "";
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.textContent = lang === "ar" ? "جاري الحفظ... ⏳" : "Saving... ⏳";
+      saveBtn.textContent = "Saving... ⏳";
     }
 
     const resetSaveBtn = () => {
       if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.textContent = originalBtnText || (lang === "ar" ? "حفظ الزيارات المخططة" : "Save Planned Visits");
+        saveBtn.textContent = originalBtnText || "Save Planned Visits";
       }
     };
 
@@ -1747,9 +1798,7 @@ const visitsApp = {
     );
     if (checkedBoxes.length === 0) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? "يرجى اختيار طبيب أو مستشفى واحد على الأقل."
-        : "Please select at least one doctor or hospital.";
+      const msg = "Please select at least one doctor or hospital.";
       showToast(msg, "warning");
       return;
     }
@@ -1757,9 +1806,7 @@ const visitsApp = {
     const planDate = document.getElementById("bulkPlanDate").value || todayStr;
     if (planDate < todayStr) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
-        : "Cannot plan visits in the past. Please select today or a future date.";
+      const msg = "Cannot plan visits in the past. Please select today or a future date.";
       showToast(msg, "warning");
       return;
     }
@@ -1790,9 +1837,7 @@ const visitsApp = {
 
     if (duplicateTargets.length > 0 && validBoxes.length === 0) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? `الأهداف المحددة مسجلة بالفعل في هذا اليوم: (${duplicateTargets.join("، ")}). لا يمكن تكرار الزيارة لنفس الطبيب مرتين في نفس اليوم.`
-        : `Selected targets are already scheduled/visited today: (${duplicateTargets.join(", ")}). Duplicate visits on the same day are not permitted.`;
+      const msg = `Selected targets are already scheduled/visited today: (${duplicateTargets.join(", ")}). Duplicate visits on the same day are not permitted.`;
       showToast(msg, "warning");
       return;
     }
@@ -1818,9 +1863,7 @@ const visitsApp = {
         ).length;
         const totalPm = existingPmCount + validBoxes.length;
         if (totalPm < minPmRequired) {
-          pmReminder = lang === "ar"
-            ? ` (تذكير: مستهدف اليوم ${minPmRequired} زيارات مسائية، تم تخطيط ${totalPm} حتى الآن)`
-            : ` (Note: Daily target is ${minPmRequired} PM visits, ${totalPm} planned so far)`;
+          pmReminder = ` (Note: Daily target is ${minPmRequired} PM visits, ${totalPm} planned so far)`;
         }
       }
     }
@@ -1891,19 +1934,14 @@ const visitsApp = {
     }
     renderVisits(true);
 
-    let successMsg =
-      lang === "ar"
-        ? `✓ تم حفظ ${validBoxes.length} زيارة مخطط لها بنجاح وإرسالها للاعتماد!`
-        : `✓ Successfully saved ${validBoxes.length} planned visit(s) for manager approval!`;
+    let successMsg = `✓ Successfully saved ${validBoxes.length} planned visit(s) for manager approval!`;
 
     if (pmReminder) {
       successMsg += pmReminder;
     }
 
     if (duplicateTargets.length > 0) {
-      successMsg += lang === "ar"
-        ? ` (تم تخطي الأطباء المكررين اليوم: ${duplicateTargets.join("، ")})`
-        : ` (Skipped duplicate targets: ${duplicateTargets.join(", ")})`;
+      successMsg += ` (Skipped duplicate targets: ${duplicateTargets.join(", ")})`;
     }
 
     showToast(successMsg, "success");
@@ -1942,7 +1980,7 @@ function updateVisitModalDayDisplay() {
   const dateInput = document.getElementById("visitDate");
   const displayEl = document.getElementById("visitModalDayName");
   if (!dateInput || !displayEl) return;
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "ar";
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const dt = formatVisitDateTime(dateInput.value, null, lang);
   displayEl.textContent = dt.dayName ? `📅 ${dt.dayName}` : "";
 }
@@ -2264,6 +2302,11 @@ function renderVisitsTimeline(triggeredByShow = false) {
     (a.time || "00:00").localeCompare(b.time || "00:00"),
   );
 
+  let medicalCount = 0;
+  let pharmacyCount = 0;
+  const pContainer = document.getElementById("timelinePharmacyEventsContainer");
+  if (pContainer) pContainer.replaceChildren();
+
   sortedTimeline.forEach((v) => {
     const isActivity = v.type === "activity";
     const isJoint = v.visitType === "double" || !!v.doubleWithUserId;
@@ -2278,7 +2321,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
       borderClass = "missed-border";
       dotClass = "missed";
       badgeClass = "missed";
-      badgeLabel = lang === "ar" ? "تعذر المقابلة" : "Missed Call";
+      badgeLabel = "Missed Call";
     } else if (isActivity) {
       borderClass = "actual-border";
       dotClass = "actual";
@@ -2312,16 +2355,10 @@ function renderVisitsTimeline(triggeredByShow = false) {
 
     const repRoleLabel =
       repUser && repUser.role === "district_manager"
-        ? lang === "ar"
-          ? "مدير المنطقة"
-          : "DM"
+        ? "DM"
         : repUser && repUser.role === "line_manager"
-          ? lang === "ar"
-            ? "مدير الخط"
-            : "LM"
-          : lang === "ar"
-            ? "المندوب"
-            : "Rep";
+          ? "LM"
+          : "Rep";
 
     let accompanimentNote = "";
     if (isJoint) {
@@ -2334,11 +2371,11 @@ function renderVisitsTimeline(triggeredByShow = false) {
         partnerName =
           v.repId === currentUser.id ? "Team Rep" : currentUser.name;
       }
-      accompanimentNote = ` • <span class="accompaniment-note-joint">🤝 ${lang === "ar" ? "نزول مشترك مع:" : "Co-visiting with:"} ${window.escapeHtml(partnerName)}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-joint">🤝 Co-visiting with: ${window.escapeHtml(partnerName)}</span>`;
     } else if (repUser && repUser.role === "district_manager") {
       accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
     } else if (repUser && repUser.role === "line_manager") {
-      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${lang === "ar" ? "زيارة إشرافية (LM)" : "Supervisory Visit (LM)"}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 Supervisory Visit (LM)</span>`;
     } else if (v.repId === currentUser.id && isManager) {
       accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
     }
@@ -2347,11 +2384,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
       v.targetType === "pharmacy" ||
       (v.period || "").toLowerCase() === "pharmacy" ||
       (v.doctorId && String(v.doctorId).startsWith("pharm"));
-    const periodDisplay = isPharmVisit
-      ? lang === "ar"
-        ? "صيدلية"
-        : "PHARM"
-      : (v.period || "PM").toUpperCase();
+    const periodDisplay = isPharmVisit ? "PHARM" : (v.period || "PM").toUpperCase();
 
     let targetArea = v.area;
     if (!targetArea) {
@@ -2391,13 +2424,13 @@ function renderVisitsTimeline(triggeredByShow = false) {
           (() => {
             const cardProds = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
             return cardProds.length > 0
-              ? `<div class="timeline-products-row"><strong>${lang === "ar" ? "المنتجات:" : "Products:"}</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
+              ? `<div class="timeline-products-row"><strong>Products:</strong> ${cardProds.map((p) => window.escapeHtml(p)).join(", ")}</div>`
               : "";
           })()
         }
         ${
           v.giveawaySamples
-            ? `<div class="timeline-samples-row"><strong>${lang === "ar" ? "عينات ومواد دعائية:" : "Giveaway Samples:"}</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
+            ? `<div class="timeline-samples-row"><strong>Giveaway Samples:</strong> ${window.escapeHtml(v.giveawaySamples)}</div>`
             : ""
         }
         ${
@@ -2407,12 +2440,12 @@ function renderVisitsTimeline(triggeredByShow = false) {
         }
         ${
           v.status === "missed" && v.missedReason
-            ? `<div class="timeline-missed-reason"><strong>${lang === "ar" ? "سبب تعذر المقابلة:" : "Missed Reason:"}</strong> "${window.escapeHtml(v.missedReason)}"</div>`
+            ? `<div class="timeline-missed-reason"><strong>Missed Reason:</strong> "${window.escapeHtml(v.missedReason)}"</div>`
             : ""
         }
         ${
           v.lastRescheduleReason
-            ? `<div class="timeline-rescheduled-reason"><strong>${lang === "ar" ? "مؤجلة سابقاً بسبب:" : "Rescheduled Reason:"}</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
+            ? `<div class="timeline-rescheduled-reason"><strong>Rescheduled Reason:</strong> "${window.escapeHtml(v.lastRescheduleReason)}"</div>`
             : ""
         }
         ${(() => {
@@ -2420,11 +2453,11 @@ function renderVisitsTimeline(triggeredByShow = false) {
           const insTime = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00"));
           return `
             <div class="timeline-timestamp-chip" style="display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;">
-              <span><strong>📅 ${lang === "ar" ? "يوم الزيارة:" : "Visit Day:"}</strong> ${v.date} ${periodDisplay}</span>
-              <span><strong>⏰ ${lang === "ar" ? "وقت الزيارة:" : "Visit Time:"}</strong> ${v.time || "10:00"}</span>
+              <span><strong>📅 Visit Day:</strong> ${v.date} ${periodDisplay}</span>
+              <span><strong>⏰ Visit Time:</strong> ${v.time || "10:00"}</span>
               <span style="opacity: 0.95; border-inline-start: 1px solid currentColor; padding-inline-start: 10px;">
-                <strong>📥 ${lang === "ar" ? "تاريخ الإدخال:" : "Insertion Date:"}</strong> ${insDate}
-                • <strong>${lang === "ar" ? "الوقت:" : "Time:"}</strong> ${insTime}
+                <strong>📥 Insertion Date:</strong> ${insDate}
+                • <strong>Time:</strong> ${insTime}
               </span>
             </div>
           `;
@@ -2439,7 +2472,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
               ✓ ${trans.btnComplete}
             </button>
             <button type="button" class="btn btn-timeline-reschedule" onclick="openRescheduleModal('${v.id}')">
-              🗓️ ${lang === "ar" ? "تأجيل الزيارة" : "Reschedule"}
+              🗓️ Reschedule
             </button>
             ${
               canDeleteVisit(v)
@@ -2456,12 +2489,62 @@ function renderVisitsTimeline(triggeredByShow = false) {
         `
               : ""
         }
+    `;
+
+    if (isPharmVisit) {
+      pharmacyCount++;
+      const pharmContainer = document.getElementById("timelinePharmacyEventsContainer");
+      if (pharmContainer) pharmContainer.appendChild(card);
+      else container.appendChild(card);
+    } else {
+      medicalCount++;
+      container.appendChild(card);
+    }
+  });
+
+  // Empty states per section
+  if (medicalCount === 0) {
+    container.innerHTML = `
+      <div class="timeline-empty-card timeline-empty-card-wrapper" style="text-align: center; padding: 32px 16px;">
+        <span class="timeline-empty-icon">🩺</span>
+        <h4 class="timeline-target-title timeline-empty-title">No Doctor or Hospital visits on this day</h4>
       </div>
     `;
-    container.appendChild(card);
-  });
+  }
+  const pharmContainer = document.getElementById("timelinePharmacyEventsContainer");
+  if (pharmContainer && pharmacyCount === 0) {
+    pharmContainer.innerHTML = `
+      <div class="timeline-empty-card timeline-empty-card-wrapper" style="text-align: center; padding: 32px 16px;">
+        <span class="timeline-empty-icon">💊</span>
+        <h4 class="timeline-target-title timeline-empty-title">No Pharmacy visits recorded on this day</h4>
+      </div>
+    `;
+  }
+
   updateAdminGpsButton();
 }
+
+window.currentVisitsScope = "medical";
+window.switchVisitsScope = function (scope) {
+  window.currentVisitsScope = scope;
+  const btnMedical = document.getElementById("btnScopeMedical");
+  const btnPharm = document.getElementById("btnScopePharmacy");
+  const secMedical = document.getElementById("medicalVisitsSection");
+  const secPharm = document.getElementById("pharmacyVisitsSection");
+
+  if (scope === "pharmacy") {
+    if (btnPharm) { btnPharm.classList.add("active"); btnPharm.classList.remove("btn-outline"); }
+    if (btnMedical) { btnMedical.classList.remove("active"); btnMedical.classList.add("btn-outline"); }
+    if (secPharm) secPharm.style.display = "block";
+    if (secMedical) secMedical.style.display = "none";
+  } else {
+    if (btnMedical) { btnMedical.classList.add("active"); btnMedical.classList.remove("btn-outline"); }
+    if (btnPharm) { btnPharm.classList.remove("active"); btnPharm.classList.add("btn-outline"); }
+    if (secMedical) secMedical.style.display = "block";
+    if (secPharm) secPharm.style.display = "none";
+  }
+};
+
 
 function populateVisitProducts(selectedProducts = [], targetRepId = null) {
   const container = document.getElementById("visitProducts");
@@ -2663,7 +2746,7 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
 
   if (candidates.length === 0) {
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    container.innerHTML = `<span class="candidates-empty-msg">${lang === "ar" ? "لا يوجد زملاء أو مدراء متاحين للاختيار" : "No colleagues or managers available for companion selection."}</span>`;
+    container.innerHTML = `<span class="candidates-empty-msg">No colleagues or managers available for companion selection.</span>`;
     return;
   }
 
@@ -2712,9 +2795,7 @@ function openVisitModal(isActual = false) {
   const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
   if (saveBtn) {
     saveBtn.disabled = false;
-    saveBtn.innerText = isActual
-      ? (lang === "ar" ? "تسجيل وحفظ الزيارة" : "Log & Save Visit")
-      : (lang === "ar" ? "حفظ الزيارة" : "Save Visit");
+    saveBtn.innerText = isActual ? "Log & Save Visit" : "Save Visit";
   }
   const checkGpsBtn = document.getElementById("btnCheckMyGps");
   if (checkGpsBtn) checkGpsBtn.disabled = false;
@@ -2749,8 +2830,8 @@ function openVisitModal(isActual = false) {
     insertionMeta.style.display = "block";
     const curDate = now.toISOString().slice(0, 10);
     const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    if (insDateEl) insDateEl.innerText = `${curDate} (${lang === "ar" ? "تلقائي عند الحفظ" : "Auto on Save"})`;
-    if (insTimeEl) insTimeEl.innerText = `${curTime} (${lang === "ar" ? "تلقائي عند الحفظ" : "Auto on Save"})`;
+    if (insDateEl) insDateEl.innerText = `${curDate} (Auto on Save)`;
+    if (insTimeEl) insTimeEl.innerText = `${curTime} (Auto on Save)`;
   }
 
   const commentEl = document.getElementById("visitComment");
@@ -2842,8 +2923,6 @@ function setupModalTargetFilter() {
     return;
   }
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
   const allUsers =
     (window.store && window.store.users
       ? window.store.users.getAll()
@@ -2858,11 +2937,9 @@ function setupModalTargetFilter() {
 
   if (role === "district_manager") {
     if (filterLabel) {
-      filterLabel.textContent = isAr
-        ? "تصفية الأطباء حسب المندوب:"
-        : "Filter Doctors by Medical Rep:";
+      filterLabel.textContent = "Filter Doctors by Medical Rep:";
     }
-    allOpt.textContent = isAr ? "👥 جميع أطباء فريقي" : "👥 All My Team Doctors";
+    allOpt.textContent = "👥 All My Team Doctors";
     filterSelect.appendChild(allOpt);
 
     let myReps = allUsers.filter(
@@ -2880,7 +2957,7 @@ function setupModalTargetFilter() {
     myReps.forEach((rep) => {
       const opt = document.createElement("option");
       opt.value = rep.id;
-      const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
+      const repName = rep.name;
       opt.textContent = `👤 ${repName}`;
       filterSelect.appendChild(opt);
     });
@@ -2901,17 +2978,15 @@ function setupModalTargetFilter() {
     myVacantAreas.forEach((va) => {
       const opt = document.createElement("option");
       opt.value = `vacant:${va.id}`;
-      const vaName = isAr && va.nameAr ? va.nameAr : va.name;
-      opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+      const vaName = va.name;
+      opt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
       filterSelect.appendChild(opt);
     });
   } else if (role === "line_manager") {
     if (filterLabel) {
-      filterLabel.textContent = isAr
-        ? "تصفية الأطباء حسب مدير المنطقة (DM):"
-        : "Filter Doctors by District Manager (DM):";
+      filterLabel.textContent = "Filter Doctors by District Manager (DM):";
     }
-    allOpt.textContent = isAr ? "👥 جميع أطباء الخط" : "👥 All Line Doctors";
+    allOpt.textContent = "👥 All Line Doctors";
     filterSelect.appendChild(allOpt);
 
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -2943,7 +3018,7 @@ function setupModalTargetFilter() {
     }
     const assignedVacant = new Set();
     myDms.forEach((dm) => {
-      const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
+      const dmName = dm.name;
       const opt = document.createElement("option");
       opt.value = `dm:${dm.id}`;
       opt.textContent = `👔 ${dmName} (DM)`;
@@ -2962,7 +3037,7 @@ function setupModalTargetFilter() {
         });
       }
       dmReps.forEach((rep) => {
-        const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
+        const repName = rep.name;
         const repOpt = document.createElement("option");
         repOpt.value = `rep:${rep.id}`;
         repOpt.textContent = `　↳ 👤 ${repName}`;
@@ -2975,10 +3050,10 @@ function setupModalTargetFilter() {
       });
       dmVacant.forEach((va) => {
         assignedVacant.add(va.id);
-        const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+        const vaName = va.name;
         const vaOpt = document.createElement("option");
         vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `　↳ 📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaOpt.textContent = `　↳ 📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
         filterSelect.appendChild(vaOpt);
       });
     });
@@ -2987,17 +3062,15 @@ function setupModalTargetFilter() {
     unassignedVacant.forEach((va) => {
       const opt = document.createElement("option");
       opt.value = `vacant:${va.id}`;
-      const vaName = isAr && va.nameAr ? va.nameAr : va.name;
-      opt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+      const vaName = va.name;
+      opt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
       filterSelect.appendChild(opt);
     });
   } else if (role === "business_unit" || role === "admin") {
     if (filterLabel) {
-      filterLabel.textContent = isAr
-        ? "تصفية الأطباء بالمدير (LM / DM):"
-        : "Filter Doctors by Manager (LM / DM):";
+      filterLabel.textContent = "Filter Doctors by Manager (LM / DM):";
     }
-    allOpt.textContent = isAr ? "👥 جميع الأطباء" : "👥 All Doctors";
+    allOpt.textContent = "👥 All Doctors";
     filterSelect.appendChild(allOpt);
 
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -3037,9 +3110,9 @@ function setupModalTargetFilter() {
 
     if (lms.length > 0) {
       const lmGrp = document.createElement("optgroup");
-      lmGrp.label = isAr ? "مديرو الخطوط (Line Managers)" : "Line Managers (LMs)";
+      lmGrp.label = "Line Managers (LMs)";
       lms.forEach((lm) => {
-        const lmName = isAr && lm.nameAr ? lm.nameAr : lm.name;
+        const lmName = lm.name;
         const opt = document.createElement("option");
         opt.value = `lm:${lm.id}`;
         opt.textContent = `👔 ${lmName} (LM)`;
@@ -3075,17 +3148,11 @@ function setupModalTargetFilter() {
     const assignedVacant = new Set();
     if (dms.length > 0) {
       const dmGrp = document.createElement("optgroup");
-      dmGrp.label = isAr
-        ? "مديرو المناطق (District Managers)"
-        : "District Managers (DMs)";
+      dmGrp.label = "District Managers (DMs)";
       dms.forEach((dm) => {
-        const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
+        const dmName = dm.name;
         const parentLm = allUsers.find((u) => u.id === dm.managerId);
-        const parentName = parentLm
-          ? isAr && parentLm.nameAr
-            ? parentLm.nameAr
-            : parentLm.name
-          : "";
+        const parentName = parentLm ? parentLm.name : "";
         const opt = document.createElement("option");
         opt.value = `dm:${dm.id}`;
         opt.textContent = `👔 ${dmName} (DM${parentName ? " - " + parentName : ""})`;
@@ -3097,10 +3164,10 @@ function setupModalTargetFilter() {
         });
         dmVacant.forEach((va) => {
           assignedVacant.add(va.id);
-          const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+          const vaName = va.name;
           const vaOpt = document.createElement("option");
           vaOpt.value = `vacant:${va.id}`;
-          vaOpt.textContent = `　↳ 📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+          vaOpt.textContent = `　↳ 📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
           dmGrp.appendChild(vaOpt);
         });
       });
@@ -3110,23 +3177,21 @@ function setupModalTargetFilter() {
     const unassignedVacant = buVacant.filter((a) => !assignedVacant.has(a.id));
     if (unassignedVacant.length > 0) {
       const vaGrp = document.createElement("optgroup");
-      vaGrp.label = isAr ? "مناطق شاغرة أخرى" : "Other Vacant Areas";
+      vaGrp.label = "Other Vacant Areas";
       unassignedVacant.forEach((va) => {
-        const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+        const vaName = va.name;
         const vaOpt = document.createElement("option");
         vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaOpt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
         vaGrp.appendChild(vaOpt);
       });
       filterSelect.appendChild(vaGrp);
     }
   } else if (role === "product_manager") {
     if (filterLabel) {
-      filterLabel.textContent = isAr
-        ? "تصفية الأهداف حسب عضو الفريق في الخط:"
-        : "Filter Targets by Line Team Member:";
+      filterLabel.textContent = "Filter Targets by Line Team Member:";
     }
-    allOpt.textContent = isAr ? "👥 جميع أهداف الخط" : "👥 All Line Targets";
+    allOpt.textContent = "👥 All Line Targets";
     filterSelect.appendChild(allOpt);
 
     const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
@@ -3141,9 +3206,9 @@ function setupModalTargetFilter() {
     });
     if (lineLMs.length > 0) {
       const lmGrp = document.createElement("optgroup");
-      lmGrp.label = isAr ? "مديرو الخطوط (Line Managers)" : "Line Managers (LMs)";
+      lmGrp.label = "Line Managers (LMs)";
       lineLMs.forEach((lm) => {
-        const lmName = isAr && lm.nameAr ? lm.nameAr : lm.name;
+        const lmName = lm.name;
         const opt = document.createElement("option");
         opt.value = `lm:${lm.id}`;
         opt.textContent = `👔 ${lmName} (LM)`;
@@ -3160,9 +3225,9 @@ function setupModalTargetFilter() {
     });
     if (lineDMs.length > 0) {
       const dmGrp = document.createElement("optgroup");
-      dmGrp.label = isAr ? "مديرو المناطق (District Managers)" : "District Managers (DMs)";
+      dmGrp.label = "District Managers (DMs)";
       lineDMs.forEach((dm) => {
-        const dmName = isAr && dm.nameAr ? dm.nameAr : dm.name;
+        const dmName = dm.name;
         const opt = document.createElement("option");
         opt.value = `dm:${dm.id}`;
         opt.textContent = `👔 ${dmName} (DM)`;
@@ -3179,9 +3244,9 @@ function setupModalTargetFilter() {
     });
     if (lineReps.length > 0) {
       const repGrp = document.createElement("optgroup");
-      repGrp.label = isAr ? "المندوبون (Medical Reps)" : "Medical Reps";
+      repGrp.label = "Medical Reps";
       lineReps.forEach((rep) => {
-        const repName = isAr && rep.nameAr ? rep.nameAr : rep.name;
+        const repName = rep.name;
         const opt = document.createElement("option");
         opt.value = `rep:${rep.id}`;
         opt.textContent = `👤 ${repName}`;
@@ -3198,12 +3263,12 @@ function setupModalTargetFilter() {
     }
     if (pmVacant.length > 0) {
       const vaGrp = document.createElement("optgroup");
-      vaGrp.label = isAr ? "مناطق شاغرة (Vacant Areas)" : "Vacant Areas";
+      vaGrp.label = "Vacant Areas";
       pmVacant.forEach((va) => {
-        const vaName = isAr && va.nameAr ? va.nameAr : va.name;
+        const vaName = va.name;
         const vaOpt = document.createElement("option");
         vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `📍 [${isAr ? "شاغرة" : "Vacant"}] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaOpt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
         vaGrp.appendChild(vaOpt);
       });
       filterSelect.appendChild(vaGrp);
@@ -3237,8 +3302,6 @@ function updateTargetOptions() {
   if (!targetSelect) return;
   targetSelect.replaceChildren();
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
   const role = window.normalizeRole
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
@@ -3288,7 +3351,7 @@ function updateTargetOptions() {
 
   if (period.toLowerCase() === "am") {
     const allHosps = getMockHospitals();
-    if (targetLabel) targetLabel.textContent = isAr ? "المستشفى" : "Hospital";
+    if (targetLabel) targetLabel.textContent = "Hospital";
     if (selectedFilter && selectedFilter.startsWith("vacant:")) {
       const vAreaId = selectedFilter.split(":")[1];
       const vArea = allAreas.find((a) => a.id === vAreaId);
@@ -3342,7 +3405,7 @@ function updateTargetOptions() {
     }
   } else if (period.toLowerCase() === "pharmacy") {
     const allPharms = getMockPharmacies();
-    if (targetLabel) targetLabel.textContent = isAr ? "الصيدلية" : "Pharmacy";
+    if (targetLabel) targetLabel.textContent = "Pharmacy";
     if (selectedFilter && selectedFilter.startsWith("vacant:")) {
       const vAreaId = selectedFilter.split(":")[1];
       const vArea = allAreas.find((a) => a.id === vAreaId);
@@ -3395,7 +3458,7 @@ function updateTargetOptions() {
       options = allPharms;
     }
   } else {
-    if (targetLabel) targetLabel.textContent = isAr ? "الطبيب" : "Doctor";
+    if (targetLabel) targetLabel.textContent = "Doctor";
     const allDocs = getMockDoctors();
 
     const inactiveUserIds = allUsers
@@ -3604,22 +3667,43 @@ function updateTargetOptions() {
   if (options.length === 0) {
     const emptyOpt = document.createElement("option");
     emptyOpt.value = "";
-    emptyOpt.textContent = isAr
-      ? "-- لا توجد أهداف مطابقة --"
-      : "-- No targets found --";
+    emptyOpt.textContent = "-- No targets found --";
     emptyOpt.disabled = true;
     emptyOpt.selected = true;
     targetSelect.appendChild(emptyOpt);
     return;
   }
 
+  const currentVisitLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  options.sort(window.sortBilingualByName || ((a, b) => {
+    const nA = (currentVisitLang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
+    const nB = (currentVisitLang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
+    return nA.localeCompare(nB, currentVisitLang === "ar" ? ["ar", "en"] : ["en", "ar"], { numeric: true, sensitivity: "base" });
+  }));
+
   options.forEach((opt) => {
     const o = document.createElement("option");
     o.value = opt.id;
-    const displayName = isAr ? (opt.nameAr || opt.name) : (opt.name || opt.nameAr);
+    const displayName = (currentVisitLang === "ar" && opt.nameAr) ? opt.nameAr : (opt.name || opt.nameAr || "");
     o.textContent = displayName;
     targetSelect.appendChild(o);
   });
+
+  // Pharmacies are strictly exempt from GPS tracking & location validation
+  const gpsSec = document.getElementById("visitGpsSection");
+  if (gpsSec) {
+    if (period.toLowerCase() === "pharmacy") {
+      gpsSec.style.display = "none";
+    } else {
+      const companySettings = (window.store && window.store.companySettings)
+        ? window.store.companySettings.get()
+        : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+      const isActualModal = document.getElementById("visitModalTitle")?.getAttribute("data-mode") === "actual" || true;
+      if (companySettings.requireGpsValidation) {
+        gpsSec.style.display = "block";
+      }
+    }
+  }
 }
 
 function toggleDoubleVisit() {
@@ -3644,7 +3728,7 @@ function openCompleteModal(visitId) {
   const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
   if (saveBtn) {
     saveBtn.disabled = false;
-    saveBtn.innerText = lang === "ar" ? "اعتماد وإتمام الزيارة" : "Complete Visit";
+    saveBtn.innerText = "Complete Visit";
   }
   const checkGpsBtn = document.getElementById("btnCheckMyGps");
   if (checkGpsBtn) checkGpsBtn.disabled = false;
@@ -3675,8 +3759,8 @@ function openCompleteModal(visitId) {
     const now = new Date();
     const curDate = now.toISOString().slice(0, 10);
     const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    if (insDateEl) insDateEl.innerText = `${curDate} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
-    if (insTimeEl) insTimeEl.innerText = `${curTime} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+    if (insDateEl) insDateEl.innerText = `${curDate} (Auto on Complete)`;
+    if (insTimeEl) insTimeEl.innerText = `${curTime} (Auto on Complete)`;
   }
 
   const periodValue =
@@ -3745,7 +3829,7 @@ function closeVisitModal() {
   if (saveBtn) {
     saveBtn.disabled = false;
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    saveBtn.innerText = lang === "ar" ? "حفظ الزيارة" : "Save Visit";
+    saveBtn.innerText = "Save Visit";
   }
 }
 
@@ -3755,13 +3839,13 @@ function saveVisit() {
   if (saveBtn) {
     if (saveBtn.disabled) return;
     saveBtn.disabled = true;
-    saveBtn.innerText = lang === "ar" ? "جاري التحقق والحفظ... ⏳" : "Saving... ⏳";
+    saveBtn.innerText = "Saving... ⏳";
   }
 
   const resetSaveBtn = () => {
     if (saveBtn) {
       saveBtn.disabled = false;
-      saveBtn.innerText = lang === "ar" ? "حفظ الزيارة" : "Save Visit";
+      saveBtn.innerText = "Save Visit";
     }
   };
 
@@ -3775,9 +3859,7 @@ function saveVisit() {
   if (modalSource === "plan" && !currentEditVisitId) {
     if (visitDate < todayStr) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? "لا يمكن جدولة خطة في تاريخ سابق. يرجى اختيار تاريخ اليوم أو تاريخ مستقبلي."
-        : "Cannot plan visits in the past. Please select today or a future date.";
+      const msg = "Cannot plan visits in the past. Please select today or a future date.";
       showToast(msg, "warning");
       return;
     }
@@ -3785,9 +3867,7 @@ function saveVisit() {
     const twoDaysAgoStr = getTwoDaysAgoStr();
     if (visitDate > todayStr) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
-        : "Cannot log an actual visit in a future date.";
+      const msg = "Cannot log an actual visit in a future date.";
       showToast(msg, "warning");
       return;
     }
@@ -3800,13 +3880,9 @@ function saveVisit() {
 
     if (visitDate < minBacklogDate) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? (limitDays === 0
-            ? "وفقاً لسياسة الشركة، يجب تسجيل الزيارات الفعلية في نفس اليوم فقط."
-            : `وفقاً لسياسة الشركة، لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من ${limitDays} ${limitDays === 1 ? "يوم" : limitDays === 2 ? "يومين" : "أيام"} على تاريخها.`)
-        : (limitDays === 0
-            ? "Company policy requires same-day visit logging only."
-            : `Company policy does not allow logging visits older than ${limitDays} day(s).`);
+      const msg = limitDays === 0
+        ? "Company policy requires same-day visit logging only."
+        : `Company policy does not allow logging visits older than ${limitDays} day(s).`;
       showToast(msg, "warning");
       return;
     }
@@ -3831,13 +3907,9 @@ function saveVisit() {
     const conflictingTime = timeConflict.conflictingVisit.time || visitTime;
     let conflictMsg;
     if (timeConflict.exactMatch) {
-      conflictMsg = lang === "ar"
-        ? `⚠️ يوجد زيارة مسجلة بالفعل في نفس التوقيت (${visitTime}) لدكتور/هدف آخر (${conflictingTarget}). يرجى ضبط توقيت الزيارة.`
-        : `⚠️ A visit is already recorded at the exact same time (${visitTime}) for another target (${conflictingTarget}). Please adjust visit time.`;
+      conflictMsg = `⚠️ A visit is already recorded at the exact same time (${visitTime}) for another target (${conflictingTarget}). Please adjust visit time.`;
     } else {
-      conflictMsg = lang === "ar"
-        ? `⚠️ الفارق الزمني بين الزيارات يجب ألا يقل عن ${timeConflict.minRequired} دقائق عند تفعيل تسجيل الزيارات بالموقع (GPS). توجد زيارة أخرى في (${conflictingTime}) لـ (${conflictingTarget}).`
-        : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
+      conflictMsg = `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
     }
     showToast(conflictMsg, "warning");
     return;
@@ -3854,9 +3926,7 @@ function saveVisit() {
     );
     if (companionCbs.length === 0) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? "يرجى تحديد المرافق في الزيارة المزدوجة."
-        : "Please select at least one companion for the double visit.";
+      const msg = "Please select at least one companion for the double visit.";
       showToast(msg, "warning");
       return;
     }
@@ -3876,9 +3946,7 @@ function saveVisit() {
       const compCheck = checkVisitDateAllowed(visitDate, doubleWithUserId, lang);
       if (!compCheck.allowed) {
         resetSaveBtn();
-        const cMsg = lang === "ar"
-          ? `⚠️ المرافق المحدد في الزيارة المشتركة لديه إجازة مسجلة أو عطلة في هذا التاريخ (${visitDate}).`
-          : `⚠️ The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
+        const cMsg = `⚠️ The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
         showToast(cMsg, "warning");
         return;
       }
@@ -3938,13 +4006,15 @@ function saveVisit() {
         if (gpsPayload) {
           visit.gpsStatus = gpsPayload.status;
           if (gpsPayload.distanceMeters != null) visit.distanceMeters = gpsPayload.distanceMeters;
+          if (gpsPayload.deviceLat != null) visit.deviceLat = gpsPayload.deviceLat;
+          if (gpsPayload.deviceLng != null) visit.deviceLng = gpsPayload.deviceLng;
+          if (gpsPayload.targetLat != null) visit.targetLat = gpsPayload.targetLat;
+          if (gpsPayload.targetLng != null) visit.targetLng = gpsPayload.targetLng;
         }
         persistVisits();
         closeVisitModal();
         renderVisits(true);
-        const successMsg = lang === "ar"
-          ? "تم تسجيل وحفظ الزيارة بنجاح."
-          : "Visit saved successfully.";
+        const successMsg = "Visit saved successfully.";
         showToast(successMsg, "success");
       };
 
@@ -3954,15 +4024,16 @@ function saveVisit() {
           if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
             const allDocs = getMockDoctors();
             const allHosps = getMockHospitals();
-            const targetItem = allDocs.find((d) => d.id === visit.doctorId) || allHosps.find((h) => h.id === visit.doctorId);
+            const allPharms = getMockPharmacies();
+            const targetItem = allDocs.find((d) => d.id === visit.doctorId) || allHosps.find((h) => h.id === visit.doctorId) || allPharms.find((p) => p.id === visit.doctorId);
             if (targetItem && targetItem.lat != null && targetItem.lng != null) {
               const dist = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
               const maxDist = companySettings.gpsMaxDistanceMeters || 200;
               gpsPayload = dist <= maxDist
-                ? { status: "in_range", distanceMeters: dist }
-                : { status: "out_of_range", distanceMeters: dist };
+                ? { status: "in_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng }
+                : { status: "out_of_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng };
             } else {
-              gpsPayload = { status: "no_target_coords", distanceMeters: null };
+              gpsPayload = { status: "no_target_coords", distanceMeters: null, deviceLat: loc.lat, deviceLng: loc.lng };
             }
           }
           finalizeEdit(gpsPayload);
@@ -3980,17 +4051,14 @@ function saveVisit() {
     const targetId = targetSelect ? targetSelect.value : "";
     if (!targetId) {
       resetSaveBtn();
-      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-      showToast(isAr ? "يرجى اختيار الهدف أولاً" : "Please select a target first", "warning");
+      showToast("Please select a target first", "warning");
       return;
     }
 
     // Duplicate check on same date for same rep (excluding rejected visits)
     if (isDoctorAlreadyVisitedToday(targetId, visitDate, currentUser.id, currentEditVisitId)) {
       resetSaveBtn();
-      const msg = lang === "ar"
-        ? "تم تسجيل أو جدولة زيارة لهذا الطبيب بالفعل في هذا اليوم. لا يمكن تكرار زيارة نفس الطبيب مرتين في نفس اليوم."
-        : "A visit for this target is already logged or scheduled today. Duplicate visits to the same target on the same day are not allowed.";
+      const msg = "A visit for this target is already logged or scheduled today. Duplicate visits to the same target on the same day are not allowed.";
       return showToast(msg, "warning");
     }
 
@@ -4071,6 +4139,10 @@ function saveVisit() {
       if (gpsPayload) {
         newVisit.gpsStatus = gpsPayload.status;
         if (gpsPayload.distanceMeters != null) newVisit.distanceMeters = gpsPayload.distanceMeters;
+        if (gpsPayload.deviceLat != null) newVisit.deviceLat = gpsPayload.deviceLat;
+        if (gpsPayload.deviceLng != null) newVisit.deviceLng = gpsPayload.deviceLng;
+        if (gpsPayload.targetLat != null) newVisit.targetLat = gpsPayload.targetLat;
+        if (gpsPayload.targetLng != null) newVisit.targetLng = gpsPayload.targetLng;
       }
       getLiveVisits();
       demoVisits.unshift(newVisit);
@@ -4078,10 +4150,7 @@ function saveVisit() {
       closeVisitModal();
       renderVisits(true);
 
-      const successMsg =
-        lang === "ar"
-          ? (modalSource === "plan" ? "تم حفظ الزيارة المخططة وإرسالها للاعتماد بنجاح." : "تم تسجيل وحفظ الزيارة بنجاح.")
-          : (modalSource === "plan" ? "Visit planned and submitted for approval successfully." : "Visit saved successfully.");
+      const successMsg = modalSource === "plan" ? "Visit planned and submitted for approval successfully." : "Visit saved successfully.";
       showToast(successMsg, "success");
     };
 
@@ -4095,15 +4164,16 @@ function saveVisit() {
         if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
           const allDocs = getMockDoctors();
           const allHosps = getMockHospitals();
-          const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId);
+          const allPharms = getMockPharmacies();
+          const targetItem = allDocs.find((d) => d.id === targetId) || allHosps.find((h) => h.id === targetId) || allPharms.find((p) => p.id === targetId);
           if (targetItem && targetItem.lat != null && targetItem.lng != null) {
             const dist = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
             const maxDist = companySettings.gpsMaxDistanceMeters || 200;
             gpsPayload = dist <= maxDist
-              ? { status: "in_range", distanceMeters: dist }
-              : { status: "out_of_range", distanceMeters: dist };
+              ? { status: "in_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng }
+              : { status: "out_of_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng };
           } else {
-            gpsPayload = { status: "no_target_coords", distanceMeters: null };
+            gpsPayload = { status: "no_target_coords", distanceMeters: null, deviceLat: loc.lat, deviceLng: loc.lng };
           }
         }
         finalizeNewSave(gpsPayload);
@@ -4146,15 +4216,11 @@ function exportVisitsToCSV() {
     filtered = filtered.filter((v) => v.repId === fRep);
   }
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
   let exportDate = null;
 
   if (fDate) {
     const exportDayOnly = confirm(
-      isAr
-        ? `هل تريد تصدير زيارات تاريخ اليوم المختار (${fDate}) فقط؟\n\n• اضغط (موافق / OK) لتصدير زيارات هذا اليوم فقط.\n• اضغط (إلغاء / Cancel) لتصدير كامل سجل الزيارات لجميع التواريخ.`
-        : `Do you want to export visits for the selected date (${fDate}) only?\n\n• Click (OK) to export visits for this date only.\n• Click (Cancel) to export all historical visits across all dates.`
+      `Do you want to export visits for the selected date (${fDate}) only?\n\n• Click (OK) to export visits for this date only.\n• Click (Cancel) to export all historical visits across all dates.`
     );
     if (exportDayOnly) {
       exportDate = fDate;
@@ -4254,7 +4320,7 @@ function exportVisitsToCSV() {
   }
 
   let csv =
-    "Target Name,Area,Visit Day,Visit Time,Insertion Date,Insertion Time,Period,Type,Status,Source,Rep ID,Products,Comment\n";
+    "Target Name,Area,Visit Day,Visit Time,Insertion Date,Insertion Time,Period,Type,Status,Plan Status,GPS Status,Deviation (m),Rep ID,Products,Comment\n";
   filtered.forEach((v) => {
     let areaName = v.area || "";
     if (!areaName) {
@@ -4273,7 +4339,10 @@ function exportVisitsToCSV() {
     const insDate = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date) || "";
     const insTime = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00")) || "";
     const prods = (window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join("; ");
-    csv += `"${(v.doctorName || "").replace(/"/g, '""')}","${(areaName || "").replace(/"/g, '""')}","${v.date || ""}","${v.time || ""}","${insDate}","${insTime}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${v.source || ""}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
+    const planStatusLabel = (v.source === "actual" || v.isActual) ? "Actual without Plan" : "From Plan";
+    const gpsStatusLabel = v.gpsStatus || "none";
+    const devMeters = v.distanceMeters != null ? Math.round(v.distanceMeters) : "";
+    csv += `"${(v.doctorName || "").replace(/"/g, '""')}","${(areaName || "").replace(/"/g, '""')}","${v.date || ""}","${v.time || ""}","${insDate}","${insTime}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${planStatusLabel}","${gpsStatusLabel}","${devMeters}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -4306,10 +4375,7 @@ Object.assign(visitsApp, {
       ? `${repUser.name} (${repUser.role === "line_manager" ? "LM" : repUser.role === "district_manager" ? "DM" : "Rep"})`
       : visit.repId || "";
 
-    const confirmMsg =
-      lang === "ar"
-        ? `هل أنت متأكد من حذف هذه الزيارة نهائياً من سجلات النظام؟\n\n• الهدف: ${visit.doctorName}\n• مسجلة بواسطة: ${repName}\n• التاريخ: ${visit.date}`
-        : `Are you sure you want to permanently delete this visit record?\n\n• Target: ${visit.doctorName}\n• Logged by: ${repName}\n• Date: ${visit.date}`;
+    const confirmMsg = `Are you sure you want to permanently delete this visit record?\n\n• Target: ${visit.doctorName}\n• Logged by: ${repName}\n• Date: ${visit.date}`;
 
     if (!confirm(confirmMsg)) return;
 
@@ -4361,7 +4427,7 @@ Object.assign(visitsApp, {
 
     renderVisits();
     showToast(
-      lang === "ar" ? "تم حذف الزيارة بنجاح." : "Visit deleted successfully.",
+      "Visit deleted successfully.",
       "success",
     );
   },

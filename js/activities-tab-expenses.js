@@ -470,10 +470,8 @@
       Core.dispatchWorkflowNotification({
         userId: newExpense.nextApproverId,
         type: "expense_approval",
-        title: "طلب مصروفات بانتظار اعتمادك",
-        titleEn: "Expense Claim Pending Approval",
-        message: `قدم ${reqName} مطالبة مصروفات بقيمة ${amount.toLocaleString()} ج.م (${category}) بانتظار موافقتك.`,
-        messageEn: `${reqName} submitted an expense claim of ${amount.toLocaleString()} EGP (${category}) awaiting your approval.`,
+        title: "Expense Claim Pending Approval",
+        message: `${reqName} submitted an expense claim of ${amount.toLocaleString()} EGP (${category}) awaiting your approval.`,
         link: "activities.html",
         icon: "💵",
         badgeClass: "bg-warning",

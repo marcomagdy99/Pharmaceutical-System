@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -21,23 +21,23 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=v133">
+    <link rel="stylesheet" href="css/style.css?v=v162">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/products.css?v=v133">
+    <link rel="stylesheet" href="css/products.css?v=v162">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v133"></script>
-    <script src="js/store.js?v=v133"></script>
+    <script src="js/app.js?v=v159"></script>
+    <script src="js/store.js?v=v145"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v133"></script>
-    <script src="js/firebase-sync.js?v=v133"></script>
+    <script src="js/firebase-config.js?v=v145"></script>
+    <script src="js/firebase-sync.js?v=v157"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v133";
+        var EXPECTED_SW = "v159";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -192,7 +192,7 @@
                         <div class="form-text" data-i18n="priceHint">Used to auto-fill Unit Value when this product is picked in Manage Targets -- still editable per rep there as an exception.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" data-i18n="cutPointLabel">⚡ Monthly Cut Point (Ceiling)</label>
+                        <label class="form-label fw-semibold" data-i18n="cutPointLabel">? Monthly Cut Point (Ceiling)</label>
                         <input type="number" class="form-control" id="productCutPoint" min="0" step="1" data-i18n-placeholder="cutPointPlaceholder" placeholder="e.g., 200">
                         <div class="form-text" data-i18n="cutPointHint">Maximum allowed pharmacy pull per month. Surplus above this is distributed as Bulk to all bricks by weight. Set 0 or leave empty to disable.</div>
                     </div>
@@ -316,7 +316,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content product-card">
             <div class="modal-header border-bottom py-3">
-                <h5 class="modal-title fw-bold" id="brickWeightsTitle">⚖️ <span data-i18n="brickWeightsTitle">Brick Weights</span> — <span id="brickWeightsProdName"></span></h5>
+                <h5 class="modal-title fw-bold" id="brickWeightsTitle">?? <span data-i18n="brickWeightsTitle">Brick Weights</span> � <span id="brickWeightsProdName"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body py-3">
@@ -336,7 +336,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-light fw-bold">
-                                <td colspan="3" data-i18n="bwTotal">📊 Total</td>
+                                <td colspan="3" data-i18n="bwTotal">?? Total</td>
                                 <td id="brickWeightsTotalPct">0.00%</td>
                             </tr>
                         </tfoot>
@@ -355,7 +355,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Firebase Config (mock) -->
 <!-- Main App JS (mock logic/auth/i18n) -->
-<!-- Products Page JS -->
-<script src="js/products.js?v=v133"></script>
+<script src="js/products.js?v=v145"></script>
 </body>
 </html>

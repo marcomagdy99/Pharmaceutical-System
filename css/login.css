@@ -25,10 +25,6 @@ body {
     overflow-x: hidden;
 }
 
-html[dir="rtl"] body {
-    font-family: 'Cairo', sans-serif;
-}
-
 .login-container {
     display: flex;
     width: 100%;
@@ -56,11 +52,6 @@ html[dir="rtl"] body {
     align-items: center;
     gap: 0.75rem;
     z-index: 50;
-}
-
-html[dir="rtl"] .login-top-actions {
-    right: auto;
-    left: 1.5rem;
 }
 
 .theme-toggle,
@@ -254,10 +245,6 @@ html[dir="rtl"] .login-top-actions {
     color: var(--primary);
 }
 
-html[dir="rtl"] .back-btn i {
-    transform: scaleX(-1);
-}
-
 .form-group {
     margin-bottom: 1.5rem;
     position: relative;
@@ -284,11 +271,6 @@ html[dir="rtl"] .back-btn i {
     height: 20px;
 }
 
-html[dir="rtl"] .input-icon {
-    left: auto;
-    right: 1rem;
-}
-
 .form-control {
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 3rem;
@@ -298,10 +280,6 @@ html[dir="rtl"] .input-icon {
     font-family: inherit;
     transition: all 0.2s;
     box-sizing: border-box;
-}
-
-html[dir="rtl"] .form-control {
-    padding: 0.75rem 3rem 0.75rem 1rem;
 }
 
 .form-control:focus {
@@ -325,11 +303,6 @@ html[dir="rtl"] .form-control {
     align-items: center;
     justify-content: center;
     padding: 0;
-}
-
-html[dir="rtl"] .password-toggle {
-    right: auto;
-    left: 1rem;
 }
 
 .password-toggle:hover {
@@ -627,18 +600,10 @@ html[dir="rtl"] .password-toggle {
     width: 100%;
 }
 
-html[dir="rtl"] .quick-user-chip {
-    text-align: right;
-}
-
 .quick-user-chip:hover {
     background: #e7f1ff;
     border-color: #3b82f6;
     transform: translateX(4px);
-}
-
-html[dir="rtl"] .quick-user-chip:hover {
-    transform: translateX(-4px);
 }
 
 .quick-chip-info {
@@ -672,45 +637,45 @@ html[dir="rtl"] .quick-user-chip:hover {
 }
 
 [data-theme="dark"] .login-left {
-    background-color: #181b21 !important;
-    color: #f1f3f5 !important;
+    background-color: #181b21;
+    color: #f1f3f5;
 }
 
 [data-theme="dark"] .logo-title,
 [data-theme="dark"] .department-title,
 [data-theme="dark"] .dept-card h3 {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 [data-theme="dark"] .logo-subtitle,
 [data-theme="dark"] .dept-card p,
 [data-theme="dark"] .login-footer {
-    color: #9da5b1 !important;
+    color: #9da5b1;
 }
 
 [data-theme="dark"] .dept-card {
-    background-color: #232731 !important;
-    border-color: #3d4554 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+    background-color: #232731;
+    border-color: #3d4554;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .dept-card:hover {
-    background-color: #2d3340 !important;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25) !important;
+    background-color: #2d3340;
+    border-color: #3b82f6;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
 }
 
 [data-theme="dark"] .dept-icon-wrapper {
-    background: #162a4a !important;
+    background: #162a4a;
 }
 
 [data-theme="dark"] .dept-card:hover .dept-icon-wrapper {
-    background: #1d3b66 !important;
+    background: #1d3b66;
 }
 
 [data-theme="dark"] .dept-card i,
 [data-theme="dark"] .dept-card svg {
-    color: #58a6ff !important;
+    color: #58a6ff;
 }
 
 [data-theme="dark"] .theme-toggle,
@@ -729,56 +694,56 @@ html[dir="rtl"] .quick-user-chip:hover {
 }
 
 [data-theme="dark"] .form-label {
-    color: #dee2e6 !important;
+    color: #dee2e6;
 }
 
 [data-theme="dark"] .form-control {
-    background-color: #232731 !important;
-    border-color: #3d4554 !important;
-    color: #ffffff !important;
+    background-color: #232731;
+    border-color: #3d4554;
+    color: #ffffff;
 }
 
 [data-theme="dark"] .form-control:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
 }
 
 [data-theme="dark"] .back-btn {
-    color: #9da5b1 !important;
+    color: #9da5b1;
 }
 
 [data-theme="dark"] .back-btn:hover {
-    color: #58a6ff !important;
+    color: #58a6ff;
 }
 
 [data-theme="dark"] .forgot-password,
 [data-theme="dark"] .remember-me span {
-    color: #9da5b1 !important;
+    color: #9da5b1;
 }
 
 [data-theme="dark"] .quick-login-wrapper {
-    border-top-color: #2d3340 !important;
+    border-top-color: #2d3340;
 }
 
 [data-theme="dark"] .quick-login-title {
-    color: #9da5b1 !important;
+    color: #9da5b1;
 }
 
 [data-theme="dark"] .quick-user-chip {
-    background: #232731 !important;
-    border-color: #3d4554 !important;
+    background: #232731;
+    border-color: #3d4554;
 }
 
 [data-theme="dark"] .quick-user-chip:hover {
-    background: #282d38 !important;
-    border-color: #3b82f6 !important;
+    background: #282d38;
+    border-color: #3b82f6;
 }
 
 [data-theme="dark"] .quick-chip-name {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 [data-theme="dark"] .quick-chip-role {
-    color: #9da5b1 !important;
+    color: #9da5b1;
 }
 

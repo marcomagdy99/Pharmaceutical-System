@@ -81,81 +81,6 @@ const userTranslations = {
     sickDaysLabel: "Sick (Days)",
     login_as: "Log in as (Preview)",
   },
-  ar: {
-    menu_users: "المستخدمين",
-    switch_lang: "English",
-    logout: "تسجيل الخروج",
-    user_management: "إدارة المستخدمين",
-    total_users_badge: "إجمالي المستخدمين",
-    sync_cloud_now: "مزامنة من السحابة",
-    add_user: "إضافة مستخدم",
-    edit_user: "تعديل مستخدم",
-    total_users: "إجمالي المستخدمين",
-    stat_admins: "المديرين",
-    stat_managers: "المدراء",
-    stat_reps: "المندوبين الطبيين",
-    search_user_ph: "البحث بالاسم، البريد أو الكود...",
-    role_all: "كل الأدوار",
-    role_admin: "مدير نظام",
-    role_bu: "وحدة الأعمال",
-    role_lm: "مدير خط",
-    role_dm: "مدير منطقة",
-    role_rep: "مندوب طبي",
-    role_pm: "مدير منتج (PM)",
-    assigned_products: "الأدوية المسندة",
-    all_line_products: "كل أدوية اللاين",
-    pm_products_hint: "حدد الأدوية التي يديرها مدير المنتج في هذا اللاين.",
-    view_table: "جدول",
-    view_tree: "هيكلية",
-    col_user: "المستخدم",
-    col_code: "الكود",
-    col_role: "الدور",
-    col_manager: "المدير المباشر",
-    col_area: "المناطق",
-    col_status: "الحالة",
-    col_actions: "إجراءات",
-    status_active: "نشط",
-    status_inactive: "غير نشط",
-    full_name: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    emp_code: "كود الموظف",
-    password: "كلمة المرور",
-    password_ph: "اتركه فارغاً للاحتفاظ بالحالي",
-    role: "الدور",
-    select_role: "اختر الدور...",
-    phone: "رقم الهاتف",
-    hire_date: "تاريخ التعيين",
-    manager: "تعيين مدير",
-    select_manager: "اختر المدير...",
-    area: "المناطق المخصصة",
-    product_line: "تعيين خط منتجات",
-    cancel: "إلغاء",
-    save: "حفظ",
-    reset_password_title: "إعادة تعيين كلمة المرور",
-    reset_password_confirm:
-      "هل أنت متأكد من إعادة تعيين كلمة المرور لهذا المستخدم؟ سيتم إرسال كلمة مرور افتراضية.",
-    confirm_reset: "إعادة تعيين",
-    deactivate_title: "إلغاء تنشيط المستخدم",
-    deactivate_confirm:
-      "هل أنت متأكد من إلغاء تنشيط هذا المستخدم؟ لن يتمكن من تسجيل الدخول.",
-    confirm_deactivate: "إلغاء تنشيط",
-    activate: "تنشيط",
-    deactivate: "إلغاء تنشيط",
-    none: "لا يوجد",
-    manage_lines: "إدارة خطوط المبيعات (Sales Lines)",
-    manage_areas: "إدارة وتوزيع المناطق",
-    add_new_line: "إضافة خط مبيعات جديد",
-    save_line: "حفظ الخط",
-    line_name: "اسم الخط",
-    active_managers: "مدير الخط (LM)",
-    close: "إغلاق",
-    leaveAllocationTitle: "تخصيص أرصدة الإجازات السنوية (بالأيام)",
-    leaveAllocationSub: "تحديد رصيد الإجازة الاعتيادية والعارضة والمرضية",
-    annualDaysLabel: "الاعتيادية (أيام)",
-    casualDaysLabel: "العارضة (أيام)",
-    sickDaysLabel: "المرضية (أيام)",
-    login_as: "تسجيل الدخول كـ (معاينة)",
-  },
 };
 
 const userMgmt = {
@@ -208,21 +133,15 @@ const userMgmt = {
       window.location.replace("index.html");
       return;
     }
-
     if (window.translations) {
       window.translations.en = {
         ...(window.translations.en || {}),
         ...userTranslations.en,
       };
-      window.translations.ar = {
-        ...(window.translations.ar || {}),
-        ...userTranslations.ar,
-      };
     } else {
       window.translations = userTranslations;
     }
-
-    if (typeof renderSidebar === "function") {
+if (typeof renderSidebar === "function") {
       renderSidebar("users");
     }
 
@@ -239,7 +158,7 @@ const userMgmt = {
     document.addEventListener("languageChanged", (e) => {
       const lang = e.detail?.lang || e.detail;
       const lbl = document.getElementById("langLabel");
-      if (lbl) lbl.textContent = lang === "ar" ? "English" : "عربي";
+      if (lbl) lbl.textContent = "English";
       this.render();
     });
 
@@ -452,8 +371,6 @@ const userMgmt = {
   updateAreaDropdown(preselectedAreaId) {
     const areaSelect = document.getElementById("uArea");
     if (!areaSelect) return;
-
-    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
     const curVal = preselectedAreaId !== undefined ? preselectedAreaId : areaSelect.value;
 
     const selectedLineIds = Array.from(
@@ -461,7 +378,7 @@ const userMgmt = {
     ).map((cb) => cb.value);
 
     if (selectedLineIds.length === 0) {
-      areaSelect.innerHTML = `<option value="">${isAr ? "حدد الخط البيعي أولاً..." : "Select sales line(s) first..."}</option>`;
+      areaSelect.innerHTML = `<option value="">Select sales line(s) first...</option>`;
       areaSelect.value = "";
       return;
     }
@@ -472,17 +389,17 @@ const userMgmt = {
     );
 
     if (filteredAreas.length === 0) {
-      areaSelect.innerHTML = `<option value="">${isAr ? "لا توجد مناطق للخطوط المحددة" : "No areas found for selected line(s)"}</option>`;
+      areaSelect.innerHTML = `<option value="">No areas found for selected line(s)</option>`;
       areaSelect.value = "";
       return;
     }
 
-    let html = `<option value="" data-i18n="select_area">${isAr ? "اختر المنطقة..." : "Select Area..."}</option>`;
+    let html = `<option value="" data-i18n="select_area">Select Area...</option>`;
 
     selectedLineIds.forEach((lineId) => {
       const lineObj = (this.lines || []).find((l) => l.id === lineId);
       const lineName = lineObj
-        ? (isAr && lineObj.nameAr ? lineObj.nameAr : lineObj.name)
+        ? (lineObj.name || lineObj.nameAr)
         : lineId;
       const areasInLine = filteredAreas.filter((a) => a.lineId === lineId);
 
@@ -491,9 +408,8 @@ const userMgmt = {
         areasInLine.forEach((a) => {
           const rep = a.repId ? (this.users || []).find((u) => u.id === a.repId) : null;
           const repNote = rep
-            ? ` (${isAr ? "مسندة لـ" : "Assigned"}: ${window.escapeHtml(rep.name)})`
-            : ` (${isAr ? "غير مسندة" : "Unassigned"})`;
-          const areaDisplayName = isAr && a.nameAr ? a.nameAr : a.name;
+            ? ` (Assigned: ${window.escapeHtml(rep.name)})` : ` (Unassigned)`;
+          const areaDisplayName = a.name || a.nameAr;
           html += `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(areaDisplayName)} (${window.escapeHtml(a.code || "")}) - [${window.escapeHtml(lineName)}]${repNote}</option>`;
         });
         html += `</optgroup>`;
@@ -502,13 +418,12 @@ const userMgmt = {
 
     const orphanAreas = filteredAreas.filter((a) => !a.lineId);
     if (orphanAreas.length > 0) {
-      html += `<optgroup label="📦 ${isAr ? "مناطق أخرى" : "Other Areas"}">`;
+      html += `<optgroup label="📦 Other Areas">`;
       orphanAreas.forEach((a) => {
         const rep = a.repId ? (this.users || []).find((u) => u.id === a.repId) : null;
         const repNote = rep
-          ? ` (${isAr ? "مسندة لـ" : "Assigned"}: ${window.escapeHtml(rep.name)})`
-          : ` (${isAr ? "غير مسندة" : "Unassigned"})`;
-        const areaDisplayName = isAr && a.nameAr ? a.nameAr : a.name;
+          ? ` (Assigned: ${window.escapeHtml(rep.name)})` : ` (Unassigned)`;
+        const areaDisplayName = a.name || a.nameAr;
         html += `<option value="${window.escapeHtml(a.id)}">${window.escapeHtml(areaDisplayName)} (${window.escapeHtml(a.code || "")})${repNote}</option>`;
       });
       html += `</optgroup>`;
@@ -526,10 +441,9 @@ const userMgmt = {
   renderAssignedAreasDisplay(userId) {
     const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
     if (!areaDisplayEl) return;
-    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
 
     if (!userId) {
-      areaDisplayEl.innerHTML = `<span class="text-muted small">${isAr ? "اختر منطقة أعلاه أو قم بالتعيين عبر صفحة المناطق" : "Select area above or assign via Areas page"}</span>`;
+      areaDisplayEl.innerHTML = `<span class="text-muted small">Select area above or assign via Areas page</span>`;
       return;
     }
 
@@ -541,18 +455,18 @@ const userMgmt = {
     if (repAreas.length > 0) {
       areaDisplayEl.innerHTML = repAreas
         .map((a) => {
-          const areaName = isAr && a.nameAr ? a.nameAr : a.name;
+          const areaName = a.name || a.nameAr;
           const lineObj = (this.lines || []).find((l) => l.id === a.lineId);
-          const lineBadge = lineObj ? ` [${window.escapeHtml(isAr && lineObj.nameAr ? lineObj.nameAr : lineObj.name)}]` : "";
+          const lineBadge = lineObj ? ` [${window.escapeHtml(lineObj.name || lineObj.nameAr)}]` : "";
           return `<span class="badge bg-primary text-white me-1 mb-1 p-2 d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.82rem;">
             <span>${window.escapeHtml(areaName)} (${window.escapeHtml(a.code || "")})${lineBadge}</span>
-            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem; padding: 2px; margin-inline-start: 4px; opacity: 0.85;" onclick="userMgmt.unassignArea('${window.escapeHtml(a.id)}', '${window.escapeHtml(userId)}')" title="${isAr ? "إلغاء إسناد هذه المنطقة" : "Unassign this area"}" aria-label="Remove"></button>
+            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem; padding: 2px; margin-inline-start: 4px; opacity: 0.85;" onclick="userMgmt.unassignArea('${window.escapeHtml(a.id)}', '${window.escapeHtml(userId)}')" title="Unassign this area" aria-label="Remove"></button>
           </span>`;
         })
         .join("") +
-        `<div class="mt-2"><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">${isAr ? "إدارة في صفحة المناطق ←" : "Manage in Areas Page →"}</a></div>`;
+        `<div class="mt-2"><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">Manage in Areas Page →</a></div>`;
     } else {
-      areaDisplayEl.innerHTML = `<span class="badge bg-secondary-subtle text-secondary me-2">${isAr ? "لا توجد مناطق مسندة" : "No areas assigned"}</span><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">${isAr ? "إسناد مناطق ←" : "Assign Areas →"}</a>`;
+      areaDisplayEl.innerHTML = `<span class="badge bg-secondary-subtle text-secondary me-2">No areas assigned</span><a href="areas.html" class="btn btn-sm btn-outline-primary py-0" style="font-size:0.75rem;">Assign Areas →</a>`;
     }
   },
 
@@ -652,15 +566,13 @@ const userMgmt = {
     return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => m.name).join(", ")})</span>`;
   },
   showAreasToast(allNames) {
-    const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
-    const prefix = isAr ? "المناطق المسندة:" : "Assigned Areas:";
+    const prefix = "Assigned Areas:";
     if (typeof showToast === "function") {
       showToast(`${prefix} ${allNames}`, "info");
     }
   },
   formatAreasBadges(areas, badgeClass = "badge-neutral border") {
     if (!areas || areas.length === 0) return `<span class="text-muted">-</span>`;
-    const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
 
     if (areas.length <= 2) {
       return areas
@@ -674,7 +586,7 @@ const userMgmt = {
     const firstOne = areas[0];
     const remainingCount = areas.length - 1;
     const allNames = areas.map((a) => a.name).join(", ");
-    const moreText = isAr ? `+${remainingCount} المزيد` : `+${remainingCount} more`;
+    const moreText = `+${remainingCount} more`;
     const escapedNames = window.escapeHtml(allNames).replace(/'/g, "\\'");
 
     return `
@@ -729,8 +641,7 @@ const userMgmt = {
     }
 
     if (user.role === "PM") {
-      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-      return `<span class="badge border" style="background:#f3e8ff; color:#7e22ce;">${isAr ? "الجمهورية (اللاين)" : "Nationwide (Line)"}</span>`;
+      return `<span class="badge border" style="background:#f3e8ff; color:#7e22ce;">Nationwide (Line)</span>`;
     }
 
     return `<span class="text-muted">-</span>`;
@@ -779,7 +690,6 @@ const userMgmt = {
   renderTable() {
     const tbody = document.getElementById("usersTableBody");
     const filtered = this.getFilteredUsers();
-    const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
     const authUser = (window.checkAuth && window.checkAuth()) || {};
     const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
     const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
@@ -790,7 +700,7 @@ const userMgmt = {
         const dispEmail = u.email || "-";
         const dispStatus = u.status || "Active";
         const canImpersonate = isRealAdmin && String(u.id) !== String(authUser.id) && dispStatus === "Active";
-        const loginAsTooltip = isAr ? `تسجيل الدخول كـ ${u.name}` : `Log in as ${u.name}`;
+        const loginAsTooltip = `Log in as ${u.name}`;
 
         return `
         <tr>
@@ -828,7 +738,6 @@ const userMgmt = {
     const nextVisited = new Set(visited);
     nextVisited.add(parentId);
 
-    const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
     const authUser = (window.checkAuth && window.checkAuth()) || {};
     const isRealAdmin = (authUser.role === "admin") || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
 
@@ -840,7 +749,7 @@ const userMgmt = {
           const isInactive = u.status === "Inactive";
           const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1" style="font-size:0.65em">${u.role}</span>`;
           const canImpersonate = isRealAdmin && u.id !== authUser.id && !isInactive;
-          const loginAsTooltip = isAr ? `تسجيل الدخول كـ ${u.name}` : `Log in as ${u.name}`;
+          const loginAsTooltip = `Log in as ${u.name}`;
           const treeImpersonateBtn = canImpersonate
             ? `<button class="btn btn-sm btn-light text-info py-0 px-2 ms-2" title="${loginAsTooltip}" onclick="event.stopPropagation(); userMgmt.impersonateUser('${u.id}')"><i class="fas fa-sign-in-alt"></i></button>`
             : "";
@@ -853,7 +762,7 @@ const userMgmt = {
               <div class="node-content shadow-sm border border-dashed border-warning-subtle" style="background:#fffbeb; opacity:0.9;">
                 <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">⚠️</div>
                 <div class="flex-grow-1">
-                  <div class="fw-bold small mb-0 text-dark"><span class="badge bg-warning text-dark me-1">[Vacant / شاغر]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${u.role} Branch`} ${roleBadge}</div>
+                  <div class="fw-bold small mb-0 text-dark"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${u.role} Branch`} ${roleBadge}</div>
                   <small class="text-muted" style="font-size:0.75rem;">(Position Open • Former: ${u.name})</small>
                 </div>
               </div>
@@ -891,7 +800,7 @@ const userMgmt = {
             <div class="node-content shadow-sm border border-dashed border-warning-subtle" style="background:#fffbeb; opacity:0.9;">
               <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">⚠️</div>
               <div class="flex-grow-1">
-                <div class="fw-bold small mb-0 user-name-text"><span class="badge bg-warning text-dark me-1">[Vacant / شاغر]</span>${u.role} Position ${roleBadge}</div>
+                <div class="fw-bold small mb-0 user-name-text"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role} Position ${roleBadge}</div>
                 <small class="text-muted" style="font-size:0.75rem;">(Position Open • Former: ${u.name})</small>
               </div>
             </div>
@@ -1050,8 +959,7 @@ const userMgmt = {
     });
 
     if (availableProducts.length === 0) {
-      const isAr = typeof getCurrentLang === "function" && getCurrentLang() === "ar";
-      container.innerHTML = `<span class="text-muted" style="font-size:0.8rem;">${isAr ? "يرجى تحديد خط مبيعات أولاً لعرض الأدوية" : "Please select a sales line first to view products"}</span>`;
+      container.innerHTML = `<span class="text-muted" style="font-size:0.8rem;">Please select a sales line first to view products</span>`;
       return;
     }
 
@@ -1222,11 +1130,7 @@ const userMgmt = {
       );
 
     if (id && managerId && this.wouldCreateCycle(id, managerId)) {
-      const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-      const cycleMsg = isAr
-        ? "⚠️ تعذر الحفظ: لا يمكن اختيار هذا المدير لأنه سيؤدي إلى حلقة إدارية مغلقة (المستخدم الحالي يقع ضمن السلسلة الإدارية له)."
-        : "⚠️ Cannot save: selecting this manager creates a circular management loop.";
-      return showToast(cycleMsg, "warning");
+      return showToast("⚠️ Cannot save: selecting this manager creates a circular management loop.", "warning");
     }
 
     const selectedLineIds = Array.from(

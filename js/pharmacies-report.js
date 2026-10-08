@@ -10,6 +10,17 @@ function getPharmaciesData() {
   return (window.DEMO_DATA && window.DEMO_DATA.pharmacies) || [];
 }
 
+function sortBilingualPharmacies(a, b) {
+  if (typeof window !== "undefined" && typeof window.sortBilingualByName === "function") {
+    return window.sortBilingualByName(a, b);
+  }
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const nameA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
+  const nameB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
+  const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
+  return nameA.localeCompare(nameB, locales, { numeric: true, sensitivity: "base" });
+}
+
 function getScopedPharmacies(respectActiveFilters = true) {
   const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
@@ -160,13 +171,13 @@ function getScopedPharmacies(respectActiveFilters = true) {
   }
 
   if (!respectActiveFilters) {
-    return pharms;
+    return pharms.slice().sort(sortBilingualPharmacies);
   }
 
   const searchInput = document.getElementById("pharmacySearchInput");
   const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
-  return pharms.filter((p) => {
+  const filteredPharms = pharms.filter((p) => {
     return (
       !query ||
       (p.name && p.name.toLowerCase().includes(query)) ||
@@ -176,6 +187,8 @@ function getScopedPharmacies(respectActiveFilters = true) {
       (p.phone && p.phone.toLowerCase().includes(query))
     );
   });
+
+  return filteredPharms.sort(sortBilingualPharmacies);
 }
 
 function renderPharmaciesReport() {
@@ -228,7 +241,7 @@ function renderPharmaciesReport() {
         <div class="directory-card-header">
           <div class="directory-avatar pharmacy">💊</div>
           <div class="directory-header-info">
-            <h4 class="directory-name">${window.escapeHtml(p.name)}</h4>
+            <h4 class="directory-name">${window.escapeHtml((lang === "ar" && p.nameAr) ? p.nameAr : (p.name || p.nameAr || ""))}</h4>
             <span class="directory-meta-tag pharmacy">Partner Pharmacy</span>
           </div>
           ${lineName ? `<span class="badge bg-secondary ms-auto" style="font-size: 0.68rem;">${window.escapeHtml(lineName)}</span>` : ""}
@@ -371,9 +384,8 @@ function savePharmacy() {
   }
 
   if (!assignedAreaId) {
-    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-    if (typeof showToast === "function") {
-      showToast(isAr ? "يرجى اختيار المنطقة التابعة." : "Please select a territory / area.", "warning");
+        if (typeof showToast === "function") {
+      showToast("Please select a territory / area.", "warning");
     }
     return;
   }
@@ -494,12 +506,11 @@ function initPharmaciesDirectory(user) {
 
 function exportPharmaciesDirectory() {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
+  
   const pharmsToExport = getScopedPharmacies(true);
 
   if (!pharmsToExport || pharmsToExport.length === 0) {
-    const msg = isAr ? "لا توجد بيانات صيدليات لتصديرها." : "No pharmacy records found to export.";
+    const msg = "No pharmacy records found to export.";
     if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
@@ -507,12 +518,19 @@ function exportPharmaciesDirectory() {
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
 
-  const headers = isAr
-    ? ["اسم الصيدلية", "المنطقة", "العنوان", "مسؤول التواصل / الصيدلي", "رقم الهاتف", "المندوب المسؤول"]
-    : ["Pharmacy Name", "Area", "Address", "Contact Person", "Phone", "Representative"];
+  const headers = [
+      "Pharmacy Name",
+      "Territory / Area",
+      "Product Line",
+      "Assigned Rep",
+      "Phone",
+      "Address",
+      "Target Visits/Mo",
+      "Status",
+    ];
 
   const rows = pharmsToExport.map((p) => {
-    const pharmName = isAr ? (p.nameAr || p.name || "") : (p.name || p.nameAr || "");
+    const pharmName = p.name || p.nameAr || "";
 
     let areaName = p.area || "";
     if (!areaName && p.areaId) {
@@ -536,8 +554,8 @@ function exportPharmaciesDirectory() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, "0");
   const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const fileName = isAr ? `دليل_الصيدليات_${dateStr}` : `pharmacies_directory_${dateStr}`;
-  const sheetTitle = isAr ? "الصيدليات" : "Pharmacies";
+  const fileName = `pharmacies_directory_${dateStr}`;
+  const sheetTitle = "Pharmacies";
 
   if (typeof window.downloadExcelOrCsv === "function") {
     window.downloadExcelOrCsv(fileName, sheetTitle, rows, headers);
@@ -559,7 +577,7 @@ function exportPharmaciesDirectory() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const successMsg = isAr ? "تم تصدير الدليل بنجاح (.csv)" : "Directory exported successfully (.csv)";
+    const successMsg = "Directory exported successfully (.csv)";
     if (typeof showToast === "function") showToast(successMsg, "success");
   }
 }

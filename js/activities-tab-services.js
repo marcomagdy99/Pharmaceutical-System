@@ -338,46 +338,82 @@
 
     tbody.innerHTML = list
       .map((srv) => {
-        const requesterName = Core.escapeHTML(Core.getUserDisplayName(srv.requesterId));
+        let reqName = Core.getUserDisplayName(srv.requesterId);
+        if (!reqName || reqName === "-" || reqName === "Unknown User") {
+          if (srv.requesterName) reqName = srv.requesterName;
+          else if (srv.shares && srv.shares[0] && srv.shares[0].repId) reqName = Core.getUserDisplayName(srv.shares[0].repId);
+          else reqName = Core.getUserDisplayName(Core._state.currentUser?.id);
+        }
+
         const actionsHtml = getServiceActionButtons(srv, Core._state.currentUser);
         const deptBadge = srv.department === "marketing"
-          ? `<span class="badge badge-dept-marketing">Marketing</span>`
-          : `<span class="badge badge-dept-sales">Sales</span>`;
+          ? `<span class="svc-dept-pill marketing">Marketing</span>`
+          : `<span class="svc-dept-pill sales">Sales</span>`;
 
-        const shiftIcon = srv.shift === Core.PERIODS.AM ? `🏥 AM (Hospital)` : `👨‍⚕️ PM (Doctor)`;
-
-        let lineCell = `<span class="line-name-label">${Core.getLineName(srv.lineId)}</span>`;
+        let lineCell = `<div class="svc-line-badge single"><span class="svc-line-dot"></span><span>${Core.escapeHTML(Core.getLineName(srv.lineId))}</span></div>`;
         if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
           const uniqueLines = Array.from(new Set(srv.shares.map(sh => sh.lineId)));
           const isIntraLine = uniqueLines.length === 1;
-          const badgeText = isIntraLine ? `🤝 ${Core.t("sharedIntraLineBadge")}` : `🤝 ${srv.shares.length} Lines`;
-          const linesList = srv.shares.map(sh => Core.getLineName(sh.lineId)).join(" + ");
+          const badgeText = isIntraLine ? `🤝 Intra-Line` : `⚡ ${srv.shares.length} Lines Split`;
+          const linesBreakdown = srv.shares.map(sh => `<span class="svc-mini-line-chip">${Core.escapeHTML(Core.getLineName(sh.lineId))}</span>`).join("<span class='svc-plus'>+</span>");
           lineCell = `
-            <div>
-              <span class="badge badge-shared-tag">${Core.escapeHTML(badgeText)}</span>
-              <div class="shared-lines-summary">${Core.escapeHTML(linesList)}</div>
+            <div class="svc-shared-line-cell">
+              <span class="svc-split-tag ${isIntraLine ? 'intra' : 'multi'}">${Core.escapeHTML(badgeText)}</span>
+              <div class="svc-lines-breakdown">${linesBreakdown}</div>
             </div>
           `;
         }
 
-        let areaCell = `<small class="area-name-label">${Core.getAreaName(srv.areaId)}</small>`;
+        let areaCell = `<div class="svc-area-chip"><span class="svc-pin">📍</span><span>${Core.escapeHTML(Core.getAreaName(srv.areaId))}</span></div>`;
         if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
-          const areasDetails = srv.shares.map(sh => {
-            const liveRep = Core.getLiveRepForArea(sh.areaId);
-            const repName = liveRep ? Core.getUserDisplayName(liveRep.id) : (sh.repId ? Core.getUserDisplayName(sh.repId) : "-");
-            return `<div class="shared-area-rep-sub">📍 <strong>${Core.escapeHTML(Core.getAreaName(sh.areaId))}</strong> (${Core.escapeHTML(repName)})</div>`;
-          }).join("");
-          areaCell = `<div>${areasDetails}</div>`;
+          const uniqueAreaIds = Array.from(new Set(srv.shares.map(sh => sh.areaId)));
+          const areasChips = uniqueAreaIds.map(aId => `<div class="svc-area-chip"><span class="svc-pin">📍</span><span>${Core.escapeHTML(Core.getAreaName(aId))}</span></div>`).join("");
+          areaCell = `<div class="svc-areas-stack">${areasChips}</div>`;
         }
 
+        let targetName = srv.targetName;
+        if (!targetName || targetName === srv.targetId || String(targetName).startsWith("doc_") || String(targetName).startsWith("hosp_")) {
+          const docObj = (window.store && window.store.doctors && window.store.doctors.getById && window.store.doctors.getById(srv.targetId)) ||
+                         (window.DEMO_DATA && window.DEMO_DATA.doctors && window.DEMO_DATA.doctors.find && window.DEMO_DATA.doctors.find(d => d.id === srv.targetId));
+          if (docObj) {
+            targetName = docObj.name;
+          } else {
+            const hospObj = (window.store && window.store.hospitals && window.store.hospitals.getById && window.store.hospitals.getById(srv.targetId)) ||
+                            (window.DEMO_DATA && window.DEMO_DATA.hospitals && window.DEMO_DATA.hospitals.find && window.DEMO_DATA.hospitals.find(h => h.id === srv.targetId));
+            if (hospObj) targetName = hospObj.name;
+          }
+        }
+        targetName = targetName || srv.targetId || "-";
+
+        const isAM = srv.shift === Core.PERIODS.AM;
+        const targetCell = `
+          <div class="svc-target-cell">
+            <div class="svc-target-type">
+              <span class="svc-shift-badge ${isAM ? 'am' : 'pm'}">${isAM ? '🏥 AM' : '👨‍⚕️ PM'}</span>
+              <span class="svc-type-text">${isAM ? 'Hospital' : 'Doctor'}</span>
+            </div>
+            <div class="svc-target-name">${Core.escapeHTML(targetName)}</div>
+          </div>
+        `;
+
         const curr = Core.t("currency") || "EGP";
-        let costCell = `<strong class="service-cost-main">${Number(srv.cost).toLocaleString()} ${curr}</strong>`;
+        let costCell = `
+          <div class="svc-cost-container">
+            <div class="svc-cost-grand-total">${Number(srv.cost).toLocaleString()} <span class="svc-curr">${curr}</span></div>
+          </div>
+        `;
         if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
-          const splits = srv.shares.map(sh => `<div class="shared-cost-split-row">${Core.getLineName(sh.lineId)}: ${sh.sharePercent}% (${Number(sh.shareAmount).toLocaleString()} ${curr})</div>`).join("");
+          const splitsHtml = srv.shares.map(sh => `
+            <div class="svc-cost-split-item">
+              <span class="svc-split-line-name">${Core.escapeHTML(Core.getLineName(sh.lineId))}</span>
+              <span class="svc-split-share-pct">${sh.sharePercent}%</span>
+              <span class="svc-split-share-amt">${Number(sh.shareAmount).toLocaleString()} ${curr}</span>
+            </div>
+          `).join("");
           costCell = `
-            <div>
-              <div class="service-cost-main">${Number(srv.cost).toLocaleString()} ${curr}</div>
-              ${splits}
+            <div class="svc-cost-container">
+              <div class="svc-cost-grand-total">${Number(srv.cost).toLocaleString()} <span class="svc-curr">${curr}</span></div>
+              <div class="svc-cost-splits-box">${splitsHtml}</div>
             </div>
           `;
         }
@@ -385,7 +421,7 @@
         let attachmentHtml = "";
         if (srv.attachmentBase64) {
           attachmentHtml = `
-            <div class="table-attachment-wrapper">
+            <div class="table-attachment-wrapper mt-1">
               <button type="button" class="btn btn-sm btn-outline" onclick="ActivitiesModule.openReceiptPreviewModal('${srv.attachmentBase64}')" title="${Core.t("viewAttachment")}">
                 📎 ${Core.t("attachmentLabel")}
               </button>
@@ -395,21 +431,28 @@
 
         return `
           <tr>
-            <td class="table-date-cell">${srv.date}</td>
+            <td class="table-date-cell">
+              <div class="svc-date-pill">
+                <span class="svc-date-val">${srv.date || '-'}</span>
+              </div>
+            </td>
             <td>
-              <div class="user-display-title">${requesterName}</div>
+              <div class="svc-user-chip">
+                <span class="svc-user-avatar">👤</span>
+                <span class="svc-user-name">${Core.escapeHTML(reqName)}</span>
+              </div>
             </td>
             <td>${lineCell}</td>
             <td>${deptBadge}</td>
             <td>${areaCell}</td>
+            <td>${targetCell}</td>
             <td>
-              <div class="shift-target-title">${shiftIcon}</div>
-              <small class="target-name-sub">${Core.escapeHTML(srv.targetName || srv.targetId || "-")}</small>
-            </td>
-            <td>
-              <strong class="service-title-text">${Core.escapeHTML(srv.title)}</strong>
-              ${srv.notes ? `<br><small class="item-notes-text">${Core.escapeHTML(srv.notes)}</small>` : ""}
-              ${attachmentHtml}
+              <div class="svc-title-cell">
+                ${srv.category ? `<span class="svc-cat-badge" style="display:inline-block; font-size:0.75rem; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:10px; margin-bottom:4px; font-weight:700; border:1px solid #bae6fd;">${Core.escapeHTML(srv.category)}</span>` : ""}
+                <div class="svc-title-text">${Core.escapeHTML(srv.title)}</div>
+                ${srv.notes ? `<div class="svc-notes-sub">💬 ${Core.escapeHTML(srv.notes)}</div>` : ""}
+                ${attachmentHtml}
+              </div>
             </td>
             <td class="table-amount-cell">${costCell}</td>
             <td>${renderServiceStatusBadge(srv)}</td>
@@ -423,50 +466,67 @@
   function renderServiceStatusBadge(srv) {
     if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
       if (srv.status === Core.REQUEST_STATUS.APPROVED) {
-        return `<span class="status-pill approved">${Core.t("approvedLabel")}</span>`;
+        return `<div class="svc-status-pill approved"><span class="status-icon">✓</span> <span>${Core.t("approvedLabel")}</span></div>`;
       }
       if (srv.status === Core.REQUEST_STATUS.REJECTED) {
-        return `<span class="status-pill rejected">${Core.t("rejectedLabel")}</span>`;
+        return `<div class="svc-status-pill rejected"><span class="status-icon">✕</span> <span>${Core.t("rejectedLabel")}</span></div>`;
       }
       const sharesBadges = srv.shares.map((sh) => {
         const lineName = Core.getLineName(sh.lineId);
-        let sTxt = "⏳";
+        let sTxt = "Pending";
         let sClass = "pending";
+        let sIcon = "⏳";
         if (sh.status === Core.REQUEST_STATUS.APPROVED) {
-          sTxt = "✓";
+          sTxt = "Approved";
           sClass = "approved";
+          sIcon = "✓";
         } else if (sh.status === Core.REQUEST_STATUS.REJECTED) {
-          sTxt = "✕";
+          sTxt = "Rejected";
           sClass = "rejected";
+          sIcon = "✕";
         } else if (sh.status === Core.REQUEST_STATUS.PENDING_DM) {
-          sTxt = "⏳ DM";
+          sTxt = "Pending DM";
+          sClass = "pending";
+          sIcon = "⏳";
         } else if (sh.status === Core.REQUEST_STATUS.PENDING_LM) {
-          sTxt = "⏳ LM";
+          sTxt = "Pending LM";
+          sClass = "pending";
+          sIcon = "⏳";
         }
-        return `<div class="shared-badge-tag"><span class="badge ${sClass}">${lineName}: ${sh.sharePercent}% [${sTxt}]</span></div>`;
+        return `
+          <div class="svc-share-status-card ${sClass}">
+            <span class="svc-share-line-lbl">${Core.escapeHTML(lineName)} (${sh.sharePercent}%)</span>
+            <span class="svc-share-status-tag ${sClass}">${sIcon} ${sTxt}</span>
+          </div>
+        `;
       }).join("");
-      return `<div class="shared-status-container">${sharesBadges}</div>`;
+      return `<div class="svc-shared-status-group">${sharesBadges}</div>`;
     }
 
     const s = srv.status || "pending";
     let label = Core.t("statusPending");
     let css = "pending";
+    let icon = "⏳";
 
     if (s === Core.REQUEST_STATUS.PENDING_DM) {
       label = `${Core.t("waitingDmPrefix")}${Core.getUserDisplayName(srv.nextApproverId)}`;
       css = "pending";
+      icon = "⏳";
     } else if (s === Core.REQUEST_STATUS.PENDING_LM) {
       label = `${Core.t("waitingLmPrefix")}${Core.getUserDisplayName(srv.nextApproverId)}`;
       css = "pending";
+      icon = "⏳";
     } else if (s === Core.REQUEST_STATUS.APPROVED) {
       label = Core.t("approvedLabel");
       css = "approved";
+      icon = "✓";
     } else if (s === Core.REQUEST_STATUS.REJECTED) {
       label = Core.t("rejectedLabel");
       css = "rejected";
+      icon = "✕";
     }
 
-    return `<span class="status-pill ${css}">${label}</span>`;
+    return `<div class="svc-status-pill ${css}"><span class="status-icon">${icon}</span> <span>${label}</span></div>`;
   }
 
   function getServiceActionButtons(srv, user) {
@@ -534,6 +594,8 @@
 
     Core._state.sharedLines = [];
     Core._state.currentServiceFileBase64 = null;
+    const catSelect = document.getElementById("serviceFormCategorySelect");
+    if (catSelect) catSelect.selectedIndex = 0;
     const fileInp = document.getElementById("serviceFormFileInput");
     if (fileInp) fileInp.value = "";
     const submitBtn = document.getElementById("btnSubmitService");
@@ -592,10 +654,8 @@
 
     const lineId = lineSelect.value;
     const areas = Core.getAreasForLine(lineId, Core._state.currentUser);
-    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-
     if (!areas || areas.length === 0) {
-      areaSelect.innerHTML = `<option value="" disabled selected>${isAr ? "لا توجد مناطق مخصصة لك في هذا الخط" : "No areas assigned to you for this line"}</option>`;
+      areaSelect.innerHTML = `<option value="" disabled selected>No areas assigned to you for this line</option>`;
       areaSelect.value = "";
     } else {
       areaSelect.innerHTML = areas.map((a) => `<option value="${a.id}">${a.name} (${a.code || a.id})</option>`).join("");
@@ -628,12 +688,10 @@
     const hospitals = (window.store && window.store.hospitals && window.store.hospitals.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
     const doctors = (window.store && window.store.doctors && window.store.doctors.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
 
-    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-
     if (hospSelect) {
       const filteredHosp = hospitals.filter((h) => (!lineId || !h.lineId || h.lineId === lineId) && (!areaId || !h.areaId || h.areaId === areaId));
       if (filteredHosp.length === 0) {
-        hospSelect.innerHTML = `<option value="" disabled selected>${isAr ? "لا توجد مستشفيات متاحة" : "No hospitals available"}</option>`;
+        hospSelect.innerHTML = `<option value="" disabled selected>No hospitals available</option>`;
       } else {
         hospSelect.innerHTML = filteredHosp.map((h) => `<option value="${h.id}">${h.name}</option>`).join("");
       }
@@ -641,10 +699,15 @@
 
     if (docSelect) {
       const filteredDoc = doctors.filter((d) => (!lineId || !d.lineId || d.lineId === lineId) && (!areaId || !d.areaId || d.areaId === areaId));
+      filteredDoc.sort(window.sortBilingualByName || ((a, b) => (a.name || "").localeCompare(b.name || "")));
       if (filteredDoc.length === 0) {
-        docSelect.innerHTML = `<option value="" disabled selected>${isAr ? "لا يوجد أطباء متاحون" : "No doctors available"}</option>`;
+        docSelect.innerHTML = `<option value="" disabled selected>No doctors available</option>`;
       } else {
-        docSelect.innerHTML = filteredDoc.map((d) => `<option value="${d.id}">${d.name} (${d.specialty || "-"})</option>`).join("");
+        const currentDocLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+        docSelect.innerHTML = filteredDoc.map((d) => {
+          const docName = (currentDocLang === "ar" && d.nameAr) ? d.nameAr : (d.name || d.nameAr || "");
+          return `<option value="${d.id}">${docName} (${d.specialty || "-"})</option>`;
+        }).join("");
       }
     }
 
@@ -925,6 +988,7 @@
     const shiftSelect = document.getElementById("serviceFormShiftSelect");
     const docSelect = document.getElementById("serviceFormDoctorSelect");
     const hospSelect = document.getElementById("serviceFormHospitalSelect");
+    const categorySelect = document.getElementById("serviceFormCategorySelect");
     const titleInput = document.getElementById("serviceFormTitleInput");
     const costInput = document.getElementById("serviceFormCostInput");
     const dateInput = document.getElementById("serviceFormDateInput");
@@ -934,10 +998,16 @@
     const department = deptSelect.value;
     const areaId = areaSelect.value;
     const shift = shiftSelect.value;
+    const category = categorySelect ? categorySelect.value : "";
     const title = titleInput.value.trim();
     const cost = parseFloat(costInput.value);
     const date = dateInput.value;
     const notes = notesInput.value.trim();
+
+    if (!category) {
+      Core.safeShowToast("Please select a service category.", "warning");
+      return;
+    }
 
     if (!cost || cost <= 0) {
       Core.safeShowToast("Please enter a valid cost.", "warning");
@@ -971,7 +1041,7 @@
     let primaryPercent = 100;
     if (isShared) {
       if (Core._state.sharedLines.length === 0) {
-        Core.safeShowToast("يرجى إضافة خط أو منطقة مشاركة واحدة على الأقل.", "warning");
+        Core.safeShowToast("Please add at least one shared line or area.", "warning");
         return;
       }
 
@@ -981,7 +1051,7 @@
       const totalPct = primaryPercent + partSum;
 
       if (totalPct !== 100) {
-        Core.safeShowToast(Core.t("sharedExceedsNotice") || "يجب أن يكون مجموع نسب المشاركة 100% بالضبط.", "warning");
+        Core.safeShowToast(Core.t("sharedExceedsNotice") || "Total share percentages must equal exactly 100%.", "warning");
         return;
       }
     }
@@ -995,16 +1065,13 @@
       const budgetMetrics = getBudgetMetricsForUser(lineId, Core._state.currentUser);
       if (budgetMetrics.allocated <= 0) {
         Core.safeShowToast(
-          Core.t("noBudgetAllocated") || "عفواً، لم يتم تخصيص ميزانية لخدمات الأطباء لهذا الخط بعد. يرجى مراجعة مدير المنطقة.",
+          Core.t("noBudgetAllocated") || "Doctor services budget has not been allocated for this product line yet. Please consult your manager.",
           "warning"
         );
         return;
       }
       if (myShareCost > budgetMetrics.remaining) {
-        const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-        const errMsg = lang === "ar"
-          ? `عفواً، التكلفة المطلوبة (${myShareCost.toLocaleString()} ج.م) تتجاوز الرصيد المتبقي من ميزانيتك (${budgetMetrics.remaining.toLocaleString()} ج.م).`
-          : `Requested cost (${myShareCost.toLocaleString()} EGP) exceeds your remaining promotional budget (${budgetMetrics.remaining.toLocaleString()} EGP).`;
+        const errMsg = `Requested cost (${myShareCost.toLocaleString()} EGP) exceeds your remaining promotional budget (${budgetMetrics.remaining.toLocaleString()} EGP).`;
         Core.safeShowToast(errMsg, "danger");
         return;
       }
@@ -1035,7 +1102,7 @@
 
       for (const row of Core._state.sharedLines) {
         if (!row.areaId) {
-          Core.safeShowToast("يرجى اختيار المنطقة لكل خط مشارك.", "warning");
+          Core.safeShowToast("Please select the area for each shared line.", "warning");
           return;
         }
         const rowHierarchy = Core.getLiveHierarchyForArea(row.areaId);
@@ -1099,6 +1166,7 @@
       targetType: targetType,
       targetId: targetId,
       targetName: targetName,
+      category: category,
       title: title,
       cost: cost,
       date: date,
@@ -1129,10 +1197,8 @@
           Core.dispatchWorkflowNotification({
             userId: sh.repId,
             type: "shared_service_request",
-            title: `طلب خدمة مشتركة جديد (${sh.sharePercent}%)`,
-            titleEn: `New Shared Service Request (${sh.sharePercent}%)`,
-            message: `تمت مشاركتك في طلب خدمة (${newService.title}) بنسبة ${sh.sharePercent}% (${sh.shareAmount.toLocaleString()} ج.م) بواسطة ${creatorName}.`,
-            messageEn: `You have been included in a shared service request (${newService.title}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${creatorName}.`,
+            title: `New Shared Service Request (${sh.sharePercent}%)`,
+            message: `You have been included in a shared service request (${newService.title}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${creatorName}.`,
             link: "activities.html",
             icon: "🤝",
             badgeClass: "bg-info",
@@ -1149,10 +1215,8 @@
           Core.dispatchWorkflowNotification({
             userId: sh.nextApproverId,
             type: "shared_service_approval",
-            title: "طلب خدمة مشتركة بانتظار اعتمادك",
-            titleEn: "Shared Service Request Pending Approval",
-            message: `هناك طلب خدمة مشتركة (${newService.title}) بتكلفة إجمالية ${newService.cost.toLocaleString()} ج.م بانتظار مراجعتك واعتمادك.`,
-            messageEn: `A shared service request (${newService.title}) totaling ${newService.cost.toLocaleString()} EGP is awaiting your approval.`,
+            title: "Shared Service Request Pending Approval",
+            message: `A shared service request (${newService.title}) totaling ${newService.cost.toLocaleString()} EGP is awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
             badgeClass: "bg-warning",
@@ -1166,10 +1230,8 @@
         Core.dispatchWorkflowNotification({
           userId: newService.nextApproverId,
           type: "service_approval",
-          title: "طلب خدمة جديد بانتظار اعتمادك",
-          titleEn: "Service Request Pending Approval",
-          message: `قدم ${creatorName} طلب خدمة (${newService.title}) بتكلفة ${newService.cost.toLocaleString()} ج.م بانتظار اعتمادك.`,
-          messageEn: `${creatorName} submitted a service request (${newService.title}) for ${newService.cost.toLocaleString()} EGP awaiting your approval.`,
+          title: "Service Request Pending Approval",
+          message: `${creatorName} submitted a service request (${newService.title}) for ${newService.cost.toLocaleString()} EGP awaiting your approval.`,
           link: "activities.html",
           icon: "📋",
           badgeClass: "bg-warning",

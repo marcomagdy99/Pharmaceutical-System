@@ -54,64 +54,6 @@ const calendarTranslations = {
     statusApproved: "Approved",
     statusPending: "Pending",
   },
-  ar: {
-    selectRep: "عرض جدول المواعيد لـ:",
-    allReps: "جميع التابعين (عرض الفريق)",
-    browseOrgTree: "تصفح الهيكل الوظيفي",
-    viewAllTeam: "عرض كل الفريق",
-    selectAllTeam: "اختيار كامل الفريق",
-    orgTreeTitle: "🏢 اختر الموظف أو الفرع الإداري",
-    orgTreeSubtitle: "اختر أي مستوى (BU أو LM أو DM أو مندوب) أو ابحث مباشرة",
-    searchPlaceholder: "ابحث بالاسم، المسمى الوظيفي، أو الكود...",
-    selectBtn: "اختيار",
-    selectedBtn: "✓ تم الاختيار",
-    allTeamView: "جميع التابعين (عرض الفريق)",
-    teamBadge: "الفريق",
-    noResults: "لا يوجد موظفون يطابقون بحثك.",
-    directReports: "تابعين مباشرين",
-    close: "إغلاق",
-    today: "اليوم",
-    monthView: "شهر",
-    weekView: "أسبوع",
-    completedVisit: "زيارة مكتملة",
-    plannedVisit: "زيارة مخططة",
-    approvedLeave: "إجازة معتمدة",
-    pendingLeave: "إجازة قيد الانتظار",
-    trainingMeeting: "تدريب/اجتماع/مؤتمر",
-    officeWork: "عمل مكتبي",
-    publicHoliday: "إجازة رسمية عامة",
-    days: [
-      "السبت",
-      "الأحد",
-      "الاثنين",
-      "الثلاثاء",
-      "الأربعاء",
-      "الخميس",
-      "الجمعة",
-    ],
-    months: [
-      "يناير",
-      "فبراير",
-      "مارس",
-      "أبريل",
-      "مايو",
-      "يونيو",
-      "يوليو",
-      "أغسطس",
-      "سبتمبر",
-      "أكتوبر",
-      "نوفمبر",
-      "ديسمبر",
-    ],
-    amActivities: "أنشطة الصباح",
-    pmActivities: "أنشطة المساء",
-    leaves: "الإجازات",
-    noEvents: "لا توجد أحداث في هذا اليوم.",
-    statusCompleted: "مكتمل",
-    statusPlanned: "مخطط",
-    statusApproved: "معتمد",
-    statusPending: "قيد الانتظار",
-  },
 };
 
 /**
@@ -230,46 +172,45 @@ window.currentCalendarTargetRole = "Team";
 
 function getRoleBadgeInfo(role) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  switch (role) {
+    switch (role) {
     case "admin":
       return {
-        label: isAr ? "مدير النظام" : "System Admin",
+        label: "System Admin",
         short: "Admin",
         badgeClass: "role-admin",
         icon: "👑",
       };
     case "business_unit":
       return {
-        label: isAr ? "مدير وحدة (BU)" : "Business Unit (BU)",
+        label: "Business Unit (BU)",
         short: "BU",
         badgeClass: "role-business_unit",
         icon: "🏢",
       };
     case "line_manager":
       return {
-        label: isAr ? "مدير خط (LM)" : "Line Manager (LM)",
+        label: "Line Manager (LM)",
         short: "LM",
         badgeClass: "role-line_manager",
         icon: "📁",
       };
     case "district_manager":
       return {
-        label: isAr ? "مدير منطقة (DM)" : "District Manager (DM)",
+        label: "District Manager (DM)",
         short: "DM",
         badgeClass: "role-district_manager",
         icon: "🗂️",
       };
     case "medical_rep":
       return {
-        label: isAr ? "مندوب دعاية (Rep)" : "Medical Rep",
+        label: "Medical Rep",
         short: "Rep",
         badgeClass: "role-medical_rep",
         icon: "👤",
       };
     case "hr":
       return {
-        label: isAr ? "الموارد البشرية (HR)" : "HR Manager",
+        label: "HR Manager",
         short: "HR",
         badgeClass: "role-hr",
         icon: "📋",
@@ -286,12 +227,11 @@ function getRoleBadgeInfo(role) {
 
 function getUserHierarchyBreadcrumb(userId, allUsers) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const crumbs = [];
+    const crumbs = [];
   let curr = allUsers.find((u) => u.id === userId);
   while (curr) {
     const roleInfo = getRoleBadgeInfo(curr.role);
-    const name = isAr && curr.nameAr ? curr.nameAr : curr.name;
+    const name = curr.name || curr.nameAr;
     crumbs.unshift(`${roleInfo.short}: ${name}`);
     if (!curr.managerId || curr.managerId === "admin1" || curr.role === "admin")
       break;
@@ -481,8 +421,7 @@ function renderCalendar() {
 
 function openDayDetail(dateObj, events) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const t = calendarTranslations[lang] || calendarTranslations.en;
+    const t = calendarTranslations[lang] || calendarTranslations.en;
 
   const titleEl = document.getElementById("detailDateTitle");
   if (titleEl) {
@@ -514,13 +453,7 @@ function openDayDetail(dateObj, events) {
     if (pmEvents.length > 0)
       renderDetailSection(t.pmActivities, pmEvents, contentEl, t, lang);
     if (pharmacyEvents.length > 0)
-      renderDetailSection(
-        isAr ? "💊 زيارات الصيدليات" : "💊 Pharmacy Visits",
-        pharmacyEvents,
-        contentEl,
-        t,
-        lang,
-      );
+      renderDetailSection("💊 Pharmacy Visits", pharmacyEvents, contentEl, t, lang);
   }
 
   const panel = document.getElementById("dayDetailPanel");
@@ -533,8 +466,7 @@ function openDayDetail(dateObj, events) {
 function renderDetailSection(title, evts, container, t, lang) {
   const currentLang =
     lang || (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = currentLang === "ar";
-
+  
   const sec = document.createElement("div");
   sec.className = "detail-section";
   sec.innerHTML = `<div class="detail-section-title">${window.escapeHtml(title)}</div>`;
@@ -556,9 +488,7 @@ function renderDetailSection(title, evts, container, t, lang) {
     if (evt.type === "holiday") {
       iconClass = "icon-visit-completed";
       badgeClass = "badge-completed";
-      statusText = isAr
-        ? "إجازة رسمية عامة"
-        : "Official Holiday (No Deduction)";
+      statusText = "Official Holiday (No Deduction)";
       iconChar = "🌴";
     } else if (evt.type === "visit") {
       iconClass =
@@ -604,7 +534,7 @@ function renderDetailSection(title, evts, container, t, lang) {
     if (evt.repId) {
       const u = allUsers.find((user) => user.id === evt.repId);
       if (u) {
-        const uName = isAr && u.nameAr ? u.nameAr : u.name;
+        const uName = u.name || u.nameAr;
         ownerText = ` • 👤 ${window.escapeHtml(uName)}`;
       }
     }
@@ -693,8 +623,7 @@ function selectCalendarTarget(targetId, targetName, targetRole) {
 
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const t = calendarTranslations[lang] || calendarTranslations.en;
+    const t = calendarTranslations[lang] || calendarTranslations.en;
 
   if (targetId === "all") {
     targetName = targetName || t.allTeamView;
@@ -702,7 +631,7 @@ function selectCalendarTarget(targetId, targetName, targetRole) {
   } else if (!targetName || !targetRole) {
     const foundUser = allUsers.find((u) => u.id === targetId);
     if (foundUser) {
-      targetName = isAr && foundUser.nameAr ? foundUser.nameAr : foundUser.name;
+      targetName = foundUser.name || foundUser.nameAr;
       const badgeInfo = getRoleBadgeInfo(foundUser.role);
       targetRole = badgeInfo.short;
     }
@@ -749,8 +678,7 @@ function renderOrgTreeNodes(searchTerm = "") {
   if (!container) return;
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const t = calendarTranslations[lang] || calendarTranslations.en;
+    const t = calendarTranslations[lang] || calendarTranslations.en;
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     role: "admin",
@@ -799,7 +727,7 @@ function renderOrgTreeNodes(searchTerm = "") {
 
     let searchHtml = '<div class="search-results-list">';
     filteredUsers.forEach((u) => {
-      const uName = isAr && u.nameAr ? u.nameAr : u.name;
+      const uName = u.name || u.nameAr;
       const roleInfo = getRoleBadgeInfo(u.role);
       const breadcrumb = getUserHierarchyBreadcrumb(u.id, allUsers);
       const isSelected = window.currentCalendarTargetId === u.id;
@@ -828,7 +756,7 @@ function renderOrgTreeNodes(searchTerm = "") {
 
   function renderUserNode(userNode, level = 0) {
     const isInactive = userNode.status === "Inactive";
-    const nodeName = isAr && userNode.nameAr ? userNode.nameAr : userNode.name;
+    const nodeName = userNode.name || userNode.nameAr;
     const roleInfo = getRoleBadgeInfo(userNode.role);
     const directs = allUsers.filter((u) => {
       if (u.managerId !== userNode.id) return false;
@@ -960,8 +888,7 @@ function populateCalendarLineFilter(user = null) {
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isRep = role === "medical_rep" || role === "rep";
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+    const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
   const curVal = lineSelect.value;
 
   lineSelect.replaceChildren();
@@ -971,7 +898,7 @@ function populateCalendarLineFilter(user = null) {
       userLines.forEach((l) => {
         const opt = document.createElement("option");
         opt.value = l.id;
-        opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+        opt.textContent = `📦 ${l.name || l.nameAr}`;
         lineSelect.appendChild(opt);
       });
       lineSelect.value = userLines[0].id;
@@ -980,7 +907,7 @@ function populateCalendarLineFilter(user = null) {
     } else {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = isAr ? "📦 لا توجد خطوط معينة" : "📦 No Line Assigned";
+      opt.textContent = "📦 No Line Assigned";
       lineSelect.appendChild(opt);
       window.selectedCalendarLineId = "";
       lineSelect.disabled = true;
@@ -995,14 +922,14 @@ function populateCalendarLineFilter(user = null) {
   if (isFullAdmin || userLines.length > 1) {
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    optAll.textContent = "🌐 All Product Lines";
     lineSelect.appendChild(optAll);
   }
 
   userLines.forEach((l) => {
     const opt = document.createElement("option");
     opt.value = l.id;
-    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    opt.textContent = `📦 ${l.name || l.nameAr}`;
     lineSelect.appendChild(opt);
   });
 
@@ -1041,8 +968,7 @@ function setupManagerFilter(user) {
   const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
   const isRep = role === "medical_rep" || role === "rep";
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const t = calendarTranslations[lang] || calendarTranslations.en;
+    const t = calendarTranslations[lang] || calendarTranslations.en;
 
   managerFilter.classList.add("active");
   managerFilter.style.display = "flex";
@@ -1051,11 +977,11 @@ function setupManagerFilter(user) {
     if (btnOpenTree) btnOpenTree.style.display = "none";
     if (btnReset) btnReset.style.display = "none";
     if (targetRoleBadge) {
-      targetRoleBadge.textContent = isAr ? "مندوب" : "Rep";
+      targetRoleBadge.textContent = "Rep";
       targetRoleBadge.className = "target-role-badge role-badge role-medical_rep";
     }
     if (targetNameDisplay) {
-      targetNameDisplay.textContent = isAr && user.nameAr ? user.nameAr : user.name;
+      targetNameDisplay.textContent = user.name || user.nameAr;
     }
   } else {
     if (btnOpenTree) btnOpenTree.style.display = "inline-flex";

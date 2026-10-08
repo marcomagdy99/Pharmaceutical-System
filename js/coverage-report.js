@@ -334,21 +334,20 @@ function renderCoverageReportView() {
   const drilldownBar = document.getElementById('coverageActiveDrilldownBar');
   const drilldownText = document.getElementById('coverageActiveDrilldownText');
 
-  const isAr = lang === 'ar';
-  const headerTerritory = document.getElementById('covColTerritory');
+    const headerTerritory = document.getElementById('covColTerritory');
   const headerEmployee = document.getElementById('covColEmployee');
   const headerDoctors = document.getElementById('covColDoctors');
   const headerVisited = document.getElementById('covColVisited');
   const headerUnvisited = document.getElementById('covColUnvisited');
   const headerActual = document.getElementById('covColActual');
   const headerAvgFreq = document.getElementById('covColAvgFreq');
-  if (headerTerritory) headerTerritory.textContent = isAr ? 'المنطقة / الإقليم' : 'Territory / Area';
-  if (headerEmployee) headerEmployee.textContent = isAr ? 'الموظف' : 'Employee';
-  if (headerDoctors) headerDoctors.textContent = isAr ? 'إجمالي الأطباء' : 'Doctors';
-  if (headerVisited) headerVisited.textContent = isAr ? 'الأطباء المزارين' : 'Visited Doctors';
-  if (headerUnvisited) headerUnvisited.textContent = isAr ? 'الأطباء غير المزارين' : 'Unvisited Doctors';
-  if (headerActual) headerActual.textContent = isAr ? 'الزيارات الفعلية' : 'Actual Visits';
-  if (headerAvgFreq) headerAvgFreq.textContent = isAr ? 'معدل التردد' : 'Average Frequency';
+  if (headerTerritory) headerTerritory.textContent = 'Territory / Area';
+  if (headerEmployee) headerEmployee.textContent = 'Employee';
+  if (headerDoctors) headerDoctors.textContent = 'Doctors';
+  if (headerVisited) headerVisited.textContent = 'Visited Doctors';
+  if (headerUnvisited) headerUnvisited.textContent = 'Unvisited Doctors';
+  if (headerActual) headerActual.textContent = 'Actual Visits';
+  if (headerAvgFreq) headerAvgFreq.textContent = 'Average Frequency';
 
   if (summaryTbody) summaryTbody.replaceChildren();
   if (detailsTbody) detailsTbody.replaceChildren();

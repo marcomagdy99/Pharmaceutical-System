@@ -725,7 +725,15 @@
     // ==========================================
     doctors: {
       getAll() {
-        return window.DEMO_DATA.doctors || [];
+        const raw = window.DEMO_DATA.doctors || [];
+        const sorter = window.sortBilingualByName || ((a, b) => {
+          const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+          const nA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
+          const nB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
+          const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
+          return nA.localeCompare(nB, locales, { numeric: true, sensitivity: "base" });
+        });
+        return raw.slice().sort(sorter);
       },
       getById(id) {
         return (window.DEMO_DATA.doctors || []).find((d) => d.id === id);
@@ -763,7 +771,15 @@
     // ==========================================
     pharmacies: {
       getAll() {
-        return window.DEMO_DATA.pharmacies || [];
+        const raw = window.DEMO_DATA.pharmacies || [];
+        const sorter = window.sortBilingualByName || ((a, b) => {
+          const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+          const nA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
+          const nB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
+          const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
+          return nA.localeCompare(nB, locales, { numeric: true, sensitivity: "base" });
+        });
+        return raw.slice().sort(sorter);
       },
       getById(id) {
         return (window.DEMO_DATA.pharmacies || []).find((p) => p.id === id);
@@ -910,6 +926,120 @@
         autoSave("pharmacyOverrides", "delete", { id });
         return item;
       },
+    },
+
+    // ==========================================
+    // Section: Account Location Requests Module (GPS Pinning & Relocation Workflow)
+    // Allows Reps to pin clinic GPS on 1st visit or request relocation update,
+    // pending DM / Admin approval.
+    // ==========================================
+    accountLocationRequests: {
+      getAll() {
+        if (!window.DEMO_DATA.accountLocationRequests) {
+          window.DEMO_DATA.accountLocationRequests = [];
+        }
+        return window.DEMO_DATA.accountLocationRequests;
+      },
+      getPending() {
+        return this.getAll().filter((r) => r.status === "pending");
+      },
+      getById(id) {
+        return this.getAll().find((r) => r.id === id);
+      },
+      submit(req) {
+        if (!window.DEMO_DATA.accountLocationRequests) {
+          window.DEMO_DATA.accountLocationRequests = [];
+        }
+        const item = {
+          id: req.id || "locreq_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+          targetId: req.targetId,
+          targetType: req.targetType || "doctor", // 'doctor' | 'hospital' | 'pharmacy'
+          targetName: req.targetName,
+          requestType: req.requestType || "initial_pin", // 'initial_pin' | 'relocation'
+          newLat: Number(req.newLat),
+          newLng: Number(req.newLng),
+          oldLat: req.oldLat != null ? Number(req.oldLat) : null,
+          oldLng: req.oldLng != null ? Number(req.oldLng) : null,
+          distanceMeters: req.distanceMeters != null ? Math.round(Number(req.distanceMeters)) : null,
+          reason: req.reason || "",
+          newAddress: req.newAddress || "",
+          repId: req.repId,
+          repName: req.repName,
+          status: "pending", // 'pending' | 'approved' | 'rejected'
+          submittedAt: new Date().toISOString(),
+          decisionAt: null,
+          decisionBy: null,
+          decisionComment: ""
+        };
+        window.DEMO_DATA.accountLocationRequests.unshift(item);
+        autoSave("accountLocationRequests", "create", item);
+
+        // Optional notification dispatch
+        if (typeof window.addWorkflowNotification === "function") {
+          window.addWorkflowNotification({
+            type: "location_pin_request",
+            title: item.requestType === "relocation" ? "Clinic Relocation Request" : "Clinic Location Pin Request",
+            message: `Rep ${item.repName} requested GPS pin for ${item.targetName}`,
+            link: "visits.html",
+            icon: "📍",
+            badgeClass: "bg-warning",
+            actorName: item.repName,
+            action: "submitted"
+          });
+        }
+        return item;
+      },
+      approve(id, actorUser, comment = "") {
+        const item = this.getById(id);
+        if (!item || item.status !== "pending") return null;
+        item.status = "approved";
+        item.decisionAt = new Date().toISOString();
+        item.decisionBy = actorUser ? actorUser.name : "Manager";
+        item.decisionComment = comment;
+
+        // Apply updated GPS coordinates to target entity
+        if (item.targetType === "doctor" && store.doctors) {
+          const doc = store.doctors.getById(item.targetId);
+          if (doc) {
+            doc.lat = item.newLat;
+            doc.lng = item.newLng;
+            if (item.newAddress) {
+              doc.address = item.newAddress;
+              doc.clinicAddress = item.newAddress;
+            }
+            store.doctors.save(doc);
+          }
+        } else if (item.targetType === "hospital" && store.hospitals) {
+          const hosp = store.hospitals.getById(item.targetId);
+          if (hosp) {
+            hosp.lat = item.newLat;
+            hosp.lng = item.newLng;
+            if (item.newAddress) hosp.address = item.newAddress;
+            store.hospitals.save(hosp);
+          }
+        } else if (item.targetType === "pharmacy" && store.pharmacies) {
+          const pharm = store.pharmacies.getById(item.targetId);
+          if (pharm) {
+            pharm.lat = item.newLat;
+            pharm.lng = item.newLng;
+            if (item.newAddress) pharm.address = item.newAddress;
+            store.pharmacies.save(pharm);
+          }
+        }
+
+        autoSave("accountLocationRequests", "update", item);
+        return item;
+      },
+      reject(id, actorUser, comment = "") {
+        const item = this.getById(id);
+        if (!item || item.status !== "pending") return null;
+        item.status = "rejected";
+        item.decisionAt = new Date().toISOString();
+        item.decisionBy = actorUser ? actorUser.name : "Manager";
+        item.decisionComment = comment;
+        autoSave("accountLocationRequests", "update", item);
+        return item;
+      }
     },
 
     // ==========================================
@@ -2285,10 +2415,8 @@
           id: notif.id || ("notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
           userId: notif.userId || "rep1",
           type: notif.type || "system",
-          title: notif.title || "إشعار جديد",
-          titleEn: notif.titleEn || notif.title || "Notification",
-          message: notif.message || "",
-          messageEn: notif.messageEn || notif.message || "",
+          title: notif.title || notif.titleEn || "New Notification",
+          message: notif.message || notif.messageEn || "",
           note: notif.note || null,
           link: notif.link || "#",
           read: false,
@@ -2583,3 +2711,4 @@
     store.users.syncAreasFromStore();
   }
 })();
+

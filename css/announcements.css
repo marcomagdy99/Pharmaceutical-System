@@ -580,20 +580,7 @@
     cursor: pointer;
     padding: 6px;
 }
-html[dir="rtl"] .lightbox-close {
-    right: auto;
-    left: 0;
-}
 /* --- END IMAGE UPLOAD & CARD IMAGES --- */
-
-/* RTL Support */
-html[dir="rtl"] .announcement-card {
-    border-left: none;
-    border-right: 4px solid transparent;
-}
-html[dir="rtl"] .announcement-card.priority-high { border-right-color: var(--danger, #dc3545); }
-html[dir="rtl"] .announcement-card.priority-normal { border-right-color: var(--primary, #0d6efd); }
-html[dir="rtl"] .announcement-card.priority-low { border-right-color: var(--gray-400, #94a3b8); }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -687,23 +674,6 @@ html[dir="rtl"] .announcement-card.priority-low { border-right-color: var(--gray
 
 [data-theme="dark"] .announcement-card.priority-low {
     border-left-color: #64748b;
-}
-
-html[dir="rtl"][data-theme="dark"] .announcement-card {
-    border-left: none;
-    border-right: 4px solid transparent;
-}
-
-html[dir="rtl"][data-theme="dark"] .announcement-card.priority-high {
-    border-right-color: #ef4444;
-}
-
-html[dir="rtl"][data-theme="dark"] .announcement-card.priority-normal {
-    border-right-color: #388bfd;
-}
-
-html[dir="rtl"][data-theme="dark"] .announcement-card.priority-low {
-    border-right-color: #64748b;
 }
 
 [data-theme="dark"] .announcement-card.unread {

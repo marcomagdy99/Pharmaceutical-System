@@ -176,7 +176,9 @@
       modalNewServiceTitle: "New Doctor / Hospital Service Request",
       targetHospital: "Target Hospital / Center",
       targetDoctor: "Target Doctor",
-      serviceTitleLabel: "Service Type / Title",
+      serviceCategoryLabel: "Service Category",
+      selectCategoryPrompt: "Select Service Category...",
+      serviceTitleLabel: "Event Title / Purpose",
       serviceDateLabel: "Expected Execution Date",
       btnSubmitService: "Submit Service Request",
       noServicesFound: "No service requests found matching your filter.",
@@ -251,192 +253,6 @@
       allEmployees: "All Employees",
       myRequestsOnly: "My Requests Only",
       dayOff: "Day Off"
-    },
-    ar: {
-      activitiesTitle: "فارماكير - الطلبات الميدانية",
-      dailyActivities: "الأنشطة اليومية",
-      tabDailyActivities: "الأنشطة اليومية",
-      tabExpenses: "نفقات ومصاريف العمل",
-      tabServices: "خدمات الدكاترة والمستشفيات",
-      tabSalesBudget: "ميزانية المبيعات (Budget)",
-      today: "اليوم",
-      amPeriod: "فترة الصباح",
-      pmPeriod: "فترة المساء",
-      logActivity: "تسجيل نشاط",
-      logActivityTitle: "تسجيل نشاط",
-      weeklyOverview: "نظرة عامة أسبوعية (السبت - الجمعة)",
-      period: "الفترة",
-      activityType: "نوع النشاط",
-      selectActivity: "اختر النشاط...",
-      typeVisit: "زيارة",
-      typeOfficeWork: "عمل مكتبي",
-      typeTraining: "تدريب",
-      typeMeeting: "اجتماع",
-      typeConference: "مؤتمر",
-      notes: "ملاحظات",
-      cancel: "إلغاء",
-      save: "حفظ",
-      deleteActivity: "حذف النشاط",
-      confirmDeleteActivity: "هل أنت متأكد من حذف هذا النشاط؟",
-      activityDeleted: "تم حذف النشاط بنجاح.",
-      selectActivityTypeWarning: "يرجى اختيار نوع النشاط أولاً.",
-      statusLogged: "تم التسجيل",
-      statusNotLogged: "لم يتم التسجيل",
-      goToVisits: "الذهاب لصفحة الزيارات",
-      noActivityLogged: "لم يتم تسجيل نشاط لهذه الفترة.",
-      sat: "السبت",
-      sun: "الأحد",
-      mon: "الاثنين",
-      tue: "الثلاثاء",
-      wed: "الأربعاء",
-      thu: "الخميس",
-      fri: "الجمعة",
-
-      // Expenses Tab
-      expensesTitle: "نفقات ومصاريف الميدان والسفر",
-      expensesSubtitle: "إدارة مطالبات السفر، الانتقالات، البنزين، الكارتات، والضيافة بسلسلة موافقات دقيقة.",
-      btnNewExpense: "مطالبة نفقات جديدة",
-      pendingApproval: "في انتظار الموافقة",
-      approvedExpenses: "المطالبات المعتمدة",
-      disbursedExpenses: "المنصرف / المدفوع",
-      allStatuses: "كل الحالات",
-      filterPending: "قيد المراجعة",
-      filterApproved: "معتمد",
-      filterRejected: "مرفوض",
-      filterDisbursed: "تم الصرف",
-      allCategories: "كل البنود",
-      catTravel: "انتقالات وسفر",
-      catFuelTolls: "كارتات وبنزين",
-      catHospitality: "ضيافة واجتماعات",
-      catHotel: "إقامة فندقية",
-      colDate: "التاريخ",
-      colEmployee: "الموظف",
-      colCategory: "بند النفقة",
-      colAmount: "المبلغ",
-      colReceipt: "الفاتورة / الإيصال",
-      colStatus: "حالة الاعتماد",
-      colActions: "إجراءات",
-      modalNewExpenseTitle: "تسجيل مطالبة نفقات ميدانية",
-      receiptHelp: "التقط صورة واضحة للفاتورة أو الإيصال أو أرفقها من جهازك.",
-      btnSubmitClaim: "إرسال المطالبة",
-      noExpensesFound: "لا توجد مطالبات نفقات مطابقة للفلتر المحدد.",
-
-      // Services Tab
-      servicesTitle: "خدمات ورعاية الدكاترة والمستشفيات",
-      servicesSubtitle: "تمويل المؤتمرات الطبية، بروشورات التوعية للعيادات، والموائد المستديرة مع الأطباء.",
-      btnNewService: "طلب خدمة / رعاية جديدة",
-      allocatedBudgetOverview: "الميزانية المخصصة للترويج",
-      lineFilterLabel: "اللاين:",
-      filterEmployee: "الموظف:",
-      totalAllocatedBudget: "إجمالي الميزانية",
-      districtBudget: "ميزانية المنطقة",
-      distributedToDms: "الموزع على الـ DMs",
-      approvedSpent: "المعتمد والمستهلك",
-      pendingServices: "معلق في الطلبات",
-      remainingBudget: "الرصيد المتبقي",
-      distributeToDmsTitle: "توزيع ميزانية اللاين على مديري المناطق (DMs)",
-      distributeToDmsSubtitle: "توزيع مخصصات من ميزانيتك المعتمدة على الـ DMs التابعين للاين.",
-      saveAllocations: "حفظ المخصصات",
-      distributeToRepsTitle: "توزيع ميزانية المنطقة على المندوبين (Medical Reps)",
-      distributeToRepsSubtitle: "تحديد ميزانية لكل مندوب طبي تابع لمنطقتك وخط الإنتاج.",
-      saveRepsAllocations: "حفظ مخصصات المندوبين",
-      colDm: "مدير المنطقة (DM)",
-      colRep: "المندوب الطبي (Medical Rep)",
-      colCode: "الكود",
-      colAllocatedAmount: "الميزانية المخصصة (ج.م)",
-      colUtilized: "المستهلك",
-      distributedToReps: "الموزع على المندوبين",
-      myAllocatedBudget: "ميزانيتي المعتمدة",
-      savedRepBudgetMessage: "تم حفظ مخصصات المندوبين بنجاح.",
-      unauthorizedRepBudgetAction: "غير مصرح لك بتعديل مخصصات المندوبين.",
-      allDepts: "كل الأقسام",
-      deptSales: "خدمات المبيعات (Sales)",
-      deptMarketing: "خدمات التسويق (Marketing)",
-      colLine: "اللاين",
-      colDept: "القسم",
-      colArea: "المنطقة",
-      colShiftTarget: "الفترة والجهة",
-      colService: "اسم الخدمة",
-      colCost: "التكلفة التقديرية",
-      colShift: "الفترة",
-      modalNewServiceTitle: "طلب رعاية / خدمة جديدة لطبيب أو مستشفى",
-      targetHospital: "المستشفى / المركز المستهدف",
-      targetDoctor: "الطبيب المستهدف",
-      serviceTitleLabel: "نوع / اسم الخدمة",
-      serviceDateLabel: "تاريخ التنفيذ المتوقع",
-      btnSubmitService: "إرسال طلب الخدمة",
-      noServicesFound: "لا توجد طلبات خدمات مطابقة للفلتر المحدد.",
-
-      // Shared Services
-      sharedServiceToggleLabel: "تقاسم التكلفة بين أكثر من خط / منطقة (Shared Multi-Line)",
-      sharedSubtitle: "توزيع نسبة التكلفة والميزانية على أكثر من خط أو منطقة",
-      btnAddSharedLine: "إضافة خط / منطقة مشاركة",
-      sharedPrimaryTitle: "الخط الأساسي (المُنشئ للطلب)",
-      sharedParticipatingTitle: "خط مشارك",
-      sharedLineLabel: "خط الإنتاج",
-      sharedAreaLabel: "المنطقة / الإقليم",
-      sharedTotalCost: "إجمالي التكلفة",
-      sharedAllocated: "الموزع",
-      sharedRemaining: "المتبقي",
-      sharedSelectLinePrompt: "-- اختر خط الإنتاج --",
-      sharedSelectAreaPrompt: "-- اختر المنطقة التابعة --",
-      sharedAssignedRep: "المندوب المسؤول",
-      sharedNoRepAssigned: "لم يتم تعيين مندوب",
-      sharedShare: "الحصة",
-      sharedValidationComplete: "التوزيع مكتمل بنسبة 100%",
-      sharedValidationIncomplete: "مجموع الحصص الحالي {pct}% (متبقي {rem}%)",
-      sharedExceedsNotice: "مجموع الحصص لا يمكن أن يتجاوز 100%.",
-      sharedBadge: "خدمة مشتركة",
-      partnerBadge: "حصة شريكة",
-      currency: "ج.م",
-      attachmentLabel: "المرفق",
-      viewAttachment: "عرض المرفق",
-      yourShare: "حصتك",
-      sharedIntraLineBadge: "مشاركة داخل اللاين",
-      serviceAttachmentLabel: "مرفق عرض السعر / الفاتورة (اختياري)",
-      noBudgetAllocated: "عفواً، لم يتم تخصيص ميزانية لخدمات الأطباء لهذا الخط بعد. يرجى مراجعة مدير المنطقة.",
-      budgetExceededNotice: "عفواً، التكلفة المطلوبة تتجاوز الرصيد المتبقي من ميزانيتك المتاحة.",
-
-      // Sales Budget Tab
-      buBudgetTitle: "توزيع ميزانيات المبيعات (Sales Promo Budget)",
-      buBudgetSubtitle: "تحديد وتوزيع ميزانيات الدعاية والخدمات لكل لاين على مديري الخطوط (LMs).",
-      selectProductLine: "لاين المنتجات:",
-      totalLineBudget: "إجمالي ميزانية اللاين",
-      allocatedToLms: "الموزع على الـ LMs",
-      unallocatedRemaining: "المتبقي غير الموزع",
-      colLm: "مدير الخط (LM)",
-      colDistributedToDms: "الموزع للـ DMs",
-
-      // Hierarchical Status Text
-      waitingDmPrefix: "في انتظار الـ DM: ",
-      waitingLmPrefix: "في انتظار الـ LM: ",
-      waitingHr: "في انتظار مراجعة وصرف الـ HR",
-      approvedLabel: "معتمد",
-      rejectedLabel: "مرفوض",
-      disbursedLabel: "تم الصرف",
-      statusPending: "قيد المراجعة",
-
-      // Decision Modal
-      confirmApprovalTitle: "تأكيد الموافقة والاعتماد",
-      confirmRejectionTitle: "تأكيد رفض الطلب",
-      confirmDisbursementTitle: "تأكيد الصرف المالي الفعلي",
-      confirmApproveMsg: "هل أنت متأكد من اعتماد وموافقة هذا الطلب بقيمة {amount} ج.م والمقدم من {name}؟",
-      confirmRejectMsg: "هل أنت متأكد من رفض هذا الطلب المقدم من {name}؟ يرجى كتابة سبب الرفض.",
-      confirmDisburseMsg: "تأكيد الصرف المالي الفعلي لمبلغ {amount} ج.م للموظف {name}؟",
-      reasonLabel: "السبب / ملاحظات:",
-      reasonPlaceholder: "اكتب ملاحظاتك أو سبب الرفض...",
-      btnApprove: "موافقة واعتماد",
-      btnReject: "رفض الطلب",
-      btnDisburse: "صرف المبلغ",
-      rejectionReasonRequired: "يرجى كتابة سبب الرفض أولاً قبل المتابعة.",
-      successAction: "تم تنفيذ الإجراء بنجاح!",
-      savedBudgetMessage: "تم حفظ وتحديث توزيع الميزانيات بنجاح!",
-      insufficientBudgetNotice: "تنبيه: تكلفة الطلب تتجاوز الرصيد المتاح حالياً بالميزانية.",
-      noReceipt: "لا توجد فاتورة مرفقة",
-      allLines: "جميع خطوط الإنتاج",
-      allEmployees: "جميع الموظفين",
-      myRequestsOnly: "طلباتي فقط",
-      dayOff: "إجازة أسبوعية"
     }
   };
 
@@ -793,7 +609,7 @@
         id: "rep1",
         role: ROLES.REP,
         name: "Ahmed Mostafa",
-        nameAr: "أحمد مصطفى",
+        nameAr: "Ahmed Mostafa",
         lineIds: ["line1"],
         areaId: "area1",
       };
@@ -1035,14 +851,74 @@
 
   function getAreasForLine(lineId, user) {
     const allAreas = (window.store && window.store.areas && window.store.areas.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
-    let areas = allAreas.filter((a) => !lineId || a.lineId === lineId);
+    let areas = allAreas.filter((a) => !lineId || !a.lineId || a.lineId === lineId);
     if (!user) return areas;
-    if (user.role === ROLES.REP || user.role === ROLES.REP_ALT) {
-      if (user.areaId) {
-        const userAreas = areas.filter((a) => a.id === user.areaId);
-        if (userAreas.length > 0) return userAreas;
+
+    const role = (user.role || "").toLowerCase();
+    const isRep = role === ROLES.REP || role === ROLES.REP_ALT || role === "medical_rep" || role === "rep";
+
+    if (isRep) {
+      const assignedAreaIdSet = new Set();
+      if (user.areaId) assignedAreaIdSet.add(user.areaId);
+      if (Array.isArray(user.areaIds)) {
+        user.areaIds.forEach((id) => assignedAreaIdSet.add(id));
+      }
+
+      // Check active territory history assignments
+      if (window.store && window.store.territoryHistory && typeof window.store.territoryHistory.getByUser === "function") {
+        const hist = window.store.territoryHistory.getByUser(user.id) || [];
+        hist.forEach((h) => {
+          if (!h.endDate && h.areaId) {
+            assignedAreaIdSet.add(h.areaId);
+          }
+        });
+      }
+
+      const repAreas = areas.filter(
+        (a) => a.repId === user.id || assignedAreaIdSet.has(a.id)
+      );
+
+      // Deduplicate by ID
+      const uniqueMap = new Map();
+      repAreas.forEach((a) => {
+        if (!uniqueMap.has(a.id)) uniqueMap.set(a.id, a);
+      });
+
+      if (uniqueMap.size > 0) {
+        return Array.from(uniqueMap.values());
+      }
+
+      // Fallback: search allAreas without line constraint
+      const fallbackAreas = allAreas.filter(
+        (a) => a.repId === user.id || assignedAreaIdSet.has(a.id)
+      );
+      fallbackAreas.forEach((a) => {
+        if (!uniqueMap.has(a.id)) uniqueMap.set(a.id, a);
+      });
+
+      if (uniqueMap.size > 0) {
+        return Array.from(uniqueMap.values());
       }
     }
+
+    const isDM = role === ROLES.DM || role === "district_manager";
+    if (isDM) {
+      const allUsers = getAllUsers();
+      const subUsers = allUsers.filter((u) => u.dmId === user.id || u.managerId === user.id || u.id === user.id);
+      const subUserIds = new Set(subUsers.map((u) => u.id));
+
+      const dmAreas = areas.filter(
+        (a) => a.dmId === user.id || a.managerId === user.id || subUserIds.has(a.repId)
+      );
+      if (dmAreas.length > 0) {
+        const dmMap = new Map();
+        dmAreas.forEach((a) => {
+          if (!dmMap.has(a.id)) dmMap.set(a.id, a);
+        });
+        return Array.from(dmMap.values());
+      }
+    }
+
     return areas;
   }
 

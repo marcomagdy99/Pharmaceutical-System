@@ -196,6 +196,7 @@ const directoryTranslations = {
     tabDoctorsList: 'Doctors List',
     tabHospitalsList: 'Hospitals List',
     tabPharmaciesList: 'Pharmacies List',
+    tabMissingDays: 'Missing Days',
     doctorsDirectoryTitle: '👨‍⚕️ Doctors Directory',
     doctorsDirectorySubtitle: 'Master physician registry with contact details, specialty, and assignment.',
     hospitalsDirectoryTitle: '🏥 Hospitals Directory',
@@ -313,131 +314,30 @@ const directoryTranslations = {
     salesTypeAll: 'All',
     salesTypePrivate: 'Private',
     salesTypeBulk: 'Bulk',
-    colType: 'Type',
     labelAchSalesType: 'Sales Type:',
     achSalesTypeTotal: 'Total',
-  },
-  ar: {
-    tabDoctorsList: 'قائمة الأطباء',
-    tabHospitalsList: 'قائمة المستشفيات',
-    tabPharmaciesList: 'قائمة الصيدليات',
-    doctorsDirectoryTitle: '👨‍⚕️ دليل الأطباء',
-    doctorsDirectorySubtitle: 'سجل الأطباء المعتمد مع تفاصيل الاتصال، التخصص، والمنطقة التابعة.',
-    hospitalsDirectoryTitle: '🏥 دليل المستشفيات',
-    hospitalsDirectorySubtitle: 'سجل المستشفيات والمراكز الطبية المعتمدة مع تفاصيل الاتصال والمندوب والمنطقة التابعة.',
-    pharmaciesDirectoryTitle: '💊 دليل الصيدليات',
-    pharmaciesDirectorySubtitle: 'سجل الصيدليات الشريكة، بيانات الصيدلي المسؤول، والمنطقة التابعة.',
-    searchDoctors: 'بحث الأطباء:',
-    searchDoctorsPlaceholder: 'ابحث بالاسم، العيادة، الهاتف...',
-    searchHospitals: 'بحث المستشفيات:',
-    searchHospitalsPlaceholder: 'ابحث باسم المستشفى، العنوان، الهاتف...',
-    specialty: 'التخصص:',
-    allSpecialties: 'جميع التخصصات',
-    doctorClass: 'الفئة:',
-    allClasses: 'جميع الفئات (A و B)',
-    searchPharmacies: 'بحث الصيدليات:',
-    searchPharmaciesPlaceholder: 'ابحث باسم الصيدلية، العنوان، المسؤول...',
-    addDoctor: 'إضافة طبيب',
-    editDoctor: 'تعديل بيانات الطبيب',
-    addDoctorSubtitle: 'تسجيل طبيب جديد في الدليل وتعيين المندوب والمنطقة التابعة.',
-    editDoctorSubtitle: 'تعديل بيانات الطبيب، التخصص، والمنطقة التابعة.',
-    deleteDoctor: 'حذف طبيب',
-    confirmDeleteDoctor: 'هل أنت متأكد من حذف هذا الطبيب من النظام نهائياً؟',
-    addPharmacy: 'إضافة صيدلية',
-    editPharmacy: 'تعديل بيانات الصيدلية',
-    addPharmacySubtitle: 'تسجيل صيدلية شريكة جديدة وبيانات الصيدلي المسؤول.',
-    editPharmacySubtitle: 'تعديل بيانات الصيدلية، الصيدلي المسؤول، والمنطقة التابعة.',
-    deletePharmacy: 'حذف صيدلية',
-    confirmDeletePharmacy: 'هل أنت متأكد من حذف هذه الصيدلية من النظام نهائياً؟',
-    addHospital: 'إضافة مستشفى',
-    editHospital: 'تعديل بيانات المستشفى',
-    addHospitalSubtitle: 'تسجيل مستشفى أو مركز طبي جديد وتعيين المندوب والمنطقة التابعة.',
-    editHospitalSubtitle: 'تعديل بيانات المستشفى، العنوان، والمنطقة التابعة والمندوب.',
-    deleteHospital: 'حذف مستشفى',
-    confirmDeleteHospital: 'هل أنت متأكد من حذف هذه المستشفى من النظام نهائياً؟',
-    noDoctorsFound: 'لا يوجد أطباء مطابقين',
-    noDoctorsDesc: 'يرجى تجربة معايير بحث أخرى أو تعديل الفلاتر.',
-    noHospitalsFound: 'لا توجد مستشفيات مطابقة',
-    noHospitalsDesc: 'يرجى تجربة معايير بحث أخرى أو تعديل الفلاتر.',
-    noPharmaciesFound: 'لا توجد صيدليات مطابقة',
-    noPharmaciesDesc: 'يرجى تجربة معايير بحث أخرى أو تعديل الفلاتر.',
-    doctorName: 'اسم الطبيب',
-    hospitalName: 'اسم المستشفى',
-    hospitalNameAr: 'اسم المستشفى بالعربي',
-    clinicAddress: 'عنوان العيادة',
-    phone: 'رقم الهاتف',
-    assignedRep: 'المندوب المسؤول',
-    pharmacyName: 'اسم الصيدلية',
-    address: 'العنوان',
-    contactPerson: 'الصيدلي المسؤول / جهة الاتصال',
-    labelLine: 'الخط البيعي / LM:',
-    labelDm: 'المنطقة / DM:',
-    labelRep: 'المندوب الطبي:',
-    territoryAssignment: 'المنطقة وتعيين المندوب المسؤول',
-    filterLm: 'الخط البيعي / LM',
-    filterDm: 'المنطقة / DM',
-    allReps: 'جميع المناديب',
-    doctorsCountSuffix: 'طبيب',
-    hospitalsCountSuffix: 'مستشفى',
-    pharmaciesCountSuffix: 'صيدلية',
-    btnEdit: 'تعديل',
-    btnDelete: 'حذف',
-    cancel: 'إلغاء',
-    save: 'حفظ',
-    delete: 'حذف',
-    btnImportDoctors: 'استيراد من شيت (.csv)',
-    btnImportPharmacies: 'استيراد من شيت (.csv)',
-    btnExportDoctors: 'تصدير اللستة (Export)',
-    btnExportPharmacies: 'تصدير اللستة (Export)',
-    btnExportCSV: 'تصدير CSV',
-    importDoctorsTitle: 'استيراد أطباء من شيت إكسيل',
-    importDoctorsSubtitle: 'قم بتحميل القالب الرسمي المعتمد باللغة الإنجليزية، املأ البيانات، وارفع الملف للاستيراد الفوري.',
-    importPharmaciesTitle: 'استيراد صيدليات من شيت إكسيل',
-    importPharmaciesSubtitle: 'قم بتحميل القالب الرسمي المعتمد باللغة الإنجليزية، املأ البيانات، وارفع الملف للاستيراد الفوري.',
-    step1DownloadTemplate: 'الخطوة 1: تحميل القالب الرسمي (باللغة الإنجليزية)',
-    step1Desc: 'استخدم هذا القالب الرسمي. الحقول الإلزامية: Doctor Name, Specialty, Class, Address.',
-    step1PharmDesc: 'استخدم هذا القالب الرسمي. الحقول الإلزامية: Pharmacy Name, Address.',
-    btnDownloadTemplate: 'تحميل القالب (.csv)',
-    step2AssignRep: 'الخطوة 2: تعيين المندوب المسؤول',
-    step2Desc: 'عيّن جميع السجلات المرفوعة لمندوب محدد، أو اتركها لتقرأ من عمود Rep Code في الشيت.',
-    step3UploadFile: 'الخطوة 3: رفع ملف الشيت المكتمل (.csv)',
-    dropZoneText: 'انقر للاختيار أو اسحب الملف وأفلته هنا',
-    dropZoneSubtext: 'يدعم ملفات CSV (مفصولة بفواصل)',
-    previewTitle: 'معاينة وفحص صحة البيانات',
-    btnConfirmImport: 'تأكيد واستيراد',
-    salesTrendTitle: 'منحنى تحقيق المبيعات شهرياً',
-    coverageGaugeTitle: 'مؤشر قياس التغطية',
-    doctorClassesTitle: 'توزيع فئات الأطباء والمستشفيات',
-    promptShowSalesTitle: 'اضغط على زر عرض لإظهار تقرير المبيعات',
-    promptShowSalesDesc: 'حدد المنتج والشهر والسنة والموزع أو الخط البيعي ثم اضغط على زر عرض لعرض بيانات المبيعات.',
-    promptShowAchTitle: 'اضغط على زر عرض لإظهار تقرير الإنجازات',
-    promptShowAchDesc: 'حدد الشهر والسنة ثم اضغط على زر عرض لعرض الأهداف ونسب التحقيق.',
-    promptShowTimelineTitle: 'اضغط على زر عرض لإظهار التايم لاين اليومي',
-    promptShowTimelineDesc: 'اختر الموظف والفترة الزمنية ثم اضغط على زر عرض لعرض جدول الزيارات والأنشطة.',
-    promptShowCoverageTitle: 'اضغط على زر عرض لإظهار تقرير التغطية',
-    promptShowCoverageDesc: 'اختر الموظف والفترة وفئة الأطباء ثم اضغط على زر عرض لحساب نسب التغطية والتكرار.',
-    promptShowDoctorsTitle: 'اضغط على زر عرض لإظهار دليل الأطباء',
-    promptShowDoctorsDesc: 'حدد الموظف أو التخصص أو الفئة أو كلمات البحث ثم اضغط على زر عرض لإظهار الأطباء.',
-    promptShowPharmaciesTitle: 'اضغط على زر عرض لإظهار دليل الصيدليات',
-    promptShowPharmaciesDesc: 'حدد الموظف أو كلمات البحث ثم اضغط على زر عرض لإظهار الصيدليات.',
-    timelineFrom: 'من:',
-    timelineTo: 'إلى:',
-    allTargets: 'جميع الأهداف (A و B ومستشفيات)',
-    allDoctorsClassAB: 'جميع الأطباء (فئة A و B)',
-    classAOnly: 'فئة A فقط',
-    classBOnly: 'فئة B فقط',
-    hospitalsOnly: 'المستشفيات فقط',
-    colArea: 'المنطقة البيعية',
-    allAreas: 'جميع المناطق',
-    assignedArea: 'المنطقة البيعية',
-    selectArea: '-- اختر المنطقة البيعية --',
-    labelSalesType: 'نوع البيع:',
-    salesTypeAll: 'الكل',
-    salesTypePrivate: 'Private',
-    salesTypeBulk: 'Bulk',
-    colType: 'النوع',
-    labelAchSalesType: 'نوع البيع:',
-    achSalesTypeTotal: 'الإجمالي',
+    labelDateFrom: 'From Date:',
+    labelDateTo: 'To Date:',
+    colLine: 'Line',
+    colAm: 'AM',
+    colDm: 'DM',
+    colHiring: 'Hiring Date',
+    colMonth: 'Month',
+    colQuarter: 'Quarter',
+    colWd: 'W.D',
+    colTargetFd: 'Target F.D',
+    colActualFd: 'Actual F.D',
+    colNonFd: 'Non F.D',
+    colVacation: 'Vacation',
+    colMissingDays: 'Missing Days',
+    kpiTeamInScope: 'Team In Scope',
+    kpiWorkingDays: 'Working Days (W.D)',
+    kpiActualFieldDays: 'Actual Field Days',
+    kpiMissingDaysTotal: 'Missing Days',
+    missingDaysTitle: '📅 Field Discipline & Attendance Audit',
+    missingDaysSubtitle: 'Comparing Working Days, Target Field Days, Completed Doctor Visits, Office Activities, and Official Leaves.',
+    promptShowMissingTitle: 'Click Show to View Missing Days Report',
+    promptShowMissingDesc: 'Select date range and team filters, then click Show to calculate working days, actual field days, and missed days.',
   }
 };
 
@@ -448,8 +348,7 @@ function initializeReportsPage() {
   // Merge directory translations
   if (window.translations) {
     window.translations.en = { ...window.translations.en, ...directoryTranslations.en };
-    window.translations.ar = { ...window.translations.ar, ...directoryTranslations.ar };
-  }
+      }
   initPage('reports');
   syncReportsData();
   const user = checkAuth();
@@ -480,8 +379,12 @@ function initializeReportsPage() {
   // Check URL query parameter for active tab
   const urlParams = new URLSearchParams(window.location.search);
   const requestedTab = urlParams.get('tab');
-  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'hospitals', 'pharmacies'].includes(requestedTab)) {
+  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'hospitals', 'pharmacies', 'missing-days', 'gps-tracing'].includes(requestedTab)) {
     switchReportTab(requestedTab);
+  }
+
+  if (typeof window.checkGpsTracingVisibility === 'function') {
+    window.checkGpsTracingVisibility();
   }
 }
 
@@ -496,6 +399,9 @@ document.addEventListener('languageChanged', () => {
   if (user) {
     setupRolePermissions(user);
     initAllFilters(user);
+  }
+  if (typeof window.checkGpsTracingVisibility === 'function') {
+    window.checkGpsTracingVisibility();
   }
 });
 
@@ -544,19 +450,13 @@ function setupRolePermissions(user) {
 
   const noticeBadge = document.getElementById('adminBadgeNotice');
   const noticeText = document.getElementById('roleNoticeText');
-  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
-
   if (noticeBadge && noticeText) {
     if (isAdmin) {
       noticeBadge.className = 'admin-notice-pill admin-mode';
-      noticeText.textContent = lang === 'ar' 
-        ? 'صلاحية الإدارة: متاح إدارة الأهداف والتقارير والأطباء والمستشفيات والصيدليات' 
-        : 'Admin Role: Full Targets Management, Doctors, Hospitals & Pharmacies Management';
+      noticeText.textContent = 'Admin Role: Full Targets Management, Doctors, Hospitals & Pharmacies Management';
     } else {
       noticeBadge.className = 'admin-notice-pill';
-      noticeText.textContent = lang === 'ar' 
-        ? 'عرض فقط: تعديل التارجت والأطباء والمستشفيات والصيدليات مقتصر على الإدارة' 
-        : 'View-Only: Targets and Directories managed by Admin';
+      noticeText.textContent = 'View-Only: Targets and Directories managed by Admin';
     }
   }
 }
@@ -571,12 +471,25 @@ function switchReportTab(tabKey) {
   document.querySelectorAll('.report-content-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tabPanel-${tabKey}`);
   });
-  setupRolePermissions(typeof checkAuth === 'function' ? checkAuth() : null);
+  const currentUser = typeof checkAuth === 'function' ? checkAuth() : null;
+  setupRolePermissions(currentUser);
+  if (typeof populateUnifiedReportEmployeeFilters === 'function') {
+    populateUnifiedReportEmployeeFilters(currentUser, window.selectedReportLineId);
+  }
   if (tabKey === 'achievements') {
     if (typeof populateAchFilters === 'function') populateAchFilters();
   }
   if (tabKey === 'doctors') {
     if (typeof populateDoctorSpecialtyFilter === 'function') populateDoctorSpecialtyFilter();
+  }
+  if (tabKey === 'missing-days') {
+    if (typeof window.initMissingDaysTab === 'function') window.initMissingDaysTab();
+  }
+  if (tabKey === 'gps-tracing') {
+    if (typeof window.initGpsTracingTab === 'function') window.initGpsTracingTab();
+  }
+  if (tabKey === 'accounts-costing') {
+    if (typeof window.initAccountsCostingTab === 'function') window.initAccountsCostingTab();
   }
 }
 
@@ -616,8 +529,6 @@ function populateReportLineFilter(user) {
   const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'admin1' };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
   const isRep = role === 'medical_rep' || role === 'rep';
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-  const isAr = lang === 'ar';
   const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
   const curVal = lineSelect.value;
 
@@ -628,7 +539,7 @@ function populateReportLineFilter(user) {
       userLines.forEach((l) => {
         const opt = document.createElement('option');
         opt.value = l.id;
-        opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+        opt.textContent = `📦 ${l.name}`;
         lineSelect.appendChild(opt);
       });
       lineSelect.value = userLines[0].id;
@@ -637,7 +548,7 @@ function populateReportLineFilter(user) {
     } else {
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = isAr ? '📦 لا توجد خطوط معينة' : '📦 No Line Assigned';
+      opt.textContent = '📦 No Line Assigned';
       lineSelect.appendChild(opt);
       window.selectedReportLineId = '';
       lineSelect.disabled = true;
@@ -652,14 +563,14 @@ function populateReportLineFilter(user) {
   if (isFullAdmin || userLines.length > 1) {
     const optAll = document.createElement('option');
     optAll.value = 'all';
-    optAll.textContent = isAr ? '🌐 جميع خطوط الإنتاج' : '🌐 All Product Lines';
+    optAll.textContent = '🌐 All Product Lines';
     lineSelect.appendChild(optAll);
   }
 
   userLines.forEach((l) => {
     const opt = document.createElement('option');
     opt.value = l.id;
-    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    opt.textContent = `📦 ${l.name}`;
     lineSelect.appendChild(opt);
   });
 
@@ -701,8 +612,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
   if (selects.length === 0) return;
 
   const effectiveLineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-  const lang = getCurrentLang();
-  const isAr = lang === 'ar';
+  
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const allUsers = getSharedReportUsers();
   const scopedTeam = window.getScopedTeamForLine
@@ -742,7 +652,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
     }
 
     if (isDM) {
-      const allLabel = isAr ? 'كل مناديب الخط/الفريق' : 'All Team Reps in Line';
+      const allLabel = 'All Team Reps in Line';
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
       allOpt.textContent = allLabel;
@@ -759,12 +669,12 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
       myVacantAreas.forEach((area) => {
         const opt = document.createElement('option');
         opt.value = `vacant:${area.id}`;
-        const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-        opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        const areaName = area.name;
+        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
         selectEl.appendChild(opt);
       });
     } else {
-      const allLabel = isAr ? 'جميع الفريق في الخط (الكل)' : 'All Team in Line';
+      const allLabel = 'All Team in Line';
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
       allOpt.textContent = allLabel;
@@ -775,7 +685,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
 
       if (dms.length > 0) {
         const dmGroup = document.createElement('optgroup');
-        dmGroup.label = isAr ? 'مدراء المناطق (District Managers)' : 'District Managers (DMs)';
+        dmGroup.label = 'District Managers (DMs)';
         appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `💼 ${dm.name} (${dm.employeeCode || 'DM'})`);
         selectEl.appendChild(dmGroup);
 
@@ -790,13 +700,13 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
 
           if (dmReps.length > 0 || dmVacantAreas.length > 0) {
             const group = document.createElement('optgroup');
-            group.label = isAr ? `فريق ${dm.name} (Reps)` : `Team ${dm.name} (Reps)`;
+            group.label = `Team ${dm.name} (Reps)`;
             appendSelectOptions(group, dmReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
             dmVacantAreas.forEach((area) => {
               const opt = document.createElement('option');
               opt.value = `vacant:${area.id}`;
-              const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-              opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+              const areaName = area.name;
+        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
               group.appendChild(opt);
             });
             selectEl.appendChild(group);
@@ -807,26 +717,26 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
         const unassignedVacant = vacantAreas.filter((a) => !assignedVacantIds.has(a.id));
         if (otherReps.length > 0 || unassignedVacant.length > 0) {
           const group = document.createElement('optgroup');
-          group.label = isAr ? 'مناديب ومناطق أخرى' : 'Other Reps & Vacant Areas';
+          group.label = 'Other Reps & Vacant Areas';
           appendSelectOptions(group, otherReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
           unassignedVacant.forEach((area) => {
             const opt = document.createElement('option');
             opt.value = `vacant:${area.id}`;
-            const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-            opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+            const areaName = area.name;
+        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
             group.appendChild(opt);
           });
           selectEl.appendChild(group);
         }
       } else if (reps.length > 0 || vacantAreas.length > 0) {
         const repGroup = document.createElement('optgroup');
-        repGroup.label = isAr ? 'المناديب والمناطق (Team)' : 'Team Reps & Areas';
+        repGroup.label = 'Team Reps & Areas';
         appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
         vacantAreas.forEach((area) => {
           const opt = document.createElement('option');
           opt.value = `vacant:${area.id}`;
-          const areaName = isAr && area.nameAr ? area.nameAr : area.name;
-          opt.textContent = `📍 [${isAr ? 'شاغرة' : 'Vacant'}] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+          const areaName = area.name;
+        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
           repGroup.appendChild(opt);
         });
         selectEl.appendChild(repGroup);
@@ -855,7 +765,7 @@ window.populateSalesAndAchRepFilters = populateUnifiedReportEmployeeFilters;
 function populateLinesFilter(lineSelect, user = null) {
   if (!lineSelect) return;
   const lang = getCurrentLang();
-  const allLinesLabel = lang === 'ar' ? 'جميع خطوط الإنتاج (الكل)' : 'All Lines (Select All)';
+  const allLinesLabel = 'All Lines (Select All)';
   lineSelect.innerHTML = `<option value="all">${allLinesLabel}</option>`;
   const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [
     { id: 'line1', name: 'Cardio Line', lineManagerId: 'lm1' }
@@ -880,7 +790,7 @@ function populateLinesFilter(lineSelect, user = null) {
 function populateDMsFilter(dmSelect, lmId = null, lineId = null) {
   if (!dmSelect) return;
   const lang = getCurrentLang();
-  const allDMsLabel = lang === 'ar' ? 'جميع المناطق ومديريها (الكل)' : 'All Districts & DMs';
+  const allDMsLabel = 'All Districts & DMs';
   dmSelect.innerHTML = `<option value="all">${allDMsLabel}</option>`;
   const allUsers = getSharedReportUsers();
   const currentUser = checkAuth();
@@ -908,7 +818,7 @@ function populateDMsFilter(dmSelect, lmId = null, lineId = null) {
 function populateRepsFilter(repSelect, dmId = null, lineId = null) {
   if (!repSelect) return;
   const lang = getCurrentLang();
-  const allRepsLabel = lang === 'ar' ? 'جميع المناديب (الكل)' : 'All Representatives';
+  const allRepsLabel = 'All Representatives';
   repSelect.innerHTML = `<option value="all">${allRepsLabel}</option>`;
   const allUsers = getSharedReportUsers();
   const currentUser = checkAuth();
@@ -1049,8 +959,7 @@ function updateModalAreas(repSelectId, areaSelectId, targetAreaId = null, curren
     matchingAreas = allAreas;
   }
 
-  const isAr = (window.getCurrentLang && window.getCurrentLang() === 'ar');
-  const defaultLabel = isAr ? '-- اختر المنطقة البيعية --' : '-- Select Territory / Area --';
+  const defaultLabel = '-- Select Territory / Area --';
   areaSelect.innerHTML = `<option value="">${defaultLabel}</option>`;
 
   matchingAreas.forEach((a) => {
@@ -1287,7 +1196,7 @@ function openImportDoctorsModal() {
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === 'function') {
-      showToast(getCurrentLang() === 'ar' ? 'غير مصرح: استيراد بيانات الأطباء للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+      showToast('Permission Denied: Admin only.', 'error');
     }
     return;
   }
@@ -1345,12 +1254,12 @@ function handleDoctorsFileSelected(event) {
     fileNameDisplay.textContent = file.name;
   }
 
-  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  
 
   const processRows = (rows) => {
     if (!rows || !rows.length) {
       if (typeof showToast === 'function') {
-        showToast(isAr ? 'الملف المحدد فارغ أو غير متوافق.' : 'Selected file is empty or incompatible.', 'warning');
+        showToast('Selected file is empty or incompatible.', 'warning');
       }
       return;
     }
@@ -1402,10 +1311,10 @@ function handleDoctorsFileSelected(event) {
       }
 
       const statusBadge = isValid
-        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'صالح' : 'Valid'}</span>`
-        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'بيانات ناقصة' : 'Missing Data'}</span>`;
+        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Valid</span>`
+        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Missing Data</span>`;
 
-      const repName = matchedRep ? matchedRep.name : (isAr ? 'تلقائي' : 'Auto');
+      const repName = matchedRep ? matchedRep.name : 'Auto';
 
       tableRowsHtml.push(`
         <tr>
@@ -1427,9 +1336,9 @@ function handleDoctorsFileSelected(event) {
     const badgesContainer = document.getElementById('doctorsValidationBadges');
     if (badgesContainer) {
       badgesContainer.innerHTML = `
-        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'الإجمالي' : 'Total'}: ${rows.length}</span>
-        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'صالح' : 'Valid'}: ${validCount}</span>
-        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">${isAr ? 'غير مكتمل' : 'Invalid'}: ${invalidCount}</span>` : ''}
+        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">Total: ${rows.length}</span>
+        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">Valid: ${validCount}</span>
+        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">Invalid: ${invalidCount}</span>` : ''}
       `;
     }
 
@@ -1450,7 +1359,7 @@ function handleDoctorsFileSelected(event) {
         processRows(rows);
       } catch (err) {
         console.error('CSV parse error:', err);
-        if (typeof showToast === 'function') showToast(isAr ? 'خطأ في معالجة ملف CSV' : 'Error parsing CSV file', 'error');
+        if (typeof showToast === 'function') showToast('Error parsing CSV file', 'error');
       }
     };
     reader.readAsText(file);
@@ -1463,14 +1372,13 @@ window.handleDoctorsFileSelected = handleDoctorsFileSelected;
 function confirmImportDoctors() {
   const user = checkAuth();
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
-  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
   if (!isAdmin) {
-    if (typeof showToast === 'function') showToast(isAr ? 'غير مصرح: استيراد بيانات الأطباء للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
 
   if (!pendingDoctorsImport || !pendingDoctorsImport.length) {
-    if (typeof showToast === 'function') showToast(isAr ? 'لا توجد بيانات صالحة للاستيراد.' : 'No valid records to import.', 'warning');
+    if (typeof showToast === 'function') showToast('No valid records to import.', 'warning');
     return;
   }
 
@@ -1511,7 +1419,7 @@ function confirmImportDoctors() {
   closeImportDoctorsModal();
 
   if (typeof showToast === 'function') {
-    showToast(isAr ? `تم استيراد ${importedCount} طبيب بنجاح!` : `Successfully imported ${importedCount} doctors!`, 'success');
+    showToast(`Successfully imported ${importedCount} doctors!`, 'success');
   }
 
   if (typeof renderDoctorsReport === 'function') {
@@ -1525,7 +1433,7 @@ function openImportPharmaciesModal() {
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === 'function') {
-      showToast(getCurrentLang() === 'ar' ? 'غير مصرح: استيراد بيانات الصيدليات للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+      showToast('Permission Denied: Admin only.', 'error');
     }
     return;
   }
@@ -1583,12 +1491,12 @@ function handlePharmaciesFileSelected(event) {
     fileNameDisplay.textContent = file.name;
   }
 
-  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  
 
   const processRows = (rows) => {
     if (!rows || !rows.length) {
       if (typeof showToast === 'function') {
-        showToast(isAr ? 'الملف المحدد فارغ أو غير متوافق.' : 'Selected file is empty or incompatible.', 'warning');
+        showToast('Selected file is empty or incompatible.', 'warning');
       }
       return;
     }
@@ -1637,10 +1545,10 @@ function handlePharmaciesFileSelected(event) {
       }
 
       const statusBadge = isValid
-        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'صالح' : 'Valid'}</span>`
-        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">${isAr ? 'بيانات ناقصة' : 'Missing Data'}</span>`;
+        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Valid</span>`
+        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Missing Data</span>`;
 
-      const repName = matchedRep ? matchedRep.name : (isAr ? 'تلقائي' : 'Auto');
+      const repName = matchedRep ? matchedRep.name : 'Auto';
 
       tableRowsHtml.push(`
         <tr>
@@ -1661,9 +1569,9 @@ function handlePharmaciesFileSelected(event) {
     const badgesContainer = document.getElementById('pharmaciesValidationBadges');
     if (badgesContainer) {
       badgesContainer.innerHTML = `
-        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'الإجمالي' : 'Total'}: ${rows.length}</span>
-        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">${isAr ? 'صالح' : 'Valid'}: ${validCount}</span>
-        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">${isAr ? 'غير مكتمل' : 'Invalid'}: ${invalidCount}</span>` : ''}
+        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">Total: ${rows.length}</span>
+        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">Valid: ${validCount}</span>
+        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">Invalid: ${invalidCount}</span>` : ''}
       `;
     }
 
@@ -1684,7 +1592,7 @@ function handlePharmaciesFileSelected(event) {
         processRows(rows);
       } catch (err) {
         console.error('CSV parse error:', err);
-        if (typeof showToast === 'function') showToast(isAr ? 'خطأ في معالجة ملف CSV' : 'Error parsing CSV file', 'error');
+        if (typeof showToast === 'function') showToast('Error parsing CSV file', 'error');
       }
     };
     reader.readAsText(file);
@@ -1697,14 +1605,13 @@ window.handlePharmaciesFileSelected = handlePharmaciesFileSelected;
 function confirmImportPharmacies() {
   const user = checkAuth();
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
-  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
   if (!isAdmin) {
-    if (typeof showToast === 'function') showToast(isAr ? 'غير مصرح: استيراد بيانات الصيدليات للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
 
   if (!pendingPharmaciesImport || !pendingPharmaciesImport.length) {
-    if (typeof showToast === 'function') showToast(isAr ? 'لا توجد بيانات صالحة للاستيراد.' : 'No valid records to import.', 'warning');
+    if (typeof showToast === 'function') showToast('No valid records to import.', 'warning');
     return;
   }
 
@@ -1733,7 +1640,7 @@ function confirmImportPharmacies() {
   closeImportPharmaciesModal();
 
   if (typeof showToast === 'function') {
-    showToast(isAr ? `تم استيراد ${importedCount} صيدلية بنجاح!` : `Successfully imported ${importedCount} pharmacies!`, 'success');
+    showToast(`Successfully imported ${importedCount} pharmacies!`, 'success');
   }
 
   if (typeof renderPharmaciesReport === 'function') {
@@ -1751,9 +1658,7 @@ function parseExcelFile(file, callback) {
     try {
       const data = new Uint8Array(e.target.result);
       if (typeof XLSX === 'undefined') {
-        const msg = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar')
-          ? 'مكتبة قراءة الإكسيل غير محملة. يرجى التأكد من الاتصال بالإنترنت.'
-          : 'SheetJS library not loaded. Please ensure you are connected to the internet.';
+        const msg = 'SheetJS library not loaded. Please ensure you are connected to the internet.';
         if (typeof showToast === 'function') showToast(msg, 'error');
         else if (typeof window.showToast === 'function') window.showToast(msg, 'error');
         return;
@@ -1774,9 +1679,7 @@ function parseExcelFile(file, callback) {
       callback(normalizedRows);
     } catch (err) {
       console.error('Error parsing Excel file:', err);
-      const errMsg = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar')
-        ? 'خطأ في معالجة ملف الإكسيل. يرجى التأكد من صحة الملف وصيغته.'
-        : 'Error parsing Excel file. Please make sure the file is a valid spreadsheet.';
+      const errMsg = 'Error parsing Excel file. Please make sure the file is a valid spreadsheet.';
       if (typeof showToast === 'function') showToast(errMsg, 'error');
       else if (typeof window.showToast === 'function') window.showToast(errMsg, 'error');
     }
@@ -1788,7 +1691,7 @@ function parseExcelFile(file, callback) {
  * Generic Excel (.xlsx) or UTF-8 CSV exporter with BOM
  */
 function downloadExcelOrCsv(filename, sheetName, dataRows, headers) {
-  const isAr = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar');
+  
   if (typeof XLSX !== 'undefined') {
     const wsData = [headers, ...dataRows];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -1810,7 +1713,7 @@ function downloadExcelOrCsv(filename, sheetName, dataRows, headers) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
     XLSX.writeFile(wb, `${filename}.xlsx`);
-    const successMsg = isAr ? 'تم تصدير ملف الإكسيل بنجاح (.xlsx)' : 'Excel file exported successfully (.xlsx)';
+    const successMsg = 'Excel file exported successfully (.xlsx)';
     if (typeof showToast === 'function') showToast(successMsg, 'success');
   } else {
     // Fallback to UTF-8 CSV with BOM
@@ -1831,7 +1734,7 @@ function downloadExcelOrCsv(filename, sheetName, dataRows, headers) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const successMsg = isAr ? 'تم تصدير الملف بنجاح (.csv)' : 'Directory exported successfully (.csv)';
+    const successMsg = 'Directory exported successfully (.csv)';
     if (typeof showToast === 'function') showToast(successMsg, 'success');
   }
 }

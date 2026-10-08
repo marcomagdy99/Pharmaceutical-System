@@ -32,15 +32,14 @@ function attachRescheduleModal() {
   if (document.getElementById("rescheduleVisitModal")) return;
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
+  
   const modalHtml = `
     <div class="modal-overlay" id="rescheduleVisitModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 3100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
       <div class="modal-box" style="background: var(--surface, #ffffff); color: var(--text-color, #1e293b); width: 92%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color, #e2e8f0); pointer-events: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color, #e2e8f0); padding-bottom: 12px;">
           <h4 style="margin: 0; font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
             <span>🗓️</span>
-            <span id="rescheduleModalHeading">${isAr ? "تأجيل الزيارة أو تعذر المقابلة" : "Reschedule or Missed Call"}</span>
+            <span id="rescheduleModalHeading">Reschedule or Missed Call</span>
           </h4>
           <button type="button" onclick="closeRescheduleModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500, #64748b); line-height: 1;">&times;</button>
         </div>
@@ -62,16 +61,16 @@ function attachRescheduleModal() {
 
           <div class="form-group" style="margin-bottom: 16px;">
             <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.88rem;">
-              ${isAr ? "الإجراء المطلوب:" : "Action:"}
+              Action:
             </label>
             <div style="display: flex; gap: 16px; flex-wrap: wrap;">
               <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; font-weight: 600;">
                 <input type="radio" name="rescheduleAction" value="reschedule" checked onchange="toggleRescheduleActionView()">
-                <span>${isAr ? "🗓️ تأجيل لتاريخ لاحق" : "🗓️ Reschedule to Later Date"}</span>
+                <span>🗓️ Reschedule to Later Date</span>
               </label>
               <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: #dc3545;">
                 <input type="radio" name="rescheduleAction" value="missed" onchange="toggleRescheduleActionView()">
-                <span>${isAr ? "🚫 تعذر المقابلة (لم تتم)" : "🚫 Missed Call (Unavailable)"}</span>
+                <span>🚫 Missed Call (Unavailable)</span>
               </label>
             </div>
           </div>
@@ -81,18 +80,18 @@ function attachRescheduleModal() {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <div class="form-group">
                 <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">
-                  ${isAr ? "التاريخ الجديد (إجباري):" : "New Date (Mandatory):"}
+                  New Date (Mandatory):
                 </label>
                 <input type="date" id="rescheduleNewDate" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px;">
               </div>
               <div class="form-group">
                 <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">
-                  ${isAr ? "الفترة:" : "Period:"}
+                  Period:
                 </label>
                 <select id="rescheduleNewPeriod" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px;">
-                  <option value="am">${isAr ? "صباحية AM (مستشفيات)" : "AM (Hospitals)"}</option>
-                  <option value="pm" selected>${isAr ? "مسائية PM (عيادات)" : "PM (Doctors)"}</option>
-                  <option value="pharmacy">${isAr ? "صيدليات" : "Pharmacy"}</option>
+                  <option value="am">AM (Hospitals)</option>
+                  <option value="pm" selected>PM (Doctors)</option>
+                  <option value="pharmacy">Pharmacy</option>
                 </select>
               </div>
             </div>
@@ -101,26 +100,26 @@ function attachRescheduleModal() {
           <!-- Reason Selection & Textarea (MANDATORY) -->
           <div class="form-group" style="margin-bottom: 16px;">
             <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">
-              ${isAr ? "سبب التأجيل أو تعذر المقابلة" : "Reason for Reschedule / Missed Call"} <span style="color: #dc3545;">* (${isAr ? "إجباري" : "Mandatory"})</span>:
+              Reason for Reschedule / Missed Call <span style="color: #dc3545;">* (Mandatory)</span>:
             </label>
             <select id="rescheduleQuickReason" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;" onchange="onRescheduleQuickReasonChange()">
-              <option value="">${isAr ? "-- اختر سبباً شائعاً أو اكتب بالتفصيل بالأسفل --" : "-- Select common reason or write below --"}</option>
-              <option value="${isAr ? 'طبيب مسافر / غير متواجد' : 'Doctor Traveling / Unavailable'}">✈️ ${isAr ? 'طبيب مسافر / غير متواجد' : 'Doctor Traveling / Unavailable'}</option>
-              <option value="${isAr ? 'عملية جراحية طارئة / مؤتمر طبي' : 'Emergency Surgery / Medical Conference'}">🏥 ${isAr ? 'عملية جراحية طارئة / مؤتمر طبي' : 'Emergency Surgery / Medical Conference'}</option>
-              <option value="${isAr ? 'العيادة مغلقة / اعتذار السكرتارية' : 'Clinic Closed / Secretary Apology'}">🔒 ${isAr ? 'العيادة مغلقة / اعتذار السكرتارية' : 'Clinic Closed / Secretary Apology'}</option>
-              <option value="${isAr ? 'ازدحام شديد وضيق وقت الطبيب' : 'Severe Overcrowding / Doctor Short Time'}">⏳ ${isAr ? 'ازدحام شديد وضيق وقت الطبيب' : 'Severe Overcrowding / Doctor Short Time'}</option>
-              <option value="${isAr ? 'ظروف جوية أو طارئة في خط السير' : 'Weather / Route Emergency'}">🌧️ ${isAr ? 'ظروف جوية أو طارئة في خط السير' : 'Weather / Route Emergency'}</option>
-              <option value="other">✍️ ${isAr ? 'سبب آخر (توضيح بالتفصيل)' : 'Other (Specify details)'}</option>
+              <option value="">-- Select common reason or write below --</option>
+              <option value="Doctor Traveling / Unavailable">✈️ Doctor Traveling / Unavailable</option>
+              <option value="Emergency Surgery / Medical Conference">🏥 Emergency Surgery / Medical Conference</option>
+              <option value="Clinic Closed / Secretary Apology">🔒 Clinic Closed / Secretary Apology</option>
+              <option value="Severe Overcrowding / Doctor Short Time">⏳ Severe Overcrowding / Doctor Short Time</option>
+              <option value="Weather / Route Emergency">🌧️ Weather / Route Emergency</option>
+              <option value="other">✍️ Other (Specify details)</option>
             </select>
-            <textarea id="rescheduleReasonText" class="form-control" rows="3" required placeholder="${isAr ? 'اكتب سبب التأجيل أو تعذر المقابلة بالتفصيل هنا...' : 'Explain the reason for rescheduling or missing the visit...'}" style="width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;"></textarea>
+            <textarea id="rescheduleReasonText" class="form-control" rows="3" required placeholder="Explain the reason for rescheduling or missing the visit..." style="width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;"></textarea>
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 14px;">
             <button type="button" class="btn btn-secondary" onclick="closeRescheduleModal()" style="padding: 8px 16px; border-radius: 8px;">
-              ${isAr ? "إلغاء" : "Cancel"}
+              Cancel
             </button>
             <button type="submit" class="btn btn-primary" id="btnSubmitReschedule" style="padding: 8px 20px; border-radius: 8px; font-weight: 700;">
-              ${isAr ? "تأكيد وحفظ الإجراء" : "Confirm & Save"}
+              Confirm & Save
             </button>
           </div>
         </form>
@@ -163,15 +162,12 @@ function openRescheduleModal(visitId) {
   const user = (typeof currentUser !== "undefined" && currentUser) || (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   if (!user || !user.id) return;
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const today = (window.getSystemTodayStr && window.getSystemTodayStr()) || new Date().toISOString().split("T")[0];
+    const today = (window.getSystemTodayStr && window.getSystemTodayStr()) || new Date().toISOString().split("T")[0];
 
   // 1. Quota Check: Max 2 reschedules per day
   const usedToday = getDailyRescheduleCount(user.id, today);
   if (usedToday >= 2) {
-    const quotaMsg = isAr
-      ? "⚠️ عفواً، لقد بلغت الحد الأقصى المسموح به لتأجيل أو تسجيل تعذر الزيارات اليوم (زيارتان فقط في اليوم الواحد). يرجى التواصل مع مديرك المباشر."
-      : "⚠️ Sorry, you have reached the maximum daily limit for rescheduling or marking visits as missed (max 2 visits per day). Please consult your direct manager.";
+    const quotaMsg = "⚠️ Sorry, you have reached the maximum daily limit for rescheduling or marking visits as missed (max 2 visits per day). Please consult your direct manager.";
     showToast(quotaMsg, "warning");
     return;
   }
@@ -182,7 +178,7 @@ function openRescheduleModal(visitId) {
     : (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
   const visit = allVisits.find((v) => String(v.id) === String(visitId));
   if (!visit) {
-    if (typeof showToast === "function") showToast(isAr ? "تعذر العثور على الزيارة." : "Visit not found.", "error");
+    if (typeof showToast === "function") showToast("Visit not found.", "error");
     return;
   }
 
@@ -190,14 +186,12 @@ function openRescheduleModal(visitId) {
   document.getElementById("rescheduleVisitId").value = visit.id;
   document.getElementById("rescheduleTargetName").textContent = visit.doctorName || visit.targetName || "Target";
   const currentPeriod = (visit.period || "pm").toUpperCase();
-  document.getElementById("rescheduleCurrentSchedule").textContent = `${isAr ? "الموعد الحالي:" : "Current:"} ${visit.date} (${currentPeriod})`;
+  document.getElementById("rescheduleCurrentSchedule").textContent = `Current: ${visit.date} (${currentPeriod})`;
 
   // Update Quota Text
   const quotaTextEl = document.getElementById("rescheduleQuotaText");
   if (quotaTextEl) {
-    quotaTextEl.textContent = isAr
-      ? `الحد المسموح للتأجيل اليوم: (${usedToday} من 2 مستخدمة - متبقي لك ${2 - usedToday} تأجيل)`
-      : `Daily limit: (${usedToday} of 2 used - ${2 - usedToday} remaining today)`;
+    quotaTextEl.textContent = `Daily limit: (${usedToday} of 2 used - ${2 - usedToday} remaining today)`;
   }
 
   // Set Default Date to Tomorrow
@@ -265,10 +259,8 @@ function notifyManagerOnRescheduleOrMissed(options) {
           type: "warning",
           icon: "🚨",
           badgeClass: "bg-danger",
-          title: "تنبيه نزول مشترك: تأجيل زيارة مجدولة",
-          titleEn: "Joint Visit Alert: Rescheduled",
-          message: `قام المندوب ${repDisplayName} بتأجيل زيارة مشتركة للطبيب ${doctorDisplayName} من تاريخ ${oldDate} إلى ${newDate}. السبب: ${reason}`,
-          messageEn: `Rep ${repDisplayName} rescheduled joint visit with Dr. ${doctorDisplayName} from ${oldDate} to ${newDate}. Reason: ${reason}`,
+          title: "Joint Visit Alert: Rescheduled",
+          message: `Rep ${repDisplayName} rescheduled joint visit with Dr. ${doctorDisplayName} from ${oldDate} to ${newDate}. Reason: ${reason}`,
           note: reason,
           link: "visits.html?date=" + newDate,
           actorName: repDisplayName,
@@ -280,10 +272,8 @@ function notifyManagerOnRescheduleOrMissed(options) {
           type: "visit",
           icon: "🗓️",
           badgeClass: "bg-warning",
-          title: "تأجيل زيارة مجدولة",
-          titleEn: "Visit Rescheduled",
-          message: `قام المندوب ${repDisplayName} بتأجيل زيارة ${doctorDisplayName} إلى ${newDate}. السبب: ${reason}`,
-          messageEn: `Rep ${repDisplayName} rescheduled visit with Dr. ${doctorDisplayName} to ${newDate}. Reason: ${reason}`,
+          title: "Visit Rescheduled",
+          message: `Rep ${repDisplayName} rescheduled visit with Dr. ${doctorDisplayName} to ${newDate}. Reason: ${reason}`,
           note: reason,
           link: "visits.html?date=" + newDate,
           actorName: repDisplayName,
@@ -297,10 +287,8 @@ function notifyManagerOnRescheduleOrMissed(options) {
           type: "warning",
           icon: "🚫",
           badgeClass: "bg-danger",
-          title: "تنبيه نزول مشترك: تعذر مقابلة الطبيب",
-          titleEn: "Joint Visit Alert: Missed Call",
-          message: `سجل المندوب ${repDisplayName} تعذر مقابلة الطبيب ${doctorDisplayName} في زيارة مشتركة بتاريخ ${visit.date}. السبب: ${reason}`,
-          messageEn: `Rep ${repDisplayName} marked joint visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
+          title: "Joint Visit Alert: Missed Call",
+          message: `Rep ${repDisplayName} marked joint visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
           note: reason,
           link: "visits.html?date=" + visit.date,
           actorName: repDisplayName,
@@ -312,10 +300,8 @@ function notifyManagerOnRescheduleOrMissed(options) {
           type: "visit",
           icon: "🚫",
           badgeClass: "bg-warning",
-          title: "تعذر زيارة مجدولة",
-          titleEn: "Missed Call Logged",
-          message: `سجل المندوب ${repDisplayName} تعذر زيارة الطبيب ${doctorDisplayName} بتاريخ ${visit.date}. السبب: ${reason}`,
-          messageEn: `Rep ${repDisplayName} marked visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
+          title: "Missed Call Logged",
+          message: `Rep ${repDisplayName} marked visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
           note: reason,
           link: "visits.html?date=" + visit.date,
           actorName: repDisplayName,
@@ -332,15 +318,12 @@ function handleRescheduleSubmit(e) {
   const user = (typeof currentUser !== "undefined" && currentUser) || (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   if (!user || !user.id) return;
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const today = (window.getSystemTodayStr && window.getSystemTodayStr()) || new Date().toISOString().split("T")[0];
+    const today = (window.getSystemTodayStr && window.getSystemTodayStr()) || new Date().toISOString().split("T")[0];
 
   // Re-verify quota
   const usedToday = getDailyRescheduleCount(user.id, today);
   if (usedToday >= 2) {
-    const quotaMsg = isAr
-      ? "⚠️ عفواً، لقد بلغت الحد الأقصى المسموح به لتأجيل أو تسجيل تعذر الزيارات اليوم (زيارتان فقط في اليوم الواحد)."
-      : "⚠️ Sorry, you have reached the maximum daily limit for rescheduling visits (max 2 per day).";
+    const quotaMsg = "⚠️ Sorry, you have reached the maximum daily limit for rescheduling visits (max 2 per day).";
     if (typeof showToast === "function") showToast(quotaMsg, "warning");
     return;
   }
@@ -351,9 +334,7 @@ function handleRescheduleSubmit(e) {
 
   // Validate mandatory reason
   if (!reason || reason.length < 3) {
-    const reasonMsg = isAr
-      ? "⚠️ يرجى كتابة سبب التأجيل أو تعذر المقابلة (إجباري)."
-      : "⚠️ Please provide a valid reason (mandatory).";
+    const reasonMsg = "⚠️ Please provide a valid reason (mandatory).";
     if (typeof showToast === "function") showToast(reasonMsg, "warning");
     document.getElementById("rescheduleReasonText").focus();
     return;
@@ -372,7 +353,7 @@ function handleRescheduleSubmit(e) {
     const newPeriod = document.getElementById("rescheduleNewPeriod").value;
 
     if (!newDate) {
-      if (typeof showToast === "function") showToast(isAr ? "يرجى تحديد التاريخ الجديد." : "Please select new date.", "warning");
+      if (typeof showToast === "function") showToast("Please select new date.", "warning");
       return;
     }
 
@@ -391,9 +372,7 @@ function handleRescheduleSubmit(e) {
     const docId = visit.doctorId || visit.targetId;
     const checkDupFn = window.isDoctorAlreadyVisitedToday || (typeof isDoctorAlreadyVisitedToday === "function" ? isDoctorAlreadyVisitedToday : null);
     if (docId && checkDupFn && checkDupFn(docId, newDate, targetRepId, visit.id)) {
-      const dupMsg = isAr
-        ? "⚠️ يوجد زيارة مسجلة بالفعل لهذا الطبيب في التاريخ الجديد المحدد. يرجى اختيار تاريخ آخر."
-        : "⚠️ A visit is already scheduled for this doctor on the new date. Please choose another date.";
+      const dupMsg = "⚠️ A visit is already scheduled for this doctor on the new date. Please choose another date.";
       if (typeof showToast === "function") showToast(dupMsg, "warning");
       return;
     }
@@ -429,9 +408,7 @@ function handleRescheduleSubmit(e) {
       user
     });
 
-    const successMsg = isAr
-      ? `تم تأجيل زيارة "${visit.doctorName || 'العميل'}" بنجاح إلى تاريخ ${newDate}.`
-      : `Visit rescheduled successfully to ${newDate}.`;
+    const successMsg = `Visit rescheduled successfully to ${newDate}.`;
     if (typeof showToast === "function") showToast(successMsg, "success");
 
   } else if (action === "missed") {
@@ -466,9 +443,7 @@ function handleRescheduleSubmit(e) {
       user
     });
 
-    const successMsg = isAr
-      ? `تم تسجيل تعذر المقابلة لـ "${visit.doctorName || 'العميل'}" بنجاح.`
-      : `Marked visit as missed call successfully.`;
+    const successMsg = `Marked visit as missed call successfully.`;
     if (typeof showToast === "function") showToast(successMsg, "info");
   }
 

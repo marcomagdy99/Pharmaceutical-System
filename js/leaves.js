@@ -155,109 +155,23 @@ const leaveTranslations = {
     leaveDuration: "Leave Duration",
     noMatchingRecords: "No matching leave records found.",
   },
-  ar: {
-    pageTitle: "إدارة الإجازات",
-    pageSubtitle: "تقديم ومتابعة موافقات الإجازات وإدارة الأرصدة",
-    annualLeave: "Annual Leave",
-    casualLeave: "Casual Vacation",
-    sickLeave: "Sick Leave",
-    emergencyLeave: "Emergency Leave",
-    compensatoryLeave: "Compensatory Leave",
-    funeralLeave: "Funeral Vacation",
-    militaryLeave: "Calling for Army",
-    unpaidLeave: "Unpaid Leave",
-    maternityPaternity: "Maternity/Paternity",
-    used: "مستخدم",
-    remaining: "متبقي",
-    days: "أيام",
-    submitRequest: "تقديم طلب إجازة",
-    leaveType: "نوع الإجازة",
-    selectType: "اختر نوع الإجازة",
-    startDate: "تاريخ البدء",
-    endDate: "تاريخ الانتهاء",
-    daysCount: "عدد الأيام",
-    reason: "تعليق",
-    leaveComment: "تعليق",
-    leaveCommentPlaceholder: "تعليق...",
-    submit: "تقديم",
-    myHistory: "سجل إجازاتي",
-    status: "الحالة",
-    pending: "قيد الانتظار",
-    approved: "مقبول",
-    rejected: "مرفوض",
-    managerSection: "صندوق موافقات المدير",
-    pendingApprovals: "الطلبات المعلقة التي تتطلب قرارك",
-    approve: "قبول",
-    reject: "رفض",
-    modalRejectLeaveTitle: "رفض طلب الإجازة",
-    modalRejectLeaveSubtitle: "يمكنك كتابة سبب الرفض أو توجيهات للموظف (اختياري).",
-    modalRejectLeaveReasonLabel: "سبب الرفض / التوجيهات (اختياري):",
-    btnConfirmRejectLeave: "تأكيد الرفض",
-    rejectionReasonLabel: "سبب الرفض:",
-    noPending: "لا توجد طلبات قيد الانتظار.",
-    noHistory: "لا يوجد سجل إجازات مسجل.",
-    hrGovernanceTitle:
-      "🏛️ إدارة الموارد البشرية: أرصدة الإجازات والإجازات الرسمية",
-    employeeBalanceControl: "تخصيص وضبط أرصدة إجازات الموظفين",
-    employeeBalanceControlSub:
-      "تحديد عدد أيام الإجازات السنوية والعارضة والمرضية لكل موظف",
-    selectEmployee: "اختر الموظف",
-    chooseEmployee: "اختر موظفاً...",
-    annualDaysLabel: "الاعتيادية (أيام)",
-    casualDaysLabel: "العارضة (أيام)",
-    sickDaysLabel: "المرضية (أيام)",
-    saveEmployeeBalance: "حفظ رصيد الموظف",
-    declarePublicHoliday: "تسجيل إجازة رسمية عامة",
-    declarePublicHolidaySub: "تظهر في نتيجة الشركة بدون خصم من رصيد الموظف",
-    holidayDateLabel: "تاريخ الإجازة",
-    holidayTitleLabel: "اسم / مناسبة الإجازة",
-    addHolidayBtn: "إضافة إجازة رسمية",
-    currentHolidays: "الإجازات الرسمية المسجلة حالياً:",
-    totalDays: "الإجمالي",
-    holidayDurationLabel: "مدة العطلة الرسمية",
-    fullDay: "يوم كامل",
-    halfDay: "نصف يوم",
-    allEmployeesLeavesTitle: "📋 سجل إجازات جميع الموظفين",
-    allEmployeesLeavesSub:
-      "تدقيق ومتابعة جميع طلبات الإجازات لفرق العمل بالشركة",
-    companyLeaveArchive: "أرشيف إجازات الشركة",
-    filterByEmployee: "الموظف",
-    allEmployees: "جميع الموظفين",
-    filterByType: "نوع الإجازة",
-    allTypes: "جميع الأنواع",
-    filterByStatus: "الحالة",
-    allStatuses: "جميع الحالات",
-    searchLeavesPlaceholder: "بحث بالاسم، الدور، أو السبب...",
-    employee: "الموظف",
-    leaveDuration: "مدة الإجازة",
-    noMatchingRecords: "لا توجد سجلات إجازات مطابقة للبحث.",
-  },
 };
 
 if (window.translations) {
   if (window.translations.en)
     Object.assign(window.translations.en, leaveTranslations.en);
-  if (window.translations.ar)
-    Object.assign(window.translations.ar, leaveTranslations.ar);
 }
 
 let currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
 
 const getSysLang = () => (window.getCurrentLang && window.getCurrentLang()) || "en";
-const isSysAr = () => getSysLang() === "ar";
 const getSysToday = () => (window.getSystemTodayStr && window.getSystemTodayStr()) || (new Date()).toISOString().slice(0, 10);
 
 function formatLeaveDurationText(l, lang) {
   if (l.dayDuration === "half") {
-    return lang === "ar" ? "نصف يوم" : "Half Day";
+    return "Half Day";
   }
   const count = parseFloat(l.days) || 1;
-  if (lang === "ar") {
-    if (count === 1) return "يوم واحد";
-    if (count === 2) return "يومان";
-    if (count >= 3 && count <= 10) return `${count} أيام`;
-    return `${count} يوم`;
-  }
   return count === 1 ? "1 Day" : `${count} Days`;
 }
 
@@ -266,7 +180,7 @@ function formatLeaveDateRange(startDate, endDate, lang) {
   if (!endDate || startDate === endDate) {
     return startDate;
   }
-  const separator = lang === "ar" ? " إلى " : " to ";
+  const separator = " to ";
   return `${startDate}${separator}${endDate}`;
 }
 
@@ -277,8 +191,8 @@ function formatLeaveDateDisplay(startDate, endDate, lang) {
       <span class="leave-date-value">${startDate}</span>
     </div>`;
   }
-  const fromLabel = lang === "ar" ? "من:" : "From:";
-  const toLabel = lang === "ar" ? "إلى:" : "To:";
+  const fromLabel = "From:";
+  const toLabel = "To:";
   return `<div class="leave-date-range-block">
     <div class="leave-date-row">
       <span class="leave-date-prefix">${fromLabel}</span>
@@ -294,18 +208,18 @@ function formatLeaveDateDisplay(startDate, endDate, lang) {
 function formatLeaveUserRole(role, lang) {
   const r = (role || "").toLowerCase();
   if (r === "medical_rep" || r === "rep") {
-    return lang === "ar" ? "مندوب طبي" : "Medical Rep";
+    return "Medical Rep";
   }
   if (r === "district_manager" || r === "dm") {
-    return lang === "ar" ? "مدير منطقة" : "District Manager";
+    return "District Manager";
   }
   if (r === "line_manager" || r === "lm") {
-    return lang === "ar" ? "مدير خط" : "Line Manager";
+    return "Line Manager";
   }
   if (r === "admin" || r === "hr") {
-    return lang === "ar" ? "الموارد البشرية" : "HR / Admin";
+    return "HR / Admin";
   }
-  return role || (lang === "ar" ? "موظف" : "Staff");
+  return role || "Staff";
 }
 
 let activeRejectLeaveId = null;
@@ -345,8 +259,7 @@ function initLeaves() {
   if (window.translations) {
     if (window.translations.en)
       Object.assign(window.translations.en, leaveTranslations.en);
-    if (window.translations.ar)
-      Object.assign(window.translations.ar, leaveTranslations.ar);
+    
   }
   if (window.initPage) {
     window.initPage("leaves");
@@ -432,22 +345,16 @@ function setupEventListeners() {
     const endDate = document.getElementById("endDate").value;
     const reason = document.getElementById("reason").value;
 
-    const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-
     if (!startDate || !endDate) {
       return showToast(
-        isAr
-          ? "يرجى تحديد تاريخ البداية والنهاية للإجازة."
-          : "Please specify both start and end dates for the leave.",
+        "Please specify both start and end dates for the leave.",
         "warning",
       );
     }
 
     if (endDate < startDate) {
       return showToast(
-        isAr
-          ? "تاريخ نهاية الإجازة يجب أن يكون مساوياً لتاريخ البداية أو لاحقاً له."
-          : "End date must be on or after start date.",
+        "End date must be on or after start date.",
         "warning",
       );
     }
@@ -466,13 +373,6 @@ function setupEventListeners() {
     });
 
     if (overlappingLeave) {
-      const typeNamesAr = {
-        annual: "اعتيادية",
-        casual: "عارضة",
-        sick: "مرضية",
-        emergency: "عارضة/طارئة",
-        unpaid: "بدون راتب",
-      };
       const typeNamesEn = {
         annual: "Annual",
         casual: "Casual",
@@ -480,28 +380,18 @@ function setupEventListeners() {
         emergency: "Casual",
         unpaid: "Unpaid",
       };
-      const statusLabelsAr = {
-        approved: "معتمدة",
-        pending: "قيد الانتظار",
-      };
       const statusLabelsEn = {
         approved: "Approved",
         pending: "Pending Approval",
       };
 
-      const oType = isAr
-        ? (typeNamesAr[overlappingLeave.type] || overlappingLeave.type)
-        : (typeNamesEn[overlappingLeave.type] || overlappingLeave.type);
-      const oStatus = isAr
-        ? (statusLabelsAr[overlappingLeave.status] || overlappingLeave.status)
-        : (statusLabelsEn[overlappingLeave.status] || overlappingLeave.status);
+      const oType = typeNamesEn[overlappingLeave.type] || overlappingLeave.type;
+      const oStatus = statusLabelsEn[overlappingLeave.status] || overlappingLeave.status;
 
       const oStart = overlappingLeave.startDate || overlappingLeave.endDate;
       const oEnd = overlappingLeave.endDate || overlappingLeave.startDate;
 
-      const msg = isAr
-        ? `⚠️ لديك بالفعل طلب إجازة مسجل (${oStatus}: ${oType}) في الفترة من ${oStart} إلى ${oEnd}. لا يمكن تقديم طلبين في نفس الأيام.`
-        : `⚠️ You already have a leave request (${oStatus}: ${oType}) from ${oStart} to ${oEnd}. Cannot submit overlapping requests.`;
+      const msg = `⚠️ You already have a leave request (${oStatus}: ${oType}) from ${oStart} to ${oEnd}. Cannot submit overlapping requests.`;
 
       return showToast(msg, "warning");
     }
@@ -521,9 +411,7 @@ function setupEventListeners() {
 
     if (calculatedDays === 0) {
       return showToast(
-        isAr
-          ? "التواريخ المختارة هي عطلة رسمية عامة بالفعل ولا تتطلب خصم أي أيام إجازة."
-          : "The selected dates are already official public holidays and do not require leave deduction.",
+        "The selected dates are already official public holidays and do not require leave deduction.",
         "info",
       );
     }
@@ -531,9 +419,7 @@ function setupEventListeners() {
     // Labor Law & Pharma Policy Check: Casual Leave cannot exceed 2 consecutive days per request
     if ((type === "casual" || type === "emergency") && calculatedDays > 2) {
       return showToast(
-        isAr
-          ? "⚠️ طبقاً للائحة العمل، الحد الأقصى للإجازة العارضة هو يومان متتاليان فقط في المرة الواحدة. يرجى اختيار إجازة اعتيادية (Annual) للفترات الأطول."
-          : "⚠️ Casual leave cannot exceed 2 consecutive days per request. Please submit as Annual Leave for longer periods.",
+        "⚠️ Casual leave cannot exceed 2 consecutive days per request. Please submit as Annual Leave for longer periods.",
         "warning",
       );
     }
@@ -591,12 +477,6 @@ function setupEventListeners() {
       const remainingBalance = Math.max(0, total - approvedUsed);
       const availableBalance = Math.max(0, remainingBalance - pendingUsed);
 
-      const typeDisplayNamesAr = {
-        annual: "الاعتيادية",
-        casual: "العارضة",
-        emergency: "العارضة",
-        sick: "المرضية",
-      };
       const typeDisplayNamesEn = {
         annual: "Annual Leave",
         casual: "Casual Vacation",
@@ -604,28 +484,16 @@ function setupEventListeners() {
         sick: "Sick Leave",
       };
 
-      const typeName = isAr
-        ? (typeDisplayNamesAr[type] || type)
-        : (typeDisplayNamesEn[type] || type);
-
-      const formatDays = (num) => {
-        if (isAr) {
-          return num === 1 ? "1 يوم" : num === 2 ? "2 يوم" : num <= 10 ? `${num} أيام` : `${num} يوماً`;
-        }
-        return num === 1 ? "1 day" : `${num} days`;
-      };
+      const typeName = typeDisplayNamesEn[type] || type;
+      const formatDays = (num) => (num === 1 ? "1 day" : `${num} days`);
 
       if (calculatedDays > remainingBalance) {
-        const msg = isAr
-          ? `⚠️ عفواً، رصيدك المتبقي من الإجازة ${typeName} (${formatDays(remainingBalance)}) لا يكفي لطلب (${formatDays(calculatedDays)}).`
-          : `⚠️ Sorry, your remaining balance for ${typeName} (${formatDays(remainingBalance)}) is not enough for (${formatDays(calculatedDays)}).`;
+        const msg = `⚠️ Sorry, your remaining balance for ${typeName} (${formatDays(remainingBalance)}) is not enough for (${formatDays(calculatedDays)}).`;
         return showToast(msg, "warning");
       }
 
       if (calculatedDays > availableBalance) {
-        const msg = isAr
-          ? `⚠️ عفواً، رصيدك المتبقي من الإجازة ${typeName} (${formatDays(remainingBalance)}) لا يكفي، نظراً لوجود طلبات سابقة قيد الانتظار بـ (${formatDays(pendingUsed)}). المتاح حالياً هو (${formatDays(availableBalance)}).`
-          : `⚠️ Sorry, your available balance for ${typeName} is (${formatDays(availableBalance)}) due to (${formatDays(pendingUsed)}) in pending requests. Cannot request (${formatDays(calculatedDays)}).`;
+        const msg = `⚠️ Sorry, your available balance for ${typeName} is (${formatDays(availableBalance)}) due to (${formatDays(pendingUsed)}) in pending requests. Cannot request (${formatDays(calculatedDays)}).`;
         return showToast(msg, "warning");
       }
     }
@@ -676,11 +544,8 @@ function setupEventListeners() {
       window.addWorkflowNotification({
         userId: currentUser.managerId,
         type: "leave_submission",
-        title: isAr ? "طلب إجازة جديد للمراجعة" : "New Leave Request for Review",
-        titleEn: "New Leave Request for Review",
-        message: isAr
-          ? `قدم ${currentUser.name} طلب إجازة (${type}) لمدة ${calculatedDays} يوم.`
-          : `${currentUser.name} submitted a leave request (${type}) for ${calculatedDays} days.`,
+        title: "New Leave Request for Review",
+        message: `${currentUser.name} submitted a leave request (${type}) for ${calculatedDays} days.`,
         link: "leaves.html",
         icon: "🏖️",
         badgeClass: "bg-warning",
@@ -690,9 +555,7 @@ function setupEventListeners() {
     }
 
     showToast(
-      isAr
-        ? "تم إرسال طلب الإجازة بنجاح وهو الآن قيد المراجعة والاعتماد."
-        : "Leave request submitted for multi-level approval successfully!",
+      "Leave request submitted for multi-level approval successfully!",
       "success",
     );
     e.target.reset();
@@ -715,10 +578,8 @@ const leavesApp = {
       document.querySelector('input[name="leaveDurationType"]:checked')
         ?.value || "full";
     const daysCountInput = document.getElementById("daysCount");
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const isAr = lang === "ar";
     if (durationType === "half") {
-      daysCountInput.value = isAr ? "نصف يوم" : "Half Day";
+      daysCountInput.value = "Half Day";
     } else {
       calcDays();
     }
@@ -735,11 +596,9 @@ function calcDays() {
     "full";
   const daysCount = document.getElementById("daysCount");
   const holidayNotice = document.getElementById("leaveHolidayNotice");
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
 
   if (durationType === "half") {
-    if (daysCount) daysCount.value = isAr ? "نصف يوم" : "Half Day";
+    if (daysCount) daysCount.value = "Half Day";
     if (holidayNotice) holidayNotice.classList.add("d-none");
     return;
   }
@@ -750,17 +609,7 @@ function calcDays() {
   if (start && end) {
     const res = resolveLeaveDaysDetailed(start, end);
     const days = res.totalDays;
-    const daysWord = isAr
-      ? days === 1
-        ? "يوم"
-        : days === 2
-          ? "يومان"
-          : days >= 3 && days <= 10
-            ? "أيام"
-            : "يوم"
-      : days === 1
-        ? "Day"
-        : "Days";
+    const daysWord = days === 1 ? "Day" : "Days";
 
     if (daysCount) daysCount.value = `${days} ${daysWord}`;
 
@@ -768,36 +617,23 @@ function calcDays() {
       const noticeParts = [];
       if (res.excludedFridays > 0) {
         noticeParts.push(
-          isAr
-            ? `🕌 استثناء ${res.excludedFridays} يوم جمعة (راحة أسبوعية رسمية لا تُخصم من الرصيد)`
-            : `🕌 ${res.excludedFridays} Friday(s) excluded (statutory paid rest day)`
+          `🕌 ${res.excludedFridays} Friday(s) excluded (statutory paid rest day)`
         );
       }
       if (res.excludedThursdays > 0) {
         noticeParts.push(
-          isAr
-            ? `📅 استثناء ${res.excludedThursdays} يوم خميس (عطلة أسبوعية لا تُخصم من الرصيد)`
-            : `📅 ${res.excludedThursdays} Thursday(s) excluded (company weekly rest day)`
+          `📅 ${res.excludedThursdays} Thursday(s) excluded (company weekly rest day)`
         );
       }
       if (res.excludedHolidays.length > 0) {
         const titles = res.excludedHolidays
           .map((h) => {
-            const durLabel =
-              h.duration === "half"
-                ? isAr
-                  ? "نصف يوم"
-                  : "Half Day"
-                : isAr
-                  ? "يوم كامل"
-                  : "Full Day";
+            const durLabel = h.duration === "half" ? "Half Day" : "Full Day";
             return `<strong>${window.escapeHtml(h.title)}</strong> (${window.escapeHtml(h.date)} - ${durLabel})`;
           })
-          .join("، ");
+          .join(", ");
         noticeParts.push(
-          isAr
-            ? `🌴 <strong>عطلات رسمية:</strong> ${titles}`
-            : `🌴 <strong>Official holidays:</strong> ${titles}`
+          `🌴 <strong>Official holidays:</strong> ${titles}`
         );
       }
 
@@ -837,12 +673,13 @@ function resolveLeaveDaysDetailed(start, end) {
   const companySettings = (window.store && window.store.companySettings)
     ? window.store.companySettings.get()
     : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
-  const isThursdayWeekend = !!companySettings.isThursdayWeekend;
+  const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? "thursday" : "none");
+  const secMode = companySettings.secondaryWeekendMode || "full_day";
 
   let count = 0;
   const excludedHolidays = [];
   let excludedFridays = 0;
-  let excludedThursdays = 0;
+  let excludedSecondaryDays = 0;
 
   const cur = new Date(startD);
   while (cur <= endD) {
@@ -850,9 +687,9 @@ function resolveLeaveDaysDetailed(start, end) {
     const m = String(cur.getMonth() + 1).padStart(2, "0");
     const d = String(cur.getDate()).padStart(2, "0");
     const dateStr = `${y}-${m}-${d}`;
-    const dayOfWeek = cur.getDay();
+    const dayOfWeek = cur.getDay(); // 0: Sun, 1: Mon, ..., 4: Thu, 5: Fri, 6: Sat
     const isFriday = dayOfWeek === 5;
-    const isThursday = dayOfWeek === 4 && isThursdayWeekend;
+    const isSecondary = (secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4);
 
     const holidayMatch = publicHolidays.find((h) => h.date === dateStr);
     if (holidayMatch) {
@@ -862,8 +699,14 @@ function resolveLeaveDaysDetailed(start, end) {
       }
     } else if (isFriday) {
       excludedFridays++;
-    } else if (isThursday) {
-      excludedThursdays++;
+    } else if (isSecondary) {
+      if (secMode === "full_day") {
+        excludedSecondaryDays++;
+      } else {
+        // PM Only weekend: morning is a working day, so deducting 0.5 day
+        count += 0.5;
+        excludedSecondaryDays += 0.5;
+      }
     } else {
       count += 1;
     }
@@ -1036,16 +879,10 @@ function calculateBalances() {
     used.annual = rollover.consumedFromNewAnnual;
   }
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
   const badgeEl = document.getElementById("annualRolloverBadge");
   if (badgeEl) {
     if (rollover.isValid && rollover.initialCarriedOver > 0) {
       badgeEl.classList.remove("d-none");
-      const remainingMsg = rollover.consumedFromRollover > 0
-        ? `متبقي ${rollover.remainingRollover} من ${rollover.initialCarriedOver} (تم استهلاك ${rollover.consumedFromRollover} أولاً)`
-        : `+${rollover.initialCarriedOver} أيام مرحلة`;
       const remainingMsgEn = rollover.consumedFromRollover > 0
         ? `${rollover.remainingRollover} left of ${rollover.initialCarriedOver} (${rollover.consumedFromRollover} consumed first)`
         : `+${rollover.initialCarriedOver} days`;
@@ -1055,12 +892,12 @@ function calculateBalances() {
           <div class="p-2 rounded-3 rollover-banner-active">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="fw-bold text-success-emphasis d-flex align-items-center gap-1">
-                <i class="bi bi-arrow-repeat"></i> ${isAr ? "رصيد مرحل (يُخصم أولاً FIFO):" : "Carried Over (Deducted First):"}
+                <i class="bi bi-arrow-repeat"></i> Carried Over (Deducted First):
               </span>
-              <span class="badge bg-success text-white fw-bold px-2 py-1">${isAr ? remainingMsg : remainingMsgEn}</span>
+              <span class="badge bg-success text-white fw-bold px-2 py-1">${remainingMsgEn}</span>
             </div>
             <div class="text-danger fw-semibold d-flex align-items-center gap-1 rollover-expiry-countdown">
-              <i class="bi bi-hourglass-split"></i> ${isAr ? `مهلة الاستخدام تنتهي في: ${rollover.expiryDate}` : `Expires on: ${rollover.expiryDate}`}
+              <i class="bi bi-hourglass-split"></i> Expires on: ${rollover.expiryDate}
             </div>
           </div>
         </div>`;
@@ -1070,7 +907,7 @@ function calculateBalances() {
         <div class="mt-2 pt-2 border-top rollover-border-expired">
           <div class="p-2 rounded-3 rollover-banner-expired">
             <div class="d-flex justify-content-between align-items-center">
-              <span class="rollover-expired-label"><i class="bi bi-clock-history me-1"></i>${isAr ? `انتهت مهلة الرصيد المرحل (${rollover.remainingRollover} يوم سقطت)` : `Rollover expired (${rollover.remainingRollover}d forfeited)`}</span>
+              <span class="rollover-expired-label"><i class="bi bi-clock-history me-1"></i>Rollover expired (${rollover.remainingRollover}d forfeited)</span>
               <span class="fw-semibold rollover-expiry-date">${rollover.expiryDate}</span>
             </div>
           </div>
@@ -1096,9 +933,7 @@ function calculateBalances() {
 
     if (elPending) {
       if (pendingCounts[type] > 0) {
-        elPending.textContent = isAr
-          ? `(${pendingCounts[type]} معلق)`
-          : `(${pendingCounts[type]} pending)`;
+        elPending.textContent = `(${pendingCounts[type]} pending)`;
         elPending.className = "ms-1 badge bg-warning-subtle text-warning border leave-pending-chip";
       } else {
         elPending.textContent = "";
@@ -1115,7 +950,6 @@ function calculateBalances() {
 function resolveApproverDisplayName(leave, level, lang) {
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const app = (leave && leave.approvals && leave.approvals[level]) || {};
-  const isAr = lang === "ar";
 
   if (app.approverName && typeof app.approverName === "string") {
     let clean = app.approverName
@@ -1134,7 +968,7 @@ function resolveApproverDisplayName(leave, level, lang) {
           (u && u.nameAr && u.nameAr === clean),
       );
       if (foundUser) {
-        return isAr && foundUser.nameAr ? foundUser.nameAr : foundUser.name;
+        return foundUser.name;
       }
       return clean;
     }
@@ -1145,9 +979,9 @@ function resolveApproverDisplayName(leave, level, lang) {
   if (level === "dm") {
     const dmUser = allUsers.find((u) => u && u.id === applicantUser.managerId);
     if (dmUser) {
-      return isAr && dmUser.nameAr ? dmUser.nameAr : dmUser.name;
+      return dmUser.name;
     }
-    return isAr ? "كريم ناصر" : "Karim Nasser";
+    return "Karim Nasser";
   }
 
   if (level === "lm") {
@@ -1164,17 +998,17 @@ function resolveApproverDisplayName(leave, level, lang) {
       }
     }
     if (lmUser) {
-      return isAr && lmUser.nameAr ? lmUser.nameAr : lmUser.name;
+      return lmUser.name;
     }
-    return isAr ? "حسن علي" : "Hassan Ali";
+    return "Hassan Ali";
   }
 
   if (level === "hr") {
     const hrUser = allUsers.find((u) => u && (u.role === "hr" || u.role === "HR"));
     if (hrUser) {
-      return isAr && hrUser.nameAr ? hrUser.nameAr : hrUser.name;
+      return hrUser.name;
     }
-    return isAr ? "فاطمة الشريف" : "Fatma El-Sherif";
+    return "Fatma El-Sherif";
   }
 
   return level.toUpperCase();
@@ -1281,14 +1115,14 @@ function renderHistory() {
           ${
             canDelete
               ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1 leave-delete-btn" onclick="deleteMyLeave('${l.id}')">
-                   <i class="bi bi-trash3 me-1"></i>${lang === "ar" ? "حذف" : "Delete"}
+                   <i class="bi bi-trash3 me-1"></i>Delete
                  </button>`
               : ""
           }
           ${
             l.status === "rejected" && l.rejectionReason
               ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
-                   <i class="bi bi-chat-left-text me-1"></i><strong>${lang === "ar" ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
+                   <i class="bi bi-chat-left-text me-1"></i><strong>Reason:</strong> ${window.escapeHtml(l.rejectionReason)}
                  </div>`
               : ""
           }
@@ -1300,7 +1134,6 @@ function renderHistory() {
 }
 
 window.deleteMyLeave = function(leaveId) {
-  const isAr = isSysAr();
   const todayStr = getSysToday();
 
   const idx = demoLeaves.findIndex((l) => l.id === leaveId);
@@ -1312,21 +1145,15 @@ window.deleteMyLeave = function(leaveId) {
 
   if (!canDelete) {
     showToast(
-      isAr
-        ? "لا يمكن حذف إجازة معتمدة حل تاريخ بدئها بالفعل أو في الماضي."
-        : "Cannot delete an approved leave that has already started or passed.",
+      "Cannot delete an approved leave that has already started or passed.",
       "warning"
     );
     return;
   }
 
-  const confirmMsg = isAr
-    ? (l.status === "approved"
-        ? "هل أنت متأكد من رغبتك في التراجع عن هذه الإجازة المعتمدة وحذفها؟ سيبقى الرصيد متاحاً في حسابك."
-        : "هل أنت متأكد من حذف طلب الإجازة هذا؟")
-    : (l.status === "approved"
-        ? "Are you sure you want to cancel and delete this approved leave? The days will remain in your balance."
-        : "Are you sure you want to delete this leave request?");
+  const confirmMsg = l.status === "approved"
+    ? "Are you sure you want to cancel and delete this approved leave? The days will remain in your balance."
+    : "Are you sure you want to delete this leave request?";
 
   if (!confirm(confirmMsg)) return;
 
@@ -1341,7 +1168,7 @@ window.deleteMyLeave = function(leaveId) {
   calculateBalances();
 
   showToast(
-    isAr ? "تم حذف الإجازة بنجاح وتحديث رصيدك." : "Leave deleted successfully and balance updated.",
+    "Leave deleted successfully and balance updated.",
     "success"
   );
 };
@@ -1438,13 +1265,13 @@ function renderPendingApprovals() {
 
         <div class="approval-meta-grid mb-3">
           <div class="approval-meta-item">
-            <span class="approval-meta-label"><i class="bi bi-calendar-event me-1"></i>${lang === "ar" ? "الفترة" : "Dates"}</span>
+            <span class="approval-meta-label"><i class="bi bi-calendar-event me-1"></i>Dates</span>
             <div class="approval-meta-val">
               ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
             </div>
           </div>
           <div class="approval-meta-item">
-            <span class="approval-meta-label"><i class="bi bi-clock me-1"></i>${lang === "ar" ? "المدة" : "Duration"}</span>
+            <span class="approval-meta-label"><i class="bi bi-clock me-1"></i>Duration</span>
             <span class="badge duration-badge">${durationLabel}</span>
           </div>
         </div>
@@ -1452,7 +1279,7 @@ function renderPendingApprovals() {
         <div class="approval-reason-box mb-3">
           <div class="approval-reason-header">
             <i class="bi bi-chat-left-quote me-1"></i>
-            <span>${lang === "ar" ? "سبب الإجازة" : "Reason"}</span>
+            <span>Reason</span>
           </div>
           <div class="approval-reason-content leave-reason-text"></div>
         </div>
@@ -1469,10 +1296,10 @@ function renderPendingApprovals() {
 
         <div class="approval-actions-row">
           <button type="button" class="btn btn-sm btn-success approval-btn" onclick="window.handleDecisionStep('${l.id}', 'approved')">
-            <i class="bi bi-check-circle me-1"></i>${leaveTranslations[lang]?.approve || (lang === "ar" ? "قبول" : "Approve")}
+            <i class="bi bi-check-circle me-1"></i>Approve
           </button>
           <button type="button" class="btn btn-sm btn-outline-danger approval-btn" onclick="window.openRejectLeaveModal('${l.id}')">
-            <i class="bi bi-x-circle me-1"></i>${leaveTranslations[lang]?.reject || (lang === "ar" ? "رفض" : "Reject")}
+            <i class="bi bi-x-circle me-1"></i>Reject
           </button>
         </div>
       </div>
@@ -1480,7 +1307,7 @@ function renderPendingApprovals() {
 
     const reasonEl = card.querySelector(".leave-reason-text");
     if (reasonEl) {
-      reasonEl.textContent = l.reason || (lang === "ar" ? "بدون ملاحظات" : "No reason provided");
+      reasonEl.textContent = l.reason || "No reason provided";
     }
 
     container.appendChild(card);
@@ -1495,11 +1322,9 @@ function renderDeclaredHolidaysList() {
   const container = document.getElementById("declaredHolidaysBadges");
   if (!container) return;
   const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays) || [];
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
 
   if (holidays.length === 0) {
-    container.innerHTML = `<span class="text-muted small">${isAr ? "لا توجد إجازات رسمية مسجلة حتى الآن." : "No official public holidays declared yet."}</span>`;
+    container.innerHTML = `<span class="text-muted small">No official public holidays declared yet.</span>`;
     return;
   }
 
@@ -1507,8 +1332,8 @@ function renderDeclaredHolidaysList() {
     .map((h, idx) => {
       const isHalf = h.duration === "half";
       const durationBadge = isHalf
-        ? `<span class="badge bg-warning text-dark border border-warning duration-chip-badge">${isAr ? "نصف يوم" : "Half Day"}</span>`
-        : `<span class="badge bg-success-subtle text-success border border-success duration-chip-badge">${isAr ? "يوم كامل" : "Full Day"}</span>`;
+        ? `<span class="badge bg-warning text-dark border border-warning duration-chip-badge">Half Day</span>`
+        : `<span class="badge bg-success-subtle text-success border border-success duration-chip-badge">Full Day</span>`;
 
       return `
       <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2 holiday-chip-badge">
@@ -1529,13 +1354,11 @@ function populateHrAllLeavesFilter() {
     window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)
       ? window.DEMO_DATA.users
       : [];
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
 
-  const defaultOpt = `<option value="all">${leaveTranslations[lang]?.allEmployees || "All Employees"}</option>`;
+  const defaultOpt = `<option value="all">All Employees</option>`;
   const userOpts = allUsers
     .map((u) => {
-      const displayName = isAr && u.nameAr ? u.nameAr : u.name || u.id;
+      const displayName = u.name || u.id;
       const roleBadge = u.role ? ` (${u.role})` : "";
       return `<option value="${u.id}">${window.escapeHtml(displayName)}${roleBadge}</option>`;
     })
@@ -1581,9 +1404,6 @@ function renderHrAllLeaves() {
   if (!tbody) return;
   tbody.replaceChildren();
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
   const empVal =
     document.getElementById("hrAllLeavesEmployeeFilter")?.value || "all";
   const typeVal =
@@ -1612,11 +1432,11 @@ function renderHrAllLeaves() {
   const statPending = document.getElementById("hrStatPendingRequests");
 
   if (statTotal)
-    statTotal.textContent = `${isAr ? "الإجمالي" : "Total"}: ${totalCount}`;
+    statTotal.textContent = `Total: ${totalCount}`;
   if (statApproved)
-    statApproved.textContent = `${isAr ? "مقبول" : "Approved"}: ${approvedCount}`;
+    statApproved.textContent = `Approved: ${approvedCount}`;
   if (statPending)
-    statPending.textContent = `${isAr ? "معلق" : "Pending"}: ${pendingCount}`;
+    statPending.textContent = `Pending: ${pendingCount}`;
 
   const filtered = leavesList.filter((l) => {
     if (empVal !== "all" && l.userId !== empVal) return false;
@@ -1728,7 +1548,7 @@ function renderHrAllLeaves() {
           ${
             l.status === "rejected" && l.rejectionReason
               ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
-                   <i class="bi bi-chat-left-text me-1"></i><strong>${isAr ? "سبب الرفض:" : "Reason:"}</strong> ${window.escapeHtml(l.rejectionReason)}
+                   <i class="bi bi-chat-left-text me-1"></i><strong>Reason:</strong> ${window.escapeHtml(l.rejectionReason)}
                  </div>`
               : ""
           }
@@ -1761,35 +1581,30 @@ function populateHrEmployeeSelect() {
   const select = document.getElementById("hrEmployeeSelect");
   if (!select) return;
 
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const t = leaveTranslations[lang] || leaveTranslations.en;
-
   const users =
     window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)
       ? window.DEMO_DATA.users
       : [];
-  const prevVal = select.value;
 
-  select.innerHTML = `<option value="">${t.chooseEmployee || (isAr ? "اختر موظفاً..." : "Choose an employee...")}</option>`;
+  select.innerHTML = `<option value="">Choose an employee...</option>`;
 
   const roleNameMap = {
-    medical_rep: isAr ? "مندوب طبي (Rep)" : "Medical Rep",
-    rep: isAr ? "مندوب طبي (Rep)" : "Medical Rep",
-    district_manager: isAr ? "مدير منطقة (DM)" : "District Manager (DM)",
-    dm: isAr ? "مدير منطقة (DM)" : "District Manager (DM)",
-    line_manager: isAr ? "مدير خط (LM)" : "Line Manager (LM)",
-    lm: isAr ? "مدير خط (LM)" : "Line Manager (LM)",
-    business_unit: isAr ? "رئيس قطاع (BU)" : "Business Unit Head (BU)",
-    bu: isAr ? "رئيس قطاع (BU)" : "Business Unit Head (BU)",
-    hr: isAr ? "موارد بشرية (HR)" : "HR",
-    admin: isAr ? "مسؤول النظام (Admin)" : "Admin",
+    medical_rep: "Medical Rep",
+    rep: "Medical Rep",
+    district_manager: "District Manager (DM)",
+    dm: "District Manager (DM)",
+    line_manager: "Line Manager (LM)",
+    lm: "Line Manager (LM)",
+    business_unit: "Business Unit Head (BU)",
+    bu: "Business Unit Head (BU)",
+    hr: "HR",
+    admin: "Admin",
   };
 
   users.forEach((u) => {
     const opt = document.createElement("option");
     opt.value = u.id;
-    const name = isAr && u.nameAr ? u.nameAr : u.name;
+    const name = u.name;
     const code = u.employeeCode || u.code || u.id;
     const roleTitle = roleNameMap[u.role] || u.role;
     opt.textContent = `${name} (${code}) - ${roleTitle}`;
@@ -1893,12 +1708,8 @@ Object.assign(leavesApp, {
           window.addWorkflowNotification({
             userId: leave.userId,
             type: "leave_rejection",
-            title: "رفض طلب الإجازة",
-            titleEn: "Leave Request Rejected",
+            title: "Leave Request Rejected",
             message: rejectionReason
-              ? `تم رفض طلب إجازتك (${leave.type}) بواسطة (${currentUser.name}) مع ملاحظة: ${rejectionReason}`
-              : `تم رفض طلب إجازتك (${leave.type}) بواسطة (${currentUser.name}).`,
-            messageEn: rejectionReason
               ? `Your leave request (${leave.type}) was rejected by (${currentUser.name}) with note: ${rejectionReason}`
               : `Your leave request (${leave.type}) was rejected by (${currentUser.name}).`,
             note: rejectionReason || null,
@@ -1911,8 +1722,8 @@ Object.assign(leavesApp, {
         }
 
         const rejMsg = rejectionReason
-          ? (lang === "ar" ? `تم رفض طلب الإجازة مع تسجيل السبب: "${rejectionReason}"` : `Leave request rejected with note: "${rejectionReason}"`)
-          : (lang === "ar" ? "تم رفض طلب الإجازة." : "Leave request rejected.");
+          ? `Leave request rejected with note: "${rejectionReason}"`
+          : "Leave request rejected.";
         if (typeof showToast === "function") showToast(rejMsg, "warning");
         else if (typeof window.showToast === "function")
           window.showToast(rejMsg, "warning");
@@ -1926,10 +1737,8 @@ Object.assign(leavesApp, {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
-              title: "اعتماد أولي للإجازة",
-              titleEn: "Leave Endorsed by DM",
-              message: `اعتمد مدير المنطقة (${currentUser.name}) طلب إجازتك وتم تحويله لمدير الخط.`,
-              messageEn: `District Manager (${currentUser.name}) endorsed your leave request.`,
+              title: "Leave Endorsed by DM",
+              message: `District Manager (${currentUser.name}) endorsed your leave request.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
@@ -1938,10 +1747,7 @@ Object.assign(leavesApp, {
             });
           }
 
-          const msg =
-            lang === "ar"
-              ? "تم اعتماد الإجازة من مدير المنطقة وتحويلها لمدير الخط."
-              : "Approved by District Manager. Forwarded to Line Manager.";
+          const msg = "Approved by District Manager. Forwarded to Line Manager.";
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
@@ -1954,10 +1760,8 @@ Object.assign(leavesApp, {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
-              title: "اعتماد طلب الإجازة",
-              titleEn: "Leave Endorsed by LM",
-              message: `اعتمد مدير الخط (${currentUser.name}) طلب إجازتك وتم تحويله للموارد البشرية.`,
-              messageEn: `Line Manager (${currentUser.name}) endorsed your leave request.`,
+              title: "Leave Endorsed by LM",
+              message: `Line Manager (${currentUser.name}) endorsed your leave request.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
@@ -1966,10 +1770,7 @@ Object.assign(leavesApp, {
             });
           }
 
-          const msg =
-            lang === "ar"
-              ? "تم اعتماد الإجازة من مدير الخط وتحويلها لقسم الموارد البشرية."
-              : "Approved by Line Manager. Forwarded to HR.";
+          const msg = "Approved by Line Manager. Forwarded to HR.";
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
@@ -1985,22 +1786,17 @@ Object.assign(leavesApp, {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
-              title: "موافقة على طلب الإجازة",
-              titleEn: "Leave Request Approved",
-              message: "وافق قسم الموارد البشرية على طلب إجازتك الاعتيادية.",
-              messageEn: "HR Department approved your annual leave request.",
+              title: "Leave Request Approved",
+              message: "HR Department approved your annual leave request.",
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-success",
-              actorName: "الموارد البشرية (HR)",
+              actorName: "HR",
               action: "approved",
             });
           }
 
-          const msg =
-            lang === "ar"
-              ? "تم الاعتماد النهائي للإجازة وخصمها من الرصيد."
-              : "Final approval granted by HR. Deducted from leave balance.";
+          const msg = "Final approval granted by HR. Deducted from leave balance.";
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
@@ -2077,16 +1873,7 @@ Object.assign(leavesApp, {
     }
 
     if (window.saveDataToStorage) window.saveDataToStorage();
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const isAr = lang === "ar";
-    const durationLabel =
-      durationVal === "half"
-        ? isAr
-          ? "نصف يوم"
-          : "Half Day"
-        : isAr
-          ? "يوم كامل"
-          : "Full Day";
+    const durationLabel = durationVal === "half" ? "Half Day" : "Full Day";
     showToast(
       `Official Public Holiday "${nameVal}" (${durationLabel}) declared! Visible in company calendar.`,
       "success",
@@ -2160,31 +1947,17 @@ Object.assign(leavesApp, {
     });
 
     if (summaryEl) {
-      const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-      const isAr = lang === "ar";
       const remAnnual = Math.max(0, effectiveAnnual - used.annual);
       const remCasual = Math.max(0, casualTotal - used.casual);
       const remSick = Math.max(0, sickTotal - used.sick);
-      const rawDisplayName = isAr && user.nameAr ? user.nameAr : user.name;
-      const displayName = window.escapeHtml(rawDisplayName);
       const safeUserName = window.escapeHtml(user.name);
 
       const rolloverBadge = rollover.isValid
-        ? `<span class="badge bg-success-subtle text-success border">+${rollover.carriedOver} ${isAr ? "مرحل" : "Rollover"}</span>`
+        ? `<span class="badge bg-success-subtle text-success border">+${rollover.carriedOver} Rollover</span>`
         : "";
 
       summaryEl.classList.remove("d-none");
-      summaryEl.innerHTML = isAr
-        ? `
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <span class="fw-bold text-dark">ملخص استهلاك الإجازات لـ (${displayName}):</span>
-          <div class="d-flex gap-2 flex-wrap align-items-center">
-            <span class="badge bg-primary-subtle text-primary border">اعتيادي: مستخدم ${used.annual} / متبقي ${remAnnual} من ${effectiveAnnual} ${rolloverBadge}</span>
-            <span class="badge bg-warning-subtle text-warning-emphasis border">عارضة: مستخدم ${used.casual} / متبقي ${remCasual} من ${casualTotal}</span>
-            <span class="badge bg-info-subtle text-info-emphasis border">مرضي: مستخدم ${used.sick} / متبقي ${remSick} من ${sickTotal}</span>
-          </div>
-        </div>`
-        : `
+      summaryEl.innerHTML = `
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span class="fw-bold text-dark">Leave Usage Snapshot for (${safeUserName}):</span>
           <div class="d-flex gap-2 flex-wrap align-items-center">
@@ -2206,11 +1979,8 @@ Object.assign(leavesApp, {
     }
     const select = document.getElementById("hrEmployeeSelect");
     if (!select || !select.value) {
-      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
       return showToast(
-        isAr
-          ? "برجاء اختيار الموظف أولاً."
-          : "Please select an employee first.",
+        "Please select an employee first.",
         "warning",
       );
     }
@@ -2263,13 +2033,8 @@ Object.assign(leavesApp, {
 
     if (window.saveDataToStorage) window.saveDataToStorage();
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const isAr = lang === "ar";
-    const displayName = isAr && user.nameAr ? user.nameAr : user.name;
     showToast(
-      isAr
-        ? `تم حفظ وتحديث رصيد إجازات الموظف (${displayName}) بنجاح.`
-        : `Leave balance updated for ${displayName} successfully.`,
+      `Leave balance updated for ${user.name} successfully.`,
       "success",
     );
 

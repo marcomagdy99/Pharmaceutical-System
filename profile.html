@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -18,21 +18,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v133">
-    <link rel="stylesheet" href="css/profile.css?v=v133">
+    <link rel="stylesheet" href="css/style.css?v=v162">
+    <link rel="stylesheet" href="css/profile.css?v=v145">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v133"></script>
-    <script src="js/store.js?v=v133"></script>
+    <script src="js/app.js?v=v159"></script>
+    <script src="js/store.js?v=v145"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v133"></script>
-    <script src="js/firebase-sync.js?v=v133"></script>
+    <script src="js/firebase-config.js?v=v145"></script>
+    <script src="js/firebase-sync.js?v=v157"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v133";
+        var EXPECTED_SW = "v159";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -118,7 +118,7 @@
                                 <input type="text" class="form-control" id="managerInput" value="" readonly>
                             </div>
                             <div class="admin-only-note">
-                                <span class="note-icon">🔒</span>
+                                <span class="note-icon">??</span>
                                 <span data-i18n="managed_by_admin_hint">Official personal & employee details are managed by the System Administrator or HR.</span>
                             </div>
                             <div id="adminManageUsersShortcut" style="display: none; margin-top: 12px;">
@@ -171,11 +171,10 @@
                         <div class="card">
                             <div class="card-header" data-i18n="preferences">Preferences</div>
                             <form id="preferencesForm">
-                                <div class="form-group">
+                                <div class="form-group" style="display: none;">
                                     <label class="form-label" data-i18n="language">Language</label>
                                     <select class="form-control" id="languageSelect">
-                                        <option value="en">English</option>
-                                        <option value="ar">العربية (Arabic)</option>
+                                        <option value="en" selected>English</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -200,7 +199,7 @@
 
                 <div class="card" id="adminCompanySettingsCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
                     <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700;">🏛️ <span data-i18n="companyGovernanceTitle">Company Field Governance & Policies</span></span>
+                        <span style="font-weight: 700;">??? <span data-i18n="companyGovernanceTitle">Company Field Governance & Policies</span></span>
                         <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
                     </div>
                     <div style="padding: 20px;">
@@ -259,7 +258,7 @@
                             </div>
                             <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
                             <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                <span>🏖️</span>
+                                <span>???</span>
                                 <span data-i18n="leaveRolloverPolicyTitle">Annual Leave Carryover & Expiry Policy</span>
                             </div>
                             <div class="form-group" style="margin-bottom: 16px;">
@@ -294,17 +293,30 @@
                             </div>
                             <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
                             <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                <span>📅</span>
+                                <span>??</span>
                                 <span data-i18n="workSchedulePolicyTitle">Work Schedule & Weekly Rest Days</span>
                             </div>
-                            <div class="form-group" style="margin-bottom: 20px;">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" class="toggle-input" id="toggleThursdayWeekend">
-                                    <div class="toggle-slider"></div>
-                                    <span style="font-weight: 600;" data-i18n="toggleThursdayWeekendLabel">Designate Thursday as Official Weekend (Thursday & Friday)</span>
-                                </label>
-                                <small class="text-muted" style="display: block; margin-top: 6px; margin-inline-start: 56px;" data-i18n="toggleThursdayWeekendHint">When enabled, Thursday is treated as an official day off alongside Friday across all visits, daily activities, and leave balances. If disabled, only Friday is the statutory rest day.</small>
+                            <div class="grid-2" style="max-width: 650px; gap: 16px; margin-bottom: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="secondaryWeekendDayLabel">Secondary Rest Day (Alongside Friday)</label>
+                                    <select class="form-control" id="secondaryWeekendDaySelect" onchange="onSecondaryWeekendChange()">
+                                        <option value="none">None - Friday Only (6 Working Days)</option>
+                                        <option value="saturday" selected>Saturday (Friday & Saturday)</option>
+                                        <option value="thursday">Thursday (Thursday & Friday)</option>
+                                    </select>
+                                    <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="secondaryWeekendDayHint">Friday is statutory rest day. Choose additional day off if applicable.</small>
+                                </div>
+                                <div class="form-group" id="secondaryWeekendModeGroup">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="secondaryWeekendModeLabel">Rest Day Coverage Mode</label>
+                                    <select class="form-control" id="secondaryWeekendModeSelect">
+                                        <option value="full_day" selected>Full Day Off (AM & PM Off)</option>
+                                        <option value="pm_only">PM Only Off (AM Work, PM Clinics Off)</option>
+                                    </select>
+                                    <small class="text-muted" style="display: block; margin-top: 4px;" data-i18n="secondaryWeekendModeHint">Full Day: complete day off. PM Only: morning work allowed, evening clinic quota exempted.</small>
+                                </div>
                             </div>
+                            <!-- Hidden backwards compatibility toggle -->
+                            <input type="checkbox" id="toggleThursdayWeekend" style="display: none;">
                             <button type="submit" class="btn-primary" data-i18n="saveCompanyPolicies">Save Company Policies</button>
                         </form>
                     </div>
@@ -313,7 +325,7 @@
                 <!-- START: Admin Company Branding & Login Customization Card -->
                 <div class="card" id="adminBrandingCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
                     <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700;">🎨 <span data-i18n="companyBrandingTitle">Company Branding & Login Customization</span></span>
+                        <span style="font-weight: 700;">?? <span data-i18n="companyBrandingTitle">Company Branding & Login Customization</span></span>
                         <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
                     </div>
                     <div style="padding: 20px;">
@@ -351,8 +363,8 @@
                                     <input type="text" class="form-control" id="brandTaglineEn" placeholder="e.g. Empowering Medical Representatives" required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="taglineArLabel">Slogan / Tagline (Arabic)</label>
-                                    <input type="text" class="form-control" id="brandTaglineAr" placeholder="مثال: نمكّن المناديب الطبيين" dir="rtl" required>
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="taglineArLabel">Slogan / Tagline (Arabic - Optional)</label>
+                                    <input type="text" class="form-control" id="brandTaglineAr" placeholder="e.g. Optional Arabic Slogan" required>
                                 </div>
                             </div>
 
@@ -363,8 +375,8 @@
                                     <textarea class="form-control" id="brandDescEn" rows="3" placeholder="Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution." required></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="descArLabel">Description (Arabic)</label>
-                                    <textarea class="form-control" id="brandDescAr" rows="3" placeholder="قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا." dir="rtl" required></textarea>
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="descArLabel">Description (Arabic - Optional)</label>
+                                    <textarea class="form-control" id="brandDescAr" rows="3" placeholder="Optional Arabic Description..." required></textarea>
                                 </div>
                             </div>
 
@@ -423,6 +435,6 @@
             </div>
         </main>
     </div>
-    <script src="js/profile.js?v=v133"></script>
+    <script src="js/profile.js?v=v145"></script>
 </body>
 </html>

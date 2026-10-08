@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    PharmaCare - Calendar Page Stylesheet
    Includes: Monthly grid, day cells, event dots/blocks, detail drawer,
    and complete Dark Mode contrast overrides (fixing weekend & text contrast).
@@ -227,11 +227,6 @@
     padding: 1.5rem;
     flex-direction: column;
     overflow-y: auto;
-}
-
-[dir="rtl"] .day-detail-panel {
-    right: auto;
-    left: 0;
 }
 
 .day-detail-panel.active {
@@ -858,15 +853,6 @@
     gap: 6px;
 }
 
-[dir="rtl"] .org-node-children {
-    margin-left: 0;
-    margin-right: 24px;
-    padding-left: 0;
-    padding-right: 12px;
-    border-left: none;
-    border-right: 2px dashed var(--gray-300, #cbd5e1);
-}
-
 /* Search results cards */
 .search-results-list {
     display: flex;
@@ -1220,12 +1206,6 @@
         margin-top: 4px;
         margin-bottom: 4px;
         gap: 4px;
-    }
-    [dir="rtl"] .org-node-children {
-        margin-left: 0;
-        margin-right: 8px;
-        padding-left: 0;
-        padding-right: 6px;
     }
     .org-node-row {
         padding: 7px 8px;

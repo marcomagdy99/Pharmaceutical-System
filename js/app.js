@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v85";
+  const EXPECTED_SW = "v145";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -79,6 +79,29 @@ function getSystemTodayStr() {
 
 window.getSystemDate = getSystemDate;
 window.getSystemTodayStr = getSystemTodayStr;
+
+// ============================================================================
+// Section 0.6: Bilingual Alphabetical Collation Utility (AR / EN)
+// ============================================================================
+function sortBilingualByName(a, b) {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  const lang = (typeof window !== "undefined" && window.getCurrentLang && window.getCurrentLang()) || "en";
+  const getName = (item) => {
+    if (!item) return "";
+    if (typeof item === "string") return item.trim();
+    if (lang === "ar") {
+      return (item.nameAr || item.name || "").trim();
+    }
+    return (item.name || item.nameAr || "").trim();
+  };
+  const nameA = getName(a);
+  const nameB = getName(b);
+  const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
+  return nameA.localeCompare(nameB, locales, { numeric: true, sensitivity: "base" });
+}
+window.sortBilingualByName = sortBilingualByName;
 
 // ============================================================================
 // Section 1: Default Master Seed Data
@@ -889,97 +912,85 @@ const DEFAULT_DEMO_DATA = {
       id: "notif_rep_1",
       userId: "rep1",
       type: "plan_approval",
-      title: "اعتماد الخطة الميدانية",
-      titleEn: "Field Plan Approved",
-      message: "اعتمد مدير المنطقة (كريم ناصر) خطتك الميدانية لتاريخ 2026-09-20.",
-      messageEn: "District Manager (Karim Nasser) approved your field plan for 2026-09-20.",
+      title: "Field Plan Approved",
+      message: "District Manager (Karim Nasser) approved your field plan for 2026-09-20.",
       link: "calendar.html",
       read: false,
       createdAt: "2026-09-17T15:30:00Z",
       icon: "🗓️",
       badgeClass: "bg-success",
-      actorName: "كريم ناصر",
+      actorName: "Karim Nasser",
       action: "approved",
     },
     {
       id: "notif_rep_2",
       userId: "rep1",
       type: "leave_approval",
-      title: "موافقة على طلب الإجازة",
-      titleEn: "Leave Request Approved",
-      message: "وافق قسم الموارد البشرية على طلب إجازتك الاعتيادية.",
-      messageEn: "HR Department approved your annual leave request.",
+      title: "Leave Request Approved",
+      message: "HR Department approved your annual leave request.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T14:15:00Z",
       icon: "🏖️",
       badgeClass: "bg-success",
-      actorName: "الموارد البشرية (HR)",
+      actorName: "HR Department",
       action: "approved",
     },
     {
       id: "notif_rep_3",
       userId: "rep1",
       type: "visit_rejection",
-      title: "رفض وتوجيه زيارة",
-      titleEn: "Visit Directive / Rejection",
-      message: "تم رفض زيارة د. أحمد مصطفى مع ملاحظة: يرجى تغيير موعد الزيارة للفترة الصباحية.",
-      messageEn: "Visit for Dr. Ahmed Mostafa rejected with note: Please reschedule to morning period.",
-      note: "يرجى تغيير موعد الزيارة للفترة الصباحية",
+      title: "Visit Directive / Rejection",
+      message: "Visit for Dr. Ahmed Mostafa rejected with note: Please reschedule to morning period.",
+      note: "Please reschedule to morning period",
       link: "visits.html",
       read: false,
       createdAt: "2026-09-17T11:00:00Z",
       icon: "❌",
       badgeClass: "bg-danger",
-      actorName: "كريم ناصر",
+      actorName: "Karim Nasser",
       action: "rejected",
     },
     {
       id: "notif_dm_1",
       userId: "dm1",
       type: "plan_submission",
-      title: "خطة زيارات معلقة للاعتماد",
-      titleEn: "Field Plan for Review",
-      message: "قدم المندوب أحمد مصطفى خطته الميدانية لشهر سبتمبر للمراجعة والاعتماد.",
-      messageEn: "Medical Rep Ahmed Mostafa submitted a new field plan for your review.",
+      title: "Field Plan for Review",
+      message: "Medical Rep Ahmed Mostafa submitted a new field plan for your review.",
       link: "plans-review.html",
       read: false,
       createdAt: "2026-09-17T13:00:00Z",
       icon: "📋",
       badgeClass: "bg-primary",
-      actorName: "أحمد مصطفى",
+      actorName: "Ahmed Mostafa",
       action: "submitted",
     },
     {
       id: "notif_dm_2",
       userId: "dm1",
       type: "leave_submission",
-      title: "طلب إجازة جديد",
-      titleEn: "New Leave Request",
-      message: "طلب إجازة اعتيادية مقدم من المندوب أحمد مصطفى (يومان) بانتظار موافقتك.",
-      messageEn: "Annual leave request submitted by Ahmed Mostafa (2 days) awaiting your approval.",
+      title: "New Leave Request",
+      message: "Annual leave request submitted by Ahmed Mostafa (2 days) awaiting your approval.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T10:00:00Z",
       icon: "🏖️",
       badgeClass: "bg-warning",
-      actorName: "أحمد مصطفى",
+      actorName: "Ahmed Mostafa",
       action: "submitted",
     },
     {
       id: "notif_hr_1",
       userId: "hr1",
       type: "leave_submission",
-      title: "طلب إجازة للاعتماد النهائي",
-      titleEn: "Leave Request Final Approval",
-      message: "اعتمد مدير الخط طلب إجازة أحمد مصطفى وبانتظار اعتماد الموارد البشرية النهائي.",
-      messageEn: "Line Manager approved leave for Ahmed Mostafa, awaiting HR final confirmation.",
+      title: "Leave Request Final Approval",
+      message: "Line Manager approved leave for Ahmed Mostafa, awaiting HR final confirmation.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T12:30:00Z",
       icon: "🏖️",
       badgeClass: "bg-info",
-      actorName: "حسن علي",
+      actorName: "Hassan Ali",
       action: "endorsed",
     },
   ],
@@ -1065,6 +1076,12 @@ function loadDataFromStorage() {
               const def = DEFAULT_DEMO_DATA.users.find((du) => du.id === u.id);
               u.hireDate = def?.hireDate || "2024-01-15";
             }
+          });
+        }
+        if (Array.isArray(data.notifications)) {
+          data.notifications.forEach((n) => {
+            if (n.titleEn) n.title = n.titleEn;
+            if (n.messageEn) n.message = n.messageEn;
           });
         }
         if (data.currentUser && !data.currentUser.hireDate) {
@@ -1232,6 +1249,9 @@ window.addEventListener("storage", (e) => {
       if (window.DEMO_DATA && typeof fresh === "object") {
         Object.assign(window.DEMO_DATA, fresh);
         document.dispatchEvent(new CustomEvent("pharma:storage:synced", { detail: { key: "pharma_master_data" } }));
+        if (typeof window.updateWorkflowNotifUI === "function") {
+          window.updateWorkflowNotifUI();
+        }
       }
     } catch (err) {
       console.warn("[StorageSync] Failed to sync master data across tabs:", err);
@@ -1400,7 +1420,6 @@ function isDoctorAlreadyVisitedToday(doctorId, visitDate, repId, currentVisitId 
 
 function checkVisitDateAllowed(dateStr, repId, lang) {
   if (!dateStr) return { allowed: true };
-  const isAr = lang === "ar";
 
   // 1. Official public holidays check
   const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays)
@@ -1416,10 +1435,8 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
 
   const holiday = holidays.find((h) => h.date === dateStr);
   if (holiday) {
-    const hTitle = (isAr && holiday.titleAr) ? holiday.titleAr : (holiday.title || (isAr ? "عطلة رسمية" : "Public Holiday"));
-    const msg = isAr
-      ? `⚠️ غير مسموح بتسجيل أو حفظ زيارة في يوم إجازة: التاريخ المحدد (${dateStr}) يوافق عطلة رسمية (${hTitle}).`
-      : `⚠️ Recording or saving visits on holidays is not permitted: The selected date (${dateStr}) is an official holiday (${hTitle}).`;
+    const hTitle = holiday.title || "Public Holiday";
+    const msg = `⚠️ Recording or saving visits on holidays is not permitted: The selected date (${dateStr}) is an official holiday (${hTitle}).`;
     return { allowed: false, reason: "public_holiday", message: msg };
   }
 
@@ -1438,13 +1455,6 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
   });
 
   if (matchedLeave) {
-    const typeNamesAr = {
-      annual: "اعتيادية",
-      casual: "عارضة",
-      sick: "مرضية",
-      unpaid: "بدون راتب",
-      maternity: "وضع",
-    };
     const typeNamesEn = {
       annual: "Annual",
       casual: "Casual",
@@ -1452,25 +1462,14 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
       unpaid: "Unpaid",
       maternity: "Maternity",
     };
-    const statusLabelsAr = {
-      approved: "معتمدة",
-      pending: "قيد الاعتماد",
-    };
     const statusLabelsEn = {
       approved: "Approved",
       pending: "Pending Approval",
     };
 
-    const lType = isAr
-      ? (typeNamesAr[matchedLeave.type] || matchedLeave.type)
-      : (typeNamesEn[matchedLeave.type] || matchedLeave.type);
-    const lStatus = isAr
-      ? (statusLabelsAr[matchedLeave.status] || matchedLeave.status)
-      : (statusLabelsEn[matchedLeave.status] || matchedLeave.status);
-
-    const msg = isAr
-      ? `⚠️ لديك طلب إجازة مسجل (${lStatus}: ${lType}) في هذا التاريخ (${dateStr}). لا يُسمح بتسجيل أو تخطيط زيارات أثناء الإجازات.`
-      : `⚠️ You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
+    const lType = typeNamesEn[matchedLeave.type] || matchedLeave.type || "Leave";
+    const lStatus = statusLabelsEn[matchedLeave.status] || matchedLeave.status || "Pending";
+    const msg = `⚠️ You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
 
     return { allowed: false, reason: "employee_leave", message: msg };
   }
@@ -1642,19 +1641,7 @@ function canApproveFor(targetUserId) {
 
 window.canApproveFor = canApproveFor;
 
-function formatVisitDateTime(dateStr, timeStr, lang) {
-  const currentLang =
-    lang || (window.getCurrentLang && window.getCurrentLang()) || "ar";
-  const isAr = currentLang === "ar";
-  const arDays = [
-    "الأحد",
-    "الاثنين",
-    "الثلاثاء",
-    "الأربعاء",
-    "الخميس",
-    "الجمعة",
-    "السبت",
-  ];
+function formatVisitDateTime(dateStr, timeStr) {
   const enDays = [
     "Sunday",
     "Monday",
@@ -1671,7 +1658,7 @@ function formatVisitDateTime(dateStr, timeStr, lang) {
   if (dateStr) {
     const d = new Date(dateStr + "T00:00:00");
     const dayIndex = isNaN(d.getDay()) ? 0 : d.getDay();
-    dayName = isAr ? arDays[dayIndex] : enDays[dayIndex];
+    dayName = enDays[dayIndex];
   }
 
   const safeTime = timeStr || "10:00";
@@ -2243,122 +2230,29 @@ const translations = {
     notifViewDetails: "View Details",
     teamFilterLabel: "Employee Filter:",
     notifDirectiveLabel: "Directive / Note:",
-  },
-  ar: {
-    brandName: "فارماكير",
-    brandSub: "التميز في الرعاية الصحية",
-    navMain: "القائمة الرئيسية",
-    navHome: "الرئيسية",
-    navVisits: "الزيارات",
-    navCalendar: "التقويم",
-    navRequests: "الطلبات والأنشطة",
-    navVacations: "الإجازات",
-    navNotifications: "الإشعارات",
-    navSettings: "الإعدادات",
-    navReports: "التقارير",
-    navDoctors: "الأطباء",
-    navPharmacies: "الصيدليات",
-    navPlan: "خطتي الأسبوعية",
-    navCoverage: "التغطية",
-    navActivities: "الأنشطة",
-    navLeaves: "الإجازات",
-    navSales: "المبيعات",
-    navQuizzes: "الاختبارات",
-    navProducts: "المنتجات",
-    navAreas: "المناطق",
-    navDistributors: "الموزعين",
-    navUsers: "المستخدمين",
-    navProfile: "الملف الشخصي",
-    navHelp: "مساعدة",
-    roleAdmin: "مدير النظام",
-    roleBusinessUnit: "مدير وحدة الأعمال",
-    roleLineManager: "مدير الخط",
-    roleDistrictManager: "مدير المنطقة",
-    roleMedicalRep: "مندوب طبي",
-    save: "حفظ",
-    cancel: "إلغاء",
-    delete: "حذف",
-    edit: "تعديل",
-    add: "إضافة",
-    search: "بحث...",
-    filter: "تصفية",
-    submit: "إرسال",
-    approve: "موافقة",
-    reject: "رفض",
-    pending: "قيد الانتظار",
-    completed: "مكتمل",
-    cancelled: "ملغى",
-    viewAll: "عرض الكل",
-    loading: "جاري التحميل...",
-    noData: "لا توجد بيانات",
-    welcome: "مرحباً",
-    logout: "تسجيل الخروج",
-    roleHR: "مدير الموارد البشرية",
-    navAnnouncements: "الإعلانات",
-    logActualVisit: "تسجيل زيارة فعلية",
-    plannedVisit: "زيارة من الخطة",
-    actualVisit: "زيارة فعلية مباشرة",
-    officeWork: "عمل مكتبي",
-    training: "تدريب",
-    meeting: "اجتماع",
-    conference: "مؤتمر",
-    periodAM: "صباحاً (AM)",
-    periodPM: "مساءً (PM)",
-    periodFullDay: "يوم كامل",
-    darkMode: "الوضع الليلي",
-    lightMode: "الوضع النهاري",
-    btnShow: "عرض النتائج",
-    userCodeLabel: "كود:",
-    selectRep: "عرض جدول المواعيد لـ:",
-    browseOrgTree: "تصفح الهيكل الوظيفي",
-    viewAllTeam: "عرض كل الفريق",
-    selectAllTeam: "اختيار كامل الفريق",
-    orgTreeTitle: "🏢 اختر الموظف أو الفرع الإداري",
-    orgTreeSubtitle: "اختر أي مستوى (BU أو LM أو DM أو مندوب) أو ابحث مباشرة",
-    navPlansReview: "مراجعة الخطط",
-    close: "إغلاق",
-    leaveAllocationTitle: "تخصيص أرصدة الإجازات السنوية (بالأيام)",
-    leaveAllocationSub: "تحديد رصيد الإجازة الاعتيادية والعارضة والمرضية",
-    hrGovernanceTitle:
-      "🏛️ إدارة الموارد البشرية: أرصدة الإجازات والإجازات الرسمية",
-    employeeBalanceControl: "تخصيص وضبط أرصدة إجازات الموظفين",
-    employeeBalanceControlSub:
-      "تحديد عدد أيام الإجازات السنوية والعارضة والمرضية لكل موظف",
-    selectEmployee: "اختر الموظف",
-    chooseEmployee: "اختر موظفاً...",
-    annualDaysLabel: "الاعتيادية (أيام)",
-    casualDaysLabel: "العارضة (أيام)",
-    sickDaysLabel: "المرضية (أيام)",
-    saveEmployeeBalance: "حفظ رصيد الموظف",
-    declarePublicHoliday: "تسجيل إجازة رسمية عامة",
-    declarePublicHolidaySub: "تظهر في نتيجة الشركة بدون خصم من رصيد الموظف",
-    holidayDateLabel: "تاريخ الإجازة",
-    holidayTitleLabel: "اسم / مناسبة الإجازة",
-    addHolidayBtn: "إضافة إجازة رسمية",
-    currentHolidays: "الإجازات الرسمية المسجلة حالياً:",
-    totalDays: "الإجمالي",
-    notifCenterTitle: "مركز الإشعارات",
-    notifMarkAllRead: "تحديد الكل كمقروء",
-    notifClearAll: "مسح الكل",
-    notifEmptyTitle: "لا توجد إشعارات جديدة",
-    notifEmptyDesc: "ستظهر هنا إشعارات الاعتمادات، الرفض، والتوجيهات الميدانية فور حدوثها.",
-    notifTabAll: "الكل",
-    notifTabUnread: "غير مقروء",
-    notifNew: "جديد",
-    notifViewDetails: "عرض التفاصيل",
-    teamFilterLabel: "تصفية الموظف / الفريق:",
-    notifDirectiveLabel: "ملاحظة التوجيه:",
-  },
+  }
+
 };
 
 window.translations = translations;
+translations.ar = translations.en; // Safe fallback alias to guarantee zero runtime exceptions
 
 function getCurrentLang() {
-  return localStorage.getItem("pharmaLang") || "en";
+  return "en";
 }
+window.getCurrentLang = getCurrentLang;
+
+try {
+  localStorage.setItem("pharmaLang", "en");
+  localStorage.setItem("lang", "en");
+  if (document.documentElement) {
+    document.documentElement.dir = "ltr";
+    document.documentElement.lang = "en";
+  }
+} catch (e) {}
 
 function applyTranslations(lang) {
-  const current = lang || getCurrentLang();
+  const current = "en";
   const dict = translations[current];
   if (!dict) return;
 
@@ -2374,14 +2268,16 @@ function applyTranslations(lang) {
 }
 
 function switchLanguage(lang) {
-  localStorage.setItem("pharmaLang", lang);
-  localStorage.setItem("lang", lang);
-  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-  document.documentElement.lang = lang;
+  try {
+    localStorage.setItem("pharmaLang", "en");
+    localStorage.setItem("lang", "en");
+  } catch (e) {}
+  document.documentElement.dir = "ltr";
+  document.documentElement.lang = "en";
 
-  applyTranslations(lang);
+  applyTranslations("en");
   document.dispatchEvent(
-    new CustomEvent("languageChanged", { detail: { lang } }),
+    new CustomEvent("languageChanged", { detail: { lang: "en" } }),
   );
 
   renderSidebar(window.currentActivePage || resolveActivePage());
@@ -2476,28 +2372,17 @@ function getIconSymbol(id) {
   return map[id] || "📌";
 }
 
-function getRoleBadge(role, lang) {
+function getRoleBadge(role) {
   const roleNames = {
-    en: {
-      admin: "Admin",
-      business_unit: "BU Head",
-      line_manager: "Line Manager",
-      district_manager: "District Manager",
-      medical_rep: "Medical Rep",
-      product_manager: "Product Manager",
-      hr: "HR Manager",
-    },
-    ar: {
-      admin: "مدير النظام",
-      business_unit: "مدير وحدة الأعمال",
-      line_manager: "مدير الخط",
-      district_manager: "مدير المنطقة",
-      medical_rep: "مندوب طبي",
-      product_manager: "مدير منتج (PM)",
-      hr: "مدير الموارد البشرية",
-    },
+    admin: "Admin",
+    business_unit: "BU Head",
+    line_manager: "Line Manager",
+    district_manager: "District Manager",
+    medical_rep: "Medical Rep",
+    product_manager: "Product Manager",
+    hr: "HR Manager",
   };
-  return (roleNames[lang] && roleNames[lang][role]) || role;
+  return roleNames[role] || role;
 }
 
 function getNavItemsForRole(role) {
@@ -2693,7 +2578,7 @@ function renderSidebar(activePage) {
     
     <div class="sidebar-nav">
       <div style="padding: 10px 24px 4px; font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px;">
-        ${lang === "ar" ? "القائمة الرئيسية" : "Main Menu"}
+        Main Menu
       </div>
       <ul style="list-style: none; padding: 0; margin: 0;">
   `;
@@ -2703,13 +2588,13 @@ function renderSidebar(activePage) {
     const pendingCount = getNavPendingCount(item.id, user);
     const badgeHtml =
       pendingCount > 0
-        ? `<span class="badge bg-danger rounded-pill nav-pending-badge ${lang === "ar" ? "me-auto" : "ms-auto"}" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
+        ? `<span class="badge bg-danger rounded-pill nav-pending-badge ms-auto" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
         : "";
     html += `
       <li class="nav-item">
         <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === resolved ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === resolved ? "600" : "500"}; background: ${item.id === resolved ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
           <span style="font-size: 1.1rem; width: 22px; text-align: center;">${getIconSymbol(item.id)}</span>
-          <span data-i18n="${item.i18n}">${translations[lang][item.i18n] || item.id}</span>
+          <span data-i18n="${item.i18n}">${(translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id}</span>
           ${badgeHtml}
         </a>
       </li>
@@ -2720,7 +2605,7 @@ function renderSidebar(activePage) {
     html += `
       <li class="nav-header" role="presentation" style="list-style: none;">
         <div style="padding: 16px 24px 4px; font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px;">
-          ${lang === "ar" ? "الإدارة والبيانات" : "Management & Data"}
+          Management & Data
         </div>
       </li>
     `;
@@ -2729,13 +2614,13 @@ function renderSidebar(activePage) {
       const pendingCount = getNavPendingCount(item.id, user);
       const badgeHtml =
         pendingCount > 0
-          ? `<span class="badge bg-danger rounded-pill nav-pending-badge ${lang === "ar" ? "me-auto" : "ms-auto"}" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
+          ? `<span class="badge bg-danger rounded-pill nav-pending-badge ms-auto" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
           : "";
       html += `
         <li class="nav-item">
           <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === resolved ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === resolved ? "600" : "500"}; background: ${item.id === resolved ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
             <span style="font-size: 1.1rem; width: 22px; text-align: center;">${getIconSymbol(item.id)}</span>
-            <span data-i18n="${item.i18n}">${translations[lang][item.i18n] || item.id}</span>
+            <span data-i18n="${item.i18n}">${(translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id}</span>
             ${badgeHtml}
           </a>
         </li>
@@ -2807,7 +2692,7 @@ function renderTopbar(force = false) {
   const userCode = user.employeeCode || user.code || "EMP-001";
   const roleBadge = getRoleBadge(user.role, lang);
   const codeLabel =
-    translations[lang]?.userCodeLabel || (lang === "ar" ? "كود:" : "Code:");
+    "Code:";
   const avatarChar = user.name ? user.name.charAt(0) : "U";
 
   const { primaryNavItems, managementNavItems } = getNavItemsForRole(user.role);
@@ -2837,14 +2722,12 @@ function renderTopbar(force = false) {
         <div class="pharma-impersonation-content">
           <span class="pharma-impersonation-icon">⚠️</span>
           <span class="pharma-impersonation-text">
-            ${lang === "ar" 
-              ? `<strong>وضع المعاينة (Log in as):</strong> أنت تتصفح حالياً بصفتك <strong>${userName}</strong> (${roleBadge}) — مسجل بواسطة الأدمن <strong>${originalAdminName}</strong>`
-              : `<strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>`}
+            <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>
           </span>
         </div>
         <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
           <span>↩️</span>
-          <span>${lang === "ar" ? "إنهاء المعاينة والعودة للأدمن" : "Exit & Return to Admin"}</span>
+          <span>Exit & Return to Admin</span>
         </button>
       `;
     } else if (bannerEl) {
@@ -2889,9 +2772,9 @@ function renderTopbar(force = false) {
         notifWrapper.className = "pharma-notif-wrapper";
         notifWrapper.id = "pharmaNotifWrapper";
         notifWrapper.innerHTML = `
-          <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="${translations[lang]?.notifCenterTitle || (lang === 'ar' ? 'مركز الإشعارات' : 'Notifications')}" aria-label="Notifications">
+          <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="Notifications" aria-label="Notifications">
             <span class="notif-bell-icon">🔔</span>
-            <span class="badge rounded-pill bg-danger notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+            <span class="notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
           </button>
           <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
         `;
@@ -2956,14 +2839,12 @@ function renderTopbar(force = false) {
       <div class="pharma-impersonation-content">
         <span class="pharma-impersonation-icon">⚠️</span>
         <span class="pharma-impersonation-text">
-          ${lang === "ar" 
-            ? `<strong>وضع المعاينة (Log in as):</strong> أنت تتصفح حالياً بصفتك <strong>${userName}</strong> (${roleBadge}) — مسجل بواسطة الأدمن <strong>${originalAdminName}</strong>`
-            : `<strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>`}
+          <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>
         </span>
       </div>
       <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
         <span>↩️</span>
-        <span>${lang === "ar" ? "إنهاء المعاينة والعودة للأدمن" : "Exit & Return to Admin"}</span>
+        <span>Exit & Return to Admin</span>
       </button>
     </div>
   ` : "";
@@ -2992,24 +2873,20 @@ function renderTopbar(force = false) {
       
       <div id="cloudSyncStatus" style="display: inline-flex; align-items: center; margin-inline: 8px;">
         <span style="display: inline-flex; align-items: center; gap: 4px; color: #10b981; font-size: 0.75rem; font-weight: 600;" title="Realtime Cloud Sync Active">
-          <span style="font-size: 0.7rem;">●</span> ${lang === "ar" ? "سحابي مباشر" : "Cloud Live"}
+          <span style="font-size: 0.7rem;">●</span> Cloud Live
         </span>
       </div>
 
       <div class="pharma-actions-group">
         <!-- Live Workflow Notification Center Bell & Dropdown -->
         <div class="pharma-notif-wrapper" id="pharmaNotifWrapper">
-          <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="${translations[lang]?.notifCenterTitle || (lang === 'ar' ? 'مركز الإشعارات' : 'Notifications')}" aria-label="Notifications">
+          <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="Notifications" aria-label="Notifications">
             <span class="notif-bell-icon">🔔</span>
-            <span class="badge rounded-pill bg-danger notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+            <span class="notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
           </button>
           
           <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
         </div>
-
-        <button class="pharma-action-btn" style= "display: none;" onclick="switchLanguage('${lang === "ar" ? "en" : "ar"}')" title="Language">
-          &#127760; <span id="langLabel">${lang === "ar" ? "English" : "عربي"}</span>
-        </button>
         
         <button class="pharma-action-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Theme">
           <span id="themeIcon">${document.documentElement.getAttribute("data-theme") === "dark" ? "☀️" : "🌙"}</span>
@@ -3094,21 +2971,12 @@ window.formatWorkflowNotifTime = function (isoString, lang) {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (lang === "ar") {
-      if (diffMins < 1) return "الآن";
-      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-      if (diffDays === 1) return "أمس";
-      if (diffDays < 7) return `منذ ${diffDays} أيام`;
-      return d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" });
-    } else {
-      if (diffMins < 1) return "Just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays === 1) return "Yesterday";
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    }
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   } catch (e) {
     return "";
   }
@@ -3160,8 +3028,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
   const container = document.getElementById("workflowNotifDropdown");
   if (!container) return;
 
-  const lang = window.getCurrentLang ? window.getCurrentLang() : "ar";
-  const isAr = lang === "ar";
+  const lang = window.getCurrentLang ? window.getCurrentLang() : "en";
   let user = window.checkAuth ? window.checkAuth() : null;
   if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
   const userId = user ? user.id : "rep1";
@@ -3183,9 +3050,9 @@ window.renderWorkflowNotifContent = function (filter = "all") {
     itemsHtml = `
       <div class="notif-empty-state">
         <div style="font-size: 2.2rem; margin-bottom: 8px;">🔕</div>
-        <div class="fw-bold fs-6 mb-1">${isAr ? "لا توجد إشعارات جديدة" : "No notifications"}</div>
+        <div class="fw-bold fs-6 mb-1">No notifications</div>
         <div class="text-muted small" style="max-width: 260px; margin: 0 auto; line-height: 1.45;">
-          ${isAr ? "ستظهر هنا إشعارات الاعتمادات، الرفض، والتوجيهات الميدانية فور حدوثها." : "Workflow approvals, rejections, and directives will appear here live."}
+          Workflow approvals, rejections, and directives will appear here live.
         </div>
       </div>
     `;
@@ -3193,12 +3060,8 @@ window.renderWorkflowNotifContent = function (filter = "all") {
     itemsHtml = displayList
       .map((item) => {
         const isUnread = !item.read;
-        const title = isAr
-          ? item.title || item.titleEn || "إشعار"
-          : item.titleEn || item.title || "Notification";
-        const msg = isAr
-          ? item.message || item.messageEn || ""
-          : item.messageEn || item.message || "";
+        const title = item.titleEn || item.title || "Notification";
+        const msg = item.messageEn || item.message || "";
         const timeStr = window.formatWorkflowNotifTime(item.createdAt, lang);
 
         let icon = item.icon || "🔔";
@@ -3231,7 +3094,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
         const noteHtml = item.note
           ? `
           <div class="notif-note-callout">
-            <strong>💬 ${isAr ? "ملاحظة التوجيه:" : "Directive Note:"}</strong> "${window.escapeHtml ? window.escapeHtml(item.note) : item.note}"
+            <strong>💬 Directive Note:</strong> "${window.escapeHtml ? window.escapeHtml(item.note) : item.note}"
           </div>
         `
           : "";
@@ -3258,12 +3121,12 @@ window.renderWorkflowNotifContent = function (filter = "all") {
                   linkTarget !== "#"
                     ? `
                   <button type="button" class="notif-btn-open" onclick="event.stopPropagation(); window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
-                    ${isAr ? "فتح الصفحة" : "View"} ↗
+                    View ↗
                   </button>
                 `
                     : "<span></span>"
                 }
-                <button type="button" class="notif-btn-delete" title="${isAr ? "حذف الإشعار" : "Delete"}" onclick="window.deleteWorkflowNotif(event, '${item.id}')">
+                <button type="button" class="notif-btn-delete" title="Delete" onclick="window.deleteWorkflowNotif(event, '${item.id}')">
                   🗑️
                 </button>
               </div>
@@ -3278,9 +3141,9 @@ window.renderWorkflowNotifContent = function (filter = "all") {
     <div class="notif-dropdown-header">
       <h5>
         <span>🔔</span>
-        <span>${isAr ? "مركز الإشعارات" : "Notifications"}</span>
+        <span>Notifications</span>
         <span class="badge ${unreadCount > 0 ? "bg-danger" : "bg-secondary"} rounded-pill" style="font-size: 0.72rem; padding: 2px 7px;">
-          ${unreadCount} ${isAr ? "جديد" : "New"}
+          ${unreadCount} New
         </span>
       </h5>
       <div style="display: flex; gap: 8px; align-items: center;">
@@ -3288,7 +3151,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
           unreadCount > 0
             ? `
           <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" style="font-size: 0.78rem; font-weight: 600; color: #2563eb;" onclick="window.markAllWorkflowNotifsRead(event)">
-            ✓ ${isAr ? "تحديد الكل كمقروء" : "Mark all read"}
+            ✓ Mark all read
           </button>
         `
             : ""
@@ -3298,10 +3161,10 @@ window.renderWorkflowNotifContent = function (filter = "all") {
 
     <div class="notif-filter-tabs">
       <button type="button" class="notif-filter-btn ${filter === "all" ? "active" : ""}" onclick="window.renderWorkflowNotifContent('all')">
-        ${isAr ? "الكل" : "All"} (${totalCount})
+        All (${totalCount})
       </button>
       <button type="button" class="notif-filter-btn ${filter === "unread" ? "active" : ""}" onclick="window.renderWorkflowNotifContent('unread')">
-        ${isAr ? "غير مقروء" : "Unread"} (${unreadCount})
+        Unread (${unreadCount})
       </button>
     </div>
 
@@ -3313,9 +3176,9 @@ window.renderWorkflowNotifContent = function (filter = "all") {
       totalCount > 0
         ? `
       <div class="notif-dropdown-footer">
-        <span class="small text-muted">${totalCount} ${isAr ? "إشعار إجمالي" : "total"}</span>
+        <span class="small text-muted">${totalCount} total</span>
         <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 small" style="font-size: 0.75rem;" onclick="window.clearAllWorkflowNotifs(event)">
-          🗑️ ${isAr ? "مسح الكل" : "Clear all"}
+          🗑️ Clear all
         </button>
       </div>
     `
@@ -3415,10 +3278,8 @@ window.addWorkflowNotification = function (notif) {
       read: false,
       userId: notif.userId || "rep1",
       type: notif.type || "system",
-      title: notif.title || "إشعار جديد",
-      titleEn: notif.titleEn || notif.title || "Notification",
-      message: notif.message || "",
-      messageEn: notif.messageEn || notif.message || "",
+      title: notif.title || notif.titleEn || "New Notification",
+      message: notif.message || notif.messageEn || "",
       note: notif.note || null,
       link: notif.link || "#",
       icon: notif.icon || "🔔",
@@ -3438,8 +3299,7 @@ window.addWorkflowNotification = function (notif) {
   let user = window.checkAuth ? window.checkAuth() : null;
   if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
   if (user && (notif.userId === user.id || notif.userId === "all")) {
-    const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
-    const toastMsg = isAr ? (notif.title || notif.message) : (notif.titleEn || notif.messageEn || notif.title);
+    const toastMsg = notif.title || notif.titleEn || notif.message || notif.messageEn || "Notification";
     if (typeof window.showToast === "function") {
       window.showToast(`🔔 ${toastMsg}`, "info");
     }
@@ -3645,12 +3505,15 @@ window.getVisitDisplayProducts = getVisitDisplayProducts;
 
 function initPage(pageName) {
   requireAuth();
-  const lang = getCurrentLang();
-  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-  document.documentElement.lang = lang;
+  document.documentElement.dir = "ltr";
+  document.documentElement.lang = "en";
+  try {
+    localStorage.setItem("pharmaLang", "en");
+    localStorage.setItem("lang", "en");
+  } catch (e) {}
   renderSidebar(pageName);
   renderTopbar();
-  applyTranslations(lang);
+  applyTranslations("en");
 }
 
 // ============================================================================
@@ -3666,7 +3529,7 @@ function createExcelProgressModal() {
     modalEl.innerHTML = `
       <div style="background: var(--card-bg, #ffffff); color: var(--text-color, #1e293b); border-radius: 14px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
         <div style="font-size: 2.2rem; margin-bottom: 8px;" id="excelProgressIcon">📊</div>
-        <h5 style="margin: 0 0 6px 0; font-weight: 700; color: var(--text-color, #1e293b);" id="excelProgressTitle">جاري استيراد ملف المبيعات</h5>
+        <h5 style="margin: 0 0 6px 0; font-weight: 700; color: var(--text-color, #1e293b);" id="excelProgressTitle">Processing Sales Import</h5>
         <div style="font-size: 0.85rem; color: var(--gray-500, #64748b); margin-bottom: 16px; word-break: break-all;" id="excelProgressFileName">-</div>
         
         <div style="background: rgba(0,0,0,0.08); border-radius: 8px; height: 14px; overflow: hidden; margin-bottom: 12px; position: relative;">
@@ -3678,7 +3541,7 @@ function createExcelProgressModal() {
           <span id="excelProgressCount">0 / 0</span>
         </div>
 
-        <div style="font-size: 0.82rem; color: var(--gray-500, #64748b); min-height: 20px;" id="excelProgressStatus">جاري تجهيز الملف...</div>
+        <div style="font-size: 0.82rem; color: var(--gray-500, #64748b); min-height: 20px;" id="excelProgressStatus">Preparing file...</div>
       </div>
     `;
     document.body.appendChild(modalEl);
@@ -3687,7 +3550,6 @@ function createExcelProgressModal() {
 }
 
 function openExcelImportProgress(options = {}) {
-  const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar") || document.documentElement.dir === "rtl";
   const modalEl = createExcelProgressModal();
   modalEl.style.display = "flex";
 
@@ -3699,13 +3561,13 @@ function openExcelImportProgress(options = {}) {
   const statusEl = document.getElementById("excelProgressStatus");
   const iconEl = document.getElementById("excelProgressIcon");
 
-  titleEl.textContent = options.title || (isAr ? "جاري معالجة واستيراد المبيعات" : "Processing Sales Import");
+  titleEl.textContent = options.title || "Processing Sales Import";
   fileEl.textContent = options.fileName || "";
   barEl.style.width = "0%";
   barEl.style.background = "linear-gradient(90deg, #3b82f6, #10b981)";
   percentEl.textContent = "0%";
   countEl.textContent = "0 / " + (options.totalRows ? options.totalRows.toLocaleString() : "0");
-  statusEl.textContent = options.status || (isAr ? "جاري قراءة وتفكيك بيانات الشيت..." : "Parsing sheet data...");
+  statusEl.textContent = options.status || "Parsing sheet data...";
   iconEl.textContent = "📊";
 
   return {
@@ -3717,15 +3579,13 @@ function openExcelImportProgress(options = {}) {
       if (customStatus) {
         statusEl.textContent = customStatus;
       } else {
-        statusEl.textContent = isAr
-          ? `تمت معالجة ${current.toLocaleString()} من ${total.toLocaleString()} سجل...`
-          : `Processed ${current.toLocaleString()} of ${total.toLocaleString()} records...`;
+        statusEl.textContent = `Processed ${current.toLocaleString()} of ${total.toLocaleString()} records...`;
       }
     },
     finish(successMsg) {
       barEl.style.width = "100%";
       percentEl.textContent = "100%";
-      statusEl.textContent = successMsg || (isAr ? "تم الاستيراد بنجاح!" : "Import completed successfully!");
+      statusEl.textContent = successMsg || "Import completed successfully!";
       iconEl.textContent = "✅";
       setTimeout(() => {
         modalEl.style.display = "none";
@@ -3760,9 +3620,8 @@ function checkAndRenderImpersonationBanner() {
   if (document.getElementById("pharmaImpersonationBanner")) return;
 
   const currentUser = (typeof checkAuth === "function" ? checkAuth() : null) || {};
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const roleLabel = (currentUser.role || "").toUpperCase();
-  const userName = (isAr && currentUser.nameAr) ? currentUser.nameAr : (currentUser.name || currentUser.email || "");
+  const userName = currentUser.name || currentUser.nameAr || currentUser.email || "";
   const adminName = originalAdmin.name || "Admin";
 
   const banner = document.createElement("div");
@@ -3774,14 +3633,12 @@ function checkAndRenderImpersonationBanner() {
     <div class="pharma-impersonation-content">
       <span class="pharma-impersonation-icon">⚠️</span>
       <span class="pharma-impersonation-text">
-        ${isAr
-          ? `<strong>وضع المعاينة (Log in as):</strong> أنت تتصفح حالياً بصفتك <strong>${userName}</strong> (${roleLabel}) — مسجل بواسطة الأدمن <strong>${adminName}</strong>`
-          : `<strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleLabel}) — logged in by Admin <strong>${adminName}</strong>`}
+        <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleLabel}) — logged in by Admin <strong>${adminName}</strong>
       </span>
     </div>
     <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
       <span>↩️</span>
-      <span>${isAr ? "الخروج والعودة للأدمن" : "Exit & Return to Admin"}</span>
+      <span>Exit & Return to Admin</span>
     </button>
   `;
 
@@ -3837,15 +3694,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (sessionStorage.getItem("pharma_rbac_denied") === "true") {
     sessionStorage.removeItem("pharma_rbac_denied");
-    const isAr = (getCurrentLang && getCurrentLang() === "ar");
     setTimeout(() => {
       if (typeof showToast === "function") {
-        showToast(
-          isAr
-            ? "عفواً، لا تملك الصلاحية للوصول إلى هذه الصفحة."
-            : "Access Denied: You do not have permission to view this page.",
-          "error"
-        );
+        showToast("Access Denied: You do not have permission to view this page.", "error");
       }
     }, 200);
   }

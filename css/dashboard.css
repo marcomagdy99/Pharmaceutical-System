@@ -171,14 +171,6 @@
 .plan-item.pm {
     border-left: 4px solid var(--primary);
 }
-html[dir="rtl"] .plan-item.am {
-    border-left: none;
-    border-right: 4px solid var(--info);
-}
-html[dir="rtl"] .plan-item.pm {
-    border-left: none;
-    border-right: 4px solid var(--primary);
-}
 .plan-item-header {
     display: flex;
     justify-content: space-between;
@@ -275,9 +267,6 @@ html[dir="rtl"] .plan-item.pm {
     border-collapse: collapse;
     text-align: left;
     font-size: 14px;
-}
-html[dir="rtl"] .data-table {
-    text-align: right;
 }
 .data-table th {
     padding: 12px;
@@ -1019,11 +1008,6 @@ html[dir="rtl"] .data-table {
     background: var(--bg-card, #ffffff);
 }
 
-html[dir="rtl"] .dm-covisit-sticky-col {
-    left: auto;
-    right: 0;
-}
-
 [data-theme="dark"] .dm-covisit-sticky-col {
     background: #1c2229;
 }
@@ -1456,11 +1440,6 @@ html[dir="rtl"] .dm-covisit-sticky-col {
 
 .plan-item.pharm {
     border-left: 4px solid #10b981;
-}
-
-html[dir="rtl"] .plan-item.pharm {
-    border-left: none;
-    border-right: 4px solid #10b981;
 }
 
 .plan-header-title.pharm {

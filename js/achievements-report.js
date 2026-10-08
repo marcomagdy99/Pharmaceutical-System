@@ -556,10 +556,9 @@ function renderAchievementsReport() {
   if (kpiReps) kpiReps.textContent = groups.length;
 
   if (typeof window.renderSalesTargetTrendChart === 'function') {
-    const isAr = lang === 'ar';
-    const chartLabels = selectedMonths.map((mVal) => {
+        const chartLabels = selectedMonths.map((mVal) => {
       const idx = parseInt(mVal, 10) - 1;
-      return isAr ? ACH_MONTHS_AR[idx] : ACH_MONTHS[idx];
+      return ACH_MONTHS[idx];
     });
 
     const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';

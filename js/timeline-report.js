@@ -33,6 +33,8 @@ function renderDailyTimeline() {
 
   if (!container) return;
   container.replaceChildren();
+  const pharmContainer = document.getElementById('timelineReportPharmacyContainer');
+  if (pharmContainer) pharmContainer.replaceChildren();
 
   const user    = checkAuth();
   const role    = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
@@ -175,32 +177,32 @@ function renderDailyTimeline() {
     const rangeLabel = fromDate === toDate ? fromDate : `${fromDate} → ${toDate}`;
     summaryBar.innerHTML = `
       <div class="timeline-stat-chip">
-        <span>${lang === 'ar' ? 'الفترة:' : 'Period:'}</span>
+        <span>Period:</span>
         <strong style="color: var(--primary); font-size: 1rem; margin: 0 6px;">${rangeLabel}</strong>
       </div>
       <div class="timeline-stat-chip">
         <strong class="stat-value" style="color: var(--primary);">${totalItems}</strong>
-        <span class="stat-label">${lang === 'ar' ? 'إجمالي الأحداث' : 'Total Events'}</span>
+        <span class="stat-label">Total Events</span>
       </div>
       <div class="timeline-stat-chip">
         <strong class="stat-value" style="color: #b45309;">${actualVisitCount}</strong>
         <span class="stat-label">
           <span class="legend-dot actual" style="width:7px; height:7px; margin-inline-end:3px;"></span>
-          ${lang === 'ar' ? 'زيارات فعلية' : 'Actual Visits'}
+          Actual Visits
         </span>
       </div>
       <div class="timeline-stat-chip">
         <strong class="stat-value" style="color: #0284c7;">${plannedVisitCount}</strong>
         <span class="stat-label">
           <span class="legend-dot planned" style="width:7px; height:7px; margin-inline-end:3px;"></span>
-          ${lang === 'ar' ? 'من الخطة' : 'From Plan'}
+          From Plan
         </span>
       </div>
       <div class="timeline-stat-chip">
         <strong class="stat-value" style="color: #6b21a8;">${activityCount}</strong>
         <span class="stat-label">
           <span class="legend-dot activity" style="background:#9333ea; width:7px; height:7px; margin-inline-end:3px;"></span>
-          ${lang === 'ar' ? 'أنشطة مسجلة' : 'Activities'}
+          Activities
         </span>
       </div>
     `;
@@ -210,10 +212,18 @@ function renderDailyTimeline() {
     container.innerHTML = `
       <div class="timeline-empty-card" style="text-align: center; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color, #dee2e6);">
         <span style="font-size: 2.5rem;">📅</span>
-        <h4 style="margin: 10px 0 4px; color: var(--gray-700);">${lang === 'ar' ? 'لا توجد زيارات أو أنشطة مسجلة في هذه الفترة' : 'No visits or activities recorded in this period'}</h4>
-        <p style="color: var(--gray-500); font-size: 0.85rem;">${lang === 'ar' ? 'جرّب تاريخاً أو فترة زمنية مختلفة' : 'Try a different date or date range'}</p>
+        <h4 style="margin: 10px 0 4px; color: var(--gray-700);">No visits or activities recorded in this period</h4>
+        <p style="color: var(--gray-500); font-size: 0.85rem;">Try a different date or date range</p>
       </div>
     `;
+    if (pharmContainer) {
+      pharmContainer.innerHTML = `
+        <div class="timeline-empty-card" style="text-align: center; padding: 40px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color, #dee2e6);">
+          <span style="font-size: 2.5rem;">💊</span>
+          <h4 style="margin: 10px 0 4px; color: var(--gray-700);">No pharmacy visits recorded in this period</h4>
+        </div>
+      `;
+    }
     return;
   }
 
@@ -226,26 +236,29 @@ function renderDailyTimeline() {
     return periodA - periodB;
   });
 
+  let reportMedicalCount = 0;
+  let reportPharmacyCount = 0;
+
   sortedTimeline.forEach((v) => {
     const isActivity = v.type === 'activity';
     const isActual   = !!v.isActual;
     const borderClass = isActivity ? 'activity-border' : (isActual ? 'actual-border' : 'planned-border');
     const dotClass    = isActivity ? 'activity' : (isActual ? 'actual' : 'planned');
     const isPharm     = v.targetType === 'pharmacy' || (v.period || '').toLowerCase() === 'pharmacy' || (v.doctorId && String(v.doctorId).startsWith('pharm'));
-    const period      = isPharm ? (lang === 'ar' ? 'صيدلية' : 'PHARM') : (v.period || 'PM').toUpperCase();
+    const period      = isPharm ? 'PHARM' : (v.period || 'PM').toUpperCase();
     const periodClass = isPharm ? 'pharm' : period.toLowerCase();
 
     let badgeLabel = '';
     let badgeClass = 'planned';
     if (isActivity) {
       badgeClass = 'activity';
-      badgeLabel = lang === 'ar' ? 'نشاط رسمي مسجل (Logged Activity)' : 'Logged Activity';
+      badgeLabel = 'Logged Activity';
     } else if (isActual) {
       badgeClass = 'actual';
-      badgeLabel = lang === 'ar' ? 'زيارة فعلية مباشرة (Actual Visit)' : 'Direct Actual Visit';
+      badgeLabel = 'Actual without Plan';
     } else {
       badgeClass = 'planned';
-      badgeLabel = lang === 'ar' ? 'زيارة من الخطة (Planned Visit)' : 'Planned & Executed';
+      badgeLabel = 'Planned & Executed';
     }
 
     const safeTargetName = window.escapeHtml(v.targetName || '');
@@ -270,10 +283,10 @@ function renderDailyTimeline() {
         ${isActivity ? `
           <div style="font-size: 0.88rem; color: var(--gray-700); margin-bottom: 6px; line-height: 1.5;">
             <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #6b21a8;">
-              ${lang === 'ar' ? 'نوع النشاط:' : 'Activity Type:'} <strong>${safeActivityType}</strong>
+              Activity Type: <strong>${safeActivityType}</strong>
             </span>
-            ${safeSpecialty ? `• <span style="color: var(--gray-600);">${lang === 'ar' ? 'ملاحظات:' : 'Notes:'} <em>"${safeSpecialty}"</em></span>` : ''}
-            • <span style="font-weight: 500;">${lang === 'ar' ? 'الموظف:' : 'Employee:'} <strong>${safeRepName}</strong></span>
+            ${safeSpecialty ? `• <span style="color: var(--gray-600);">Notes: <em>"${safeSpecialty}"</em></span>` : ''}
+            • <span style="font-weight: 500;">Employee: <strong>${safeRepName}</strong></span>
           </div>
         ` : `
           <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 6px;">
@@ -281,17 +294,62 @@ function renderDailyTimeline() {
           </div>
         `}
         <div class="timeline-entry-timestamp" style="font-size: 0.78rem; padding: 6px 10px; border-radius: 6px; display: inline-flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;">
-          <span><strong>📅 ${lang === 'ar' ? 'يوم الزيارة:' : 'Visit Day:'}</strong> ${v.date} ${period}</span>
-          <span><strong>⏰ ${lang === 'ar' ? 'وقت الزيارة:' : 'Visit Time:'}</strong> ${v.time || '10:00'}</span>
+          <span><strong>📅 Visit Day:</strong> ${v.date} ${period}</span>
+          <span><strong>⏰ Visit Time:</strong> ${v.time || '10:00'}</span>
           <span style="opacity: 0.95; border-inline-start: 1px solid currentColor; padding-inline-start: 10px;">
-            <strong>📥 ${lang === 'ar' ? 'تاريخ الإدخال:' : 'Insertion Date:'}</strong> ${v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date)}
-            • <strong>${lang === 'ar' ? 'الوقت:' : 'Time:'}</strong> ${v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'))}
+            <strong>📥 Insertion Date:</strong> ${v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date)}
+            • <strong>Time:</strong> ${v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'))}
           </span>
         </div>
       </div>
     `;
-    container.appendChild(card);
+
+    if (isPharm) {
+      reportPharmacyCount++;
+      const pharmBox = document.getElementById('timelineReportPharmacyContainer');
+      if (pharmBox) pharmBox.appendChild(card);
+      else container.appendChild(card);
+    } else {
+      reportMedicalCount++;
+      container.appendChild(card);
+    }
   });
+
+  if (reportMedicalCount === 0) {
+    container.innerHTML = `
+      <div class="timeline-empty-card" style="text-align: center; padding: 36px 16px;">
+        <span style="font-size: 2.2rem;">🩺</span>
+        <h4 style="margin: 8px 0 4px; color: var(--gray-700);">No Doctor or Hospital visits in this period</h4>
+      </div>
+    `;
+  }
+  const pharmBox = document.getElementById('timelineReportPharmacyContainer');
+  if (pharmBox && reportPharmacyCount === 0) {
+    pharmBox.innerHTML = `
+      <div class="timeline-empty-card" style="text-align: center; padding: 36px 16px;">
+        <span style="font-size: 2.2rem;">💊</span>
+        <h4 style="margin: 8px 0 4px; color: var(--gray-700);">No Pharmacy visits in this period</h4>
+      </div>
+    `;
+  }
 }
 
-// ============================================================================
+window.switchReportTimelineScope = function (scope) {
+  const btnMedical = document.getElementById('btnReportScopeMedical');
+  const btnPharm = document.getElementById('btnReportScopePharmacy');
+  const secMedical = document.getElementById('reportMedicalVisitsSection');
+  const secPharm = document.getElementById('reportPharmacyVisitsSection');
+
+  if (scope === 'pharmacy') {
+    if (btnPharm) { btnPharm.classList.add('active'); btnPharm.classList.remove('btn-outline'); }
+    if (btnMedical) { btnMedical.classList.remove('active'); btnMedical.classList.add('btn-outline'); }
+    if (secPharm) secPharm.style.display = 'block';
+    if (secMedical) secMedical.style.display = 'none';
+  } else {
+    if (btnMedical) { btnMedical.classList.add('active'); btnMedical.classList.remove('btn-outline'); }
+    if (btnPharm) { btnPharm.classList.remove('active'); btnPharm.classList.add('btn-outline'); }
+    if (secMedical) secMedical.style.display = 'block';
+    if (secPharm) secPharm.style.display = 'none';
+  }
+};
+

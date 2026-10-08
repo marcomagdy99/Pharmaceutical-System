@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -21,7 +21,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v133";
+        var EXPECTED_SW = "v159";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -51,14 +51,9 @@
       function updateLoginThemeUI(theme) {
         var icon = document.getElementById('themeToggleIcon');
         var text = document.getElementById('themeToggleText');
-        var isAr = (localStorage.getItem('pharmaLang') || 'en') === 'ar';
-        if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        if (icon) icon.textContent = theme === 'dark' ? '??' : '??';
         if (text) {
-          if (theme === 'dark') {
-            text.textContent = isAr ? 'فاتح' : 'Light';
-          } else {
-            text.textContent = isAr ? 'داكن' : 'Dark';
-          }
+          text.textContent = theme === 'dark' ? 'Light' : 'Dark';
         }
       }
       window.updateLoginThemeUI = updateLoginThemeUI;
@@ -136,9 +131,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v133">
+    <link rel="stylesheet" href="css/style.css?v=v162">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/login.css?v=v133">
+    <link rel="stylesheet" href="css/login.css?v=v162">
 </head>
 <body>
 
@@ -150,16 +145,8 @@
             <!-- START: Top Action Buttons (Theme Toggle & Language Toggle) -->
             <div class="login-top-actions">
                 <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleLoginTheme()" title="Toggle Dark/Light Mode">
-                    <span id="themeToggleIcon">🌙</span>
+                    <span id="themeToggleIcon">??</span>
                     <span id="themeToggleText">Dark</span>
-                </button>
-                <!-- Language Toggle Button commented out as requested by user -->
-                <!--
-                <button type="button" class="language-toggle" id="langToggle">
-                    <i class="fas fa-globe"></i>
-                    <span id="langText">عربي</span>
-                </button>
-                -->
             </div>
             <!-- END: Top Action Buttons -->
 
@@ -209,7 +196,7 @@
                 </div>
                 
                 <div class="login-footer">
-                    <span data-i18n="footer_text">© 2026 PharmaCare. All rights reserved.</span>
+                    <span data-i18n="footer_text">� 2026 PharmaCare. All rights reserved.</span>
                 </div>
             </div>
             <!-- END: Department Selection View -->
@@ -265,7 +252,7 @@
                 </button>
 
                 <div class="login-footer">
-                    <span data-i18n="footer_text">© 2026 PharmaCare. All rights reserved.</span>
+                    <span data-i18n="footer_text">� 2026 PharmaCare. All rights reserved.</span>
                 </div>
             </div>
             <!-- END: Login Form View -->
@@ -293,15 +280,15 @@
     <!-- END: Login Container -->
 
     <!-- Core Application & Store -->
-    <script src="js/app.js?v=v133"></script>
-    <script src="js/store.js?v=v133"></script>
+    <script src="js/app.js?v=v159"></script>
+    <script src="js/store.js?v=v145"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v133"></script>
-    <script src="js/firebase-sync.js?v=v133"></script>
+    <script src="js/firebase-config.js?v=v145"></script>
+    <script src="js/firebase-sync.js?v=v157"></script>
 
     <!-- External JavaScript -->
-    <script src="js/login.js?v=v133"></script>
+    <script src="js/login.js?v=v145"></script>
 </body>
 </html>

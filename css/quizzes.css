@@ -287,12 +287,6 @@
     min-width: 140px;
     max-width: 170px;
   }
-  html[dir="rtl"] #team-comparison-table th:first-child,
-  html[dir="rtl"] #team-comparison-table td:first-child {
-    left: auto;
-    right: 0;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.08);
-  }
 
   .grade-badge {
     width: 24px;
@@ -336,10 +330,6 @@
 [data-theme="dark"] #team-comparison-table td:first-child {
   background-color: var(--white);
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
-}
-[data-theme="dark"] html[dir="rtl"] #team-comparison-table th:first-child,
-[data-theme="dark"] html[dir="rtl"] #team-comparison-table td:first-child {
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] #team-comparison-table tbody tr:hover td:first-child {
   background-color: var(--surface-hover);

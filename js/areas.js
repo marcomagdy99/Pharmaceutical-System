@@ -44,41 +44,6 @@ const areaTranslations = {
     no_bricks_assigned: "No bricks assigned",
     no_matching_bricks: "No matching bricks found",
   },
-  ar: {
-    area_management: "إدارة المناطق",
-    total_areas: "إجمالي المناطق",
-    assigned_areas: "مناطق معينة",
-    unassigned_areas: "مناطق شاغرة (غير معينة)",
-    manage_areas: "إدارة المناطق",
-    add_area: "إضافة منطقة",
-    search_areas: "البحث بالاسم أو الرمز...",
-    area_code: "رمز المنطقة",
-    area_name: "اسم المنطقة",
-    assigned_rep: "المندوب المعين",
-    status: "الحالة",
-    actions: "إجراءات",
-    assigned: "معين",
-    unassigned: "شاغرة (غير معينة)",
-    code_hint: "تلميح التنسيق: CAI-N01. يجب أن يكون فريداً.",
-    assign_rep: "تعيين لمندوب طبي",
-    cancel: "إلغاء",
-    save: "حفظ",
-    edit: "تعديل",
-    delete: "حذف",
-    confirm_delete: "تأكيد الحذف",
-    delete_area_msg: "هل أنت متأكد أنك تريد حذف هذه المنطقة؟",
-    select_line: "الخط الإنتاجي:",
-    all_lines: "كل الخطوط",
-    assigned_bricks: "البريكات التابعة",
-    assigned_bricks_label: "البريكات التابعة للمنطقة (IMS Bricks)",
-    search_bricks: "ابحث عن اسم البريكة...",
-    select_all: "تحديد الكل",
-    clear: "مسح",
-    assigned_bricks_hint: "اختر البريكات الجغرافية التي يغطيها المندوب في هذه المنطقة (لربط فواتير الموزعين وتوزيع المبيعات تلقائياً).",
-    selected_bricks: "بريكة مختارة",
-    no_bricks_assigned: "لا توجد بريكات مرتبطة",
-    no_matching_bricks: "لا توجد بريكات مطابقة للبحث",
-  },
 };
 
 function getAreasList() {
@@ -119,10 +84,7 @@ function getAreasList() {
 function populateRepDropdown(selectedRepId = "", targetLineId = null) {
   const repSelect = document.getElementById("assignRep");
   if (!repSelect) return;
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
-  const unassignedLabel = isAr
-    ? "-- غير معيّنة (شاغرة) --"
-    : "-- Unassigned (Vacant) --";
+  const unassignedLabel = "-- Unassigned (Vacant) --";
 
   // Filter reps by specified or selected line
   const effectiveLineId = targetLineId || currentSelectedLineId;
@@ -135,7 +97,7 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
 
   let html = `<option value="">${unassignedLabel}</option>`;
   activeReps.forEach((r) => {
-    const rName = isAr && r.nameAr ? r.nameAr : r.name;
+    const rName = r.name || r.nameAr;
     const sel = r.id === selectedRepId ? "selected" : "";
     html += `<option value="${window.escapeHtml(r.id)}" ${sel}>${window.escapeHtml(rName)} (${window.escapeHtml(r.employeeCode || r.code || r.id)})</option>`;
   });
@@ -149,7 +111,6 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
 function populateLineSelector() {
   const select = document.getElementById("lineSelector");
   if (!select) return;
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
 
@@ -157,7 +118,7 @@ function populateLineSelector() {
   allLines.forEach((line) => {
     if (line.status && line.status !== "Active") return;
     const sel = line.id === currentSelectedLineId ? "selected" : "";
-    const label = isAr && line.nameAr ? line.nameAr : line.name;
+    const label = line.name || line.nameAr;
     html += `<option value="${window.escapeHtml(line.id)}" ${sel}>${window.escapeHtml(label)}</option>`;
   });
   select.innerHTML = html;
@@ -195,15 +156,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   areaModal = new bootstrap.Modal(document.getElementById("areaModal"));
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
-
   if (window.translations) {
     window.translations.en = {
       ...window.translations.en,
       ...areaTranslations.en,
-    };
-    window.translations.ar = {
-      ...window.translations.ar,
-      ...areaTranslations.ar,
     };
   }
 
@@ -318,11 +274,10 @@ function populateBricksSelector(existingBricks = []) {
   );
 
   currentBricksLimit = 200;
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const searchInput = document.getElementById("searchBricksInput");
   if (searchInput) {
     searchInput.value = "";
-    searchInput.placeholder = isAr ? areaTranslations.ar.search_bricks : areaTranslations.en.search_bricks;
+    searchInput.placeholder = areaTranslations.en.search_bricks;
   }
 
   renderModalBricksList("");
@@ -334,7 +289,6 @@ function renderModalBricksList(filterQuery = "") {
   if (!container) return;
 
   const allMaster = (window.getMasterBricks && window.getMasterBricks()) || (window.EGYPT_MASTER_BRICKS || []);
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
   const rawQ = (filterQuery || "").trim();
   const isFiltered = Boolean(rawQ);
 
@@ -359,13 +313,13 @@ function renderModalBricksList(filterQuery = "") {
   const totalMasterCount = allMaster.length;
   let headerHtml = `
     <div class="d-flex justify-content-between align-items-center mb-2 px-1 text-muted small border-bottom pb-1">
-      <span><i class="fas fa-database text-primary me-1"></i> ${isAr ? 'إجمالي البريكات في النظام:' : 'Total in Database:'} <strong>${totalMasterCount.toLocaleString()}</strong></span>
-      <span>${isFiltered ? (isAr ? `المطابقة: ${displayBricks.length}` : `Matches: ${displayBricks.length}`) : (isAr ? `المعروض: ${displayBricks.length}` : `Showing: ${displayBricks.length}`)}</span>
+      <span><i class="fas fa-database text-primary me-1"></i> Total in Database: <strong>${totalMasterCount.toLocaleString()}</strong></span>
+      <span>${isFiltered ? `Matches: ${displayBricks.length}` : `Showing: ${displayBricks.length}`}</span>
     </div>
   `;
 
   if (displayBricks.length === 0) {
-    const noMatchText = isAr ? areaTranslations.ar.no_matching_bricks : areaTranslations.en.no_matching_bricks;
+    const noMatchText = areaTranslations.en.no_matching_bricks;
     container.innerHTML = headerHtml + `
       <div class="text-center text-muted py-3">
         <i class="fas fa-search me-1"></i> ${window.escapeHtml(noMatchText)}
@@ -396,7 +350,7 @@ function renderModalBricksList(filterQuery = "") {
     html += `
       <div class="text-center pt-3 pb-1">
         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="loadMoreModalBricks()">
-          <i class="fas fa-chevron-down me-1"></i> ${isAr ? "عرض المزيد من البريكات (+200)" : "Load More Bricks (+200)"}
+          <i class="fas fa-chevron-down me-1"></i> Load More Bricks (+200)
         </button>
       </div>
     `;
@@ -466,8 +420,7 @@ function updateSelectedBricksCount() {
   const badge = document.getElementById("selectedBricksCountBadge");
   if (!badge) return;
   const count = selectedBrickNames.size;
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
-  const word = isAr ? areaTranslations.ar.selected_bricks : areaTranslations.en.selected_bricks;
+  const word = areaTranslations.en.selected_bricks;
   badge.textContent = `${count} ${word}`;
 }
 
@@ -493,13 +446,8 @@ function renderAreas(filterText = "") {
       a.code.toLowerCase().includes(filterText.toLowerCase()),
   );
 
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
-  const assignedText = isAr
-    ? areaTranslations.ar.assigned
-    : areaTranslations.en.assigned;
-  const unassignedText = isAr
-    ? areaTranslations.ar.unassigned
-    : areaTranslations.en.unassigned;
+  const assignedText = areaTranslations.en.assigned;
+  const unassignedText = areaTranslations.en.unassigned;
 
   filteredAreas.forEach((area) => {
     const isAssigned = area.repId !== null;
@@ -516,14 +464,14 @@ function renderAreas(filterText = "") {
 
     const bricksList = Array.isArray(area.bricks) ? area.bricks : [];
     const bricksCount = bricksList.length;
-    const separator = isAr ? "، " : ", ";
+    const separator = ", ";
     const bricksTooltip = bricksCount > 0
       ? (bricksCount > 15 ? bricksList.slice(0, 15).join(separator) + ` ... (+${bricksCount - 15})` : bricksList.join(separator))
-      : (isAr ? areaTranslations.ar.no_bricks_assigned : areaTranslations.en.no_bricks_assigned);
+      : areaTranslations.en.no_bricks_assigned;
 
     const bricksBadge = bricksCount > 0
       ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}" style="cursor:help;">
-           <i class="fas fa-cubes me-1"></i>${bricksCount} ${isAr ? "بريكة" : "bricks"}
+           <i class="fas fa-cubes me-1"></i>${bricksCount} bricks
          </span>`
       : `<span class="badge bg-light text-muted border px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}">0</span>`;
 
@@ -558,18 +506,18 @@ function renderAreas(filterText = "") {
                 <i class="fas fa-ellipsis-v"></i>
               </button>
               <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                <li><a class="dropdown-item" href="#" onclick="openEditModal('${window.escapeHtml(area.id)}')"><i class="fas fa-edit me-2 text-primary"></i> <span>${isAr ? areaTranslations.ar.edit : areaTranslations.en.edit}</span></a></li>
-                <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteModal('${window.escapeHtml(area.id)}')"><i class="fas fa-trash me-2"></i> <span>${isAr ? areaTranslations.ar.delete : areaTranslations.en.delete}</span></a></li>
+                <li><a class="dropdown-item" href="#" onclick="openEditModal('${window.escapeHtml(area.id)}')"><i class="fas fa-edit me-2 text-primary"></i> <span>${areaTranslations.en.edit}</span></a></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteModal('${window.escapeHtml(area.id)}')"><i class="fas fa-trash me-2"></i> <span>${areaTranslations.en.delete}</span></a></li>
               </ul>
             </div>
           </div>
           <h5 class="card-title fw-bold mb-2">${window.escapeHtml(area.name)}</h5>
           <div class="mb-3 d-flex align-items-center justify-content-between">
-            <small class="text-muted"><i class="fas fa-cubes me-1"></i>${isAr ? areaTranslations.ar.assigned_bricks : areaTranslations.en.assigned_bricks}:</small>
+            <small class="text-muted"><i class="fas fa-cubes me-1"></i>${areaTranslations.en.assigned_bricks}:</small>
             ${bricksBadge}
           </div>
           <div class="mt-auto pt-3 border-top">
-            <small class="text-muted d-block mb-1">${isAr ? areaTranslations.ar.assigned_rep : areaTranslations.en.assigned_rep}</small>
+            <small class="text-muted d-block mb-1">${areaTranslations.en.assigned_rep}</small>
             ${repDisplay}
           </div>
         </div>
@@ -669,19 +617,16 @@ function openAddModal() {
   populateAreaNamesDatalist();
   populateBricksSelector([]);
 
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
-  document.getElementById("areaModalTitle").textContent =
-    isAr ? areaTranslations.ar.add_area : areaTranslations.en.add_area;
-
+  document.getElementById("areaModalTitle").textContent = areaTranslations.en.add_area;
   if (typeof applyTranslations === "function") {
-    applyTranslations(isAr ? "ar" : "en");
+    applyTranslations("en");
   }
 
   // Update line label in modal
   const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const lineObj = allLines.find((l) => l.id === currentSelectedLineId);
-  const lineLabel = lineObj ? ((isAr && lineObj.nameAr) ? lineObj.nameAr : lineObj.name) : (currentSelectedLineId || "");
+  const lineLabel = lineObj ? (lineObj.name || lineObj.nameAr) : (currentSelectedLineId || "");
   const modalLineEl = document.getElementById("modalLineName");
   if (modalLineEl) modalLineEl.textContent = lineLabel;
 
@@ -703,19 +648,16 @@ function openEditModal(id) {
     populateAreaNamesDatalist();
     populateBricksSelector(area.bricks || []);
 
-    const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
-    document.getElementById("areaModalTitle").textContent =
-      isAr ? areaTranslations.ar.edit : areaTranslations.en.edit;
-
-    if (typeof applyTranslations === "function") {
-      applyTranslations(isAr ? "ar" : "en");
-    }
+    document.getElementById("areaModalTitle").textContent = areaTranslations.en.edit;
+  if (typeof applyTranslations === "function") {
+    applyTranslations("en");
+  }
 
     // Update line label in modal
     const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
       || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
     const lineObj = allLines.find((l) => l.id === areaLineId);
-    const lineLabel = lineObj ? ((isAr && lineObj.nameAr) ? lineObj.nameAr : lineObj.name) : (areaLineId || "");
+    const lineLabel = lineObj ? (lineObj.name || lineObj.nameAr) : (areaLineId || "");
     const modalLineEl = document.getElementById("modalLineName");
     if (modalLineEl) modalLineEl.textContent = lineLabel;
 
@@ -742,10 +684,8 @@ function saveArea() {
     repName = rep ? rep.name : null;
   }
 
-  const isAr = (typeof getCurrentLang === "function" ? getCurrentLang() : document.documentElement.lang) === "ar" || document.documentElement.dir === "rtl";
-
   if (!name || !code) {
-    const msg = isAr ? "يرجى إدخال اسم المنطقة والرمز." : "Area Name and Code are required.";
+    const msg = "Area Name and Code are required.";
     if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
@@ -765,9 +705,7 @@ function saveArea() {
     return a.code && a.code.trim().toUpperCase() === code.toUpperCase();
   });
   if (isDuplicateCode) {
-    const msg = isAr
-      ? `رمز المنطقة "${code.toUpperCase()}" مستخدم مسبقاً لمنطقة أخرى في نفس الخط الإنتاجي.`
-      : `Area code "${code.toUpperCase()}" is already in use by another area in this product line.`;
+    const msg = `Area code "${code.toUpperCase()}" is already in use by another area in this product line.`;
     if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
@@ -802,13 +740,11 @@ function saveArea() {
   renderAreas();
   updateStats();
 
-  let successMsg = isAr ? "تم حفظ المنطقة بنجاح." : "Area saved successfully.";
+  let successMsg = "Area saved successfully.";
   if (reassignResult && (reassignResult.updatedDoctors > 0 || reassignResult.updatedPharmacies > 0 || reassignResult.updatedHospitals > 0)) {
     const totalCustomers = reassignResult.updatedDoctors + reassignResult.updatedPharmacies + reassignResult.updatedHospitals;
     if (repId) {
-      successMsg = isAr
-        ? `تم حفظ المنطقة وتحديث تبعية ${totalCustomers} عميل للمندوب الجديد بنجاح.`
-        : `Area saved and ${totalCustomers} customer(s) reassigned to the new representative successfully.`;
+      successMsg = `Area saved and ${totalCustomers} customer(s) reassigned to the new representative successfully.`;
     }
   }
   if (typeof showToast === "function") showToast(successMsg, "success");
@@ -832,7 +768,6 @@ function openDeleteModal(id) {
   );
   const hasRep = Boolean(area.repId);
 
-  const isAr = document.documentElement.dir === "rtl";
   const warningContainer = document.getElementById("deleteWarningContainer");
   const warningDetails = document.getElementById("deleteWarningDetails");
   const transferSelect = document.getElementById("transferAreaSelect");
@@ -843,28 +778,15 @@ function openDeleteModal(id) {
 
   if (linkedDoctors.length > 0 || linkedVisits.length > 0 || hasRep) {
     warningContainer.style.display = "block";
-
-    if (isAr) {
-      deleteMsg.textContent = `تحذير: المنطقة "${area.name}" تحتوي على بيانات نشطة ولا يمكن حذفها مباشرة:`;
-      warningDetails.innerHTML = `
-        <ul class="mb-1 ps-3">
-          <li><strong>${linkedDoctors.length}</strong> طبيب مسجل بالمنطقة.</li>
-          <li><strong>${linkedVisits.length}</strong> زيارة مسجلة بالمنطقة.</li>
-          ${hasRep ? `<li>مندوب معيّن: <strong>${area.repName || area.repId}</strong>.</li>` : ""}
-        </ul>
-      `;
-      confirmBtn.textContent = "نقل البيانات وحذف المنطقة";
-    } else {
-      deleteMsg.textContent = `Warning: "${area.name}" contains active records and cannot be deleted directly:`;
-      warningDetails.innerHTML = `
-        <ul class="mb-1 ps-3">
-          <li><strong>${linkedDoctors.length}</strong> registered doctor(s).</li>
-          <li><strong>${linkedVisits.length}</strong> logged visit(s).</li>
-          ${hasRep ? `<li>Assigned rep: <strong>${area.repName || area.repId}</strong>.</li>` : ""}
-        </ul>
-      `;
-      confirmBtn.textContent = "Transfer & Delete";
-    }
+    deleteMsg.textContent = `Warning: "${area.name}" contains active records and cannot be deleted directly:`;
+    warningDetails.innerHTML = `
+      <ul class="mb-1 ps-3">
+        <li><strong>${linkedDoctors.length}</strong> registered doctor(s).</li>
+        <li><strong>${linkedVisits.length}</strong> logged visit(s).</li>
+        ${hasRep ? `<li>Assigned rep: <strong>${area.repName || area.repId}</strong>.</li>` : ""}
+      </ul>
+    `;
+    confirmBtn.textContent = "Transfer & Delete";
 
     let optHtml = "";
     otherAreas.forEach((oa) => {
@@ -872,7 +794,7 @@ function openDeleteModal(id) {
     });
 
     if (otherAreas.length === 0) {
-      optHtml = `<option value="">${isAr ? "لا توجد مناطق أخرى متاحة للنقل!" : "No other areas available for transfer!"}</option>`;
+      optHtml = `<option value="">No other areas available for transfer!</option>`;
       confirmBtn.disabled = true;
     } else {
       confirmBtn.disabled = false;
@@ -880,10 +802,8 @@ function openDeleteModal(id) {
     transferSelect.innerHTML = optHtml;
   } else {
     warningContainer.style.display = "none";
-    deleteMsg.textContent = isAr
-      ? `هل أنت متأكد من حذف منطقة "${area.name}"؟ (المنطقة فارغة ولا تحتوي على أطباء أو زيارات)`
-      : `Are you sure you want to delete "${area.name}"? (Area is empty with no doctors or visits)`;
-    confirmBtn.textContent = isAr ? "حذف" : "Delete";
+    deleteMsg.textContent = `Are you sure you want to delete "${area.name}"? (Area is empty with no doctors or visits)`;
+    confirmBtn.textContent = "Delete";
     confirmBtn.disabled = false;
   }
 
@@ -903,7 +823,6 @@ function confirmDelete() {
 
   const warningContainer = document.getElementById("deleteWarningContainer");
   const isTransferRequired = warningContainer && warningContainer.style.display !== "none";
-  const isAr = document.documentElement.dir === "rtl";
 
   let destinationArea = null;
 
@@ -913,7 +832,7 @@ function confirmDelete() {
     destinationArea = currentAreas.find((a) => a.id === targetAreaId);
 
     if (!destinationArea) {
-      const msg = isAr ? "يرجى تحديد منطقة صالحة لنقل السجلات إليها." : "Please select a valid destination area for transfer.";
+      const msg = "Please select a valid destination area for transfer.";
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
@@ -981,8 +900,6 @@ function confirmDelete() {
   renderAreas();
   updateStats();
 
-  const successMsg = isAr
-    ? (isTransferRequired ? `تم نقل كافة السجلات إلى ${destinationArea ? destinationArea.name : ""} وحذف المنطقة بنجاح.` : "تم حذف المنطقة بنجاح.")
-    : (isTransferRequired ? `All records safely transferred to ${destinationArea ? destinationArea.name : ""} and area deleted.` : "Area deleted successfully.");
+  const successMsg = isTransferRequired ? `All records safely transferred to ${destinationArea ? destinationArea.name : ""} and area deleted.` : "Area deleted successfully.";
   if (typeof showToast === "function") showToast(successMsg, "info");
 }

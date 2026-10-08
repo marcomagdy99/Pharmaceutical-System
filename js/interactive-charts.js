@@ -89,13 +89,12 @@
       destroyExistingChart(canvasId);
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-      const isAr = lang === 'ar';
-      const dark = isDarkMode();
+            const dark = isDarkMode();
 
       const textColor = dark ? '#cbd5e1' : '#475569';
       const gridColor = dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.6)';
 
-      const labels = options.labels || (isAr ? MONTH_LABELS.ar : MONTH_LABELS.en);
+      const labels = options.labels || MONTH_LABELS.en;
       const targets = options.targets || [20000, 25000, 22000, 28000, 30000, 32000, 31000, 35000, 34000, 38000, 40000, 42000];
       const actuals = options.actuals || [21000, 24000, 23500, 29000, 28500, 34000, 32500, 36000, 33500, 39000, 41000, 43000];
 
@@ -112,7 +111,7 @@
           datasets: [
             {
               type: 'bar',
-              label: isAr ? '\u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0641\u0639\u0644\u064a\u0629 (EGP)' : 'Actual Sales (EGP)',
+              label: 'Actual Sales (EGP)',
               data: actuals,
               backgroundColor: 'rgba(37, 99, 235, 0.85)',
               borderColor: '#2563eb',
@@ -123,7 +122,7 @@
             },
             {
               type: 'bar',
-              label: isAr ? '\u0627\u0644\u0645\u0633\u062a\u0647\u062f\u0641 (EGP)' : 'Target Sales (EGP)',
+              label: 'Target Sales (EGP)',
               data: targets,
               backgroundColor: dark ? 'rgba(148, 163, 184, 0.35)' : 'rgba(148, 163, 184, 0.55)',
               borderColor: '#94a3b8',
@@ -134,7 +133,7 @@
             },
             {
               type: 'line',
-              label: isAr ? '\u0646\u0633\u0628\u0629 \u0627\u0644\u062a\u062d\u0642\u064a\u0642 %' : 'Achievement %',
+              label: 'Achievement %',
               data: achievements,
               borderColor: '#10b981',
               backgroundColor: '#10b981',
@@ -158,19 +157,19 @@
           plugins: {
             legend: {
               position: 'top',
-              rtl: isAr,
+              rtl: false,
               labels: {
                 boxWidth: 12,
                 color: textColor,
                 font: {
-                  family: isAr ? 'Cairo, sans-serif' : 'Inter, sans-serif',
+                  family: 'Inter, sans-serif',
                   size: 11,
                   weight: '600'
                 }
               }
             },
             tooltip: {
-              rtl: isAr,
+              rtl: false,
               callbacks: {
                 label: function (context) {
                   let label = context.dataset.label || '';
@@ -191,7 +190,7 @@
               ticks: {
                 color: textColor,
                 font: {
-                  family: isAr ? 'Cairo, sans-serif' : 'Inter, sans-serif',
+                  family: 'Inter, sans-serif',
                   size: 11
                 }
               }
@@ -199,7 +198,7 @@
             y: {
               type: 'linear',
               display: true,
-              position: isAr ? 'right' : 'left',
+              position: 'left',
               beginAtZero: true,
               grid: { color: gridColor },
               ticks: {
@@ -214,7 +213,7 @@
             y1: {
               type: 'linear',
               display: true,
-              position: isAr ? 'left' : 'right',
+              position: 'right',
               beginAtZero: true,
               grid: { drawOnChartArea: false },
               ticks: {
@@ -248,13 +247,10 @@
       destroyExistingChart(canvasId);
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-      const isAr = lang === 'ar';
-      const dark = isDarkMode();
+            const dark = isDarkMode();
       const textColor = dark ? '#cbd5e1' : '#475569';
 
-      const labels = isAr
-        ? ['\u0623\u0637\u0628\u0627\u0621 \u0641\u0626\u0629 A', '\u0623\u0637\u0628\u0627\u0621 \u0641\u0626\u0629 B', '\u0645\u0633\u062a\u0634\u0641\u064a\u0627\u062a \u0648\u0645\u0631\u0627\u0643\u0632']
-        : ['Class A Doctors', 'Class B Doctors', 'Hospitals & Centers'];
+      const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 
       const dataVals = [Number(classA) || 0, Number(classB) || 0, Number(hospitals) || 0];
       const total = dataVals.reduce((a, b) => a + b, 0);
@@ -285,20 +281,20 @@
           plugins: {
             legend: {
               position: 'bottom',
-              rtl: isAr,
+              rtl: false,
               labels: {
                 boxWidth: 12,
                 padding: 12,
                 color: textColor,
                 font: {
-                  family: isAr ? 'Cairo, sans-serif' : 'Inter, sans-serif',
+                  family: 'Inter, sans-serif',
                   size: 11,
                   weight: '600'
                 }
               }
             },
             tooltip: {
-              rtl: isAr,
+              rtl: false,
               callbacks: {
                 label: function (context) {
                   const val = context.parsed;
@@ -348,10 +344,9 @@
       destroyExistingChart(canvasId);
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-      const isAr = lang === 'ar';
-      const dark = isDarkMode();
+            const dark = isDarkMode();
 
-      const labels = isAr ? ['\u062a\u0645\u062a \u0627\u0644\u062a\u063a\u0637\u064a\u0629', '\u0645\u062a\u0628\u0642\u064a'] : ['Covered', 'Remaining'];
+      const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 
       const ctx = canvas.getContext('2d');
       const chart = new Chart(ctx, {
@@ -377,7 +372,7 @@
               display: false
             },
             tooltip: {
-              rtl: isAr,
+              rtl: false,
               callbacks: {
                 label: function (context) {
                   return ' ' + context.label + ': ' + context.parsed + '%';

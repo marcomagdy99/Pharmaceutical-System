@@ -64,61 +64,6 @@ const plansReviewTranslations = {
     actorTitleAdmin: "Administrator",
     actorTitleDm: "District Manager",
   },
-  ar: {
-    pageTitle: "مراجعة الخطط - فارماكير",
-    plansReviewTitle: "📋 مراجعة واعتماد خطط الزيارات",
-    plansReviewSubtitle:
-      "مراجعة واعتماد جداول الزيارات المخططة المرسلة من مناديب فريقك الميداني",
-    btnGoToVisits: "الذهاب للزيارات",
-    btnApproveAll: "اعتماد كل الخطط",
-    btnApproveAllForRep: "اعتماد كل خطة",
-    btnRejectAllForRep: "رفض الكل",
-    btnApprove: "اعتماد",
-    btnReject: "رفض",
-    statPendingVisits: "زيارات معلقة بانتظار المراجعة",
-    statPendingReps: "مناديب بانتظار الاعتماد",
-    statApprovedToday: "زيارات معتمدة نشطة",
-    allTeamReps: "كل مناديب الفريق",
-    colDoctor: "الطبيب / المستشفى",
-    colDatePeriod: "التاريخ والفترة",
-    colSpecialty: "التخصص والفئة",
-    colProducts: "المنتجات",
-    colActions: "إجراءات",
-    noPendingPlans:
-      "تمت مراجعة واعتماد جميع الخطط بنجاح! لا توجد خطط معلقة حالياً.",
-    noMatchingPlansTitle: "لا توجد خطط معلقة مطابقة لمعايير البحث",
-    noMatchingPlansDesc: "جرب البحث باسم طبيب أو مندوب آخر أو تعديل فلاتر الخط والمندوب.",
-    toastApprovedSingle: "تم اعتماد الزيارة بنجاح وإضافتها للجدول النشط!",
-    toastApprovedAllRep: "تم اعتماد جميع زيارات المندوب بنجاح!",
-    toastApprovedAllGlobal: "تم اعتماد جميع خطط الفريق بالكامل بنجاح!",
-    toastRejected: "تم رفض الزيارة وإشعار المندوب بالملاحظات.",
-    modalRejectTitle: "رفض / طلب تعديل الخطة",
-    modalRejectSubtitle:
-      "يرجى توضيح سبب الرفض أو توجيهات التعديل للمندوب الطبي.",
-    modalRejectReasonLabel: "سبب الرفض / الملاحظات والتوجيهات:",
-    btnCancel: "إلغاء",
-    btnConfirmReject: "تأكيد الرفض",
-    btnAccompany: "نزول مشترك",
-    btnAccompanyDay: "🤝 مرافقة هذا اليوم بالكامل",
-    badgeAccompaniedLocked: "🤝 مرافقة مؤكدة بالكامل (مغلق)",
-    badgeBookedOtherRep: "🔒 محجوز مع مندوب آخر",
-    toastAccompanyDaySuccess:
-      "تم تأكيد النزول الميداني لليوم بالكامل واعتماد الزيارات كمخططة بنجاح!",
-    toastAlreadyBooked:
-      "لديك نزول ميداني محجوز بالفعل في هذا اليوم مع مندوب آخر.",
-    btnApproveDay: "اعتماد اليوم",
-    colPeriodOnly: "الفترة",
-    toastAccompanySuccess:
-      "تم اعتماد الزيارة وتسجيل النزول الميداني المشترك معك في صفحتك الرئيسية!",
-    badgePending: "قيد المراجعة",
-    badgeHospital: "مستشفى",
-    badgeDoctor: "طبيب",
-    badgeActingDm: "⚡ قائم بأعمال مدير المنطقة (الـ DM شاغر/معطل)",
-    badgeSupervisory: "رؤية إشرافية (الاعتماد لمشرف المنطقة)",
-    actorTitleActingDm: "مدير الخط (القائم بأعمال مدير المنطقة)",
-    actorTitleAdmin: "مدير النظام",
-    actorTitleDm: "مدير المنطقة",
-  },
 };
 
 // ============================================================================
@@ -328,8 +273,7 @@ function populatePlansLineFilter(currentUser) {
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-  const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+    const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
   const curVal = lineSelect.value;
 
   lineSelect.replaceChildren();
@@ -338,14 +282,14 @@ function populatePlansLineFilter(currentUser) {
   if (isFullAdmin || userLines.length > 1) {
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = isAr ? "🌐 جميع خطوط الإنتاج" : "🌐 All Product Lines";
+    optAll.textContent = "🌐 All Product Lines";
     lineSelect.appendChild(optAll);
   }
 
   userLines.forEach((l) => {
     const opt = document.createElement("option");
     opt.value = l.id;
-    opt.textContent = `📦 ${(isAr && l.nameAr) ? l.nameAr : l.name}`;
+    opt.textContent = `📦 ${l.name || l.nameAr}`;
     lineSelect.appendChild(opt);
   });
 
@@ -781,10 +725,7 @@ const plansReview = {
 
     // 1. Reps can never approve
     if (role === "medical_rep" || role === "rep") {
-      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-      const msg = isAr
-        ? "عفواً، لا يمتلك المندوب الطبي صلاحية اعتماد الخطط."
-        : "Notice: Medical Representatives do not have plan approval permissions.";
+      const msg = "Notice: Medical Representatives do not have plan approval permissions.";
       if (typeof window.showToast === "function") window.showToast(msg, "warning");
       return false;
     }
@@ -799,10 +740,7 @@ const plansReview = {
       if (targetRepId) {
         const rep = allUsers.find((u) => u.id === targetRepId);
         if (rep && rep.managerId !== currentUser.id && rep.dmId !== currentUser.id) {
-          const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-          const msg = isAr
-            ? "عفواً، يمكنك فقط اعتماد خطط مناديب منطقتك المباشرة."
-            : "Notice: You can only approve plans for representatives in your direct district.";
+          const msg = "Notice: You can only approve plans for representatives in your direct district.";
           if (typeof window.showToast === "function") window.showToast(msg, "warning");
           return false;
         }
@@ -817,10 +755,7 @@ const plansReview = {
         if (rep && canUserApproveForRep(currentUser, rep, allUsers)) {
           return true;
         }
-        const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-        const msg = isAr
-          ? "عفواً، مراجعة واعتماد الخطط الميدانية والمرافقة من اختصاص مدير المنطقة المباشر (DM)."
-          : "Notice: Field plan approvals are restricted to the direct District Manager (DM).";
+        const msg = "Notice: Field plan approvals are restricted to the direct District Manager (DM).";
         if (typeof window.showToast === "function") window.showToast(msg, "warning");
         return false;
       }
@@ -828,10 +763,7 @@ const plansReview = {
       const canApproveAny = scopedReps.some((r) => canUserApproveForRep(currentUser, r, allUsers));
       if (canApproveAny) return true;
 
-      const isAr = (window.getCurrentLang && window.getCurrentLang()) === "ar";
-      const msg = isAr
-        ? "عفواً، مراجعة واعتماد الخطط الميدانية والمرافقة من اختصاص مدير المنطقة المباشر (DM)."
-        : "Notice: Field plan approvals are restricted to the direct District Manager (DM).";
+      const msg = "Notice: Field plan approvals are restricted to the direct District Manager (DM).";
       if (typeof window.showToast === "function") window.showToast(msg, "warning");
       return false;
     }
@@ -1025,10 +957,8 @@ const plansReview = {
       window.addWorkflowNotification({
         userId: visit.repId,
         type: "plan_approval",
-        title: "اعتماد زيارة مخططة",
-        titleEn: "Planned Visit Approved",
-        message: `اعتمد ${actorTitle} (${currentUser.name}) زيارتك لـ (${docName}) لتاريخ ${visit.date}.`,
-        messageEn: `${actorTitle} (${currentUser.name}) approved your visit to (${doc ? doc.name : docName}) on ${visit.date}.`,
+        title: "Planned Visit Approved",
+        message: `${actorTitle} (${currentUser.name}) approved your visit to (${doc ? doc.name : docName}) on ${visit.date}.`,
         link: "calendar.html",
         icon: "🗓️",
         badgeClass: "bg-success",
@@ -1091,10 +1021,8 @@ const plansReview = {
       window.addWorkflowNotification({
         userId: repId,
         type: "plan_approval",
-        title: "اعتماد الخطة الميدانية",
-        titleEn: "Field Plan Approved",
-        message: `اعتمد ${actorTitle} (${currentUser.name}) خطتك الميدانية ${dateTextAr} بإجمالي (${count} زيارة).`,
-        messageEn: `${actorTitle} (${currentUser.name}) approved your field plan ${dateTextEn} (${count} visits total).`,
+        title: "Field Plan Approved",
+        message: `${actorTitle} (${currentUser.name}) approved your field plan ${dateTextEn} (${count} visits total).`,
         link: "calendar.html",
         icon: "🗓️",
         badgeClass: "bg-success",
@@ -1161,10 +1089,8 @@ const plansReview = {
         window.addWorkflowNotification({
           userId: rId,
           type: "plan_approval",
-          title: "اعتماد الخطة الميدانية",
-          titleEn: "Field Plan Approved",
-          message: `اعتمد ${actorTitle} (${currentUser.name}) خطتك الميدانية بالكامل (${repCounts[rId]} زيارة).`,
-          messageEn: `${actorTitle} (${currentUser.name}) approved your full field plan (${repCounts[rId]} visits).`,
+          title: "Field Plan Approved",
+          message: `${actorTitle} (${currentUser.name}) approved your full field plan (${repCounts[rId]} visits).`,
           link: "calendar.html",
           icon: "🗓️",
           badgeClass: "bg-success",
@@ -1229,7 +1155,7 @@ const plansReview = {
     if (!this._ensureCanApprove(currentUser, targetRepId)) return;
     const reason =
       document.getElementById("rejectReasonText")?.value.trim() ||
-      "يرجى مراجعة الخطة وتعديل المواعيد";
+      "Please review the schedule and adjust visit dates";
 
     const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
     const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
@@ -1250,15 +1176,13 @@ const plansReview = {
         v.rejectedBy = currentUser.id;
 
         const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === v.doctorId);
-        const docName = doc ? (doc.nameAr || doc.name) : (v.doctorName || "د. أحمد مصطفى");
+        const docName = doc ? (doc.name || doc.nameAr) : (v.doctorName || "Dr. Ahmed Mostafa");
         if (typeof window.addWorkflowNotification === "function") {
           window.addWorkflowNotification({
             userId: v.repId,
             type: "visit_rejection",
-            title: "رفض وتوجيه زيارة",
-            titleEn: "Visit Directive / Rejection",
-            message: `تم رفض زيارة ${docName} من قبل ${actorTitle} مع ملاحظة: ${reason}`,
-            messageEn: `Visit for ${doc ? doc.name : docName} rejected by ${actorTitle} with note: ${reason}`,
+            title: "Visit Directive / Rejection",
+            message: `Visit for ${doc ? doc.name : docName} rejected by ${actorTitle} with note: ${reason}`,
             note: reason,
             link: "visits.html",
             icon: "❌",
@@ -1285,10 +1209,8 @@ const plansReview = {
         window.addWorkflowNotification({
           userId: this.activeRejectTarget.repId,
           type: "plan_rejection",
-          title: "ملاحظات على الخطة الميدانية",
-          titleEn: "Field Plan Returned with Notes",
-          message: `طلب ${actorTitle} (${currentUser.name}) تعديلات على الخطة مع ملاحظة: ${reason}`,
-          messageEn: `${actorTitle} (${currentUser.name}) requested plan modifications: ${reason}`,
+          title: "Field Plan Returned with Notes",
+          message: `${actorTitle} (${currentUser.name}) requested plan modifications: ${reason}`,
           note: reason,
           link: "calendar.html",
           icon: "❌",

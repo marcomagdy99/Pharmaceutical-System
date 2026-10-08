@@ -311,40 +311,44 @@
 }
 
 /* --- High-Contrast Badges (Crisp in Light & Dark Mode) --- */
-.product-dosage-badge {
-    background-color: rgba(13, 110, 253, 0.1) !important;
-    color: #0b5ed7 !important;
-    border: 1px solid rgba(13, 110, 253, 0.25) !important;
+.product-dosage-badge,
+.badge.product-dosage-badge {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0b5ed7;
+    border: 1px solid rgba(13, 110, 253, 0.25);
     font-weight: 600;
     font-size: 0.76rem;
     padding: 3px 8px;
     letter-spacing: 0.2px;
 }
 
-[data-theme="dark"] .product-dosage-badge {
-    background-color: rgba(56, 139, 253, 0.18) !important;
-    color: #79c0ff !important;
-    border: 1px solid rgba(56, 139, 253, 0.4) !important;
+[data-theme="dark"] .product-dosage-badge,
+[data-theme="dark"] .badge.product-dosage-badge {
+    background-color: rgba(56, 139, 253, 0.18);
+    color: #79c0ff;
+    border: 1px solid rgba(56, 139, 253, 0.4);
 }
 
-.product-form-badge {
-    background-color: rgba(108, 117, 125, 0.1) !important;
-    color: #495057 !important;
-    border: 1px solid rgba(108, 117, 125, 0.25) !important;
+.product-form-badge,
+.badge.product-form-badge {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #495057;
+    border: 1px solid rgba(108, 117, 125, 0.25);
     font-size: 0.76rem;
     padding: 3px 8px;
 }
 
-[data-theme="dark"] .product-form-badge {
-    background-color: rgba(157, 165, 177, 0.15) !important;
-    color: #c9d1d9 !important;
-    border: 1px solid rgba(157, 165, 177, 0.3) !important;
+[data-theme="dark"] .product-form-badge,
+[data-theme="dark"] .badge.product-form-badge {
+    background-color: rgba(157, 165, 177, 0.15);
+    color: #c9d1d9;
+    border: 1px solid rgba(157, 165, 177, 0.3);
 }
 
 /* --- Mobile Product Cards (< 768px) --- */
 .product-mobile-card {
     background-color: #ffffff;
-    border-color: #e5e7eb !important;
+    border-color: #e5e7eb;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -361,7 +365,7 @@
 
 [data-theme="dark"] .product-mobile-card {
     background-color: #21252d;
-    border-color: #2f3643 !important;
+    border-color: #2f3643;
 }
 
 [data-theme="dark"] .product-mobile-card:hover,

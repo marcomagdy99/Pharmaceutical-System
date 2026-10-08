@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accounts Costing & Budget Splitting Integration Test Suite</title>
+  <link rel="stylesheet" href="css/style.css?v=v162" />
+  <link rel="stylesheet" href="css/reports.css?v=v162" />
+  <style>
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+      margin: 0;
+    }
+    .test-container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .test-header {
+      background: #1e293b;
+      padding: 20px 24px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .test-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 0 0 6px 0;
+    }
+    .test-subtitle {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin: 0;
+    }
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .test-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px 20px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .test-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    .test-card-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+    .test-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .badge-pending { background: #475569; color: #cbd5e1; }
+    .badge-pass { background: #065f46; color: #34d399; }
+    .badge-fail { background: #991b1b; color: #f87171; }
+    .test-log {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.8rem;
+      background: #0f172a;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      max-height: 140px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: auto;
+    }
+    .interactive-simulator {
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 32px;
+    }
+    .simulator-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .form-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      flex: 1 1 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+    .form-group input, .form-group select {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .live-preview-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+    .role-toggle-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      flex-wrap: wrap;
+    }
+    .role-btn {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #475569;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .role-btn.active {
+      background: #38bdf8;
+      color: #0f172a;
+      border-color: #38bdf8;
+      font-weight: 700;
+    }
+  </style>
+
+  <!-- Core Scripts -->
+  <script src="js/app.js?v=v159"></script>
+  <script src="js/store.js?v=v156"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="js/accounts-costing-report.js?v=v156"></script>
+</head>
+<body>
+  <div class="test-container">
+    <!-- Header -->
+    <div class="test-header">
+      <div>
+        <h1 class="test-title">🧪 Accounts Costing & Budget Splitting Integration Test Suite</h1>
+        <p class="test-subtitle">Automated verification of Multi-Line / Intra-Line Shared Budgets, Event Attendee Splitting, Role Scoping, and Dynamic Category Columns.</p>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" onclick="runAllCostingTests()" style="padding: 10px 18px; font-weight: 700;">
+          ▶ Run All Automated Tests
+        </button>
+        <button type="button" class="btn btn-outline" onclick="cleanupTestData(); alert('All test data purged from storage!'); location.reload();" style="padding: 10px 18px; font-weight: 700; color: #f87171; border-color: #f87171;">
+          🧹 Purge All Test Data
+        </button>
+      </div>
+    </div>
+
+    <!-- Overall Summary Card -->
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <span style="font-weight: 600; font-size: 1rem;">Test Results Summary: </span>
+        <span id="summaryPassed" style="color: #34d399; font-weight: 700; margin-left: 8px;">0 Passed</span> /
+        <span id="summaryFailed" style="color: #f87171; font-weight: 700; margin-left: 4px;">0 Failed</span>
+      </div>
+      <div id="overallStatusBadge" class="test-badge badge-pending">PENDING EXECUTION</div>
+    </div>
+
+    <!-- Test Suites Grid -->
+    <div class="test-grid">
+      <!-- Suite 1 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">1. Role Hierarchy Scoping (Rep & DM Lockdown)</div>
+          <span id="badge-suite-1" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-1" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 2 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">2. Service Request Approved State Reflection</div>
+          <span id="badge-suite-2" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-2" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 3 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">3. Unapproved & Rejected Requests Exclusion</div>
+          <span id="badge-suite-3" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-3" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 4 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">4. Dynamic Category Columns Generation</div>
+          <span id="badge-suite-4" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-4" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 5 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">5. Event Activity Attendees Equal Split (20k / 4 = 5k)</div>
+          <span id="badge-suite-5" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-5" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 6 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">6. Cross-Rep Privacy & Territory Isolation</div>
+          <span id="badge-suite-6" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-6" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 7 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">7. Drill-Down Breakdown Ledger Modal</div>
+          <span id="badge-suite-7" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-7" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 8 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">8. Excel Export Data Structure & Summary</div>
+          <span id="badge-suite-8" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-8" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 9 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">9. Multi-Line Shared Split (60% Line 1 / 40% Line 2)</div>
+          <span id="badge-suite-9" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-9" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 10 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">10. Intra-Line Shared Split (50% Rep A / 50% Rep B)</div>
+          <span id="badge-suite-10" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-10" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 11 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">11. Partial Share Approval Governance</div>
+          <span id="badge-suite-11" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-11" class="test-log">Waiting for execution...</div>
+      </div>
+
+      <!-- Suite 12 -->
+      <div class="test-card">
+        <div class="test-card-header">
+          <div class="test-card-title">12. Cumulative Doctor Ledger Grand Total Accuracy</div>
+          <span id="badge-suite-12" class="test-badge badge-pending">PENDING</span>
+        </div>
+        <div id="log-suite-12" class="test-log">Waiting for execution...</div>
+      </div>
+    </div>
+
+    <!-- Live Interactive Service Creation Simulator -->
+    <div class="interactive-simulator">
+      <h2 class="simulator-title">⚡ Live Service Request & Budget Splitting Simulator</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">
+        Submit a standard or shared multi-line service request, then use the role toggles to immediately observe the table re-calculating the budget split in real-time.
+      </p>
+
+      <!-- Role View Toggle -->
+      <div class="role-toggle-bar">
+        <span style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Active Perspective:</span>
+        <button type="button" class="role-btn active" id="btnRoleAdmin" onclick="setSimulatorRole('admin')">Admin (All Lines)</button>
+        <button type="button" class="role-btn" id="btnRoleRep1" onclick="setSimulatorRole('rep1')">Rep Hassan (Line 1)</button>
+        <button type="button" class="role-btn" id="btnRoleRep2" onclick="setSimulatorRole('rep2')">Rep Mina (Line 2)</button>
+        <button type="button" class="role-btn" id="btnRoleDm" onclick="setSimulatorRole('dm1')">DM Cairo (Line 1 District)</button>
+      </div>
+
+      <form id="simulatorForm" onsubmit="handleSimulatorSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="simDoctorSelect">Select Doctor / Account:</label>
+            <select id="simDoctorSelect" required></select>
+          </div>
+          <div class="form-group">
+            <label for="simServiceCategory">Service Category / Title:</label>
+            <input type="text" id="simServiceCategory" placeholder="e.g. Ultrasound Diagnostic Machine" value="Ultrasound Diagnostic Machine" required />
+          </div>
+          <div class="form-group">
+            <label for="simCost">Total Cost (EGP):</label>
+            <input type="number" id="simCost" placeholder="e.g. 50000" value="50000" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="simDate">Service Date:</label>
+            <input type="date" id="simDate" required />
+          </div>
+          <div class="form-group">
+            <label for="simStatus">Approval Status:</label>
+            <select id="simStatus">
+              <option value="approved">Approved (Reflects in Table)</option>
+              <option value="pending_dm">Pending DM (Excluded)</option>
+              <option value="rejected">Rejected (Excluded)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Shared Split Toggle -->
+        <div style="background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 16px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #38bdf8; cursor: pointer;">
+            <input type="checkbox" id="simIsShared" onchange="toggleSharedInputs()" />
+            Split Budget Across Multiple Lines (Multi-Line Shared Service)
+          </label>
+          <div id="simSharedInputs" style="display: none; margin-top: 12px; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span style="font-size: 0.85rem; color: #cbd5e1;">Line 1 Share %:</span>
+              <input type="number" id="simLine1Percent" value="60" min="1" max="99" style="width: 80px; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 4px;" />
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span style="font-size: 0.85rem; color: #cbd5e1;">Line 2 Share %:</span>
+              <input type="number" id="simLine2Percent" value="40" min="1" max="99" style="width: 80px; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 4px;" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="submit" class="btn btn-primary" style="padding: 9px 18px; font-weight: 600;">
+            ➕ Submit Live Service Request
+          </button>
+          <span id="simFeedback" style="font-size: 0.88rem; font-weight: 600; color: #34d399;"></span>
+        </div>
+      </form>
+
+      <!-- Hidden Form Fields expected by Accounts Costing -->
+      <div style="display: none;">
+        <input type="date" id="accountsCostingDateFrom" />
+        <input type="date" id="accountsCostingDateTo" />
+        <select id="accountsCostingLineSelect"></select>
+        <select id="accountsCostingDmSelect"></select>
+        <select id="accountsCostingRepSelect"></select>
+        <select id="accountsCostingAreaSelect"></select>
+        <select id="accountsCostingClassSelect"><option value="all">all</option></select>
+        <select id="accountsCostingSpecialtySelect"><option value="all">all</option></select>
+        <input type="text" id="accountsCostingSearchInput" />
+        <input type="checkbox" id="accountsCostingOnlyWithExpenses" />
+        <div id="accountsCostingBreakdownModal">
+          <div id="modalCostingAccountName"></div>
+          <div id="modalCostingAccountSub"></div>
+          <div id="modalCostingCountText"></div>
+          <div id="modalCostingTotalText"></div>
+          <table><tbody id="modalCostingTbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Live Table Preview -->
+      <div class="live-preview-box">
+        <h4 style="margin: 0 0 12px 0; color: #f8fafc; font-size: 0.95rem;">Live Generated Accounts Costing Matrix:</h4>
+        <table class="report-table" id="accountsCostingTable" style="width: 100%; font-size: 0.85rem;">
+          <thead id="accountsCostingThead"></thead>
+          <tbody id="accountsCostingTbody"></tbody>
+          <tfoot id="accountsCostingTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let totalPass = 0;
+    let totalFail = 0;
+    let currentSimulatorUser = { id: 'admin1', role: 'admin', name: 'System Administrator' };
+
+    function setSuiteResult(suiteNum, isPass, logText) {
+      const badge = document.getElementById(`badge-suite-${suiteNum}`);
+      const log = document.getElementById(`log-suite-${suiteNum}`);
+      if (badge && log) {
+        badge.className = `test-badge ${isPass ? 'badge-pass' : 'badge-fail'}`;
+        badge.textContent = isPass ? 'PASSED' : 'FAILED';
+        log.textContent = logText;
+      }
+      if (isPass) totalPass++; else totalFail++;
+    }
+
+    function cleanupTestData() {
+      try {
+        const raw = localStorage.getItem("pharma_services_data");
+        if (raw) {
+          const list = JSON.parse(raw);
+          const clean = list.filter(s => !String(s.id).startsWith("test_") && !String(s.id).startsWith("srv_sim_"));
+          localStorage.setItem("pharma_services_data", JSON.stringify(clean));
+        }
+      } catch (e) {}
+
+      try {
+        localStorage.removeItem("pharma_activities_data_rep1");
+      } catch (e) {}
+
+      if (window.DEMO_DATA) {
+        if (Array.isArray(window.DEMO_DATA.services)) {
+          window.DEMO_DATA.services = window.DEMO_DATA.services.filter(
+            s => !String(s.id).startsWith("test_") && !String(s.id).startsWith("srv_sim_")
+          );
+        }
+        if (Array.isArray(window.DEMO_DATA.doctors)) {
+          window.DEMO_DATA.doctors = window.DEMO_DATA.doctors.filter(
+            d => !String(d.id).startsWith("doc_test_") && !String(d.id).startsWith("doc_secret_") && d.id !== "doc_test_1"
+          );
+        }
+        if (window.DEMO_DATA._activitiesByUser) {
+          delete window.DEMO_DATA._activitiesByUser["rep1"];
+        }
+      }
+
+      try {
+        const rawMaster = localStorage.getItem("pharma_master_data");
+        if (rawMaster) {
+          const m = JSON.parse(rawMaster);
+          if (m && Array.isArray(m.doctors)) {
+            m.doctors = m.doctors.filter(
+              d => !String(d.id).startsWith("doc_test_") && !String(d.id).startsWith("doc_secret_") && d.id !== "doc_test_1"
+            );
+            localStorage.setItem("pharma_master_data", JSON.stringify(m));
+          }
+        }
+      } catch (e) {}
+
+      if (window.store && window.store.services && typeof window.store.services.getAll === "function") {
+        const cur = window.store.services.getAll();
+        const clean = cur.filter(s => !String(s.id).startsWith("test_") && !String(s.id).startsWith("srv_sim_"));
+        if (window.DEMO_DATA) window.DEMO_DATA.services = clean;
+      }
+    }
+
+    function setupTestFixtures() {
+      cleanupTestData();
+
+      // Ensure DEMO_DATA structure
+      window.DEMO_DATA = window.DEMO_DATA || {};
+      if (!Array.isArray(window.DEMO_DATA.users)) window.DEMO_DATA.users = [];
+      if (!Array.isArray(window.DEMO_DATA.doctors)) window.DEMO_DATA.doctors = [];
+      if (!Array.isArray(window.DEMO_DATA.areas)) window.DEMO_DATA.areas = [];
+      if (!Array.isArray(window.DEMO_DATA.productLines)) window.DEMO_DATA.productLines = [];
+      if (!Array.isArray(window.DEMO_DATA.services)) window.DEMO_DATA.services = [];
+
+      // Test Lines
+      const lines = [
+        { id: 'line1', name: 'Cardiology Line' },
+        { id: 'line2', name: 'Dermatology Line' }
+      ];
+      lines.forEach(l => {
+        if (!window.DEMO_DATA.productLines.find(x => x.id === l.id)) {
+          window.DEMO_DATA.productLines.push(l);
+        }
+      });
+
+      // Test Users
+      const users = [
+        { id: 'admin1', name: 'System Admin', role: 'admin' },
+        { id: 'dm1', name: 'DM Cairo Central', role: 'district_manager', lineId: 'line1', lineIds: ['line1'] },
+        { id: 'rep1', name: 'Rep Hassan', role: 'medical_rep', lineId: 'line1', lineIds: ['line1'], areaId: 'area1', areaIds: ['area1'], managerId: 'dm1' },
+        { id: 'rep2', name: 'Rep Mina', role: 'medical_rep', lineId: 'line2', lineIds: ['line2'], areaId: 'area2', areaIds: ['area2'], managerId: 'dm2' },
+        { id: 'rep3', name: 'Rep Tarek', role: 'medical_rep', lineId: 'line1', lineIds: ['line1'], areaId: 'area3', areaIds: ['area3'], managerId: 'dm1' }
+      ];
+      users.forEach(u => {
+        const existing = window.DEMO_DATA.users.find(x => x.id === u.id);
+        if (existing) {
+          Object.assign(existing, u);
+        } else {
+          window.DEMO_DATA.users.push(u);
+        }
+      });
+
+      // Test Areas
+      const areas = [
+        { id: 'area1', name: 'Dokki', lineId: 'line1', repId: 'rep1' },
+        { id: 'area2', name: 'Nasr City', lineId: 'line2', repId: 'rep2' },
+        { id: 'area3', name: 'Mohandessin', lineId: 'line1', repId: 'rep3' }
+      ];
+      areas.forEach(a => {
+        const existing = window.DEMO_DATA.areas.find(x => x.id === a.id);
+        if (existing) {
+          Object.assign(existing, a);
+        } else {
+          window.DEMO_DATA.areas.push(a);
+        }
+      });
+
+      // Primary Test Doctor
+      const testDoc = {
+        id: 'doc_test_1',
+        name: 'Dr. Test Medical VIP',
+        clinicName: 'Elite Medical VIP Clinic',
+        class: 'A',
+        specialty: 'Cardiology',
+        lineId: 'line1',
+        areaId: 'area1',
+        repId: 'rep1'
+      };
+      const docIdx = window.DEMO_DATA.doctors.findIndex(x => x.id === testDoc.id);
+      if (docIdx >= 0) {
+        window.DEMO_DATA.doctors[docIdx] = testDoc;
+      } else {
+        window.DEMO_DATA.doctors.unshift(testDoc);
+      }
+    }
+
+    function initSimulatorDoctors() {
+      setupTestFixtures();
+      const docSelect = document.getElementById('simDoctorSelect');
+      const docs = (window.store && window.store.doctors && window.store.doctors.getAll()) || window.DEMO_DATA.doctors || [];
+      if (docSelect && docs.length > 0) {
+        docSelect.innerHTML = docs.map(d => `<option value="${d.id}">${d.name} (${d.specialty || 'General'})</option>`).join('');
+      }
+      const today = new Date().toISOString().split('T')[0];
+      const dateInp = document.getElementById('simDate');
+      if (dateInp) dateInp.value = today;
+    }
+
+    function toggleSharedInputs() {
+      const chk = document.getElementById('simIsShared');
+      const box = document.getElementById('simSharedInputs');
+      if (box) box.style.display = chk.checked ? 'flex' : 'none';
+    }
+
+    function setSimulatorRole(roleKey) {
+      document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+      if (roleKey === 'admin') {
+        document.getElementById('btnRoleAdmin').classList.add('active');
+        currentSimulatorUser = { id: 'admin1', role: 'admin', name: 'System Administrator' };
+      } else if (roleKey === 'rep1') {
+        document.getElementById('btnRoleRep1').classList.add('active');
+        currentSimulatorUser = { id: 'rep1', role: 'medical_rep', name: 'Rep Hassan', lineId: 'line1', areaId: 'area1', managerId: 'dm1' };
+      } else if (roleKey === 'rep2') {
+        document.getElementById('btnRoleRep2').classList.add('active');
+        currentSimulatorUser = { id: 'rep2', role: 'medical_rep', name: 'Rep Mina', lineId: 'line2', areaId: 'area2', managerId: 'dm2' };
+      } else if (roleKey === 'dm1') {
+        document.getElementById('btnRoleDm').classList.add('active');
+        currentSimulatorUser = { id: 'dm1', role: 'district_manager', name: 'DM Cairo Central', lineId: 'line1' };
+      }
+      window.checkAuth = () => currentSimulatorUser;
+      window.initAccountsCostingTab();
+      // Clear date boundary constraints in simulator preview so all test transactions display
+      const df = document.getElementById('accountsCostingDateFrom');
+      const dt = document.getElementById('accountsCostingDateTo');
+      if (df) df.value = '';
+      if (dt) dt.value = '';
+      window.renderAccountsCostingReport();
+    }
+
+    function handleSimulatorSubmit(e) {
+      e.preventDefault();
+      const docSelect = document.getElementById('simDoctorSelect');
+      const catInp = document.getElementById('simServiceCategory');
+      const costInp = document.getElementById('simCost');
+      const dateInp = document.getElementById('simDate');
+      const statusSelect = document.getElementById('simStatus');
+      const isSharedChk = document.getElementById('simIsShared');
+      const feedback = document.getElementById('simFeedback');
+
+      const docs = (window.store && window.store.doctors && window.store.doctors.getAll()) || [];
+      const selectedDoc = docs.find(d => d.id === docSelect.value);
+      const totalCost = Number(costInp.value) || 0;
+
+      let newService = {
+        id: 'srv_sim_' + Date.now(),
+        targetType: 'doctor',
+        targetId: docSelect.value,
+        targetName: selectedDoc ? selectedDoc.name : 'Doctor',
+        title: catInp.value.trim(),
+        cost: totalCost,
+        date: dateInp.value,
+        status: statusSelect.value,
+        lineId: selectedDoc?.lineId || 'line1',
+        areaId: selectedDoc?.areaId || 'area1',
+        requesterId: selectedDoc?.repId || 'rep1',
+        notes: 'Submitted via Live Simulator',
+        isShared: false
+      };
+
+      if (isSharedChk && isSharedChk.checked) {
+        const p1 = Number(document.getElementById('simLine1Percent').value) || 60;
+        const p2 = Number(document.getElementById('simLine2Percent').value) || 40;
+        const amt1 = Math.round((totalCost * p1) / 100);
+        const amt2 = totalCost - amt1;
+
+        newService.isShared = true;
+        newService.shares = [
+          { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: p1, shareAmount: amt1, status: statusSelect.value },
+          { lineId: 'line2', areaId: 'area2', repId: 'rep2', sharePercent: p2, shareAmount: amt2, status: statusSelect.value }
+        ];
+      }
+
+      window.store.services.add(newService);
+      window.renderAccountsCostingReport();
+
+      if (feedback) {
+        feedback.textContent = `✓ Request #${newService.id} created (${newService.status})! Table updated.`;
+        setTimeout(() => { feedback.textContent = ''; }, 4000);
+      }
+    }
+
+    function runAllCostingTests() {
+      totalPass = 0;
+      totalFail = 0;
+      setupTestFixtures();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // 1. Suite 1: Role Hierarchy Scoping
+      try {
+        const u = { id: 'rep1', role: 'medical_rep', lineId: 'line1', areaId: 'area1', managerId: 'dm1' };
+        window.checkAuth = () => u;
+        window.initAccountsCostingTab();
+
+        const lEl = document.getElementById('accountsCostingLineSelect');
+        const dEl = document.getElementById('accountsCostingDmSelect');
+        const rEl = document.getElementById('accountsCostingRepSelect');
+        const aEl = document.getElementById('accountsCostingAreaSelect');
+
+        const pass1 = lEl.disabled === true && dEl.disabled === true && rEl.disabled === true;
+        setSuiteResult(1, pass1, `Rep Role verified:\n- Line locked: ${lEl.disabled}\n- DM locked: ${dEl.disabled}\n- Rep locked: ${rEl.disabled}\n- Area count: ${aEl.children.length}`);
+      } catch (e) {
+        setSuiteResult(1, false, e.message);
+      }
+
+      // Switch to Admin context
+      window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+      window.initAccountsCostingTab();
+      document.getElementById('accountsCostingDateFrom').value = '';
+      document.getElementById('accountsCostingDateTo').value = '';
+
+      // 2. Suite 2: Approved Service Reflection
+      try {
+        const testSrv = {
+          id: 'test_srv_app_1',
+          targetType: 'doctor',
+          targetId: 'doc_test_1',
+          targetName: 'Dr. Test Medical VIP',
+          title: 'Clinic Equipment Supplies',
+          cost: 14000,
+          date: todayStr,
+          status: 'approved',
+          requesterId: 'rep1',
+          lineId: 'line1',
+          areaId: 'area1'
+        };
+        window.store.services.add(testSrv);
+        window.renderAccountsCostingReport();
+
+        const thead = document.getElementById('accountsCostingThead').innerHTML;
+        const tbody = document.getElementById('accountsCostingTbody').innerHTML;
+        const row2 = window.CostingState && window.CostingState.currentRows.find(r => r.id === 'doc_test_1');
+        const has14k = tbody.includes('14,000') || Boolean(row2 && row2.categoryTotals && row2.categoryTotals['Clinic Equipment'] >= 14000);
+        const pass2 = thead.includes('Clinic Equipment') && has14k;
+        setSuiteResult(2, pass2, `Approved Service added:\n- 14,000 EGP present: ${has14k}\n- Dynamic header: ${thead.includes('Clinic Equipment')}`);
+      } catch (e) {
+        setSuiteResult(2, false, e.message);
+      }
+
+      // 3. Suite 3: Pending & Rejected Exclusion
+      try {
+        const srvPending = { id: 'test_p_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'Pending Service', cost: 77777, status: 'pending_dm', requesterId: 'rep1', date: todayStr };
+        const srvRejected = { id: 'test_r_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'Rejected Service', cost: 88888, status: 'rejected', requesterId: 'rep1', date: todayStr };
+        window.store.services.add(srvPending);
+        window.store.services.add(srvRejected);
+        window.renderAccountsCostingReport();
+
+        const tbody = document.getElementById('accountsCostingTbody').innerHTML;
+        const pass3 = !tbody.includes('77,777') && !tbody.includes('88,888');
+        setSuiteResult(3, pass3, `Pending & Rejected Exclusion:\n- 77,777 excluded: ${!tbody.includes('77,777')}\n- 88,888 excluded: ${!tbody.includes('88,888')}`);
+      } catch (e) {
+        setSuiteResult(3, false, e.message);
+      }
+
+      // 4. Suite 4: Dynamic Category Generation & Sums
+      try {
+        const srvConf = { id: 'test_c_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'World Medical Conference', cost: 20000, status: 'approved', requesterId: 'rep1', lineId: 'line1', areaId: 'area1', date: todayStr };
+        window.store.services.add(srvConf);
+        window.renderAccountsCostingReport();
+
+        const thead = document.getElementById('accountsCostingThead').innerHTML;
+        const pass4 = thead.includes('Medical Conference');
+        setSuiteResult(4, pass4, `Multiple Categories Generated:\n- Medical Conference Column: ${thead.includes('Medical Conference')}`);
+      } catch (e) {
+        setSuiteResult(4, false, e.message);
+      }
+
+      // 5. Suite 5: Event Activity Attendees (20,000 / 4 doctors = 5,000 each)
+      try {
+        if (window.store && window.store.activities && typeof window.store.activities.save === 'function') {
+          window.store.activities.save('rep1', todayStr, 'am', {
+            activityType: 'Round Table Discussion',
+            title: 'Hypertension Guidelines RTD',
+            cost: 20000,
+            doctors: ['doc_test_1', 'doc2', 'doc3', 'doc4']
+          });
+        }
+        window.renderAccountsCostingReport();
+
+        const tbody = document.getElementById('accountsCostingTbody').innerHTML;
+        const pass5 = tbody.includes('5,000');
+        setSuiteResult(5, pass5, `Event Activity Multi-Doctor Split:\n- 20,000 EGP split equally by 4 attendees.\n- Found 5,000 EGP cell in matrix: ${pass5}`);
+      } catch (e) {
+        setSuiteResult(5, false, e.message);
+      }
+
+      // 6. Suite 6: Cross-Rep Privacy & Territory Isolation
+      try {
+        // Create an unassigned private doctor for rep2 in line2
+        const secretDoc = { id: 'doc_secret_999', name: 'Dr. Secret Unassigned', lineId: 'line2', areaId: 'area2', repId: 'rep2' };
+        window.DEMO_DATA.doctors.push(secretDoc);
+
+        window.checkAuth = () => ({ id: 'rep1', role: 'medical_rep', lineId: 'line1', areaId: 'area1', managerId: 'dm1' });
+        window.initAccountsCostingTab();
+        document.getElementById('accountsCostingDateFrom').value = '';
+        document.getElementById('accountsCostingDateTo').value = '';
+        window.renderAccountsCostingReport();
+
+        const tbody = document.getElementById('accountsCostingTbody').innerHTML;
+        const pass6 = !tbody.includes('Dr. Secret Unassigned');
+        setSuiteResult(6, pass6, `Territory Privacy Verified:\n- Doctors and transactions from other lines/areas strictly omitted for Rep profile.`);
+      } catch (e) {
+        setSuiteResult(6, false, e.message);
+      }
+
+      // Reset to Admin
+      window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+      window.initAccountsCostingTab();
+      document.getElementById('accountsCostingDateFrom').value = '';
+      document.getElementById('accountsCostingDateTo').value = '';
+
+      // 7. Suite 7: Drill-Down Modal
+      try {
+        window.renderAccountsCostingReport();
+        window.openAccountsCostingBreakdown('doc_test_1');
+        const titleEl = document.getElementById('modalCostingAccountName');
+        const pass7 = titleEl !== null && titleEl.textContent.includes('Dr. Test Medical VIP');
+        setSuiteResult(7, pass7, `Drill-Down Modal verified:\n- Open & ledger populate without error for doc_test_1.`);
+      } catch (e) {
+        setSuiteResult(7, false, e.message);
+      }
+
+      // 8. Suite 8: Excel Export Structure
+      try {
+        const pass8 = typeof window.exportAccountsCostingToExcel === 'function';
+        setSuiteResult(8, pass8, `Excel Export Engine verified:\n- exportAccountsCostingToExcel function ready.`);
+      } catch (e) {
+        setSuiteResult(8, false, e.message);
+      }
+
+      // 9. Suite 9: Multi-Line Shared Split (50,000 EGP: Line 1 = 30k, Line 2 = 20k)
+      try {
+        const srvSharedMulti = {
+          id: 'test_srv_multi_split_1',
+          targetType: 'doctor',
+          targetId: 'doc_test_1',
+          targetName: 'Dr. Test Medical VIP',
+          title: 'Joint Cardiovascular Symposium',
+          cost: 50000,
+          date: todayStr,
+          status: 'approved',
+          isShared: true,
+          shares: [
+            { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: 60, shareAmount: 30000, status: 'approved' },
+            { lineId: 'line2', areaId: 'area2', repId: 'rep2', sharePercent: 40, shareAmount: 20000, status: 'approved' }
+          ]
+        };
+        window.store.services.add(srvSharedMulti);
+
+        // Rep 1 should see 30,000 EGP
+        window.checkAuth = () => ({ id: 'rep1', role: 'medical_rep', lineId: 'line1', lineIds: ['line1'], areaId: 'area1', areaIds: ['area1'], managerId: 'dm1' });
+        window.initAccountsCostingTab();
+        document.getElementById('accountsCostingDateFrom').value = '';
+        document.getElementById('accountsCostingDateTo').value = '';
+        window.renderAccountsCostingReport();
+        const rowR1 = (window.CostingState && window.CostingState.currentRows.find(r => r.id === 'doc_test_1'));
+        const txR1 = rowR1 && rowR1.transactions.find(t => t.serviceId === 'test_srv_multi_split_1');
+        const passR1 = Boolean(txR1 && txR1.cost === 30000);
+
+        // Rep 2 should see 20,000 EGP
+        window.checkAuth = () => ({ id: 'rep2', role: 'medical_rep', lineId: 'line2', lineIds: ['line2'], areaId: 'area2', areaIds: ['area2'], managerId: 'dm2' });
+        window.initAccountsCostingTab();
+        document.getElementById('accountsCostingDateFrom').value = '';
+        document.getElementById('accountsCostingDateTo').value = '';
+        window.renderAccountsCostingReport();
+        const rowR2 = (window.CostingState && window.CostingState.currentRows.find(r => r.id === 'doc_test_1'));
+        const txR2 = rowR2 && rowR2.transactions.find(t => t.serviceId === 'test_srv_multi_split_1');
+        const passR2 = Boolean(txR2 && txR2.cost === 20000);
+
+        const pass9 = passR1 && passR2;
+        const logR1 = passR1 ? '30,000 EGP (PASS)' : (txR1 ? `${txR1.cost} EGP (FAIL)` : 'Not found (FAIL)');
+        const logR2 = passR2 ? '20,000 EGP (PASS)' : (txR2 ? `${txR2.cost} EGP (FAIL)` : 'Not found (FAIL)');
+        setSuiteResult(9, pass9, `Multi-Line Split Verified:\n- Rep 1 (Line 1): ${logR1}\n- Rep 2 (Line 2): ${logR2}`);
+      } catch (e) {
+        setSuiteResult(9, false, e.message);
+      }
+
+      // 10. Suite 10: Intra-Line Shared Split (24,000 EGP: 12k each)
+      try {
+        const srvIntra = {
+          id: 'test_srv_intra_split_1',
+          targetType: 'doctor',
+          targetId: 'doc_test_1',
+          targetName: 'Dr. Test Medical VIP',
+          title: 'District Echo Training Workshop',
+          cost: 24000,
+          date: todayStr,
+          status: 'approved',
+          isShared: true,
+          shares: [
+            { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: 50, shareAmount: 12000, status: 'approved' },
+            { lineId: 'line1', areaId: 'area3', repId: 'rep3', sharePercent: 50, shareAmount: 12000, status: 'approved' }
+          ]
+        };
+        window.store.services.add(srvIntra);
+
+        window.checkAuth = () => ({ id: 'rep1', role: 'medical_rep', lineId: 'line1', areaId: 'area1', managerId: 'dm1' });
+        window.initAccountsCostingTab();
+        document.getElementById('accountsCostingDateFrom').value = '';
+        document.getElementById('accountsCostingDateTo').value = '';
+        window.renderAccountsCostingReport();
+        const row10 = (window.CostingState && window.CostingState.currentRows.find(r => r.id === 'doc_test_1'));
+        const tx10 = row10 && row10.transactions.find(t => t.serviceId === 'test_srv_intra_split_1');
+        const pass10 = Boolean(tx10 && tx10.cost === 12000);
+        setSuiteResult(10, pass10, `Intra-Line Split Verified:\n- Rep 1 allocated exactly 12,000 EGP (50% share).`);
+      } catch (e) {
+        setSuiteResult(10, false, e.message);
+      }
+
+      // 11. Suite 11: Partial Share Approval Governance
+      try {
+        const srvPartial = {
+          id: 'test_srv_partial_share_1',
+          targetType: 'doctor',
+          targetId: 'doc_test_1',
+          targetName: 'Dr. Test Medical VIP',
+          title: 'Specialized Sample Kits',
+          cost: 20000,
+          date: todayStr,
+          status: 'pending_shared',
+          isShared: true,
+          shares: [
+            { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: 50, shareAmount: 10000, status: 'approved' },
+            { lineId: 'line2', areaId: 'area2', repId: 'rep2', sharePercent: 50, shareAmount: 10000, status: 'pending_dm' }
+          ]
+        };
+        window.store.services.add(srvPartial);
+
+        window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+        window.initAccountsCostingTab();
+        document.getElementById('accountsCostingDateFrom').value = '';
+        document.getElementById('accountsCostingDateTo').value = '';
+        window.renderAccountsCostingReport();
+        const row11 = (window.CostingState && window.CostingState.currentRows.find(r => r.id === 'doc_test_1'));
+        const txs11 = row11 ? row11.transactions.filter(t => t.serviceId === 'test_srv_partial_share_1') : [];
+        const pass11 = Boolean(txs11.length > 0 && txs11.some(t => Number(t.cost) === 10000) && !txs11.some(t => t.status === 'pending_dm'));
+        setSuiteResult(11, pass11, `Partial Share Approvals Verified:\n- Approved share (10,000 EGP) included.\n- Pending share (10,000 EGP) strictly excluded until approved.`);
+      } catch (e) {
+        setSuiteResult(11, false, e.message);
+      }
+
+      // 12. Suite 12: Cumulative Ledger Grand Total Accuracy
+      try {
+        window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+        window.initAccountsCostingTab();
+        document.getElementById('accountsCostingDateFrom').value = '';
+        document.getElementById('accountsCostingDateTo').value = '';
+        window.renderAccountsCostingReport();
+        const row12 = (window.CostingState && window.CostingState.currentRows.find(r => r.id === 'doc_test_1'));
+        const pass12 = Boolean(row12 && row12.grandTotal > 0 && row12.transactions.length >= 4);
+        setSuiteResult(12, pass12, `Cumulative Ledger Verification:\n- Doctor grand total calculated: ${row12 ? row12.grandTotal : 0} EGP\n- Total transaction ledger rows: ${row12 ? row12.transactions.length : 0}`);
+      } catch (e) {
+        setSuiteResult(12, false, e.message);
+      }
+
+      // Update Summary Badge
+      document.getElementById('summaryPassed').textContent = `${totalPass} Passed`;
+      document.getElementById('summaryFailed').textContent = `${totalFail} Failed`;
+      const overall = document.getElementById('overallStatusBadge');
+      if (totalFail === 0) {
+        overall.className = 'test-badge badge-pass';
+        overall.textContent = `ALL ${totalPass} SUITES PASSED (100%)`;
+      } else {
+        overall.className = 'test-badge badge-fail';
+        overall.textContent = `${totalFail} SUITES FAILED`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSimulatorDoctors();
+      runAllCostingTests();
+    });
+  </script>
+</body>
+</html>

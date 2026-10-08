@@ -70,8 +70,90 @@
       document.getElementById("tabBtnBudget")?.classList.add("active");
       document.getElementById("pane-budget")?.classList.add("active");
       window.ActivitiesBudget?.renderBudgetTab?.();
+    } else if (tabId === "tab-locations") {
+      document.getElementById("tabBtnLocationRequests")?.classList.add("active");
+      document.getElementById("pane-locations")?.classList.add("active");
+      renderLocationRequestsTable();
     }
   }
+
+  function renderLocationRequestsTable() {
+    const tbody = document.getElementById("locationRequestsTableBody");
+    if (!tbody) return;
+    const requests = (window.store && window.store.accountLocationRequests)
+      ? window.store.accountLocationRequests.getAll()
+      : [];
+    const currentUser = Core.getAuthUser() || {};
+    const role = (currentUser.role || "").toLowerCase();
+    const canApprove = (role === "admin" || role === "district_manager" || role === "line_manager" || role === "business_unit");
+
+    if (requests.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No geographic location requests submitted yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = requests.map((req) => {
+      const typeBadge = req.requestType === "relocation"
+        ? `<span class="badge bg-warning text-dark">🔄 Relocation</span>`
+        : `<span class="badge bg-info text-dark">📍 Initial Pin</span>`;
+
+      const statusBadge = req.status === "approved"
+        ? `<span class="badge bg-success">✅ Approved</span>`
+        : (req.status === "rejected"
+          ? `<span class="badge bg-danger">❌ Rejected</span>`
+          : `<span class="badge bg-warning text-dark">⏳ Pending</span>`);
+
+      let locInfo = `<code>${req.newLat.toFixed(5)}, ${req.newLng.toFixed(5)}</code>`;
+      if (req.oldLat != null && req.oldLng != null) {
+        const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${req.oldLat},${req.oldLng}&destination=${req.newLat},${req.newLng}`;
+        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">🗺️ Compare on Map</a>`;
+        if (req.distanceMeters) locInfo += ` <span class="badge bg-secondary">${req.distanceMeters}m</span>`;
+      } else {
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${req.newLat},${req.newLng}`;
+        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">🗺️ View on Map</a>`;
+      }
+
+      let actionsHtml = "";
+      if (req.status === "pending" && canApprove) {
+        actionsHtml = `
+          <button type="button" class="btn btn-sm btn-success me-1" onclick="approveLocationReq('${req.id}')">✓ Approve</button>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectLocationReq('${req.id}')">✕ Reject</button>
+        `;
+      } else if (req.status !== "pending") {
+        actionsHtml = `<small class="text-muted">${req.decisionBy || "Manager"} • ${req.decisionAt ? req.decisionAt.slice(0, 10) : ""}</small>`;
+      }
+
+      return `
+        <tr>
+          <td><strong>${window.escapeHtml(req.targetName || "")}</strong></td>
+          <td>${window.escapeHtml(req.repName || "")}</td>
+          <td>${typeBadge}</td>
+          <td>${locInfo}</td>
+          <td>${window.escapeHtml(req.newAddress || req.reason || "-")}</td>
+          <td>${statusBadge}</td>
+          <td><small>${req.submittedAt ? req.submittedAt.slice(0, 16).replace("T", " ") : "-"}</small></td>
+          <td>${actionsHtml}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  window.approveLocationReq = function(id) {
+    if (!window.store || !window.store.accountLocationRequests) return;
+    const user = Core.getAuthUser() || {};
+    window.store.accountLocationRequests.approve(id, user);
+    if (typeof window.showToast === "function") window.showToast("Location coordinates approved and updated successfully! ✅", "success");
+    renderLocationRequestsTable();
+  };
+
+  window.rejectLocationReq = function(id) {
+    if (!window.store || !window.store.accountLocationRequests) return;
+    const reason = window.prompt("Rejection reason (optional):") || "";
+    const user = Core.getAuthUser() || {};
+    window.store.accountLocationRequests.reject(id, user, reason);
+    if (typeof window.showToast === "function") window.showToast("Location request rejected.", "info");
+    renderLocationRequestsTable();
+  };
 
   function setupModalBackdropsAndShortcuts() {
     const modalClosers = [

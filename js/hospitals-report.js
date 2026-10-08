@@ -191,10 +191,9 @@ function renderHospitalsReport() {
 
   const filtered = getScopedHospitals(true);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
+  
   if (countBadge) {
-    countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? (isAr ? "مستشفى" : "Hospital") : (isAr ? "مستشفيات" : "Hospitals")}`;
+    countBadge.textContent = `${filtered.length} ${filtered.length === 1 ? "Hospital" : "Hospitals"}`;
   }
 
   if (filtered.length === 0) {
@@ -216,13 +215,13 @@ function renderHospitalsReport() {
   grid.innerHTML = filtered
     .map((h) => {
       const areaObj = allAreas.find((a) => a.id === h.areaId);
-      const areaName = areaObj ? (areaObj.name || areaObj.id) : (h.area || (isAr ? "عام" : "General"));
+      const areaName = areaObj ? (areaObj.name || areaObj.id) : (h.area || "General");
       const effectiveRepId = areaObj ? (areaObj.repId || null) : (h.repId || null);
       const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
-      const repName = repObj ? repObj.name : (isAr ? "غير مسند" : "Unassigned");
+      const repName = repObj ? repObj.name : "Unassigned";
       const lineObj = allLines.find((l) => l.id === h.lineId);
-      const lineName = lineObj ? (isAr ? (lineObj.nameAr || lineObj.name) : lineObj.name) : "";
-      const displayName = isAr ? (h.nameAr || h.name) : (h.name || h.nameAr);
+      const lineName = lineObj ? lineObj.name : "";
+      const displayName = h.name || h.nameAr;
 
       return `
       <div class="directory-card card">
@@ -230,35 +229,35 @@ function renderHospitalsReport() {
           <div class="directory-avatar hospital">🏥</div>
           <div class="directory-header-info">
             <h4 class="directory-name">${window.escapeHtml(displayName)}</h4>
-            <span class="directory-meta-tag hospital">${isAr ? "مستشفى / مركز طبي" : "Hospital / Medical Center"}</span>
+            <span class="directory-meta-tag hospital">Hospital / Medical Center</span>
           </div>
           ${lineName ? `<span class="badge bg-secondary ms-auto" style="font-size: 0.72rem;">${window.escapeHtml(lineName)}</span>` : ""}
         </div>
         <div class="directory-card-body">
           <div class="directory-info-row">
             <span class="info-icon">📍</span>
-            <span class="info-text">${window.escapeHtml(h.address || (isAr ? "العنوان غير محدد" : "No address specified"))}</span>
+            <span class="info-text">${window.escapeHtml(h.address || "No address specified")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">🏢</span>
-            <span class="info-text">${isAr ? "المنطقة:" : "Area:"} <strong>${window.escapeHtml(areaName)}</strong></span>
+            <span class="info-text">Area: <strong>${window.escapeHtml(areaName)}</strong></span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">📞</span>
-            <span class="info-text">${window.escapeHtml(h.phone || (isAr ? "لا يوجد هاتف" : "No phone provided"))}</span>
+            <span class="info-text">${window.escapeHtml(h.phone || "No phone provided")}</span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👤</span>
-            <span class="info-text">${isAr ? "المندوب المسؤول:" : "Rep:"} <strong>${window.escapeHtml(repName)}</strong></span>
+            <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         ${isAdmin ? `
         <div class="directory-card-footer">
           <button class="btn btn-sm btn-outline-primary" onclick="openHospitalModal('${h.id}')">
-            ✏️ ${isAr ? 'تعديل' : 'Edit'}
+            ✏️ Edit
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="openDeleteHospitalModal('${h.id}')">
-            🗑️ ${isAr ? 'حذف' : 'Delete'}
+            🗑️ Delete
           </button>
         </div>
         ` : ''}
@@ -305,8 +304,7 @@ function openHospitalModal(hospId = null) {
   }
 
   const modalTitle = document.getElementById("hospitalModalTitle");
-  const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-
+  
   if (hospId) {
     const hosps = getHospitalsData();
     const hosp = hosps.find((h) => h.id === hospId);
@@ -318,14 +316,14 @@ function openHospitalModal(hospId = null) {
       if (phoneInput) phoneInput.value = hosp.phone || "";
       if (areaInput && hosp.areaId) areaInput.value = hosp.areaId;
     }
-    if (modalTitle) modalTitle.textContent = isAr ? "تعديل بيانات المستشفى" : "Edit Hospital";
+    if (modalTitle) modalTitle.textContent = "Edit Hospital";
   } else {
     if (idInput) idInput.value = "";
     if (nameInput) nameInput.value = "";
     if (nameArInput) nameArInput.value = "";
     if (addressInput) addressInput.value = "";
     if (phoneInput) phoneInput.value = "";
-    if (modalTitle) modalTitle.textContent = isAr ? "إضافة مستشفى" : "Add Hospital";
+    if (modalTitle) modalTitle.textContent = "Add Hospital";
   }
 
   modal.style.display = "flex";
@@ -372,9 +370,8 @@ function saveHospital() {
   }
 
   if (!assignedAreaId) {
-    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-    if (typeof showToast === "function") {
-      showToast(isAr ? "يرجى اختيار المنطقة التابعة." : "Please select a territory / area.", "warning");
+        if (typeof showToast === "function") {
+      showToast("Please select a territory / area.", "warning");
     }
     return;
   }

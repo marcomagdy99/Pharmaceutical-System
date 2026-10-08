@@ -142,129 +142,6 @@ const distributorTranslations = {
     override_deleted_success:
       "Pharmacy override deleted. {count} sales rows reverted.",
   },
-  ar: {
-    distributor_management: "إدارة الموزعين",
-    total_distributors: "إجمالي الموزعين",
-    add_distributor: "إضافة موزّع",
-    search_distributors: "البحث بالاسم...",
-    distributor_name: "اسم الموزّع",
-    actions: "إجراءات",
-    no_distributors_found: "لا يوجد موزعين",
-    no_distributors_desc: "أضف أول موزّع عندك عشان تبدأ تربط شيتات مبيعاته.",
-    cancel: "إلغاء",
-    save: "حفظ",
-    edit: "تعديل",
-    delete: "حذف",
-    confirm_delete: "تأكيد الحذف",
-    delete_distributor_msg: "هل أنت متأكد أنك تريد حذف هذا الموزّع؟",
-    mapping_status: "ربط الشيت",
-    mapped: "متربط",
-    not_configured: "غير مضبوط",
-    configure_mapping: "ضبط ربط الشيت",
-    edit_mapping: "تعديل الربط",
-    configure: "ضبط",
-    upload_sample_sheet: "ارفع نموذج شيت",
-    upload_sample_sheet_desc:
-      "ارفع شيت حقيقي واحد من الموزّع ده. هنقرأ بس أسماء الأعمدة -- مفيش أي بيانات مبيعات هتتسجل في الخطوة دي.",
-    assign_columns: "حدد كل عمود",
-    assign_columns_desc:
-      "لكل عمود ظاهر في الشيت، حدد بيمثل إيه. عمود المنتج والقيمة إلزاميين، الباقي اختياري.",
-    detected_column: "العمود المكتشف",
-    represents: "بيمثل",
-    upload_different_sheet: "ارفع نموذج تاني بدل ده",
-    save_mapping: "حفظ الربط",
-    role_ignore: "-- تجاهل العمود ده --",
-    role_product: "اسم المنتج / الدواء",
-    role_value: "قيمة المبيعات",
-    role_quantity: "الكمية / عدد الوحدات المسحوبة",
-    role_date: "تاريخ العملية (اختياري)",
-    role_area: "المنطقة / الإقليم (نص خام)",
-    role_pharmacy: "اسم الصيدلية / العميل",
-    role_pharmacy_code: "كود الصيدلية / العميل بالموزع",
-    supply_type: "نوع التوريد",
-    supply_type_hint:
-      'التجاري والمناقصات من نفس الموزّع (زي "ابن سينا" و"Tender ابن سينا") بيتسجلوا كموزّعين منفصلين.',
-    type_commercial: "تجاري",
-    type_tender: "مناقصات",
-    unmatched_territories: "مناطق غير مربوطة",
-    unmatched_territories_desc:
-      "نص المنطقة الخام من الشيتات المستوردة اللي لسه مش مربوط بمنطقة حقيقية. اربط كل واحدة مرة عشان مبيعاتها تتحسب على المندوب الصح.",
-    raw_territory_text: "النص الخام",
-    affected_rows: "عدد الصفوف",
-    link_to_area: "اربط بمنطقة",
-    select_area: "-- اختار المنطقة --",
-    link: "اربط",
-    linked_successfully: "اتربطت المنطقة وحسبنا المبيعات المطابقة على المندوب.",
-    select_area_first: "اختار منطقة الأول.",
-    unmatched_products: "منتجات غير مربوطة",
-    unmatched_products_desc:
-      "نص المنتج الخام من الشيتات المستوردة اللي لسه مش مربوط بمنتج حقيقي. اربط كل واحد مرة عشان مبيعاته تتحسب على الـ Line الصح.",
-    raw_product_text: "النص الخام",
-    link_to_product: "اربط بمنتج",
-    select_product: "-- اختار المنتج --",
-    product_linked_successfully:
-      "اتربط المنتج وحسبنا المبيعات المطابقة على الـ Line بتاعه.",
-    select_product_first: "اختار منتج الأول.",
-    import_history: "سجل الاستيراد",
-    import_history_desc:
-      "كل شيت اترفع لحد دلوقتي. مسح رفعة بيشيل كل صفوف المبيعات اللي اتسجلت منها -- استخدمها عشان تلغي رفعة غلط (موزّع غلط، ملف غلط...).",
-    import_month: "الشهر",
-    import_file: "الملف",
-    import_uploaded_at: "تاريخ الرفع",
-    no_imports_yet: "مفيش شيتات اترفعت لحد دلوقتي.",
-    confirm_delete_batch: "تمسح الاستيراد ده؟ هيتشال نهائيًا",
-    confirm_delete_batch_suffix: "صف مبيعات. الإجراء ده مايتراجعش.",
-    batch_deleted: "اتمسح الاستيراد.",
-    tab_distributors_mapping: "الموزعين وضبط القوالب",
-    tab_sales_import: "رفع شيتات المبيعات",
-    upload_sales_title: "رفع شيت المبيعات الشهري",
-    upload_sales_desc:
-      "اختر الموزع والشهر والسنة ثم ارفع شيت المبيعات المعتمد.",
-    select_distributor: "-- اختر الموزّع --",
-    label_month: "الشهر",
-    label_year: "السنة",
-    upload_excel_btn: "رفع شيت إكسيل",
-    active_aliases_title: "الأسماء المربوطة حالياً (Active Aliases)",
-    active_aliases_desc:
-      "عرض وإدارة أسماء المناطق والمنتجات المربوطة بالموزعين. يمكنك إلغاء أي ربط خاطئ بضغطة زر واحدة.",
-    tab_mapped_territories: "المناطق",
-    tab_mapped_products: "المنتجات",
-    mapped_to_area: "المنطقة المربوط بها",
-    mapped_to_product: "المنتج المربوط به (اللاين)",
-    unlink: "إلغاء الربط",
-    no_mapped_territories: "لا توجد مناطق مربوطة حالياً.",
-    no_mapped_products: "لا توجد منتجات مربوطة حالياً.",
-    edit_alias: "تعديل الربط",
-    edit_territory_mapping: "تعديل ربط المنطقة",
-    edit_product_mapping: "تعديل ربط المنتج",
-    currently_mapped_to: "مربوط حالياً بـ",
-    select_new_target: "اختر الهدف الجديد",
-    alias_updated_successfully: "تم تعديل الربط وإعادة توجيه المبيعات بنجاح.",
-    raw_sheet_text: "النص الخام بالشيت",
-    save_changes: "حفظ التعديلات",
-    tab_pharmacy_overrides: "استثناءات الصيدليات",
-    pharmacy_overrides_title: "استثناءات توجيه الصيدليات",
-    pharmacy_overrides_desc:
-      "توجيه صيدليات محددة لمنطقة ومندوب مخصص بغض النظر عن نص المنطقة المسجل بشيت الموزع.",
-    btn_add_pharmacy_override: "إضافة استثناء صيدلية",
-    add_pharmacy_override: "إضافة استثناء لمنطقة صيدلية",
-    edit_pharmacy_override: "تعديل استثناء منطقة صيدلية",
-    target_area: "المنطقة الموجهة إليها *",
-    col_pharmacy_code: "كود الصيدلية",
-    col_pharmacy_name: "اسم الصيدلية",
-    col_rep: "المندوب المسؤول",
-    col_effective_period: "النطاق الزمني",
-    scope_all_history: "كل المبيعات (أثر رجعي كامل)",
-    scope_from_month: "بدءاً من شهر {month} فصاعداً",
-    scope_future_only: "الشيتات القادمة فقط",
-    no_pharmacy_overrides: "لا توجد أي استثناءات مسجلة للصيدليات حتى الآن.",
-    save_override: "حفظ الاستثناء",
-    confirm_delete_override:
-      "هل أنت متأكد من حذف هذا الاستثناء؟ ستعود مبيعات الصيدلية لمناطقها الأصلية بشيت الموزع.",
-    override_saved_success: "تم حفظ الاستثناء بنجاح وتحديث {count} صف مبيعات.",
-    override_deleted_success:
-      "تم حذف الاستثناء وإعادة {count} صف مبيعات لمناطقها الأصلية.",
-  },
 };
 
 function getDistributorsList() {
@@ -305,10 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ...window.translations.en,
       ...distributorTranslations.en,
     };
-    window.translations.ar = {
-      ...window.translations.ar,
-      ...distributorTranslations.ar,
-    };
   }
 
   try { renderDistributors(); } catch (e) { console.error("renderDistributors error:", e); }
@@ -347,7 +220,6 @@ function renderDistributors(filterText = "") {
     d.name.toLowerCase().includes(filterText.toLowerCase()),
   );
 
-  const isAr = document.documentElement.dir === "rtl";
 
   if (filtered.length === 0) {
     if (emptyState) emptyState.style.display = "block";
@@ -362,23 +234,17 @@ function renderDistributors(filterText = "") {
   filtered.forEach((dist) => {
     const isTender = dist.type === "tender";
     const typeBadge = isTender
-      ? `<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.type_tender : distributorTranslations.en.type_tender}</span>`
-      : `<span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.type_commercial : distributorTranslations.en.type_commercial}</span>`;
+      ? `<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 rounded-pill">${distributorTranslations.en.type_tender}</span>`
+      : `<span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-pill">${distributorTranslations.en.type_commercial}</span>`;
     const hasMapping = !!(
       dist.columnMap &&
       dist.columnMap.product &&
       dist.columnMap.value
     );
     const mappingBadge = hasMapping
-      ? `<span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.mapped : distributorTranslations.en.mapped}</span>`
-      : `<span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1 rounded-pill">${isAr ? distributorTranslations.ar.not_configured : distributorTranslations.en.not_configured}</span>`;
-    const configureLabel = hasMapping
-      ? isAr
-        ? distributorTranslations.ar.edit_mapping
-        : distributorTranslations.en.edit_mapping
-      : isAr
-        ? distributorTranslations.ar.configure
-        : distributorTranslations.en.configure;
+      ? `<span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-pill">${distributorTranslations.en.mapped}</span>`
+      : `<span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1 rounded-pill">${distributorTranslations.en.not_configured}</span>`;
+    const configureLabel = hasMapping ? distributorTranslations.en.edit_mapping : distributorTranslations.en.configure;
 
     // Desktop table row
     const tr = document.createElement("tr");
@@ -399,10 +265,10 @@ function renderDistributors(filterText = "") {
         </div>
       </td>
       <td class="px-4 py-3 text-end area-actions-cell">
-        <button class="btn btn-sm btn-light me-1 text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.edit : distributorTranslations.en.edit}">
+        <button class="btn btn-sm btn-light me-1 text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.edit}">
           <i class="fas fa-edit"></i>
         </button>
-        <button class="btn btn-sm btn-light text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.delete : distributorTranslations.en.delete}">
+        <button class="btn btn-sm btn-light text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.delete}">
           <i class="fas fa-trash"></i>
         </button>
       </td>
@@ -425,10 +291,10 @@ function renderDistributors(filterText = "") {
           <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="openMappingModal('${window.escapeHtml(dist.id)}')">
             <i class="fas fa-table-columns me-1"></i>${window.escapeHtml(configureLabel)}
           </button>
-          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.edit : distributorTranslations.en.edit}">
+          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.edit}">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${isAr ? distributorTranslations.ar.delete : distributorTranslations.en.delete}">
+          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.delete}">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -577,12 +443,9 @@ function openMappingModal(id) {
   mappingTargetDistId = id;
   mappingDetectedHeaders = [];
   const dist = getDistributorsList().find((d) => d.id === id);
-  const isAr = document.documentElement.dir === "rtl";
   const nameEl = document.getElementById("mappingModalDistName");
   if (nameEl && dist) {
-    nameEl.textContent = isAr
-      ? `الموزّع: ${dist.name}`
-      : `Distributor: ${dist.name}`;
+    nameEl.textContent = `Distributor: ${dist.name}`;
   }
   resetMappingUpload();
   mappingModal.show();
@@ -831,8 +694,7 @@ function guessRoleFromHeader(header, assignedRoles, allHeaders = []) {
 function buildRolesTable(headers) {
   const tbody = document.getElementById("mappingRolesTableBody");
   if (!tbody) return;
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const dist = getDistributorsList().find((d) => d.id === mappingTargetDistId);
   const existingMap = (dist && dist.columnMap) || {};
 
@@ -948,8 +810,7 @@ function renderPendingAreas() {
     return;
   }
 
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const pending = window.store.distributorSales.getPendingAreaTexts();
 
   if (!pending.length) {
@@ -1032,8 +893,7 @@ function renderPendingAreas() {
 }
 
 function linkAreaAlias(distributorId, areaRaw, selectId) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const select = document.getElementById(selectId);
   const areaId = select ? select.value : "";
 
@@ -1074,8 +934,7 @@ function renderPendingProducts() {
     return;
   }
 
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const pending = window.store.distributorSales.getPendingProductTexts();
 
   const mobileContainer = document.getElementById("pendingProductsMobileCards");
@@ -1156,8 +1015,7 @@ function renderPendingProducts() {
 }
 
 function linkProductAlias(distributorId, productRaw, selectId) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const select = document.getElementById(selectId);
   const combined = select ? select.value : "";
 
@@ -1232,15 +1090,14 @@ function switchAliasTab(tabName) {
 window.switchAliasTab = switchAliasTab;
 
 function renderMappedAliases() {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const distributors = getDistributorsList();
 
   // Populate distributor filter dropdown once or keep in sync
   const distFilterSelect = document.getElementById("aliasDistributorFilter");
   if (distFilterSelect && distFilterSelect.options.length <= 1) {
     const currentVal = distFilterSelect.value;
-    distFilterSelect.innerHTML = `<option value="">${isAr ? "كل الموزعين" : "All Distributors"}</option>` +
+    distFilterSelect.innerHTML = `<option value="">All Distributors</option>` +
       distributors.map(d => `<option value="${window.escapeHtml(d.id)}">${window.escapeHtml(d.name)}</option>`).join("");
     if (currentVal) distFilterSelect.value = currentVal;
   }
@@ -1277,18 +1134,16 @@ function renderMappedAliases() {
     }
 
     if (currentAliasTab === "areas" && countLabelEl) {
-      countLabelEl.textContent = isAr
-        ? `عرض ${areaAliases.length} من إجمالي ${allAreaAliases.length}`
-        : `Showing ${areaAliases.length} of ${allAreaAliases.length}`;
+      countLabelEl.textContent = `Showing ${areaAliases.length} of ${allAreaAliases.length}`;
     }
 
     const areasMobileContainer = document.getElementById("mappedAreasMobileCards");
     if (areasMobileContainer) areasMobileContainer.replaceChildren();
 
     if (areaAliases.length === 0) {
-      areasTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allAreaAliases.length === 0 ? t.no_mapped_territories : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
+      areasTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allAreaAliases.length === 0 ? t.no_mapped_territories : "No matching results found."}</td></tr>`;
       if (areasMobileContainer) {
-        areasMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allAreaAliases.length === 0 ? t.no_mapped_territories : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</div>`;
+        areasMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allAreaAliases.length === 0 ? t.no_mapped_territories : "No matching results found."}</div>`;
       }
     } else {
       areasTbody.innerHTML = "";
@@ -1371,18 +1226,16 @@ function renderMappedAliases() {
     }
 
     if (currentAliasTab === "products" && countLabelEl) {
-      countLabelEl.textContent = isAr
-        ? `عرض ${prodAliases.length} من إجمالي ${allProdAliases.length}`
-        : `Showing ${prodAliases.length} of ${allProdAliases.length}`;
+      countLabelEl.textContent = `Showing ${prodAliases.length} of ${allProdAliases.length}`;
     }
 
     const prodsMobileContainer = document.getElementById("mappedProductsMobileCards");
     if (prodsMobileContainer) prodsMobileContainer.replaceChildren();
 
     if (prodAliases.length === 0) {
-      prodsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allProdAliases.length === 0 ? t.no_mapped_products : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
+      prodsTbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${allProdAliases.length === 0 ? t.no_mapped_products : "No matching results found."}</td></tr>`;
       if (prodsMobileContainer) {
-        prodsMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allProdAliases.length === 0 ? t.no_mapped_products : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</div>`;
+        prodsMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allProdAliases.length === 0 ? t.no_mapped_products : "No matching results found."}</div>`;
       }
     } else {
       prodsTbody.innerHTML = "";
@@ -1461,18 +1314,16 @@ function renderMappedAliases() {
     }
 
     if (currentAliasTab === "pharmacies" && countLabelEl) {
-      countLabelEl.textContent = isAr
-        ? `عرض ${overrides.length} من إجمالي ${allOverrides.length}`
-        : `Showing ${overrides.length} of ${allOverrides.length}`;
+      countLabelEl.textContent = `Showing ${overrides.length} of ${allOverrides.length}`;
     }
 
     const pharmsMobileContainer = document.getElementById("mappedPharmaciesMobileCards");
     if (pharmsMobileContainer) pharmsMobileContainer.replaceChildren();
 
     if (overrides.length === 0) {
-      pharmsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">${allOverrides.length === 0 ? t.no_pharmacy_overrides : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</td></tr>`;
+      pharmsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">${allOverrides.length === 0 ? t.no_pharmacy_overrides : "No matching results found."}</td></tr>`;
       if (pharmsMobileContainer) {
-        pharmsMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allOverrides.length === 0 ? t.no_pharmacy_overrides : (isAr ? "لا توجد نتائج مطابقة للبحث." : "No matching results found.")}</div>`;
+        pharmsMobileContainer.innerHTML = `<div class="text-center text-muted py-4 small">${allOverrides.length === 0 ? t.no_pharmacy_overrides : "No matching results found."}</div>`;
       }
     } else {
       pharmsTbody.innerHTML = "";
@@ -1485,7 +1336,7 @@ function renderMappedAliases() {
         const area = areas.find((a) => a.id === entry.areaId);
         const rep =
           area && area.repId ? users.find((u) => u.id === area.repId) : null;
-        const povrTx = getPovrTexts(isAr);
+        const povrTx = getPovrTexts();
         const entryMode = entry.mode || "single";
         let areaCellHtml;
         let repCellHtml;
@@ -1500,7 +1351,7 @@ function renderMappedAliases() {
             .map((sp) => {
               const a = areas.find((x) => x.id === sp.areaId);
               const r = a && a.repId ? users.find((u) => u.id === a.repId) : null;
-              return `<div>${window.escapeHtml(r ? r.name : isAr ? "غير معين" : "Unassigned")}</div>`;
+              return `<div>${window.escapeHtml(r ? r.name : "Unassigned")}</div>`;
             })
             .join("");
         } else if (entryMode === "bulk") {
@@ -1510,7 +1361,7 @@ function renderMappedAliases() {
           repCellHtml = "—";
         } else {
           areaCellHtml = `<i class="fas fa-map-marker-alt me-1 text-danger"></i>${window.escapeHtml(area ? area.name : entry.areaId || "—")}`;
-          repCellHtml = window.escapeHtml(rep ? rep.name : isAr ? "غير معين" : "Unassigned");
+          repCellHtml = window.escapeHtml(rep ? rep.name : "Unassigned");
         }
 
         let scopeLabel = "";
@@ -1596,62 +1447,36 @@ function getPharmacyOverrideModal() {
   return pharmacyOverrideModalInstance;
 }
 
-// Texts for the split / all-bulk modes of the Pharmacy Override modal
-function getPovrTexts(isAr) {
-  return isAr
-    ? {
-        mode_label: "طريقة التوزيع",
-        mode_single: "منطقة واحدة",
-        mode_split: "تقسيم بالنسبة",
-        mode_bulk: "الكل بلك",
-        mode_bulk_badge: "الكل بلك (حسب أوزان البريكات)",
-        split_label: "قسّم مسحوبات الصيدلية على عدة مناطق (المجموع لازم 100%)",
-        split_add: "إضافة منطقة",
-        split_area: "اختر المنطقة",
-        split_remove: "حذف",
-        split_total: "المجموع",
-        bulk_line: "الخط *",
-        bulk_select_line: "اختر الخط",
-        bulk_hint: "كل مسحوبات الصيدلية تُعتبر بلك وتتوزع على البريكات حسب أوزان البريكات لكل منتج (من صفحة المنتجات). المنتجات بدون أوزان تظل Private.",
-        err_split_min: "لازم تختار منطقتين على الأقل.",
-        err_split_area: "اختر المنطقة في كل صف.",
-        err_split_dup: "لا يمكن تكرار نفس المنطقة.",
-        err_split_pct: "كل نسبة لازم تكون أكبر من 0.",
-        err_split_sum: "مجموع النسب لازم يساوي 100%.",
-        err_split_line: "كل المناطق لازم تكون من نفس الخط.",
-        err_bulk_line: "يرجى اختيار الخط.",
-        warn_no_weights: "تنبيه: {n} مجموعة منتجات بدون أوزان بريكات، فظلت Private. حدد الأوزان من صفحة المنتجات.",
-      }
-    : {
-        mode_label: "Distribution Mode",
-        mode_single: "Single area",
-        mode_split: "Split by %",
-        mode_bulk: "All as Bulk",
-        mode_bulk_badge: "All Bulk (by brick weights)",
-        split_label: "Split this pharmacy's sales across areas (total must be 100%)",
-        split_add: "Add area",
-        split_area: "Select area",
-        split_remove: "Remove",
-        split_total: "Total",
-        bulk_line: "Product Line *",
-        bulk_select_line: "Select line",
-        bulk_hint: "All sales of this pharmacy are treated as Bulk and spread across bricks by each product's Brick Weights (Products page). Products without weights stay Private.",
-        err_split_min: "Select at least two areas.",
-        err_split_area: "Select an area in every row.",
-        err_split_dup: "The same area cannot be used twice.",
-        err_split_pct: "Every percentage must be greater than 0.",
-        err_split_sum: "Percentages must add up to 100%.",
-        err_split_line: "All areas must belong to the same line.",
-        err_bulk_line: "Please select a line.",
-        warn_no_weights: "Note: {n} product group(s) have no brick weights and stayed Private. Set weights in the Products page.",
-      };
+function getPovrTexts() {
+  return {
+    mode_label: "Distribution Mode",
+    mode_single: "Single area",
+    mode_split: "Split by %",
+    mode_bulk: "All as Bulk",
+    mode_bulk_badge: "All Bulk (by brick weights)",
+    split_label: "Split this pharmacy's sales across areas (total must be 100%)",
+    split_add: "Add area",
+    split_area: "Select area",
+    split_remove: "Remove",
+    split_total: "Total",
+    bulk_line: "Product Line *",
+    bulk_select_line: "Select line",
+    bulk_hint: "All sales of this pharmacy are treated as Bulk and spread across bricks by each product's Brick Weights (Products page). Products without weights stay Private.",
+    err_split_min: "Select at least two areas.",
+    err_split_area: "Select an area in every row.",
+    err_split_dup: "The same area cannot be used twice.",
+    err_split_pct: "Every percentage must be greater than 0.",
+    err_split_sum: "Percentages must add up to 100%.",
+    err_split_line: "All areas must belong to the same line.",
+    err_bulk_line: "Please select a line.",
+    warn_no_weights: "Note: {n} product group(s) have no brick weights and stayed Private. Set weights in the Products page.",
+  };
 }
 
 let povrAreaOptionsHtml = "";
 
 function applyPovrLabels() {
-  const isAr = document.documentElement.dir === "rtl";
-  const tx = getPovrTexts(isAr);
+  const tx = getPovrTexts();
   const set = (id, v) => {
     const el = document.getElementById(id);
     if (el) el.textContent = v;
@@ -1692,8 +1517,7 @@ function togglePovrMode() {
 window.togglePovrMode = togglePovrMode;
 
 function addPovrSplitRow(areaId = "", percent = "") {
-  const isAr = document.documentElement.dir === "rtl";
-  const tx = getPovrTexts(isAr);
+  const tx = getPovrTexts();
   const wrap = document.getElementById("povrSplitRows");
   if (!wrap) return;
   const row = document.createElement("div");
@@ -1735,8 +1559,7 @@ function readPovrSplitRows() {
 }
 
 function updatePovrSplitTotal() {
-  const isAr = document.documentElement.dir === "rtl";
-  const tx = getPovrTexts(isAr);
+  const tx = getPovrTexts();
   const total = readPovrSplitRows().reduce((a, r) => a + (isNaN(r.percent) ? 0 : r.percent), 0);
   const rounded = Math.round(total * 100) / 100;
   const el = document.getElementById("povrSplitTotal");
@@ -1756,8 +1579,7 @@ function togglePovrMonthPicker() {
 window.togglePovrMonthPicker = togglePovrMonthPicker;
 
 function openPharmacyOverrideModal(editId = null) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const modal = getPharmacyOverrideModal();
   if (!modal) return;
 
@@ -1809,7 +1631,7 @@ function openPharmacyOverrideModal(editId = null) {
   // Split rows share the same area options; bulk mode needs a line selector
   povrAreaOptionsHtml = areaSelect.innerHTML.replace(/^<option value="">[^<]*<\/option>/, "");
   const bulkLineSelect = document.getElementById("povrBulkLineSelect");
-  const povrTx = getPovrTexts(isAr);
+  const povrTx = getPovrTexts();
   if (bulkLineSelect) {
     bulkLineSelect.innerHTML =
       `<option value="">${window.escapeHtml(povrTx.bulk_select_line)}</option>` +
@@ -1881,8 +1703,7 @@ function openPharmacyOverrideModal(editId = null) {
 window.openPharmacyOverrideModal = openPharmacyOverrideModal;
 
 function savePharmacyOverride() {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
 
   const editId = document.getElementById("povrEditId")?.value;
   const distributorId = document.getElementById("povrDistributorSelect")?.value;
@@ -1902,7 +1723,7 @@ function savePharmacyOverride() {
   if (!distributorId) {
     if (typeof showToast === "function")
       showToast(
-        isAr ? "يرجى اختيار الموزع أولاً." : "Please select a distributor.",
+        "Please select a distributor.",
         "warning",
       );
     return;
@@ -1910,14 +1731,12 @@ function savePharmacyOverride() {
   if (!pharmacyCode && !pharmacyName) {
     if (typeof showToast === "function")
       showToast(
-        isAr
-          ? "يرجى إدخال كود الصيدلية أو اسمها."
-          : "Please enter pharmacy code or name.",
+        "Please enter pharmacy code or name.",
         "warning",
       );
     return;
   }
-  const povrTx = getPovrTexts(isAr);
+  const povrTx = getPovrTexts();
   const mode = getPovrMode();
   const warn = (m) => {
     if (typeof showToast === "function") showToast(m, "warning");
@@ -1926,7 +1745,7 @@ function savePharmacyOverride() {
   let bulkLineId = "";
   if (mode === "single") {
     if (!areaId) {
-      warn(isAr ? "يرجى اختيار المنطقة المستهدفة." : "Please select target area.");
+      warn("Please select target area.");
       return;
     }
   } else if (mode === "split") {
@@ -1952,9 +1771,7 @@ function savePharmacyOverride() {
   if (effectiveScope === "from_month" && !fromMonth) {
     if (typeof showToast === "function")
       showToast(
-        isAr
-          ? "يرجى تحديد شهر بداية التطبيق."
-          : "Please specify the starting month.",
+        "Please specify the starting month.",
         "warning",
       );
     return;
@@ -2010,8 +1827,7 @@ function savePharmacyOverride() {
 window.savePharmacyOverride = savePharmacyOverride;
 
 function deletePharmacyOverride(id) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   if (!confirm(t.confirm_delete_override)) return;
 
   if (!window.store || !window.store.pharmacyOverrides) return;
@@ -2038,10 +1854,7 @@ function deletePharmacyOverride(id) {
 window.deletePharmacyOverride = deletePharmacyOverride;
 
 function unlinkAreaAlias(areaId, distributorId, rawText) {
-  const isAr = document.documentElement.dir === "rtl";
-  const confirmMsg = isAr
-    ? `هل أنت متأكد من إلغاء ربط "${rawText}"؟ ستعود المنطقة للمناطق المعلقة وسيتم إلغاء نسب المبيعات المرتبطة بها لحين إعادة ربطها.`
-    : `Are you sure you want to unlink "${rawText}"? It will return to pending and its sales rows will be unlinked until re-mapped.`;
+  const confirmMsg = `Are you sure you want to unlink "${rawText}"? It will return to pending and its sales rows will be unlinked until re-mapped.`;
   if (!confirm(confirmMsg)) return;
 
   if (window.store && window.store.areas) {
@@ -2049,18 +1862,13 @@ function unlinkAreaAlias(areaId, distributorId, rawText) {
   }
   renderPendingAreas();
   renderMappedAliases();
-  const successMsg = isAr
-    ? `تم إلغاء ربط "${rawText}" بنجاح.`
-    : `Alias "${rawText}" unlinked successfully.`;
+  const successMsg = `Alias "${rawText}" unlinked successfully.`;
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 window.unlinkAreaAlias = unlinkAreaAlias;
 
 function unlinkProductAlias(lineId, productId, distributorId, rawText) {
-  const isAr = document.documentElement.dir === "rtl";
-  const confirmMsg = isAr
-    ? `هل أنت متأكد من إلغاء ربط الصنف "${rawText}"؟ سيعود للأصناف المعلقة وسيتم إلغاء نسب مبيعاته للخط الإنتاجي.`
-    : `Are you sure you want to unlink product "${rawText}"? It will return to pending and sales rows will be unlinked.`;
+  const confirmMsg = `Are you sure you want to unlink product "${rawText}"? It will return to pending and sales rows will be unlinked.`;
   if (!confirm(confirmMsg)) return;
 
   if (window.store && window.store.productLines) {
@@ -2073,9 +1881,7 @@ function unlinkProductAlias(lineId, productId, distributorId, rawText) {
   }
   renderPendingProducts();
   renderMappedAliases();
-  const successMsg = isAr
-    ? `تم إلغاء ربط الصنف "${rawText}" بنجاح.`
-    : `Product alias "${rawText}" unlinked successfully.`;
+  const successMsg = `Product alias "${rawText}" unlinked successfully.`;
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 window.unlinkProductAlias = unlinkProductAlias;
@@ -2096,8 +1902,7 @@ function getEditAliasModal() {
 }
 
 function openEditAreaAlias(areaId, distributorId, rawText) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const dist =
     (window.store && window.store.distributors
       ? window.store.distributors.getById(distributorId)
@@ -2155,8 +1960,7 @@ function openEditAreaAlias(areaId, distributorId, rawText) {
 }
 
 function openEditProductAlias(lineId, productId, distributorId, rawText) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const dist =
     (window.store && window.store.distributors
       ? window.store.distributors.getById(distributorId)
@@ -2213,8 +2017,7 @@ function openEditProductAlias(lineId, productId, distributorId, rawText) {
 }
 
 function saveEditedAlias() {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const type = document.getElementById("editAliasType").value;
   const distId = document.getElementById("editAliasDistId").value;
   const rawText = document.getElementById("editAliasRawText").value;
@@ -2316,7 +2119,6 @@ function renderImportBatches() {
   if (!tbody) return;
   if (!window.store || !window.store.importBatches) return;
 
-  const isAr = document.documentElement.dir === "rtl";
   const batches = window.store.importBatches
     .getAll()
     .slice()
@@ -2327,7 +2129,7 @@ function renderImportBatches() {
   const distFilterSelect = document.getElementById("historyDistributorFilter");
   if (distFilterSelect && distFilterSelect.options.length <= 1) {
     const currentVal = distFilterSelect.value;
-    distFilterSelect.innerHTML = `<option value="">${isAr ? "كل الموزعين" : "All Distributors"}</option>` +
+    distFilterSelect.innerHTML = `<option value="">All Distributors</option>` +
       distributors.map(d => `<option value="${window.escapeHtml(d.id)}">${window.escapeHtml(d.name)}</option>`).join("");
     if (currentVal) distFilterSelect.value = currentVal;
   }
@@ -2353,9 +2155,7 @@ function renderImportBatches() {
   }
 
   if (countLabelEl) {
-    countLabelEl.textContent = isAr
-      ? `عرض ${filteredBatches.length} من إجمالي ${batches.length}`
-      : `Showing ${filteredBatches.length} of ${batches.length}`;
+    countLabelEl.textContent = `Showing ${filteredBatches.length} of ${batches.length}`;
   }
 
   tbody.replaceChildren();
@@ -2363,7 +2163,7 @@ function renderImportBatches() {
   if (!filteredBatches.length) {
     if (emptyMsg) {
       emptyMsg.style.display = "block";
-      emptyMsg.textContent = batches.length === 0 ? (isAr ? "لم يتم رفع أي شيتات بعد." : "No sheets uploaded yet.") : (isAr ? "لا توجد شيتات مطابقة للبحث." : "No matching import sheets found.");
+      emptyMsg.textContent = batches.length === 0 ? "No sheets uploaded yet." : "No matching import sheets found.";
     }
     return;
   }
@@ -2372,7 +2172,7 @@ function renderImportBatches() {
   filteredBatches.forEach((b) => {
     const dist = distributors.find((d) => d.id === b.distributorId);
     const uploadedLabel = b.uploadedAt
-      ? new Date(b.uploadedAt).toLocaleString(isAr ? "ar-EG" : "en-US")
+      ? new Date(b.uploadedAt).toLocaleString("en-US")
       : "";
 
     const tr = document.createElement("tr");
@@ -2393,8 +2193,7 @@ function renderImportBatches() {
 }
 
 function deleteImportBatch(batchId) {
-  const isAr = document.documentElement.dir === "rtl";
-  const t = isAr ? distributorTranslations.ar : distributorTranslations.en;
+  const t = distributorTranslations.en;
   const batch =
     window.store && window.store.importBatches
       ? window.store.importBatches.getById(batchId)
@@ -2458,23 +2257,16 @@ function populateUploadControls() {
   const distSelect = document.getElementById("uploadDistributorSelect");
   const monthSelect = document.getElementById("uploadMonthSelect");
   const yearSelect = document.getElementById("uploadYearSelect");
-  const isAr = document.documentElement.dir === "rtl";
 
   if (distSelect) {
     const prevVal = distSelect.value;
-    distSelect.innerHTML = `<option value="">${isAr ? "-- اختر الموزّع --" : "-- Select Distributor --"}</option>`;
+    distSelect.innerHTML = `<option value="">-- Select Distributor --</option>`;
     const distributors = getDistributorsList();
     distributors.forEach((d) => {
       const opt = document.createElement("option");
       opt.value = d.id;
       const isMapped = d.columnMap && d.columnMap.product && d.columnMap.value;
-      const mapLabel = isMapped
-        ? isAr
-          ? " (مربوط)"
-          : " (Mapped)"
-        : isAr
-          ? " (غير مربوط)"
-          : " (Unmapped)";
+      const mapLabel = isMapped ? " (Mapped)" : " (Unmapped)";
       opt.textContent = `${d.name}${mapLabel}`;
       distSelect.appendChild(opt);
     });
@@ -2515,9 +2307,7 @@ function populateUploadControls() {
       const val = String(idx + 1).padStart(2, "0");
       const opt = document.createElement("option");
       opt.value = val;
-      opt.textContent = isAr
-        ? `${val} - ${monthNamesAr[idx]}`
-        : `${val} - ${m}`;
+      opt.textContent = `${val} - ${m}`;
       if (val === currentMonth) opt.selected = true;
       monthSelect.appendChild(opt);
     });
@@ -2542,12 +2332,11 @@ function populateUploadControls() {
 function triggerExcelUpload() {
   const distSelect = document.getElementById("uploadDistributorSelect");
   const distId = distSelect ? distSelect.value : "";
-  const isAr = document.documentElement.dir === "rtl";
 
   if (!distId) {
     if (typeof showToast === "function") {
       showToast(
-        isAr ? "اختر الموزّع الأول." : "Select a distributor first.",
+        "Select a distributor first.",
         "warning",
       );
     }
@@ -2563,9 +2352,7 @@ function triggerExcelUpload() {
   if (!hasMapping) {
     if (typeof showToast === "function") {
       showToast(
-        isAr
-          ? "الموزّع ده لسه مفيهوش ربط أعمدة. اضبطه من تبويب قائمة الموزعين الأول."
-          : "This distributor's sheet columns aren't mapped yet. Configure it from the Distributors tab first.",
+        "This distributor's sheet columns aren't mapped yet. Configure it from the Distributors tab first.",
         "error",
       );
     }
@@ -2579,7 +2366,6 @@ function triggerExcelUpload() {
 function handleExcelUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const isAr = document.documentElement.dir === "rtl";
 
   const distSelect = document.getElementById("uploadDistributorSelect");
   const monthSelect = document.getElementById("uploadMonthSelect");
@@ -2602,9 +2388,7 @@ function handleExcelUpload(e) {
   ) {
     if (typeof showToast === "function") {
       showToast(
-        isAr
-          ? "محتاج تختار الموزّع والشهر والسنة الأول."
-          : "Select a distributor, month, and year first.",
+        "Select a distributor, month, and year first.",
         "warning",
       );
     }
@@ -2615,9 +2399,7 @@ function handleExcelUpload(e) {
   if (typeof XLSX === "undefined") {
     if (typeof showToast === "function") {
       showToast(
-        isAr
-          ? "مكتبة قراءة الإكسيل غير محملة."
-          : "Excel reader library failed to load.",
+        "Excel reader library failed to load.",
         "error",
       );
     }
@@ -2636,9 +2418,7 @@ function handleExcelUpload(e) {
     const uploadedDate = existingBatch.uploadedAt
       ? new Date(existingBatch.uploadedAt).toLocaleString()
       : "";
-    const confirmMsg = isAr
-      ? `اتعملت رفعة قبل كده لـ "${dist.name}" لشهر ${monthKey} (${existingBatch.rowCount} صف${uploadedDate ? "، بتاريخ " + uploadedDate : ""}). لو كملت، الرفعة القديمة هتتمسح ويتحل محلها الملف الجديد بالكامل. عايز تكمل؟`
-      : `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ", on " + uploadedDate : ""}). Continuing will replace that previous upload entirely. Continue?`;
+    const confirmMsg = `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ", on " + uploadedDate : ""}). Continuing will replace that previous upload entirely. Continue?`;
     if (!confirm(confirmMsg)) {
       e.target.value = "";
       return;
@@ -2648,9 +2428,7 @@ function handleExcelUpload(e) {
 
   if (typeof showToast === "function") {
     showToast(
-      isAr
-        ? `جاري معالجة الشيت: ${file.name}...`
-        : `Processing file: ${file.name}...`,
+      `Processing file: ${file.name}...`,
       "info",
     );
   }
@@ -2694,9 +2472,7 @@ function handleExcelUpload(e) {
       const totalRows = rows.length;
       if (typeof window.openExcelImportProgress === "function") {
         progress = window.openExcelImportProgress({
-          title: isAr
-            ? `جاري استيراد مبيعات: ${dist.name}`
-            : `Importing Sales: ${dist.name}`,
+          title: `Importing Sales: ${dist.name}`,
           fileName: file.name,
           totalRows: totalRows,
         });
@@ -2805,7 +2581,7 @@ function handleExcelUpload(e) {
         progress.update(
           totalRows,
           totalRows,
-          isAr ? "جاري حفظ وتخزين البيانات..." : "Saving imported records...",
+          "Saving imported records...",
         );
       }
 
@@ -2837,14 +2613,8 @@ function handleExcelUpload(e) {
       const panel = document.getElementById("salesImportResultsPanel");
       if (panel) {
         panel.style.display = "block";
-        const replacedNote = replacingPreviousBatch
-          ? isAr
-            ? " (استبدلت رفعة سابقة لنفس الشهر/الموزّع)"
-            : " (replaced a previous upload for this month/distributor)"
-          : "";
-        panel.innerHTML = isAr
-          ? `✅ تم تسجيل <strong>${imported.length.toLocaleString()}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب). صافي القيمة: <strong>${totalValue.toLocaleString()}</strong>. تم تجاهل ${skippedInvalid} صف ببيانات غير مكتملة.<br><span class="fw-bold">ملاحظة:</span> يمكنك ربط المناطق والمنتجات غير المربوطة من الجداول بالأسفل مباشرة.`
-          : `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
+        const replacedNote = replacingPreviousBatch ? " (replaced a previous upload for this month/distributor)" : "";
+        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
       }
 
       renderImportBatches();
@@ -2853,29 +2623,18 @@ function handleExcelUpload(e) {
       renderMappedAliases();
 
       if (progress) {
-        progress.finish(
-          isAr
-            ? `تم استيراد ${imported.length.toLocaleString()} سجل بنجاح!`
-            : `Successfully imported ${imported.length.toLocaleString()} rows!`,
-        );
+        progress.finish(`Successfully imported ${imported.length.toLocaleString()} rows!`);
       }
 
       if (typeof showToast === "function") {
-        showToast(
-          isAr
-            ? `تم استيراد ${imported.length} صف بنجاح.`
-            : `Successfully imported ${imported.length} rows.`,
-          "success",
-        );
+        showToast(`Successfully imported ${imported.length} rows.`, "success");
       }
     } catch (err) {
       if (progress) progress.close();
       console.error("Error parsing distributor sheet:", err);
       if (typeof showToast === "function") {
         showToast(
-          isAr
-            ? "تعذرت قراءة الملف. تأكد إنه بنفس شكل الشيت اللي اتعمل عليه الربط."
-            : "Could not read this file. Make sure it matches the sheet layout the mapping was configured from.",
+          "Could not read this file. Make sure it matches the sheet layout the mapping was configured from.",
           "error",
         );
       }

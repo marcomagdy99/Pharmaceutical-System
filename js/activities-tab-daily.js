@@ -105,14 +105,19 @@
     const companySettings = (window.store && window.store.companySettings)
       ? window.store.companySettings.get()
       : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
-    const isThursdayWeekend = !!companySettings.isThursdayWeekend;
+    const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? "thursday" : "none");
+    const secMode = companySettings.secondaryWeekendMode || "full_day";
 
     for (let i = 0; i < 7; i++) {
       const dayDate = Core.addDays(weekStart, i);
       const dayStr = Core.formatDate(dayDate);
       const isSelected = dayStr === curDateStr;
-      const dayKey = Core.WEEK_DAY_KEYS[i];
-      const isDayOff = i === 6 || (i === 5 && isThursdayWeekend);
+      const dayKey = Core.WEEK_DAY_KEYS[i]; // 0: sat, 1: sun, ..., 5: thu, 6: fri
+      
+      const isFriday = i === 6;
+      const isSecondary = (secDay === "saturday" && i === 0) || (secDay === "thursday" && i === 5);
+      const isDayOff = isFriday || (isSecondary && secMode === "full_day");
+      const isHalfDayOff = isSecondary && secMode === "pm_only";
       const acts = Core.StoreAdapter.getActivities(userId, dayStr) || {};
 
       const hasAm = !!(acts[Core.PERIODS.AM] && acts[Core.PERIODS.AM].type);

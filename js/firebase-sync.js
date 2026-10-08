@@ -42,8 +42,30 @@
     }
   }
 
+  function hasToastBeenShown(notifId) {
+    try {
+      const raw = sessionStorage.getItem("pharma_shown_notif_toasts");
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.includes(String(notifId))) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function markToastShown(notifId) {
+    try {
+      const raw = sessionStorage.getItem("pharma_shown_notif_toasts");
+      const arr = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(arr) && !arr.includes(String(notifId))) {
+        arr.push(String(notifId));
+        sessionStorage.setItem("pharma_shown_notif_toasts", JSON.stringify(arr));
+      }
+    } catch (e) {}
+  }
+
   // Deep entity merger from Cloud into local window.DEMO_DATA
-  function mergeCloudIntoLocal(cloudData) {
+  function mergeCloudIntoLocal(cloudData, isInitialSync = false) {
     if (!window.DEMO_DATA || !cloudData) return false;
     let hasChanges = false;
 
@@ -63,7 +85,8 @@
       "distributors",
       "territoryHistory",
       "importBatches",
-      "pharmacyOverrides"
+      "pharmacyOverrides",
+      "notifications"
     ];
 
     arrayCollections.forEach((collKey) => {
@@ -87,9 +110,15 @@
         window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => !isMock(it));
         const localList = window.DEMO_DATA[collKey];
 
+        const newIncomingNotifs = [];
+
         // Merge or append real items by ID (or email for users)
         cloudData[collKey].forEach((cloudItem) => {
           if (!cloudItem || isMock(cloudItem)) return;
+          if (collKey === "notifications") {
+            if (cloudItem.titleEn) cloudItem.title = cloudItem.titleEn;
+            if (cloudItem.messageEn) cloudItem.message = cloudItem.messageEn;
+          }
           const itemId = cloudItem.id;
           if (itemId) {
             const localIdx = localList.findIndex((it) => {
@@ -112,9 +141,30 @@
             } else {
               localList.push(cloudItem);
               hasChanges = true;
+              if (collKey === "notifications") {
+                newIncomingNotifs.push(cloudItem);
+              }
             }
           }
         });
+
+        // Ensure notifications are sorted newest first
+        if (collKey === "notifications" && Array.isArray(window.DEMO_DATA.notifications)) {
+          window.DEMO_DATA.notifications.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+          // Toast prompt strictly for live newly arrived notifications (never on initial page load / navigation)
+          const authUser = (window.checkAuth ? window.checkAuth() : null) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
+          const currentUid = authUser ? authUser.id : null;
+          if (!isInitialSync && currentUid && newIncomingNotifs.length > 0 && typeof window.showToast === "function") {
+            newIncomingNotifs.forEach((n) => {
+              const nId = String(n.id || "");
+              if ((n.userId === currentUid || n.userId === "all") && !n.read && !hasToastBeenShown(nId)) {
+                markToastShown(nId);
+                window.showToast(`🔔 ${n.title || n.message || "New Notification"}`, "info");
+              }
+            });
+          }
+        }
 
         // Ensure users list is strictly unique by email and ID
         if (collKey === "users") {
@@ -313,6 +363,15 @@
       }
     }
 
+    // 6d. Realtime Notification UI
+    if (typeof window.updateWorkflowNotifUI === "function") {
+      try {
+        window.updateWorkflowNotifUI();
+      } catch (e) {
+        console.warn("[FirebaseSync] updateWorkflowNotifUI error:", e);
+      }
+    }
+
     // 7. General event bus
     document.dispatchEvent(new CustomEvent("pharma:storage:synced", {
       detail: { key: "pharma_master_data", source: "cloud" }
@@ -432,6 +491,7 @@
   function startCloudListener() {
     if (isListening || !db) return;
     isListening = true;
+    let isInitialSnapshot = true;
 
     try {
       db.collection("app_state").doc("master_data").onSnapshot((snapshot) => {
@@ -459,7 +519,8 @@
         try {
           const parsed = typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload;
           if (parsed && typeof parsed === "object") {
-            const hasNewChanges = mergeCloudIntoLocal(parsed);
+            const hasNewChanges = mergeCloudIntoLocal(parsed, isInitialSnapshot);
+            isInitialSnapshot = false;
 
             if (hasNewChanges) {
               console.log("[FirebaseSync] Received realtime updates from Cloud Firestore.");
@@ -492,19 +553,18 @@
     const el = document.getElementById("cloudSyncStatus");
     if (!el) return;
 
-    const isAr = window.getCurrentLang && window.getCurrentLang() === "ar";
     if (state === "syncing") {
       el.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 4px; color: #0d6efd; font-size: 0.75rem; font-weight: 600;">
         <span class="spinner-border spinner-border-sm" style="width: 10px; height: 10px;" role="status"></span>
-        ${isAr ? "مزامنة..." : "Syncing..."}
+        Syncing...
       </span>`;
     } else if (state === "synced") {
       el.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 4px; color: #10b981; font-size: 0.75rem; font-weight: 600;" title="Realtime Cloud Sync Active">
-        <span style="font-size: 0.7rem;">●</span> ${isAr ? "سحابي مباشر" : "Cloud Live"}
+        <span style="font-size: 0.7rem;">●</span> Cloud Live
       </span>`;
     } else if (state === "error" || state === "offline") {
       el.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 4px; color: #f59e0b; font-size: 0.75rem; font-weight: 600;" title="Offline Mode Active">
-        <span style="font-size: 0.7rem;">○</span> ${isAr ? "محلي (أوفلاين)" : "Local Offline"}
+        <span style="font-size: 0.7rem;">○</span> Local Offline
       </span>`;
     }
   }
@@ -515,12 +575,7 @@
       db = initFirestore();
       if (!db) {
         if (isManual && typeof window.showToast === "function") {
-          window.showToast(
-            window.getCurrentLang && window.getCurrentLang() === "ar"
-              ? "تعذر الاتصال بـ Firebase Firestore. تحقق من اتصال الإنترنت."
-              : "Unable to connect to Firebase. Check internet connection.",
-            "error"
-          );
+          window.showToast("Unable to connect to Firebase. Check internet connection.", "error");
         }
         return;
       }
@@ -532,12 +587,7 @@
     }
 
     if (isManual && typeof window.showToast === "function") {
-      window.showToast(
-        window.getCurrentLang && window.getCurrentLang() === "ar"
-          ? "جاري المزامنة مع السحابة..."
-          : "Syncing with cloud...",
-        "info"
-      );
+      window.showToast("Syncing with cloud...", "info");
     }
 
     try {
@@ -548,7 +598,7 @@
         if (data && data.payload) {
           const parsed = typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload;
           if (parsed && typeof parsed === "object") {
-            const hasNewChanges = mergeCloudIntoLocal(parsed);
+            const hasNewChanges = mergeCloudIntoLocal(parsed, true);
             lastCloudTimestamp = data.updatedAtMs || Date.now();
 
             // Always persist and notify if manual or if has new changes
@@ -565,23 +615,13 @@
 
             if (isManual && typeof window.showToast === "function") {
               const count = window.DEMO_DATA && window.DEMO_DATA.users ? window.DEMO_DATA.users.length : 0;
-              window.showToast(
-                window.getCurrentLang && window.getCurrentLang() === "ar"
-                  ? `تمت المزامنة بنجاح! إجمالي المستخدمين: ${count}`
-                  : `Synced successfully! Total users: ${count}`,
-                "success"
-              );
+              window.showToast(`Synced successfully! Total users: ${count}`, "success");
             }
           }
         }
       } else {
         if (isManual && typeof window.showToast === "function") {
-          window.showToast(
-            window.getCurrentLang && window.getCurrentLang() === "ar"
-              ? "لم يتم العثور على بيانات سحابية بعد."
-              : "No cloud data found yet.",
-            "warning"
-          );
+          window.showToast("No cloud data found yet.", "warning");
         }
       }
 
@@ -624,12 +664,7 @@
       console.warn("[FirebaseSync] Fetch error:", err);
       updateSyncStatusUI("offline");
       if (isManual && typeof window.showToast === "function") {
-        window.showToast(
-          window.getCurrentLang && window.getCurrentLang() === "ar"
-            ? "حدث خطأ أثناء المزامنة السحابية."
-            : "Error occurred during cloud sync.",
-          "error"
-        );
+        window.showToast("Error occurred during cloud sync.", "error");
       }
     } finally {
       if (syncBtnIcon) {

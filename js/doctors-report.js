@@ -16,18 +16,17 @@ function populateDoctorSpecialtyFilter() {
 
   const currentVal = selectEl.value || "all";
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
+  
   const allSpecs =
     (window.store && window.store.specialties
       ? window.store.specialties.getAll()
       : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
 
-  const allLabel = isAr ? "جميع التخصصات" : "All Specialties";
+  const allLabel = "All Specialties";
 
   let html = `<option value="all" data-i18n="allSpecialties">${allLabel}</option>`;
   allSpecs.forEach((s) => {
-    const label = isAr ? (s.nameAr ? `${s.nameAr} (${s.name})` : s.name) : s.name;
+    const label = s.name;
     const isSelected = (currentVal === s.name || currentVal === s.id) ? " selected" : "";
     html += `<option value="${window.escapeHtml(s.name)}" data-id="${window.escapeHtml(s.id)}"${isSelected}>${window.escapeHtml(label)}</option>`;
   });
@@ -36,6 +35,17 @@ function populateDoctorSpecialtyFilter() {
   if (currentVal && currentVal !== "all") {
     selectEl.value = currentVal;
   }
+}
+
+function sortBilingualDoctors(a, b) {
+  if (typeof window !== "undefined" && typeof window.sortBilingualByName === "function") {
+    return window.sortBilingualByName(a, b);
+  }
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const nameA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
+  const nameB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
+  const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
+  return nameA.localeCompare(nameB, locales, { numeric: true, sensitivity: "base" });
 }
 
 function getScopedDoctors(respectActiveFilters = true) {
@@ -188,7 +198,7 @@ function getScopedDoctors(respectActiveFilters = true) {
   }
 
   if (!respectActiveFilters) {
-    return docs;
+    return docs.slice().sort(sortBilingualDoctors);
   }
 
   const searchInput = document.getElementById("doctorSearchInput");
@@ -207,7 +217,7 @@ function getScopedDoctors(respectActiveFilters = true) {
     (s) => s.name === specialty || s.id === specialty,
   );
 
-  return docs.filter((d) => {
+  const filteredDocs = docs.filter((d) => {
     const matchQuery =
       !query ||
       (d.name && d.name.toLowerCase().includes(query)) ||
@@ -232,6 +242,8 @@ function getScopedDoctors(respectActiveFilters = true) {
 
     return matchQuery && matchSpecialty && matchClass;
   });
+
+  return filteredDocs.sort(sortBilingualDoctors);
 }
 
 function renderDoctorsReport() {
@@ -324,8 +336,8 @@ function renderDoctorsReport() {
         <div class="directory-card-header">
           <div class="directory-avatar doctor">🩺</div>
           <div class="directory-header-info">
-            <h4 class="directory-name">${window.escapeHtml(d.name)}</h4>
-            <span class="directory-meta-tag specialty">${window.escapeHtml(d.specialty || "General")}</span>
+            <h4 class="directory-name">${window.escapeHtml((lang === "ar" && d.nameAr) ? d.nameAr : (d.name || d.nameAr || ""))}</h4>
+            <span class="directory-meta-tag specialty">${window.escapeHtml((lang === "ar" && d.specialtyAr) ? d.specialtyAr : (d.specialty || "General"))}</span>
           </div>
           <div class="d-flex flex-column align-items-end gap-1 ms-auto">
             <span class="badge ${isClassA ? "bg-warning text-dark" : "bg-secondary"}" style="font-size: 0.72rem;">
@@ -409,8 +421,7 @@ function openDoctorModal(docId = null) {
   if (specialtyInput) {
     const specs = (window.store && window.store.specialties ? window.store.specialties.getAll() : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
     if (specs.length > 0) {
-      const isAr = (window.getCurrentLang && window.getCurrentLang() === "ar");
-      specialtyInput.innerHTML = specs.map((s) => `<option value="${s.id}">${window.escapeHtml(isAr ? (s.nameAr || s.name) : s.name)}</option>`).join("");
+            specialtyInput.innerHTML = specs.map((s) => `<option value="${s.id}">${window.escapeHtml(s.name)}</option>`).join("");
     }
   }
 
@@ -494,9 +505,8 @@ function saveDoctor() {
   }
 
   if (!assignedAreaId) {
-    const isAr = (typeof getCurrentLang === "function" && getCurrentLang() === "ar");
-    if (typeof showToast === "function") {
-      showToast(isAr ? "يرجى اختيار المنطقة التابعة." : "Please select a territory / area.", "warning");
+        if (typeof showToast === "function") {
+      showToast("Please select a territory / area.", "warning");
     }
     return;
   }
@@ -632,12 +642,11 @@ if (document.readyState === "loading") {
 
 function exportDoctorsDirectory() {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
+  
   const docsToExport = getScopedDoctors(true);
 
   if (!docsToExport || docsToExport.length === 0) {
-    const msg = isAr ? "لا توجد بيانات أطباء لتصديرها." : "No doctor records found to export.";
+    const msg = "No doctor records found to export.";
     if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
@@ -645,13 +654,23 @@ function exportDoctorsDirectory() {
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
 
-  const headers = isAr
-    ? ["اسم الطبيب", "التخصص", "الفئة", "المنطقة", "عنوان العيادة", "رقم الهاتف", "المندوب المسؤول"]
-    : ["Doctor Name", "Specialty", "Class", "Area", "Clinic Address", "Phone", "Representative"];
+  const headers = [
+      "Doctor Name",
+      "Specialty",
+      "Class",
+      "Territory / Area",
+      "Product Line",
+      "Assigned Rep",
+      "Workplace",
+      "Phone",
+      "Address",
+      "Target Visits/Mo",
+      "Status",
+    ];
 
   const rows = docsToExport.map((d) => {
-    const docName = isAr ? (d.nameAr || d.name || "") : (d.name || d.nameAr || "");
-    const spec = isAr ? (d.specialtyAr || d.specialty || "") : (d.specialty || d.specialtyAr || "");
+    const docName = d.name || d.nameAr || "";
+    const spec = d.specialty || d.specialtyAr || "";
     const docClass = d.class || "";
 
     let areaName = d.area || "";
@@ -675,8 +694,8 @@ function exportDoctorsDirectory() {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, "0");
   const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const fileName = isAr ? `دليل_الأطباء_${dateStr}` : `doctors_directory_${dateStr}`;
-  const sheetTitle = isAr ? "الأطباء" : "Doctors";
+  const fileName = `doctors_directory_${dateStr}`;
+  const sheetTitle = "Doctors";
 
   if (typeof window.downloadExcelOrCsv === "function") {
     window.downloadExcelOrCsv(fileName, sheetTitle, rows, headers);
@@ -698,7 +717,7 @@ function exportDoctorsDirectory() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const successMsg = isAr ? "تم تصدير الدليل بنجاح (.csv)" : "Directory exported successfully (.csv)";
+    const successMsg = "Directory exported successfully (.csv)";
     if (typeof showToast === "function") showToast(successMsg, "success");
   }
 }

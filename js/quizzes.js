@@ -82,43 +82,6 @@ const quizTranslations = {
     no_reps_found: "No medical representatives found for the selected team.",
     viewing_team_dm: "Team:",
     all_reps: "All Representatives"
-  },
-  ar: {
-    quizzes_title: "الاختبارات",
-    create_quiz: "إنشاء اختبار",
-    average_score: "متوسط الدرجات",
-    total_quizzes: "إجمالي الاختبارات المجراة",
-    best_score: "أفضل درجة",
-    quiz_history: "سجل الاختبارات",
-    quiz_name: "اسم الاختبار",
-    date: "التاريخ",
-    score: "الدرجة",
-    total_marks: "الدرجة الكلية",
-    percentage: "النسبة المئوية",
-    grade: "التقدير",
-    enter_scores: "إدخال الدرجات",
-    select_quiz: "اختر الاختبار",
-    choose_quiz: "اختر اختبارًا...",
-    rep_name: "اسم المندوب",
-    save_scores: "حفظ الدرجات",
-    team_comparison: "مقارنة درجات الفريق",
-    quiz_title: "العنوان",
-    quiz_title_placeholder: "أدخل عنوان الاختبار",
-    total_marks_placeholder: "مثال 50",
-    save: "حفظ",
-    dashboard: "لوحة القيادة",
-    logout: "تسجيل خروج",
-    alert_scores_saved: "تم حفظ درجات الاختبار بنجاح!",
-    alert_quiz_created: "تم إنشاء الاختبار بنجاح!",
-    filter_bu: "مدير الوحدة:",
-    filter_lm: "مدير الخط:",
-    filter_dm: "مدير المنطقة:",
-    all_bus: "كل وحدات الأعمال",
-    all_lms: "كل مديري الخطوط",
-    all_dms: "كل مديري المناطق",
-    no_reps_found: "لا يوجد مناديب مسجلين في هذا الفريق المختار.",
-    viewing_team_dm: "فريق:",
-    all_reps: "كل المناديب"
   }
 };
 
@@ -178,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Merge translations
   if (window.translations) {
     window.translations.en = { ...window.translations.en, ...quizTranslations.en };
-    window.translations.ar = { ...window.translations.ar, ...quizTranslations.ar };
   } else {
     window.translations = quizTranslations;
   }

@@ -172,82 +172,10 @@ const productTranslations = {
     bwTotal: "📊 Total",
     brickWeightsSaved: "Brick weights saved successfully.",
     brickWeightsRecalc: "Bulk distribution recalculated.",
-  },
-  ar: {
-    productLinesTitle: "خطوط الإنتاج - فارماكير",
-    productLinesHeader: "خطوط الإنتاج",
-    addProductLine: "إضافة خط إنتاج",
-    editProductLine: "تعديل الخط",
-    deleteLine: "حذف الخط",
-    lineName: "اسم الخط",
-    assignManager: "تعيين مدير الخط",
-    manager: "المدير",
-    products: "المنتجات",
-    addProduct: "إضافة منتج",
-    editProduct: "تعديل المنتج",
-    deleteProduct: "حذف",
-    productName: "اسم المنتج",
-    dosage: "الجرعة",
-    form: "الشكل الدوائي",
-    price: "القيمة",
-    pricePlaceholder: "مثال: 40",
-    priceHint: "تُحدد تلقائياً كقيمة افتراضية للوحدة عند اختيار هذا المنتج في شاشة إدارة التارجت -- وقابلة للتعديل لكل مندوب كاستثناء.",
-    description: "الوصف",
-    actions: "إجراءات",
-    tablet: "أقراص",
-    capsule: "كبسولات",
-    drops: "نقط",
-    syrup: "شراب",
-    injection: "حقن",
-    cream: "كريم",
-    other: "أخرى",
-    save: "حفظ",
-    cancel: "إلغاء",
-    delete: "حذف",
-    confirmDelete: "تأكيد الحذف",
-    deleteConfirmMessage: "هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.",
-    lineNamePlaceholder: "أدخل اسم الخط",
-    productNamePlaceholder: "أدخل اسم المنتج",
-    dosagePlaceholder: "مثال: 500 ملغ",
-    descriptionPlaceholder: "أدخل وصف المنتج",
-    logout: "تسجيل الخروج",
-    selectManager: "اختر مديرًا",
-    unassignedManager: "-- غير محدد (اختياري) --",
-    transferProduct: "نقل المنتج إلى خط آخر",
-    currentLine: "الخط الحالي",
-    destinationLine: "نقل إلى الخط",
-    confirmTransfer: "تأكيد النقل",
-    selectLinePlaceholder: "-- اختر الخط المراد النقل إليه --",
-    transferSuccess: "تم نقل المنتج بنجاح.",
-    transferErrorSameLine: "لا يمكن نقل المنتج إلى نفس الخط.",
-    callFrequencyTitle: "المستهدف الربع سنوي للزيارات (حسب فئة الطبيب)",
-    callFrequencyHint: "تحديد عدد الزيارات الربع سنوية (الكوارتر) الإلزامية لكل طبيب في هذا الخط لحساب نسبة التغطية.",
-    visitsUnit: "ز/ك",
-    targetFrequencyBadge: "مستهدف الكوارتر",
-    cycleCampaignFocusTitle: "تركيز الحملة البيعية (Cycle Focus)",
-    cycleCampaignFocusBtn: "تركيز الحملة البيعية",
-    focusActiveLabel: "تفعيل تركيز الحملة لهذا الخط",
-    focusTargetProduct: "المنتج المستهدف ذو الأولوية (اختياري)",
-    focusTargetProductHint: "اختر منتجاً رئيسياً كبطل لهذه الدورة البيعية أو اتركه عاماً لكامل منتجات الخط.",
-    focusMessageLabel: "الرسالة الترويجية / التوجه الاستراتيجي",
-    focusMessageHint: "ستظهر هذه الرسالة كإشعار توجيهي اختياري على لوحة تحكم فريق المبيعات في هذا الخط.",
-    focusGeneralProduct: "-- تركيز عام على كامل الخط --",
-    cutPointLabel: "⚡ سقف السحب الشهري (Cut Point)",
-    cutPointPlaceholder: "مثال: 200",
-    cutPointHint: "الحد الأقصى المسموح لسحب الصيدلية شهرياً. الزيادة فوقه تُوزع كـ Bulk على كل البريكات بالنسبة. اتركه 0 أو فارغ لتعطيل السقف.",
-    brickWeightsBtn: "أوزان البريكات",
-    brickWeightsTitle: "أوزان البريكات",
-    bwAreaName: "المنطقة / البريك",
-    bwAreaCode: "الكود",
-    bwRep: "المندوب",
-    bwWeight: "الوزن (%)",
-    bwTotal: "📊 الإجمالي",
-    brickWeightsSaved: "تم حفظ أوزان البريكات بنجاح.",
-    brickWeightsRecalc: "تم إعادة حساب توزيع الـ Bulk.",
-  },
+  }
 };
 
-let currentLang = localStorage.getItem("pharmaLang") || "en";
+let currentLang = "en";
 let lineModal, productModal, deleteModal, transferProductModal, campaignFocusModal;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -295,7 +223,7 @@ function populateLineManagersDropdown() {
   const managerSelect = document.getElementById("lineManager");
   if (!managerSelect) return;
   const currentVal = managerSelect.value;
-  const optLabel = productTranslations[currentLang]?.unassignedManager || "-- Unassigned (Optional) --";
+  const optLabel = productTranslations.en?.unassignedManager || "-- Unassigned (Optional) --";
   managerSelect.innerHTML = `<option value="">${optLabel}</option>`;
   getActiveLineManagers().forEach((m) => {
     managerSelect.innerHTML += `<option value="${window.escapeHtml(m.id)}">${window.escapeHtml(m.name)}</option>`;
@@ -317,7 +245,7 @@ function openAddLineModal() {
   const titleEl = document.getElementById("lineModalTitle");
   if (titleEl) {
     titleEl.setAttribute("data-i18n", "addProductLine");
-    titleEl.textContent = productTranslations[currentLang].addProductLine;
+    titleEl.textContent = productTranslations.en.addProductLine;
   }
 
   if (lineModal) lineModal.show();
@@ -344,7 +272,7 @@ function openEditLine(id) {
   const titleEl = document.getElementById("lineModalTitle");
   if (titleEl) {
     titleEl.setAttribute("data-i18n", "editProductLine");
-    titleEl.textContent = productTranslations[currentLang].editProductLine;
+    titleEl.textContent = productTranslations.en.editProductLine;
   }
 
   if (lineModal) lineModal.show();
@@ -515,19 +443,19 @@ function renderProductLines(activeLineId) {
                         <div class="line-actions-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 p-2 rounded-3">
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-pill px-3 shadow-sm fw-semibold" onclick="openAddProductModal('${line.id}')">
-                                    <i class="bi bi-plus-circle-fill"></i> <span data-i18n="addProduct">${productTranslations[currentLang].addProduct || "Add Product"}</span>
+                                    <i class="bi bi-plus-circle-fill"></i> <span data-i18n="addProduct">${productTranslations.en.addProduct || "Add Product"}</span>
                                 </button>
                                 <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')" title="Configure Cycle Campaign Focus">
-                                    <i class="bi bi-bullseye"></i> <span data-i18n="cycleCampaignFocusBtn">${productTranslations[currentLang].cycleCampaignFocusBtn}</span>
+                                    <i class="bi bi-bullseye"></i> <span data-i18n="cycleCampaignFocusBtn">${productTranslations.en.cycleCampaignFocusBtn}</span>
                                 </button>
                             </div>
                             ${canManageLine ? `
                             <div class="d-flex align-items-center gap-2 ms-auto">
                                 <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 d-inline-flex align-items-center gap-1" onclick="openEditLine('${line.id}')" title="Edit Line">
-                                    <i class="bi bi-pencil"></i> <span class="d-none d-sm-inline" data-i18n="editProductLine">${productTranslations[currentLang].editProductLine || "Edit"}</span>
+                                    <i class="bi bi-pencil"></i> <span class="d-none d-sm-inline" data-i18n="editProductLine">${productTranslations.en.editProductLine || "Edit"}</span>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger rounded-pill px-2 d-inline-flex align-items-center gap-1" onclick="openDeleteModal('line', '${line.id}')" title="Delete Line">
-                                    <i class="bi bi-trash"></i> <span class="d-none d-sm-inline" data-i18n="deleteLine">${productTranslations[currentLang].deleteLine || "Delete"}</span>
+                                    <i class="bi bi-trash"></i> <span class="d-none d-sm-inline" data-i18n="deleteLine">${productTranslations.en.deleteLine || "Delete"}</span>
                                 </button>
                             </div>
                             ` : ""}
@@ -553,7 +481,6 @@ function saveLine() {
   const id = document.getElementById("lineId").value;
   const name = (document.getElementById("lineName").value || "").trim();
   const managerId = document.getElementById("lineManager").value;
-  const isAr = currentLang === "ar";
 
   const rawFreqA = parseInt(document.getElementById("lineFreqA")?.value, 10);
   const rawFreqB = parseInt(document.getElementById("lineFreqB")?.value, 10);
@@ -563,7 +490,7 @@ function saveLine() {
   const freqC = isNaN(rawFreqC) ? 1 : Math.max(0, rawFreqC);
 
   if (!name) {
-    const msg = isAr ? "يرجى إدخال اسم الخط." : "Please enter Line Name.";
+    const msg = "Please enter Line Name.";
     showToast(msg, "warning");
     return;
   }
@@ -630,17 +557,14 @@ function saveLine() {
   if (lineModal) lineModal.hide();
   renderProductLines(lineIdToUse);
 
-  const successMsg = isAr
-    ? (id ? "تم تعديل خط الإنتاج بنجاح." : "تمت إضافة خط الإنتاج بنجاح.")
-    : (id ? "Product Line updated successfully." : "Product Line added successfully.");
+  const successMsg = id ? "Product Line updated successfully." : "Product Line added successfully.";
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
 function openAddProductModal(lineId) {
   const line = window.store.productLines.getById(lineId);
   if (!line) {
-    const isAr = currentLang === "ar";
-    const msg = isAr ? "تعذر العثور على هذا الخط." : "Target line not found.";
+    const msg = "Target line not found.";
     showToast(msg, "error");
     return;
   }
@@ -656,7 +580,7 @@ function openAddProductModal(lineId) {
   const titleEl = document.getElementById("productModalTitle");
   if (titleEl) {
     titleEl.setAttribute("data-i18n", "addProduct");
-    titleEl.textContent = productTranslations[currentLang].addProduct;
+    titleEl.textContent = productTranslations.en.addProduct;
   }
 
   if (productModal) productModal.show();
@@ -679,7 +603,7 @@ function openEditProduct(lineId, prodId) {
       const titleEl = document.getElementById("productModalTitle");
       if (titleEl) {
         titleEl.setAttribute("data-i18n", "editProduct");
-        titleEl.textContent = productTranslations[currentLang].editProduct;
+        titleEl.textContent = productTranslations.en.editProduct;
       }
 
       if (productModal) productModal.show();
@@ -691,8 +615,6 @@ function saveProduct() {
   const user = (window.checkAuth && window.checkAuth()) || {};
   const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
   const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : user.role === "admin";
-  const isAr = currentLang === "ar";
-
   if (!isAdmin && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: Admin or Product Manager only.", "error");
     return;
@@ -701,7 +623,7 @@ function saveProduct() {
   if (isPM && !isAdmin) {
     const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
     if (!userLines.includes(targetLineId)) {
-      if (typeof showToast === "function") showToast(isAr ? "غير مصرح: يمكنك إدارة منتجات خطك فقط." : "Permission Denied: You can only manage your line.", "error");
+      if (typeof showToast === "function") showToast("Permission Denied: You can only manage your line.", "error");
       return;
     }
   }
@@ -716,26 +638,26 @@ function saveProduct() {
   const cutPoint = cutPointInput === "" ? 0 : parseInt(cutPointInput, 10) || 0;
 
   if (!targetLineId) {
-    const msg = isAr ? "خطأ: لم يتم تحديد الخط المستهدف." : "Error: Target Line not identified.";
+    const msg = "Error: Target Line not identified.";
     showToast(msg, "error");
     return;
   }
 
   if (!name) {
-    const msg = isAr ? "يرجى إدخال اسم الدواء/المنتج." : "Please enter Product Name.";
+    const msg = "Please enter Product Name.";
     showToast(msg, "warning");
     return;
   }
 
   if (!dosage) {
-    const msg = isAr ? "يرجى إدخال الجرعة (مثل 500mg)." : "Please enter Dosage.";
+    const msg = "Please enter Dosage.";
     showToast(msg, "warning");
     return;
   }
 
   const line = window.store.productLines.getById(targetLineId);
   if (!line) {
-    const msg = isAr ? "تعذر العثور على هذا الخط." : "Target line not found.";
+    const msg = "Target line not found.";
     showToast(msg, "error");
     return;
   }
@@ -748,7 +670,7 @@ function saveProduct() {
            p.dosage.trim().toLowerCase() === dosage.toLowerCase()
   );
   if (isDuplicate) {
-    const msg = isAr ? "هذا الصنف بنفس الجرعة مسجل بالفعل في هذا الخط." : "This product with the same dosage already exists in this line.";
+    const msg = "This product with the same dosage already exists in this line.";
     showToast(msg, "warning");
     return;
   }
@@ -779,9 +701,7 @@ function saveProduct() {
   if (productModal) productModal.hide();
   renderProductLines(targetLineId);
 
-  const successMsg = isAr
-    ? (prodId ? "تم تعديل المنتج بنجاح." : "تمت إضافة المنتج إلى الخط بنجاح.")
-    : (prodId ? "Product updated successfully." : "Product added to line successfully.");
+  const successMsg = prodId ? "Product updated successfully." : "Product added to line successfully.";
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
@@ -806,7 +726,7 @@ function openCampaignFocusModal(lineId) {
 
   document.getElementById("focusLineId").value = lineId;
   const prodSelect = document.getElementById("focusTargetProductSelect");
-  const genOpt = productTranslations[currentLang]?.focusGeneralProduct || "-- General / All Line Products --";
+  const genOpt = productTranslations.en?.focusGeneralProduct || "-- General / All Line Products --";
 
   prodSelect.innerHTML = `<option value="">${genOpt}</option>`;
   if (Array.isArray(line.products)) {
@@ -850,8 +770,7 @@ function saveCampaignFocus() {
   if (campaignFocusModal) campaignFocusModal.hide();
   renderProductLines(lineId);
 
-  const isAr = currentLang === "ar";
-  const msg = isAr ? "تم حفظ تركيز الحملة البيعية بنجاح." : "Cycle Campaign Focus saved successfully.";
+  const msg = "Cycle Campaign Focus saved successfully.";
   if (typeof showToast === "function") showToast(msg, "success");
 }
 
@@ -954,8 +873,7 @@ function openTransferModal(lineId, productId) {
   const selectEl = document.getElementById("transferTargetLineSelect");
   if (!selectEl) return;
 
-  const isAr = document.documentElement.dir === "rtl";
-  const placeholder = isAr ? "-- اختر الخط الهدف --" : "-- Select Target Line --";
+  const placeholder = "-- Select Target Line --";
   let optionsHtml = `<option value="" disabled selected>${placeholder}</option>`;
   window.store.productLines.getAll().forEach((l) => {
     if (l.id !== lineId) {
@@ -977,17 +895,14 @@ function confirmTransferProduct() {
   const sourceLineId = document.getElementById("transferSourceLineId").value;
   const productId = document.getElementById("transferProductId").value;
   const targetLineId = document.getElementById("transferTargetLineSelect").value;
-  const isAr = document.documentElement.dir === "rtl";
 
   if (!targetLineId) {
-    const msg = isAr ? "يرجى اختيار الخط الجديد." : "Please select a destination line.";
-    showToast(msg, "warning");
+    showToast("Please select a destination line.", "warning");
     return;
   }
 
   if (sourceLineId === targetLineId) {
-    const errMsg = isAr ? productTranslations.ar.transferErrorSameLine : productTranslations.en.transferErrorSameLine;
-    showToast(errMsg, "warning");
+    showToast(productTranslations.en.transferErrorSameLine, "warning");
     return;
   }
 
@@ -1036,35 +951,25 @@ function confirmTransferProduct() {
   if (transferProductModal) transferProductModal.hide();
   renderProductLines();
 
-  const successMsg = isAr
-    ? "تم نقل الصنف وتحديث المبيعات بنجاح. تم مسح أهداف الصنف من مناديب الخط القديم، يرجى تعيين الأهداف الجديدة لمناديب الخط الجديد من صفحة التقارير."
-    : "Product transferred successfully. Quotas removed from old line reps; please set new targets for the new line reps in Reports.";
+  const successMsg = "Product transferred successfully. Quotas removed from old line reps; please set new targets for the new line reps in Reports.";
   if (typeof showToast === "function") showToast(successMsg, "info");
 }
 
 function toggleLanguage() {
-  currentLang = currentLang === "en" ? "ar" : "en";
-  localStorage.setItem("pharmaLang", currentLang);
-  document.documentElement.lang = currentLang;
-  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
-  applyProductTranslations(currentLang);
-
-  const managerSelect = document.getElementById("lineManager");
-  if (managerSelect && managerSelect.options.length > 0 && managerSelect.options[0].value === "") {
-    managerSelect.options[0].text = productTranslations[currentLang].selectManager;
-  }
+  currentLang = "en";
+  document.documentElement.lang = "en";
+  document.documentElement.dir = "ltr";
+  applyProductTranslations("en");
 }
 
 if (typeof window.translations !== "undefined") {
   if (window.translations.en && productTranslations.en) Object.assign(window.translations.en, productTranslations.en);
-  if (window.translations.ar && productTranslations.ar) Object.assign(window.translations.ar, productTranslations.ar);
 }
 
 function applyProductTranslations(lang) {
-  const selectedLang = lang || (typeof getCurrentLang === "function" ? getCurrentLang() : "en");
-  if (typeof window.applyTranslations === "function") window.applyTranslations(selectedLang);
+  if (typeof window.applyTranslations === "function") window.applyTranslations("en");
   
-  const t = productTranslations[selectedLang];
+  const t = productTranslations.en;
   if (!t) return;
 
   document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -1173,7 +1078,7 @@ function saveBrickWeights() {
   if (brickWeightsModal) brickWeightsModal.hide();
 
   if (typeof showToast === "function") {
-    showToast(productTranslations[currentLang].brickWeightsSaved || "Saved.", "success");
+    showToast(productTranslations.en.brickWeightsSaved || "Saved.", "success");
   }
 }
 

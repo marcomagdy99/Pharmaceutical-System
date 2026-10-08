@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -24,20 +24,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v133">
-    <link rel="stylesheet" href="css/visits.css?v=v133">
+    <link rel="stylesheet" href="css/style.css?v=v162">
+    <link rel="stylesheet" href="css/visits.css?v=v145">
       <!-- Core Application & Store -->
-    <script src="js/app.js?v=v133"></script>
-    <script src="js/store.js?v=v133"></script>
+    <script src="js/app.js?v=v159"></script>
+    <script src="js/store.js?v=v145"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v133"></script>
-    <script src="js/firebase-sync.js?v=v133"></script>
+    <script src="js/firebase-config.js?v=v145"></script>
+    <script src="js/firebase-sync.js?v=v157"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v133";
+        var EXPECTED_SW = "v159";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -88,19 +88,19 @@
                     </div>
                     <div class="header-actions-row">
                         <button class="btn btn-outline d-none" onclick="toggleCompanyGpsPolicy()" id="adminGpsPolicyBtn" title="Toggle Company GPS Enforcement Policy">
-                            📍 <span id="adminGpsPolicyLabel">GPS: Active</span>
+                            ?? <span id="adminGpsPolicyLabel">GPS: Active</span>
                         </button>
                         <button class="btn btn-outline" onclick="exportVisitsToCSV()" id="exportVisitsBtn" title="Export to CSV/Excel">
-                            📥 <span data-i18n="btnExportCSV">Export CSV</span>
+                            ?? <span data-i18n="btnExportCSV">Export CSV</span>
                         </button>
                         <button class="btn btn-outline" onclick="printVisitsReport()" id="printVisitsBtn" title="Print Visits">
-                            🖨️ <span data-i18n="btnPrint">Print</span>
+                            ??? <span data-i18n="btnPrint">Print</span>
                         </button>
                         <button class="btn btn-outline" onclick="openBulkPlanModal()" id="planVisitBtn">
-                            🗓️ <span data-i18n="planVisit">Plan Visits (Bulk)</span>
+                            ??? <span data-i18n="planVisit">Plan Visits (Bulk)</span>
                         </button>
                         <button class="btn btn-primary" onclick="openVisitModal(true)" id="addActualVisitBtn" data-i18n="logActualVisit">
-                            📍 Log Actual Visit
+                            ?? Log Actual Visit
                         </button>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
                 <div id="managerFilterBar" class="manager-rep-filter-container">
                     <div id="managerLineFilterContainer" class="manager-filter-field col-line">
                         <label for="filterLine" class="manager-rep-filter-label">
-                            <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
+                            <span>??</span> <span data-i18n="lineFilterLabel">Product Line:</span>
                         </label>
                         <select id="filterLine" class="form-control filter-input" onchange="onVisitsLineFilterChange(this.value)">
                             <option value="all" data-i18n="allLines">All Lines</option>
@@ -117,7 +117,7 @@
                     </div>
                     <div id="managerRepFilterContainer" class="manager-filter-field col-rep">
                         <label for="filterRep" class="manager-rep-filter-label">
-                            <span>👥</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
+                            <span>??</span> <span data-i18n="teamFilterLabel">Team Filter:</span>
                         </label>
                         <select id="filterRep" class="form-control filter-input" onchange="onVisitsRepFilterChange(this.value)">
                             <option value="all" data-i18n="allReps">All Team (DMs & Med Reps)</option>
@@ -135,7 +135,7 @@
                             </div>
                             <div class="timeline-filter-field col-area">
                                 <label class="timeline-filter-label" for="timelineAreaFilter">
-                                    <span>📍</span> <span data-i18n="filterArea">Area:</span>
+                                    <span>??</span> <span data-i18n="filterArea">Area:</span>
                                 </label>
                                 <select id="timelineAreaFilter" class="form-control filter-input">
                                     <option value="all" data-i18n="allAreas">All Areas</option>
@@ -143,7 +143,7 @@
                             </div>
                             <div class="timeline-filter-field col-period">
                                 <label class="timeline-filter-label" for="timelinePeriodFilter">
-                                    <span>⏰</span> <span data-i18n="filterPeriod">Period:</span>
+                                    <span>?</span> <span data-i18n="filterPeriod">Period:</span>
                                 </label>
                                 <select id="timelinePeriodFilter" class="form-control filter-input">
                                     <option value="all" data-i18n="allPeriods">All Periods</option>
@@ -154,7 +154,7 @@
                             </div>
                             <div class="timeline-filter-field col-status">
                                 <label class="timeline-filter-label" for="timelineStatusFilter">
-                                    <span>📊</span> <span data-i18n="filterStatus">Status:</span>
+                                    <span>??</span> <span data-i18n="filterStatus">Status:</span>
                                 </label>
                                 <select id="timelineStatusFilter" class="form-control filter-input">
                                     <option value="all" data-i18n="allStatuses">All Statuses</option>
@@ -164,14 +164,14 @@
                             </div>
                             <div class="timeline-filter-field col-btn">
                                 <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)">
-                                    🔍 <span data-i18n="btnShow">Show</span>
+                                    ?? <span data-i18n="btnShow">Show</span>
                                  </button>
                             </div>
                         </div>
                         <div class="legend-box">
                             <span class="legend-item">
                                 <span class="legend-dot actual"></span> 
-                                <span data-i18n="directActual">Direct Actual Visit</span>
+                                <span data-i18n="directActual">Actual without Plan</span>
                             </span>
                             <span class="legend-item">
                                 <span class="legend-dot planned"></span> 
@@ -184,8 +184,27 @@
                         </div>
                     </div>
 
+                    <!-- Distinct Sub-Tabs: Medical (Doctors & Hospitals) vs Commercial (Pharmacies) -->
+                    <div class="visits-scope-tabs" style="display: flex; gap: 8px; margin: 16px 0; border-bottom: 2px solid var(--gray-200); padding-bottom: 6px;">
+                        <button type="button" class="btn btn-sm visits-scope-tab-btn active" id="btnScopeMedical" onclick="switchVisitsScope('medical')" style="font-weight: 700; border-radius: 8px; padding: 8px 16px;">
+                            ?? <span data-i18n="tabMedicalVisits">Doctor & Hospital Visits</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline visits-scope-tab-btn" id="btnScopePharmacy" onclick="switchVisitsScope('pharmacy')" style="font-weight: 700; border-radius: 8px; padding: 8px 16px;">
+                            ?? <span data-i18n="tabPharmacyVisits">Pharmacy Visits</span>
+                        </button>
+                    </div>
+
                     <div class="timeline-summary-bar" id="timelineSummaryBar"></div>
-                    <div class="timeline-container" id="timelineEventsContainer"></div>
+
+                    <!-- Medical Visits Container -->
+                    <div id="medicalVisitsSection" class="visits-scope-content active">
+                        <div class="timeline-container" id="timelineEventsContainer"></div>
+                    </div>
+
+                    <!-- Pharmacy Visits Dedicated Container -->
+                    <div id="pharmacyVisitsSection" class="visits-scope-content" style="display: none;">
+                        <div class="timeline-container" id="timelinePharmacyEventsContainer"></div>
+                    </div>
                 </div>
 
             </div>
@@ -196,7 +215,7 @@
     <div class="modal" id="bulkPlanModal">
         <div class="modal-content modal-content-lg">
             <div class="modal-header">
-                <div class="modal-title modal-header-title">🗓️ Plan Visits (Multi-Select)</div>
+                <div class="modal-title modal-header-title">??? Plan Visits (Multi-Select)</div>
                 <button class="close-btn" onclick="closeBulkPlanModal()">&times;</button>
             </div>
             
@@ -288,7 +307,7 @@
                 <div class="radio-group" id="visitPeriodRadioGroup">
                     <label class="radio-label"><input type="radio" name="visitPeriod" value="am" onchange="updateTargetOptions()"> <span data-i18n="modalAM">AM (Hospital)</span></label>
                     <label class="radio-label"><input type="radio" name="visitPeriod" value="pm" checked onchange="updateTargetOptions()"> <span data-i18n="modalPM">PM (Doctor)</span></label>
-                    <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy">💊 Pharmacy</span></label>
+                    <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy">?? Pharmacy</span></label>
                 </div>
             </div>
             <div class="form-group d-none" id="modalTargetFilterContainer">
@@ -305,7 +324,7 @@
                 <div class="visit-gps-card">
                     <div class="visit-gps-card-header">
                         <label class="visit-gps-label">
-                            <span>📍</span>
+                            <span>??</span>
                             <span id="lblVisitGpsTitle" data-i18n="modalGpsTitle">GPS Geofencing Verification</span>
                         </label>
                         <span id="visitGpsBadge" class="badge visit-gps-badge" data-i18n="gpsBadgePending">
@@ -317,9 +336,19 @@
                     </div>
                     <div class="visit-gps-actions">
                         <button type="button" class="btn btn-outline btn-check-gps" id="btnCheckMyGps" onclick="triggerManualGpsCheck()">
-                            <span data-i18n="btnCheckGps">📡 Check Location Now</span>
+                            <span data-i18n="btnCheckGps">?? Check Location Now</span>
                         </button>
                         <span id="visitGpsDistanceText" class="visit-gps-distance"></span>
+                    </div>
+
+                    <!-- Account GPS Pinning & Relocation Action Bar -->
+                    <div class="visit-gps-pin-bar mt-2 pt-2 border-top" id="visitGpsPinBar" style="display: none;">
+                        <button type="button" class="btn btn-sm btn-outline-success" id="btnPinClinicLocation" onclick="handlePinClinicLocation()">
+                            ?? <span id="lblPinClinicBtn">Pin Clinic Location</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" id="btnRelocateClinicLocation" style="display: none;" onclick="openRelocationModal()">
+                            ?? <span id="lblRelocateClinicBtn">Request Clinic Re-pin</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -357,8 +386,42 @@
         </div>
     </div>
 
+    <!-- Relocation Request Modal -->
+    <div class="modal" id="relocationModal" style="display: none; z-index: 1060;">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <span>??</span>
+                    <span id="lblRelocationModalTitle">Clinic Relocation Request (Re-pin GPS)</span>
+                </div>
+                <button class="close-btn" onclick="closeRelocationModal()">&times;</button>
+            </div>
+            <div class="p-3">
+                <p class="small text-muted mb-3" id="lblRelocationNotice">
+                    If the doctor has relocated their clinic to a new facility, your current coordinates will be captured and submitted to your District Manager for formal validation.
+                </p>
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600;">Doctor / Account:</label>
+                    <input type="text" id="relocateTargetNameDisplay" class="form-control" readonly style="background: var(--gray-100, #f1f5f9);">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600;">Actual New Address:</label>
+                    <input type="text" id="relocateNewAddressInput" class="form-control" placeholder="e.g. New Doctors Tower, 3rd Floor, El-Tahrir St">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600;">Relocation Reason / Notes:</label>
+                    <textarea id="relocateReasonInput" class="form-control" rows="2" placeholder="e.g. Clinic moved officially on Oct 1st..."></textarea>
+                </div>
+                <div class="modal-actions-footer-simple mt-3">
+                    <button type="button" class="btn btn-secondary" onclick="closeRelocationModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitRelocationReq" onclick="submitRelocationRequest()">Submit Request for Approval</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
-    <script src="js/reschedule.js?v=v133"></script>
-    <script src="js/visits.js?v=v133"></script>
+    <script src="js/reschedule.js?v=v145"></script>
+    <script src="js/visits.js?v=v145"></script>
 </body>
 </html>

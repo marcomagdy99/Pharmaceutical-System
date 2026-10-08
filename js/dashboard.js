@@ -112,116 +112,7 @@ const dashboardTranslations = {
     manage_users: "Manage Users",
     upload_sales: "Upload Sales",
     manage_products: "Manage Products",
-    manage_areas: "Manage Areas",
     recent_activity: "Recent System Activity",
-  },
-  ar: {
-    welcome_back: "مرحباً بك",
-    target_progress: "تقدم الهدف",
-    total_doctors: "إجمالي الأطباء",
-    visits_month: "زيارات هذا الشهر",
-    target_achievement: "تحقيق الهدف",
-    active_planned: "زيارات الخطة النشطة",
-    todays_plan: "الأطباء والمستشفيات في الخطة",
-    plan_expiry_note: "تختفي تلقائياً بعد 7 أيام إذا لم تُنفذ",
-    am_hospitals: "مستشفيات الصباح في الخطة",
-    pm_doctors: "عيادات الأطباء في الخطة",
-    pharm_planned: "صيدليات في الخطة (Pharmacies)",
-    filter_today: "اليوم",
-    filter_tomorrow: "غداً",
-    filter_upcoming: "الزيارات القادمة",
-    filter_all_planned: "جميع المخططة",
-    specific_date: "تاريخ محدد",
-    convert_to_actual: "تحويل لزيارة فعلية",
-    no_planned_visits: "لا توجد زيارات مخططة نشطة لهذه الفترة.",
-    recent_visits: "الزيارات الفعلية المنفذة مؤخراً",
-    view_all_visits: "عرض كل الزيارات",
-    target_doctor: "الهدف / الطبيب",
-    date_time: "التاريخ والوقت",
-    entry_type: "نوع الدخول",
-    status: "الحالة",
-    completed: "مكتمل",
-    direct_actual: "فعلية مباشرة",
-    from_plan: "من الخطة",
-    quick_actions: "إجراءات سريعة",
-    new_visit: "زيارة جديدة",
-    log_activity: "تسجيل نشاط",
-    request_leave: "طلب إجازة",
-    reports: "التقارير",
-    overall_coverage: "نسبة التغطية الكلية",
-    coverage_rule: "Class A: 4 زيارات/كوارتر | Class B: 3 زيارات/كوارتر",
-    sales_achievement: "تحقيق المبيعات (YTD)",
-    visits_achievement: "تحقيق الزيارات",
-    visits_target: "تارجت زيارات الشهر",
-    visit_type: "نوع الزيارة",
-    single_visit: "فردي (Single)",
-    double_visit: "مزدوج (Double)",
-    accompanied_by: "مرافق مع (اختر المرافقين)",
-    visit_day: "يوم الزيارة",
-    visit_time: "وقت الزيارة",
-    insertion_date: "تاريخ الإدخال",
-    insertion_time: "وقت الإدخال",
-    products_discussed: "المنتجات التي تمت مناقشتها",
-    visit_feedback: "ملاحظات الزيارة",
-    confirm_actual_visit: "تأكيد الزيارة الفعلية",
-    cancel: "إلغاء",
-
-    // District Manager
-    team_stats: "إحصائيات الفريق",
-    total_reps: "إجمالي المندوبين",
-    team_visits: "زيارات الفريق",
-    avg_coverage: "متوسط التغطية",
-    pending_leaves: "إجازات معلقة",
-    pending_actions: "إجراءات معلقة",
-    leave_requests: "طلبات إجازة للموافقة",
-    plans_review: "خطط للمراجعة",
-    team_performance: "أداء الفريق",
-    rep_name: "اسم المندوب",
-    achievement: "الإنجاز",
-    team_field_plan: "خطة انتشار الفريق وزياراتهم المخططة",
-    team_field_plan_desc: "الزيارات الميدانية المجدولة لمناديب منطقتك",
-    join_double_visit: "نزول مرافق (Double)",
-    no_team_planned: "لا توجد زيارات مخططة مجدولة لفريقك في هذه الفترة.",
-
-    // Line Manager
-    line_overview: "نظرة عامة على الخط وهيكل الفريق",
-    total_dms: "مديري المناطق (DMs)",
-    total_line_reps: "إجمالي المناديب في الخط",
-    line_visits: "زيارات الخط (هذا الشهر)",
-    dm_name: "مدير المنطقة (DM)",
-    reps_under_dm: "المناديب التابعين له",
-    line_sales: "مبيعات الخط الشهرية",
-
-    // Business Unit Head
-    bu_overview: "نظرة عامة على وحدة الأعمال وهيكل الفريق الكامل",
-    total_lines: "خطوط الإنتاج",
-    total_lms: "مديري الخطوط (LMs)",
-    total_bu_dms: "مديري المناطق (DMs)",
-    total_bu_reps: "المناديب الطبيين",
-    line_name: "خط الإنتاج",
-    assigned_lm: "مدير الخط (LM)",
-    dms_in_line: "مديري المناطق",
-    reps_in_line: "المناديب الطبيين",
-    bu_sales: "مبيعات وحدة الأعمال المجمعة",
-
-    // HR
-    hr_overview: "بوابة شؤون الموظفين والإعلانات",
-    total_employees: "إجمالي الموظفين",
-    published_announcements: "الإعلانات المنشورة",
-    departments: "الأقسام",
-
-    // Admin
-    system_overview: "نظرة عامة على النظام",
-    total_users: "إجمالي المستخدمين",
-    total_areas: "إجمالي المناطق",
-    product_lines: "خطوط المنتجات",
-    monthly_sales: "المبيعات الشهرية",
-    quick_links: "روابط الإدارة السريعة",
-    manage_users: "إدارة المستخدمين",
-    upload_sales: "رفع المبيعات",
-    manage_products: "إدارة المنتجات",
-    manage_areas: "إدارة المناطق",
-    recent_activity: "النشاط الأخير في النظام",
   },
 };
 
@@ -229,10 +120,6 @@ if (window.translations) {
   window.translations.en = {
     ...window.translations.en,
     ...dashboardTranslations.en,
-  };
-  window.translations.ar = {
-    ...window.translations.ar,
-    ...dashboardTranslations.ar,
   };
 } else {
   window.translations = dashboardTranslations;
@@ -381,9 +268,6 @@ window.switchDmLineFilter = function (lineId) {
  * @param {string} dmId
  */
 window.openDmTeamModal = function (dmId) {
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
-
   const allUsers =
     (window.store && window.store.users
       ? window.store.users.getAll()
@@ -430,16 +314,14 @@ window.openDmTeamModal = function (dmId) {
   const dmLines = (dm.lineIds || (dm.lineId ? [dm.lineId] : []))
     .map((lid) => {
       const l = allLines.find((x) => x.id === lid);
-      return l ? (isAr ? l.nameAr || l.name : l.name) : lid;
+      return l ? l.name : lid;
     })
     .filter(Boolean);
 
   const dmLineText =
     dmLines.length > 0
       ? dmLines.join(" • ")
-      : isAr
-        ? "بدون خط محدد"
-        : "No Line Assigned";
+      : "No Line Assigned";
   const dmCode = dm.employeeCode || dm.code || "DM";
 
   const getInitials = (name) => {
@@ -451,12 +333,8 @@ window.openDmTeamModal = function (dmId) {
 
   const repsCountText = `${reps.length} ${
     reps.length === 1
-      ? isAr
-        ? "مندوب ميداني"
-        : "Field Rep"
-      : isAr
-        ? "مناديب ميدانيين"
-        : "Field Reps"
+      ? "Field Rep"
+      : "Field Reps"
   }`;
 
   const repsHtml =
@@ -466,19 +344,19 @@ window.openDmTeamModal = function (dmId) {
             let areaName = r.area;
             if (!areaName && r.areaId) {
               const a = allAreas.find((x) => x.id === r.areaId);
-              if (a) areaName = isAr ? a.nameAr || a.name : a.name;
+              if (a) areaName = a.name;
             }
             if (!areaName && r.areaIds && r.areaIds.length > 0) {
               const areaNames = r.areaIds.map((aid) => {
                 const a = allAreas.find((x) => x.id === aid);
-                return a ? (isAr ? a.nameAr || a.name : a.name) : aid;
+                return a ? a.name : aid;
               });
-              areaName = areaNames.join("، ");
+              areaName = areaNames.join(", ");
             }
-            if (!areaName) areaName = isAr ? "غير محدد" : "Unassigned";
+            if (!areaName) areaName = "Unassigned";
 
             const repCode = r.employeeCode || r.code || "REP";
-            const repName = isAr ? r.nameAr || r.name : r.name;
+            const repName = r.name;
             const initials = getInitials(r.name);
             const isActive = (r.status || "Active").toLowerCase() === "active";
 
@@ -489,7 +367,7 @@ window.openDmTeamModal = function (dmId) {
                   <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                     <div class="dm-team-rep-name">${repName}</div>
                     <span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 6px;">
-                      ${isActive ? (isAr ? "نشط" : "Active") : isAr ? "غير نشط" : "Inactive"}
+                      ${isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
                   <div class="dm-team-rep-meta">
@@ -506,7 +384,7 @@ window.openDmTeamModal = function (dmId) {
       : `
         <div style="text-align: center; padding: 30px 20px; color: var(--gray-500);">
           <div style="font-size: 2rem; margin-bottom: 8px;">👥</div>
-          <div style="font-weight: 600;">${isAr ? "لا يوجد مناديب مسندين لهذا المدير حالياً" : "No representatives assigned under this manager yet"}</div>
+          <div style="font-weight: 600;">No representatives assigned under this manager yet</div>
         </div>
       `;
 
@@ -516,7 +394,7 @@ window.openDmTeamModal = function (dmId) {
         <div class="dm-team-modal-header-info">
           <h3 class="dm-team-modal-title" id="dmTeamModalTitle">
             <span>👥</span>
-            <span>${isAr ? dm.nameAr || dm.name : dm.name}</span>
+            <span>${dm.name}</span>
           </h3>
           <div class="dm-team-modal-subtitle">
             <span>🆔 ${dmCode}</span>
@@ -526,14 +404,14 @@ window.openDmTeamModal = function (dmId) {
             <span style="font-weight: 600; color: var(--primary);">${repsCountText}</span>
           </div>
         </div>
-        <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="${isAr ? "إغلاق" : "Close"}">✕</button>
+        <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="Close">✕</button>
       </div>
       <div class="dm-team-modal-body">
         ${repsHtml}
       </div>
       <div class="dm-team-modal-footer">
         <button type="button" class="btn btn-secondary" onclick="window.closeDmTeamModal()" style="padding: 6px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">
-          ${isAr ? "إغلاق" : "Close"}
+          Close
         </button>
       </div>
     </div>
@@ -567,24 +445,23 @@ if (!window._dmTeamModalEscListenerAttached) {
  * Generates the HTML markup for interactive dashboard charts.
  * @param {string} lang
  */
-function renderDashboardChartsMarkup(lang) {
-  const isAr = lang === "ar";
+function renderDashboardChartsMarkup() {
   return `
     <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px;">
         <div>
           <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
-            📊 ${isAr ? "التحليلات والمؤشرات التفاعلية" : "Interactive Analytics & KPI Trends"}
+            📊 Interactive Analytics & KPI Trends
           </h3>
           <small style="color: var(--gray-500); font-size: 0.82rem;">
-            ${isAr ? "متابعة فورية للمبيعات، نسبة التغطية وتوزيع فئات الأطباء" : "Real-time trends for sales achievement, doctor coverage and category breakdown"}
+            Real-time trends for sales achievement, doctor coverage and category breakdown
           </small>
         </div>
       </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px;">
         <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
           <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
-            📈 ${isAr ? "منحنى تحقيق المبيعات شهرياً" : "Monthly Sales vs Target Trend"}
+            📈 Monthly Sales vs Target Trend
           </h4>
           <div style="position: relative; height: 250px; width: 100%;">
             <canvas id="dashSalesTrendChart"></canvas>
@@ -592,7 +469,7 @@ function renderDashboardChartsMarkup(lang) {
         </div>
         <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
           <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
-            🎯 ${isAr ? "نسبة الوصول للأطباء (هذا الشهر)" : "Doctor Reach Gauge (This Month)"}
+            🎯 Doctor Reach Gauge (This Month)
           </h4>
           <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
             <canvas id="dashCoverageGaugeChart"></canvas>
@@ -601,7 +478,7 @@ function renderDashboardChartsMarkup(lang) {
         </div>
         <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
           <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
-            🥧 ${isAr ? "توزيع فئات الأطباء والمستشفيات" : "Doctor Classes & Hospitals"}
+            🥧 Doctor Classes & Hospitals
           </h4>
           <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
             <canvas id="dashDoctorClassesChart"></canvas>
@@ -768,14 +645,10 @@ function initDashboardCharts(user) {
   });
 
   const sortedMonths = Object.keys(monthsMap).sort();
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
   const monthLabels = sortedMonths.map((m) => {
     const parts = m.split("-");
     const mIdx = parseInt(parts[1], 10) - 1;
-    const names = isAr
-      ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
-      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return names[mIdx] || m;
   });
   const trendTargets = sortedMonths.map((m) => monthsMap[m].target);
@@ -830,9 +703,7 @@ function initDashboardCharts(user) {
   // 4. Per-Line Sales Trend Charts (LM, BU & PM dashboards)
   const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUserId) : [];
   if (userLines.length > 0 && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "product_manager" || role === "pm")) {
-    const monthNames = isAr
-      ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
-      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     userLines.forEach(function (line) {
       const canvasId = "dashLineTrend_" + line.id;
@@ -881,7 +752,6 @@ function getActiveCycleCampaignBanner(user, lang) {
   );
   if (focusedLines.length === 0) return "";
 
-  const isAr = lang === "ar";
   return focusedLines
     .map((line) => {
       const focus = line.cycleCampaignFocus;
@@ -890,7 +760,7 @@ function getActiveCycleCampaignBanner(user, lang) {
         const prod = line.products.find((p) => p.id === focus.targetProductId);
         if (prod) prodName = prod.name;
       }
-      const lineDisplayName = isAr ? (line.nameAr || line.name) : line.name;
+      const lineDisplayName = line.name;
 
       return `
         <div class="cycle-campaign-banner mb-3 shadow-sm" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.12)); border-inline-start: 5px solid #2563eb; border-radius: 12px; padding: 14px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; position: relative;">
@@ -899,16 +769,16 @@ function getActiveCycleCampaignBanner(user, lang) {
             <div>
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <span class="badge bg-primary" style="font-size: 0.8rem; font-weight: 700;">${window.escapeHtml(lineDisplayName)}</span>
-                <strong style="color: var(--primary); font-size: 0.95rem;">${isAr ? "تركيز الحملة البيعية الحالية (Cycle Focus)" : "Current Cycle Campaign Focus"}</strong>
+                <strong style="color: var(--primary); font-size: 0.95rem;">Current Cycle Campaign Focus</strong>
                 ${prodName ? `<span class="badge bg-success" style="font-size: 0.8rem;">📦 ${window.escapeHtml(prodName)}</span>` : ""}
               </div>
               <div style="margin-top: 6px; font-size: 0.9rem; color: var(--text-color, #1e293b); font-weight: 500; line-height: 1.5;">
                 ${window.escapeHtml(focus.focusMessage)}
               </div>
-              ${focus.updatedBy ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 4px;">👤 ${isAr ? "محدد بواسطة" : "Set by"}: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
+              ${focus.updatedBy ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 4px;">👤 Set by: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
             </div>
           </div>
-          <button type="button" class="btn-close" style="opacity: 0.6;" onclick="this.closest('.cycle-campaign-banner').remove()" title="${isAr ? "إغلاق الإشعار" : "Dismiss"}"></button>
+          <button type="button" class="btn-close" style="opacity: 0.6;" onclick="this.closest('.cycle-campaign-banner').remove()" title="Dismiss"></button>
         </div>
       `;
     })
@@ -959,16 +829,15 @@ function renderDashboard() {
     }, 50);
   } catch (renderErr) {
     console.error("Dashboard render failed:", renderErr);
-    const isAr = window.getCurrentLang && window.getCurrentLang() === "ar";
     container.innerHTML = `
       <div class="card" style="padding: 40px 20px; text-align: center; max-width: 480px; margin: 40px auto; border-radius: 16px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: var(--card-bg, #ffffff);">
         <div style="font-size: 3rem; margin-bottom: 12px;">🔄</div>
-        <h3 style="font-weight: 800; margin-bottom: 8px; font-size: 1.2rem; color: var(--text-color, #1e293b);">${isAr ? "تحديث جديد للنظام متاح" : "New App Update Available"}</h3>
+        <h3 style="font-weight: 800; margin-bottom: 8px; font-size: 1.2rem; color: var(--text-color, #1e293b);">New App Update Available</h3>
         <p style="color: var(--text-muted, #64748b); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px;">
-          ${isAr ? "تم إصدار تحديث حديث للنظام يتطلب تحديث الذاكرة المؤقتة (Cache) على هذا الجهاز." : "A new update has been released. Please refresh your browser cache to apply changes."}
+          A new update has been released. Please refresh your browser cache to apply changes.
         </p>
         <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; border-radius: 10px; cursor: pointer;">
-          ⚡ ${isAr ? "تحديث الصفحة وحذف الكاش" : "Refresh & Clear Cache"}
+          ⚡ Refresh & Clear Cache
         </button>
       </div>
     `;
@@ -2361,7 +2230,6 @@ function renderLMDashboard(userName, user) {
         const rawLines = myUserLines.length > 0 ? myUserLines : allLines.filter(l => l.lineManagerId === user.id);
         const linesToShow = rawLines.filter(l => activeLmLine === "all" || l.id === activeLmLine);
         if (linesToShow.length === 0) return "";
-        const isAr = lang === "ar";
         const currentYear = new Date().getFullYear().toString();
         const allSales = getDashboardSalesData();
 
@@ -2369,10 +2237,10 @@ function renderLMDashboard(userName, user) {
       <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
         <div style="margin-bottom: 1.25rem;">
           <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
-            📈 ${isAr ? "منحنى ومستهدف المبيعات لكل خط مستقل" : "Monthly Sales & Target Trend (Per Line)"}
+            📈 Monthly Sales & Target Trend (Per Line)
           </h3>
           <small style="color: var(--gray-500); font-size: 0.82rem;">
-            ${isAr ? "كل خط إنتاج له تارجت ومبيعات ونسبة تحقيق مستقلة تماماً" : "Each product line has independent target, sales, and achievement %"}
+            Each product line has independent target, sales, and achievement %
           </small>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
@@ -2390,7 +2258,7 @@ function renderLMDashboard(userName, user) {
                 📦 ${line.name}
               </h4>
               <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
-                ${isAr ? "تحقيق:" : "Ach:"} ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
+                Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
               </span>
             </div>
             <div style="position: relative; height: 250px; width: 100%;">
@@ -2410,10 +2278,8 @@ function renderLMDashboard(userName, user) {
  * Renders the Product Manager (PM) Dashboard.
  */
 function renderPMDashboard(userName, user) {
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const isAr = lang === "ar";
   const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-  const lineNames = pmLines.map((l) => (isAr ? (l.nameAr || l.name) : l.name)).join(isAr ? "، " : ", ");
+  const lineNames = pmLines.map((l) => l.name).join(", ");
 
   const team = typeof window.getScopedTeamForLine === "function"
     ? window.getScopedTeamForLine(user)
@@ -2451,54 +2317,54 @@ function renderPMDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #4f46e5 100%);">
-        <h2 class="welcome-title">${isAr ? "مرحباً بك، مدير المنتج (PM)" : "Welcome back, Product Manager"} ${userName}!</h2>
-        <div class="welcome-subtitle">🏷️ ${lineNames || (isAr ? "إدارة خط المنتجات" : "Product Line Management")} • ${isAr ? "نطاق الصلاحية: على مستوى الجمهورية للخط" : "Nationwide Line Scope"}</div>
+        <h2 class="welcome-title">Welcome back, Product Manager ${userName}!</h2>
+        <div class="welcome-subtitle">🏷️ ${lineNames || "Product Line Management"} • Nationwide Line Scope</div>
       </div>
 
-      ${getActiveCycleCampaignBanner(user, lang)}
+      ${getActiveCycleCampaignBanner(user, "en")}
 
       <div class="stat-grid">
         <div class="stat-card">
-          <div class="stat-label">${isAr ? "أصناف الخط المسندة" : "Assigned Products"}</div>
+          <div class="stat-label">Assigned Products</div>
           <div class="stat-value primary counter" data-target="${lineProducts.length}">${lineProducts.length}</div>
           <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-            ${isAr ? "منتجات تحت إشرافك التسويقي" : "Products under your marketing scope"}
+            Products under your marketing scope
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">${isAr ? "مندوبو الخط (الجمهورية)" : "Line Medical Reps"}</div>
+          <div class="stat-label">Line Medical Reps</div>
           <div class="stat-value success counter" data-target="${team.reps.length}">${team.reps.length}</div>
           <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-            ${isAr ? "مندوبو المبيعات في الخط" : "Field reps in your line"}
+            Field reps in your line
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">${isAr ? "مشرفو ومديرو الخط" : "DMs & LMs in Line"}</div>
+          <div class="stat-label">DMs & LMs in Line</div>
           <div class="stat-value info" style="color: #6366f1;">
             <span class="counter" data-target="${team.dms.length}">${team.dms.length}</span> DM / <span class="counter" data-target="${team.lms.length}">${team.lms.length}</span> LM
           </div>
           <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-            ${isAr ? "فريق الإشراف والإدارة" : "Supervisory & management team"}
+            Supervisory & management team
           </div>
         </div>
         <a href="visits.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--primary);">
           <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${isAr ? "زيارات الخط (هذا الشهر)" : "Line Visits (This Month)"}</span>
+            <span>Line Visits (This Month)</span>
             <span>📍</span>
           </div>
           <div class="stat-value primary counter" data-target="${lineVisitsThisMonth}">${lineVisitsThisMonth}</div>
           <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
-            ${isAr ? "عرض سجل الزيارات ←" : "View visits log →"}
+            View visits log →
           </div>
         </a>
         <a href="activities.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--warning);">
           <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${isAr ? "طلبات التسويق بانتظار الاعتماد" : "Pending Marketing Requests"}</span>
+            <span>Pending Marketing Requests</span>
             <span>⏳</span>
           </div>
           <div class="stat-value warning counter" data-target="${pendingMarketingRequests}">${pendingMarketingRequests}</div>
           <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
-            ${isAr ? "مراجعة واعتماد الطلبات ←" : "Review & approve requests →"}
+            Review & approve requests →
           </div>
         </a>
       </div>
@@ -2510,8 +2376,8 @@ function renderPMDashboard(userName, user) {
             🤝
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "زيارة ميدانية (Double)" : "Field Double Visit"}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "النزول مع LMs و DMs" : "With line LMs & DMs"}</div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Field Double Visit</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">With line LMs & DMs</div>
           </div>
         </a>
         <a href="reports.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
@@ -2519,8 +2385,8 @@ function renderPMDashboard(userName, user) {
             📊
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "مبيعات وإنجاز الخط" : "Line Sales & Target"}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "تقارير الصيدليات والموزعين" : "Pharmacies & distributor sales"}</div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Line Sales & Target</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Pharmacies & distributor sales</div>
           </div>
         </a>
         <a href="quizzes.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
@@ -2528,8 +2394,8 @@ function renderPMDashboard(userName, user) {
             📝
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "الاختبارات العلمية" : "Scientific Quizzes"}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "إنشاء وتقييم اختبارات الخط" : "Create & evaluate quizzes"}</div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Scientific Quizzes</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Create & evaluate quizzes</div>
           </div>
         </a>
         <a href="activities.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
@@ -2537,8 +2403,8 @@ function renderPMDashboard(userName, user) {
             📋
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">${isAr ? "الطلبات والميزانية" : "Requests & Budget"}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${isAr ? "اعتماد طلبات التسويق" : "Approve marketing requests"}</div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Requests & Budget</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Approve marketing requests</div>
           </div>
         </a>
       </div>
@@ -2546,21 +2412,21 @@ function renderPMDashboard(userName, user) {
       <!-- Line Products Showcase -->
       <div class="pm-portfolio-card" style="background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 14px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
         <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #dee2e6); background: var(--surface-hover, rgba(0,0,0,0.02));">
-          <h5 style="margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--gray-800);">📦 ${isAr ? "أصناف ومنتجات الخط" : "Line Products Portfolio"}</h5>
+          <h5 style="margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--gray-800);">📦 Line Products Portfolio</h5>
           <span style="background: rgba(13, 110, 253, 0.1); color: var(--primary); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;">
-            ${lineProducts.length} ${isAr ? "مستحضر مسجل" : "Registered Products"}
+            ${lineProducts.length} Registered Products
           </span>
         </div>
         <div style="overflow-x: auto; width: 100%;">
-          <table style="width: 100%; border-collapse: collapse; text-align: ${isAr ? "right" : "left"}; font-size: 0.9rem;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
             <thead>
               <tr style="background: var(--surface-dim, #f8f9fa); border-bottom: 2px solid var(--border-color, #dee2e6); color: var(--gray-700);">
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "اسم المستحضر" : "Product Name"}</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "الجرعة" : "Dosage"}</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "الشكل الدوائي" : "Form"}</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "الخط" : "Line"}</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "القيمة التقديرية" : "Value"}</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">${isAr ? "حالة التركيز البيعي" : "Cycle Focus"}</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Product Name</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Dosage</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Form</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Line</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Value</th>
+                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Cycle Focus</th>
               </tr>
             </thead>
             <tbody>
@@ -2576,15 +2442,15 @@ function renderPMDashboard(userName, user) {
                     <td style="padding: 12px 18px; font-weight: 700; color: var(--gray-800);">${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
                     <td style="padding: 12px 18px;">
                       ${isFocused 
-                        ? `<span style="background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">🎯 ${isAr ? "منتج ذو أولوية" : "Priority Focus"}</span>` 
-                        : `<span style="color: var(--text-muted); font-size: 0.84rem;">${isAr ? "عادي" : "Standard"}</span>`}
+                        ? `<span style="background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">🎯 Priority Focus</span>` 
+                        : `<span style="color: var(--text-muted); font-size: 0.84rem;">Standard</span>`}
                     </td>
                   </tr>
                 `;
               }).join("") : `
                 <tr>
                   <td colspan="6" style="padding: 24px; text-align: center; color: var(--text-muted);">
-                    ${isAr ? "لا توجد منتجات مسجلة في هذا الخط حالياً." : "No products registered in this line yet."}
+                    No products registered in this line yet.
                   </td>
                 </tr>
               `}
@@ -2594,7 +2460,7 @@ function renderPMDashboard(userName, user) {
       </div>
 
       <!-- Charts Section -->
-      ${renderDashboardChartsMarkup(lang)}
+      ${renderDashboardChartsMarkup()}
 
       ${(() => {
         if (!pmLines || pmLines.length === 0) return "";
@@ -2603,7 +2469,7 @@ function renderPMDashboard(userName, user) {
         return `
         <div style="margin-top: 24px;">
           <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: var(--gray-800);">
-            📊 ${isAr ? "مؤشرات المبيعات الشهرية لمنتجات الخط" : "Monthly Sales Trends for Line Products"}
+            📊 Monthly Sales Trends for Line Products
           </h3>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
             ${pmLines.map((line) => {
@@ -2625,7 +2491,7 @@ function renderPMDashboard(userName, user) {
                     📦 ${line.name}
                   </h4>
                   <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
-                    ${isAr ? "تحقيق:" : "Ach:"} ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
+                    Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
                   </span>
                 </div>
                 <div style="position: relative; height: 250px; width: 100%;">
@@ -2864,7 +2730,7 @@ function renderBUDashboard(userName, user) {
                                     ${lm.email ? `<div class="bu-line-subtext">${lm.email}</div>` : ""}
                                   </td>
                                   <td>
-                                    <span class="badge bg-secondary-subtle text-secondary">${lang === "ar" ? "بدون خط مسند" : "No Line Assigned"}</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">No Line Assigned</span>
                                   </td>
                                 </tr>
                               `,
@@ -2897,7 +2763,6 @@ function renderBUDashboard(userName, user) {
         const rawLines = buUserLines.length > 0 ? buUserLines : allLinesLocal;
         const linesToShow = rawLines.filter((l) => activeBuLine === "all" || l.id === activeBuLine);
         if (linesToShow.length === 0) return "";
-        const isAr = lang === "ar";
         const currentYear = new Date().getFullYear().toString();
         const allSales = getDashboardSalesData();
 
@@ -2905,10 +2770,10 @@ function renderBUDashboard(userName, user) {
       <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
         <div style="margin-bottom: 1.25rem;">
           <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
-            📈 ${isAr ? "منحنى ومستهدف المبيعات لكل خط في وحدة الأعمال" : "Monthly Sales & Target Trend (Per Line)"}
+            📈 Monthly Sales & Target Trend (Per Line)
           </h3>
           <small style="color: var(--gray-500); font-size: 0.82rem;">
-            ${isAr ? "مقارنة المبيعات الفعلية بالمستهدف لكل خط إنتاج مستقل في وحدة الأعمال" : "Actual vs Target comparison for each independent product line under your business unit"}
+            Actual vs Target comparison for each independent product line under your business unit
           </small>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
@@ -2926,7 +2791,7 @@ function renderBUDashboard(userName, user) {
                 📦 ${line.name}
               </h4>
               <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
-                ${isAr ? "تحقيق:" : "Ach:"} ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
+                Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
               </span>
             </div>
             <div style="position: relative; height: 250px; width: 100%;">
@@ -2947,8 +2812,7 @@ function renderBUDashboard(userName, user) {
  * @param {string} lang - 'ar' or 'en'
  * @returns {Array<{text: string, type: string}>}
  */
-function getSystemRecentActivities(lang) {
-  const isAr = lang === "ar";
+function getSystemRecentActivities() {
   const activities = [];
 
   const allUsers = (window.store && window.store.users) ? window.store.users.getAll() : (window.DEMO_DATA?.users || []);
@@ -2963,16 +2827,12 @@ function getSystemRecentActivities(lang) {
   if (isCloudLive) {
     activities.push({
       type: "primary",
-      text: isAr
-        ? "مزامنة السحابة المباشرة (Cloud Live) نشطة ومتصلة بقاعدة البيانات."
-        : "Live Cloud Synchronization (Cloud Live) active and connected to Firestore."
+      text: "Live Cloud Synchronization (Cloud Live) active and connected to Firestore."
     });
   } else {
     activities.push({
       type: "primary",
-      text: isAr
-        ? "النظام يعمل في وضع التخزين المحلي الآمن (Local Storage Active)."
-        : "System operating in reliable local storage mode."
+      text: "System operating in reliable local storage mode."
     });
   }
 
@@ -2980,17 +2840,13 @@ function getSystemRecentActivities(lang) {
   if (allSales.length > 0) {
     activities.push({
       type: "success",
-      text: isAr
-        ? `شيتات المبيعات: تم تسجيل ${allSales.length} حركة بيع للموزعين في النظام.`
-        : `Distributor Sales: ${allSales.length} distributor sales records registered in system.`
+      text: `Distributor Sales: ${allSales.length} distributor sales records registered in system.`
     });
   } else if (allDistributors.length > 0) {
     const configuredCount = allDistributors.filter(d => d.columnMap && d.columnMap.product && d.columnMap.value).length;
     activities.push({
       type: "success",
-      text: isAr
-        ? `إدارة الموزعين: تم تسجيل ${allDistributors.length} موزعين (${configuredCount} مهيئين للمطابقة).`
-        : `Distributors: ${allDistributors.length} distributors registered (${configuredCount} configured for mapping).`
+      text: `Distributors: ${allDistributors.length} distributors registered (${configuredCount} configured for mapping).`
     });
   }
 
@@ -3000,21 +2856,17 @@ function getSystemRecentActivities(lang) {
     const prodCount = Array.isArray(firstLine.products) ? firstLine.products.length : 0;
     activities.push({
       type: "success",
-      text: isAr
-        ? `خط الإنتاج "${firstLine.name}": معتمد ويضم ${prodCount} أصناف دوائية.`
-        : `Product Line "${firstLine.name}": Verified with ${prodCount} pharmaceutical products.`
+      text: `Product Line "${firstLine.name}": Verified with ${prodCount} pharmaceutical products.`
     });
   }
 
   // 4. Territory Coverage
   if (allAreas.length > 0) {
     const sampleArea = allAreas.find(a => a.assignedRepId || a.assignedRep || a.repId) || allAreas[0];
-    const repName = sampleArea.assignedRepName || sampleArea.assignedRep || sampleArea.repId || (isAr ? "مندوب" : "Rep");
+    const repName = sampleArea.assignedRepName || sampleArea.assignedRep || sampleArea.repId || "Rep";
     activities.push({
       type: "warning",
-      text: isAr
-        ? `تغطية المناطق: المنطقة "${sampleArea.name} (${sampleArea.code || ''})" مسندة للمندوب (${repName}).`
-        : `Territory Coverage: Area "${sampleArea.name} (${sampleArea.code || ''})" assigned to (${repName}).`
+      text: `Territory Coverage: Area "${sampleArea.name} (${sampleArea.code || ''})" assigned to (${repName}).`
     });
   }
 
@@ -3024,9 +2876,7 @@ function getSystemRecentActivities(lang) {
     const managers = allUsers.filter(u => ["dm", "manager", "bu", "business_unit"].includes(u.role)).length;
     activities.push({
       type: "primary",
-      text: isAr
-        ? `فريق العمل: إجمالي ${allUsers.length} مستخدمين (${reps} مندوبين، ${managers} مشرفين).`
-        : `Staff Directory: Total ${allUsers.length} users (${reps} reps, ${managers} managers active).`
+      text: `Staff Directory: Total ${allUsers.length} users (${reps} reps, ${managers} managers active).`
     });
   }
 
@@ -3035,9 +2885,7 @@ function getSystemRecentActivities(lang) {
     const latest = allAnnouncements[0];
     activities.push({
       type: "primary",
-      text: isAr
-        ? `إعلان عام: "${latest.title || 'إشعار إداري'}" منشور لفريق العمل.`
-        : `Announcement: "${latest.title || 'Notice'}" published to team.`
+      text: `Announcement: "${latest.title || 'Notice'}" published to team.`
     });
   }
 
@@ -3045,7 +2893,7 @@ function getSystemRecentActivities(lang) {
   if (activities.length === 0) {
     activities.push({
       type: "primary",
-      text: isAr ? "النظام يعمل بشكل سليم ومستقر." : "System operating normally."
+      text: "System operating normally."
     });
   }
 

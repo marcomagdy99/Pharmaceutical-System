@@ -53,48 +53,23 @@ try {
     error_invalid: "Invalid email or password.",
     error_empty: "Please fill in all fields.",
     error_wrong_dept: "This account does not belong to the selected department.",
-    lang_toggle_text: "عربي",
+    lang_toggle_text: "English",
     demo_accounts_title: "Quick Demo Accounts:",
     selected_dept_admin: "Admin Portal",
     selected_dept_sales: "Sales & Marketing Portal",
     selected_dept_hr: "Human Resources Portal",
     dark_mode: "Dark",
     light_mode: "Light"
-  },
-  ar: {
-    login_subtitle: "نظام إدارة علاقات العملاء الصيدلانية",
-    select_department: "اختر القسم الخاص بك",
-    dept_admin: "الإدارة",
-    dept_admin_desc: "مسؤولي النظام",
-    dept_sales: "المبيعات والتسويق",
-    dept_sales_desc: "مديري الوحدات والخطوط والمندوبين",
-    dept_hr: "الموارد البشرية",
-    dept_hr_desc: "شؤون الموظفين",
-    back: "العودة للاختيار",
-    email_label: "البريد الإلكتروني",
-    email_placeholder: "أدخل بريدك الإلكتروني",
-    password_label: "كلمة المرور",
-    password_placeholder: "أدخل كلمة المرور",
-    remember_me: "تذكرني",
-    forgot_password: "هل نسيت كلمة المرور؟",
-    login_btn: "تسجيل الدخول",
-    footer_text: "© 2026 PharmaCare. جميع الحقوق محفوظة.",
-    brand_tagline: "نمكّن المناديب الطبيين",
-    brand_desc: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
-    error_invalid: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-    error_empty: "يرجى ملء جميع الحقول.",
-    error_wrong_dept: "هذا الحساب لا ينتمي للقسم المختار. يرجى اختيار القسم الصحيح.",
-    lang_toggle_text: "English",
-    demo_accounts_title: "تسجيل تجريبي سريع:",
-    selected_dept_admin: "بوابة الإدارة",
-    selected_dept_sales: "بوابة المبيعات والتسويق",
-    selected_dept_hr: "بوابة الموارد البشرية",
-    dark_mode: "داكن",
-    light_mode: "فاتح"
   }
 };
 
-let currentLang = localStorage.getItem('pharmaLang') || 'en';
+let currentLang = 'en';
+try {
+  localStorage.setItem('pharmaLang', 'en');
+  localStorage.setItem('lang', 'en');
+  document.documentElement.lang = 'en';
+  document.documentElement.dir = 'ltr';
+} catch (e) {}
 let selectedDepartment = null;
 
 // DOM References
@@ -129,30 +104,26 @@ const selectedDeptTitle = document.getElementById('selectedDeptTitle');
   }
 
 function setLanguage(lang) {
-  currentLang = lang;
-  document.documentElement.lang = lang;
-  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  currentLang = 'en';
+  document.documentElement.lang = 'en';
+  document.documentElement.dir = 'ltr';
 
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
-    if (translations[lang] && translations[lang][key]) {
-      el.textContent = translations[lang][key];
+    if (translations['en'] && translations['en'][key]) {
+      el.textContent = translations['en'][key];
     }
   });
 
   document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
     const key = el.getAttribute('data-i18n-placeholder');
-    if (translations[lang] && translations[lang][key]) {
-      el.placeholder = translations[lang][key];
+    if (translations['en'] && translations['en'][key]) {
+      el.placeholder = translations['en'][key];
     }
   });
 
-  if (langText) {
-    langText.textContent = translations[lang].lang_toggle_text;
-  }
-
   if (selectedDepartment && selectedDeptTitle) {
-    selectedDeptTitle.textContent = translations[lang]['selected_dept_' + selectedDepartment];
+    selectedDeptTitle.textContent = translations['en']['selected_dept_' + selectedDepartment];
   }
 
   if (typeof window.updateLoginThemeUI === 'function') {
@@ -199,16 +170,15 @@ function applyBrandSettings() {
     });
   }
 
-  // 2. Update Tagline (both right panel and left subtitle if customized)
-  const isAr = currentLang === "ar";
-  const taglineText = isAr ? (brand.taglineAr || brand.taglineEn) : (brand.taglineEn || brand.taglineAr);
+  // 2. Update Tagline
+  const taglineText = brand.taglineEn || brand.taglineAr;
   const brandTagline = document.getElementById("brandTagline");
   if (brandTagline && taglineText) {
     brandTagline.textContent = taglineText;
   }
 
   // 3. Update Description
-  const descText = isAr ? (brand.descAr || brand.descEn) : (brand.descEn || brand.descAr);
+  const descText = brand.descEn || brand.descAr;
   const brandDesc = document.getElementById("brandDesc");
   if (brandDesc && descText) {
     brandDesc.textContent = descText;
@@ -235,14 +205,6 @@ window.addEventListener("storage", (e) => {
     applyBrandSettings();
   }
 });
-
-if (langToggle) {
-  langToggle.addEventListener('click', () => {
-    const newLang = currentLang === 'en' ? 'ar' : 'en';
-    localStorage.setItem('pharmaLang', newLang);
-    setLanguage(newLang);
-  });
-}
 
 if (togglePassword && passwordInput) {
   togglePassword.addEventListener('click', () => {

@@ -95,16 +95,8 @@
     border-left: 4px solid var(--primary);
 }
 
-[dir="rtl"] .visit-card {
-    border-left: none;
-    border-right: 4px solid var(--primary);
-}
-
 .visit-card.completed { border-left-color: var(--success); }
 .visit-card.cancelled { border-left-color: var(--danger); }
-
-[dir="rtl"] .visit-card.completed { border-right-color: var(--success); }
-[dir="rtl"] .visit-card.cancelled { border-right-color: var(--danger); }
 
 .visit-info {
     display: flex;
@@ -170,7 +162,6 @@
     border-bottom: 1px solid var(--gray-200);
 }
 
-[dir="rtl"] .visits-table th, [dir="rtl"] .visits-table td { text-align: right; }
 .visits-table th { background: var(--gray-50); font-weight: 600; }
 
 .period-badge {
@@ -424,15 +415,8 @@
     color: #f1f3f5;
 }
 
-[data-theme="dark"][dir="rtl"] .visit-card {
-    border-left: 1px solid #2d3340;
-    border-right: 4px solid #0d6efd;
-}
-
 [data-theme="dark"] .visit-card.completed { border-left-color: #198754; }
-[data-theme="dark"][dir="rtl"] .visit-card.completed { border-right-color: #198754; }
 [data-theme="dark"] .visit-card.cancelled { border-left-color: #dc3545; }
-[data-theme="dark"][dir="rtl"] .visit-card.cancelled { border-right-color: #dc3545; }
 
 [data-theme="dark"] .filter-input {
     background-color: #232731;
@@ -814,10 +798,6 @@
     width: 100%;
 }
 
-[dir="rtl"] .timeline-container {
-    padding: 10px 20px 20px 0;
-}
-
 .timeline-container::before {
     content: '';
     position: absolute;
@@ -826,11 +806,6 @@
     left: 45px;
     width: 3px;
     background-color: var(--gray-200);
-}
-
-[dir="rtl"] .timeline-container::before {
-    left: auto;
-    right: 45px;
 }
 
 .timeline-event-card {
@@ -887,10 +862,6 @@
 .timeline-content-box.planned-border { border-left: 4px solid #0d6efd; }
 .timeline-content-box.joint-border { border-left: 4px solid #8b5cf6; }
 .timeline-content-box.missed-border { border-left: 4px solid #dc3545; }
-
-[dir="rtl"] .timeline-content-box.actual-border { border-left: 1px solid var(--gray-200); border-right: 4px solid #f59e0b; }
-[dir="rtl"] .timeline-content-box.planned-border { border-left: 1px solid var(--gray-200); border-right: 4px solid #0d6efd; }
-[dir="rtl"] .timeline-content-box.joint-border { border-left: 1px solid var(--gray-200); border-right: 4px solid #8b5cf6; }
 
 .timeline-target-title {
     font-size: 1.05rem;
@@ -1021,23 +992,9 @@
     border: 1px solid #6d28d9;
 }
 
-/* RTL border colors in dark mode */
 [data-theme="dark"] .timeline-content-box.actual-border { border-left-color: #f59e0b; }
 [data-theme="dark"] .timeline-content-box.planned-border { border-left-color: #388bfd; }
 [data-theme="dark"] .timeline-content-box.joint-border { border-left-color: #8b5cf6; }
-
-[data-theme="dark"][dir="rtl"] .timeline-content-box.actual-border {
-    border-left: 1px solid #2d3340;
-    border-right: 4px solid #f59e0b;
-}
-[data-theme="dark"][dir="rtl"] .timeline-content-box.planned-border {
-    border-left: 1px solid #2d3340;
-    border-right: 4px solid #388bfd;
-}
-[data-theme="dark"][dir="rtl"] .timeline-content-box.joint-border {
-    border-left: 1px solid #2d3340;
-    border-right: 4px solid #8b5cf6;
-}
 
 /* ==========================================================================
    Print Stylesheet: Clean, Isolated Visits List Printing
@@ -1567,6 +1524,16 @@
     font-weight: 700;
 }
 
+.badge-gps-no-coords {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
 .badge-gps-in-range {
     background: #dcfce7;
     color: #166534;
@@ -1574,6 +1541,9 @@
     padding: 3px 8px;
     border-radius: 999px;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .badge-gps-out-of-range {
@@ -1583,6 +1553,49 @@
     padding: 3px 8px;
     border-radius: 999px;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-gps-map-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+}
+
+.badge-gps-map-link:hover {
+    transform: scale(1.25);
+}
+
+[data-theme="dark"] .badge-gps-denied {
+    background: #422006;
+    color: #fde047;
+    border: 1px solid #713f12;
+}
+
+[data-theme="dark"] .badge-gps-no-coords {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .badge-gps-in-range {
+    background: #052e16;
+    color: #86efac;
+    border: 1px solid #166534;
+}
+
+[data-theme="dark"] .badge-gps-out-of-range {
+    background: #450a0a;
+    color: #fca5a5;
+    border: 1px solid #991b1b;
 }
 
 .stat-value-primary {

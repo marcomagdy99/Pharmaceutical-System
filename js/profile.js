@@ -47,6 +47,10 @@ const profileTranslations = {
     minPmVisitsLabel: "Minimum Evening Visits (PM Visits/Day)",
     minPmVisitsHint: "Daily minimum required clinic visits during the evening shift for medical representatives.",
     workSchedulePolicyTitle: "Work Schedule & Weekly Rest Days",
+    secondaryWeekendDayLabel: "Secondary Rest Day (Alongside Friday)",
+    secondaryWeekendDayHint: "Friday is statutory rest day. Choose additional day off if applicable.",
+    secondaryWeekendModeLabel: "Rest Day Coverage Mode",
+    secondaryWeekendModeHint: "Full Day: complete day off. PM Only: morning work allowed, evening clinic quota exempted.",
     toggleThursdayWeekendLabel: "Designate Thursday as Official Weekend (Thursday & Friday)",
     toggleThursdayWeekendHint: "When enabled, Thursday is treated as an official day off alongside Friday across all visits, daily activities, and leave balances. If disabled, only Friday is the statutory rest day.",
     saveCompanyPolicies: "Save Company Policies",
@@ -64,67 +68,6 @@ const profileTranslations = {
     bannerThemeLabel: "Login Panel Theme Color & Gradient",
     saveBrandingSettings: "Save Branding Settings",
     brandingSettingsSaved: "Company branding & login appearance saved successfully!",
-  },
-  ar: {
-    upload_photo: "رفع صورة",
-    role_rep: "مندوب طبي",
-    personal_info: "المعلومات الشخصية",
-    full_name: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    phone: "رقم الهاتف",
-    employee_code: "رمز الموظف",
-    hire_date: "تاريخ التعيين",
-    product_line: "خط المنتجات",
-    manager: "المدير",
-    save_changes: "حفظ التغييرات",
-    leave_balance: "رصيد الإجازات",
-    annual_leave: "إجازة سنوية",
-    sick_leave: "إجازة مرضية",
-    emergency_leave: "إجازة طارئة",
-    unpaid_leave: "إجازة غير مدفوعة",
-    days: "أيام",
-    preferences: "التفضيلات",
-    language: "اللغة",
-    email_notifications: "إشعارات البريد الإلكتروني",
-    push_notifications: "إشعارات التطبيق",
-    save_preferences: "حفظ التفضيلات",
-    change_password: "تغيير كلمة المرور",
-    current_password: "كلمة المرور الحالية",
-    new_password: "كلمة المرور الجديدة",
-    confirm_password: "تأكيد كلمة المرور الجديدة",
-    update_password: "تحديث كلمة المرور",
-    req_length: "8 أحرف على الأقل",
-    req_upper: "حرف كبير واحد على الأقل",
-    req_number: "رقم واحد على الأقل",
-    managed_by_admin_hint: "البيانات الشخصية والوظيفية الرسمية يتم تعديلها فقط من قِبل إدارة النظام أو الموارد البشرية.",
-    manage_users_link: "إدارة بيانات الموظفين في شاشة المستخدمين",
-    photo_updated: "تم تحديث الصورة الشخصية بنجاح!",
-    companyGovernanceTitle: "إعدادات وسياسات الشركة الميدانية",
-    adminExclusive: "خاص بالإدارة العامة",
-    companyGovernanceDesc: "تهيئة السياسات التنظيمية الملزمة لكافة المناديب والمشرفين والمديرين في الميدان.",
-    toggleGpsLabel: "إلزام التحقق الجغرافي بالـ GPS للزيارات الميدانية",
-    toggleGpsHint: "عند التفعيل، يتم فحص تواجد المندوب داخل نطاق العيادة/المستشفى (200 متر). وفي حال تعطيل المندوب للـ GPS يتم تسجيل شارة تدقيق للمدير.",
-    gpsRadiusLabel: "نصف قطر نطاق العيادة المسموح به (بالأمتار)",
-    minPmVisitsLabel: "الحد الأدنى لزيارات العيادات المسائية (PM Visits)",
-    minPmVisitsHint: "الحد الأدنى الإلزامي لعدد زيارات العيادات خلال الفترة المسائية يومياً لكل مندوب طبي.",
-    workSchedulePolicyTitle: "مواعيد العمل والعطلات الأسبوعية الرسمية",
-    toggleThursdayWeekendLabel: "اعتماد يوم الخميس عطلة أسبوعية رسمية (خميس وجمعة)",
-    toggleThursdayWeekendHint: "عند التفعيل، يُعتبر يوم الخميس راحة أسبوعية رسمية إلى جانب الجمعة في تقارير الزيارات وجداول الأنشطة ورصيد الإجازات. في حال التعطيل، يكون يوم الجمعة فقط هو العطلة الرسمية.",
-    saveCompanyPolicies: "حفظ سياسات الشركة",
-    companyPoliciesSaved: "تم حفظ وتطبيق سياسات الشركة بنجاح على جميع المستخدمين!",
-    companyBrandingTitle: "تخصيص هوية الشركة وشاشة الدخول",
-    companyBrandingDesc: "تخصيص اللوحة الجانبية لشاشة تسجيل الدخول بشعار الشركة، الشعار اللفظي (السلوجان)، الوصف، وألوان الهوية.",
-    companyLogoLabel: "شعار الشركة (اللوجو المعروض بشاشة الدخول)",
-    uploadLogo: "رفع شعار جديد",
-    resetDefault: "استعادة الافتراضي",
-    logoConstraintHint: "صيغ PNG أو JPG أو SVG. يتم ضبط الحجم والمقاسات تلقائياً ليناسب المربع الموحد 96×96 بدون أي تشويه.",
-    taglineEnLabel: "الشعار اللفظي / السلوجان (بالإنجليزي)",
-    taglineArLabel: "الشعار اللفظي / السلوجان (بالعربي)",
-    descEnLabel: "الوصف التفصيلي (بالإنجليزي)",
-    descArLabel: "الوصف التفصيلي (بالعربي)",
-    bannerThemeLabel: "لون وتدرج لوحة الدخول (Brand Theme)",
-    saveBrandingSettings: "حفظ إعدادات الهوية",
-    brandingSettingsSaved: "تم حفظ وتطبيق هوية الشركة وشاشة تسجيل الدخول بنجاح!",
   },
 };
 
@@ -145,8 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = e.target.files[0];
       if (file) {
         if (!file.type.startsWith("image/")) {
-          const currentLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-          const msg = currentLang === "ar" ? "يرجى اختيار ملف صورة صالح." : "Please select a valid image file.";
+          const msg = "Please select a valid image file.";
           if (typeof showToast === "function") showToast(msg, "warning");
           return;
         }
@@ -222,32 +164,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("passwordForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const isAr = lang === "ar";
+    
     const currentPass = document.getElementById("currentPassword")?.value || "";
     const newPass = document.getElementById("newPassword").value;
     const confirmPass = document.getElementById("confirmPassword").value;
 
     if (newPass.length < 8) {
-      const msg = isAr ? "يجب ألا تقل كلمة المرور عن 8 أحرف." : "Password must be at least 8 characters.";
+      const msg = "Password must be at least 8 characters.";
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
 
     if (!/[A-Z]/.test(newPass)) {
-      const msg = isAr ? "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل (A-Z)." : "Password must contain at least one uppercase letter (A-Z).";
+      const msg = "Password must contain at least one uppercase letter (A-Z).";
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
 
     if (!/[0-9]/.test(newPass)) {
-      const msg = isAr ? "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (0-9)." : "Password must contain at least one number (0-9).";
+      const msg = "Password must contain at least one number (0-9).";
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
 
     if (newPass !== confirmPass) {
-      const msg = isAr ? "كلمة المرور وتأكيدها غير متطابقين." : "New password and confirmation do not match.";
+      const msg = "New password and confirmation do not match.";
       if (typeof showToast === "function") showToast(msg, "error");
       return;
     }
@@ -259,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPass && userObj.passwordHash) {
           const checkHash = await window.hashPassword(currentPass);
           if (checkHash !== userObj.passwordHash && (!userObj.password || userObj.password !== currentPass)) {
-            const msg = isAr ? "كلمة المرور الحالية غير صحيحة." : "Current password is incorrect.";
+            const msg = "Current password is incorrect.";
             if (typeof showToast === "function") showToast(msg, "error");
             return;
           }
@@ -278,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    const successMsg = isAr ? "تم تحديث كلمة المرور بنجاح!" : "Password updated successfully!";
+    const successMsg = "Password updated successfully!";
     if (typeof showToast === "function") showToast(successMsg, "success");
     e.target.reset();
     const ind = document.getElementById("strengthIndicator");
@@ -534,10 +475,24 @@ function loadUserProfile() {
       const backlogSelect = document.getElementById("visitBacklogLimitSelect");
       const expirySelect = document.getElementById("plannedVisitExpirySelect");
 
+      const secondaryDaySelect = document.getElementById("secondaryWeekendDaySelect");
+      const secondaryModeSelect = document.getElementById("secondaryWeekendModeSelect");
+      const secondaryModeGroup = document.getElementById("secondaryWeekendModeGroup");
+
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
       if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
       if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
-      if (thursdayToggle) thursdayToggle.checked = !!currentSettings.isThursdayWeekend;
+
+      // Weekend Policy: backwards compatibility with isThursdayWeekend
+      let secDay = currentSettings.secondaryWeekendDay;
+      if (!secDay) {
+        secDay = currentSettings.isThursdayWeekend ? "thursday" : "none";
+      }
+      if (secondaryDaySelect) secondaryDaySelect.value = secDay;
+      if (secondaryModeSelect) secondaryModeSelect.value = currentSettings.secondaryWeekendMode || "full_day";
+      if (secondaryModeGroup) secondaryModeGroup.style.display = secDay === "none" ? "none" : "block";
+
+      if (thursdayToggle) thursdayToggle.checked = secDay === "thursday";
       if (backlogSelect) backlogSelect.value = String(currentSettings.visitBacklogLimitDays !== undefined ? currentSettings.visitBacklogLimitDays : 2);
       if (expirySelect) expirySelect.value = String(currentSettings.plannedVisitExpiryDays !== undefined ? currentSettings.plannedVisitExpiryDays : 7);
 
@@ -608,6 +563,14 @@ window.onToggleLeaveRolloverChange = function() {
   }
 };
 
+window.onSecondaryWeekendChange = function() {
+  const daySelect = document.getElementById("secondaryWeekendDaySelect");
+  const modeGroup = document.getElementById("secondaryWeekendModeGroup");
+  if (daySelect && modeGroup) {
+    modeGroup.style.display = daySelect.value === "none" ? "none" : "block";
+  }
+};
+
 function handleSaveCompanySettings(e) {
   if (e) e.preventDefault();
   const user = (window.checkAuth && window.checkAuth()) || {};
@@ -622,7 +585,8 @@ function handleSaveCompanySettings(e) {
   const rolloverToggle = document.getElementById("toggleLeaveRollover");
   const rolloverGrace = document.getElementById("leaveRolloverGraceSelect");
   const rolloverMax = document.getElementById("leaveRolloverMaxDaysInput");
-  const thursdayToggle = document.getElementById("toggleThursdayWeekend");
+  const secondaryDaySelect = document.getElementById("secondaryWeekendDaySelect");
+  const secondaryModeSelect = document.getElementById("secondaryWeekendModeSelect");
   const backlogSelect = document.getElementById("visitBacklogLimitSelect");
   const expirySelect = document.getElementById("plannedVisitExpirySelect");
 
@@ -632,7 +596,11 @@ function handleSaveCompanySettings(e) {
   const allowLeaveRollover = rolloverToggle ? rolloverToggle.checked : true;
   const leaveRolloverGraceMonths = rolloverGrace ? (parseInt(rolloverGrace.value, 10) || 3) : 3;
   const leaveRolloverMaxDays = rolloverMax ? Math.max(0, parseInt(rolloverMax.value, 10) || 0) : 5;
-  const isThursdayWeekend = thursdayToggle ? thursdayToggle.checked : false;
+
+  const secondaryWeekendDay = secondaryDaySelect ? secondaryDaySelect.value : "saturday";
+  const secondaryWeekendMode = secondaryModeSelect ? secondaryModeSelect.value : "full_day";
+  const isThursdayWeekend = secondaryWeekendDay === "thursday";
+
   const visitBacklogLimitDays = backlogSelect ? Math.max(0, parseInt(backlogSelect.value, 10) || 0) : 2;
   const plannedVisitExpiryDays = expirySelect ? Math.max(1, parseInt(expirySelect.value, 10) || 7) : 7;
 
@@ -650,19 +618,25 @@ function handleSaveCompanySettings(e) {
       leaveRolloverGraceMonths,
       leaveRolloverMaxDays,
       isThursdayWeekend,
+      secondaryWeekendDay,
+      secondaryWeekendMode,
       visitBacklogLimitDays,
       plannedVisitExpiryDays,
     });
   }
 
   // Broadcast policy update notifications to all employees
-  const allUsers = (window.store && window.store.users)
-    ? window.store.users.getAll()
-    : (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-
   function broadcastPolicyNotification(notifData) {
     if (typeof window.addWorkflowNotification !== "function") return;
-    allUsers.forEach((u) => {
+    const userMap = new Map();
+    const sourceUsers = (window.store && window.store.users)
+      ? window.store.users.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    sourceUsers.forEach((u) => { if (u && u.id) userMap.set(u.id, u); });
+    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)) {
+      window.DEMO_DATA.users.forEach((u) => { if (u && u.id) userMap.set(u.id, u); });
+    }
+    userMap.forEach((u) => {
       window.addWorkflowNotification({
         userId: u.id,
         type: "policy_update",
@@ -700,10 +674,8 @@ function handleSaveCompanySettings(e) {
     broadcastPolicyNotification({
       icon: "⏱️",
       badgeClass: "bg-warning",
-      title: "تحديث سياسة تسجيل الزيارات",
-      titleEn: "Visit Logging Limit Policy Update",
-      message: `تنبيه: تم تعديل مهلة تسجيل الزيارات بأثر رجعي إلى: ${bAr}. لن يُسمح بتسجيل أو إتمام أي زيارة تتعدى هذه المهلة.`,
-      messageEn: `Notice: Past visit logging grace period is now set to: ${bEn}. Visits beyond this window cannot be logged.`,
+      title: "Visit Logging Limit Policy Update",
+      message: `Notice: Past visit logging grace period is now set to: ${bEn}. Visits beyond this window cannot be logged.`,
       link: "visits.html",
     });
   }
@@ -714,26 +686,20 @@ function handleSaveCompanySettings(e) {
     broadcastPolicyNotification({
       icon: "🗓️",
       badgeClass: "bg-info",
-      title: "تحديث سياسة انتهاء الزيارات المخططة",
-      titleEn: "Planned Visits Expiry Policy Update",
-      message: `تنبيه: تم تعديل مدة انتهاء صلاحية الزيارات المخططة غير المنفذة إلى: ${plannedVisitExpiryDays} يوم.`,
-      messageEn: `Notice: Unexecuted planned visits will automatically expire after ${plannedVisitExpiryDays} days.`,
+      title: "Planned Visits Expiry Policy Update",
+      message: `Notice: Unexecuted planned visits will automatically expire after ${plannedVisitExpiryDays} days.`,
       link: "visits.html",
     });
   }
 
-  // 3. GPS Validation Change
+  // 3. GPS Validation Change (strictly on state change)
   const prevGps = prevSettings.requireGpsValidation !== undefined ? !!prevSettings.requireGpsValidation : true;
   if (prevGps !== requireGpsValidation) {
     broadcastPolicyNotification({
       icon: "📍",
       badgeClass: requireGpsValidation ? "bg-primary" : "bg-warning",
-      title: "تحديث سياسة التحقق الجغرافي (GPS)",
-      titleEn: "GPS Location Policy Update",
+      title: "GPS Location Policy Update",
       message: requireGpsValidation
-        ? "تنبيه: تم تفعيل إلزامية التحقق من الموقع الجغرافي (GPS) عند تسجيل الزيارات الميدانية."
-        : "تنبيه: تم تعطيل إلزامية التحقق من الموقع الجغرافي (GPS) عند تسجيل الزيارات مؤقتاً.",
-      messageEn: requireGpsValidation
         ? "Notice: GPS geofence verification is now strictly required when recording field visits."
         : "Notice: Mandatory GPS verification has been temporarily relaxed.",
       link: "visits.html",
@@ -746,10 +712,8 @@ function handleSaveCompanySettings(e) {
     broadcastPolicyNotification({
       icon: "🎯",
       badgeClass: "bg-info",
-      title: "تحديث نطاق التواجد الجغرافي (Geofence)",
-      titleEn: "Geofence Radius Policy Update",
-      message: `تنبيه: تم تعديل أقصى نطاق مسموح به لتسجيل الزيارات حول العيادة/المستشفى إلى: ${gpsMaxDistanceMeters} متر.`,
-      messageEn: `Notice: Clinic geofence validation radius has been updated to: ${gpsMaxDistanceMeters} meters.`,
+      title: "Geofence Radius Policy Update",
+      message: `Notice: Clinic geofence validation radius has been updated to: ${gpsMaxDistanceMeters} meters.`,
       link: "visits.html",
     });
   }
@@ -760,10 +724,8 @@ function handleSaveCompanySettings(e) {
     broadcastPolicyNotification({
       icon: "🩺",
       badgeClass: "bg-primary",
-      title: "تحديث الحد الأدنى للزيارات المسائية",
-      titleEn: "Daily PM Visits Target Policy Update",
-      message: `تنبيه: تم تعديل الحد الأدنى المطلوب للزيارات المسائية اليومية إلى: ${minPmVisitsPerDay} زيارات/يوم.`,
-      messageEn: `Notice: Daily minimum required evening clinic visits has been updated to: ${minPmVisitsPerDay} visits/day.`,
+      title: "Daily PM Visits Target Policy Update",
+      message: `Notice: Daily minimum required evening clinic visits has been updated to: ${minPmVisitsPerDay} visits/day.`,
       link: "dashboard.html",
     });
   }
@@ -774,12 +736,8 @@ function handleSaveCompanySettings(e) {
     broadcastPolicyNotification({
       icon: "📅",
       badgeClass: "bg-info",
-      title: "تحديث سياسة أيام العمل والعطلات",
-      titleEn: "Work Schedule Policy Update",
+      title: "Work Schedule Policy Update",
       message: isThursdayWeekend
-        ? "تنبيه: تم اعتماد يوم الخميس عطلة أسبوعية رسمية للشركة (الخميس والجمعة)."
-        : "تنبيه: تم إلغاء عطلة يوم الخميس واعتباره يوم عمل رسمي للشركة.",
-      messageEn: isThursdayWeekend
         ? "Notice: Thursday has been officially designated as a weekly day off (Thursday & Friday)."
         : "Notice: Thursday is now designated as an official working day.",
       link: "profile.html",
@@ -793,12 +751,8 @@ function handleSaveCompanySettings(e) {
     broadcastPolicyNotification({
       icon: "🏖️",
       badgeClass: "bg-info",
-      title: "تحديث سياسة ترحيل رصيد الإجازات",
-      titleEn: "Leave Balance Rollover Policy Update",
+      title: "Leave Balance Rollover Policy Update",
       message: allowLeaveRollover
-        ? `تنبيه: تم تفعيل ترحيل رصيد الإجازات السنوية بحد أقصى ${leaveRolloverMaxDays} يوم.`
-        : "تنبيه: تم إلغاء ترحيل رصيد الإجازات السنوية للعام القادم.",
-      messageEn: allowLeaveRollover
         ? `Notice: Annual leave rollover is enabled up to ${leaveRolloverMaxDays} days.`
         : "Notice: Annual leave balance rollover to next year has been disabled.",
       link: "leaves.html",

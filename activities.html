@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -27,22 +27,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v133">
-    <link rel="stylesheet" href="css/activities.css?v=v133">
+    <link rel="stylesheet" href="css/style.css?v=v162">
+    <link rel="stylesheet" href="css/activities.css?v=v156">
 
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v133"></script>
-    <script src="js/store.js?v=v133"></script>
+    <script src="js/app.js?v=v159"></script>
+    <script src="js/store.js?v=v156"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v133"></script>
-    <script src="js/firebase-sync.js?v=v133"></script>
+    <script src="js/firebase-config.js?v=v156"></script>
+    <script src="js/firebase-sync.js?v=v157"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v133";
+        var EXPECTED_SW = "v159";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -89,6 +89,9 @@
                     </button>
                     <button type="button" class="requests-tab-btn" id="tabBtnServices" onclick="switchRequestsTab('tab-services')">
                         <span>🤝</span> <span data-i18n="tabServices">Request Services</span>
+                    </button>
+                    <button type="button" class="requests-tab-btn" id="tabBtnLocationRequests" onclick="switchRequestsTab('tab-locations')">
+                        <span>📍</span> <span data-i18n="tabLocationRequests">Location Requests</span>
                     </button>
                     <button type="button" class="requests-tab-btn" id="tabBtnBudget" style="display: none;" onclick="switchRequestsTab('tab-budget')">
                         <span>💰</span> <span data-i18n="tabSalesBudget">Sales Budget</span>
@@ -445,6 +448,40 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- ======================================================== -->
+                <!-- TAB 5: Account Location Requests (GPS Pin & Relocation)   -->
+                <!-- ======================================================== -->
+                <div class="requests-tab-pane" id="pane-locations">
+                    <div class="page-header">
+                        <div>
+                            <h1 data-i18n="locationRequestsTitle" class="section-header-title">📍 Account GPS Location Requests</h1>
+                            <p class="section-header-subtitle" data-i18n="locationRequestsSubtitle">
+                                Review and approve clinic and pharmacy GPS pinning and relocation requests submitted by medical representatives.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="requests-table-container">
+                        <table class="requests-table" id="locationRequestsTable">
+                            <thead>
+                                <tr>
+                                    <th>Target / Clinic</th>
+                                    <th>Representative</th>
+                                    <th>Type</th>
+                                    <th>Captured Location</th>
+                                    <th>New Address / Reason</th>
+                                    <th>Status</th>
+                                    <th>Submitted Date</th>
+                                    <th>Decision / Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="locationRequestsTableBody">
+                                <!-- Populated dynamically by activities.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -624,16 +661,34 @@
                         </select>
                     </div>
 
-                    <!-- Row 4: Service Title and Cost -->
-                    <div class="form-grid-2to1">
+                    <!-- Row 4: Service Category and Estimated Cost -->
+                    <div class="form-grid-2col">
                         <div class="form-group">
-                            <label class="form-label"><span data-i18n="serviceTitleLabel">Service Type / Title</span> <span class="required-star">*</span></label>
-                            <input type="text" id="serviceFormTitleInput" class="form-control" required placeholder="e.g. CME Congress Sponsorship, Patient Brochures...">
+                            <label class="form-label"><span data-i18n="serviceCategoryLabel">Service Category</span> <span class="required-star">*</span></label>
+                            <select id="serviceFormCategorySelect" class="form-control" required>
+                                <option value="" disabled selected data-i18n="selectCategoryPrompt">Select Service Category...</option>
+                                <option value="Medical Conference">Medical Conference</option>
+                                <option value="Round Table Discussion">Round Table Discussion</option>
+                                <option value="Group Meeting">Group Meeting</option>
+                                <option value="Local Event">Local Event</option>
+                                <option value="Clinical Workshop">Clinical Workshop</option>
+                                <option value="Clinic Equipment">Clinic Equipment</option>
+                                <option value="Patient Materials">Patient Materials</option>
+                                <option value="Audio-visual (AV)">Audio-visual (AV)</option>
+                                <option value="Scientific Subscriptions">Scientific Subscriptions</option>
+                                <option value="Other Requests">Other Requests</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label"><span data-i18n="colCost">Estimated Cost (EGP)</span> <span class="required-star">*</span></label>
                             <input type="number" id="serviceFormCostInput" class="form-control" required min="1" step="10" placeholder="0.00">
                         </div>
+                    </div>
+
+                    <!-- Row 5: Event Title / Specific Purpose -->
+                    <div class="form-group">
+                        <label class="form-label"><span data-i18n="serviceTitleLabel">Event Title / Purpose</span> <span class="required-star">*</span></label>
+                        <input type="text" id="serviceFormTitleInput" class="form-control" required placeholder="e.g. 15th Annual Cardio Congress, Patient Awareness Brochures...">
                     </div>
 
                     <!-- Row 5: Shared Service Modern Toggle & Dynamic Distribution Block -->
@@ -782,12 +837,12 @@
 
     <!-- Scripts -->
     <!-- Modular Field Activities Architecture -->
-    <script src="js/activities-core.js?v=v133" charset="UTF-8"></script>
-    <script src="js/activities-tab-daily.js?v=v133" charset="UTF-8"></script>
-    <script src="js/activities-tab-expenses.js?v=v133" charset="UTF-8"></script>
-    <script src="js/activities-tab-services.js?v=v133" charset="UTF-8"></script>
-    <script src="js/activities-tab-budget.js?v=v133" charset="UTF-8"></script>
-    <script src="js/activities-decisions.js?v=v133" charset="UTF-8"></script>
-    <script src="js/activities-init.js?v=v133" charset="UTF-8"></script>
+    <script src="js/activities-core.js?v=v160" charset="UTF-8"></script>
+    <script src="js/activities-tab-daily.js?v=v160" charset="UTF-8"></script>
+    <script src="js/activities-tab-expenses.js?v=v160" charset="UTF-8"></script>
+    <script src="js/activities-tab-services.js?v=v160" charset="UTF-8"></script>
+    <script src="js/activities-tab-budget.js?v=v160" charset="UTF-8"></script>
+    <script src="js/activities-decisions.js?v=v160" charset="UTF-8"></script>
+    <script src="js/activities-init.js?v=v160" charset="UTF-8"></script>
 </body>
 </html>

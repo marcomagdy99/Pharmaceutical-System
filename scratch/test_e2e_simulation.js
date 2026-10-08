@@ -260,7 +260,7 @@ async function testVisitsGovernance() {
   ];
   const holidayCheck = win.checkVisitDateAllowed("2026-10-06", "rep1", "ar");
   assert.strictEqual(holidayCheck.allowed, false, "Visits on Armed Forces Day must be blocked");
-  assert.ok(holidayCheck.message.includes("عطلة رسمية"), "Holiday message mismatch");
+  assert.ok(holidayCheck.message.toLowerCase().includes("holiday"), "Holiday message mismatch");
 
   // 4. Test Normal workday allowed
   const normalCheck = win.checkVisitDateAllowed("2026-10-07", "rep1", "ar");
