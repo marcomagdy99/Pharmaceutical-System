@@ -148,6 +148,7 @@ if (typeof renderSidebar === "function") {
     this.loadDemoData();
     this.initLines();
     this.populateDropdowns();
+    try { localStorage.removeItem("pharma_custom_titles"); localStorage.removeItem("pharma_hierarchy_levels"); } catch (e) {}
 
     const searchInput = document.getElementById("searchUser");
     if (searchInput) searchInput.addEventListener("input", () => this.render());
@@ -175,8 +176,13 @@ if (typeof renderSidebar === "function") {
     const el = document.getElementById(id);
     if (!el) return null;
 
-    const instance = new bootstrap.Modal(el);
-    this._modalInstances[id] = instance;
+    let instance = null;
+    if (window.bootstrap && window.bootstrap.Modal) {
+      instance = typeof bootstrap.Modal.getOrCreateInstance === "function"
+        ? bootstrap.Modal.getOrCreateInstance(el)
+        : (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el));
+    }
+    if (instance) this._modalInstances[id] = instance;
 
     if (id === "linesModal") {
       el.addEventListener("hidden.bs.modal", () => {
@@ -203,8 +209,8 @@ if (typeof renderSidebar === "function") {
     if (type === "lines") {
       const userModalEl = document.getElementById("userModal");
       if (userModalEl && userModalEl.classList.contains("show")) {
-        this.returnToUserModal = true;
-        this._getModalInstance("userModal").hide();
+        this.returnToUserModalFromSub = true;
+        this._getModalInstance("userModal")?.hide();
       }
     }
     const instance = this._getModalInstance(id);
@@ -223,8 +229,14 @@ if (typeof renderSidebar === "function") {
     };
     const id = idMap[type];
     if (!id) return;
+    const el = document.getElementById(id);
     const instance = this._getModalInstance(id);
-    if (instance) instance.hide();
+    if (instance) {
+      instance.hide();
+    } else if (el && window.bootstrap && window.bootstrap.Modal) {
+      const bsInst = typeof bootstrap.Modal.getInstance === "function" ? bootstrap.Modal.getInstance(el) : null;
+      if (bsInst) bsInst.hide();
+    }
   },
 
   initLines() {
@@ -338,6 +350,7 @@ if (typeof renderSidebar === "function") {
   },
 
   populateDropdowns() {
+    this.populateRoleDropdowns();
     const linesContainer = document.getElementById("uProductLinesContainer");
     if (linesContainer) {
       linesContainer.replaceChildren();
@@ -367,6 +380,9 @@ if (typeof renderSidebar === "function") {
 
     this.updateAreaDropdown();
   },
+
+
+  populateRoleDropdowns() {},
 
   updateAreaDropdown(preselectedAreaId) {
     const areaSelect = document.getElementById("uArea");
@@ -676,13 +692,13 @@ if (typeof renderSidebar === "function") {
           (u.name || "").toLowerCase().includes(query) ||
           (u.email || "").toLowerCase().includes(query) ||
           (u.employeeCode || u.code || "").toLowerCase().includes(query);
-        const matchRole = role === "All" || u.role === role;
+        const matchRole = role === "All" || u.role === role || u.titleId === role || u.titleCode === role || u.title === role;
         return matchQuery && matchRole;
       })
       .sort((a, b) => {
-        const orderA = ROLE_ORDER[a.role] ?? 99;
-        const orderB = ROLE_ORDER[b.role] ?? 99;
-        if (orderA !== orderB) return orderA - orderB;
+        const levelA = a.level != null ? a.level : (ROLE_ORDER[a.role] ? (6 - ROLE_ORDER[a.role]) : 1);
+        const levelB = b.level != null ? b.level : (ROLE_ORDER[b.role] ? (6 - ROLE_ORDER[b.role]) : 1);
+        if (levelA !== levelB) return levelB - levelA;
         return (a.name || "").localeCompare(b.name || "");
       });
   },
@@ -716,7 +732,9 @@ if (typeof renderSidebar === "function") {
             </div>
           </td>
           <td><span class="badge badge-neutral border">${dispCode}</span></td>
-          <td><span class="badge rounded-pill role-badge ${this.getRoleBadgeClass(u.role)}" data-i18n="role_${u.role.toLowerCase()}">${u.role}</span></td>
+          <td>
+            <span class="badge rounded-pill role-badge ${this.getRoleBadgeClass(u.role)}">${window.escapeHtml(u.role)}</span>
+          </td>
           <td>${this.getManagerNameWithVacant(u.managerId)}</td>
           <td>${this.renderLinesSummary(u)}</td>
           <td>${this.renderAreasSummary(u)}</td>
@@ -845,38 +863,36 @@ if (typeof renderSidebar === "function") {
   },
 
   updateManagerDropdown() {
-    const role = document.getElementById("uRole").value;
+    const roleVal = document.getElementById("uRole")?.value || "";
     const managerSelect = document.getElementById("uManager");
     if (!managerSelect) return;
 
-    if (role === "Admin") {
+    const normRole = this.normalizeRole(roleVal);
+    const levelMap = { Admin: 5, BU: 4, HR: 4, LM: 3, PM: 3, DM: 2, Rep: 1 };
+    const userLevel = levelMap[normRole] || 1;
+
+    if (normRole === "Admin" || userLevel >= 5) {
       document.getElementById("managerGroup").style.display = "none";
       return;
     }
     document.getElementById("managerGroup").style.display = "block";
 
-    let targetManagerRole = "";
-    if (role === "BU") targetManagerRole = "Admin";
-    else if (role === "PM") targetManagerRole = "BU";
-    else if (role === "LM") targetManagerRole = "BU";
-    else if (role === "DM") targetManagerRole = "LM";
-    else if (role === "Rep") targetManagerRole = "DM";
-
     const currentUserId = document.getElementById("userId")?.value;
 
-    let possibleManagers = this.users.filter(
-      (u) =>
-        u.role === targetManagerRole &&
-        (u.status || "Active") === "Active" &&
-        u.id !== currentUserId &&
-        !this.wouldCreateCycle(currentUserId, u.id),
-    );
+    let possibleManagers = this.users.filter((u) => {
+      if (u.id === currentUserId) return false;
+      if ((u.status || "Active") !== "Active") return false;
+      if (this.wouldCreateCycle(currentUserId, u.id)) return false;
+
+      const mgrLevel = levelMap[this.normalizeRole(u.role)] || 1;
+      return mgrLevel > userLevel;
+    });
 
     const selectedLineIds = Array.from(
       document.querySelectorAll(".user-line-cb:checked"),
     ).map((cb) => cb.value);
 
-    if ((role === "DM" || role === "Rep" || role === "PM") && selectedLineIds.length > 0) {
+    if (userLevel <= 2 && selectedLineIds.length > 0) {
       const lineMatched = possibleManagers.filter((m) => {
         const mgrLines = m.lineIds || (m.lineId ? [m.lineId] : []);
         return mgrLines.some((id) => selectedLineIds.includes(id));
@@ -900,7 +916,10 @@ if (typeof renderSidebar === "function") {
 
     managerSelect.innerHTML = `<option value="" data-i18n="select_manager">Select Manager...</option>
       ${possibleManagers
-        .map((m) => `<option value="${m.id}">${m.name} (${m.employeeCode || m.code || m.id}) - ${m.role}</option>`)
+        .map((m) => {
+          const tName = m.role || "Manager";
+          return `<option value="${m.id}">${m.name} (${m.employeeCode || m.code || m.id}) - ${tName}</option>`;
+        })
         .join("")}`;
 
     if (
@@ -914,21 +933,24 @@ if (typeof renderSidebar === "function") {
   },
 
   onRoleChange() {
-    const role = document.getElementById("uRole").value;
+    const roleVal = document.getElementById("uRole")?.value || "";
+    const normRole = this.normalizeRole(roleVal);
+
     const areaGroup = document.getElementById("areaGroup");
     if (areaGroup) {
-      areaGroup.style.display = role === "Rep" ? "block" : "none";
+      areaGroup.style.display = (normRole === "Rep") ? "block" : "none";
     }
     const productLineGroup = document.getElementById("productLineGroup");
     if (productLineGroup) {
-      productLineGroup.style.display = ["BU", "LM", "DM", "Rep", "PM"].includes(role)
+      productLineGroup.style.display = ["BU", "LM", "DM", "Rep", "PM"].includes(normRole)
         ? "block"
         : "none";
     }
     const pmProductsGroup = document.getElementById("pmProductsGroup");
     if (pmProductsGroup) {
-      pmProductsGroup.style.display = role === "PM" ? "block" : "none";
-      if (role === "PM") {
+      const isPm = normRole === "PM";
+      pmProductsGroup.style.display = isPm ? "block" : "none";
+      if (isPm) {
         this.renderPmProducts();
       }
     }
@@ -1021,6 +1043,8 @@ if (typeof renderSidebar === "function") {
     }
 
     this.renderAssignedAreasDisplay(null);
+    const promoContainer = document.getElementById("uPromotionHistoryContainer");
+    if (promoContainer) promoContainer.style.display = "none";
 
     this.onRoleChange();
     this.updateAreaDropdown();
@@ -1046,7 +1070,36 @@ if (typeof renderSidebar === "function") {
     if (document.getElementById("uPhone"))
       document.getElementById("uPhone").value = user.phone || "";
 
-    document.getElementById("uRole").value = (user.role === "product_manager" || user.role === "pm" || user.role === "PM") ? "PM" : (user.role || "Rep");
+    const uRoleSelect = document.getElementById("uRole");
+    if (uRoleSelect) {
+      uRoleSelect.value = this.normalizeRole(user.role);
+    }
+
+    // Render Career Ladder & Promotion History
+    const promoContainer = document.getElementById("uPromotionHistoryContainer");
+    const promoList = document.getElementById("uPromotionHistoryList");
+    if (promoContainer && promoList) {
+      if (Array.isArray(user.promotionHistory) && user.promotionHistory.length > 0) {
+        promoContainer.style.display = "block";
+        promoList.innerHTML = user.promotionHistory.map((p) => {
+          const dateStr = p.promotedAt ? p.promotedAt.slice(0, 10) : "";
+          return `<div class="d-flex align-items-center justify-content-between py-1 border-bottom border-light">
+            <div>
+              <span class="text-muted fw-semibold">${window.escapeHtml(p.fromTitle || "Previous")}</span>
+              <i class="fas fa-arrow-right mx-1 text-primary small"></i>
+              <span class="fw-bold text-dark">${window.escapeHtml(p.toTitle || "Promoted")}</span>
+            </div>
+            <div class="text-muted" style="font-size:0.75rem;">
+              <span>${dateStr}</span>
+              ${p.promotedBy ? `<span class="ms-1 text-secondary">by ${window.escapeHtml(p.promotedBy)}</span>` : ""}
+            </div>
+          </div>`;
+        }).join("");
+      } else {
+        promoContainer.style.display = "none";
+        promoList.innerHTML = "";
+      }
+    }
 
     let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
     if ((!userLineIds || userLineIds.length === 0) && typeof window.getUserLines === "function") {
@@ -1155,6 +1208,7 @@ if (typeof renderSidebar === "function") {
       PM: "product_manager",
       HR: "hr",
     };
+    const effectiveBaseRole = storeRoleMap[role] || (window.normalizeRole ? window.normalizeRole(role) : role.toLowerCase());
 
     let selectedProductIds = [];
     if (role === "PM") {
@@ -1180,7 +1234,10 @@ if (typeof renderSidebar === "function") {
       email,
       code: code,
       employeeCode: code,
-      role: storeRoleMap[role] || "medical_rep",
+      role: effectiveBaseRole,
+      title: role,
+      titleCode: role,
+      level: ({"admin": 5, "business_unit": 4, "hr": 4, "line_manager": 3, "product_manager": 3, "district_manager": 2, "medical_rep": 1}[effectiveBaseRole] || 1),
       passwordHash,
       phone: document.getElementById("uPhone")
         ? document.getElementById("uPhone").value.trim()
@@ -1192,6 +1249,23 @@ if (typeof renderSidebar === "function") {
       })(),
       managerId: managerId || null,
       status: rawExistingUser ? rawExistingUser.status : "Active",
+      promotionHistory: (() => {
+        if (rawExistingUser) {
+          const oldT = rawExistingUser.role;
+          const newT = role;
+          const hist = Array.isArray(rawExistingUser.promotionHistory) ? [...rawExistingUser.promotionHistory] : [];
+          if (oldT && oldT !== newT) {
+            hist.unshift({
+              fromTitle: oldT,
+              toTitle: newT,
+              promotedAt: new Date().toISOString(),
+              promotedBy: authUser.name || "Admin"
+            });
+          }
+          return hist;
+        }
+        return [];
+      })(),
       lineIds: selectedLineIds,
       lineId: selectedLineIds[0] || null,
       productIds: selectedProductIds,
@@ -1450,3 +1524,4 @@ window.userMgmt = userMgmt;
 document.addEventListener("DOMContentLoaded", () => {
   userMgmt.init();
 });
+

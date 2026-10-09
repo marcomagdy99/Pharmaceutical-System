@@ -223,6 +223,8 @@
       },
     },
 
+
+
     // ==========================================
     // Section: Areas Module
     // ==========================================
@@ -941,7 +943,7 @@
         return window.DEMO_DATA.accountLocationRequests;
       },
       getPending() {
-        return this.getAll().filter((r) => r.status === "pending");
+        return this.getAll().filter((r) => r.status && r.status !== "approved" && r.status !== "rejected");
       },
       getById(id) {
         return this.getAll().find((r) => r.id === id);
@@ -950,12 +952,36 @@
         if (!window.DEMO_DATA.accountLocationRequests) {
           window.DEMO_DATA.accountLocationRequests = [];
         }
+        const wf = (store.companySettings && store.companySettings.getApprovalWorkflows().relocation) || {
+          enabled: true,
+          requireDm: true,
+          requireLm: false,
+          requireBu: false,
+          requireGm: false,
+          autoApproveWithinMeters: 50
+        };
+
+        let initialStatus = "pending_dm";
+        if (!wf.requireDm && wf.requireLm) {
+          initialStatus = "pending_lm";
+        } else if (!wf.requireDm && !wf.requireLm && wf.requireBu) {
+          initialStatus = "pending_bu";
+        } else if (!wf.requireDm && !wf.requireLm && !wf.requireBu && wf.requireGm) {
+          initialStatus = "pending_gm";
+        } else if (!wf.requireDm && !wf.requireLm && !wf.requireBu && !wf.requireGm) {
+          initialStatus = "approved";
+        }
+
+        if (req.distanceMeters != null && wf.autoApproveWithinMeters > 0 && req.distanceMeters <= wf.autoApproveWithinMeters) {
+          initialStatus = "approved";
+        }
+
         const item = {
           id: req.id || "locreq_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
           targetId: req.targetId,
-          targetType: req.targetType || "doctor", // 'doctor' | 'hospital' | 'pharmacy'
+          targetType: req.targetType || "doctor",
           targetName: req.targetName,
-          requestType: req.requestType || "initial_pin", // 'initial_pin' | 'relocation'
+          requestType: req.requestType || "initial_pin",
           newLat: Number(req.newLat),
           newLng: Number(req.newLng),
           oldLat: req.oldLat != null ? Number(req.oldLat) : null,
@@ -965,17 +991,22 @@
           newAddress: req.newAddress || "",
           repId: req.repId,
           repName: req.repName,
-          status: "pending", // 'pending' | 'approved' | 'rejected'
+          status: initialStatus,
           submittedAt: new Date().toISOString(),
-          decisionAt: null,
-          decisionBy: null,
-          decisionComment: ""
+          decisionAt: initialStatus === "approved" ? new Date().toISOString() : null,
+          decisionBy: initialStatus === "approved" ? "Auto-System" : null,
+          decisionComment: initialStatus === "approved" ? "Auto-approved within radius threshold" : "",
+          approvalChain: []
         };
+
+        if (initialStatus === "approved") {
+          this._applyCoordinates(item);
+        }
+
         window.DEMO_DATA.accountLocationRequests.unshift(item);
         autoSave("accountLocationRequests", "create", item);
 
-        // Optional notification dispatch
-        if (typeof window.addWorkflowNotification === "function") {
+        if (typeof window.addWorkflowNotification === "function" && initialStatus !== "approved") {
           window.addWorkflowNotification({
             type: "location_pin_request",
             title: item.requestType === "relocation" ? "Clinic Relocation Request" : "Clinic Location Pin Request",
@@ -989,15 +1020,7 @@
         }
         return item;
       },
-      approve(id, actorUser, comment = "") {
-        const item = this.getById(id);
-        if (!item || item.status !== "pending") return null;
-        item.status = "approved";
-        item.decisionAt = new Date().toISOString();
-        item.decisionBy = actorUser ? actorUser.name : "Manager";
-        item.decisionComment = comment;
-
-        // Apply updated GPS coordinates to target entity
+      _applyCoordinates(item) {
         if (item.targetType === "doctor" && store.doctors) {
           const doc = store.doctors.getById(item.targetId);
           if (doc) {
@@ -1026,13 +1049,77 @@
             store.pharmacies.save(pharm);
           }
         }
+      },
+      advanceApproval(id, actorUser, comment = "") {
+        const item = this.getById(id);
+        if (!item || item.status === "approved" || item.status === "rejected") return null;
+
+        if (!item.approvalChain) item.approvalChain = [];
+        const role = (actorUser?.role || "").toLowerCase();
+        item.approvalChain.push({
+          actorId: actorUser?.id || "unknown",
+          actorName: actorUser?.name || "Manager",
+          actorRole: role,
+          stage: item.status,
+          decidedAt: new Date().toISOString(),
+          comment: comment || ""
+        });
+
+        const wf = (store.companySettings && store.companySettings.getApprovalWorkflows().relocation) || {
+          enabled: true,
+          requireDm: true,
+          requireLm: false,
+          requireBu: false,
+          requireGm: false
+        };
+
+        if (role === "admin" || role === "general_manager") {
+          item.status = "approved";
+        } else if (item.status === "pending" || item.status === "pending_dm") {
+          if (wf.requireLm) {
+            item.status = "pending_lm";
+          } else if (wf.requireBu) {
+            item.status = "pending_bu";
+          } else if (wf.requireGm) {
+            item.status = "pending_gm";
+          } else {
+            item.status = "approved";
+          }
+        } else if (item.status === "pending_lm") {
+          if (wf.requireBu) {
+            item.status = "pending_bu";
+          } else if (wf.requireGm) {
+            item.status = "pending_gm";
+          } else {
+            item.status = "approved";
+          }
+        } else if (item.status === "pending_bu") {
+          if (wf.requireGm) {
+            item.status = "pending_gm";
+          } else {
+            item.status = "approved";
+          }
+        } else {
+          item.status = "approved";
+        }
+
+        item.decisionAt = new Date().toISOString();
+        item.decisionBy = actorUser ? actorUser.name : "Manager";
+        item.decisionComment = comment;
+
+        if (item.status === "approved") {
+          this._applyCoordinates(item);
+        }
 
         autoSave("accountLocationRequests", "update", item);
         return item;
       },
+      approve(id, actorUser, comment = "") {
+        return this.advanceApproval(id, actorUser, comment);
+      },
       reject(id, actorUser, comment = "") {
         const item = this.getById(id);
-        if (!item || item.status !== "pending") return null;
+        if (!item || item.status === "approved" || item.status === "rejected") return null;
         item.status = "rejected";
         item.decisionAt = new Date().toISOString();
         item.decisionBy = actorUser ? actorUser.name : "Manager";
@@ -2338,6 +2425,52 @@
             isThursdayWeekend: false,
             visitBacklogLimitDays: 2,
             plannedVisitExpiryDays: 7,
+            approvalWorkflows: {
+              commercialServices: {
+                requireDm: true,
+                requireLm: true,
+                requireBu: true,
+                requireGm: false,
+                buThresholdMode: "all",
+                buThresholdAmount: 5000,
+                autoSkipSubmitterRole: true,
+              },
+              marketingServices: {
+                requirePm: true,
+                requireDm: false,
+                requireLm: false,
+                requireBu: true,
+                buThresholdMode: "all",
+                buThresholdAmount: 10000,
+                autoSkipSubmitterRole: true,
+              },
+              expenses: {
+                requireDm: true,
+                requireLm: true,
+                requireHr: true,
+                requireDisbursement: true,
+                requireBuThreshold: false,
+                buThresholdAmount: 10000,
+                autoSkipSubmitterRole: true,
+              },
+              leaves: {
+                requireDm: true,
+                requireLm: true,
+                requireBu: false,
+                requireHr: true,
+                autoSkipSubmitterRole: true,
+              },
+              plans: {
+                requireDm: true,
+                requireLm: false,
+                requireBu: false,
+              },
+              relocation: {
+                requireDm: true,
+                requireLm: false,
+                requireBu: false,
+              }
+            },
             branding: {
               logoUrl: "images/pharma-icon-192.png",
               taglineEn: "Empowering Medical Representatives",
@@ -2365,6 +2498,54 @@
           }
           if (window.DEMO_DATA.companySettings.plannedVisitExpiryDays === undefined) {
             window.DEMO_DATA.companySettings.plannedVisitExpiryDays = 7;
+          }
+          if (!window.DEMO_DATA.companySettings.approvalWorkflows) {
+            window.DEMO_DATA.companySettings.approvalWorkflows = {
+              commercialServices: {
+                requireDm: true,
+                requireLm: true,
+                requireBu: true,
+                requireGm: false,
+                buThresholdMode: "all",
+                buThresholdAmount: 5000,
+                autoSkipSubmitterRole: true,
+              },
+              marketingServices: {
+                requirePm: true,
+                requireDm: false,
+                requireLm: false,
+                requireBu: true,
+                buThresholdMode: "all",
+                buThresholdAmount: 10000,
+                autoSkipSubmitterRole: true,
+              },
+              expenses: {
+                requireDm: true,
+                requireLm: true,
+                requireHr: true,
+                requireDisbursement: true,
+                requireBuThreshold: false,
+                buThresholdAmount: 10000,
+                autoSkipSubmitterRole: true,
+              },
+              leaves: {
+                requireDm: true,
+                requireLm: true,
+                requireBu: false,
+                requireHr: true,
+                autoSkipSubmitterRole: true,
+              },
+              plans: {
+                requireDm: true,
+                requireLm: false,
+                requireBu: false,
+              },
+              relocation: {
+                requireDm: true,
+                requireLm: false,
+                requireBu: false,
+              }
+            };
           }
           if (!window.DEMO_DATA.companySettings.branding) {
             window.DEMO_DATA.companySettings.branding = {

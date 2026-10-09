@@ -19,7 +19,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v159";
+        var EXPECTED_SW = "v178";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -51,12 +51,12 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v162" />
-    <link rel="stylesheet" href="css/reports.css?v=v162" />
+    <link rel="stylesheet" href="css/style.css?v=v165" />
+    <link rel="stylesheet" href="css/reports.css?v=v165" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v159"></script>
-    <script src="js/store.js?v=v156"></script>
+    <script src="js/app.js?v=v178"></script>
+    <script src="js/store.js?v=v178"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -1637,12 +1637,12 @@
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
                 <!-- Date From -->
-                <div class="sales-filter-field col-month">
+                <div class="sales-filter-field col-date col-date-from">
                   <label for="accountsCostingDateFrom">From Date:</label>
                   <input type="date" id="accountsCostingDateFrom" class="form-control" />
                 </div>
                 <!-- Date To -->
-                <div class="sales-filter-field col-month">
+                <div class="sales-filter-field col-date col-date-to">
                   <label for="accountsCostingDateTo">To Date:</label>
                   <input type="date" id="accountsCostingDateTo" class="form-control" />
                 </div>
@@ -1652,7 +1652,7 @@
                   <select id="accountsCostingLineSelect" class="form-control" onchange="onAccountsCostingLineChange()"></select>
                 </div>
                 <!-- District / DM Filter -->
-                <div class="sales-filter-field col-distributor">
+                <div class="sales-filter-field col-dm">
                   <label for="accountsCostingDmSelect">District / DM:</label>
                   <select id="accountsCostingDmSelect" class="form-control" onchange="onAccountsCostingDmChange()"></select>
                 </div>
@@ -1662,12 +1662,12 @@
                   <select id="accountsCostingRepSelect" class="form-control" onchange="onAccountsCostingRepChange()"></select>
                 </div>
                 <!-- Territory / Area Filter -->
-                <div class="sales-filter-field col-distributor">
+                <div class="sales-filter-field col-area">
                   <label for="accountsCostingAreaSelect">Territory / Area:</label>
                   <select id="accountsCostingAreaSelect" class="form-control"></select>
                 </div>
                 <!-- Doctor Class Filter -->
-                <div class="sales-filter-field" style="min-width: 130px;">
+                <div class="sales-filter-field col-class">
                   <label for="accountsCostingClassSelect">Doctor Class:</label>
                   <select id="accountsCostingClassSelect" class="form-control">
                     <option value="all">All Classes</option>
@@ -1677,45 +1677,45 @@
                   </select>
                 </div>
                 <!-- Specialty Filter -->
-                <div class="sales-filter-field" style="min-width: 150px;">
+                <div class="sales-filter-field col-specialty">
                   <label for="accountsCostingSpecialtySelect">Specialty:</label>
                   <select id="accountsCostingSpecialtySelect" class="form-control"></select>
                 </div>
                 <!-- Search Input -->
-                <div class="sales-filter-field" style="flex: 1 1 200px;">
+                <div class="sales-filter-field col-search">
                   <label for="accountsCostingSearchInput">Search Account / Doctor:</label>
                   <input type="text" id="accountsCostingSearchInput" class="form-control" placeholder="Type doctor or clinic name..." oninput="onAccountsCostingSearchInput(this.value)" />
                 </div>
                 <!-- Action Buttons -->
-                <div class="sales-filter-field col-btn" style="display: flex; gap: 8px; align-items: flex-end;">
-                  <button type="button" class="btn btn-primary" onclick="renderAccountsCostingReport()">
+                <div class="sales-filter-field col-btn costing-filter-actions">
+                  <button type="button" class="btn btn-primary costing-btn-show" onclick="renderAccountsCostingReport()">
                     <span>🔍</span> <span>Show Report</span>
                   </button>
-                  <button type="button" class="btn btn-outline" onclick="resetAccountsCostingFilters()" title="Reset Filters">
+                  <button type="button" class="btn btn-outline costing-btn-reset" onclick="resetAccountsCostingFilters()" title="Reset Filters">
                     <span>↺</span>
                   </button>
-                  <button type="button" class="btn btn-excel" onclick="exportAccountsCostingToExcel()" title="Export to Excel">
+                  <button type="button" class="btn btn-excel costing-btn-excel" onclick="exportAccountsCostingToExcel()" title="Export to Excel">
                     <span>📊</span> <span>Export Excel</span>
                   </button>
                 </div>
               </div>
 
               <!-- Quick Presets and Options -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px;">
+              <div class="costing-quick-presets-bar">
                 <div class="sales-period-pill" id="accountsCostingHeaderPill">
                   <span>💼 Accounts Costing & Investment Ledger</span>
                 </div>
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                  <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; margin: 0; font-weight: 600;">
+                <div class="costing-options-wrap">
+                  <label class="costing-expenses-check">
                     <input type="checkbox" id="accountsCostingOnlyWithExpenses" onchange="renderAccountsCostingReport()" />
                     <span>Show accounts with expenses only</span>
                   </label>
-                  <div style="display: flex; gap: 6px; align-items: center;">
-                    <span class="text-muted small fw-bold">Period:</span>
-                    <button type="button" class="btn btn-sm btn-outline" onclick="setAccountsCostingPeriodPreset('thisMonth')">This Month</button>
-                    <button type="button" class="btn btn-sm btn-outline" onclick="setAccountsCostingPeriodPreset('lastMonth')">Last Month</button>
-                    <button type="button" class="btn btn-sm btn-outline" onclick="setAccountsCostingPeriodPreset('thisYear')">This Year</button>
-                    <button type="button" class="btn btn-sm btn-outline" onclick="setAccountsCostingPeriodPreset('allTime')">All Time</button>
+                  <div class="costing-period-buttons-group">
+                    <span class="text-muted small fw-bold costing-period-label">Period:</span>
+                    <button type="button" class="btn btn-sm btn-outline costing-period-btn" onclick="setAccountsCostingPeriodPreset('thisMonth')">This Month</button>
+                    <button type="button" class="btn btn-sm btn-outline costing-period-btn" onclick="setAccountsCostingPeriodPreset('lastMonth')">Last Month</button>
+                    <button type="button" class="btn btn-sm btn-outline costing-period-btn" onclick="setAccountsCostingPeriodPreset('thisYear')">This Year</button>
+                    <button type="button" class="btn btn-sm btn-outline costing-period-btn" onclick="setAccountsCostingPeriodPreset('allTime')">All Time</button>
                   </div>
                 </div>
               </div>

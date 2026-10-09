@@ -2068,6 +2068,8 @@ function normalizeRole(role) {
   if (r === "pm" || r === "product_manager" || r === "product manager") return "product_manager";
   if (r === "admin" || r === "administrator") return "admin";
   if (r === "hr" || r === "human_resources" || r === "human resources") return "hr";
+  if (r === "gm" || r === "general_manager" || r === "general manager") return "general_manager";
+
   return r;
 }
 
@@ -2093,6 +2095,7 @@ function isManagerRole(user) {
   const r = normalizeRole(u?.role);
   return [
     "admin",
+    "general_manager",
     "business_unit",
     "line_manager",
     "district_manager",

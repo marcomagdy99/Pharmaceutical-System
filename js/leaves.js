@@ -501,17 +501,29 @@ function setupEventListeners() {
     const userRole = (currentUser.role || "medical_rep").toLowerCase();
     let initialApprovals = {};
 
+    const lvsWf = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
+      ? window.WorkflowEngine.getWorkflows().leaves
+      : { requireDm: true, requireLm: true, requireBu: false, requireHr: true };
+
+    const requireDm = lvsWf.requireDm !== false;
+    const requireLm = lvsWf.requireLm !== false;
+    const requireBu = !!lvsWf.requireBu;
+
     if (userRole === "medical_rep" || userRole === "rep") {
-      initialApprovals = {
-        dm: { status: "pending", approverName: null, updatedAt: null },
-        lm: { status: "pending", approverName: null, updatedAt: null },
-        hr: { status: "pending", approverName: null, updatedAt: null },
-      };
+      initialApprovals = {};
+      if (requireDm) initialApprovals.dm = { status: "pending", approverName: null, updatedAt: null };
+      if (requireLm) initialApprovals.lm = { status: "pending", approverName: null, updatedAt: null };
+      if (requireBu) initialApprovals.bu = { status: "pending", approverName: null, updatedAt: null };
+      initialApprovals.hr = { status: "pending", approverName: null, updatedAt: null };
     } else if (userRole === "district_manager" || userRole === "dm") {
-      initialApprovals = {
-        lm: { status: "pending", approverName: null, updatedAt: null },
-        hr: { status: "pending", approverName: null, updatedAt: null },
-      };
+      initialApprovals = {};
+      if (requireLm) initialApprovals.lm = { status: "pending", approverName: null, updatedAt: null };
+      if (requireBu) initialApprovals.bu = { status: "pending", approverName: null, updatedAt: null };
+      initialApprovals.hr = { status: "pending", approverName: null, updatedAt: null };
+    } else if (userRole === "line_manager" || userRole === "lm") {
+      initialApprovals = {};
+      if (requireBu) initialApprovals.bu = { status: "pending", approverName: null, updatedAt: null };
+      initialApprovals.hr = { status: "pending", approverName: null, updatedAt: null };
     } else {
       initialApprovals = {
         hr: { status: "pending", approverName: null, updatedAt: null },
@@ -1003,6 +1015,14 @@ function resolveApproverDisplayName(leave, level, lang) {
     return "Hassan Ali";
   }
 
+  if (level === "bu") {
+    let buUser = allUsers.find((u) => u && (u.role === "business_unit" || u.role === "bu"));
+    if (buUser) {
+      return buUser.name;
+    }
+    return "George Marzok";
+  }
+
   if (level === "hr") {
     const hrUser = allUsers.find((u) => u && (u.role === "hr" || u.role === "HR"));
     if (hrUser) {
@@ -1048,6 +1068,7 @@ function renderHistory() {
 
     const dmName = getApproverDisplayName(l, "dm", lang);
     const lmName = getApproverDisplayName(l, "lm", lang);
+    const buName = getApproverDisplayName(l, "bu", lang);
     const hrName = getApproverDisplayName(l, "hr", lang);
 
     if (app.dm && app.dm.status) {
@@ -1065,6 +1086,16 @@ function renderHistory() {
         <div>
           <span class="approval-step-tag ${app.lm.status}">
             ${window.escapeHtml(lmName)}: ${(app.lm.status || "").toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
+          </span>
+        </div>
+      `;
+    }
+
+    if (app.bu && app.bu.status) {
+      stepsHtml += `
+        <div>
+          <span class="approval-step-tag ${app.bu.status}">
+            ${window.escapeHtml(buName)}: ${(app.bu.status || "").toUpperCase()} ${app.bu.updatedAt ? `(${app.bu.updatedAt})` : ""}
           </span>
         </div>
       `;
@@ -1196,12 +1227,32 @@ function renderPendingApprovals() {
     const lmStatus = (app.lm && app.lm.status ? app.lm.status : "").toLowerCase();
     const dmStatus = (app.dm && app.dm.status ? app.dm.status : "").toLowerCase();
 
+    const buStatus = (app.bu && app.bu.status ? app.bu.status : "").toLowerCase();
+    const lvsWf = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
+      ? window.WorkflowEngine.getWorkflows().leaves
+      : { requireLm: true, requireBu: false };
+    const requireBu = !!(lvsWf && lvsWf.requireBu);
+    const requireLm = lvsWf && lvsWf.requireLm !== false;
+
     // HR and Admin have organization-wide authority to review pending approvals
     if (role === "hr" || role === "admin") {
-      return (
-        hrStatus === "pending" &&
-        (app.lm ? lmStatus === "approved" : true)
-      );
+      let upperApproved = true;
+      if (requireBu && app.bu) {
+        upperApproved = (app.bu.status === "approved" || app.bu.status === "skipped");
+      } else if (requireLm && app.lm) {
+        upperApproved = (app.lm.status === "approved" || app.lm.status === "skipped");
+      } else if (app.dm) {
+        upperApproved = (app.dm.status === "approved");
+      }
+
+      return hrStatus === "pending" && upperApproved;
+    }
+
+    // BU Manager approval check
+    if (role === "business_unit" || role === "bu") {
+      if (!requireBu) return false;
+      const prevApproved = requireLm && app.lm ? (lmStatus === "approved" || lmStatus === "skipped") : (app.dm ? dmStatus === "approved" : true);
+      return buStatus === "pending" && prevApproved;
     }
 
     // Verify applicant is in current manager's hierarchy to prevent unauthorized approvals
@@ -1475,6 +1526,7 @@ function renderHrAllLeaves() {
 
       const dmName = getApproverDisplayName(l, "dm", lang);
       const lmName = getApproverDisplayName(l, "lm", lang);
+      const buName = getApproverDisplayName(l, "bu", lang);
       const hrName = getApproverDisplayName(l, "hr", lang);
 
       if (app.dm && app.dm.status) {
@@ -1492,6 +1544,16 @@ function renderHrAllLeaves() {
           <div>
             <span class="approval-step-tag ${app.lm.status}">
               ${window.escapeHtml(lmName)}: ${(app.lm.status || "").toUpperCase()} ${app.lm.updatedAt ? `(${app.lm.updatedAt})` : ""}
+            </span>
+          </div>
+        `;
+      }
+
+      if (app.bu && app.bu.status) {
+        stepsHtml += `
+          <div>
+            <span class="approval-step-tag ${app.bu.status}">
+              ${window.escapeHtml(buName)}: ${(app.bu.status || "").toUpperCase()} ${app.bu.updatedAt ? `(${app.bu.updatedAt})` : ""}
             </span>
           </div>
         `;
@@ -1644,12 +1706,14 @@ Object.assign(leavesApp, {
 
       currentUser = (window.checkAuth && window.checkAuth()) || currentUser;
       const rawRole = (currentUser.role || "medical_rep").toLowerCase();
-      const isDM = rawRole === "district_manager" || rawRole === "dm";
-      const isLM = rawRole === "line_manager" || rawRole === "lm";
-      const isHR = rawRole === "hr";
-      const isAdmin = rawRole === "admin";
+      const wf = window.WorkflowEngine;
+      const isDM = wf ? wf.userMatchesTier(currentUser, "dm") : (rawRole === "district_manager" || rawRole === "dm");
+      const isLM = wf ? wf.userMatchesTier(currentUser, "lm") : (rawRole === "line_manager" || rawRole === "lm");
+      const isBU = wf ? wf.userMatchesTier(currentUser, "bu") : (rawRole === "business_unit" || rawRole === "bu");
+      const isHR = wf ? wf.userMatchesTier(currentUser, "hr") : (rawRole === "hr");
+      const isAdmin = (wf ? wf.getUserBaseRole(currentUser) : rawRole) === "admin";
 
-      if (!isDM && !isLM && !isHR && !isAdmin) {
+      if (!isDM && !isLM && !isBU && !isHR && !isAdmin) {
         if (typeof showToast === "function") showToast("Access Denied: Approvers only.", "error");
         return;
       }
@@ -1733,12 +1797,25 @@ Object.assign(leavesApp, {
           leave.approvals.dm.approverName = currentUser.name;
           leave.approvals.dm.updatedAt = timestampStr;
 
+          const lvsWf = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
+            ? window.WorkflowEngine.getWorkflows().leaves
+            : { requireLm: true };
+          const requireLm = lvsWf && lvsWf.requireLm !== false;
+
+          if (!requireLm && leave.approvals.lm) {
+            leave.approvals.lm.status = "skipped";
+            leave.approvals.lm.approverName = "Skipped (Workflow Config)";
+            leave.approvals.lm.updatedAt = timestampStr;
+          }
+
           if (typeof window.addWorkflowNotification === "function") {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
               title: "Leave Endorsed by DM",
-              message: `District Manager (${currentUser.name}) endorsed your leave request.`,
+              message: requireLm
+                ? `District Manager (${currentUser.name}) endorsed your leave request and forwarded to LM.`
+                : `District Manager (${currentUser.name}) endorsed your leave request and forwarded directly to HR.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
@@ -1747,7 +1824,9 @@ Object.assign(leavesApp, {
             });
           }
 
-          const msg = "Approved by District Manager. Forwarded to Line Manager.";
+          const msg = requireLm
+            ? "Approved by District Manager. Forwarded to Line Manager."
+            : "Approved by District Manager. Forwarded directly to HR.";
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
@@ -1756,12 +1835,25 @@ Object.assign(leavesApp, {
           leave.approvals.lm.approverName = currentUser.name;
           leave.approvals.lm.updatedAt = timestampStr;
 
+          const lvsWf = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
+            ? window.WorkflowEngine.getWorkflows().leaves
+            : { requireBu: false };
+          const requireBu = lvsWf && !!lvsWf.requireBu;
+
+          if (requireBu) {
+            if (!leave.approvals.bu) {
+              leave.approvals.bu = { status: "pending", approverName: null, updatedAt: null };
+            }
+          }
+
           if (typeof window.addWorkflowNotification === "function") {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
               title: "Leave Endorsed by LM",
-              message: `Line Manager (${currentUser.name}) endorsed your leave request.`,
+              message: requireBu
+                ? `Line Manager (${currentUser.name}) endorsed your leave request and forwarded to BU.`
+                : `Line Manager (${currentUser.name}) endorsed your leave request and forwarded to HR.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
@@ -1770,7 +1862,33 @@ Object.assign(leavesApp, {
             });
           }
 
-          const msg = "Approved by Line Manager. Forwarded to HR.";
+          const msg = requireBu
+            ? "Approved by Line Manager. Forwarded to Business Unit Head."
+            : "Approved by Line Manager. Forwarded to HR.";
+          if (typeof showToast === "function") showToast(msg, "success");
+          else if (typeof window.showToast === "function")
+            window.showToast(msg, "success");
+        } else if (isBU) {
+          if (!leave.approvals.bu) leave.approvals.bu = {};
+          leave.approvals.bu.status = "approved";
+          leave.approvals.bu.approverName = currentUser.name;
+          leave.approvals.bu.updatedAt = timestampStr;
+
+          if (typeof window.addWorkflowNotification === "function") {
+            window.addWorkflowNotification({
+              userId: leave.userId,
+              type: "leave_approval",
+              title: "Leave Endorsed by BU",
+              message: `Business Unit Head (${currentUser.name}) endorsed your leave request and forwarded to HR.`,
+              link: "leaves.html",
+              icon: "🏖️",
+              badgeClass: "bg-info",
+              actorName: currentUser.name,
+              action: "endorsed",
+            });
+          }
+
+          const msg = "Approved by Business Unit Head. Forwarded to HR.";
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");

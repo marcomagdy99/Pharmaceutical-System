@@ -18,12 +18,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v162">
+    <link rel="stylesheet" href="css/style.css?v=v165">
     <link rel="stylesheet" href="css/profile.css?v=v145">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v159"></script>
-    <script src="js/store.js?v=v145"></script>
+    <script src="js/app.js?v=v178"></script>
+    <script src="js/store.js?v=v178"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -32,7 +32,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v159";
+        var EXPECTED_SW = "v178";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -118,7 +118,7 @@
                                 <input type="text" class="form-control" id="managerInput" value="" readonly>
                             </div>
                             <div class="admin-only-note">
-                                <span class="note-icon">??</span>
+                                <span class="note-icon">ℹ️</span>
                                 <span data-i18n="managed_by_admin_hint">Official personal & employee details are managed by the System Administrator or HR.</span>
                             </div>
                             <div id="adminManageUsersShortcut" style="display: none; margin-top: 12px;">
@@ -199,7 +199,7 @@
 
                 <div class="card" id="adminCompanySettingsCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
                     <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700;">??? <span data-i18n="companyGovernanceTitle">Company Field Governance & Policies</span></span>
+                        <span style="font-weight: 700;">⚙️ <span data-i18n="companyGovernanceTitle">Company Field Governance & Policies</span></span>
                         <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
                     </div>
                     <div style="padding: 20px;">
@@ -258,7 +258,7 @@
                             </div>
                             <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
                             <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                <span>???</span>
+                                <span>📅</span>
                                 <span data-i18n="leaveRolloverPolicyTitle">Annual Leave Carryover & Expiry Policy</span>
                             </div>
                             <div class="form-group" style="margin-bottom: 16px;">
@@ -293,7 +293,7 @@
                             </div>
                             <hr style="margin: 20px 0; border-color: rgba(13, 110, 253, 0.2);">
                             <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                                <span>??</span>
+                                <span>🕒</span>
                                 <span data-i18n="workSchedulePolicyTitle">Work Schedule & Weekly Rest Days</span>
                             </div>
                             <div class="grid-2" style="max-width: 650px; gap: 16px; margin-bottom: 16px;">
@@ -322,10 +322,254 @@
                     </div>
                 </div>
 
-                <!-- START: Admin Company Branding & Login Customization Card -->
+                                <!-- START: Admin Approval Sequence Engine Card -->
+                <div class="card" id="adminApprovalSequenceCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
+                    <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700;">🔀 <span data-i18n="approvalSequenceTitle">Approval Sequence & Multi-Tier Workflows</span></span>
+                        <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p class="text-muted small" style="margin-bottom: 20px;" data-i18n="approvalSequenceDesc">
+                            Configure multi-tier authorization chains, manager escalations, and budget thresholds across operational modules.
+                        </p>
+
+                        <form id="approvalWorkflowsForm" onsubmit="handleSaveApprovalWorkflows(event)">
+                            
+                            <!-- Section 1: Commercial / Sales Services -->
+                            <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <div style="font-weight: 700; color: var(--primary, #0d6efd); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span>💼</span>
+                                    <span data-i18n="wfCommTitle">1. Commercial & Sales Services Workflow</span>
+                                </div>
+                                <div style="margin-bottom: 14px;">
+                                    <label class="form-label small fw-bold text-muted mb-2">Required Sequential Approval Steps:</label>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_comm_dm" checked>
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">District Manager (DM)</span>
+                                        </label>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_comm_lm" checked>
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">Line Manager (LM)</span>
+                                        </label>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_comm_bu" checked onchange="toggleCommBuOptions()">
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">Business Unit Manager (BU)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="commBuOptionsContainer" style="padding: 12px; background: var(--surface, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; margin-bottom: 12px;">
+                                    <label class="form-label small fw-bold mb-2">BU Escalation Rule:</label>
+                                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem;">
+                                            <input type="radio" name="wf_comm_bu_mode" value="all" checked onchange="onCommBuModeChange()">
+                                            <span>Always require BU approval for all requests</span>
+                                        </label>
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem;">
+                                            <input type="radio" name="wf_comm_bu_mode" value="threshold" onchange="onCommBuModeChange()">
+                                            <span>Only if request exceeds:</span>
+                                        </label>
+                                        <div id="commBuThresholdWrap" style="display: none; align-items: center; gap: 6px;">
+                                            <input type="number" id="wf_comm_bu_threshold" class="form-control form-control-sm" value="5000" min="500" step="500" style="width: 110px;">
+                                            <span class="small text-muted fw-bold">EGP</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_comm_skip" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-size: 0.82rem; font-weight: 600;">Smart Skip: Auto-skip steps if submitter is already a Manager (DM skips to LM, LM skips to BU)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Marketing Services -->
+                            <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <div style="font-weight: 700; color: #8b5cf6; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span>📢</span>
+                                    <span data-i18n="wfMktTitle">2. Marketing & Scientific Services Workflow</span>
+                                </div>
+                                <div style="margin-bottom: 14px;">
+                                    <label class="form-label small fw-bold text-muted mb-2">Required Sequential Approval Steps:</label>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_mkt_pm" checked>
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">Product Manager (PM)</span>
+                                        </label>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_mkt_dm">
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">Involve District Manager (DM)</span>
+                                        </label>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_mkt_lm">
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">Involve Line Manager (LM)</span>
+                                        </label>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="toggle-input" id="wf_mkt_bu" checked onchange="toggleMktBuOptions()">
+                                            <div class="toggle-slider"></div>
+                                            <span style="font-weight: 600; font-size: 0.88rem;">Business Unit Manager (BU)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="mktBuOptionsContainer" style="padding: 12px; background: var(--surface, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; margin-bottom: 12px;">
+                                    <label class="form-label small fw-bold mb-2">BU Escalation Rule for Marketing:</label>
+                                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem;">
+                                            <input type="radio" name="wf_mkt_bu_mode" value="all" checked onchange="onMktBuModeChange()">
+                                            <span>Always require BU approval for all marketing requests</span>
+                                        </label>
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem;">
+                                            <input type="radio" name="wf_mkt_bu_mode" value="threshold" onchange="onMktBuModeChange()">
+                                            <span>Only if marketing cost exceeds:</span>
+                                        </label>
+                                        <div id="mktBuThresholdWrap" style="display: none; align-items: center; gap: 6px;">
+                                            <input type="number" id="wf_mkt_bu_threshold" class="form-control form-control-sm" value="10000" min="1000" step="1000" style="width: 110px;">
+                                            <span class="small text-muted fw-bold">EGP</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Expense Claims -->
+                            <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <div style="font-weight: 700; color: #10b981; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span>💰</span>
+                                    <span data-i18n="wfExpTitle">3. Monthly Expense Claims Workflow</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_exp_dm" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">District Manager (DM)</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_exp_lm" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Line Manager (LM)</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_exp_hr" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">HR / Finance Approval</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_exp_disburse" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Cash Disbursement</span>
+                                    </label>
+                                </div>
+                                <div style="padding: 12px; background: var(--surface, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px;">
+                                    <label class="toggle-switch mb-2">
+                                        <input type="checkbox" class="toggle-input" id="wf_exp_bu_threshold_enabled" onchange="toggleExpBuThreshold()">
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.85rem;">Escalate large claims to BU Manager if amount exceeds threshold</span>
+                                    </label>
+                                    <div id="expBuThresholdWrap" style="display: none; align-items: center; gap: 8px; margin-inline-start: 56px;">
+                                        <input type="number" id="wf_exp_bu_threshold" class="form-control form-control-sm" value="10000" min="1000" step="1000" style="width: 120px;">
+                                        <span class="small text-muted fw-bold">EGP</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Leaves & Vacations -->
+                            <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <div style="font-weight: 700; color: #f59e0b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span>🏖️</span>
+                                    <span data-i18n="wfLeaveTitle">4. Leaves & Vacations Workflow</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_leave_dm" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Direct Manager (DM) Endorsement</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_leave_lm" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Line Manager (LM) Review</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_leave_bu">
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Business Unit Manager (BU) Review</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_leave_hr" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">HR Final Sign-off & Balance Deduction</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 5: Visit Plans Workflow -->
+                            <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <div style="font-weight: 700; color: #0284c7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span>📅</span>
+                                    <span data-i18n="wfPlansTitle">5. Visit Plans Approval Workflow</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_plan_dm" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">District Manager (DM)</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_plan_lm">
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Line Manager (LM) Review</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_plan_bu">
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Business Unit Manager (BU)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 6: Clinic GPS Relocation Workflow -->
+                            <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <div style="font-weight: 700; color: #059669; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <span>📍</span>
+                                    <span data-i18n="wfRelocTitle">6. Clinic GPS Relocation Workflow</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_reloc_dm" checked>
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">District Manager (DM)</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_reloc_lm">
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Line Manager (LM) Review</span>
+                                    </label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" id="wf_reloc_bu">
+                                        <div class="toggle-slider"></div>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Business Unit Manager (BU)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary" id="btnSaveApprovalWorkflows" data-i18n="btnSaveApprovalWorkflows">
+                                💾 Save Approval Sequences
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- END: Admin Approval Sequence Engine Card -->
+
+<!-- START: Admin Company Branding & Login Customization Card -->
                 <div class="card" id="adminBrandingCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
                     <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700;">?? <span data-i18n="companyBrandingTitle">Company Branding & Login Customization</span></span>
+                        <span style="font-weight: 700;">🎨 <span data-i18n="companyBrandingTitle">Company Branding & Login Customization</span></span>
                         <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
                     </div>
                     <div style="padding: 20px;">
@@ -435,6 +679,7 @@
             </div>
         </main>
     </div>
-    <script src="js/profile.js?v=v145"></script>
+    <script src="js/workflow-engine.js?v=v178"></script>
+    <script src="js/profile.js?v=v178"></script>
 </body>
 </html>

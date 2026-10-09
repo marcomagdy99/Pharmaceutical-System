@@ -6,12 +6,32 @@
 
 /* --- START: Role Badges --- */
 .role-badge { font-size: 0.8em; padding: 0.3em 0.6em; }
-.bg-admin { background-color: var(--danger, #dc3545); color: white; }
-.bg-bu { background-color: #6f42c1; color: white; }
-.bg-lm { background-color: var(--primary, #0d6efd); color: white; }
-.bg-dm { background-color: var(--success, #198754); color: white; }
-.bg-rep { background-color: var(--gray-600, #6c757d); color: white; }
-.bg-hr { background-color: #6f42c1; color: white; }
+.bg-admin { background-color: var(--danger, #dc3545) !important; color: white !important; }
+.bg-gm { background-color: #1e293b !important; color: white !important; }
+.bg-bu { background-color: #6f42c1 !important; color: white !important; }
+.bg-pm { background-color: #0891b2 !important; color: white !important; }
+.bg-lm { background-color: var(--primary, #0d6efd) !important; color: white !important; }
+.bg-dm { background-color: var(--success, #198754) !important; color: white !important; }
+.bg-rep { background-color: var(--gray-600, #6c757d) !important; color: white !important; }
+.bg-hr { background-color: #6f42c1 !important; color: white !important; }
+
+.hierarchy-level-pill {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 0.25em 0.55em !important;
+  border-radius: 6px !important;
+  background-color: #e2e8f0 !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+[data-theme="dark"] .hierarchy-level-pill {
+  background-color: #2e3542 !important;
+  color: #f1f3f5 !important;
+  border-color: #475569 !important;
+}
 /* --- END: Role Badges --- */
 
 .badge-multi-line {

@@ -68,6 +68,16 @@ const profileTranslations = {
     bannerThemeLabel: "Login Panel Theme Color & Gradient",
     saveBrandingSettings: "Save Branding Settings",
     brandingSettingsSaved: "Company branding & login appearance saved successfully!",
+    approvalSequenceTitle: "Approval Sequence & Multi-Tier Workflows",
+    approvalSequenceDesc: "Configure multi-tier authorization chains, manager escalations, and budget thresholds across operational modules.",
+    wfCommTitle: "1. Commercial & Sales Services Workflow",
+    wfMktTitle: "2. Marketing & Scientific Services Workflow",
+    wfExpTitle: "3. Monthly Expense Claims Workflow",
+    wfLeaveTitle: "4. Leaves & Vacations Workflow",
+    wfPlansTitle: "5. Visit Plans Approval Workflow",
+    wfRelocTitle: "6. Clinic GPS Relocation Workflow",
+    btnSaveApprovalWorkflows: "Save Approval Sequence Workflows",
+    approvalWorkflowsSaved: "Approval sequence workflows updated successfully!",
   },
 };
 
@@ -359,7 +369,7 @@ function loadUserProfile() {
     hr: lang === "ar" ? "مسؤول موارد بشرية" : "HR Manager"
   };
   if (profileRoleBadge) {
-    profileRoleBadge.textContent = roleLabels[user.role] || user.role;
+    profileRoleBadge.textContent = user.title || roleLabels[user.role] || user.role;
   }
 
   const area = allAreas.find((a) => a.id === user.areaId || a.repId === user.id);
@@ -553,7 +563,225 @@ function loadUserProfile() {
       adminBrandingCard.style.display = "none";
     }
   }
+
+  const adminApprovalCard = document.getElementById("adminApprovalSequenceCard");
+  if (adminApprovalCard) {
+    const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+    if (isUserAdmin) {
+      adminApprovalCard.style.display = "block";
+      loadApprovalWorkflows();
+    } else {
+      adminApprovalCard.style.display = "none";
+    }
+  }
 }
+
+function loadApprovalWorkflows() {
+  const workflows = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
+    ? window.WorkflowEngine.getWorkflows()
+    : ((window.store && window.store.companySettings && window.store.companySettings.get().approvalWorkflows) || {});
+
+  const comm = workflows.commercialServices || {};
+  const mkt = workflows.marketingServices || {};
+  const exp = workflows.expenses || {};
+  const lvs = workflows.leaves || {};
+  const pln = workflows.plans || {};
+  const rel = workflows.relocation || {};
+
+  // Commercial Services
+  const wfCommDm = document.getElementById("wf_comm_dm");
+  const wfCommLm = document.getElementById("wf_comm_lm");
+  const wfCommBu = document.getElementById("wf_comm_bu");
+  const wfCommThreshold = document.getElementById("wf_comm_bu_threshold");
+  const wfCommSkip = document.getElementById("wf_comm_skip");
+
+  if (wfCommDm) wfCommDm.checked = comm.requireDm !== false;
+  if (wfCommLm) wfCommLm.checked = comm.requireLm !== false;
+  if (wfCommBu) wfCommBu.checked = comm.requireBu !== false;
+  if (wfCommThreshold) wfCommThreshold.value = comm.buThresholdAmount || 5000;
+  if (wfCommSkip) wfCommSkip.checked = comm.autoSkipSubmitterRole !== false;
+
+  const commMode = comm.buThresholdMode || "all";
+  const commRadios = document.querySelectorAll('input[name="wf_comm_bu_mode"]');
+  commRadios.forEach((r) => { r.checked = (r.value === commMode); });
+
+  // Marketing Services
+  const wfMktPm = document.getElementById("wf_mkt_pm");
+  const wfMktDm = document.getElementById("wf_mkt_dm");
+  const wfMktLm = document.getElementById("wf_mkt_lm");
+  const wfMktBu = document.getElementById("wf_mkt_bu");
+  const wfMktThreshold = document.getElementById("wf_mkt_bu_threshold");
+
+  if (wfMktPm) wfMktPm.checked = mkt.requirePm !== false;
+  if (wfMktDm) wfMktDm.checked = !!mkt.requireDm;
+  if (wfMktLm) wfMktLm.checked = !!mkt.requireLm;
+  if (wfMktBu) wfMktBu.checked = mkt.requireBu !== false;
+  if (wfMktThreshold) wfMktThreshold.value = mkt.buThresholdAmount || 10000;
+
+  const mktMode = mkt.buThresholdMode || "all";
+  const mktRadios = document.querySelectorAll('input[name="wf_mkt_bu_mode"]');
+  mktRadios.forEach((r) => { r.checked = (r.value === mktMode); });
+
+  // Expenses
+  const wfExpDm = document.getElementById("wf_exp_dm");
+  const wfExpLm = document.getElementById("wf_exp_lm");
+  const wfExpHr = document.getElementById("wf_exp_hr");
+  const wfExpDisburse = document.getElementById("wf_exp_disburse");
+  const wfExpBuEnabled = document.getElementById("wf_exp_bu_threshold_enabled");
+  const wfExpThreshold = document.getElementById("wf_exp_bu_threshold");
+
+  if (wfExpDm) wfExpDm.checked = exp.requireDm !== false;
+  if (wfExpLm) wfExpLm.checked = exp.requireLm !== false;
+  if (wfExpHr) wfExpHr.checked = exp.requireHr !== false;
+  if (wfExpDisburse) wfExpDisburse.checked = exp.requireDisbursement !== false;
+  if (wfExpBuEnabled) wfExpBuEnabled.checked = !!exp.requireBuThreshold;
+  if (wfExpThreshold) wfExpThreshold.value = exp.buThresholdAmount || 10000;
+
+  // Leaves
+  const wfLeaveDm = document.getElementById("wf_leave_dm");
+  const wfLeaveLm = document.getElementById("wf_leave_lm");
+  const wfLeaveBu = document.getElementById("wf_leave_bu");
+  const wfLeaveHr = document.getElementById("wf_leave_hr");
+
+  if (wfLeaveDm) wfLeaveDm.checked = lvs.requireDm !== false;
+  if (wfLeaveLm) wfLeaveLm.checked = lvs.requireLm !== false;
+  if (wfLeaveBu) wfLeaveBu.checked = !!lvs.requireBu;
+  if (wfLeaveHr) wfLeaveHr.checked = lvs.requireHr !== false;
+
+  // Plans
+  const wfPlanDm = document.getElementById("wf_plan_dm");
+  const wfPlanLm = document.getElementById("wf_plan_lm");
+  const wfPlanBu = document.getElementById("wf_plan_bu");
+
+  if (wfPlanDm) wfPlanDm.checked = pln.requireDm !== false;
+  if (wfPlanLm) wfPlanLm.checked = !!pln.requireLm;
+  if (wfPlanBu) wfPlanBu.checked = !!pln.requireBu;
+
+  // Relocation
+  const wfRelocDm = document.getElementById("wf_reloc_dm");
+  const wfRelocLm = document.getElementById("wf_reloc_lm");
+  const wfRelocBu = document.getElementById("wf_reloc_bu");
+
+  if (wfRelocDm) wfRelocDm.checked = rel.requireDm !== false;
+  if (wfRelocLm) wfRelocLm.checked = !!rel.requireLm;
+  if (wfRelocBu) wfRelocBu.checked = !!rel.requireBu;
+
+  if (typeof window.toggleCommBuOptions === "function") window.toggleCommBuOptions();
+  if (typeof window.onCommBuModeChange === "function") window.onCommBuModeChange();
+  if (typeof window.toggleMktBuOptions === "function") window.toggleMktBuOptions();
+  if (typeof window.onMktBuModeChange === "function") window.onMktBuModeChange();
+  if (typeof window.toggleExpBuThreshold === "function") window.toggleExpBuThreshold();
+}
+
+window.loadApprovalWorkflows = loadApprovalWorkflows;
+
+window.toggleCommBuOptions = function() {
+  const chk = document.getElementById("wf_comm_bu");
+  const container = document.getElementById("commBuOptionsContainer");
+  if (container) container.style.display = (chk && chk.checked) ? "block" : "none";
+};
+
+window.onCommBuModeChange = function() {
+  const checked = document.querySelector('input[name="wf_comm_bu_mode"]:checked');
+  const wrap = document.getElementById("commBuThresholdWrap");
+  if (wrap) wrap.style.display = (checked && checked.value === "threshold") ? "inline-flex" : "none";
+};
+
+window.toggleMktBuOptions = function() {
+  const chk = document.getElementById("wf_mkt_bu");
+  const container = document.getElementById("mktBuOptionsContainer");
+  if (container) container.style.display = (chk && chk.checked) ? "block" : "none";
+};
+
+window.onMktBuModeChange = function() {
+  const checked = document.querySelector('input[name="wf_mkt_bu_mode"]:checked');
+  const wrap = document.getElementById("mktBuThresholdWrap");
+  if (wrap) wrap.style.display = (checked && checked.value === "threshold") ? "inline-flex" : "none";
+};
+
+window.toggleExpBuThreshold = function() {
+  const chk = document.getElementById("wf_exp_bu_threshold_enabled");
+  const wrap = document.getElementById("expBuThresholdWrap");
+  if (wrap) wrap.style.display = (chk && chk.checked) ? "inline-flex" : "none";
+};
+
+window.handleSaveApprovalWorkflows = function(e) {
+  if (e) e.preventDefault();
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+  if (!isUserAdmin) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
+
+  const commBuModeRadio = document.querySelector('input[name="wf_comm_bu_mode"]:checked');
+  const mktBuModeRadio = document.querySelector('input[name="wf_mkt_bu_mode"]:checked');
+
+  const approvalWorkflows = {
+    commercialServices: {
+      requireDm: !!document.getElementById("wf_comm_dm")?.checked,
+      requireLm: !!document.getElementById("wf_comm_lm")?.checked,
+      requireBu: !!document.getElementById("wf_comm_bu")?.checked,
+      buThresholdMode: commBuModeRadio ? commBuModeRadio.value : "all",
+      buThresholdAmount: Math.max(0, parseInt(document.getElementById("wf_comm_bu_threshold")?.value, 10) || 5000),
+      autoSkipSubmitterRole: !!document.getElementById("wf_comm_skip")?.checked,
+    },
+    marketingServices: {
+      requirePm: !!document.getElementById("wf_mkt_pm")?.checked,
+      requireDm: !!document.getElementById("wf_mkt_dm")?.checked,
+      requireLm: !!document.getElementById("wf_mkt_lm")?.checked,
+      requireBu: !!document.getElementById("wf_mkt_bu")?.checked,
+      buThresholdMode: mktBuModeRadio ? mktBuModeRadio.value : "all",
+      buThresholdAmount: Math.max(0, parseInt(document.getElementById("wf_mkt_bu_threshold")?.value, 10) || 10000),
+      autoSkipSubmitterRole: true,
+    },
+    expenses: {
+      requireDm: !!document.getElementById("wf_exp_dm")?.checked,
+      requireLm: !!document.getElementById("wf_exp_lm")?.checked,
+      requireHr: !!document.getElementById("wf_exp_hr")?.checked,
+      requireDisbursement: !!document.getElementById("wf_exp_disburse")?.checked,
+      requireBuThreshold: !!document.getElementById("wf_exp_bu_threshold_enabled")?.checked,
+      buThresholdAmount: Math.max(0, parseInt(document.getElementById("wf_exp_bu_threshold")?.value, 10) || 10000),
+      autoSkipSubmitterRole: true,
+    },
+    leaves: {
+      requireDm: !!document.getElementById("wf_leave_dm")?.checked,
+      requireLm: !!document.getElementById("wf_leave_lm")?.checked,
+      requireBu: !!document.getElementById("wf_leave_bu")?.checked,
+      requireHr: !!document.getElementById("wf_leave_hr")?.checked,
+      autoSkipSubmitterRole: true,
+    },
+    plans: {
+      requireDm: !!document.getElementById("wf_plan_dm")?.checked,
+      requireLm: !!document.getElementById("wf_plan_lm")?.checked,
+      requireBu: !!document.getElementById("wf_plan_bu")?.checked,
+    },
+    relocation: {
+      requireDm: !!document.getElementById("wf_reloc_dm")?.checked,
+      requireLm: !!document.getElementById("wf_reloc_lm")?.checked,
+      requireBu: !!document.getElementById("wf_reloc_bu")?.checked,
+    },
+  };
+
+  if (window.store && window.store.companySettings) {
+    const updatedSettings = window.store.companySettings.update({
+      approvalWorkflows: approvalWorkflows,
+    });
+    try {
+      localStorage.setItem("pharma_company_settings", JSON.stringify(updatedSettings));
+    } catch (err) {}
+  }
+
+  if (typeof window.pushLocalToCloud === "function") {
+    window.pushLocalToCloud(true);
+  }
+
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const t = profileTranslations[lang] || profileTranslations.en;
+  const msg = t.approvalWorkflowsSaved || "Approval sequence workflows updated successfully!";
+
+  showToast(msg, "success");
+};
 
 window.onToggleLeaveRolloverChange = function() {
   const toggle = document.getElementById("toggleLeaveRollover");

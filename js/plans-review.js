@@ -192,8 +192,20 @@ function canUserApproveForRep(currentUser, rep, allUsers) {
     return rep.managerId === currentUser.id || rep.dmId === currentUser.id;
   }
 
-  // 4. Line Manager / Business Unit: granted Acting DM authority ONLY when rep has no active DM
+  // 4. Line Manager / Business Unit: granted approval authority if requireLm/requireBu is enabled or acting as DM
   if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+    const plansWf = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
+      ? window.WorkflowEngine.getWorkflows().plans
+      : null;
+    const isBuRole = role === "business_unit" || role === "bu";
+    if (isBuRole && plansWf && plansWf.requireBu) {
+      const scopedReps = getScopedSubordinateReps(currentUser);
+      return scopedReps.some((r) => r.id === rep.id);
+    }
+    if (!isBuRole && plansWf && plansWf.requireLm) {
+      const scopedReps = getScopedSubordinateReps(currentUser);
+      return scopedReps.some((r) => r.id === rep.id);
+    }
     const dmActive = isRepDmActive(rep, users);
     if (!dmActive) {
       // Rep has no active DM. Ensure rep is within this manager's organizational scope

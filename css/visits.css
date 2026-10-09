@@ -1142,6 +1142,77 @@
 }
 /* --- END: Timeline Prompt Card --- */
 
+/* Layout & Component Classes */
+.header-actions-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.legend-box {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Visits Scope Sub-Tabs (Medical vs Pharmacy) */
+.visits-scope-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0;
+    border-bottom: 2px solid var(--gray-200, #e2e8f0);
+    padding-bottom: 8px;
+    align-items: center;
+}
+
+.visits-scope-tab-btn {
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.visits-scope-tab-btn.active {
+    background-color: var(--primary, #0d6efd);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(13, 110, 253, 0.25);
+}
+
+.visits-scope-tab-btn:not(.active) {
+    background-color: transparent;
+    color: var(--gray-600, #64748b);
+    border-color: var(--gray-300, #cbd5e1);
+}
+
+.visits-scope-tab-btn:not(.active):hover {
+    background-color: var(--gray-100, #f1f5f9);
+    color: var(--gray-900, #0f172a);
+}
+
+[data-theme="dark"] .visits-scope-tabs {
+    border-bottom-color: #333a46;
+}
+
+[data-theme="dark"] .visits-scope-tab-btn:not(.active) {
+    color: #94a3b8;
+    border-color: #333a46;
+    background-color: #1e2229;
+}
+
+[data-theme="dark"] .visits-scope-tab-btn:not(.active):hover {
+    background-color: #282e39;
+    color: #f8fafc;
+}
+
 /* ==========================================================================
    Responsive Visits Mobile & Tablet Styles
    ========================================================================== */
@@ -1149,13 +1220,42 @@
     .visits-header {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
+        margin-bottom: 1rem;
     }
     .visits-header > div {
         width: 100%;
-        justify-content: stretch;
     }
-    .visits-header button {
-        flex: 1 1 auto;
+    .header-actions-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        width: 100%;
+    }
+    .header-actions-row #addActualVisitBtn {
+        grid-column: 1 / -1;
+        order: -1;
+        height: 42px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .header-actions-row .btn:not(#addActualVisitBtn) {
+        font-size: 0.8rem;
+        padding: 8px 6px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .header-actions-row #adminGpsPolicyBtn:not(.d-none) {
+        grid-column: 1 / -1;
+        margin-bottom: 2px;
     }
     .am-pm-sections {
         grid-template-columns: 1fr;
@@ -1208,7 +1308,8 @@
     }
     .timeline-filter-field.col-btn .btn {
         width: 100%;
-        height: 40px;
+        height: 42px;
+        font-size: 0.95rem;
     }
     .timeline-summary-bar {
         gap: 6px;
@@ -1225,6 +1326,53 @@
     .timeline-summary-bar.is-manager {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .timeline-filter-card {
+        padding: 12px;
+    }
+    .timeline-filter-form-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .timeline-filter-field.col-date {
+        grid-column: 1 / -1;
+    }
+    .timeline-filter-field.col-status {
+        grid-column: 1 / -1;
+    }
+    .timeline-filter-field.col-btn {
+        grid-column: 1 / -1;
+    }
+    .legend-box {
+        margin-top: 10px;
+        gap: 8px 12px;
+        font-size: 0.78rem;
+    }
+    .visits-scope-tabs {
+        width: 100%;
+        gap: 6px;
+        margin: 12px 0 16px 0;
+        padding-bottom: 6px;
+    }
+    .visits-scope-tab-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        text-align: center;
+        padding: 8px 6px;
+        font-size: 0.82rem;
+        gap: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .visits-scope-tab-btn span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 
@@ -1250,18 +1398,21 @@
     }
 }
 
-/* Layout & Component Classes migrated from inline styles */
-.header-actions-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.legend-box {
-    margin-top: 12px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+@media (max-width: 440px) {
+    .header-actions-row {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+    .header-actions-row .btn:not(#addActualVisitBtn) {
+        font-size: 0.74rem;
+        padding: 6px 3px;
+        gap: 2px;
+    }
+    .header-actions-row .btn:not(#addActualVisitBtn) span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 .modal-content-lg {

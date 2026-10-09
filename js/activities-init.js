@@ -85,7 +85,6 @@
       : [];
     const currentUser = Core.getAuthUser() || {};
     const role = (currentUser.role || "").toLowerCase();
-    const canApprove = (role === "admin" || role === "district_manager" || role === "line_manager" || role === "business_unit");
 
     if (requests.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No geographic location requests submitted yet.</td></tr>`;
@@ -94,33 +93,63 @@
 
     tbody.innerHTML = requests.map((req) => {
       const typeBadge = req.requestType === "relocation"
-        ? `<span class="badge bg-warning text-dark">🔄 Relocation</span>`
-        : `<span class="badge bg-info text-dark">📍 Initial Pin</span>`;
+        ? `<span class="badge bg-warning text-dark">Relocation</span>`
+        : `<span class="badge bg-info text-dark">Initial Pin</span>`;
 
-      const statusBadge = req.status === "approved"
-        ? `<span class="badge bg-success">✅ Approved</span>`
-        : (req.status === "rejected"
-          ? `<span class="badge bg-danger">❌ Rejected</span>`
-          : `<span class="badge bg-warning text-dark">⏳ Pending</span>`);
+      const st = req.status || "pending";
+      const isPending = st !== "approved" && st !== "rejected";
+
+      let statusBadge = `<span class="badge bg-warning text-dark">Pending</span>`;
+      if (st === "approved") {
+        statusBadge = `<span class="badge bg-success">Approved</span>`;
+      } else if (st === "rejected") {
+        statusBadge = `<span class="badge bg-danger">Rejected</span>`;
+      } else if (st === "pending_dm") {
+        statusBadge = `<span class="badge bg-warning text-dark">Pending DM</span>`;
+      } else if (st === "pending_lm") {
+        statusBadge = `<span class="badge bg-info text-dark">Pending LM</span>`;
+      } else if (st === "pending_bu") {
+        statusBadge = `<span class="badge bg-primary">Pending BU</span>`;
+      } else if (st === "pending_gm") {
+        statusBadge = `<span class="badge bg-dark">Pending GM</span>`;
+      }
+
+      let canApproveStage = false;
+      if (isPending) {
+        if (role === "admin" || role === "general_manager") {
+          canApproveStage = true;
+        } else if (st === "pending" || st === "pending_dm") {
+          canApproveStage = (role === "district_manager" || role === "line_manager" || role === "business_unit");
+        } else if (st === "pending_lm") {
+          canApproveStage = (role === "line_manager" || role === "business_unit");
+        } else if (st === "pending_bu") {
+          canApproveStage = (role === "business_unit");
+        } else if (st === "pending_gm") {
+          canApproveStage = (role === "general_manager");
+        }
+      }
 
       let locInfo = `<code>${req.newLat.toFixed(5)}, ${req.newLng.toFixed(5)}</code>`;
       if (req.oldLat != null && req.oldLng != null) {
         const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${req.oldLat},${req.oldLng}&destination=${req.newLat},${req.newLng}`;
-        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">🗺️ Compare on Map</a>`;
+        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">Compare on Map</a>`;
         if (req.distanceMeters) locInfo += ` <span class="badge bg-secondary">${req.distanceMeters}m</span>`;
       } else {
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${req.newLat},${req.newLng}`;
-        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">🗺️ View on Map</a>`;
+        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">View on Map</a>`;
       }
 
       let actionsHtml = "";
-      if (req.status === "pending" && canApprove) {
+      if (isPending && canApproveStage) {
         actionsHtml = `
-          <button type="button" class="btn btn-sm btn-success me-1" onclick="approveLocationReq('${req.id}')">✓ Approve</button>
-          <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectLocationReq('${req.id}')">✕ Reject</button>
+          <button type="button" class="btn btn-sm btn-success me-1" onclick="approveLocationReq('${req.id}')">Approve</button>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectLocationReq('${req.id}')">Reject</button>
         `;
-      } else if (req.status !== "pending") {
-        actionsHtml = `<small class="text-muted">${req.decisionBy || "Manager"} • ${req.decisionAt ? req.decisionAt.slice(0, 10) : ""}</small>`;
+      } else if (isPending) {
+        const stageLabel = st.replace("pending_", "").toUpperCase() || "Manager";
+        actionsHtml = `<small class="text-muted">Awaiting ${stageLabel}</small>`;
+      } else {
+        actionsHtml = `<small class="text-muted">${req.decisionBy || "Manager"} - ${req.decisionAt ? req.decisionAt.slice(0, 10) : ""}</small>`;
       }
 
       return `

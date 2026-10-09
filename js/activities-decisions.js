@@ -141,19 +141,25 @@
         let nextStatus = Core.REQUEST_STATUS.APPROVED;
         let nextApproverId = null;
 
-        if (exp.status === Core.REQUEST_STATUS.PENDING_DM) {
-          nextStatus = Core.REQUEST_STATUS.PENDING_LM;
-          const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
-          const requester = allUsers.find((u) => u.id === exp.requesterId);
-          const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : Core._state.currentUser;
-          nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || "lm1";
-        } else if (exp.status === Core.REQUEST_STATUS.PENDING_LM) {
-          nextStatus = Core.REQUEST_STATUS.PENDING_HR;
-          const hr = Core.getHrUser();
-          nextApproverId = hr ? hr.id : "hr1";
-        } else if (exp.status === Core.REQUEST_STATUS.PENDING_HR) {
-          nextStatus = Core.REQUEST_STATUS.APPROVED;
-          nextApproverId = null;
+        if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceExpenseApproval === "function") {
+          const adv = window.WorkflowEngine.advanceExpenseApproval(exp, Core._state.currentUser);
+          nextStatus = adv.nextStatus;
+          nextApproverId = adv.nextApproverId;
+        } else {
+          if (exp.status === Core.REQUEST_STATUS.PENDING_DM) {
+            nextStatus = Core.REQUEST_STATUS.PENDING_LM;
+            const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
+            const requester = allUsers.find((u) => u.id === exp.requesterId);
+            const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : Core._state.currentUser;
+            nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || "lm1";
+          } else if (exp.status === Core.REQUEST_STATUS.PENDING_LM) {
+            nextStatus = Core.REQUEST_STATUS.PENDING_HR;
+            const hr = Core.getHrUser();
+            nextApproverId = hr ? hr.id : "hr1";
+          } else if (exp.status === Core.REQUEST_STATUS.PENDING_HR) {
+            nextStatus = Core.REQUEST_STATUS.APPROVED;
+            nextApproverId = null;
+          }
         }
 
         Core.StoreAdapter.updateExpenseStatus(requestId, nextStatus, Core._state.currentUser, comment, nextApproverId);
@@ -173,21 +179,21 @@
             });
           }
         } else if (nextApproverId) {
-          const isPendingLm = nextStatus === Core.REQUEST_STATUS.PENDING_LM;
+          let stepTitle = "Expense Claim Pending Review";
+          if (nextStatus === Core.REQUEST_STATUS.PENDING_LM) stepTitle = "Expense Claim Pending Line Manager Approval";
+          else if (nextStatus === Core.REQUEST_STATUS.PENDING_BU || nextStatus === "pending_bu") stepTitle = "Expense Claim Pending BU Manager Approval";
+          else if (nextStatus === Core.REQUEST_STATUS.PENDING_HR) stepTitle = "Expense Claim Pending HR Approval";
+
           Core.dispatchWorkflowNotification({
             userId: nextApproverId,
             type: "expense_approval",
-            title: isPendingLm
-              ? "Expense Claim Pending Line Manager Approval"
-              : "Expense Claim Pending HR Approval",
-            message: isPendingLm
-              ? `District Manager approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`
-              : `Line Manager approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`,
+            title: stepTitle,
+            message: `${actorName} approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
-            badgeClass: isPendingLm ? "bg-warning" : "bg-info",
+            badgeClass: "bg-warning",
             actorName: actorName,
-            action: isPendingLm ? "pending_lm_approval" : "pending_hr_approval",
+            action: "pending_approval",
           });
         }
       }
@@ -271,8 +277,19 @@
           } else if (userRole === Core.ROLES.DM) {
             srv.shares.forEach((sh) => {
               if (sh.dmId === userId && sh.status === Core.REQUEST_STATUS.PENDING_DM) {
-                sh.status = Core.REQUEST_STATUS.PENDING_LM;
-                sh.nextApproverId = sh.lmId;
+                if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
+                  const adv = window.WorkflowEngine.advanceServiceApproval({
+                    department: srv.department,
+                    cost: sh.shareAmount,
+                    lineId: sh.lineId,
+                    status: sh.status
+                  }, Core._state.currentUser);
+                  sh.status = adv.nextStatus;
+                  sh.nextApproverId = adv.nextApproverId;
+                } else {
+                  sh.status = Core.REQUEST_STATUS.PENDING_LM;
+                  sh.nextApproverId = sh.lmId;
+                }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 sh.approvedBy.push(userId);
               }
@@ -280,8 +297,19 @@
           } else if (userRole === Core.ROLES.LM) {
             srv.shares.forEach((sh) => {
               if (sh.lmId === userId && sh.status === Core.REQUEST_STATUS.PENDING_LM) {
-                sh.status = Core.REQUEST_STATUS.APPROVED;
-                sh.nextApproverId = null;
+                if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
+                  const adv = window.WorkflowEngine.advanceServiceApproval({
+                    department: srv.department,
+                    cost: sh.shareAmount,
+                    lineId: sh.lineId,
+                    status: sh.status
+                  }, Core._state.currentUser);
+                  sh.status = adv.nextStatus;
+                  sh.nextApproverId = adv.nextApproverId;
+                } else {
+                  sh.status = Core.REQUEST_STATUS.APPROVED;
+                  sh.nextApproverId = null;
+                }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 sh.approvedBy.push(userId);
               }
@@ -290,8 +318,19 @@
             const userLines = Core._state.currentUser.lineIds || (Core._state.currentUser.lineId ? [Core._state.currentUser.lineId] : []);
             srv.shares.forEach((sh) => {
               if (userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending")) {
-                sh.status = Core.REQUEST_STATUS.APPROVED;
-                sh.nextApproverId = null;
+                if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
+                  const adv = window.WorkflowEngine.advanceServiceApproval({
+                    department: srv.department,
+                    cost: sh.shareAmount,
+                    lineId: sh.lineId,
+                    status: sh.status
+                  }, Core._state.currentUser);
+                  sh.status = adv.nextStatus;
+                  sh.nextApproverId = adv.nextApproverId;
+                } else {
+                  sh.status = Core.REQUEST_STATUS.APPROVED;
+                  sh.nextApproverId = null;
+                }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 sh.approvedBy.push(userId);
               }
@@ -406,43 +445,28 @@
             });
           }
         } else if (decision === "approve") {
-          if (srv.status === Core.REQUEST_STATUS.PENDING_DM) {
-            const dm = Core.getUserById(srv.requesterId);
-            const lm = dm && dm.managerId ? dm.managerId : Core._state.currentUser.managerId || "lm1";
-            Core.StoreAdapter.updateServiceStatus(requestId, Core.REQUEST_STATUS.PENDING_LM, Core._state.currentUser, comment, lm);
+          let nextStatus = Core.REQUEST_STATUS.APPROVED;
+          let nextApproverId = null;
 
-            Core.dispatchWorkflowNotification({
-              userId: lm,
-              type: "service_approval",
-              title: "Service Request Pending Approval",
-              message: `DM approved service request (${srv.title}) and is pending your approval.`,
-              link: "activities.html",
-              icon: "⏳",
-              badgeClass: "bg-warning",
-              actorName: actorName,
-              action: "pending_approval",
-            });
-
-            if (srv.requesterId && srv.requesterId !== Core._state.currentUser.id) {
-              Core.dispatchWorkflowNotification({
-                userId: srv.requesterId,
-                type: "service_approved_by_dm",
-                title: "DM Approved Service Request",
-                message: `Your DM approved service request (${srv.title}) and forwarded to LM.`,
-                link: "activities.html",
-                icon: "⏳",
-                badgeClass: "bg-info",
-                actorName: actorName,
-                action: "forwarded",
-              });
+          if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
+            const adv = window.WorkflowEngine.advanceServiceApproval(srv, Core._state.currentUser);
+            nextStatus = adv.nextStatus;
+            nextApproverId = adv.nextApproverId;
+          } else {
+            if (srv.status === Core.REQUEST_STATUS.PENDING_DM) {
+              const dm = Core.getUserById(srv.requesterId);
+              const lm = dm && dm.managerId ? dm.managerId : Core._state.currentUser.managerId || "lm1";
+              nextStatus = Core.REQUEST_STATUS.PENDING_LM;
+              nextApproverId = lm;
+            } else {
+              nextStatus = Core.REQUEST_STATUS.APPROVED;
+              nextApproverId = null;
             }
-          } else if (
-            srv.status === Core.REQUEST_STATUS.PENDING_LM ||
-            Core._state.currentUser.role === Core.ROLES.ADMIN ||
-            Core._state.currentUser.role === Core.ROLES.BU ||
-            (Core._state.currentUser.role === Core.ROLES.PM && srv.department === "marketing")
-          ) {
-            Core.StoreAdapter.updateServiceStatus(requestId, Core.REQUEST_STATUS.APPROVED, Core._state.currentUser, comment, null);
+          }
+
+          Core.StoreAdapter.updateServiceStatus(requestId, nextStatus, Core._state.currentUser, comment, nextApproverId);
+
+          if (nextStatus === Core.REQUEST_STATUS.APPROVED) {
             if (srv.requesterId && srv.requesterId !== Core._state.currentUser.id) {
               Core.dispatchWorkflowNotification({
                 userId: srv.requesterId,
@@ -454,6 +478,38 @@
                 badgeClass: "bg-success",
                 actorName: actorName,
                 action: "approved",
+              });
+            }
+          } else if (nextApproverId) {
+            let stepTitle = "Service Request Pending Approval";
+            if (nextStatus === Core.REQUEST_STATUS.PENDING_LM) stepTitle = "Service Request Pending Line Manager Approval";
+            else if (nextStatus === Core.REQUEST_STATUS.PENDING_BU || nextStatus === "pending_bu") stepTitle = "Service Request Pending BU Manager Approval";
+            else if (nextStatus === Core.REQUEST_STATUS.PENDING_PM || nextStatus === "pending_pm") stepTitle = "Marketing Service Request Pending PM Review";
+            else if (nextStatus === Core.REQUEST_STATUS.PENDING_GM || nextStatus === "pending_gm") stepTitle = "Service Request Pending General Manager Approval";
+
+            Core.dispatchWorkflowNotification({
+              userId: nextApproverId,
+              type: "service_approval",
+              title: stepTitle,
+              message: `${actorName} approved service request (${srv.title}), awaiting your review.`,
+              link: "activities.html",
+              icon: "⏳",
+              badgeClass: "bg-warning",
+              actorName: actorName,
+              action: "pending_approval",
+            });
+
+            if (srv.requesterId && srv.requesterId !== Core._state.currentUser.id) {
+              Core.dispatchWorkflowNotification({
+                userId: srv.requesterId,
+                type: "service_forwarded",
+                title: "Service Request Forwarded",
+                message: `${actorName} approved service request (${srv.title}) and forwarded to next stage.`,
+                link: "activities.html",
+                icon: "⏳",
+                badgeClass: "bg-info",
+                actorName: actorName,
+                action: "forwarded",
               });
             }
           }

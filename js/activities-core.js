@@ -25,6 +25,9 @@
     PENDING_DM: "pending_dm",
     PENDING_LM: "pending_lm",
     PENDING_HR: "pending_hr",
+    PENDING_BU: "pending_bu",
+    PENDING_PM: "pending_pm",
+    PENDING_GM: "pending_gm",
     PENDING_SHARED: "pending_shared",
     APPROVED: "approved",
     REJECTED: "rejected",
@@ -647,6 +650,9 @@
     if (role === ROLES.ADMIN) return true;
 
     if (action === "approve_service" || action === "reject_service") {
+      if (window.WorkflowEngine && typeof window.WorkflowEngine.isServiceAuthorized === "function") {
+        return window.WorkflowEngine.isServiceAuthorized(resource, user, action);
+      }
       if (!resource) return false;
       if (resource.requesterId === user.id) return false;
       if (role === ROLES.REP || role === ROLES.REP_ALT) return false;
@@ -680,21 +686,18 @@
       return false;
     }
 
-    if (action === "approve_expense" || action === "reject_expense") {
+    if (action === "approve_expense" || action === "reject_expense" || action === "disburse_expense") {
+      if (window.WorkflowEngine && typeof window.WorkflowEngine.isExpenseAuthorized === "function") {
+        return window.WorkflowEngine.isExpenseAuthorized(resource, user, action);
+      }
       if (!resource) return false;
       if (resource.requesterId === user.id) return false;
       if (role === ROLES.REP || role === ROLES.REP_ALT) return false;
       if (role === ROLES.DM) return resource.status === REQUEST_STATUS.PENDING_DM && resource.nextApproverId === user.id;
       if (role === ROLES.LM) return resource.status === REQUEST_STATUS.PENDING_LM && resource.nextApproverId === user.id;
-      if (role === ROLES.HR) return resource.status === REQUEST_STATUS.PENDING_HR;
+      if (role === ROLES.HR) return resource.status === REQUEST_STATUS.PENDING_HR || (action === "disburse_expense" && resource.status === REQUEST_STATUS.APPROVED);
       if (role === ROLES.BU) return resource.status && resource.status.startsWith("pending");
       return false;
-    }
-
-    if (action === "disburse_expense") {
-      if (!resource) return false;
-      if (role !== ROLES.HR && role !== ROLES.ADMIN) return false;
-      return resource.status === REQUEST_STATUS.APPROVED;
     }
 
     if (action === "allocate_bu_budget") {

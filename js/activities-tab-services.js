@@ -516,6 +516,18 @@
       label = `${Core.t("waitingLmPrefix")}${Core.getUserDisplayName(srv.nextApproverId)}`;
       css = "pending";
       icon = "⏳";
+    } else if (s === Core.REQUEST_STATUS.PENDING_BU || s === "pending_bu") {
+      label = `${Core.t("waitingBuPrefix") || "Pending BU: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      css = "pending pending-bu";
+      icon = "👑";
+    } else if (s === Core.REQUEST_STATUS.PENDING_PM || s === "pending_pm") {
+      label = `${Core.t("waitingPmPrefix") || "Pending PM: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      css = "pending pending-pm";
+      icon = "📢";
+    } else if (s === Core.REQUEST_STATUS.PENDING_GM || s === "pending_gm") {
+      label = `${Core.t("waitingGmPrefix") || "Pending GM: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      css = "pending pending-gm";
+      icon = "🎖️";
     } else if (s === Core.REQUEST_STATUS.APPROVED) {
       label = Core.t("approvedLabel");
       css = "approved";
@@ -531,49 +543,8 @@
 
   function getServiceActionButtons(srv, user) {
     if (!user) return "&mdash;";
-    const role = (user.role || "").toLowerCase();
-    const status = srv.status;
-
-    let canApproveReject = false;
-
-    if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
-      if (role === Core.ROLES.ADMIN || role === Core.ROLES.BU) {
-        if (srv.shares.some((sh) => sh.status && sh.status.startsWith("pending"))) {
-          canApproveReject = true;
-        }
-      } else if (role === Core.ROLES.DM) {
-        if (srv.shares.some((sh) => sh.dmId === user.id && sh.status === Core.REQUEST_STATUS.PENDING_DM)) {
-          canApproveReject = true;
-        }
-      } else if (role === Core.ROLES.LM) {
-        if (srv.shares.some((sh) => sh.lmId === user.id && sh.status === Core.REQUEST_STATUS.PENDING_LM)) {
-          canApproveReject = true;
-        }
-      } else if (role === Core.ROLES.PM) {
-        const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
-        if (srv.department === "marketing" && srv.shares.some((sh) => userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending"))) {
-          canApproveReject = true;
-        }
-      }
-    } else {
-      if (role === Core.ROLES.DM && status === Core.REQUEST_STATUS.PENDING_DM && srv.nextApproverId === user.id) {
-        canApproveReject = true;
-      }
-      if (role === Core.ROLES.LM && status === Core.REQUEST_STATUS.PENDING_LM && srv.nextApproverId === user.id) {
-        canApproveReject = true;
-      }
-      if ((role === Core.ROLES.ADMIN || role === Core.ROLES.BU) && status.startsWith("pending")) {
-        canApproveReject = true;
-      }
-      if (role === Core.ROLES.PM && srv.department === "marketing" && status.startsWith("pending")) {
-        const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
-        if (userLines.includes(srv.lineId)) {
-          canApproveReject = true;
-        }
-      }
-    }
-
-    if (canApproveReject) {
+    const canApprove = Core.isActionAuthorized("approve_service", srv, user);
+    if (canApprove) {
       return `
         <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'approve')" title="Approve">
           ✓
@@ -1143,15 +1114,26 @@
       globalStatus = allApproved ? Core.REQUEST_STATUS.APPROVED : Core.REQUEST_STATUS.PENDING_SHARED;
       nextApprover = null;
     } else {
-      if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
-        globalStatus = Core.REQUEST_STATUS.PENDING_DM;
-        nextApprover = Core._state.currentUser.managerId || "dm1";
-      } else if (Core._state.currentUser.role === Core.ROLES.DM) {
-        globalStatus = Core.REQUEST_STATUS.PENDING_LM;
-        nextApprover = Core._state.currentUser.managerId || "lm1";
+      if (window.WorkflowEngine && typeof window.WorkflowEngine.resolveInitialServiceStatus === "function") {
+        const initRes = window.WorkflowEngine.resolveInitialServiceStatus({
+          department,
+          lineId,
+          areaId,
+          cost,
+        }, Core._state.currentUser);
+        globalStatus = initRes.status;
+        nextApprover = initRes.nextApproverId;
       } else {
-        globalStatus = Core.REQUEST_STATUS.APPROVED;
-        nextApprover = null;
+        if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
+          globalStatus = Core.REQUEST_STATUS.PENDING_DM;
+          nextApprover = Core._state.currentUser.managerId || "dm1";
+        } else if (Core._state.currentUser.role === Core.ROLES.DM) {
+          globalStatus = Core.REQUEST_STATUS.PENDING_LM;
+          nextApprover = Core._state.currentUser.managerId || "lm1";
+        } else {
+          globalStatus = Core.REQUEST_STATUS.APPROVED;
+          nextApprover = null;
+        }
       }
     }
 
