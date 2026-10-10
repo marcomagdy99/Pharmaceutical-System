@@ -338,7 +338,9 @@
     const toDateStr = toInput.value;
 
     if (!fromDateStr || !toDateStr) {
-      alert("Please select both From and To dates.");
+      if (typeof window.showToast === "function") {
+        window.showToast("Please select both From and To dates.", "warning");
+      }
       return;
     }
 
@@ -346,7 +348,9 @@
     const endDate = parseLocalDate(toDateStr);
 
     if (startDate > endDate) {
-      alert("From Date cannot be later than To Date.");
+      if (typeof window.showToast === "function") {
+        window.showToast("From Date cannot be later than To Date.", "warning");
+      }
       return;
     }
 
@@ -591,13 +595,13 @@
       }
 
       tr.innerHTML = `
-        <td style="font-weight:600;"><span class="badge" style="background:var(--gray-100); color:var(--gray-700);">${escapeHtml(r.lineName)}</span></td>
-        <td class="text-muted">${escapeHtml(r.amName)}</td>
-        <td style="font-weight:600; color:var(--gray-800);">${escapeHtml(r.dmName)}</td>
+        <td style="font-weight:600;"><span class="badge" style="background:var(--gray-100); color:var(--gray-700);">${window.escapeHtml(r.lineName)}</span></td>
+        <td class="text-muted">${window.escapeHtml(r.amName)}</td>
+        <td style="font-weight:600; color:var(--gray-800);">${window.escapeHtml(r.dmName)}</td>
         <td style="font-weight:700; color:var(--primary); cursor:pointer;" onclick="openMissingDaysDetailsModal('${r.repId}')" title="Click to view full days breakdown">
-          👤 ${escapeHtml(r.repName)}
+          👤 ${window.escapeHtml(r.repName)}
         </td>
-        <td style="font-size:0.82rem; color:var(--gray-500);">${escapeHtml(r.hireDate)}</td>
+        <td style="font-size:0.82rem; color:var(--gray-500);">${window.escapeHtml(r.hireDate)}</td>
         <td style="text-align:center; font-weight:600;">${r.monthLabel}</td>
         <td style="text-align:center;">Q${r.quarter}</td>
         <td style="text-align:center; font-weight:700;">${r.wd}</td>
@@ -697,7 +701,9 @@
   window.exportMissingDaysReport = function () {
     const rows = window.missingDaysState.rows;
     if (!rows || rows.length === 0) {
-      alert("No data available to export.");
+      if (typeof window.showToast === "function") {
+        window.showToast("No data available to export.", "info");
+      }
       return;
     }
 
@@ -738,14 +744,5 @@
     document.body.removeChild(link);
   };
 
-  function escapeHtml(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
 
 })();

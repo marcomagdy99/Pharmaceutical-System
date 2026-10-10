@@ -4,7 +4,7 @@ const path = require("path");
 const baseDir = path.resolve(__dirname, "..");
 const files = fs.readdirSync(baseDir).filter(f => f.endsWith(".html"));
 
-const targetVersion = "v145";
+const targetVersion = "v182";
 let updatedCount = 0;
 
 for (const file of files) {

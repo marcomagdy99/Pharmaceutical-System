@@ -268,10 +268,6 @@
     return dict[key] !== undefined ? dict[key] : key;
   }
 
-  function escapeHTML(str) {
-    return window.escapeHtml ? window.escapeHtml(str) : (str == null ? "" : String(str));
-  }
-
   function safeShowToast(msg, type = "info") {
     if (typeof showToast === "function") {
       showToast(msg, type);
@@ -988,7 +984,7 @@
     ROLES,
     activityTranslations,
     t,
-    escapeHTML,
+    escapeHTML: (str) => (window.escapeHtml ? window.escapeHtml(str) : String(str || "")),
     safeShowToast,
     addDays,
     getWeekStart,

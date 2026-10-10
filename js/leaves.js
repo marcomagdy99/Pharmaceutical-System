@@ -175,14 +175,6 @@ function formatLeaveDurationText(l, lang) {
   return count === 1 ? "1 Day" : `${count} Days`;
 }
 
-function formatLeaveDateRange(startDate, endDate, lang) {
-  if (!startDate) return "";
-  if (!endDate || startDate === endDate) {
-    return startDate;
-  }
-  const separator = " to ";
-  return `${startDate}${separator}${endDate}`;
-}
 
 function formatLeaveDateDisplay(startDate, endDate, lang) {
   if (!startDate) return "";

@@ -331,7 +331,7 @@ function renderModalBricksList(filterQuery = "") {
   let html = headerHtml + `<div class="row g-2">`;
   displayBricks.forEach((b, idx) => {
     const isChecked = selectedBrickNames.has(b.name);
-    const escapedName = window.escapeHtml ? window.escapeHtml(b.name) : b.name;
+    const escapedName = window.escapeHtml(b.name);
     const inputId = `brick_chk_${idx}`;
     html += `
       <div class="col-12 col-sm-6">

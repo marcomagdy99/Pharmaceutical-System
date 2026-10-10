@@ -70,18 +70,6 @@
     return r;
   }
 
-  /**
-   * Helper to escape HTML characters
-   */
-  function escapeHTML(str) {
-    if (str === null || str === undefined) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
 
   /**
    * Formats numbers into localized currency string (EGP)
@@ -416,18 +404,18 @@
       if (scope.isRep) {
         // Medical rep: strictly show their assigned line(s)
         if (scope.allowedLines.length === 1) {
-          lineSelect.innerHTML = `<option value="${scope.allowedLines[0].id}">${escapeHTML(scope.allowedLines[0].name)}</option>`;
+          lineSelect.innerHTML = `<option value="${scope.allowedLines[0].id}">${window.escapeHtml(scope.allowedLines[0].name)}</option>`;
           lineSelect.value = scope.allowedLines[0].id;
           lineSelect.disabled = true;
         } else {
-          lineSelect.innerHTML = scope.allowedLines.map((l) => `<option value="${l.id}">${escapeHTML(l.name)}</option>`).join("");
+          lineSelect.innerHTML = scope.allowedLines.map((l) => `<option value="${l.id}">${window.escapeHtml(l.name)}</option>`).join("");
           lineSelect.value = scope.allowedLines[0]?.id || "";
           lineSelect.disabled = false;
         }
       } else {
         // Admin, LM, or DM
         let optionsHtml = `<option value="all">All Lines</option>` +
-          scope.allowedLines.map((l) => `<option value="${l.id}">${escapeHTML(l.name)}</option>`).join("");
+          scope.allowedLines.map((l) => `<option value="${l.id}">${window.escapeHtml(l.name)}</option>`).join("");
         lineSelect.innerHTML = optionsHtml;
 
         if (window.selectedReportLineId && window.selectedReportLineId !== "all" && scope.allowedLineIds.has(window.selectedReportLineId)) {
@@ -446,17 +434,17 @@
         const myDM = scope.allowedDMs[0];
         const dmName = myDM ? (myDM.name || myDM.username) : "Assigned District Manager";
         const dmId = myDM ? myDM.id : "dm";
-        dmSelect.innerHTML = `<option value="${dmId}">${escapeHTML(dmName)}</option>`;
+        dmSelect.innerHTML = `<option value="${dmId}">${window.escapeHtml(dmName)}</option>`;
         dmSelect.value = dmId;
         dmSelect.disabled = true;
       } else if (scope.isDM) {
-        dmSelect.innerHTML = `<option value="${user.id}">${escapeHTML(user.name || user.username)}</option>`;
+        dmSelect.innerHTML = `<option value="${user.id}">${window.escapeHtml(user.name || user.username)}</option>`;
         dmSelect.value = user.id;
         dmSelect.disabled = true;
       } else {
         // Admin or LM
         dmSelect.innerHTML = `<option value="all">All Districts / DMs</option>` +
-          scope.allowedDMs.map((u) => `<option value="${u.id}">${escapeHTML(u.name || u.username)}</option>`).join("");
+          scope.allowedDMs.map((u) => `<option value="${u.id}">${window.escapeHtml(u.name || u.username)}</option>`).join("");
         dmSelect.disabled = false;
         dmSelect.value = "all";
       }
@@ -482,7 +470,7 @@
     if (!repSelect) return;
 
     if (scope.isRep) {
-      repSelect.innerHTML = `<option value="${user.id}">${escapeHTML(user.name || user.username)}</option>`;
+      repSelect.innerHTML = `<option value="${user.id}">${window.escapeHtml(user.name || user.username)}</option>`;
       repSelect.value = user.id;
       repSelect.disabled = true;
       return;
@@ -501,7 +489,7 @@
 
     const allLabel = scope.isDM ? "All District Reps" : "All Medical Reps";
     repSelect.innerHTML = `<option value="all">${allLabel}</option>` +
-      reps.map((r) => `<option value="${r.id}">${escapeHTML(r.name || r.username)}</option>`).join("");
+      reps.map((r) => `<option value="${r.id}">${window.escapeHtml(r.name || r.username)}</option>`).join("");
     repSelect.disabled = false;
     repSelect.value = "all";
   }
@@ -518,12 +506,12 @@
     if (scope.isRep) {
       // Rep strictly sees only their own areas
       if (scope.allowedAreas.length === 1) {
-        areaSelect.innerHTML = `<option value="${scope.allowedAreas[0].id}">${escapeHTML(scope.allowedAreas[0].name)}</option>`;
+        areaSelect.innerHTML = `<option value="${scope.allowedAreas[0].id}">${window.escapeHtml(scope.allowedAreas[0].name)}</option>`;
         areaSelect.value = scope.allowedAreas[0].id;
         areaSelect.disabled = true;
       } else if (scope.allowedAreas.length > 1) {
         areaSelect.innerHTML = `<option value="all">All My Areas</option>` +
-          scope.allowedAreas.map((a) => `<option value="${a.id}">${escapeHTML(a.name)}</option>`).join("");
+          scope.allowedAreas.map((a) => `<option value="${a.id}">${window.escapeHtml(a.name)}</option>`).join("");
         areaSelect.value = "all";
         areaSelect.disabled = false;
       } else {
@@ -548,7 +536,7 @@
 
     const allLabel = scope.isDM ? "All District Areas" : "All Territories / Areas";
     areaSelect.innerHTML = `<option value="all">${allLabel}</option>` +
-      areas.map((a) => `<option value="${a.id}">${escapeHTML(a.name)}</option>`).join("");
+      areas.map((a) => `<option value="${a.id}">${window.escapeHtml(a.name)}</option>`).join("");
     areaSelect.disabled = false;
     areaSelect.value = "all";
   }
@@ -578,7 +566,7 @@
 
     const sorted = Array.from(specSet).sort();
     specialtySelect.innerHTML = `<option value="all">All Specialties</option>` +
-      sorted.map((sp) => `<option value="${escapeHTML(sp)}">${escapeHTML(sp)}</option>`).join("");
+      sorted.map((sp) => `<option value="${window.escapeHtml(sp)}">${window.escapeHtml(sp)}</option>`).join("");
     specialtySelect.value = "all";
   }
 
@@ -1056,7 +1044,7 @@
     if (!thead) return;
 
     const dynamicColsHtml = categories
-      .map((cat) => `<th class="costing-th-category">${escapeHTML(cat)}</th>`)
+      .map((cat) => `<th class="costing-th-category">${window.escapeHtml(cat)}</th>`)
       .join("");
 
     thead.innerHTML = `
@@ -1104,8 +1092,8 @@
         return `<td class="costing-cell-zero">0</td>`;
       }).join("");
 
-      const classBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: inherit; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${escapeHTML(row.classification)}</span>`;
-      const specBadge = `<span style="color: #10b981; font-weight: 600;">${escapeHTML(row.specialty)}</span>`;
+      const classBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: inherit; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${window.escapeHtml(row.classification)}</span>`;
+      const specBadge = `<span style="color: #10b981; font-weight: 600;">${window.escapeHtml(row.specialty)}</span>`;
       const totalCell = row.grandTotal > 0
         ? `<strong class="costing-cell-total">${formatEGP(row.grandTotal)}</strong>`
         : `<span class="costing-cell-zero">0</span>`;
@@ -1114,16 +1102,16 @@
         <tr style="transition: background 0.15s ease;">
           <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${idx + 1}</td>
           <td>
-            <div class="costing-clinic-name">${escapeHTML(row.clinicName)}</div>
+            <div class="costing-clinic-name">${window.escapeHtml(row.clinicName)}</div>
           </td>
           <td>
             <a href="javascript:void(0)" onclick="openAccountsCostingBreakdown('${row.id}')" class="costing-doctor-link" title="View breakdown ledger">
-              ${escapeHTML(row.doctorName)}
+              ${window.escapeHtml(row.doctorName)}
             </a>
           </td>
           <td style="text-align: center;">${classBadge}</td>
           <td>${specBadge}</td>
-          <td style="color: var(--text-muted); font-size: 0.85rem;">${escapeHTML(row.areaName)}</td>
+          <td style="color: var(--text-muted); font-size: 0.85rem;">${window.escapeHtml(row.areaName)}</td>
           ${dynamicCells}
           <td>${totalCell}</td>
           <td style="text-align: center;">
@@ -1221,14 +1209,14 @@
           return `
             <tr>
               <td style="text-align: center; font-size: 0.8rem; color: var(--text-muted);">${idx + 1}</td>
-              <td>${escapeHTML(tx.date || "-")}</td>
-              <td><span class="badge" style="background: #e7f1ff; color: #0c63e4;">${escapeHTML(tx.category)}</span></td>
+              <td>${window.escapeHtml(tx.date || "-")}</td>
+              <td><span class="badge" style="background: #e7f1ff; color: #0c63e4;">${window.escapeHtml(tx.category)}</span></td>
               <td>
-                <div style="font-weight: 600;">${escapeHTML(tx.title)}</div>
-                ${tx.notes ? `<small class="text-muted">${escapeHTML(tx.notes)}</small>` : ""}
+                <div style="font-weight: 600;">${window.escapeHtml(tx.title)}</div>
+                ${tx.notes ? `<small class="text-muted">${window.escapeHtml(tx.notes)}</small>` : ""}
               </td>
               <td style="text-align: right; font-weight: 700; color: #004085;">${formatEGP(tx.cost)}</td>
-              <td>${escapeHTML(repName)}</td>
+              <td>${window.escapeHtml(repName)}</td>
               <td style="text-align: center;"><span class="badge" style="background: #d4edda; color: #155724;">Approved</span></td>
             </tr>
           `;
@@ -1249,7 +1237,9 @@
    */
   function exportAccountsCostingToExcel() {
     if (typeof window.XLSX === "undefined") {
-      alert("Excel export library is loading. Please try again in a moment.");
+      if (typeof window.showToast === "function") {
+        window.showToast("Excel export library is loading. Please try again in a moment.", "warning");
+      }
       return;
     }
 
@@ -1257,7 +1247,9 @@
     const categories = CostingState.dynamicCategories;
 
     if (!rows || rows.length === 0) {
-      alert("No data to export.");
+      if (typeof window.showToast === "function") {
+        window.showToast("No data to export.", "info");
+      }
       return;
     }
 

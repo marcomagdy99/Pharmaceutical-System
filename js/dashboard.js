@@ -161,58 +161,6 @@ var getDmAccompanimentSchedule = (typeof window !== "undefined" && window.getDmA
   return {};
 };
 
-function setDmAccompaniment(dmId, dateStr, repId) {
-  try {
-    const raw = localStorage.getItem("pharma_dm_accompaniments");
-    const data = raw ? JSON.parse(raw) : {};
-    if (!data[dmId]) data[dmId] = {};
-    if (!repId) {
-      delete data[dmId][dateStr];
-    } else {
-      data[dmId][dateStr] = repId;
-    }
-    localStorage.setItem("pharma_dm_accompaniments", JSON.stringify(data));
-  } catch (e) {
-    console.error("Error writing DM accompaniment schedule:", e);
-  }
-
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const dmUser = allUsers.find((u) => u.id === dmId) || {
-    id: dmId,
-    name: "Manager",
-  };
-
-  let updated = false;
-  allVisits.forEach((v) => {
-    if (v.date === dateStr) {
-      if (repId && repId !== "none" && v.repId === repId) {
-        v.visitType = "double";
-        v.doubleWithUserId = dmId;
-        v.doubleWithUserName = dmUser.name;
-        if (v.status === "pending_approval") {
-          v.status = "planned";
-          v.approvedBy = dmId;
-          v.approvedByName = dmUser.name;
-          v.approvedAt = new Date().toISOString();
-        }
-        updated = true;
-      } else if (
-        v.doubleWithUserId === dmId &&
-        (!repId || repId === "none" || v.repId !== repId)
-      ) {
-        v.visitType = "single";
-        delete v.doubleWithUserId;
-        delete v.doubleWithUserName;
-        updated = true;
-      }
-    }
-  });
-
-  if (updated && typeof window.saveDataToStorage === "function") {
-    window.saveDataToStorage();
-  }
-}
 
 function getDmSelectedDate() {
   if (window.currentDmSelectedDate) return window.currentDmSelectedDate;
@@ -1376,14 +1324,6 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
   const filterMode = window.dmFollowUpFilter || "all";
   const myRepIds = (myReps || []).map((r) => r.id);
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const esc = (s) =>
-    window.escapeHtml
-      ? window.escapeHtml(s)
-      : String(s || "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;");
 
   // Filter completed/actual visits by this DM's reps
   const teamCompleted = (allVisits || []).filter(
@@ -1484,7 +1424,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
 
                       const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
                       const productsHtml = prods && prods.length
-                        ? prods.map((p) => `<span class="badge badge-product" style="display: inline-block; margin: 2px; font-size: 0.72rem;">💊 ${esc(p)}</span>`).join("")
+                        ? prods.map((p) => `<span class="badge badge-product" style="display: inline-block; margin: 2px; font-size: 0.72rem;">💊 ${window.escapeHtml(p)}</span>`).join("")
                         : `<span class="text-muted" style="font-size: 0.78rem;">-</span>`;
 
                       const notesText = (v.comment || v.feedback || v.notes || "").trim();
@@ -1492,14 +1432,14 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                         ? `
                           <div style="background: var(--gray-50, #f8fafc); border: 1px solid var(--gray-200, #e2e8f0); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; color: var(--gray-800, #1e293b); line-height: 1.45; word-break: break-word;">
                             <span style="color: var(--primary, #0284c7); font-weight: 700; margin-inline-end: 4px;">💬</span>
-                            ${esc(notesText)}
+                            ${window.escapeHtml(notesText)}
                           </div>
                         `
                         : `<span style="color: var(--gray-400, #94a3b8); font-style: italic; font-size: 0.78rem;">${lang === "ar" ? "لا توجد ملاحظات مسجلة" : "No notes recorded"}</span>`;
 
                       const rawSamples = Array.isArray(v.giveawaySamples) && v.giveawaySamples.length ? v.giveawaySamples : [];
                       const samplesHtml = rawSamples.length
-                        ? `<div style="font-size: 0.72rem; color: var(--gray-600); margin-top: 4px;">🎁 <strong>${lang === "ar" ? "عينات:" : "Samples:"}</strong> ${esc(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
+                        ? `<div style="font-size: 0.72rem; color: var(--gray-600); margin-top: 4px;">🎁 <strong>${lang === "ar" ? "عينات:" : "Samples:"}</strong> ${window.escapeHtml(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
                         : "";
 
                       const isDouble = v.visitType === "double" || !!v.doubleWithUserId || !!v.doubleWithUserName;
@@ -1521,16 +1461,16 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                           </td>
                           <td style="padding: 10px 12px;">
                             <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
-                              👤 ${esc(repName)}
+                              👤 ${window.escapeHtml(repName)}
                             </div>
                             <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">
-                              📍 ${esc(repTerritory)}
+                              📍 ${window.escapeHtml(repTerritory)}
                             </div>
                             ${doubleBadge}
                           </td>
                           <td style="padding: 10px 12px;">
                             <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
-                              ${esc(v.doctorName || v.targetName || (v.doctorId ? "Dr. " + v.doctorId : "Target"))}
+                              ${window.escapeHtml(v.doctorName || v.targetName || (v.doctorId ? "Dr. " + v.doctorId : "Target"))}
                             </div>
                             <div style="margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap;">
                               ${targetBadge}

@@ -610,8 +610,6 @@
     if (!currentFilteredGpsVisits || currentFilteredGpsVisits.length === 0) {
       if (typeof showToast === "function") {
         showToast(gpsTranslations.en.openFullRouteWarning, "warning");
-      } else {
-        alert(gpsTranslations.en.openFullRouteWarning);
       }
       return;
     }
@@ -628,8 +626,9 @@
 
     if (validWaypoints.length === 0) {
       const warnMsg = gpsTranslations.en.openFullRouteWarning;
-      if (typeof showToast === "function") showToast(warnMsg, "warning");
-      else alert(warnMsg);
+      if (typeof showToast === "function") {
+        showToast(warnMsg, "warning");
+      }
       return;
     }
 
