@@ -280,7 +280,7 @@ if (typeof renderSidebar === "function") {
         },
         {
           id: "bu1",
-          name: "Tarek Saad",
+          name: "George Marzok",
           email: "bu@pharmacare.com",
           code: "BU-001",
           employeeCode: "BU-001",
@@ -292,7 +292,7 @@ if (typeof renderSidebar === "function") {
         },
         {
           id: "lm1",
-          name: "Hassan Ali",
+          name: "John Mahfouz",
           email: "lm@pharmacare.com",
           code: "LM-001",
           employeeCode: "LM-001",
@@ -303,7 +303,7 @@ if (typeof renderSidebar === "function") {
         },
         {
           id: "dm1",
-          name: "Karim Nasser",
+          name: "Amir Ayoup",
           email: "dm@pharmacare.com",
           code: "DM-001",
           employeeCode: "DM-001",
@@ -314,10 +314,10 @@ if (typeof renderSidebar === "function") {
         },
         {
           id: "rep1",
-          name: "Ahmed Mostafa",
+          name: "Marco Magdy",
           email: "rep1@pharmacare.com",
-          code: "EMP-001",
-          employeeCode: "EMP-001",
+          code: "REP-001",
+          employeeCode: "REP-001",
           role: "medical_rep",
           status: "Active",
           managerId: "dm1",
@@ -325,10 +325,10 @@ if (typeof renderSidebar === "function") {
         },
         {
           id: "rep2",
-          name: "Omar Youssef",
+          name: "Kerolos Boules",
           email: "rep2@pharmacare.com",
-          code: "EMP-002",
-          employeeCode: "EMP-002",
+          code: "REP-002",
+          employeeCode: "REP-002",
           role: "medical_rep",
           status: "Active",
           managerId: "dm1",
@@ -521,6 +521,51 @@ if (typeof renderSidebar === "function") {
     if (r === "product_manager" || r === "pm") return "PM";
     if (r === "hr") return "HR";
     return role;
+  },
+
+  getRoleCodePrefix(role) {
+    const norm = this.normalizeRole(role);
+    const prefixes = {
+      Rep: "REP-",
+      DM: "DM-",
+      LM: "LM-",
+      PM: "PM-",
+      BU: "BU-",
+      HR: "HR-",
+      Admin: "ADM-",
+    };
+    return prefixes[norm] || "EMP-";
+  },
+
+  getNextEmployeeCode(role) {
+    const norm = this.normalizeRole(role);
+    const prefix = this.getRoleCodePrefix(role);
+    const allUsers =
+      this.users ||
+      (window.store && window.store.users
+        ? window.store.users.getAll()
+        : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+    let maxNum = 0;
+    // For rep, match both REP- and legacy EMP- numbers so sequences don't collide
+    const regex =
+      norm === "Rep"
+        ? /^(?:REP|EMP)-(\d+)/i
+        : new RegExp(`^${prefix}(\\d+)`, "i");
+
+    allUsers.forEach((u) => {
+      const c = String(u.employeeCode || u.code || "").trim();
+      const match = c.match(regex);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+
+    const nextNum = maxNum + 1;
+    return `${prefix}${String(nextNum).padStart(3, "0")}`;
   },
 
   syncAuthUser(updatedUser) {
@@ -935,6 +980,19 @@ if (typeof renderSidebar === "function") {
   onRoleChange() {
     const roleVal = document.getElementById("uRole")?.value || "";
     const normRole = this.normalizeRole(roleVal);
+
+    // Auto-suggest employee code with role prefix for new users
+    const isNewUser = !document.getElementById("userId")?.value;
+    const codeInput = document.getElementById("uCode");
+    if (isNewUser && codeInput && normRole) {
+      const currentCode = codeInput.value.trim().toUpperCase();
+      const isAutoPattern =
+        !currentCode ||
+        /^(REP|DM|LM|PM|BU|HR|ADM|EMP)-\d*$/i.test(currentCode);
+      if (isAutoPattern) {
+        codeInput.value = this.getNextEmployeeCode(normRole);
+      }
+    }
 
     const areaGroup = document.getElementById("areaGroup");
     if (areaGroup) {

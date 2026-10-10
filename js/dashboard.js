@@ -244,6 +244,12 @@ window.switchDmScheduleTab = function (tab) {
   renderDashboard();
 };
 
+window.dmFollowUpFilter = window.dmFollowUpFilter || "all";
+window.switchDmFollowUpFilter = function (filterMode) {
+  window.dmFollowUpFilter = filterMode;
+  renderDashboard();
+};
+
 window.buActiveLineFilter = window.buActiveLineFilter || "all";
 window.switchBuLineFilter = function (lineId) {
   window.buActiveLineFilter = lineId;
@@ -1363,6 +1369,211 @@ function renderRepDashboard(userName, user) {
 }
 
 /**
+ * Renders the District Manager (DM) Live Follow-up Feed Card showing
+ * recent visits completed by team medical reps with real-time feedback & notes.
+ */
+function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
+  const filterMode = window.dmFollowUpFilter || "all";
+  const myRepIds = (myReps || []).map((r) => r.id);
+  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const esc = (s) =>
+    window.escapeHtml
+      ? window.escapeHtml(s)
+      : String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+
+  // Filter completed/actual visits by this DM's reps
+  const teamCompleted = (allVisits || []).filter(
+    (v) =>
+      myRepIds.includes(v.repId) &&
+      (v.status === "completed" || v.status === "actual")
+  );
+
+  const todayCount = teamCompleted.filter((v) => v.date === todayStr).length;
+
+  let filtered = teamCompleted.slice();
+  if (filterMode === "today") {
+    filtered = filtered.filter((v) => v.date === todayStr);
+  }
+
+  // Sort descending by date and time (newest first)
+  filtered.sort((a, b) => {
+    const dtA = (a.date || "") + " " + (a.time || "00:00");
+    const dtB = (b.date || "") + " " + (b.time || "00:00");
+    return dtB.localeCompare(dtA);
+  });
+
+  const displayVisits = filterMode === "today" ? filtered : filtered.slice(0, 15);
+
+  return `
+    <div class="dashboard-card" style="margin-bottom: 20px; border-inline-start: 4px solid var(--info, #0284c7);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">📡</span>
+            <h3 class="card-title" style="margin: 0; font-weight: 800; font-size: 1.15rem;">
+              ${lang === "ar" ? "المتابعة الحية لزيارات الفريق (Live Follow-up Feed)" : "Team Live Follow-up Feed"}
+            </h3>
+            <span class="badge" style="background: rgba(2, 132, 199, 0.12); color: #0284c7; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;">
+              ${displayVisits.length} ${lang === "ar" ? "زيارة معروضة" : "visits shown"}
+            </span>
+          </div>
+          <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--gray-600, #64748b);">
+            ${lang === "ar"
+              ? "متابعة فورية لحظة بلحظة للزيارات المنفذة بواسطة مناديب منطقتك وملاحظاتهم الميدانية على الدكاترة والصيدليات."
+              : "Real-time feed of completed visits and field notes logged by your medical reps across territories."}
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm ${filterMode === "all" ? "btn-primary" : "btn-outline"}" style="border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 5px 12px;" onclick="window.switchDmFollowUpFilter('all')">
+            ⏱️ ${lang === "ar" ? `آخر 15 زيارة (${teamCompleted.length})` : `Latest 15 Visits (${teamCompleted.length})`}
+          </button>
+          <button type="button" class="btn btn-sm ${filterMode === "today" ? "btn-primary" : "btn-outline"}" style="border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 5px 12px;" onclick="window.switchDmFollowUpFilter('today')">
+            📅 ${lang === "ar" ? `زيارات اليوم (${todayCount})` : `Today's Visits (${todayCount})`}
+          </button>
+          <a href="visits.html" class="btn btn-sm btn-outline" style="border-radius: 8px; font-size: 0.8rem; font-weight: 600; padding: 5px 12px; text-decoration: none;">
+            🔍 ${lang === "ar" ? "سجل الزيارات الكامل" : "All Visits"}
+          </a>
+        </div>
+      </div>
+
+      <div class="table-container" style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--gray-200); background: var(--gray-50, #f8fafc);">
+              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "الوقت والتاريخ" : "Time & Date"}</th>
+              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "المندوب والمنطقة" : "Rep & Territory"}</th>
+              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "العميل المستهدف" : "Target Account"}</th>
+              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "المنتجات المشروحة" : "Promoted Products"}</th>
+              <th style="padding: 10px 12px; font-size: 0.82rem; min-width: 240px;">${lang === "ar" ? "ملاحظات وتغذية راجعة (Feedback / Notes)" : "Rep Feedback / Notes"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              displayVisits.length > 0
+                ? displayVisits
+                    .map((v) => {
+                      const rep = (myReps || []).find((r) => r.id === v.repId) || allUsers.find((u) => u.id === v.repId);
+                      const repName = rep ? rep.name : (v.repName || (lang === "ar" ? "مندوب" : "Rep"));
+                      const repTerritory = v.area || (rep ? (rep.territory || rep.area) : "") || "-";
+
+                      const isPharm =
+                        v.targetType === "pharmacy" ||
+                        (v.period || "").toLowerCase() === "pharmacy" ||
+                        (v.doctorId && String(v.doctorId).startsWith("pharm")) ||
+                        (v.doctorId && String(v.doctorId).startsWith("p"));
+                      const isHospital =
+                        !isPharm &&
+                        (v.targetType === "hospital" ||
+                          (v.doctorName || "").toLowerCase().includes("hospital") ||
+                          (v.doctorName || "").toLowerCase().includes("مستشفى"));
+
+                      const targetBadge = isPharm
+                        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.72rem;">💊 ${lang === "ar" ? "صيدلية" : "Pharmacy"}</span>`
+                        : isHospital
+                          ? `<span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284c7; font-weight: 700; font-size: 0.72rem;">🏥 ${lang === "ar" ? "مستشفى" : "Hospital"}</span>`
+                          : `<span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #4f46e5; font-weight: 700; font-size: 0.72rem;">🩺 ${lang === "ar" ? "طبيب" : "Doctor"}</span>`;
+
+                      const targetClassBadge = v.doctorClass || v.class
+                        ? `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #b45309; font-weight: 700; font-size: 0.7rem; margin-inline-start: 4px;">Class ${v.doctorClass || v.class}</span>`
+                        : "";
+
+                      const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
+                      const productsHtml = prods && prods.length
+                        ? prods.map((p) => `<span class="badge badge-product" style="display: inline-block; margin: 2px; font-size: 0.72rem;">💊 ${esc(p)}</span>`).join("")
+                        : `<span class="text-muted" style="font-size: 0.78rem;">-</span>`;
+
+                      const notesText = (v.comment || v.feedback || v.notes || "").trim();
+                      const notesHtml = notesText
+                        ? `
+                          <div style="background: var(--gray-50, #f8fafc); border: 1px solid var(--gray-200, #e2e8f0); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; color: var(--gray-800, #1e293b); line-height: 1.45; word-break: break-word;">
+                            <span style="color: var(--primary, #0284c7); font-weight: 700; margin-inline-end: 4px;">💬</span>
+                            ${esc(notesText)}
+                          </div>
+                        `
+                        : `<span style="color: var(--gray-400, #94a3b8); font-style: italic; font-size: 0.78rem;">${lang === "ar" ? "لا توجد ملاحظات مسجلة" : "No notes recorded"}</span>`;
+
+                      const rawSamples = Array.isArray(v.giveawaySamples) && v.giveawaySamples.length ? v.giveawaySamples : [];
+                      const samplesHtml = rawSamples.length
+                        ? `<div style="font-size: 0.72rem; color: var(--gray-600); margin-top: 4px;">🎁 <strong>${lang === "ar" ? "عينات:" : "Samples:"}</strong> ${esc(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
+                        : "";
+
+                      const isDouble = v.visitType === "double" || !!v.doubleWithUserId || !!v.doubleWithUserName;
+                      const doubleBadge = isDouble
+                        ? `<span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #7e22ce; font-weight: 700; font-size: 0.7rem; margin-top: 3px; display: inline-block;">🤝 ${lang === "ar" ? "مزدوجة" : "Double"}</span>`
+                        : "";
+
+                      const isToday = v.date === todayStr;
+
+                      return `
+                        <tr style="border-bottom: 1px solid var(--gray-200); ${isToday ? "background: rgba(2, 132, 199, 0.02);" : ""}">
+                          <td style="padding: 10px 12px; white-space: nowrap;">
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
+                              ${v.time || "11:00"}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">
+                              ${isToday ? `<span style="color: var(--success, #059669); font-weight: 700;">🟢 ${lang === "ar" ? "اليوم" : "Today"}</span>` : (v.date || "-")}
+                            </div>
+                          </td>
+                          <td style="padding: 10px 12px;">
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
+                              👤 ${esc(repName)}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">
+                              📍 ${esc(repTerritory)}
+                            </div>
+                            ${doubleBadge}
+                          </td>
+                          <td style="padding: 10px 12px;">
+                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
+                              ${esc(v.doctorName || v.targetName || (v.doctorId ? "Dr. " + v.doctorId : "Target"))}
+                            </div>
+                            <div style="margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap;">
+                              ${targetBadge}
+                              ${targetClassBadge}
+                            </div>
+                          </td>
+                          <td style="padding: 10px 12px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; max-width: 220px;">
+                              ${productsHtml}
+                            </div>
+                          </td>
+                          <td style="padding: 10px 12px;">
+                            ${notesHtml}
+                            ${samplesHtml}
+                          </td>
+                        </tr>
+                      `;
+                    })
+                    .join("")
+                : `
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 28px; color: var(--gray-500); font-style: italic;">
+                      ${
+                        filterMode === "today"
+                          ? (lang === "ar"
+                              ? "لا توجد زيارات منفذة بواسطة فريقك اليوم حتى الآن ⏳"
+                              : "No visits logged by your team today yet ⏳")
+                          : (lang === "ar"
+                              ? "لا توجد زيارات منفذة مسجلة لفريقك بعد."
+                              : "No completed visits recorded for your team yet.")
+                      }
+                    </td>
+                  </tr>
+                `
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Renders the District Manager (DM) Dashboard.
  */
 function renderDMDashboard(userName, user) {
@@ -1922,11 +2133,13 @@ function renderDMDashboard(userName, user) {
         }
       </div>
 
+      ${renderDmFollowUpSection(myReps, allVisits, lang, todayStr)}
+
       <div class="dashboard-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <h3 class="card-title" style="margin: 0; font-weight: 700;">${t.team_performance}</h3>
           <span class="team-perf-subtitle" style="font-size: 0.8rem; font-weight: 600;">
-            ${new Date().getFullYear()} YTD
+            ${new Date().getFullYear()} YTD (Value)
           </span>
         </div>
         <div class="table-container">

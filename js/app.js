@@ -111,7 +111,7 @@ const DEFAULT_DEMO_DATA = {
     id: "admin1",
     email: "admin@pharmacare.com",
     name: "System Admin",
-    nameAr: "مدير النظام",
+    nameAr: "System Admin",
     role: "admin",
     employeeCode: "ADM-001",
     photoURL: "",
@@ -129,7 +129,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "admin1",
         "name": "System Admin",
-        "nameAr": "مدير النظام",
+        "nameAr": "System Admin",
         "role": "admin",
         "employeeCode": "ADM-001",
         "areaIds": [],
@@ -143,7 +143,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "bu1",
         "name": "George Marzok",
-        "nameAr": "طارق سعد",
+        "nameAr": "George Marzok",
         "role": "business_unit",
         "employeeCode": "BU-001",
         "managerId": "admin1",
@@ -173,7 +173,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "lm1",
         "name": "John Mahfouz",
-        "nameAr": "حسن علي",
+        "nameAr": "John Mahfouz",
         "role": "line_manager",
         "employeeCode": "LM-001",
         "managerId": "bu1",
@@ -203,7 +203,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "lm2",
         "name": "Mario Magdy",
-        "nameAr": "سيد إبراهيم",
+        "nameAr": "Mario Magdy",
         "role": "line_manager",
         "employeeCode": "LM-002",
         "managerId": "bu1",
@@ -232,7 +232,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "dm1",
         "name": "Amir Ayoup",
-        "nameAr": "كريم ناصر",
+        "nameAr": "Amir Ayoup",
         "role": "district_manager",
         "employeeCode": "DM-001",
         "managerId": "lm1",
@@ -262,7 +262,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "dm2",
         "name": "Jonathan Erian",
-        "nameAr": "منى عادل",
+        "nameAr": "Jonathan Erian",
         "role": "district_manager",
         "employeeCode": "DM-002",
         "managerId": "lm1",
@@ -292,7 +292,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "dm3",
         "name": "Marian Magdy",
-        "nameAr": "رامي سمير",
+        "nameAr": "Marian Magdy",
         "role": "district_manager",
         "employeeCode": "DM-003",
         "managerId": "lm2",
@@ -321,9 +321,9 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "rep1",
         "name": "Marco Magdy",
-        "nameAr": "أحمد مصطفى",
+        "nameAr": "Marco Magdy",
         "role": "medical_rep",
-        "employeeCode": "EMP-001",
+        "employeeCode": "REP-001",
         "managerId": "dm1",
         "areaId": "area1",
         "lineId": "line1",
@@ -331,7 +331,7 @@ const DEFAULT_DEMO_DATA = {
             "line1"
         ],
         "email": "rep@pharmacare.com",
-        "code": "EMP-001",
+        "code": "REP-001",
         "phone": "+201001234567",
         "leaveBalance": {
             "annual": 21,
@@ -353,9 +353,9 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "rep2",
         "name": "Kerolos Boules",
-        "nameAr": "عمر يوسف",
+        "nameAr": "Kerolos Boules",
         "role": "medical_rep",
-        "employeeCode": "EMP-002",
+        "employeeCode": "REP-002",
         "managerId": "dm2",
         "areaId": "area_line1_1790674637363",
         "lineId": "line1",
@@ -378,15 +378,15 @@ const DEFAULT_DEMO_DATA = {
             "unpaid": 0,
             "maternity": 90
         },
-        "code": "EMP-002",
+        "code": "REP-002",
         "productIds": []
     },
     {
         "id": "rep3",
         "name": "Mina Mikhael",
-        "nameAr": "علي محمود",
+        "nameAr": "Mina Mikhael",
         "role": "medical_rep",
-        "employeeCode": "EMP-003",
+        "employeeCode": "REP-003",
         "managerId": "dm2",
         "areaId": "area_line1_1790674718201",
         "lineId": "line1",
@@ -409,15 +409,15 @@ const DEFAULT_DEMO_DATA = {
             "unpaid": 0,
             "maternity": 90
         },
-        "code": "EMP-003",
+        "code": "REP-003",
         "productIds": []
     },
     {
         "id": "rep4",
         "name": "David Emad",
-        "nameAr": "نورهان عز",
+        "nameAr": "David Emad",
         "role": "medical_rep",
-        "employeeCode": "EMP-004",
+        "employeeCode": "REP-004",
         "managerId": "dm1",
         "areaId": "area_line2_1790674745627",
         "lineId": "line2",
@@ -441,13 +441,13 @@ const DEFAULT_DEMO_DATA = {
             "unpaid": 0,
             "maternity": 90
         },
-        "code": "EMP-004",
+        "code": "REP-004",
         "productIds": []
     },
     {
         "id": "hr1",
         "name": "Fatma El-Sherif",
-        "nameAr": "فاطمة الشريف",
+        "nameAr": "Fatma El-Sherif",
         "role": "hr",
         "employeeCode": "HR-001",
         "email": "hr@pharmacare.com",
@@ -469,7 +469,7 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "pm1",
         "name": "Mina Kadry",
-        "nameAr": "نادر خالد",
+        "nameAr": "Mina Kadry",
         "role": "product_manager",
         "employeeCode": "PM-001",
         "email": "pm@pharmacare.com",
@@ -511,9 +511,9 @@ const DEFAULT_DEMO_DATA = {
     {
         "id": "rep5",
         "name": "Mohamed Ramadan",
-        "nameAr": "محمد رمضان",
+        "nameAr": "Mohamed Ramadan",
         "role": "medical_rep",
-        "employeeCode": "EMP-005",
+        "employeeCode": "REP-005",
         "email": "rep5@pharmacare.com",
         "phone": "+20100999222",
         "managerId": "dm2",
@@ -538,12 +538,12 @@ const DEFAULT_DEMO_DATA = {
         ],
         "area": "Dokki, Haram",
         "areaId": "area_line1_1790674592471",
-        "code": "EMP-005"
+        "code": "REP-005"
     },
     {
         "id": "pm2",
         "name": "Fady Adel",
-        "nameAr": "فادي عادل",
+        "nameAr": "Fady Adel",
         "email": "pm2@pharmacare.com",
         "code": "PM-002",
         "employeeCode": "PM-002",
@@ -577,8 +577,8 @@ const DEFAULT_DEMO_DATA = {
         "id": "u1790626669586",
         "name": "Mark Michel",
         "email": "rep7@pharmacare.com",
-        "code": "EMP-007",
-        "employeeCode": "EMP-007",
+        "code": "REP-007",
+        "employeeCode": "REP-007",
         "role": "medical_rep",
         "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
         "phone": "",
@@ -608,8 +608,8 @@ const DEFAULT_DEMO_DATA = {
         "id": "u1790626607816",
         "name": "Ahmed Harb",
         "email": "rep6@pharmacare.com",
-        "code": "EMP-006",
-        "employeeCode": "EMP-006",
+        "code": "REP-006",
+        "employeeCode": "REP-006",
         "role": "medical_rep",
         "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
         "phone": "01202379833",
@@ -639,8 +639,8 @@ const DEFAULT_DEMO_DATA = {
         "id": "u1790687949946",
         "name": "Mina Samir",
         "email": "rep9@pharmacare.com",
-        "code": "EMP-009",
-        "employeeCode": "EMP-009",
+        "code": "REP-009",
+        "employeeCode": "REP-009",
         "role": "medical_rep",
         "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
         "phone": "+201001234567",
@@ -670,8 +670,8 @@ const DEFAULT_DEMO_DATA = {
         "id": "u1790688369929",
         "name": "Marina Shobra",
         "email": "rep11@pharmacare.com",
-        "code": "EMP-011",
-        "employeeCode": "EMP-011",
+        "code": "REP-011",
+        "employeeCode": "REP-011",
         "role": "medical_rep",
         "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
         "phone": "",
@@ -701,8 +701,8 @@ const DEFAULT_DEMO_DATA = {
         "id": "u1790688412219",
         "name": "Monica Shobra",
         "email": "rep12@pharmacare.com",
-        "code": "EMP-012",
-        "employeeCode": "EMP-012",
+        "code": "REP-012",
+        "employeeCode": "REP-012",
         "role": "medical_rep",
         "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
         "phone": "",
@@ -956,13 +956,13 @@ const DEFAULT_DEMO_DATA = {
       userId: "dm1",
       type: "plan_submission",
       title: "Field Plan for Review",
-      message: "Medical Rep Ahmed Mostafa submitted a new field plan for your review.",
+      message: "Medical Rep Marco Magdy submitted a new field plan for your review.",
       link: "plans-review.html",
       read: false,
       createdAt: "2026-09-17T13:00:00Z",
       icon: "📋",
       badgeClass: "bg-primary",
-      actorName: "Ahmed Mostafa",
+      actorName: "Marco Magdy",
       action: "submitted",
     },
     {
@@ -970,13 +970,13 @@ const DEFAULT_DEMO_DATA = {
       userId: "dm1",
       type: "leave_submission",
       title: "New Leave Request",
-      message: "Annual leave request submitted by Ahmed Mostafa (2 days) awaiting your approval.",
+      message: "Annual leave request submitted by Marco Magdy (2 days) awaiting your approval.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T10:00:00Z",
       icon: "🏖️",
       badgeClass: "bg-warning",
-      actorName: "Ahmed Mostafa",
+      actorName: "Marco Magdy",
       action: "submitted",
     },
     {
@@ -984,7 +984,7 @@ const DEFAULT_DEMO_DATA = {
       userId: "hr1",
       type: "leave_submission",
       title: "Leave Request Final Approval",
-      message: "Line Manager approved leave for Ahmed Mostafa, awaiting HR final confirmation.",
+      message: "Line Manager approved leave for Marco Magdy, awaiting HR final confirmation.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T12:30:00Z",
@@ -1013,13 +1013,30 @@ function loadDataFromStorage() {
       const data = JSON.parse(cached);
       if (data) {
         if (Array.isArray(data.users)) {
+          // Auto-migrate legacy medical rep EMP- codes to REP-
+          data.users.forEach((u) => {
+            if (u.name) {
+              u.nameAr = u.name;
+            }
+          });
+          data.users.forEach((u) => {
+            if (u.role === "medical_rep" || u.role === "rep") {
+              if (u.employeeCode && u.employeeCode.startsWith("EMP-")) {
+                u.employeeCode = u.employeeCode.replace(/^EMP-/, "REP-");
+              }
+              if (u.code && u.code.startsWith("EMP-")) {
+                u.code = u.code.replace(/^EMP-/, "REP-");
+              }
+            }
+          });
+
           // Normalize Mohamed Ramadan and Fady Adel IDs
           data.users.forEach((u) => {
-            if (u.email === "rep5@pharmacare.com" || u.code === "EMP-005" || u.employeeCode === "EMP-005") {
+            if (u.email === "rep5@pharmacare.com" || u.code === "REP-005" || u.code === "EMP-005" || u.employeeCode === "REP-005" || u.employeeCode === "EMP-005") {
               u.id = "rep5";
               u.email = "rep5@pharmacare.com";
-              u.employeeCode = "EMP-005";
-              u.code = "EMP-005";
+              u.employeeCode = "REP-005";
+              u.code = "REP-005";
               u.name = "Mohamed Ramadan";
               u.role = "medical_rep";
             }
@@ -2692,7 +2709,7 @@ function renderTopbar(force = false) {
   topbarEl.dataset.renderedState = renderStateKey;
 
   const userName = lang === "ar" ? user.nameAr || user.name : user.name;
-  const userCode = user.employeeCode || user.code || "EMP-001";
+  const userCode = user.employeeCode || user.code || "REP-001";
   const roleBadge = getRoleBadge(user.role, lang);
   const codeLabel =
     "Code:";

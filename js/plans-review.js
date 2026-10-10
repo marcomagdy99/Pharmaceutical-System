@@ -697,7 +697,7 @@ function renderPlansReview(currentUser) {
                 <span class="badge-count">${repVisits.length} Pending</span>
               </div>
               <div class="text-muted small rep-meta-text" style="margin-top: 2px;">
-                Code: <strong>${rep.employeeCode || "EMP-001"}</strong> 
+                Code: <strong>${rep.employeeCode || "REP-001"}</strong> 
                 ${area ? ` • Area: <strong>${area.name}</strong>` : ""}
                 • DM: <strong>${
                   !dm

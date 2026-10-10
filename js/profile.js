@@ -351,14 +351,14 @@ function loadUserProfile() {
   if (fullName) fullName.value = displayName;
   if (email) email.value = user.email || `${user.id}@pharmacare.com`;
   if (phone) phone.value = user.phone || "+201001234567";
-  if (empCodeInput) empCodeInput.value = user.employeeCode || user.code || "EMP-001";
+  if (empCodeInput) empCodeInput.value = user.employeeCode || user.code || "REP-001";
   if (hireDateInput) hireDateInput.value = user.hireDate || "2024-01-15";
 
   const profileRoleBadge = document.getElementById("profileRoleBadge");
   const profileEmpBadge = document.getElementById("profileEmpBadge");
   const profileAreaBadge = document.getElementById("profileAreaBadge");
 
-  if (profileEmpBadge) profileEmpBadge.textContent = user.employeeCode || user.code || "EMP-001";
+  if (profileEmpBadge) profileEmpBadge.textContent = user.employeeCode || user.code || "REP-001";
 
   const roleLabels = {
     medical_rep: lang === "ar" ? "مندوب طبي" : "Medical Rep",

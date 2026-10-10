@@ -611,8 +611,7 @@
       u = (window.DEMO_DATA && window.DEMO_DATA.currentUser) || {
         id: "rep1",
         role: ROLES.REP,
-        name: "Ahmed Mostafa",
-        nameAr: "Ahmed Mostafa",
+        name: "Marco Magdy", nameAr: "Marco Magdy",
         lineIds: ["line1"],
         areaId: "area1",
       };

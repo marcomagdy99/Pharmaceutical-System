@@ -307,6 +307,8 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   // O(1) Hash Map indices to replace repetitive O(N) .find searches in large datasets
   const usersMap = new Map(allUsers.map((u) => [u.id, u]));
+  const allProducts = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
+  const productsMap = new Map(allProducts.map((p) => [p.id, p]));
   const curAllowedLineIds = (typeof getPharmSalesAllowedLineIds === 'function')
     ? getPharmSalesAllowedLineIds(curUser)
     : null;

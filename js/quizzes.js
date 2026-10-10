@@ -16,11 +16,11 @@ const demoQuizzes = [
 // Default seed scores across team members in different lines/districts
 const demoScores = [
   // Rep 1 (DM: Karim Nasser, LM: Hassan Ali, BU: Tarek Saad)
-  { quizId: 'q1', userId: 'rep1', userName: 'Ahmed Mostafa', score: 42, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep1', userName: 'Ahmed Mostafa', score: 35, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep1', userName: 'Ahmed Mostafa', score: 28, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep1', userName: 'Ahmed Mostafa', score: 32, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep1', userName: 'Ahmed Mostafa', score: 41, totalMarks: 50 },
+  { quizId: 'q1', userId: 'rep1', userName: 'Marco Magdy', score: 42, totalMarks: 50 },
+  { quizId: 'q2', userId: 'rep1', userName: 'Marco Magdy', score: 35, totalMarks: 50 },
+  { quizId: 'q3', userId: 'rep1', userName: 'Marco Magdy', score: 28, totalMarks: 30 },
+  { quizId: 'q4', userId: 'rep1', userName: 'Marco Magdy', score: 32, totalMarks: 40 },
+  { quizId: 'q5', userId: 'rep1', userName: 'Marco Magdy', score: 41, totalMarks: 50 },
 
   // Rep 2 (DM: Karim Nasser, LM: Hassan Ali, BU: Tarek Saad)
   { quizId: 'q1', userId: 'rep2', userName: 'Omar Youssef', score: 38, totalMarks: 50 },

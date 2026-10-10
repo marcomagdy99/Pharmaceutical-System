@@ -11,7 +11,7 @@ let demoLeaves = (window.store && window.store.leaves
   {
     id: "l1",
     userId: "rep1",
-    userName: "Ahmed Mostafa",
+    userName: "Marco Magdy",
     userRole: "medical_rep",
     type: "annual",
     dayDuration: "full",
@@ -42,7 +42,7 @@ let demoLeaves = (window.store && window.store.leaves
   {
     id: "l2",
     userId: "rep1",
-    userName: "Ahmed Mostafa",
+    userName: "Marco Magdy",
     userRole: "medical_rep",
     type: "sick",
     dayDuration: "full",

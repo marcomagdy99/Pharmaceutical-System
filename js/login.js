@@ -284,11 +284,11 @@ function getAllAuthenticatableUsers() {
     { email: 'dm@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'dm1' },
     { email: 'dm2@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'dm2' },
     { email: 'dm3@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'dm3' },
-    { email: 'rep@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'EMP-001', id: 'rep1' },
-    { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'EMP-002', id: 'rep2' },
-    { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'EMP-003', id: 'rep3' },
-    { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'EMP-004', id: 'rep4' },
-    { email: 'rep5@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'EMP-005', id: 'rep5' },
+    { email: 'rep@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'REP-001', id: 'rep1' },
+    { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'REP-002', id: 'rep2' },
+    { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'REP-003', id: 'rep3' },
+    { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'REP-004', id: 'rep4' },
+    { email: 'rep5@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'REP-005', id: 'rep5' },
     { email: 'pm@pharmacare.com', passwordHash: 'ae087349bb953601482c9c52169257c0cb0371cbac3d921b5896a9aba8cc8a43', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
     { email: 'pm2@pharmacare.com', passwordHash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'pm2', lineId: 'line2', lineIds: ['line2'], productIds: ['prod5', 'prod6'] },
     { email: 'hr@pharmacare.com', passwordHash: '070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'hr1' }
@@ -317,7 +317,7 @@ function getAllAuthenticatableUsers() {
 
     // Stale data repair: if pm2 was recorded as medical_rep or has EMP-005
     if (uEmail === 'pm2@pharmacare.com' || uId === 'pm2' || u.code === 'PM-002') {
-      if (u.employeeCode === 'EMP-005' || u.name === 'Mohamed Ramadan') {
+      if (u.employeeCode === 'REP-005' || u.employeeCode === 'EMP-005' || u.name === 'Mohamed Ramadan') {
         uId = 'rep5';
         uEmail = 'rep5@pharmacare.com';
         uRole = 'medical_rep';
@@ -337,7 +337,7 @@ function getAllAuthenticatableUsers() {
       role: uRole,
       name: u.name || 'User',
       dept: dept,
-      employeeCode: u.employeeCode || u.code || 'EMP-000',
+      employeeCode: u.employeeCode || u.code || 'REP-000',
       id: uId,
       lineId: u.lineId || null,
       lineIds: u.lineIds || [],
