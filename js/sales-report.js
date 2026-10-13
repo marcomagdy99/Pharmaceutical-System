@@ -489,7 +489,14 @@ function getFilteredPharmSalesRows() {
     const subIds = subs.map((s) => s.id);
     const directLMs = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
     const allowedBuUserIds = [user.id, ...directLMs, ...subIds];
-    rows = rows.filter((r) => (r.repId && allowedBuUserIds.includes(r.repId)) || (r.dmId && allowedBuUserIds.includes(r.dmId)) || (r.lmId && allowedBuUserIds.includes(r.lmId)));
+    const buLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id).map(l => l.id) : [];
+    const buAreaIds = new Set(allAreas.filter(a => (a.lineId && buLines.includes(a.lineId)) || (a.repId && allowedBuUserIds.includes(a.repId))).map(a => a.id));
+    rows = rows.filter((r) =>
+      (r.repId && allowedBuUserIds.includes(r.repId)) ||
+      (r.dmId && allowedBuUserIds.includes(r.dmId)) ||
+      (r.lmId && allowedBuUserIds.includes(r.lmId)) ||
+      (r.areaId && buAreaIds.has(r.areaId))
+    );
   }
 
   const repSelect = document.getElementById('pharmSalesRepSelect');

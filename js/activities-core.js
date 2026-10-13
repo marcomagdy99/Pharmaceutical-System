@@ -665,10 +665,12 @@
         return resource.status === REQUEST_STATUS.PENDING_LM && resource.nextApproverId === user.id;
       }
       if (role === ROLES.BU) {
+        if (typeof window.canApproveFor === "function" && !window.canApproveFor(resource.requesterId)) return false;
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map(l => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
         if (resource.isShared && Array.isArray(resource.shares)) {
-          return resource.shares.some(sh => sh.status && sh.status.startsWith("pending"));
+          return resource.shares.some(sh => (uLines.length === 0 || uLines.includes(sh.lineId)) && sh.status && sh.status.startsWith("pending"));
         }
-        return resource.status && resource.status.startsWith("pending");
+        return (uLines.length === 0 || uLines.includes(resource.lineId)) && resource.status && resource.status.startsWith("pending");
       }
       if (role === ROLES.PM) {
         const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
@@ -692,7 +694,10 @@
       if (role === ROLES.DM) return resource.status === REQUEST_STATUS.PENDING_DM && resource.nextApproverId === user.id;
       if (role === ROLES.LM) return resource.status === REQUEST_STATUS.PENDING_LM && resource.nextApproverId === user.id;
       if (role === ROLES.HR) return resource.status === REQUEST_STATUS.PENDING_HR || (action === "disburse_expense" && resource.status === REQUEST_STATUS.APPROVED);
-      if (role === ROLES.BU) return resource.status && resource.status.startsWith("pending");
+      if (role === ROLES.BU) {
+        if (typeof window.canApproveFor === "function" && !window.canApproveFor(resource.requesterId)) return false;
+        return resource.status && resource.status.startsWith("pending");
+      }
       return false;
     }
 
@@ -761,8 +766,13 @@
   function getUserAssignedLines(user) {
     const allLines = getAllProductLines();
     if (!user) return allLines;
-    if (user.role === ROLES.ADMIN || user.role === ROLES.BU || user.role === ROLES.HR) {
+    if (user.role === ROLES.ADMIN || user.role === ROLES.HR) {
       return allLines;
+    }
+    if (user.role === ROLES.BU) {
+      if (typeof window.getUserLines === "function") {
+        return window.getUserLines(user.id);
+      }
     }
     const userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
     if (userLineIds.length === 0) return [];
@@ -946,8 +956,12 @@
       return uLines.includes(lineId);
     }
 
-    if (role === ROLES.ADMIN || role === ROLES.BU || role === ROLES.HR) {
+    if (role === ROLES.ADMIN || role === ROLES.HR) {
       return allUsers.filter(u => u.id !== user.id && matchLine(u));
+    }
+    if (role === ROLES.BU) {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      return subs.filter(u => u.id !== user.id && matchLine(u));
     }
     if (role === ROLES.LM) {
       const myDms = allUsers.filter(u => u.role === ROLES.DM && u.managerId === user.id);

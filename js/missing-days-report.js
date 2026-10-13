@@ -91,6 +91,7 @@
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
     const isLM = role === "line_manager" || role === "lm";
+    const isBU = role === "business_unit" || role === "bu";
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     
     const lineSelect = document.getElementById("missingLineSelect");
@@ -119,7 +120,7 @@
           lineSelect.appendChild(opt);
         }
         lineSelect.disabled = true;
-      } else if (isDM || isLM) {
+      } else if (isDM || isLM || isBU) {
         if (userLines.length > 1) {
           const optAll = document.createElement("option");
           optAll.value = "all";
@@ -202,6 +203,12 @@
           return r === "district_manager" || r === "dm";
         });
 
+        if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+          const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+          const subIds = new Set(subs.map((s) => s.id));
+          dms = dms.filter((dm) => subIds.has(dm.id));
+        }
+
         if (selectedLine !== "all") {
           dms = dms.filter((dm) => {
             const lines = dm.lineIds || (dm.lineId ? [dm.lineId] : []);
@@ -263,6 +270,13 @@
 
     if (role === "district_manager" || role === "dm") {
       reps = reps.filter((r) => r.managerId === user.id);
+    } else if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      const subIds = new Set(subs.map((s) => s.id));
+      reps = reps.filter((r) => subIds.has(r.id));
+      if (selectedDm !== "all") {
+        reps = reps.filter((r) => r.managerId === selectedDm);
+      }
     } else if (selectedDm !== "all") {
       reps = reps.filter((r) => r.managerId === selectedDm);
     }
@@ -396,6 +410,13 @@
       targetReps = targetReps.filter((r) => r.id === user.id);
     } else if (role === "district_manager" || role === "dm") {
       targetReps = targetReps.filter((r) => r.managerId === user.id);
+    } else if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      const subIds = new Set(subs.map((s) => s.id));
+      targetReps = targetReps.filter((r) => subIds.has(r.id));
+      if (selectedDm !== "all") {
+        targetReps = targetReps.filter((r) => r.managerId === selectedDm);
+      }
     } else if (selectedDm !== "all") {
       targetReps = targetReps.filter((r) => r.managerId === selectedDm);
     }

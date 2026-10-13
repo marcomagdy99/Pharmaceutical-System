@@ -15,7 +15,7 @@
     const lineSelect = document.getElementById("expenseFilterLine");
     if (lineSelect && lineSelect.dataset.populated !== "true") {
       const assignedLines = Core.getUserAssignedLines(user);
-      const canSeeAll = user && (user.role === Core.ROLES.ADMIN || user.role === Core.ROLES.BU || user.role === Core.ROLES.HR);
+      const canSeeAll = user && (user.role === Core.ROLES.ADMIN || user.role === Core.ROLES.HR);
       let html = "";
       if (canSeeAll || assignedLines.length > 1) {
         html += `<option value="all">${Core.t("allLines")}</option>`;
@@ -108,8 +108,13 @@
   function canUserViewExpense(exp, user) {
     if (!user) return false;
     const role = (user.role || "").toLowerCase();
-    if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR || role === Core.ROLES.BU) return true;
+    if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR) return true;
     if (exp.requesterId === user.id) return true;
+    if (role === Core.ROLES.BU) {
+      if (typeof window.canApproveFor === "function" && window.canApproveFor(exp.requesterId)) return true;
+      const subordinates = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      return subordinates.some((s) => s.id === exp.requesterId);
+    }
     if (role === Core.ROLES.DM) {
       const requester = Core.getUserById(exp.requesterId);
       return requester && requester.managerId === user.id;
@@ -252,7 +257,7 @@
         canDisburse = true;
       }
     } else if (role === Core.ROLES.BU) {
-      if (status.startsWith("pending")) {
+      if (status.startsWith("pending") && (typeof window.canApproveFor !== "function" || window.canApproveFor(exp.requesterId))) {
         canApproveReject = true;
       }
     }

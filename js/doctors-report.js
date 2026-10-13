@@ -111,6 +111,10 @@ function getScopedDoctors(respectActiveFilters = true) {
       const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
       const myDownstreamIds = myDownstream.map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
+      const buLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id).map(l => l.id) : [];
+      const buAreas = allAreas.filter((a) => (a.lineId && buLines.includes(a.lineId)) || (a.repId && allowedTeamIds.includes(a.repId)));
+      allowedAreaIds = buAreas.map((a) => a.id);
+      allowedAreaNames = buAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
     }
 
     const repFilter = document.getElementById("doctorRepSelect");
@@ -125,7 +129,7 @@ function getScopedDoctors(respectActiveFilters = true) {
         if (d.repId) {
           return allowedTeamIds.includes(d.repId);
         }
-        if (role === "admin" || role === "hr" || role === "business_unit") {
+        if (role === "admin" || role === "hr") {
           return true;
         }
         if (d.dmId && d.dmId === currentUser.id) {

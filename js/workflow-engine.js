@@ -347,8 +347,10 @@
           return service.shares.some((sh) => sh.lmId === user.id && sh.status === "pending_lm");
         }
         if (this.userMatchesTier(user, "bu")) {
-          return service.shares.some((sh) => {
-            const matchesLine = !user.lineIds || user.lineIds.includes(sh.lineId) || user.lineId === sh.lineId;
+          const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map(l => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
+          const canApprove = typeof window.canApproveFor === "function" ? window.canApproveFor(service.requesterId) : true;
+          return canApprove && service.shares.some((sh) => {
+            const matchesLine = uLines.length === 0 ? false : uLines.includes(sh.lineId);
             return matchesLine && sh.status === "pending_bu";
           });
         }
@@ -369,8 +371,10 @@
         return service.nextApproverId === user.id || !service.nextApproverId;
       }
       if (status === "pending_bu" && this.userMatchesTier(user, "bu")) {
-        const matchesLine = !user.lineIds || user.lineIds.includes(service.lineId) || user.lineId === service.lineId;
-        return matchesLine || service.nextApproverId === user.id;
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map(l => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
+        const canApprove = typeof window.canApproveFor === "function" ? window.canApproveFor(service.requesterId) : true;
+        const matchesLine = uLines.length === 0 ? false : uLines.includes(service.lineId);
+        return canApprove && (matchesLine || service.nextApproverId === user.id);
       }
       if (status === "pending_pm" && this.userMatchesTier(user, "pm")) {
         const matchesLine = !user.lineIds || user.lineIds.includes(service.lineId) || user.lineId === service.lineId;
@@ -446,13 +450,20 @@
       }
 
       if (status === "pending_dm") {
-        return this.userMatchesTier(user, "dm") || this.userMatchesTier(user, "bu");
+        if (this.userMatchesTier(user, "dm") || this.userMatchesTier(user, "bu")) {
+          return typeof window.canApproveFor === "function" ? window.canApproveFor(expense.requesterId) : true;
+        }
+        return false;
       }
       if (status === "pending_lm") {
-        return this.userMatchesTier(user, "lm") || this.userMatchesTier(user, "bu");
+        if (this.userMatchesTier(user, "lm") || this.userMatchesTier(user, "bu")) {
+          return typeof window.canApproveFor === "function" ? window.canApproveFor(expense.requesterId) : true;
+        }
+        return false;
       }
       if (status === "pending_bu") {
-        return this.userMatchesTier(user, "bu");
+        if (!this.userMatchesTier(user, "bu")) return false;
+        return typeof window.canApproveFor === "function" ? window.canApproveFor(expense.requesterId) : true;
       }
       if (status === "pending_hr") {
         return this.userMatchesTier(user, "hr");

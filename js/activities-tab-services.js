@@ -279,8 +279,16 @@
   function canUserViewService(srv, user) {
     if (!user) return false;
     const role = (user.role || "").toLowerCase();
-    if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR || role === Core.ROLES.BU) return true;
+    if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR) return true;
     if (srv.requesterId === user.id) return true;
+
+    if (role === Core.ROLES.BU) {
+      const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map((l) => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
+      const inSubordinates = typeof window.canApproveFor === "function" ? window.canApproveFor(srv.requesterId) : false;
+      const matchesSingleLine = srv.lineId && uLines.includes(srv.lineId);
+      const matchesSharedLine = srv.isShared && Array.isArray(srv.shares) && srv.shares.some((sh) => uLines.includes(sh.lineId));
+      return inSubordinates || matchesSingleLine || matchesSharedLine;
+    }
 
     if (srv.isShared && Array.isArray(srv.shares)) {
       if (srv.shares.some((sh) => sh.repId === user.id)) return true;

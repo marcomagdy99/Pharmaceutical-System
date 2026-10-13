@@ -130,9 +130,12 @@ function getScopedSubordinateReps(currentUser) {
       : [];
     const subIds = new Set(subordinates.map((s) => s.id));
 
-    // Also include reps matching the Line Manager's product line(s)
+    // Also include reps matching the Line Manager's or BU's product line(s)
+    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
     const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
-    const myLines = allLines.filter((l) => l.lineManagerId === currentUser.id).map((l) => l.id);
+    const myLines = (role === "business_unit" || role === "bu")
+      ? userLines.map((l) => l.id)
+      : (userLines.length > 0 ? userLines.map((l) => l.id) : allLines.filter((l) => l.lineManagerId === currentUser.id).map((l) => l.id));
 
     return allUsers.filter((u) => {
       if (u.role !== "medical_rep" && u.role !== "rep") return false;

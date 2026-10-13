@@ -115,7 +115,9 @@
       }
 
       let canApproveStage = false;
-      if (isPending) {
+      const targetRepId = req.repId || req.userId;
+      const belongsToMyHierarchy = !targetRepId || (typeof window.canApproveFor === "function" ? window.canApproveFor(targetRepId) : true);
+      if (isPending && (role === "admin" || role === "general_manager" || belongsToMyHierarchy)) {
         if (role === "admin" || role === "general_manager") {
           canApproveStage = true;
         } else if (st === "pending" || st === "pending_dm") {

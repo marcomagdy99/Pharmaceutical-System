@@ -1274,6 +1274,9 @@ function renderPendingApprovals() {
     // BU Manager approval check
     if (role === "business_unit" || role === "bu") {
       if (!requireBu) return false;
+      if (typeof window.canApproveFor === "function" && !window.canApproveFor(l.userId)) {
+        return false;
+      }
       const prevApproved = requireLm && app.lm ? (lmStatus === "approved" || lmStatus === "skipped") : (app.dm ? dmStatus === "approved" : true);
       return buStatus === "pending" && prevApproved;
     }
@@ -1741,7 +1744,7 @@ Object.assign(leavesApp, {
         return;
       }
 
-      if (!isHR && !isAdmin && !isBU) {
+      if (!isHR && !isAdmin) {
         if (typeof window.canApproveFor === "function" && !window.canApproveFor(leave.userId)) {
           if (typeof showToast === "function") showToast("Access Denied: You can only approve requests within your reporting hierarchy.", "error");
           return;

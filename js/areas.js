@@ -95,6 +95,14 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
     activeReps = (window.store && window.store.users.getReps()) || [];
   }
 
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+  if (role === "business_unit" || role === "bu") {
+    const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+    const subIds = new Set(subs.map((s) => s.id));
+    activeReps = activeReps.filter((r) => subIds.has(r.id));
+  }
+
   let html = `<option value="">${unassignedLabel}</option>`;
   activeReps.forEach((r) => {
     const rName = r.name || r.nameAr;
@@ -111,8 +119,16 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
 function populateLineSelector() {
   const select = document.getElementById("lineSelector");
   if (!select) return;
-  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
+  const user = (window.checkAuth && window.checkAuth()) || {};
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+  let allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+
+  if (role === "business_unit" || role === "bu") {
+    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+    const buLineIds = new Set(userLines.map((l) => l.id));
+    allLines = allLines.filter((l) => buLineIds.has(l.id));
+  }
 
   let html = "";
   allLines.forEach((line) => {
@@ -123,9 +139,11 @@ function populateLineSelector() {
   });
   select.innerHTML = html;
 
-  // If no line was pre-selected, pick the first option
-  if (!currentSelectedLineId && select.options.length > 0) {
+  // If no line was pre-selected or previously selected line not in allowed lines, pick the first option
+  const optionValues = Array.from(select.options).map((o) => o.value);
+  if ((!currentSelectedLineId || !optionValues.includes(currentSelectedLineId)) && select.options.length > 0) {
     currentSelectedLineId = select.options[0].value;
+    select.value = currentSelectedLineId;
   }
 }
 
@@ -693,6 +711,19 @@ function saveArea() {
   const existingArea = id ? (window.store && window.store.areas ? window.store.areas.getById(id) : null) : null;
   const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line1");
   const targetId = id || `area_${effectiveLineId}_${Date.now()}`;
+
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+  if (role === "business_unit" || role === "bu") {
+    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map((l) => l.id) : [];
+    if (!userLines.includes(effectiveLineId)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+      return;
+    }
+    if (repId && typeof window.canApproveFor === "function" && !window.canApproveFor(repId)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Rep outside your BU scope.", "error");
+      return;
+    }
+  }
 
   // Validate unique Area Code within the same product line (case-insensitive)
   // Allows the same area code (e.g. CAI-N01 for Nasr City) across different lines,

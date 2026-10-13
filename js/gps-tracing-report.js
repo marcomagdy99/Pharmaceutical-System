@@ -144,6 +144,7 @@
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
     const isLM = role === "line_manager" || role === "lm";
+    const isBU = role === "business_unit" || role === "bu";
     const lang = "en";
 
     const lineSelect = document.getElementById("gpsLineSelect");
@@ -172,7 +173,7 @@
           lineSelect.appendChild(opt);
         }
         lineSelect.disabled = true;
-      } else if (isDM || isLM) {
+      } else if (isDM || isLM || isBU) {
         if (userLines.length > 1) {
           const optAll = document.createElement("option");
           optAll.value = "all";
@@ -247,6 +248,10 @@
 
         if (role === "line_manager" || role === "lm") {
           eligibleDMs = eligibleDMs.filter((dm) => dm.managerId === user.id);
+        } else if (role === "business_unit" || role === "bu") {
+          const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+          const subIds = new Set(subs.map((s) => s.id));
+          eligibleDMs = eligibleDMs.filter((dm) => subIds.has(dm.id));
         }
 
         if (selectedLineId !== "all") {
@@ -310,6 +315,10 @@
         } else if (role === "line_manager" || role === "lm") {
           const myDMs = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
           eligibleReps = eligibleReps.filter((r) => myDMs.includes(r.managerId));
+        } else if (role === "business_unit" || role === "bu") {
+          const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+          const subIds = new Set(subs.map((s) => s.id));
+          eligibleReps = eligibleReps.filter((r) => subIds.has(r.id));
         }
 
         if (selectedDmId !== "all") {
@@ -406,6 +415,10 @@
       visits = visits.filter((v) => v.repId === user.id);
     } else if (selectedRep !== "all") {
       visits = visits.filter((v) => v.repId === selectedRep);
+    } else if (role !== "admin" && role !== "hr") {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      const subIds = new Set([user.id, ...subs.map((s) => s.id)]);
+      visits = visits.filter((v) => subIds.has(v.repId));
     }
     // 2. Filter by Shift (AM / PM)
     if (selectedShift === "am") {
