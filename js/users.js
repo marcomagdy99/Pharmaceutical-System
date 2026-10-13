@@ -1287,7 +1287,7 @@ if (typeof renderSidebar === "function") {
     }
 
     const userData = {
-      id: id || "u" + Date.now(),
+      id: id || "u" + Date.now() + "_" + Math.floor(Math.random() * 1000),
       name,
       email,
       code: code,

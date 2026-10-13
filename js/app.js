@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v145";
+  const EXPECTED_SW = "v189";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -755,7 +755,7 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "خط الكارديو (Cardio)",
       status: "Active",
       lineManagerId: "lm1",
-      lineManagerName: "Hassan Ali",
+      lineManagerName: "Line Manager",
       callFrequency: { classA: 4, classB: 3, classC: 1 },
       products: [
         { id: "prod1", name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet" },
@@ -770,7 +770,7 @@ const DEFAULT_DEMO_DATA = {
       nameAr: "خط النيورو (Neuro)",
       status: "Active",
       lineManagerId: "lm2",
-      lineManagerName: "Sayed Ibrahim",
+      lineManagerName: "Line Manager",
       callFrequency: { classA: 4, classB: 2, classC: 1 },
       products: [
         { id: "prod5", name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule" },
@@ -913,13 +913,13 @@ const DEFAULT_DEMO_DATA = {
       userId: "rep1",
       type: "plan_approval",
       title: "Field Plan Approved",
-      message: "District Manager (Karim Nasser) approved your field plan for 2026-09-20.",
+      message: "District Manager approved your field plan for 2026-09-20.",
       link: "calendar.html",
       read: false,
       createdAt: "2026-09-17T15:30:00Z",
       icon: "🗓️",
       badgeClass: "bg-success",
-      actorName: "Karim Nasser",
+      actorName: "District Manager",
       action: "approved",
     },
     {
@@ -948,7 +948,7 @@ const DEFAULT_DEMO_DATA = {
       createdAt: "2026-09-17T11:00:00Z",
       icon: "❌",
       badgeClass: "bg-danger",
-      actorName: "Karim Nasser",
+      actorName: "District Manager",
       action: "rejected",
     },
     {
@@ -956,13 +956,13 @@ const DEFAULT_DEMO_DATA = {
       userId: "dm1",
       type: "plan_submission",
       title: "Field Plan for Review",
-      message: "Medical Rep Marco Magdy submitted a new field plan for your review.",
+      message: "Medical Rep submitted a new field plan for your review.",
       link: "plans-review.html",
       read: false,
       createdAt: "2026-09-17T13:00:00Z",
       icon: "📋",
       badgeClass: "bg-primary",
-      actorName: "Marco Magdy",
+      actorName: "Medical Rep",
       action: "submitted",
     },
     {
@@ -970,13 +970,13 @@ const DEFAULT_DEMO_DATA = {
       userId: "dm1",
       type: "leave_submission",
       title: "New Leave Request",
-      message: "Annual leave request submitted by Marco Magdy (2 days) awaiting your approval.",
+      message: "Annual leave request submitted (2 days) awaiting your approval.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T10:00:00Z",
       icon: "🏖️",
       badgeClass: "bg-warning",
-      actorName: "Marco Magdy",
+      actorName: "Medical Rep",
       action: "submitted",
     },
     {
@@ -984,14 +984,14 @@ const DEFAULT_DEMO_DATA = {
       userId: "hr1",
       type: "leave_submission",
       title: "Leave Request Final Approval",
-      message: "Line Manager approved leave for Marco Magdy, awaiting HR final confirmation.",
+      message: "Line Manager approved leave, awaiting HR final confirmation.",
       link: "leaves.html",
       read: false,
       createdAt: "2026-09-17T12:30:00Z",
       icon: "🏖️",
       badgeClass: "bg-info",
-      actorName: "Hassan Ali",
-      action: "endorsed",
+      actorName: "Line Manager",
+      action: "approved",
     },
   ],
   distributors: [
@@ -1067,7 +1067,10 @@ function loadDataFromStorage() {
           const seenEmails = new Set();
 
           data.users.forEach((u) => {
-            if (!u || !u.id) return;
+            if (!u) return;
+            if (!u.id || typeof u.id !== "string" || !u.id.trim()) {
+              u.id = "u" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+            }
             const idKey = String(u.id);
             const emailKey = (u.email || "").toLowerCase().trim();
 

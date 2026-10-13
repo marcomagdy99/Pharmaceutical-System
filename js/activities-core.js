@@ -607,7 +607,8 @@
       u = (window.DEMO_DATA && window.DEMO_DATA.currentUser) || {
         id: "rep1",
         role: ROLES.REP,
-        name: "Marco Magdy", nameAr: "Marco Magdy",
+        name: (window.store && window.store.users && window.store.users.getById("rep1") ? window.store.users.getById("rep1").name : "Medical Rep"),
+        nameAr: (window.store && window.store.users && window.store.users.getById("rep1") ? (window.store.users.getById("rep1").nameAr || window.store.users.getById("rep1").name) : "Medical Rep"),
         lineIds: ["line1"],
         areaId: "area1",
       };

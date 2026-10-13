@@ -10,7 +10,7 @@ const demoAnnouncements = [
     priority: "high",
     target: "all",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-09-01T10:30:00",
     readBy: ["rep1"],
     published: true,
@@ -25,7 +25,7 @@ const demoAnnouncements = [
     priority: "normal",
     target: "all",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-08-28T14:00:00",
     readBy: ["rep1", "rep2", "dm1"],
     published: true,
@@ -40,7 +40,7 @@ const demoAnnouncements = [
     priority: "high",
     target: "all",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-08-25T09:00:00",
     readBy: [],
     published: true,
@@ -55,7 +55,7 @@ const demoAnnouncements = [
     priority: "normal",
     target: "rep",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-08-20T11:30:00",
     readBy: ["rep1"],
     published: true,
@@ -70,7 +70,7 @@ const demoAnnouncements = [
     priority: "high",
     target: "dm_lm_bu",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-09-05T09:00:00",
     readBy: [],
     published: true,
@@ -85,7 +85,7 @@ const demoAnnouncements = [
     priority: "normal",
     target: "lm_bu",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-09-05T15:00:00",
     readBy: [],
     published: true,
@@ -100,7 +100,7 @@ const demoAnnouncements = [
     priority: "high",
     target: "bu",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-09-06T12:00:00",
     readBy: [],
     published: true,
@@ -115,7 +115,7 @@ const demoAnnouncements = [
     priority: "high",
     target: "hr_admin",
     createdBy: "hr1",
-    createdByName: "Fatma El-Sherif",
+    createdByName: "HR Department",
     createdAt: "2026-09-07T14:00:00",
     readBy: [],
     published: true,
@@ -586,7 +586,7 @@ function renderAnnouncementCard(ann) {
 
   const title = escapeHtml(lang === "ar" ? ann.titleAr : ann.title);
   const body = escapeHtml(lang === "ar" ? ann.bodyAr : ann.body);
-  const authorName = escapeHtml(ann.createdByName || "");
+  const authorName = escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
   const safeImage = ann.image ? escapeHtml(ann.image) : "";
 
   const priorityClass = `priority-${ann.priority}`;
@@ -1172,7 +1172,7 @@ function saveAnnouncement() {
       published,
       image: currentAnnouncementImage,
       createdBy: currentUserId,
-      createdByName: currentUserName || "Fatma El-Sherif",
+      createdByName: currentUserName || "HR Department",
       createdByRole: currentUserRole,
       createdAt: new Date().toISOString(),
       readBy: [],

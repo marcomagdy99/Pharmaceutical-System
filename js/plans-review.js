@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     id: "dm1",
-    name: "Karim Nasser",
+    name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     role: "district_manager",
   };
 
@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("languageChanged", () => {
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     id: "dm1",
-    name: "Karim Nasser",
+    name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     role: "district_manager",
   };
 
@@ -317,7 +317,7 @@ window.onPlansLineFilterChange = function (selectedLineId) {
   window.selectedPlansLineId = selectedLineId;
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     id: "dm1",
-    name: "Karim Nasser",
+    name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     role: "district_manager",
   };
   populateRepFilter(currentUser, selectedLineId);
@@ -794,7 +794,7 @@ const plansReview = {
   accompanyEntireDay(repId, dateStr) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
@@ -861,7 +861,7 @@ const plansReview = {
   approveEntireDay(repId, dateStr) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
@@ -894,7 +894,7 @@ const plansReview = {
   accompanySingleVisit(visitId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     };
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
@@ -943,7 +943,7 @@ const plansReview = {
   approveSingleVisit(visitId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     };
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
@@ -988,7 +988,7 @@ const plansReview = {
   approveAllForRep(repId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
@@ -1052,7 +1052,7 @@ const plansReview = {
   approveAllPendingAcrossTeam() {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser)) return;
     const visits = getMasterVisits();
@@ -1159,7 +1159,7 @@ const plansReview = {
   confirmRejectPlan() {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
       id: "dm1",
-      name: "Karim Nasser",
+      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
       role: "district_manager",
     };
     const visits = getMasterVisits();

@@ -88,6 +88,9 @@
       },
       save(userObj) {
         if (!window.DEMO_DATA.users) window.DEMO_DATA.users = [];
+        if (!userObj.id || typeof userObj.id !== "string" || !userObj.id.trim()) {
+          userObj.id = "u" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+        }
         const users = window.DEMO_DATA.users;
         const idx = users.findIndex((u) => u.id === userObj.id);
         if (idx >= 0) {

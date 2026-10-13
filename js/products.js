@@ -15,7 +15,7 @@ function initProductLinesData() {
       name: "Cardio Line",
       nameAr: "خط الكارديو (Cardio)",
       lineManagerId: "lm1",
-      lineManagerName: "Hassan Ali",
+      lineManagerName: (window.store && window.store.users && window.store.users.getById("lm1") ? window.store.users.getById("lm1").name : "Line Manager"),
       products: [
         { id: "prod_1_1_" + Date.now(), name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet", description: "Broad-spectrum antibiotic" },
         { id: "prod_1_2_" + Date.now(), name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops", description: "Vitamin D supplement" }
@@ -26,7 +26,7 @@ function initProductLinesData() {
       name: "Neuro Line",
       nameAr: "خط النيورو (Neuro)",
       lineManagerId: "lm2",
-      lineManagerName: "Sayed Ibrahim",
+      lineManagerName: (window.store && window.store.users && window.store.users.getById("lm2") ? window.store.users.getById("lm2").name : "Line Manager"),
       products: [
         { id: "prod_2_1_" + Date.now(), name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule", description: "Neuropathic pain" }
       ]

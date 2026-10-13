@@ -13,35 +13,47 @@ const demoQuizzes = [
   { id: 'q5', title: 'Sales Techniques', date: '2026-04-15', totalMarks: 50, createdBy: 'admin1' }
 ];
 
+function resolveQuizUserName(userId, fallback) {
+  if (typeof window !== "undefined" && window.store && window.store.users && userId) {
+    const u = window.store.users.getById(userId);
+    if (u && u.name) return u.name;
+  }
+  if (typeof window !== "undefined" && window.DEMO_DATA && window.DEMO_DATA.users && userId) {
+    const u = window.DEMO_DATA.users.find(x => x.id === userId);
+    if (u && u.name) return u.name;
+  }
+  return fallback;
+}
+
 // Default seed scores across team members in different lines/districts
 const demoScores = [
-  // Rep 1 (DM: Karim Nasser, LM: Hassan Ali, BU: Tarek Saad)
-  { quizId: 'q1', userId: 'rep1', userName: 'Marco Magdy', score: 42, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep1', userName: 'Marco Magdy', score: 35, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep1', userName: 'Marco Magdy', score: 28, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep1', userName: 'Marco Magdy', score: 32, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep1', userName: 'Marco Magdy', score: 41, totalMarks: 50 },
+  // Rep 1 (DM: Amir Ayoup, LM: John Mahfouz, BU: George Marzok)
+  { quizId: 'q1', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 42, totalMarks: 50 },
+  { quizId: 'q2', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 35, totalMarks: 50 },
+  { quizId: 'q3', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 28, totalMarks: 30 },
+  { quizId: 'q4', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 32, totalMarks: 40 },
+  { quizId: 'q5', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 41, totalMarks: 50 },
 
-  // Rep 2 (DM: Karim Nasser, LM: Hassan Ali, BU: Tarek Saad)
-  { quizId: 'q1', userId: 'rep2', userName: 'Omar Youssef', score: 38, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep2', userName: 'Omar Youssef', score: 30, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep2', userName: 'Omar Youssef', score: 25, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep2', userName: 'Omar Youssef', score: 36, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep2', userName: 'Omar Youssef', score: 44, totalMarks: 50 },
+  // Rep 2 (DM: Amir Ayoup, LM: John Mahfouz, BU: George Marzok)
+  { quizId: 'q1', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 38, totalMarks: 50 },
+  { quizId: 'q2', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 30, totalMarks: 50 },
+  { quizId: 'q3', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 25, totalMarks: 30 },
+  { quizId: 'q4', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 36, totalMarks: 40 },
+  { quizId: 'q5', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 44, totalMarks: 50 },
 
-  // Rep 3 (DM: Mona Adel, LM: Hassan Ali, BU: Tarek Saad)
-  { quizId: 'q1', userId: 'rep3', userName: 'Ali Mahmoud', score: 45, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep3', userName: 'Ali Mahmoud', score: 40, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep3', userName: 'Ali Mahmoud', score: 29, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep3', userName: 'Ali Mahmoud', score: 38, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep3', userName: 'Ali Mahmoud', score: 48, totalMarks: 50 },
+  // Rep 3 (DM: Jonathan Erian, LM: John Mahfouz, BU: George Marzok)
+  { quizId: 'q1', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 45, totalMarks: 50 },
+  { quizId: 'q2', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 40, totalMarks: 50 },
+  { quizId: 'q3', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 29, totalMarks: 30 },
+  { quizId: 'q4', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 38, totalMarks: 40 },
+  { quizId: 'q5', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 48, totalMarks: 50 },
 
-  // Rep 4 (DM: Rami Samir, LM: Sayed Ibrahim, BU: Tarek Saad)
-  { quizId: 'q1', userId: 'rep4', userName: 'Nourhan Ezz', score: 40, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep4', userName: 'Nourhan Ezz', score: 38, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep4', userName: 'Nourhan Ezz', score: 27, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep4', userName: 'Nourhan Ezz', score: 34, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep4', userName: 'Nourhan Ezz', score: 42, totalMarks: 50 }
+  // Rep 4 (DM: Marian Magdy, LM: Mario Magdy, BU: George Marzok)
+  { quizId: 'q1', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 40, totalMarks: 50 },
+  { quizId: 'q2', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 38, totalMarks: 50 },
+  { quizId: 'q3', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 27, totalMarks: 30 },
+  { quizId: 'q4', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 34, totalMarks: 40 },
+  { quizId: 'q5', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 42, totalMarks: 50 }
 ];
 
 // Multilingual dictionary for Quizzes module

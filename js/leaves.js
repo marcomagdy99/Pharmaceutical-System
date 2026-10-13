@@ -4,6 +4,27 @@
  * Full/Half Day Duration, File Attachments, Dynamic Balance Deduction, and HR Public Holiday declarations.
  */
 
+function resolveLeaveUserName(userId, fallback) {
+  if (typeof window !== "undefined" && window.store && window.store.users && userId) {
+    const u = window.store.users.getById(userId);
+    if (u && u.name) return u.name;
+  }
+  if (typeof window !== "undefined" && window.DEMO_DATA && window.DEMO_DATA.users && userId) {
+    const u = window.DEMO_DATA.users.find(x => x.id === userId);
+    if (u && u.name) return u.name;
+  }
+  return fallback;
+}
+
+function getLeaveApplicantName(leave) {
+  if (!leave) return "Employee";
+  if (leave.userId) {
+    const name = resolveLeaveUserName(leave.userId, null);
+    if (name) return name;
+  }
+  return leave.userName || "Employee";
+}
+
 // Master Leave Requests with 3-tier Approval Tracking
 let demoLeaves = (window.store && window.store.leaves
   ? window.store.leaves.getAll()
@@ -11,7 +32,7 @@ let demoLeaves = (window.store && window.store.leaves
   {
     id: "l1",
     userId: "rep1",
-    userName: "Marco Magdy",
+    userName: resolveLeaveUserName("rep1", "Medical Rep"),
     userRole: "medical_rep",
     type: "annual",
     dayDuration: "full",
@@ -24,17 +45,20 @@ let demoLeaves = (window.store && window.store.leaves
     approvals: {
       dm: {
         status: "approved",
-        approverName: "Karim Nasser",
+        approverId: "dm1",
+        approverName: resolveLeaveUserName("dm1", "District Manager"),
         updatedAt: "2026-07-28 10:30 AM",
       },
       lm: {
         status: "approved",
-        approverName: "Hassan Ali",
+        approverId: "lm1",
+        approverName: resolveLeaveUserName("lm1", "Line Manager"),
         updatedAt: "2026-07-28 02:15 PM",
       },
       hr: {
         status: "approved",
-        approverName: "Fatma El-Sherif",
+        approverId: "hr1",
+        approverName: "HR Department",
         updatedAt: "2026-07-29 09:00 AM",
       },
     },
@@ -42,7 +66,7 @@ let demoLeaves = (window.store && window.store.leaves
   {
     id: "l2",
     userId: "rep1",
-    userName: "Marco Magdy",
+    userName: resolveLeaveUserName("rep1", "Medical Rep"),
     userRole: "medical_rep",
     type: "sick",
     dayDuration: "full",
@@ -61,7 +85,7 @@ let demoLeaves = (window.store && window.store.leaves
   {
     id: "l3",
     userId: "dm1",
-    userName: "Karim Nasser",
+    userName: resolveLeaveUserName("dm1", "District Manager"),
     userRole: "district_manager",
     type: "casual",
     dayDuration: "full",
@@ -952,8 +976,15 @@ function calculateBalances() {
  * Resolves the actual manager/approver display name for a specific approval tier.
  */
 function resolveApproverDisplayName(leave, level, lang) {
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const app = (leave && leave.approvals && leave.approvals[level]) || {};
+
+  if (app.approverId) {
+    const foundById = allUsers.find((u) => u && u.id === app.approverId);
+    if (foundById && foundById.name) {
+      return foundById.name;
+    }
+  }
 
   if (app.approverName && typeof app.approverName === "string") {
     let clean = app.approverName
@@ -985,7 +1016,7 @@ function resolveApproverDisplayName(leave, level, lang) {
     if (dmUser) {
       return dmUser.name;
     }
-    return "Karim Nasser";
+    return "District Manager";
   }
 
   if (level === "lm") {
@@ -1004,7 +1035,7 @@ function resolveApproverDisplayName(leave, level, lang) {
     if (lmUser) {
       return lmUser.name;
     }
-    return "Hassan Ali";
+    return "Line Manager";
   }
 
   if (level === "bu") {
@@ -1012,7 +1043,7 @@ function resolveApproverDisplayName(leave, level, lang) {
     if (buUser) {
       return buUser.name;
     }
-    return "George Marzok";
+    return "Business Unit Head";
   }
 
   if (level === "hr") {
@@ -1020,7 +1051,7 @@ function resolveApproverDisplayName(leave, level, lang) {
     if (hrUser) {
       return hrUser.name;
     }
-    return "Fatma El-Sherif";
+    return "HR Department";
   }
 
   return level.toUpperCase();
@@ -1294,10 +1325,10 @@ function renderPendingApprovals() {
         <div class="approval-header-row mb-3">
           <div class="approval-user-info">
             <div class="approval-user-avatar">
-              ${(l.userName || "U").charAt(0).toUpperCase()}
+              ${(getLeaveApplicantName(l) || "U").charAt(0).toUpperCase()}
             </div>
             <div class="approval-user-details">
-              <div class="approval-user-name">${window.escapeHtml(l.userName || "Medical Rep")}</div>
+              <div class="approval-user-name">${window.escapeHtml(getLeaveApplicantName(l))}</div>
               <div class="approval-user-role">${window.escapeHtml(roleLabel)}</div>
             </div>
           </div>
@@ -1487,7 +1518,7 @@ function renderHrAllLeaves() {
     if (statusVal !== "all" && l.status !== statusVal) return false;
 
     if (searchVal) {
-      const uName = (l.userName || "").toLowerCase();
+      const uName = getLeaveApplicantName(l).toLowerCase();
       const uRole = (l.userRole || "").toLowerCase();
       const reason = (l.reason || "").toLowerCase();
       if (
@@ -1566,10 +1597,10 @@ function renderHrAllLeaves() {
         <td>
           <div class="d-flex align-items-center">
             <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 rep-avatar-sm">
-              ${(l.userName || "U").charAt(0)}
+              ${(getLeaveApplicantName(l) || "U").charAt(0)}
             </div>
             <div>
-              <div class="fw-bold leave-item-title">${window.escapeHtml(l.userName || "Employee")}</div>
+              <div class="fw-bold leave-item-title">${window.escapeHtml(getLeaveApplicantName(l))}</div>
               <small class="text-muted">${window.escapeHtml(roleLabel)}</small>
             </div>
           </div>
@@ -1710,6 +1741,13 @@ Object.assign(leavesApp, {
         return;
       }
 
+      if (!isHR && !isAdmin && !isBU) {
+        if (typeof window.canApproveFor === "function" && !window.canApproveFor(leave.userId)) {
+          if (typeof showToast === "function") showToast("Access Denied: You can only approve requests within your reporting hierarchy.", "error");
+          return;
+        }
+      }
+
       const _leavesNow = new Date();
       const _leavesTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
         `${_leavesNow.getFullYear()}-${String(_leavesNow.getMonth() + 1).padStart(2, "0")}-${String(_leavesNow.getDate()).padStart(2, "0")}`;
@@ -1737,16 +1775,19 @@ Object.assign(leavesApp, {
         leave.status = "rejected";
         leave.rejectionReason = rejectionReason || null;
         leave.rejectedBy = currentUser.name;
+        leave.rejectedById = currentUser.id;
         leave.rejectedAt = timestampStr;
 
         if (isDM) {
           leave.approvals.dm.status = "rejected";
+          leave.approvals.dm.approverId = currentUser.id;
           leave.approvals.dm.approverName = currentUser.name;
           leave.approvals.dm.updatedAt = timestampStr;
           leave.approvals.dm.rejectionReason = rejectionReason || null;
         }
         if (isLM) {
           leave.approvals.lm.status = "rejected";
+          leave.approvals.lm.approverId = currentUser.id;
           leave.approvals.lm.approverName = currentUser.name;
           leave.approvals.lm.updatedAt = timestampStr;
           leave.approvals.lm.rejectionReason = rejectionReason || null;
@@ -1754,6 +1795,7 @@ Object.assign(leavesApp, {
         if (isHR || isAdmin) {
           if (leave.approvals.hr) {
             leave.approvals.hr.status = "rejected";
+            leave.approvals.hr.approverId = currentUser.id;
             leave.approvals.hr.approverName = currentUser.name;
             leave.approvals.hr.updatedAt = timestampStr;
             leave.approvals.hr.rejectionReason = rejectionReason || null;
@@ -1786,6 +1828,7 @@ Object.assign(leavesApp, {
       } else {
         if (isDM) {
           leave.approvals.dm.status = "approved";
+          leave.approvals.dm.approverId = currentUser.id;
           leave.approvals.dm.approverName = currentUser.name;
           leave.approvals.dm.updatedAt = timestampStr;
 
@@ -1804,15 +1847,15 @@ Object.assign(leavesApp, {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
-              title: "Leave Endorsed by DM",
+              title: "Leave Approved by DM",
               message: requireLm
-                ? `District Manager (${currentUser.name}) endorsed your leave request and forwarded to LM.`
-                : `District Manager (${currentUser.name}) endorsed your leave request and forwarded directly to HR.`,
+                ? `District Manager (${currentUser.name}) approved your leave request and forwarded to LM.`
+                : `District Manager (${currentUser.name}) approved your leave request and forwarded directly to HR.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
               actorName: currentUser.name,
-              action: "endorsed",
+              action: "approved",
             });
           }
 
@@ -1824,6 +1867,7 @@ Object.assign(leavesApp, {
             window.showToast(msg, "success");
         } else if (isLM) {
           leave.approvals.lm.status = "approved";
+          leave.approvals.lm.approverId = currentUser.id;
           leave.approvals.lm.approverName = currentUser.name;
           leave.approvals.lm.updatedAt = timestampStr;
 
@@ -1842,15 +1886,15 @@ Object.assign(leavesApp, {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
-              title: "Leave Endorsed by LM",
+              title: "Leave Approved by LM",
               message: requireBu
-                ? `Line Manager (${currentUser.name}) endorsed your leave request and forwarded to BU.`
-                : `Line Manager (${currentUser.name}) endorsed your leave request and forwarded to HR.`,
+                ? `Line Manager (${currentUser.name}) approved your leave request and forwarded to BU.`
+                : `Line Manager (${currentUser.name}) approved your leave request and forwarded to HR.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
               actorName: currentUser.name,
-              action: "endorsed",
+              action: "approved",
             });
           }
 
@@ -1863,6 +1907,7 @@ Object.assign(leavesApp, {
         } else if (isBU) {
           if (!leave.approvals.bu) leave.approvals.bu = {};
           leave.approvals.bu.status = "approved";
+          leave.approvals.bu.approverId = currentUser.id;
           leave.approvals.bu.approverName = currentUser.name;
           leave.approvals.bu.updatedAt = timestampStr;
 
@@ -1870,13 +1915,13 @@ Object.assign(leavesApp, {
             window.addWorkflowNotification({
               userId: leave.userId,
               type: "leave_approval",
-              title: "Leave Endorsed by BU",
-              message: `Business Unit Head (${currentUser.name}) endorsed your leave request and forwarded to HR.`,
+              title: "Leave Approved by BU",
+              message: `Business Unit Head (${currentUser.name}) approved your leave request and forwarded to HR.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-info",
               actorName: currentUser.name,
-              action: "endorsed",
+              action: "approved",
             });
           }
 
@@ -1887,6 +1932,7 @@ Object.assign(leavesApp, {
         } else if (isHR || isAdmin) {
           if (leave.approvals.hr) {
             leave.approvals.hr.status = "approved";
+            leave.approvals.hr.approverId = currentUser.id;
             leave.approvals.hr.approverName = currentUser.name;
             leave.approvals.hr.updatedAt = timestampStr;
           }

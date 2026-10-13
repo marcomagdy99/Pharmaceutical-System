@@ -18,21 +18,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v182">
-    <link rel="stylesheet" href="css/profile.css?v=v182">
+    <link rel="stylesheet" href="css/style.css?v=v189">
+    <link rel="stylesheet" href="css/profile.css?v=v189">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v182"></script>
-    <script src="js/store.js?v=v182"></script>
+    <script src="js/app.js?v=v189"></script>
+    <script src="js/store.js?v=v189"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v182"></script>
-    <script src="js/firebase-sync.js?v=v182"></script>
+    <script src="js/firebase-config.js?v=v189"></script>
+    <script src="js/firebase-sync.js?v=v189"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v182";
+        var EXPECTED_SW = "v189";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -488,7 +488,7 @@
                                     <label class="toggle-switch">
                                         <input type="checkbox" class="toggle-input" id="wf_leave_dm" checked>
                                         <div class="toggle-slider"></div>
-                                        <span style="font-weight: 600; font-size: 0.88rem;">Direct Manager (DM) Endorsement</span>
+                                        <span style="font-weight: 600; font-size: 0.88rem;">Direct Manager (DM) Approval</span>
                                     </label>
                                     <label class="toggle-switch">
                                         <input type="checkbox" class="toggle-input" id="wf_leave_lm" checked>
@@ -679,7 +679,7 @@
             </div>
         </main>
     </div>
-    <script src="js/workflow-engine.js?v=v182"></script>
-    <script src="js/profile.js?v=v182"></script>
+    <script src="js/workflow-engine.js?v=v189"></script>
+    <script src="js/profile.js?v=v189"></script>
 </body>
 </html>
