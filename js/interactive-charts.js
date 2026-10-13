@@ -250,7 +250,9 @@
             const dark = isDarkMode();
       const textColor = dark ? '#cbd5e1' : '#475569';
 
-      const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      const labels = lang === 'ar'
+        ? ['فئة A', 'فئة B', 'مستشفيات']
+        : ['Class A', 'Class B', 'Hospitals'];
 
       const dataVals = [Number(classA) || 0, Number(classB) || 0, Number(hospitals) || 0];
       const total = dataVals.reduce((a, b) => a + b, 0);
@@ -346,7 +348,9 @@
       const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
             const dark = isDarkMode();
 
-      const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      const labels = lang === 'ar'
+        ? ['مغطى', 'متبقي']
+        : ['Covered', 'Remaining'];
 
       const ctx = canvas.getContext('2d');
       const chart = new Chart(ctx, {

@@ -746,7 +746,7 @@ function resolveLeaveDaysDetailed(start, end) {
     totalDays: count,
     excludedHolidays,
     excludedFridays,
-    excludedThursdays,
+    excludedThursdays: excludedSecondaryDays,
   };
 }
 
@@ -1474,6 +1474,7 @@ function initHrAllLeavesControl() {
 }
 
 function renderHrAllLeaves() {
+  const lang = getSysLang();
   const role = (currentUser && currentUser.role ? currentUser.role : "").toLowerCase();
   if (role !== "hr" && role !== "admin") return;
 
@@ -1668,6 +1669,8 @@ function handleSaveEmployeeBalance(e) {
 function populateHrEmployeeSelect() {
   const select = document.getElementById("hrEmployeeSelect");
   if (!select) return;
+
+  const prevVal = select.value;
 
   const users =
     window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)
@@ -2193,7 +2196,7 @@ Object.assign(leavesApp, {
     if (window.saveDataToStorage) window.saveDataToStorage();
 
     showToast(
-      `Leave balance updated for ${user.name} successfully.`,
+      `Leave balance updated for ${targetUser.name} successfully.`,
       "success",
     );
 

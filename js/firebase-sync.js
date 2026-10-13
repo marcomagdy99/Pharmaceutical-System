@@ -103,6 +103,7 @@
           if (collKey === "visits" && (/^v\d+$/i.test(id) || /^today_v\d+$/i.test(id))) return true;
           if (collKey === "sales" && (/^s\d+$/i.test(id) || /^ds_s\d+$/i.test(id))) return true;
           if (collKey === "leaves" && /^l\d+$/i.test(id)) return true;
+          // Note: areas and productLines are NOT filtered as mock — line1/line2/area1/area2 are real data
           return false;
         };
 
@@ -148,6 +149,18 @@
           }
         });
 
+        // ✅ Deletion sync: remove local items that no longer exist in cloud
+        const validCloudItems = cloudData[collKey].filter((it) => it && !isMock(it));
+        const cloudIds = new Set(validCloudItems.map((it) => String(it.id)));
+        const beforeLen = window.DEMO_DATA[collKey].length;
+        window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => {
+          if (!it || !it.id) return false;
+          return cloudIds.has(String(it.id));
+        });
+        if (window.DEMO_DATA[collKey].length !== beforeLen) {
+          hasChanges = true;
+        }
+
         // Ensure notifications are sorted newest first
         if (collKey === "notifications" && Array.isArray(window.DEMO_DATA.notifications)) {
           window.DEMO_DATA.notifications.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -170,7 +183,7 @@
         if (collKey === "users") {
           const seenIds = new Set();
           const seenEmails = new Set();
-          window.DEMO_DATA.users = localList.filter((u) => {
+          window.DEMO_DATA.users = window.DEMO_DATA[collKey].filter((u) => {
             if (!u) return false;
             const idKey = String(u.id);
             const emailKey = (u.email || "").toLowerCase().trim();
@@ -185,7 +198,7 @@
         }
 
         // If cloud collection has more items than local, mark changes
-        if (cloudData[collKey].length > localList.length) {
+        if (cloudData[collKey].length > window.DEMO_DATA[collKey].length) {
           hasChanges = true;
         }
       }

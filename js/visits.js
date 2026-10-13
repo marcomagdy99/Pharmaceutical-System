@@ -488,6 +488,8 @@ function triggerManualGpsCheck() {
 }
 
 function handlePinClinicLocation() {
+  const allDocs = getMockDoctors();
+  const allHosps = getMockHospitals();
   const targetSelect = document.getElementById("visitTarget");
   const targetId = targetSelect ? targetSelect.value : null;
   if (!targetId) {

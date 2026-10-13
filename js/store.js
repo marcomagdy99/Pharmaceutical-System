@@ -2239,13 +2239,17 @@
           const surplus = forced ? comparisonValue : comparisonValue - cutPoint;
           const surplusRatio = surplus / comparisonValue;
 
-          // Mark original rows as Private with capped quantities (originals kept for restore)
           rows.forEach((r) => {
             r.salesType = "private";
             const rowQty = parseFloat(r.quantity) || 0;
             const rowValue = parseFloat(r.value) || 0;
-            r.cappedOrigQuantity = r.quantity === undefined ? null : r.quantity;
-            r.cappedOrigValue = r.value;
+            // Guard: use already-saved original values if present (prevents double-apply)
+            if (!("cappedOrigQuantity" in r)) {
+              r.cappedOrigQuantity = r.quantity === undefined ? null : r.quantity;
+            }
+            if (!("cappedOrigValue" in r)) {
+              r.cappedOrigValue = r.value;
+            }
             if (hasQty) {
               r.cappedQty = r.quantity;
               r.quantity = Math.round(rowQty * (1 - surplusRatio) * 100) / 100;

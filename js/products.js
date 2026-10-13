@@ -791,6 +791,7 @@ function openDeleteModal(type, targetId, lineId = null) {
 function confirmDelete() {
   const user = (window.checkAuth && window.checkAuth()) || {};
   const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
+  const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : user.role === "admin";
   const type = document.getElementById("deleteTargetType").value;
   const targetId = document.getElementById("deleteTargetId").value;
   const lineId = document.getElementById("deleteTargetLineId").value;

@@ -151,10 +151,6 @@ function getScopedHospitals(respectActiveFilters = true) {
       }
       if (h.lineId) return h.lineId === selectedLineId;
       if (Array.isArray(h.lineIds) && h.lineIds.length > 0) return h.lineIds.includes(selectedLineId);
-      if (h.areaId) {
-        const a = allAreas.find((x) => x.id === h.areaId);
-        if (a && a.lineId) return a.lineId === selectedLineId;
-      }
       if (h.repId) {
         const repLines = window.getUserLines ? window.getUserLines(h.repId) : [];
         if (repLines.some((l) => l.id === selectedLineId)) return true;

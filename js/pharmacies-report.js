@@ -162,10 +162,6 @@ function getScopedPharmacies(respectActiveFilters = true) {
       }
       if (p.lineId) return p.lineId === selectedLineId;
       if (Array.isArray(p.lineIds) && p.lineIds.length > 0) return p.lineIds.includes(selectedLineId);
-      if (p.areaId) {
-        const a = allAreas.find((x) => x.id === p.areaId);
-        if (a && a.lineId) return a.lineId === selectedLineId;
-      }
       if (p.repId) {
         const repLines = window.getUserLines ? window.getUserLines(p.repId) : [];
         if (repLines.some((l) => l.id === selectedLineId)) return true;
