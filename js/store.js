@@ -955,7 +955,7 @@
         if (!window.DEMO_DATA.accountLocationRequests) {
           window.DEMO_DATA.accountLocationRequests = [];
         }
-        const wf = (store.companySettings && store.companySettings.getApprovalWorkflows().relocation) || {
+        const wf = (store.companySettings && store.companySettings.get().approvalWorkflows && store.companySettings.get().approvalWorkflows.relocation) || {
           enabled: true,
           requireDm: true,
           requireLm: false,
@@ -1068,7 +1068,7 @@
           comment: comment || ""
         });
 
-        const wf = (store.companySettings && store.companySettings.getApprovalWorkflows().relocation) || {
+        const wf = (store.companySettings && store.companySettings.get().approvalWorkflows && store.companySettings.get().approvalWorkflows.relocation) || {
           enabled: true,
           requireDm: true,
           requireLm: false,

@@ -407,9 +407,10 @@ function savePharmacy() {
   }
 
   // Pharmacy strictly belongs to Area; representative is whoever is assigned to that Area
-  const assignedRepId = areaObj ? (areaObj.repId || null) : null;
+  const existingPharm = id ? ((window.store && window.store.pharmacies ? window.store.pharmacies.getById(id) : null) || (window.DEMO_DATA?.pharmacies?.find((p) => p.id === id))) : null;
 
   const pharmacyObj = {
+    ...(existingPharm || {}),
     id: id || "pharm_" + Date.now(),
     name,
     address,
@@ -538,9 +539,16 @@ function exportPharmaciesDirectory() {
       if (a) areaName = a.name;
     }
 
-    const addr = p.address || "";
-    const contact = p.contactPerson || "";
-    const phone = p.phone || "";
+    // Product Line
+    let lineName = "";
+    if (p.lineId) {
+      const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
+      const lineObj = allLines.find((l) => l.id === p.lineId);
+      if (lineObj) lineName = lineObj.name || lineObj.id;
+    } else if (Array.isArray(p.lineIds) && p.lineIds.length > 0) {
+      const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
+      lineName = p.lineIds.map((lid) => { const l = allLines.find((x) => x.id === lid); return l ? (l.name || l.id) : lid; }).join(", ");
+    }
 
     let repName = "";
     if (p.repId) {
@@ -548,7 +556,12 @@ function exportPharmaciesDirectory() {
       if (u) repName = u.name;
     }
 
-    return [pharmName, areaName, addr, contact, phone, repName];
+    const phone = p.phone || "";
+    const addr = p.address || "";
+    const targetVisits = p.targetVisitsPerMonth != null ? p.targetVisitsPerMonth : (p.visitFrequency || "");
+    const status = p.status || "active";
+
+    return [pharmName, areaName, lineName, repName, phone, addr, targetVisits, status];
   });
 
   const now = new Date();

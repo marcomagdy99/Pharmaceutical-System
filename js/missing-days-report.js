@@ -394,8 +394,14 @@
     const companySettings = (window.store && window.store.companySettings ? window.store.companySettings.get() : {}) || {};
     const minVisitsForFieldDay = Math.max(1, parseInt(companySettings.minPmVisitsPerDay || 4, 10));
 
-    // Working days in period
-    const totalWorkingDays = calculateWorkingDays(startDate, endDate, companySettings);
+    // Cap working days and expected field days calculation to today if the selected period extends into the future
+    const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || formatDateForInput(new Date());
+    const todayDate = parseLocalDate(todayStr) || new Date();
+    todayDate.setHours(23, 59, 59, 999);
+    const effectiveEndDate = endDate > todayDate ? (todayDate >= startDate ? todayDate : startDate) : endDate;
+
+    // Working days in period (capped to today for in-progress periods)
+    const totalWorkingDays = calculateWorkingDays(startDate, effectiveEndDate, companySettings);
 
     // Target Field Days (standard is working days minus 1 buffer day for monthly meeting/admin, or min 1)
     const defaultTargetFd = Math.max(1, totalWorkingDays > 20 ? totalWorkingDays - 1 : totalWorkingDays);
@@ -457,10 +463,10 @@
       let effectiveStartDate = startDate;
       if (rep.hireDate) {
         const hireDate = parseLocalDate(rep.hireDate);
-        if (hireDate && hireDate > startDate && hireDate <= endDate) {
+        if (hireDate && hireDate > startDate && hireDate <= effectiveEndDate) {
           effectiveStartDate = hireDate;
-          repWorkingDays = calculateWorkingDays(hireDate, endDate, companySettings);
-        } else if (hireDate && hireDate > endDate) {
+          repWorkingDays = calculateWorkingDays(hireDate, effectiveEndDate, companySettings);
+        } else if (hireDate && hireDate > effectiveEndDate) {
           // Not hired yet in this period
           repWorkingDays = 0;
         }
@@ -473,7 +479,7 @@
         if (!v || v.repId !== rep.id) return false;
         const vDate = parseLocalDate(v.date || v.visitDate);
         if (!vDate) return false;
-        if (vDate < effectiveStartDate || vDate > endDate) return false;
+        if (vDate < effectiveStartDate || vDate > effectiveEndDate) return false;
         // Completed or executed
         return v.status === "completed" || v.status === "executed" || !v.status;
       });
@@ -492,14 +498,15 @@
       // 5. Calculate Non-Field Days (Office / Meetings / Activities)
       let nonFd = 0;
       const nonFdDates = [];
-      const userActivities = (window.store && window.store.activities ? window.store.activities.getAllForUser(rep.id) : []);
-      userActivities.forEach((act) => {
-        const actDate = parseLocalDate(act.date);
+      const userActivitiesObj = (window.store && window.store.activities ? window.store.activities.getAllForUser(rep.id) : {}) || {};
+      Object.keys(userActivitiesObj).forEach((actDateStr) => {
+        const dayActs = userActivitiesObj[actDateStr];
+        if (!dayActs || (!dayActs.AM && !dayActs.PM)) return;
+        const actDate = parseLocalDate(actDateStr);
         if (!actDate) return;
-        if (actDate >= effectiveStartDate && actDate <= endDate) {
-          // If not already counted as field day
-          if (!visitsByDate[act.date]) {
-            nonFdDates.push(act.date);
+        if (actDate >= effectiveStartDate && actDate <= effectiveEndDate) {
+          if (!visitsByDate[actDateStr]) {
+            nonFdDates.push(actDateStr);
           }
         }
       });
@@ -508,14 +515,14 @@
       // 6. Calculate Vacations in range
       let vacationDays = 0;
       const vacationDates = [];
-      const repLeaves = allLeaves.filter((l) => l.repId === rep.id && (l.status === "approved" || !l.status));
+      const repLeaves = allLeaves.filter((l) => (l.userId === rep.id || l.repId === rep.id) && (l.status === "approved" || !l.status));
       repLeaves.forEach((leave) => {
         const lStart = parseLocalDate(leave.startDate);
         const lEnd = parseLocalDate(leave.endDate || leave.startDate);
         if (!lStart || !lEnd) return;
 
         let curL = new Date(Math.max(lStart.getTime(), effectiveStartDate.getTime()));
-        const limitL = new Date(Math.min(lEnd.getTime(), endDate.getTime()));
+        const limitL = new Date(Math.min(lEnd.getTime(), effectiveEndDate.getTime()));
 
         while (curL <= limitL) {
           const dayOfWeek = curL.getDay();
@@ -670,6 +677,10 @@
       const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
       const secMode = companySettings?.secondaryWeekendMode || "full_day";
 
+      const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || formatDateForInput(new Date());
+      const todayDate = parseLocalDate(todayStr) || new Date();
+      todayDate.setHours(23, 59, 59, 999);
+
       const cur = new Date(repData.effectiveStartDate.getTime());
       while (cur <= repData.endDate) {
         const dStr = formatDateForInput(cur);
@@ -697,6 +708,9 @@
         } else if (repData.vacationDates.includes(dStr)) {
           item.style.background = "#fffbeb";
           item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-warning text-dark">🏖️ Vacation</span>`;
+        } else if (cur > todayDate) {
+          item.style.background = "#f8fafc";
+          item.innerHTML = `<span class="text-muted">📅 ${dStr} (${dayName})</span> <span class="badge" style="background:#e2e8f0; color:#64748b;">⏳ Upcoming</span>`;
         } else {
           // Missing Day!
           item.style.background = "#fef2f2";

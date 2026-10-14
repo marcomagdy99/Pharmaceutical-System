@@ -86,7 +86,13 @@
       "territoryHistory",
       "importBatches",
       "pharmacyOverrides",
-      "notifications"
+      "notifications",
+      "accountLocationRequests",
+      "bulkWeights",
+      "targets",
+      "expenses",
+      "services",
+      "budgets"
     ];
 
     arrayCollections.forEach((collKey) => {
@@ -219,6 +225,53 @@
       try {
         localStorage.setItem("pharma_company_settings", JSON.stringify(window.DEMO_DATA.companySettings));
       } catch (e) {}
+    }
+
+    // Sync Object maps (salesBudgets & _activitiesByUser & publicHolidays)
+    if (cloudData.salesBudgets && typeof cloudData.salesBudgets === "object") {
+      const curBudgetsStr = JSON.stringify(window.DEMO_DATA.salesBudgets || {});
+      const newBudgetsStr = JSON.stringify(cloudData.salesBudgets);
+      if (curBudgetsStr !== newBudgetsStr) {
+        window.DEMO_DATA.salesBudgets = Object.assign(
+          {},
+          window.DEMO_DATA.salesBudgets || {},
+          cloudData.salesBudgets
+        );
+        try {
+          localStorage.setItem("pharma_sales_budgets", JSON.stringify(window.DEMO_DATA.salesBudgets));
+        } catch (e) {}
+        hasChanges = true;
+      }
+    }
+
+    if (cloudData._activitiesByUser && typeof cloudData._activitiesByUser === "object") {
+      const curActsStr = JSON.stringify(window.DEMO_DATA._activitiesByUser || {});
+      const newActsStr = JSON.stringify(cloudData._activitiesByUser);
+      if (curActsStr !== newActsStr) {
+        window.DEMO_DATA._activitiesByUser = Object.assign(
+          {},
+          window.DEMO_DATA._activitiesByUser || {},
+          cloudData._activitiesByUser
+        );
+        Object.keys(window.DEMO_DATA._activitiesByUser).forEach((uid) => {
+          try {
+            localStorage.setItem(`pharma_activities_data_${uid}`, JSON.stringify(window.DEMO_DATA._activitiesByUser[uid]));
+          } catch (e) {}
+        });
+        hasChanges = true;
+      }
+    }
+
+    if (Array.isArray(cloudData.publicHolidays)) {
+      const curHolidaysStr = JSON.stringify(window.DEMO_DATA.publicHolidays || []);
+      const newHolidaysStr = JSON.stringify(cloudData.publicHolidays);
+      if (curHolidaysStr !== newHolidaysStr) {
+        window.DEMO_DATA.publicHolidays = cloudData.publicHolidays;
+        try {
+          localStorage.setItem("pharma_public_holidays", JSON.stringify(window.DEMO_DATA.publicHolidays));
+        } catch (e) {}
+        hasChanges = true;
+      }
     }
 
     return hasChanges;

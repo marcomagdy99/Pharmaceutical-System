@@ -851,8 +851,10 @@ function handleExcelUpload(e) {
           const product = String(productRaw || '').trim();
 
           const numericValueRaw = parseSalesNumber(valueRaw);
-          let numericQuantity = map.quantity && quantityRaw !== '' && quantityRaw !== null && quantityRaw !== undefined
-            ? parseSalesNumber(quantityRaw)
+          let numericQuantity = map.quantity
+            ? (quantityRaw !== '' && quantityRaw !== null && quantityRaw !== undefined
+                ? parseSalesNumber(quantityRaw)
+                : 0)  // column is mapped but cell is empty → 0, not null
             : null;
 
           let parsedDate = null;

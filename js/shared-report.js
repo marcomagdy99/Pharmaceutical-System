@@ -78,7 +78,9 @@ function syncReportsData() {
             specialty: doc.specialty || 'General Practice',
             area: doc.clinicAddress || 'Nasr City',
             repId: doc.repId || 'rep1',
-            targetQuarterly: doc.class === 'A' ? 4 : 3
+            targetQuarterly: typeof window.getDoctorCallTarget === 'function'
+              ? window.getDoctorCallTarget(doc)
+              : (doc.class === 'A' ? 4 : 3)
           });
         }
       });

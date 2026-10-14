@@ -537,6 +537,7 @@ function saveDoctor() {
   const existingDocRecord = id ? (getDoctorsData().find((d) => d.id === id) || {}) : {};
 
   const doctorObj = {
+    ...(existingDocRecord || {}),
     id: id || "doc_" + Date.now(),
     name,
     specialtyId,

@@ -393,9 +393,10 @@ function saveHospital() {
   }
 
   // Hospital strictly belongs to Area; representative is whoever is assigned to that Area
-  const assignedRepId = areaObj ? (areaObj.repId || null) : null;
+  const existingHosp = id ? ((window.store && window.store.hospitals ? window.store.hospitals.getById(id) : null) || (window.DEMO_DATA?.hospitals?.find((h) => h.id === id))) : null;
 
   const hospitalObj = {
+    ...(existingHosp || {}),
     id: id || "hosp_" + Date.now(),
     name,
     nameAr: nameAr || name,

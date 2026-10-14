@@ -1771,8 +1771,15 @@ Object.assign(leavesApp, {
         };
       }
       const applicantIsDM = leave.userRole === "district_manager" || leave.userRole === "dm" || leave.userId === "dm1";
-      if (!applicantIsDM && !leave.approvals.dm) leave.approvals.dm = { status: "pending", approverName: null, updatedAt: null };
-      if (!leave.approvals.lm) leave.approvals.lm = { status: "pending", approverName: null, updatedAt: null };
+      const applicantIsLM = leave.userRole === "line_manager" || leave.userRole === "lm" || leave.userId === "lm1";
+      const applicantIsBU = leave.userRole === "business_unit" || leave.userRole === "bu";
+
+      if (!applicantIsDM && !applicantIsLM && !applicantIsBU && !leave.approvals.dm) {
+        leave.approvals.dm = { status: "pending", approverName: null, updatedAt: null };
+      }
+      if (!applicantIsLM && !applicantIsBU && !leave.approvals.lm) {
+        leave.approvals.lm = { status: "pending", approverName: null, updatedAt: null };
+      }
       if (!leave.approvals.hr) leave.approvals.hr = { status: "pending", approverName: null, updatedAt: null };
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
@@ -1784,19 +1791,27 @@ Object.assign(leavesApp, {
         leave.rejectedById = currentUser.id;
         leave.rejectedAt = timestampStr;
 
-        if (isDM) {
+        if (isDM && leave.approvals.dm) {
           leave.approvals.dm.status = "rejected";
           leave.approvals.dm.approverId = currentUser.id;
           leave.approvals.dm.approverName = currentUser.name;
           leave.approvals.dm.updatedAt = timestampStr;
           leave.approvals.dm.rejectionReason = rejectionReason || null;
         }
-        if (isLM) {
+        if (isLM && leave.approvals.lm) {
           leave.approvals.lm.status = "rejected";
           leave.approvals.lm.approverId = currentUser.id;
           leave.approvals.lm.approverName = currentUser.name;
           leave.approvals.lm.updatedAt = timestampStr;
           leave.approvals.lm.rejectionReason = rejectionReason || null;
+        }
+        if (isBU) {
+          if (!leave.approvals.bu) leave.approvals.bu = {};
+          leave.approvals.bu.status = "rejected";
+          leave.approvals.bu.approverId = currentUser.id;
+          leave.approvals.bu.approverName = currentUser.name;
+          leave.approvals.bu.updatedAt = timestampStr;
+          leave.approvals.bu.rejectionReason = rejectionReason || null;
         }
         if (isHR || isAdmin) {
           if (leave.approvals.hr) {

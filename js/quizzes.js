@@ -114,6 +114,8 @@ function getStoredQuizzes() {
 function saveStoredQuizzes(quizzes) {
   try {
     localStorage.setItem('pharma_quizzes', JSON.stringify(quizzes));
+    if (window.DEMO_DATA) window.DEMO_DATA.quizzes = quizzes;
+    if (typeof window.saveDataToStorage === 'function') window.saveDataToStorage();
   } catch (err) {
     console.error('Error saving pharma_quizzes to localStorage:', err);
   }
@@ -132,6 +134,8 @@ function getStoredScores() {
 function saveStoredScores(scores) {
   try {
     localStorage.setItem('pharma_quiz_scores', JSON.stringify(scores));
+    if (window.DEMO_DATA) window.DEMO_DATA.quizScores = scores;
+    if (typeof window.saveDataToStorage === 'function') window.saveDataToStorage();
   } catch (err) {
     console.error('Error saving pharma_quiz_scores to localStorage:', err);
   }
