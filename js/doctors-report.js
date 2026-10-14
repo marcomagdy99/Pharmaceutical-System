@@ -189,10 +189,6 @@ function getScopedDoctors(respectActiveFilters = true) {
       }
       if (d.lineId) return d.lineId === selectedLineId;
       if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
-      if (d.areaId) {
-        const a = allAreas.find((x) => x.id === d.areaId);
-        if (a && a.lineId) return a.lineId === selectedLineId;
-      }
       if (d.repId) {
         const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
         if (repLines.some((l) => l.id === selectedLineId)) return true;
@@ -664,13 +660,9 @@ function exportDoctorsDirectory() {
       "Specialty",
       "Class",
       "Territory / Area",
-      "Product Line",
-      "Assigned Rep",
-      "Workplace",
+      "Clinic Address",
       "Phone",
-      "Address",
-      "Target Visits/Mo",
-      "Status",
+      "Assigned Rep",
     ];
 
   const rows = docsToExport.map((d) => {

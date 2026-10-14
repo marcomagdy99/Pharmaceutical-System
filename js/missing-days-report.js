@@ -527,8 +527,10 @@
         while (curL <= limitL) {
           const dayOfWeek = curL.getDay();
           const isFriday = dayOfWeek === 5;
-          const isThuWeekend = Boolean(companySettings && companySettings.isThursdayWeekend);
-          if (!isFriday && !(isThuWeekend && dayOfWeek === 4)) {
+          const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
+          const secMode = companySettings?.secondaryWeekendMode || "full_day";
+          const isSecondaryFullOff = ((secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4)) && secMode === "full_day";
+          if (!isFriday && !isSecondaryFullOff) {
             vacationDays++;
             vacationDates.push(formatDateForInput(curL));
           }

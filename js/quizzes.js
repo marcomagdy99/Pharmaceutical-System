@@ -102,6 +102,9 @@ const quizTranslations = {
 // ============================================================================
 
 function getStoredQuizzes() {
+  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.quizzes) && window.DEMO_DATA.quizzes.length > 0) {
+    return window.DEMO_DATA.quizzes;
+  }
   try {
     const raw = localStorage.getItem('pharma_quizzes');
     if (raw) return JSON.parse(raw);
@@ -122,6 +125,9 @@ function saveStoredQuizzes(quizzes) {
 }
 
 function getStoredScores() {
+  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.quizScores) && window.DEMO_DATA.quizScores.length > 0) {
+    return window.DEMO_DATA.quizScores;
+  }
   try {
     const raw = localStorage.getItem('pharma_quiz_scores');
     if (raw) return JSON.parse(raw);
@@ -236,7 +242,7 @@ function initRepView(userId) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="fw-medium ps-3 col-quiz-name">${escapeHtml(score.quizTitle)}</td>
+      <td class="fw-medium ps-3 col-quiz-name">${typeof window.escapeHtml === 'function' ? window.escapeHtml(score.quizTitle) : (score.quizTitle || '')}</td>
       <td class="text-secondary text-center col-quiz-date">${score.date}</td>
       <td class="fw-bold text-center col-quiz-score">${score.score}</td>
       <td class="text-secondary text-center col-quiz-total">${score.totalMarks}</td>
@@ -629,7 +635,7 @@ function renderComparisonTable(repsToDisplay) {
     const tdTitle = document.createElement('td');
     tdTitle.className = 'fw-medium ps-4 text-nowrap';
     tdTitle.innerHTML = `
-      <div>${escapeHtml(quiz.title)}</div>
+      <div>${typeof window.escapeHtml === 'function' ? window.escapeHtml(quiz.title) : (quiz.title || '')}</div>
       <div class="quiz-meta-sub">${quiz.date} &bull; ${quiz.totalMarks} M</div>
     `;
     tr.appendChild(tdTitle);
