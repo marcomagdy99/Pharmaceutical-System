@@ -407,6 +407,7 @@ function savePharmacy() {
   }
 
   // Pharmacy strictly belongs to Area; representative is whoever is assigned to that Area
+  const assignedRepId = areaObj ? (areaObj.repId || null) : null;
   const existingPharm = id ? ((window.store && window.store.pharmacies ? window.store.pharmacies.getById(id) : null) || (window.DEMO_DATA?.pharmacies?.find((p) => p.id === id))) : null;
 
   const pharmacyObj = {
