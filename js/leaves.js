@@ -649,8 +649,11 @@ function calcDays() {
         );
       }
       if (res.excludedThursdays > 0) {
+        const companySettings = (window.store && window.store.companySettings ? window.store.companySettings.get() : {}) || {};
+        const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
+        const secDayName = secDay === "saturday" ? "Saturday(s)" : (secDay === "thursday" ? "Thursday(s)" : "Weekly rest day(s)");
         noticeParts.push(
-          `📅 ${res.excludedThursdays} Thursday(s) excluded (company weekly rest day)`
+          `📅 ${res.excludedThursdays} ${secDayName} excluded (company weekly rest day)`
         );
       }
       if (res.excludedHolidays.length > 0) {

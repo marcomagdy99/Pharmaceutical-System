@@ -92,7 +92,7 @@
       "targets",
       "expenses",
       "services",
-      "budgets"
+      "quizScores"
     ];
 
     arrayCollections.forEach((collKey) => {
@@ -155,16 +155,18 @@
           }
         });
 
-        // ✅ Deletion sync: remove local items that no longer exist in cloud
+        // ✅ Deletion sync: remove local items that no longer exist in cloud (only when cloud has valid items)
         const validCloudItems = cloudData[collKey].filter((it) => it && !isMock(it));
-        const cloudIds = new Set(validCloudItems.map((it) => String(it.id)));
-        const beforeLen = window.DEMO_DATA[collKey].length;
-        window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => {
-          if (!it || !it.id) return false;
-          return cloudIds.has(String(it.id));
-        });
-        if (window.DEMO_DATA[collKey].length !== beforeLen) {
-          hasChanges = true;
+        if (validCloudItems.length > 0) {
+          const cloudIds = new Set(validCloudItems.map((it) => String(it.id)));
+          const beforeLen = window.DEMO_DATA[collKey].length;
+          window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => {
+            if (!it || !it.id) return false;
+            return cloudIds.has(String(it.id));
+          });
+          if (window.DEMO_DATA[collKey].length !== beforeLen) {
+            hasChanges = true;
+          }
         }
 
         // Ensure notifications are sorted newest first

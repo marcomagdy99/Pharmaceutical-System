@@ -984,7 +984,7 @@ function exportSalesReport() {
   const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
 
   const safeCsv = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
-  let csv = 'Date,Pharmacy,Pharmacy Code,Product,Distributor,Area,Rep,Quantity,Value\n';
+  let csv = 'Date,Pharmacy,Pharmacy Code,Product,Distributor,Area,Rep,Quantity,Value,Type\n';
   rows.forEach((r) => {
     const rep = r.repId ? allUsers.find((u) => u.id === r.repId) : null;
     const area = r.areaId ? areas.find((a) => a.id === r.areaId) : null;
@@ -993,7 +993,8 @@ function exportSalesReport() {
     const repLabel = rep ? rep.name : '';
     const qty = parseFloat(r.quantity) || 0;
     const value = parseFloat(r.value) || 0;
-    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.pharmacyCode || '')},${safeCsv(r.product)},${safeCsv(dist ? dist.name : (r.distributorId || ''))},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value}\n`;
+    const typeLabel = (r.salesType === 'bulk' ? 'Bulk' : 'Private') + (r.splitPercent ? ` (Split ${r.splitPercent}%)` : '');
+    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.pharmacyCode || '')},${safeCsv(r.product)},${safeCsv(dist ? dist.name : (r.distributorId || ''))},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value},${safeCsv(typeLabel)}\n`;
   });
 
   const yearSelect = document.getElementById('pharmSalesYearSelect');

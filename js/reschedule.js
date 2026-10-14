@@ -456,6 +456,11 @@ function handleRescheduleSubmit(e) {
   if (typeof renderDashboard === "function") {
     renderDashboard();
   }
+  if (typeof window.renderCalendar === "function") {
+    window.renderCalendar();
+  } else if (typeof renderCalendar === "function") {
+    renderCalendar();
+  }
 }
 
 window.getDailyRescheduleCount = getDailyRescheduleCount;

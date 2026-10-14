@@ -409,7 +409,12 @@ function loadUserProfile() {
   }
 
   // Dynamic leave balances calculation synchronized with store leaves & rollover policy
-  const approvedLeaves = allLeaves.filter((l) => l.userId === user.id && l.status === "approved");
+  const currentYearStr = String(new Date().getFullYear());
+  const approvedLeaves = allLeaves.filter((l) => {
+    if (l.userId !== user.id || l.status !== "approved") return false;
+    const leaveYear = l.startDate ? String(l.startDate).slice(0, 4) : "";
+    return !leaveYear || leaveYear === currentYearStr;
+  });
   const used = { annual: 0, sick: 0, emergency: 0, unpaid: 0 };
   approvedLeaves.forEach((l) => {
     const d = parseFloat(l.days) || 1;

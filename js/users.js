@@ -186,8 +186,9 @@ if (typeof renderSidebar === "function") {
 
     if (id === "linesModal") {
       el.addEventListener("hidden.bs.modal", () => {
-        if (this.returnToUserModal) {
+        if (this.returnToUserModal || this.returnToUserModalFromSub) {
           this.returnToUserModal = false;
+          this.returnToUserModalFromSub = false;
           this.populateDropdowns();
           const userModalInstance = this._getModalInstance("userModal");
           if (userModalInstance) userModalInstance.show();
@@ -209,6 +210,7 @@ if (typeof renderSidebar === "function") {
     if (type === "lines") {
       const userModalEl = document.getElementById("userModal");
       if (userModalEl && userModalEl.classList.contains("show")) {
+        this.returnToUserModal = true;
         this.returnToUserModalFromSub = true;
         this._getModalInstance("userModal")?.hide();
       }

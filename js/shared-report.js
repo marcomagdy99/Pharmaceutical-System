@@ -1385,12 +1385,16 @@ function confirmImportDoctors() {
   }
 
   const allSpecs = (window.store && window.store.specialties ? window.store.specialties.getAll() : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
 
   pendingDoctorsImport.forEach((item, index) => {
     const foundSpec = allSpecs.find((s) => s.name === item.specialty || s.id === item.specialty);
     const specialtyId = foundSpec ? foundSpec.id : 'spec_internal';
     const specialty = foundSpec ? foundSpec.name : item.specialty;
     const specialtyAr = foundSpec ? (foundSpec.nameAr || foundSpec.name) : specialty;
+
+    const repAreas = item.repId ? allAreas.filter((a) => a.repId === item.repId) : [];
+    const defaultArea = repAreas.length > 0 ? repAreas[0] : null;
 
     const doctorObj = {
       id: 'doc_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
@@ -1403,6 +1407,9 @@ function confirmImportDoctors() {
       clinicAddress: item.address,
       phone: item.phone || '',
       repId: item.repId,
+      areaId: defaultArea ? defaultArea.id : null,
+      area: defaultArea ? defaultArea.name : (item.address || ''),
+      lineId: defaultArea ? (defaultArea.lineId || null) : null,
       visitsThisQuarter: 0
     };
 
@@ -1617,14 +1624,22 @@ function confirmImportPharmacies() {
     return;
   }
 
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+
   pendingPharmaciesImport.forEach((item, index) => {
+    const repAreas = item.repId ? allAreas.filter((a) => a.repId === item.repId) : [];
+    const defaultArea = repAreas.length > 0 ? repAreas[0] : null;
+
     const pharmacyObj = {
       id: 'pharm_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
       name: item.name,
       address: item.address,
       contactPerson: item.contactPerson || '',
       phone: item.phone || '',
-      repId: item.repId
+      repId: item.repId,
+      areaId: defaultArea ? defaultArea.id : null,
+      area: defaultArea ? defaultArea.name : (item.address || ''),
+      lineId: defaultArea ? (defaultArea.lineId || null) : null
     };
 
     if (window.store && window.store.pharmacies) {

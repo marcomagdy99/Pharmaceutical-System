@@ -125,22 +125,32 @@ function saveStoredQuizzes(quizzes) {
 }
 
 function getStoredScores() {
+  let list = [];
   if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.quizScores) && window.DEMO_DATA.quizScores.length > 0) {
-    return window.DEMO_DATA.quizScores;
+    list = window.DEMO_DATA.quizScores;
+  } else {
+    try {
+      const raw = localStorage.getItem('pharma_quiz_scores');
+      if (raw) list = JSON.parse(raw);
+    } catch (err) {
+      console.error('Error reading pharma_quiz_scores from localStorage:', err);
+    }
+    if (!list || !list.length) list = [...demoScores];
   }
-  try {
-    const raw = localStorage.getItem('pharma_quiz_scores');
-    if (raw) return JSON.parse(raw);
-  } catch (err) {
-    console.error('Error reading pharma_quiz_scores from localStorage:', err);
-  }
-  return [...demoScores];
+  return list.map((s, idx) => ({
+    ...s,
+    id: s.id || (s.quizId && s.userId ? `${s.quizId}_${s.userId}` : `qscore_${Date.now()}_${idx}`)
+  }));
 }
 
 function saveStoredScores(scores) {
   try {
-    localStorage.setItem('pharma_quiz_scores', JSON.stringify(scores));
-    if (window.DEMO_DATA) window.DEMO_DATA.quizScores = scores;
+    const normalized = (scores || []).map((s, idx) => ({
+      ...s,
+      id: s.id || (s.quizId && s.userId ? `${s.quizId}_${s.userId}` : `qscore_${Date.now()}_${idx}`)
+    }));
+    localStorage.setItem('pharma_quiz_scores', JSON.stringify(normalized));
+    if (window.DEMO_DATA) window.DEMO_DATA.quizScores = normalized;
     if (typeof window.saveDataToStorage === 'function') window.saveDataToStorage();
   } catch (err) {
     console.error('Error saving pharma_quiz_scores to localStorage:', err);

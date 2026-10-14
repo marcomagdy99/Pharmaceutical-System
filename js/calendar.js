@@ -114,7 +114,7 @@ function getDynamicCalendarEvents() {
           title: leaveTitle,
           leaveType: l.type,
           status: l.status,
-          repId: l.userId,
+          repId: l.userId || l.repId,
           dayDuration: l.dayDuration,
         });
 
@@ -491,14 +491,23 @@ function renderDetailSection(title, evts, container, t, lang) {
       statusText = "Official Holiday (No Deduction)";
       iconChar = "🌴";
     } else if (evt.type === "visit") {
-      iconClass =
-        evt.status === "completed"
-          ? "icon-visit-completed"
-          : "icon-visit-planned";
-      badgeClass =
-        evt.status === "completed" ? "badge-completed" : "badge-planned";
-      statusText =
-        evt.status === "completed" ? t.statusCompleted : t.statusPlanned;
+      if (evt.status === "completed") {
+        iconClass = "icon-visit-completed";
+        badgeClass = "badge-completed";
+        statusText = t.statusCompleted || "Completed";
+      } else if (evt.status === "missed") {
+        iconClass = "icon-visit-planned";
+        badgeClass = "badge-pending";
+        statusText = "Missed Call";
+      } else if (evt.status === "rejected") {
+        iconClass = "icon-visit-planned";
+        badgeClass = "badge-rejected";
+        statusText = "Rejected";
+      } else {
+        iconClass = "icon-visit-planned";
+        badgeClass = "badge-planned";
+        statusText = t.statusPlanned || "Planned";
+      }
       iconChar =
         evt.targetType === "pharmacy" ||
         evt.period === "pharmacy" ||

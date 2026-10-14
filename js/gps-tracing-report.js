@@ -420,6 +420,24 @@
       const subIds = new Set([user.id, ...subs.map((s) => s.id)]);
       visits = visits.filter((v) => subIds.has(v.repId));
     }
+
+    if (selectedDm !== "all" && selectedRep === "all") {
+      const dmSubs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(selectedDm) : [];
+      const dmRepIds = new Set([
+        selectedDm,
+        ...dmSubs.map((s) => s.id),
+        ...allUsers.filter((u) => u.managerId === selectedDm).map((u) => u.id)
+      ]);
+      visits = visits.filter((v) => dmRepIds.has(v.repId));
+    }
+
+    if (selectedLine !== "all") {
+      visits = visits.filter((v) => {
+        if (v.lineId) return v.lineId === selectedLine;
+        const repLines = window.getUserLines ? window.getUserLines(v.repId) : [];
+        return repLines.some((l) => l.id === selectedLine);
+      });
+    }
     // 2. Filter by Shift (AM / PM)
     if (selectedShift === "am") {
       visits = visits.filter((v) => {

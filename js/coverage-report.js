@@ -681,11 +681,83 @@ function exportCoverageReport() {
   else if (classFilter === 'hospital') targetList = targetList.filter((d) => d.class === 'hospital' || (d.class || '').toLowerCase() === 'hospital');
 
   const user = checkAuth();
-  const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
-  if (isRep) {
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+  const isRep = window.isRepRole ? window.isRepRole(user) : (role === 'medical_rep' || role === 'rep');
+
+  // Scope doctors by user role and rep filter (aligned with renderCoverageReport)
+  if (selectedRep && selectedRep.startsWith('vacant:')) {
+    const vacantAreaId = selectedRep.split(':')[1];
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
+    const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
+    targetList = targetList.filter((d) => {
+      if (d.areaId) return d.areaId === vacantAreaId;
+      if (areaNameLower && d.area && d.area.toLowerCase().trim() === areaNameLower) {
+        if (vacantArea && vacantArea.lineId && d.lineId) return d.lineId === vacantArea.lineId;
+        return true;
+      }
+      return false;
+    });
+  } else if (isRep) {
     targetList = targetList.filter((d) => d.repId === user.id);
+  } else if (role === 'district_manager' || role === 'dm') {
+    const teamReps = allUsers.filter((u) => u.managerId === user.id);
+    const teamRepIds = teamReps.map((u) => u.id);
+    const allowedIds = [user.id, ...teamRepIds];
+
+    if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
+    } else {
+      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
+    }
+  } else if (role === 'line_manager' || role === 'lm') {
+    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+    const dmIds = dms.map((d) => d.id);
+    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
+    const repIds = reps.map((r) => r.id);
+    const allowedIds = [user.id, ...dmIds, ...repIds];
+
+    if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
+    } else if (dmIds.includes(selectedRep)) {
+      const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
+      targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
+    } else if (selectedRep) {
+      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
+    }
+  } else if (role === 'business_unit' || role === 'bu') {
+    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
+    const lmIds = myLMs.map((u) => u.id);
+    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+    const myDownstreamIds = myDownstream.map((u) => u.id);
+    const allowedTeamIds = [user.id, ...lmIds, ...myDownstreamIds];
+
+    if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => d.repId && allowedTeamIds.includes(d.repId));
+    } else {
+      const isSelectedLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
+      const isSelectedDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      if (isSelectedLM) {
+        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+        const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
+        targetList = targetList.filter((d) => (lmTeamIds.includes(d.repId)) && allowedTeamIds.includes(d.repId));
+      } else if (isSelectedDM) {
+        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedTeamIds.includes(d.repId));
+      } else {
+        targetList = targetList.filter((d) => d.repId === selectedRep && allowedTeamIds.includes(d.repId));
+      }
+    }
   } else if (selectedRep && selectedRep !== 'all') {
-    targetList = targetList.filter((d) => d.repId === selectedRep);
+    const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+    if (isDM) {
+      const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+    } else {
+      targetList = targetList.filter((d) => d.repId === selectedRep);
+    }
   }
 
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';

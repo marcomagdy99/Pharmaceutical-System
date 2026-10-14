@@ -1722,8 +1722,11 @@
           row.lmId = dm ? dm.managerId || null : null;
           matchedCount++;
         });
-        if (matchedCount && shouldAutoSave) {
-          autoSave("distributorSales", "applyAreaMatching", { matchedCount });
+        if (matchedCount) {
+          this.applyCutPointAndBulk();
+          if (shouldAutoSave) {
+            autoSave("distributorSales", "applyAreaMatching", { matchedCount });
+          }
         }
         return matchedCount;
       },
