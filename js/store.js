@@ -2484,9 +2484,9 @@
             branding: {
               logoUrl: "images/pharma-icon-192.png",
               taglineEn: "Empowering Medical Representatives",
-              taglineAr: "نمكّن المناديب الطبيين",
+              taglineAr: "Empowering Medical Representatives",
               descEn: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
-              descAr: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+              descAr: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
               gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
             }
           };
@@ -2561,9 +2561,9 @@
             window.DEMO_DATA.companySettings.branding = {
               logoUrl: "images/pharma-icon-192.png",
               taglineEn: "Empowering Medical Representatives",
-              taglineAr: "نمكّن المناديب الطبيين",
+              taglineAr: "Empowering Medical Representatives",
               descEn: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
-              descAr: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+              descAr: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
               gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
             };
           }
@@ -2604,7 +2604,7 @@
         if (!window.DEMO_DATA.notifications) window.DEMO_DATA.notifications = [];
         const fullNotif = {
           id: notif.id || ("notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
-          userId: notif.userId || "rep1",
+          userId: notif.userId || "u1790626000001",
           type: notif.type || "system",
           title: notif.title || notif.titleEn || "New Notification",
           message: notif.message || notif.messageEn || "",
@@ -2682,10 +2682,10 @@
     // ==========================================
     activities: {
       getStorageKey(userId) {
-        return `pharma_activities_data_${userId || "rep1"}`;
+        return `pharma_activities_data_${userId || "u1790626000001"}`;
       },
       getAllForUser(userId) {
-        const uid = userId || "rep1";
+        const uid = userId || "u1790626000001";
         if (!window.DEMO_DATA._activitiesByUser) {
           window.DEMO_DATA._activitiesByUser = {};
         }
@@ -2704,7 +2704,7 @@
         return userActivities[dateStr] || {};
       },
       save(userId, dateStr, period, activityData) {
-        const uid = userId || "rep1";
+        const uid = userId || "u1790626000001";
         const userActivities = this.getAllForUser(uid);
         if (!userActivities[dateStr]) {
           userActivities[dateStr] = {};
@@ -2717,7 +2717,7 @@
         return userActivities[dateStr][period];
       },
       delete(userId, dateStr, period) {
-        const uid = userId || "rep1";
+        const uid = userId || "u1790626000001";
         const userActivities = this.getAllForUser(uid);
         if (userActivities[dateStr] && userActivities[dateStr][period]) {
           delete userActivities[dateStr][period];

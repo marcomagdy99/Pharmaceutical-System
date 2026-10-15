@@ -11,22 +11,22 @@ function initProductLinesData() {
   
   if (lines.length === 0) {
     window.store.productLines.save({
-      id: "line1",
+      id: "line_1790626000001",
       name: "Cardio Line",
-      nameAr: "خط الكارديو (Cardio)",
-      lineManagerId: "lm1",
-      lineManagerName: (window.store && window.store.users && window.store.users.getById("lm1") ? window.store.users.getById("lm1").name : "Line Manager"),
+      
+      lineManagerId: "u1790626000012",
+      lineManagerName: (window.store && window.store.users && window.store.users.getById("u1790626000012") ? window.store.users.getById("u1790626000012").name : "Line Manager"),
       products: [
         { id: "prod_1_1_" + Date.now(), name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet", description: "Broad-spectrum antibiotic" },
         { id: "prod_1_2_" + Date.now(), name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops", description: "Vitamin D supplement" }
       ]
     });
     window.store.productLines.save({
-      id: "line2",
+      id: "line_1790626000002",
       name: "Neuro Line",
-      nameAr: "خط النيورو (Neuro)",
-      lineManagerId: "lm2",
-      lineManagerName: (window.store && window.store.users && window.store.users.getById("lm2") ? window.store.users.getById("lm2").name : "Line Manager"),
+      
+      lineManagerId: "u1790626000013",
+      lineManagerName: (window.store && window.store.users && window.store.users.getById("u1790626000013") ? window.store.users.getById("u1790626000013").name : "Line Manager"),
       products: [
         { id: "prod_2_1_" + Date.now(), name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule", description: "Neuropathic pain" }
       ]
@@ -35,12 +35,12 @@ function initProductLinesData() {
     lines.forEach(line => {
       let updated = false;
       if (!line.nameAr) {
-        if (line.id === "line1") { line.nameAr = "خط الكارديو (Cardio)"; updated = true; }
-        else if (line.id === "line2") { line.nameAr = "خط النيورو (Neuro)"; updated = true; }
+        
+        
       }
       if (!line.lineManagerId) {
-        if (line.id === "line1") { line.lineManagerId = "lm1"; updated = true; }
-        else if (line.id === "line2") { line.lineManagerId = "lm2"; updated = true; }
+        if (line.id === "line_1790626000001" || line.id === "line1") { line.lineManagerId = "u1790626000012"; updated = true; }
+        else if (line.id === "line_1790626000002" || line.id === "line2") { line.lineManagerId = "u1790626000013"; updated = true; }
         else {
           const mgr = getLineManager(line);
           if (mgr) { line.lineManagerId = mgr.id; updated = true; }
@@ -184,9 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!isAdmin) {
     if (typeof showToast === "function") {
       showToast(
-        (window.getCurrentLang && window.getCurrentLang() === "ar")
-          ? "غير مصرح: إدارة المنتجات وخطوط الإنتاج مخصصة لمسؤول النظام (الأدمن) فقط."
-          : "Access Denied: Product Lines & Products management is for Admins only.",
+        "Access Denied: Product Lines & Products management is for Admins only.",
         "error"
       );
     }
@@ -391,7 +389,7 @@ function renderProductLines(activeLineId) {
     const manager = getLineManager(line);
     const managerDisplayName = manager
       ? (currentLang === "ar" ? (manager.nameAr || manager.name) : manager.name)
-      : (line.lineManagerName || (currentLang === "ar" ? "غير محدد" : "Unassigned"));
+      : (line.lineManagerName || "Unassigned");
 
     const canManageLine = role === "admin";
     let focusBannerHtml = "";
@@ -404,12 +402,12 @@ function renderProductLines(activeLineId) {
       focusBannerHtml = `
         <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-radius: 10px; border-inline-start: 4px solid #2563eb; background: rgba(37, 99, 235, 0.08);">
           <div>
-            <strong style="color: #1d4ed8;">🎯 ${currentLang === "ar" ? "تركيز الحملة البيعية الحالية:" : "Current Cycle Campaign Focus:"}</strong>
+            <strong style="color: #1d4ed8;">🎯 Current Cycle Campaign Focus:</strong>
             ${targetProdName ? `<span class="badge bg-primary ms-1">📦 ${window.escapeHtml(targetProdName)}</span>` : ""}
             <span class="ms-2" style="font-weight: 500;">${window.escapeHtml(line.cycleCampaignFocus.focusMessage)}</span>
           </div>
           <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')">
-            <i class="bi bi-pencil"></i> ${currentLang === "ar" ? "تعديل التركيز" : "Edit Focus"}
+            <i class="bi bi-pencil"></i> Edit Focus
           </button>
         </div>
       `;
@@ -1025,7 +1023,7 @@ function populateBrickWeightsTable(lineId, productId) {
     const existing = existingWeights.find((w) => w.areaId === area.id);
     const weight = existing ? existing.weight : 0;
     const rep = area.repId ? (window.store.users.getById(area.repId)) : null;
-    const repName = rep ? rep.name : (currentLang === "ar" ? "شاغر" : "Vacant");
+    const repName = rep ? rep.name : "Vacant";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `

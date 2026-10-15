@@ -117,11 +117,7 @@ function renderCoverageReport() {
   const rulesEl = document.getElementById('coverageRulesBox');
   if (rulesEl) {
     const lineTag = lineObj && lineObj.name ? ` (${lineObj.name})` : '';
-    if (lang === 'ar') {
-      rulesEl.innerHTML = `💡 <strong>قواعد التغطية${lineTag}:</strong> أطباء فئة A = ${freqA} زيارات/ربع سنوي | أطباء فئة B = ${freqB} زيارات/ربع سنوي | مستشفيات = 2 زيارة/شهر`;
-    } else {
-      rulesEl.innerHTML = `💡 <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
-    }
+    rulesEl.innerHTML = `💡 <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
   }
 
   // Filter raw doctors list by Doctor Class Filter
@@ -394,7 +390,7 @@ function renderCoverageReportView() {
       summaryTbody.innerHTML = `
         <tr>
           <td colspan="7" style="text-align: center; padding: 24px; color: var(--gray-500); font-style: italic;">
-            ${lang === 'ar' ? 'لا توجد بيانات مطابقة للموظفين المحددين في هذه الفترة.' : 'No employee data matching the selected filter.'}
+            No employee data matching the selected filter.
           </td>
         </tr>
       `;
@@ -410,7 +406,7 @@ function renderCoverageReportView() {
               type="button"
               class="drilldown-btn btn-all ${isCurrentRep && coverageDrilldownState.type === 'all' ? 'active' : ''}"
               onclick="setCoverageDrilldown('all', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
-              title="${lang === 'ar' ? 'عرض كل أطباء هذا المندوب' : 'Show all doctors for this rep'}"
+              title="Show all doctors for this rep"
             >
               ${row.doctorsCount}
             </button>
@@ -420,7 +416,7 @@ function renderCoverageReportView() {
               type="button"
               class="drilldown-btn btn-visited ${isCurrentRep && coverageDrilldownState.type === 'visited' ? 'active' : ''}"
               onclick="setCoverageDrilldown('visited', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
-              title="${lang === 'ar' ? 'عرض الأطباء المزارين فقط' : 'Show visited doctors only'}"
+              title="Show visited doctors only"
             >
               ${row.visitedCount}
             </button>
@@ -430,7 +426,7 @@ function renderCoverageReportView() {
               type="button"
               class="drilldown-btn btn-unvisited ${isCurrentRep && coverageDrilldownState.type === 'unvisited' ? 'active' : ''}"
               onclick="setCoverageDrilldown('unvisited', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
-              title="${lang === 'ar' ? 'عرض الأطباء غير المزارين' : 'Show unvisited doctors only'}"
+              title="Show unvisited doctors only"
             >
               ${row.unvisitedCount}
             </button>
@@ -440,7 +436,7 @@ function renderCoverageReportView() {
               type="button"
               class="drilldown-btn btn-actual ${isCurrentRep && coverageDrilldownState.type === 'actual' ? 'active' : ''}"
               onclick="setCoverageDrilldown('actual', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
-              title="${lang === 'ar' ? 'عرض أطباء الزيارات الفعلية' : 'Show actual visits doctors'}"
+              title="Show actual visits doctors"
             >
               ${row.actualVisitsCount}
             </button>
@@ -461,14 +457,14 @@ function renderCoverageReportView() {
         totalTr.style.background = 'var(--gray-50, #f8f9fa)';
         totalTr.style.borderTop = '2px solid var(--border-color, #e5e7eb)';
         totalTr.innerHTML = `
-          <td style="color: var(--primary);">${lang === 'ar' ? 'الإجمالي' : 'TOTAL'}</td>
-          <td>${lang === 'ar' ? 'كافة المناطق' : 'All Territories'}</td>
+          <td style="color: var(--primary);">TOTAL</td>
+          <td>All Territories</td>
           <td>
             <button
               type="button"
               class="drilldown-btn btn-all ${isTotalActive && coverageDrilldownState.type === 'all' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('all', null, '${lang === 'ar' ? 'الكل' : 'All'}')"
-              title="${lang === 'ar' ? 'عرض كافة الأطباء للجميع' : 'Show all doctors'}"
+              onclick="setCoverageDrilldown('all', null, 'All')"
+              title="Show all doctors"
             >
               ${grandDoctors}
             </button>
@@ -477,8 +473,8 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-visited ${isTotalActive && coverageDrilldownState.type === 'visited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('visited', null, '${lang === 'ar' ? 'الكل' : 'All'}')"
-              title="${lang === 'ar' ? 'عرض كافة الأطباء المزارين' : 'Show all visited doctors'}"
+              onclick="setCoverageDrilldown('visited', null, 'All')"
+              title="Show all visited doctors"
             >
               ${grandVisited}
             </button>
@@ -487,8 +483,8 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-unvisited ${isTotalActive && coverageDrilldownState.type === 'unvisited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('unvisited', null, '${lang === 'ar' ? 'الكل' : 'All'}')"
-              title="${lang === 'ar' ? 'عرض كافة الأطباء غير المزارين' : 'Show all unvisited doctors'}"
+              onclick="setCoverageDrilldown('unvisited', null, 'All')"
+              title="Show all unvisited doctors"
             >
               ${grandUnvisited}
             </button>
@@ -497,8 +493,8 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-actual ${isTotalActive && coverageDrilldownState.type === 'actual' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('actual', null, '${lang === 'ar' ? 'الكل' : 'All'}')"
-              title="${lang === 'ar' ? 'عرض كافة أطباء الزيارات الفعلية' : 'Show all actual visit doctors'}"
+              onclick="setCoverageDrilldown('actual', null, 'All')"
+              title="Show all actual visit doctors"
             >
               ${grandActualVisits}
             </button>
@@ -519,20 +515,18 @@ function renderCoverageReportView() {
       drilldownBar.style.display = 'flex';
       let typeLabel = '';
       if (coverageDrilldownState.type === 'visited') {
-        typeLabel = lang === 'ar' ? 'الأطباء المزارين فقط' : 'Visited Doctors Only';
+        typeLabel = 'Visited Doctors Only';
       } else if (coverageDrilldownState.type === 'unvisited') {
-        typeLabel = lang === 'ar' ? 'الأطباء غير المزارين' : 'Unvisited Doctors Only';
+        typeLabel = 'Unvisited Doctors Only';
       } else if (coverageDrilldownState.type === 'actual') {
-        typeLabel = lang === 'ar' ? 'أطباء الزيارات الفعلية (Actual)' : 'Actual Visits Doctors';
+        typeLabel = 'Actual Visits Doctors';
       } else {
-        typeLabel = lang === 'ar' ? 'كافة الأطباء' : 'All Doctors';
+        typeLabel = 'All Doctors';
       }
 
       const repLabel = coverageDrilldownState.repName ? ` (${coverageDrilldownState.repName})` : '';
       if (drilldownText) {
-        drilldownText.textContent = lang === 'ar'
-          ? `عرض مخصص: ${typeLabel}${repLabel}`
-          : `Filtered View: ${typeLabel}${repLabel}`;
+        drilldownText.textContent = `Filtered View: ${typeLabel}${repLabel}`;
       }
     } else {
       drilldownBar.style.display = 'none';
@@ -565,7 +559,7 @@ function renderCoverageReportView() {
       detailsTbody.innerHTML = `
         <tr>
           <td colspan="6" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-            ${lang === 'ar' ? 'لا توجد أهداف مطابقة لهذا الاختيار المحدد.' : 'No targets match the selected drill-down filter.'}
+            No targets match the selected drill-down filter.
           </td>
         </tr>
       `;
@@ -580,7 +574,7 @@ function renderCoverageReportView() {
           matchingVisits.forEach((v) => {
             const isAct = Boolean(v.isActual) || v.source === 'actual';
             const cardTypeClass = isAct ? 'actual-type' : 'planned-type';
-            const typeLabel = isAct ? (lang === 'ar' ? 'فعلية' : 'Actual') : (lang === 'ar' ? 'خطة' : 'Plan');
+            const typeLabel = isAct ? 'Actual' : 'Plan';
 
             timestampsHtml += `
               <div class="visit-timestamp-card ${cardTypeClass}" title="${isAct ? 'Direct Actual Visit' : 'Planned Visit'}">
@@ -595,13 +589,13 @@ function renderCoverageReportView() {
                 ${(() => {
                   const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
                   const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'));
-                  return `<div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;">📥 ${lang === 'ar' ? 'إدخال:' : 'Ins:'} ${insD} ${insT}</div>`;
+                  return `<div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;">📥 Ins: ${insD} ${insT}</div>`;
                 })()}
               </div>
             `;
           });
         } else {
-          timestampsHtml = `<span style="color: var(--gray-400); font-style: italic; font-size: 0.8rem;">${lang === 'ar' ? 'لا توجد زيارات في هذه الفترة' : 'No visits in this period'}</span>`;
+          timestampsHtml = `<span style="color: var(--gray-400); font-style: italic; font-size: 0.8rem;">No visits in this period</span>`;
         }
 
         const tr = document.createElement('tr');
@@ -653,7 +647,7 @@ function renderCoverageReportView() {
   if (elTarget) elTarget.textContent = totalTargetFreq.toLocaleString();
   if (elTargetsCount) elTargetsCount.textContent = `${coveredTargetsCount} / ${targetList.length}`;
   if (elPeriodSubtext) elPeriodSubtext.textContent = `${startDate} ~ ${endDate}`;
-  if (elTargetsSubtext) elTargetsSubtext.textContent = lang === 'ar' ? 'الأطباء والمستشفيات المزارة' : 'Doctors/Hospitals Visited';
+  if (elTargetsSubtext) elTargetsSubtext.textContent = 'Doctors/Hospitals Visited';
 
   if (typeof window.renderCoverageGaugeChart === 'function') {
     window.renderCoverageGaugeChart('repCoverageGaugeChart', 'repCoverageGaugeLabel', overallCoveragePct);

@@ -78,6 +78,25 @@ const profileTranslations = {
     wfRelocTitle: "6. Clinic GPS Relocation Workflow",
     btnSaveApprovalWorkflows: "Save Approval Sequence Workflows",
     approvalWorkflowsSaved: "Approval sequence workflows updated successfully!",
+    sysMgmtTitle: "System Lifecycle & Data Management",
+    sysMgmtDesc: "Manage system backups, database snapshots, and production launch transitions for organizational onboarding.",
+    backupSectionTitle: "Database Snapshots & Disaster Recovery",
+    backupSectionDesc: "Export a complete JSON archive of all catalog and operational data, or restore from a previous verified snapshot.",
+    exportBackupBtn: "Export Full Database (JSON)",
+    restoreBackupBtn: "Restore Database from Backup",
+    goLiveCardTitle: "Official Production Launch (Go-Live)",
+    goLiveCardDesc: "Transition the system from test/demo mode to real operational production. This will archive test records, prepare a clean slate for the company, and lock the system into active production mode.",
+    launchProdBtn: "Launch Production",
+    goLiveModalTitle: "Production Launch & Clean Slate",
+    goLiveModalSubtitle: "Transition to Live Enterprise Environment",
+    goLiveSafetyNotice: "Automatic Safety Net: A full backup JSON file of all current database records will be automatically downloaded to your computer before any data is cleared.",
+    selectLaunchMode: "Select Launch Transition Mode:",
+    optionKeepTitle: "Option A: Clear Test Records & Keep Company Setup (Recommended)",
+    optionKeepDesc: "Use this if you already configured your real company employees, lines, products, and doctors, and want to wipe only test transactions before going live.",
+    optionBlankTitle: "Option B: Complete Clean Slate for New Company (Blank Canvas)",
+    optionBlankDesc: "Use this when delivering the software to a completely new client who wants to start from 0 records and upload their own rosters.",
+    goLiveWarning: "Permanent Action: Once launched, this button will disappear forever and the system will remain in Active Production mode.",
+    confirmLaunchBtn: "Confirm & Launch Production",
   },
 };
 
@@ -147,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const currentLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
             const msg = (window.translations && window.translations[currentLang]?.photo_updated) ||
-              (currentLang === "ar" ? "تم تحديث الصورة الشخصية بنجاح!" : "Profile photo updated successfully!");
+              "Profile photo updated successfully!";
             if (typeof showToast === "function") showToast(msg, "success");
           };
           img.src = rawDataUrl;
@@ -361,12 +380,12 @@ function loadUserProfile() {
   if (profileEmpBadge) profileEmpBadge.textContent = user.employeeCode || user.code || "REP-001";
 
   const roleLabels = {
-    medical_rep: lang === "ar" ? "مندوب طبي" : "Medical Rep",
-    district_manager: lang === "ar" ? "مدير منطقة" : "District Manager",
-    line_manager: lang === "ar" ? "مدير خط" : "Line Manager",
-    business_unit: lang === "ar" ? "رئيس وحدة الأعمال" : "Business Unit Head",
-    admin: lang === "ar" ? "مدير النظام" : "System Admin",
-    hr: lang === "ar" ? "مسؤول موارد بشرية" : "HR Manager"
+    medical_rep: "Medical Rep",
+    district_manager: "District Manager",
+    line_manager: "Line Manager",
+    business_unit: "Business Unit Head",
+    admin: "System Admin",
+    hr: "HR Manager"
   };
   if (profileRoleBadge) {
     profileRoleBadge.textContent = user.title || roleLabels[user.role] || user.role;
@@ -374,17 +393,17 @@ function loadUserProfile() {
 
   const area = allAreas.find((a) => a.id === user.areaId || a.repId === user.id);
   if (profileAreaBadge) {
-    profileAreaBadge.textContent = area ? `${area.name} (${area.code})` : (lang === "ar" ? "الإدارة العامة" : "Headquarters");
+    profileAreaBadge.textContent = area ? `${area.name} (${area.code})` : "Headquarters";
   }
 
   const line = allLines.find((l) => l.id === user.lineId || (l.products && user.lineIds && user.lineIds.includes(l.id)));
   if (productLineInput) {
-    productLineInput.value = line ? line.name : (lang === "ar" ? "كافة الخطوط" : "All Product Lines");
+    productLineInput.value = line ? line.name : ("All Product Lines");
   }
 
   const manager = allUsers.find((u) => u.id === user.managerId);
   if (managerInput) {
-    const managerName = (lang === "ar" && manager?.nameAr) ? manager.nameAr : (manager ? manager.name : (lang === "ar" ? "الإدارة التنفيذية" : "Executive Management"));
+    const managerName = manager ? manager.name : "Executive Management";
     managerInput.value = managerName;
   }
 
@@ -442,7 +461,7 @@ function loadUserProfile() {
     emergency: userBalance.emergency !== undefined ? Number(userBalance.emergency) : (userBalance.casual !== undefined ? Number(userBalance.casual) : 6),
     unpaid: userBalance.unpaid || 0
   };
-  const daysSuffix = lang === "ar" ? "أيام" : "Days";
+  const daysSuffix = "Days";
 
   const updateLeaveEl = (textId, progId, usedVal, totalVal, badgeHtml = "") => {
     const textEl = document.getElementById(textId);
@@ -457,7 +476,7 @@ function loadUserProfile() {
   };
 
   const rolloverBadge = (rollover && isWithinGrace && rollover.initialCarriedOver > 0)
-    ? ` <span class="badge bg-success-subtle text-success border ms-1" style="font-size:0.75rem; vertical-align:middle;">+${rollover.carriedOver} ${lang === "ar" ? "مرحل" : "Rollover"}</span>`
+    ? ` <span class="badge bg-success-subtle text-success border ms-1" style="font-size:0.75rem; vertical-align:middle;">+${rollover.carriedOver} Rollover</span>`
     : "";
 
   updateLeaveEl("annualLeaveText", "annualLeaveProgress", used.annual, totals.annual, rolloverBadge);
@@ -468,6 +487,17 @@ function loadUserProfile() {
   const unpaidProg = document.getElementById("unpaidLeaveProgress");
   if (unpaidText) unpaidText.innerHTML = `${used.unpaid} <span>${daysSuffix}</span>`;
   if (unpaidProg) unpaidProg.style.width = used.unpaid > 0 ? "100%" : "0%";
+
+  const adminSysCard = document.getElementById("adminSystemManagementCard");
+  if (adminSysCard) {
+    const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : (user && String(user.role).toLowerCase() === "admin");
+    if (isUserAdmin) {
+      adminSysCard.style.display = "block";
+      renderSystemManagementCard();
+    } else {
+      adminSysCard.style.display = "none";
+    }
+  }
 
   const adminCompanyCard = document.getElementById("adminCompanySettingsCard");
   if (adminCompanyCard) {
@@ -532,9 +562,9 @@ function loadUserProfile() {
       const branding = currentSettings.branding || {
         logoUrl: "images/pharma-icon-192.png",
         taglineEn: "Empowering Medical Representatives",
-        taglineAr: "نمكّن المناديب الطبيين",
+        
         descEn: "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
-        descAr: "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+        
         gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
       };
 
@@ -881,16 +911,7 @@ function handleSaveCompanySettings(e) {
   // 1. Visit Backlog Grace Period Change
   const prevBacklog = prevSettings.visitBacklogLimitDays !== undefined ? prevSettings.visitBacklogLimitDays : 2;
   if (prevBacklog !== visitBacklogLimitDays) {
-    const backlogLabelsAr = {
-      0: "نفس اليوم فقط (0 يوم)",
-      1: "يوم واحد (24 ساعة)",
-      2: "يومان (48 ساعة)",
-      3: "3 أيام (72 ساعة)",
-      5: "5 أيام عمل",
-      7: "أسبوع كامل (7 أيام)",
-      14: "أسبوعان (14 يوماً)",
-      30: "شهر كامل (30 يوماً)",
-    };
+    const backlogLabelsAr = {};
     const backlogLabelsEn = {
       0: "Same Day Only (0 Days)",
       1: "1 Day (24 Hours)",
@@ -901,7 +922,7 @@ function handleSaveCompanySettings(e) {
       14: "14 Days (2 Weeks)",
       30: "30 Days (1 Month)",
     };
-    const bAr = backlogLabelsAr[visitBacklogLimitDays] || `${visitBacklogLimitDays} يوم`;
+    
     const bEn = backlogLabelsEn[visitBacklogLimitDays] || `${visitBacklogLimitDays} day(s)`;
 
     broadcastPolicyNotification({
@@ -1009,7 +1030,7 @@ function handleBrandLogoUpload(e) {
 
   if (!file.type.startsWith("image/")) {
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const msg = lang === "ar" ? "يرجى اختيار ملف صورة صالح (PNG, JPG, SVG)." : "Please select a valid image file (PNG, JPG, SVG).";
+    const msg = "Please select a valid image file (PNG, JPG, SVG).";
     if (typeof showToast === "function") showToast(msg, "warning");
     return;
   }
@@ -1047,7 +1068,7 @@ function handleBrandLogoUpload(e) {
       if (previewEl) previewEl.src = optimizedBase64;
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-      const msg = lang === "ar" ? "تم ضبط وتصغير الشعار تلقائياً بنجاح!" : "Logo auto-scaled and optimized successfully!";
+      const msg = "Logo auto-scaled and optimized successfully!";
       if (typeof showToast === "function") showToast(msg, "info");
     };
     img.src = evt.target.result;
@@ -1092,9 +1113,9 @@ function handleSaveBrandingSettings(e) {
   const brandingObj = {
     logoUrl: currentBrandLogoData || "images/pharma-icon-192.png",
     taglineEn: taglineEn || "Empowering Medical Representatives",
-    taglineAr: taglineAr || "نمكّن المناديب الطبيين",
+    
     descEn: descEn || "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
-    descAr: descAr || "قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.",
+    
     gradient: gradient
   };
 
@@ -1125,3 +1146,375 @@ window.handleBrandLogoUpload = handleBrandLogoUpload;
 window.resetBrandLogoToDefault = resetBrandLogoToDefault;
 window.selectGradientPreset = selectGradientPreset;
 window.handleSaveBrandingSettings = handleSaveBrandingSettings;
+
+// =============================================================================
+// System Lifecycle & Data Management Engine (Go-Live & Backup/Restore)
+// =============================================================================
+
+function renderSystemManagementCard() {
+  const bannerEl = document.getElementById("systemStatusBanner");
+  const launchSectionEl = document.getElementById("goLiveLaunchSection");
+  if (!bannerEl) return;
+
+  const currentSettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+
+  const isLaunched = Boolean(currentSettings.isProductionLaunched);
+  const launchDate = currentSettings.productionLaunchDate
+    ? new Date(currentSettings.productionLaunchDate).toLocaleDateString()
+    : "";
+  const isAr = (localStorage.getItem("pharmaLang") || "en") === "ar";
+
+  if (isLaunched) {
+    bannerEl.className = "sys-mgmt-banner sys-mgmt-banner-prod";
+    bannerEl.innerHTML = `
+      <div class="d-flex align-items-center gap-3">
+        <div class="sys-mgmt-icon-prod">
+          🛡️
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <strong class="sys-mgmt-status-title-prod">Active Production Environment (Live)</strong>
+            <span class="badge sys-mgmt-tag-prod">Official Live</span>
+          </div>
+          <small class="text-muted d-block mt-1">
+            Officially launched on: <strong>${launchDate || "Active"}</strong> — Transactional resets are permanently locked.
+          </small>
+        </div>
+      </div>
+      <div>
+        <span class="sys-mgmt-status-pill-prod">
+          <span class="sys-mgmt-dot-prod"></span>
+          Production 100%
+        </span>
+      </div>
+    `;
+
+    // Permanently remove/hide the Go-Live Launch section!
+    if (launchSectionEl) {
+      launchSectionEl.style.display = "none";
+    }
+  } else {
+    bannerEl.className = "sys-mgmt-banner sys-mgmt-banner-demo";
+    bannerEl.innerHTML = `
+      <div class="d-flex align-items-center gap-3">
+        <div class="sys-mgmt-icon-demo">
+          ⚠️
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <strong class="sys-mgmt-status-title-demo">Demo & Staging Environment</strong>
+            <span class="badge sys-mgmt-tag-demo">Pre-Launch</span>
+          </div>
+          <small class="text-muted d-block mt-1">
+            The system is running with test records. Use the Launch button below when ready to go live.
+          </small>
+        </div>
+      </div>
+      <div>
+        <span class="sys-mgmt-status-pill-demo">
+          <span class="sys-mgmt-dot-demo"></span>
+          Demo Mode
+        </span>
+      </div>
+    `;
+
+    // Show the Go-Live Launch section
+    if (launchSectionEl) {
+      launchSectionEl.style.display = "block";
+    }
+  }
+}
+
+window.renderSystemManagementCard = renderSystemManagementCard;
+
+window.exportDatabaseBackup = function () {
+  try {
+    const isAr = (localStorage.getItem("pharmaLang") || "en") === "ar";
+    const masterData = window.DEMO_DATA ? JSON.parse(JSON.stringify(window.DEMO_DATA)) : {};
+    let salesData = [];
+    if (window.store && window.store.distributorSales && typeof window.store.distributorSales.getAll === "function") {
+      salesData = window.store.distributorSales.getAll();
+    } else {
+      salesData = masterData.distributorSales || [];
+    }
+
+    const fullSnapshot = {
+      pharmaCareVersion: "v200",
+      exportedAt: new Date().toISOString(),
+      exportedBy: (window.currentUser && (window.currentUser.email || window.currentUser.name)) || "Admin",
+      masterData: masterData,
+      salesData: salesData,
+    };
+
+    const jsonString = JSON.stringify(fullSnapshot, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json;charset=utf-8;" });
+    const now = new Date();
+    const dateStr = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const filename = `PharmaCare_Database_Backup_${dateStr}.json`;
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    setTimeout(() => {
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(downloadLink.href);
+    }, 150);
+
+    if (typeof showToast === "function") {
+      showToast("Database backup exported successfully!", "success");
+    }
+    return fullSnapshot;
+  } catch (err) {
+    console.error("Backup export error:", err);
+    if (typeof showToast === "function") {
+      showToast("Failed to export database backup: " + (err.message || err), "error");
+    }
+  }
+};
+
+window.handleDatabaseRestore = function (event) {
+  const file = event && event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const isAr = (localStorage.getItem("pharmaLang") || "en") === "ar";
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("Invalid backup JSON format.");
+      }
+
+      // Support both structured snapshots { masterData, salesData } and raw masterData dumps
+      const restoredMaster = parsed.masterData || parsed;
+      const restoredSales = parsed.salesData || restoredMaster.distributorSales || [];
+
+      if (!restoredMaster.users && !restoredMaster.doctors && !restoredMaster.companySettings) {
+        throw new Error("Backup file does not contain recognized PharmaCare database tables.");
+      }
+
+      // Update in-memory DEMO_DATA
+      window.DEMO_DATA = Object.assign(window.DEMO_DATA || {}, restoredMaster);
+      window.DEMO_DATA.distributorSales = restoredSales;
+
+      // Update local storage
+      if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+      if (typeof window.saveSalesDataToStorage === "function") window.saveSalesDataToStorage();
+
+      try {
+        localStorage.setItem("pharma_sales_data", JSON.stringify(restoredSales));
+      } catch (err) {}
+
+      // Sync to cloud
+      if (typeof window.pushLocalToCloud === "function") {
+        try { window.pushLocalToCloud(true); } catch (e) {}
+      }
+      if (typeof window.pushSalesToCloud === "function") {
+        try { window.pushSalesToCloud(true); } catch (e) {}
+      }
+
+      if (typeof showToast === "function") {
+        showToast("Database restored successfully! Refreshing...", "success");
+      }
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
+
+    } catch (err) {
+      console.error("Restore error:", err);
+      if (typeof showToast === "function") {
+        showToast("Failed to restore backup: " + (err.message || err), "error");
+      }
+    } finally {
+      if (event.target) event.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.openGoLiveModal = function () {
+  const modal = document.getElementById("goLiveModal");
+  if (modal) {
+    modal.style.display = "flex";
+    selectGoLiveOption("keep_setup");
+  }
+};
+
+window.closeGoLiveModal = function () {
+  const modal = document.getElementById("goLiveModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+};
+
+window.selectGoLiveOption = function (optionValue) {
+  const radioKeep = document.getElementById("radioKeepSetup");
+  const radioBlank = document.getElementById("radioBlankSlate");
+  const labelKeep = document.getElementById("labelOptionKeep");
+  const labelBlank = document.getElementById("labelOptionBlank");
+
+  if (optionValue === "keep_setup") {
+    if (radioKeep) radioKeep.checked = true;
+    if (radioBlank) radioBlank.checked = false;
+    if (labelKeep) {
+      labelKeep.classList.add("active");
+      labelKeep.style.border = "2px solid #0d6efd";
+    }
+    if (labelBlank) {
+      labelBlank.classList.remove("active");
+      labelBlank.style.border = "2px solid var(--border-color, #e2e8f0)";
+      labelBlank.style.background = "transparent";
+    }
+  } else {
+    if (radioKeep) radioKeep.checked = false;
+    if (radioBlank) radioBlank.checked = true;
+    if (labelBlank) {
+      labelBlank.classList.add("active");
+      labelBlank.style.border = "2px solid #0d6efd";
+    }
+    if (labelKeep) {
+      labelKeep.classList.remove("active");
+      labelKeep.style.border = "2px solid var(--border-color, #e2e8f0)";
+      labelKeep.style.background = "transparent";
+    }
+  }
+};
+
+window.confirmAndExecuteGoLive = async function () {
+  const confirmBtn = document.getElementById("btnConfirmGoLive");
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = `<span>⏳ Processing Go-Live...</span>`;
+  }
+
+  try {
+    const selectedMode = document.querySelector('input[name="goLiveOption"]:checked')?.value || "keep_setup";
+
+    // 1. Mandatory Auto-Backup before doing anything destructive
+    if (typeof window.exportDatabaseBackup === "function") {
+      window.exportDatabaseBackup();
+    }
+
+    // 2. Wipe transactional records
+    if (!window.DEMO_DATA) window.DEMO_DATA = {};
+    window.DEMO_DATA.visits = [];
+    window.DEMO_DATA.leaves = [];
+    window.DEMO_DATA.sales = [];
+    window.DEMO_DATA.notifications = [];
+    window.DEMO_DATA.workflowNotifications = [];
+    window.DEMO_DATA.dailyActivities = [];
+    window.DEMO_DATA.requestExpenses = [];
+    window.DEMO_DATA.requestServices = [];
+    window.DEMO_DATA.accountLocationRequests = [];
+    window.DEMO_DATA.importBatches = [];
+
+    // Wipe distributor sales in memory and storage
+    window.DEMO_DATA.distributorSales = [];
+    try {
+      localStorage.setItem("pharma_sales_data", "[]");
+    } catch (e) {}
+
+    if (selectedMode === "keep_setup") {
+      // Reset each user's leave balance to clean yearly balance
+      if (Array.isArray(window.DEMO_DATA.users)) {
+        window.DEMO_DATA.users.forEach((u) => {
+          u.leaveBalance = {
+            annual: 21,
+            sick: 7,
+            emergency: 6,
+            unpaid: 0,
+            maternity: 90,
+          };
+        });
+      }
+    } else if (selectedMode === "blank_slate") {
+      // White-label fresh start: keep only the Super Admin account
+      const authUser = (window.checkAuth && window.checkAuth()) || window.currentUser || {};
+      let activeAdmin = (Array.isArray(window.DEMO_DATA.users)
+        ? window.DEMO_DATA.users.find((u) => u.id === authUser.id || u.role === "admin")
+        : null);
+      if (!activeAdmin) {
+        activeAdmin = {
+          id: "u1790626000010",
+          name: "System Admin",
+          
+          role: "admin",
+          email: "admin@pharmacare.com",
+          employeeCode: "ADM-001",
+        };
+      }
+      activeAdmin.areaIds = [];
+      activeAdmin.areaId = null;
+      activeAdmin.area = null;
+      activeAdmin.leaveBalance = { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 };
+
+      window.DEMO_DATA.users = [activeAdmin];
+      window.DEMO_DATA.doctors = [];
+      window.DEMO_DATA.pharmacies = [];
+      window.DEMO_DATA.hospitals = [];
+      window.DEMO_DATA.areas = [];
+      window.DEMO_DATA.productLines = [];
+      window.DEMO_DATA.distributors = [];
+      window.DEMO_DATA.bulkWeights = [];
+      window.DEMO_DATA.pharmacyOverrides = [];
+      window.DEMO_DATA.targets = [];
+    }
+
+    // 3. Mark production launch in company settings
+    const currentSettings = (window.store && window.store.companySettings && typeof window.store.companySettings.get === "function")
+      ? window.store.companySettings.get()
+      : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+
+    currentSettings.isProductionLaunched = true;
+    currentSettings.productionLaunchDate = new Date().toISOString();
+    currentSettings.productionLaunchMode = selectedMode;
+
+    if (window.store && window.store.companySettings && typeof window.store.companySettings.update === "function") {
+      window.store.companySettings.update(currentSettings);
+    } else {
+      window.DEMO_DATA.companySettings = currentSettings;
+      try {
+        localStorage.setItem("pharma_company_settings", JSON.stringify(currentSettings));
+      } catch (e) {}
+    }
+
+    // 4. Persist to storage & push to Firebase Firestore Cloud
+    if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+    if (typeof window.saveSalesDataToStorage === "function") window.saveSalesDataToStorage();
+
+    if (typeof window.pushLocalToCloud === "function") {
+      try { window.pushLocalToCloud(true); } catch (e) {}
+    }
+    if (typeof window.pushSalesToCloud === "function") {
+      try { window.pushSalesToCloud(true); } catch (e) {}
+    }
+
+    closeGoLiveModal();
+
+    const isAr = (localStorage.getItem("pharmaLang") || "en") === "ar";
+    if (typeof showToast === "function") {
+      showToast("Congratulations! Production launched successfully!", "success");
+    }
+
+    renderSystemManagementCard();
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+
+  } catch (err) {
+    console.error("Go-Live execution error:", err);
+    if (typeof showToast === "function") {
+      showToast("Production launch failed: " + (err.message || err), "error");
+    }
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = `<span>🚀 Confirm & Launch Production</span>`;
+    }
+  }
+};

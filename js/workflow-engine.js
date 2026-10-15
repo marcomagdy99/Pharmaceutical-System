@@ -193,10 +193,10 @@
 
       return {
         repId: rep ? rep.id : repId || null,
-        dmId: dmUser ? dmUser.id : "dm1",
-        lmId: lmUser ? lmUser.id : "lm1",
-        buId: buUser ? buUser.id : "bu1",
-        pmId: pmUser ? pmUser.id : "pm1",
+        dmId: dmUser ? dmUser.id : "u1790626000014",
+        lmId: lmUser ? lmUser.id : "u1790626000012",
+        buId: buUser ? buUser.id : "u1790626000011",
+        pmId: pmUser ? pmUser.id : "u1790626000018",
         dmUser,
         lmUser,
         buUser,
@@ -285,7 +285,7 @@
       else if (targetStep.role === "lm") approverId = hierarchy.lmId;
       else if (targetStep.role === "bu") approverId = hierarchy.buId;
       else if (targetStep.role === "pm") approverId = hierarchy.pmId;
-      else if (targetStep.role === "gm") approverId = "admin1";
+      else if (targetStep.role === "gm") approverId = "u1790626000010";
 
       return {
         status: targetStep.status,
@@ -320,7 +320,7 @@
       else if (nextStep.role === "lm") approverId = hierarchy.lmId;
       else if (nextStep.role === "bu") approverId = hierarchy.buId;
       else if (nextStep.role === "pm") approverId = hierarchy.pmId;
-      else if (nextStep.role === "gm") approverId = "admin1";
+      else if (nextStep.role === "gm") approverId = "u1790626000010";
 
       return {
         nextStatus: nextStep.status,
@@ -401,23 +401,23 @@
       const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : currentActor;
       const lm = dm && dm.managerId ? allUsers.find((u) => u.id === dm.managerId) : allUsers.find((u) => this.userMatchesTier(u, "lm"));
       const bu = lm && lm.managerId ? allUsers.find((u) => u.id === lm.managerId) : allUsers.find((u) => this.userMatchesTier(u, "bu"));
-      const hr = allUsers.find((u) => this.userMatchesTier(u, "hr")) || { id: "hr1" };
+      const hr = allUsers.find((u) => this.userMatchesTier(u, "hr")) || { id: "u1790626000017" };
 
       const needsBu = (cfg.requireBu === true) || (cfg.requireBuThreshold && amount >= Number(cfg.buThresholdAmount || 10000));
 
       if (currentStatus === "pending_dm") {
         if (cfg.requireLm !== false) {
-          return { nextStatus: "pending_lm", nextApproverId: lm ? lm.id : "lm1" };
+          return { nextStatus: "pending_lm", nextApproverId: lm ? lm.id : "u1790626000012" };
         }
         if (needsBu) {
-          return { nextStatus: "pending_bu", nextApproverId: bu ? bu.id : "bu1" };
+          return { nextStatus: "pending_bu", nextApproverId: bu ? bu.id : "u1790626000011" };
         }
         return { nextStatus: "pending_hr", nextApproverId: hr.id };
       }
 
       if (currentStatus === "pending_lm") {
         if (needsBu) {
-          return { nextStatus: "pending_bu", nextApproverId: bu ? bu.id : "bu1" };
+          return { nextStatus: "pending_bu", nextApproverId: bu ? bu.id : "u1790626000011" };
         }
         return { nextStatus: "pending_hr", nextApproverId: hr.id };
       }

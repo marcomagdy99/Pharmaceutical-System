@@ -77,7 +77,7 @@ function syncReportsData() {
             class: doc.class || 'B',
             specialty: doc.specialty || 'General Practice',
             area: doc.clinicAddress || 'Nasr City',
-            repId: doc.repId || 'rep1',
+            repId: doc.repId || 'u1790626000001',
             targetQuarterly: typeof window.getDoctorCallTarget === 'function'
               ? window.getDoctorCallTarget(doc)
               : (doc.class === 'A' ? 4 : 3)
@@ -94,7 +94,7 @@ function syncReportsData() {
             class: 'hospital',
             specialty: 'Hospital (AM)',
             area: hosp.address || 'Nasr City',
-            repId: hosp.repId || 'rep1',
+            repId: hosp.repId || 'u1790626000001',
             targetQuarterly: 6
           });
         }
@@ -143,7 +143,7 @@ function syncReportsData() {
           period: isPharm ? 'PHARM' : (v.period || 'PM').toUpperCase(),
           status: 'completed',
           isActual: v.source === 'actual' || Boolean(v.isActual),
-          repId: v.repId || 'rep1',
+          repId: v.repId || 'u1790626000001',
           repName: repName,
           comment: v.comment || '',
           productIds: v.productIds || [],
@@ -502,10 +502,7 @@ const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
-const MONTH_NAMES_AR = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-];
+const MONTH_NAMES_AR = MONTH_NAMES;
 window.MONTH_NAMES = MONTH_NAMES;
 window.MONTH_NAMES_AR = MONTH_NAMES_AR;
 
@@ -528,7 +525,7 @@ function populateReportLineFilter(user) {
   const lineSelect = document.getElementById('reportLineFilter');
   if (!lineSelect) return;
 
-  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'admin1' };
+  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
   const isRep = role === 'medical_rep' || role === 'rep';
   const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
@@ -770,7 +767,7 @@ function populateLinesFilter(lineSelect, user = null) {
   const allLinesLabel = 'All Lines (Select All)';
   lineSelect.innerHTML = `<option value="all">${allLinesLabel}</option>`;
   const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [
-    { id: 'line1', name: 'Cardio Line', lineManagerId: 'lm1' }
+    { id: 'line_1790626000001', name: 'Cardio Line', lineManagerId: 'u1790626000012' }
   ];
   const allUsers = getSharedReportUsers();
   let lines = allLines;
@@ -1306,15 +1303,15 @@ function handleDoctorsFileSelected(event) {
           class: docClass,
           address,
           phone,
-          repId: matchedRep ? matchedRep.id : (defaultRepId || 'rep1')
+          repId: matchedRep ? matchedRep.id : (defaultRepId || 'u1790626000001')
         });
       } else {
         invalidCount++;
       }
 
       const statusBadge = isValid
-        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Valid</span>`
-        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Missing Data</span>`;
+        ? `<span class="badge badge-import-valid">Valid</span>`
+        : `<span class="badge badge-import-invalid">Missing Data</span>`;
 
       const repName = matchedRep ? matchedRep.name : 'Auto';
 
@@ -1338,9 +1335,9 @@ function handleDoctorsFileSelected(event) {
     const badgesContainer = document.getElementById('doctorsValidationBadges');
     if (badgesContainer) {
       badgesContainer.innerHTML = `
-        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">Total: ${rows.length}</span>
-        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">Valid: ${validCount}</span>
-        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">Invalid: ${invalidCount}</span>` : ''}
+        <span class="badge badge-import-total">Total: ${rows.length}</span>
+        <span class="badge badge-import-valid-pill">Valid: ${validCount}</span>
+        ${invalidCount > 0 ? `<span class="badge badge-import-invalid-pill">Invalid: ${invalidCount}</span>` : ''}
       `;
     }
 
@@ -1547,15 +1544,15 @@ function handlePharmaciesFileSelected(event) {
           address,
           contactPerson,
           phone,
-          repId: matchedRep ? matchedRep.id : (defaultRepId || 'rep1')
+          repId: matchedRep ? matchedRep.id : (defaultRepId || 'u1790626000001')
         });
       } else {
         invalidCount++;
       }
 
       const statusBadge = isValid
-        ? `<span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Valid</span>`
-        : `<span class="badge" style="background:#ffebee;color:#c62828;font-size:0.75rem;padding:2px 8px;border-radius:10px;">Missing Data</span>`;
+        ? `<span class="badge badge-import-valid">Valid</span>`
+        : `<span class="badge badge-import-invalid">Missing Data</span>`;
 
       const repName = matchedRep ? matchedRep.name : 'Auto';
 
@@ -1578,9 +1575,9 @@ function handlePharmaciesFileSelected(event) {
     const badgesContainer = document.getElementById('pharmaciesValidationBadges');
     if (badgesContainer) {
       badgesContainer.innerHTML = `
-        <span class="badge" style="background:#e3f2fd;color:#1565c0;margin-right:6px;padding:4px 8px;border-radius:6px;">Total: ${rows.length}</span>
-        <span class="badge" style="background:#e8f5e9;color:#2e7d32;margin-right:6px;padding:4px 8px;border-radius:6px;">Valid: ${validCount}</span>
-        ${invalidCount > 0 ? `<span class="badge" style="background:#ffebee;color:#c62828;padding:4px 8px;border-radius:6px;">Invalid: ${invalidCount}</span>` : ''}
+        <span class="badge badge-import-total">Total: ${rows.length}</span>
+        <span class="badge badge-import-valid-pill">Valid: ${validCount}</span>
+        ${invalidCount > 0 ? `<span class="badge badge-import-invalid-pill">Invalid: ${invalidCount}</span>` : ''}
       `;
     }
 

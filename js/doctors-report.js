@@ -49,7 +49,7 @@ function sortBilingualDoctors(a, b) {
 }
 
 function getScopedDoctors(respectActiveFilters = true) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "u1790626000001" };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
 
@@ -323,12 +323,12 @@ function renderDoctorsReport() {
   grid.innerHTML = filtered
     .map((d) => {
       const areaObj = allAreas.find((a) => a.id === d.areaId);
-      const areaName = areaObj ? (areaObj.name || areaObj.id) : (d.area || (lang === "ar" ? "عام" : "General"));
+      const areaName = areaObj ? (areaObj.name || areaObj.id) : (d.area || "General");
       const lineObj = allLines.find((l) => l.id === (areaObj?.lineId || d.lineId));
       const lineName = lineObj ? (lang === "ar" && lineObj.nameAr ? lineObj.nameAr : lineObj.name) : "";
       const effectiveRepId = areaObj ? (areaObj.repId || null) : (d.repId || null);
       const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
-      const repName = repObj ? repObj.name : (lang === "ar" ? "غير مسند" : "Unassigned");
+      const repName = repObj ? repObj.name : "Unassigned";
       const isClassA = d.class === "A";
 
       return `
@@ -353,7 +353,7 @@ function renderDoctorsReport() {
           </div>
           <div class="directory-info-row">
             <span class="info-icon">🏢</span>
-            <span class="info-text">${lang === 'ar' ? 'المنطقة:' : 'Area:'} <strong>${window.escapeHtml(areaName)}</strong></span>
+            <span class="info-text">Area: <strong>${window.escapeHtml(areaName)}</strong></span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">📞</span>
@@ -361,16 +361,16 @@ function renderDoctorsReport() {
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👤</span>
-            <span class="info-text">${lang === 'ar' ? 'المندوب المسؤول:' : 'Rep:'} <strong>${window.escapeHtml(repName)}</strong></span>
+            <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         ${isAdmin ? `
         <div class="directory-card-footer">
           <button class="btn btn-sm btn-outline-primary" onclick="openDoctorModal('${d.id}')">
-            ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
+            ✏️ Edit
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="openDeleteDoctorModal('${d.id}')">
-            🗑️ ${lang === 'ar' ? 'حذف' : 'Delete'}
+            🗑️ Delete
           </button>
         </div>
         ` : ''}
@@ -385,7 +385,7 @@ function openDoctorModal(docId = null) {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: إدارة وتعديل الأطباء للأدمن فقط." : "Permission Denied: Only Admin can manage doctors.", "error");
+      showToast("Permission Denied: Only Admin can manage doctors.", "error");
     }
     return;
   }
@@ -469,7 +469,7 @@ function saveDoctor() {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: إضافة وتعديل الأطباء للأدمن فقط." : "Permission Denied: Only Admin can add/edit doctors.", "error");
+      showToast("Permission Denied: Only Admin can add/edit doctors.", "error");
     }
     return;
   }
@@ -566,7 +566,7 @@ function saveDoctor() {
 
   closeDoctorModal();
   renderDoctorsReport();
-  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حفظ الطبيب بنجاح." : "Doctor saved successfully.", "success");
+  if (typeof showToast === "function") showToast("Doctor saved successfully.", "success");
 }
 
 let doctorToDeleteId = null;
@@ -576,7 +576,7 @@ function openDeleteDoctorModal(docId) {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الأطباء للأدمن فقط." : "Permission Denied: Only Admin can delete doctors.", "error");
+      showToast("Permission Denied: Only Admin can delete doctors.", "error");
     }
     return;
   }
@@ -603,7 +603,7 @@ function confirmDeleteDoctor() {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الأطباء للأدمن فقط." : "Permission Denied: Only Admin can delete doctors.", "error");
+      showToast("Permission Denied: Only Admin can delete doctors.", "error");
     }
     return;
   }
@@ -619,7 +619,7 @@ function confirmDeleteDoctor() {
 
   closeDeleteDoctorModal();
   renderDoctorsReport();
-  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حذف الطبيب بنجاح." : "Doctor deleted successfully.", "info");
+  if (typeof showToast === "function") showToast("Doctor deleted successfully.", "info");
 }
 
 function onDoctorFilterChange() {

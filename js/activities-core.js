@@ -516,17 +516,17 @@
       }
       if (!b) {
         b = {
-          line1: {
+          line_1790626000001: {
             totalBudget: 150000,
-            lmAllocations: { lm1: 90000, lm2: 40000 },
-            dmAllocations: { dm1: 50000, dm2: 30000 },
-            repAllocations: { rep1: 25000, rep2: 20000 }
+            lmAllocations: { u1790626000012: 90000, u1790626000013: 40000 },
+            dmAllocations: { u1790626000014: 50000, u1790626000015: 30000 },
+            repAllocations: { u1790626000001: 25000, u1790626000002: 20000 }
           },
-          line2: {
+          line_1790626000002: {
             totalBudget: 100000,
-            lmAllocations: { lm1: 60000, lm2: 40000 },
-            dmAllocations: { dm3: 40000 },
-            repAllocations: { rep4: 30000 }
+            lmAllocations: { u1790626000012: 60000, u1790626000013: 40000 },
+            dmAllocations: { u1790626000016: 40000 },
+            repAllocations: { u1790626000004: 30000 }
           }
         };
       }
@@ -605,12 +605,12 @@
     }
     if (!u) {
       u = (window.DEMO_DATA && window.DEMO_DATA.currentUser) || {
-        id: "rep1",
+        id: "u1790626000001",
         role: ROLES.REP,
-        name: (window.store && window.store.users && window.store.users.getById("rep1") ? window.store.users.getById("rep1").name : "Medical Rep"),
-        nameAr: (window.store && window.store.users && window.store.users.getById("rep1") ? (window.store.users.getById("rep1").nameAr || window.store.users.getById("rep1").name) : "Medical Rep"),
-        lineIds: ["line1"],
-        areaId: "area1",
+        name: (window.store && window.store.users && window.store.users.getById("u1790626000001") ? window.store.users.getById("u1790626000001").name : "Medical Rep"),
+        nameAr: (window.store && window.store.users && window.store.users.getById("u1790626000001") ? (window.store.users.getById("u1790626000001").nameAr || window.store.users.getById("u1790626000001").name) : "Medical Rep"),
+        lineIds: ["line_1790626000001"],
+        areaId: "area_1790626000001",
       };
     }
 
@@ -749,8 +749,8 @@
       ? window.store.productLines.getAll()
       : null;
     return storeLines || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [
-      { id: "line1", name: "Cardio Line" },
-      { id: "line2", name: "Neuro Line" }
+      { id: "line_1790626000001", name: "Cardio Line" },
+      { id: "line_1790626000002", name: "Neuro Line" }
     ];
   }
 
@@ -814,7 +814,7 @@
     if (rep) {
       if (rep.role === ROLES.DM) {
         dmId = rep.id;
-        lmId = rep.managerId || "lm1";
+        lmId = rep.managerId || "u1790626000012";
       } else if (rep.role === ROLES.LM) {
         dmId = null;
         lmId = rep.id;
@@ -833,7 +833,7 @@
         const dmsInLine = allUsers.filter(u => u.role === ROLES.DM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
         if (dmsInLine.length > 0) {
           dmId = dmsInLine[0].id;
-          lmId = dmsInLine[0].managerId || "lm1";
+          lmId = dmsInLine[0].managerId || "u1790626000012";
         }
       }
     }
@@ -847,9 +847,9 @@
     }
 
     return {
-      repId: repId || (fallbackUserId || "rep1"),
-      dmId: dmId || "dm1",
-      lmId: lmId || "lm1"
+      repId: repId || (fallbackUserId || "u1790626000001"),
+      dmId: dmId || "u1790626000014",
+      lmId: lmId || "u1790626000012"
     };
   }
 

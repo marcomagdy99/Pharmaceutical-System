@@ -3591,4 +3591,384 @@ a.gps-action-map-btn {
     }
 }
 
+/* --- START: Missing Days Report & Import Preview Theme Adapters --- */
+.badge-missing-alert {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+[data-theme="dark"] .badge-missing-alert {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
 
+.badge-missing-full {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+[data-theme="dark"] .badge-missing-full {
+  background: rgba(34, 197, 94, 0.2) !important;
+  color: #86efac !important;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.badge-missing-over {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+[data-theme="dark"] .badge-missing-over {
+  background: rgba(14, 165, 233, 0.2) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(14, 165, 233, 0.4);
+}
+
+.badge-missing-line {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+[data-theme="dark"] .badge-missing-line {
+  background: #232731 !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Missing Days Modal Breakdown Items */
+.missing-day-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  font-size: 0.88rem;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+.missing-day-weekend {
+  background: var(--gray-50);
+}
+[data-theme="dark"] .missing-day-weekend {
+  background: rgba(148, 163, 184, 0.08) !important;
+  color: #94a3b8 !important;
+}
+.missing-day-pm-weekend {
+  background: #f8fafc;
+}
+[data-theme="dark"] .missing-day-pm-weekend {
+  background: rgba(148, 163, 184, 0.1) !important;
+  color: #cbd5e1 !important;
+}
+.missing-day-field {
+  background: #f0fdf4;
+}
+[data-theme="dark"] .missing-day-field {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #86efac !important;
+}
+.missing-day-office {
+  background: #f0f9ff;
+}
+[data-theme="dark"] .missing-day-office {
+  background: rgba(14, 165, 233, 0.12) !important;
+  color: #7dd3fc !important;
+}
+.missing-day-vacation {
+  background: #fffbeb;
+}
+[data-theme="dark"] .missing-day-vacation {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #fcd34d !important;
+}
+.missing-day-upcoming {
+  background: #f8fafc;
+}
+[data-theme="dark"] .missing-day-upcoming {
+  background: rgba(148, 163, 184, 0.08) !important;
+  color: #94a3b8 !important;
+}
+.missing-day-missing {
+  background: #fef2f2;
+}
+[data-theme="dark"] .missing-day-missing {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.missing-day-missing-text {
+  color: #b91c1c;
+  font-weight: bold;
+}
+[data-theme="dark"] .missing-day-missing-text {
+  color: #fca5a5 !important;
+}
+
+.badge-upcoming {
+  background: #e2e8f0;
+  color: #64748b;
+}
+[data-theme="dark"] .badge-upcoming {
+  background: rgba(148, 163, 184, 0.2) !important;
+  color: #cbd5e1 !important;
+}
+
+.badge-pm-weekend {
+  background: #e2e8f0;
+  color: #475569;
+}
+[data-theme="dark"] .badge-pm-weekend {
+  background: rgba(148, 163, 184, 0.2) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Shared Import Preview Badges */
+.badge-import-valid {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+[data-theme="dark"] .badge-import-valid {
+  background: rgba(46, 125, 50, 0.25) !important;
+  color: #81c784 !important;
+  border: 1px solid rgba(46, 125, 50, 0.4);
+}
+
+.badge-import-invalid {
+  background: #ffebee;
+  color: #c62828;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+[data-theme="dark"] .badge-import-invalid {
+  background: rgba(198, 40, 40, 0.25) !important;
+  color: #e57373 !important;
+  border: 1px solid rgba(198, 40, 40, 0.4);
+}
+
+.badge-import-total {
+  background: #e3f2fd;
+  color: #1565c0;
+  margin-right: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+[data-theme="dark"] .badge-import-total {
+  background: rgba(21, 101, 192, 0.25) !important;
+  color: #64b5f6 !important;
+  border: 1px solid rgba(21, 101, 192, 0.4);
+}
+
+.badge-import-valid-pill {
+  background: #e8f5e9;
+  color: #2e7d32;
+  margin-right: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+[data-theme="dark"] .badge-import-valid-pill {
+  background: rgba(46, 125, 50, 0.25) !important;
+  color: #81c784 !important;
+  border: 1px solid rgba(46, 125, 50, 0.4);
+}
+
+.badge-import-invalid-pill {
+  background: #ffebee;
+  color: #c62828;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+[data-theme="dark"] .badge-import-invalid-pill {
+  background: rgba(198, 40, 40, 0.25) !important;
+  color: #e57373 !important;
+  border: 1px solid rgba(198, 40, 40, 0.4);
+}
+/* --- END: Missing Days Report & Import Preview Theme Adapters --- */
+
+
+
+
+
+/* ==========================================================================
+   Timeline Report Semantic Styles (Extracted from js/timeline-report.js)
+   ========================================================================== */
+
+/* --- Timeline Summary Bar Elements --- */
+.timeline-period-label {
+  color: var(--primary, #0d6efd);
+  font-size: 1rem;
+  margin: 0 6px;
+}
+.stat-value.stat-val-primary {
+  color: var(--primary, #0d6efd);
+}
+.stat-value.stat-val-actual {
+  color: #b45309;
+}
+.stat-value.stat-val-planned {
+  color: #0284c7;
+}
+.stat-value.stat-val-activity {
+  color: #6b21a8;
+}
+.legend-dot-mini {
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 3px;
+  display: inline-block;
+  border-radius: 50%;
+}
+.legend-dot.activity {
+  background: #9333ea;
+}
+
+/* --- Timeline Empty Cards --- */
+.timeline-empty-card {
+  text-align: center;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color, #dee2e6);
+  background: var(--surface, #ffffff);
+}
+.timeline-empty-card-sm {
+  padding: 36px 16px;
+}
+.timeline-empty-icon {
+  font-size: 2.5rem;
+  display: block;
+}
+.timeline-empty-icon-sm {
+  font-size: 2.2rem;
+}
+.timeline-empty-title {
+  margin: 10px 0 4px;
+  color: var(--gray-700, #334155);
+  font-weight: 700;
+}
+.timeline-empty-card-sm .timeline-empty-title {
+  margin: 8px 0 4px;
+}
+.timeline-empty-subtitle {
+  color: var(--gray-500, #64748b);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* --- Timeline Event Card Elements --- */
+.timeline-date-label {
+  font-size: 0.8rem;
+  color: var(--gray-500, #64748b);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.timeline-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.timeline-target-title {
+  font-size: 1.05rem;
+}
+.timeline-target-title.is-activity {
+  color: #6b21a8;
+}
+.timeline-activity-desc {
+  font-size: 0.88rem;
+  color: var(--gray-700, #334155);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+.timeline-activity-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: #6b21a8;
+}
+.timeline-activity-notes {
+  color: var(--gray-600, #475569);
+}
+.timeline-activity-rep {
+  font-weight: 500;
+}
+.timeline-visit-details {
+  font-size: 0.85rem;
+  color: var(--gray-600, #475569);
+  margin-bottom: 6px;
+}
+.timeline-entry-timestamp {
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.timeline-ts-insertion {
+  opacity: 0.95;
+  border-inline-start: 1px solid currentColor;
+  padding-inline-start: 10px;
+}
+
+/* --- Dark Mode Overrides --- */
+[data-theme="dark"] .timeline-period-label {
+  color: #60a5fa;
+}
+[data-theme="dark"] .stat-value.stat-val-primary {
+  color: #60a5fa;
+}
+[data-theme="dark"] .stat-value.stat-val-actual {
+  color: #f59e0b;
+}
+[data-theme="dark"] .stat-value.stat-val-planned {
+  color: #38bdf8;
+}
+[data-theme="dark"] .stat-value.stat-val-activity {
+  color: #c084fc;
+}
+[data-theme="dark"] .timeline-empty-card {
+  background: var(--white, #1e2229);
+  border-color: var(--gray-200, #2d3340);
+}
+[data-theme="dark"] .timeline-empty-title {
+  color: #f1f3f5;
+}
+[data-theme="dark"] .timeline-empty-subtitle {
+  color: #94a3b8;
+}
+[data-theme="dark"] .timeline-date-label {
+  color: #94a3b8;
+}
+[data-theme="dark"] .timeline-target-title.is-activity {
+  color: #c084fc;
+}
+[data-theme="dark"] .timeline-activity-desc {
+  color: #cbd5e1;
+}
+[data-theme="dark"] .timeline-activity-type {
+  color: #c084fc;
+}
+[data-theme="dark"] .timeline-activity-notes {
+  color: #94a3b8;
+}
+[data-theme="dark"] .timeline-visit-details {
+  color: #94a3b8;
+}

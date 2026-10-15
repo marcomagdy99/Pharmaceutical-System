@@ -231,8 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "dm1",
-    name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+    id: "u1790626000014",
+    name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     role: "district_manager",
   };
 
@@ -254,8 +254,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("languageChanged", () => {
   const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "dm1",
-    name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+    id: "u1790626000014",
+    name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     role: "district_manager",
   };
 
@@ -319,8 +319,8 @@ function populatePlansLineFilter(currentUser) {
 window.onPlansLineFilterChange = function (selectedLineId) {
   window.selectedPlansLineId = selectedLineId;
   const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "dm1",
-    name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+    id: "u1790626000014",
+    name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     role: "district_manager",
   };
   populateRepFilter(currentUser, selectedLineId);
@@ -455,8 +455,8 @@ function renderPlansReview(currentUser) {
       container.innerHTML = `
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
           <div style="font-size: 3rem; margin-bottom: 12px;">🔍</div>
-          <h4 class="fw-bold rep-title mb-2">${t.noMatchingPlansTitle || (lang === 'ar' ? 'لا توجد خطط معلقة مطابقة لبحثك' : 'No pending plans match your search')}</h4>
-          <p class="text-muted small mb-0">${t.noMatchingPlansDesc || (lang === 'ar' ? 'جرب البحث باسم طبيب أو مندوب آخر أو تعديل الفلاتر.' : 'Try adjusting your search query, rep, or product line filter.')}</p>
+          <h4 class="fw-bold rep-title mb-2">${t.noMatchingPlansTitle || 'No pending plans match your search'}</h4>
+          <p class="text-muted small mb-0">${t.noMatchingPlansDesc || 'Try adjusting your search query, rep, or product line filter.'}</p>
         </div>
       `;
     } else {
@@ -572,7 +572,7 @@ function renderPlansReview(currentUser) {
             <div class="d-flex align-items-center gap-2">
               <span style="font-size: 1.1rem;">📅</span>
               <strong style="font-size: 0.95rem;">${dt.dayName ? dt.dayName + " • " : ""}${dateStr}</strong>
-              <span class="badge plans-count-badge ms-1" style="font-size: 0.78rem;">${dayVisits.length} ${lang === "ar" ? "زيارات" : "visits"}</span>
+              <span class="badge plans-count-badge ms-1" style="font-size: 0.78rem;">${dayVisits.length} visits</span>
             </div>
             ${dayActionsHtml}
           </div>
@@ -582,9 +582,9 @@ function renderPlansReview(currentUser) {
               <thead class="plans-table-head" style="font-size: 0.8rem; text-transform: uppercase;">
                 <tr>
                   <th class="plans-col-doctor">${t.colDoctor}</th>
-                  <th class="plans-col-period">${t.colPeriodOnly || (lang === "ar" ? "الفترة" : "Period")}</th>
+                  <th class="plans-col-period">${t.colPeriodOnly || "Period"}</th>
                   <th class="plans-col-products">${t.colProducts}</th>
-                  <th class="text-end plans-col-actions">${canApproveRep ? t.colActions : (lang === "ar" ? "حالة الاعتماد" : "Status")}</th>
+                  <th class="text-end plans-col-actions">${canApproveRep ? t.colActions : "Status"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -597,13 +597,13 @@ function renderPlansReview(currentUser) {
                     const isHospital =
                       !isPharm && (v.period || "").toLowerCase() === "am";
                     const targetTypeBadge = isPharm
-                      ? `<span class="badge bg-success-subtle text-success fw-bold target-badge" style="font-size: 0.7rem;">${lang === "ar" ? "صيدلية" : "Pharmacy"}</span>`
+                      ? `<span class="badge bg-success-subtle text-success fw-bold target-badge" style="font-size: 0.7rem;">Pharmacy</span>`
                       : isHospital
                         ? `<span class="badge bg-info-subtle text-info fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeHospital}</span>`
                         : `<span class="badge bg-primary-subtle text-primary fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeDoctor}</span>`;
 
                     const periodBadge = isPharm
-                      ? `<span class="badge bg-success-subtle text-success fw-bold px-2 py-1" style="font-size: 0.75rem;">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+                      ? `<span class="badge bg-success-subtle text-success fw-bold px-2 py-1" style="font-size: 0.75rem;">💊 PHARM</span>`
                       : (v.period || "").toLowerCase() === "am"
                         ? `<span class="badge bg-warning-subtle text-warning fw-bold px-2 py-1" style="font-size: 0.75rem;">AM</span>`
                         : `<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1" style="font-size: 0.75rem;">PM</span>`;
@@ -624,7 +624,7 @@ function renderPlansReview(currentUser) {
                       `
                       : `
                         <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1" style="font-size: 0.78rem;">
-                          <i class="bi bi-hourglass-split me-1"></i>${lang === "ar" ? "بانتظار اعتماد الـ DM" : "Pending DM Approval"}
+                          <i class="bi bi-hourglass-split me-1"></i>Pending DM Approval
                         </span>
                       `;
 
@@ -788,7 +788,7 @@ const plansReview = {
 
   filterPlansView() {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
+      id: "u1790626000014",
       role: "district_manager",
     };
     renderPlansReview(currentUser);
@@ -796,8 +796,8 @@ const plansReview = {
 
   accompanyEntireDay(repId, dateStr) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
@@ -812,9 +812,7 @@ const plansReview = {
     );
 
     if (eligibleVisits.length === 0) {
-      const msg = lang === "ar"
-        ? "لا توجد زيارات معلقة أو مجدولة للمرافقة في هذا اليوم."
-        : "No pending or planned visits available for accompaniment on this day.";
+      const msg = "No pending or planned visits available for accompaniment on this day.";
       if (typeof window.showToast === "function") window.showToast(msg, "warning");
       return;
     }
@@ -863,8 +861,8 @@ const plansReview = {
 
   approveEntireDay(repId, dateStr) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
@@ -896,8 +894,8 @@ const plansReview = {
 
   accompanySingleVisit(visitId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     };
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
@@ -906,9 +904,7 @@ const plansReview = {
 
     if (visit.status === "completed") {
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-      const msg = lang === "ar"
-        ? "لا يمكن تعديل زيارة تم إنجازها بالفعل."
-        : "Cannot modify a visit that has already been completed.";
+      const msg = "Cannot modify a visit that has already been completed.";
       if (typeof window.showToast === "function") window.showToast(msg, "warning");
       return;
     }
@@ -945,8 +941,8 @@ const plansReview = {
 
   approveSingleVisit(visitId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     };
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
@@ -961,7 +957,7 @@ const plansReview = {
     saveMasterVisits(visits);
 
     const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === visit.doctorId);
-    const docName = doc ? (doc.nameAr || doc.name) : (visit.doctorName || "زيارة طبية");
+    const docName = doc ? doc.name : (visit.doctorName || "Medical Visit");
     const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
     const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
@@ -990,8 +986,8 @@ const plansReview = {
 
   approveAllForRep(repId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
@@ -1022,13 +1018,13 @@ const plansReview = {
     let dateTextAr = "";
     let dateTextEn = "";
     if (sortedDates.length === 0) {
-      dateTextAr = "الجديدة";
+      // dateText removed
       dateTextEn = "new";
     } else if (sortedDates.length === 1) {
-      dateTextAr = `لتاريخ ${sortedDates[0]}`;
+      // dateText removed
       dateTextEn = `for ${sortedDates[0]}`;
     } else {
-      dateTextAr = `للفترة (${sortedDates[0]} إلى ${sortedDates[sortedDates.length - 1]})`;
+      // dateText removed
       dateTextEn = `for the period (${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]})`;
     }
 
@@ -1054,8 +1050,8 @@ const plansReview = {
 
   approveAllPendingAcrossTeam() {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
     };
     if (!this._ensureCanApprove(currentUser)) return;
     const visits = getMasterVisits();
@@ -1126,7 +1122,7 @@ const plansReview = {
 
   openRejectSingleModal(visitId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
+      id: "u1790626000014",
       role: "district_manager",
     };
     const visits = getMasterVisits();
@@ -1142,7 +1138,7 @@ const plansReview = {
 
   openRejectAllForRep(repId) {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
+      id: "u1790626000014",
       role: "district_manager",
     };
     if (!this._ensureCanApprove(currentUser, repId)) return;
@@ -1161,8 +1157,8 @@ const plansReview = {
 
   confirmRejectPlan() {
     const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "dm1",
-      name: (window.store && window.store.users && window.store.users.getById("dm1") ? window.store.users.getById("dm1").name : "District Manager"),
+      id: "u1790626000014",
+      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
       role: "district_manager",
     };
     const visits = getMasterVisits();

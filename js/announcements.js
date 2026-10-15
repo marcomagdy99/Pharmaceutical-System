@@ -1,120 +1,112 @@
 /* --- START DEMO DATA --- */
 const demoAnnouncements = [
   {
-    id: "ann1",
+    id: "ann_1790626000001",
     title: "Ramadan Working Hours",
-    titleAr: "مواعيد العمل في رمضان",
+    titleAr: "Ramadan Working Hours",
     body: "Please note that working hours during Ramadan will be from 9 AM to 3 PM starting next week. Please plan your visits accordingly and coordinate with your district managers for any schedule changes.",
-    bodyAr:
-      "يرجى العلم أن مواعيد العمل خلال شهر رمضان ستكون من 9 صباحاً حتى 3 عصراً بدءاً من الأسبوع القادم. يرجى تنظيم زياراتكم والتنسيق مع مديري المناطق لأي تغييرات في الجدول.",
+    bodyAr: "Please note that working hours during Ramadan will be from 9 AM to 3 PM starting next week. Please plan your visits accordingly and coordinate with your district managers for any schedule changes.",
     priority: "high",
     target: "all",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-09-01T10:30:00",
-    readBy: ["rep1"],
+    readBy: ["u1790626000001"],
     published: true,
   },
   {
-    id: "ann2",
+    id: "ann_1790626000002",
     title: "Annual Company Event",
-    titleAr: "الحفل السنوي للشركة",
+    titleAr: "Annual Company Event",
     body: "We are excited to announce our annual company event on October 15th at the Four Seasons Hotel, Cairo. All employees and their families are invited! RSVP by September 30th. Dress code: Business casual.",
-    bodyAr:
-      "يسعدنا الإعلان عن الحفل السنوي للشركة يوم 15 أكتوبر في فندق فور سيزونز القاهرة. جميع الموظفين وعائلاتهم مدعوون! يرجى تأكيد الحضور قبل 30 سبتمبر. اللباس: رسمي عصري.",
+    bodyAr: "We are excited to announce our annual company event on October 15th at the Four Seasons Hotel, Cairo. All employees and their families are invited! RSVP by September 30th. Dress code: Business casual.",
     priority: "normal",
     target: "all",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-08-28T14:00:00",
-    readBy: ["rep1", "rep2", "dm1"],
+    readBy: ["u1790626000001", "u1790626000002", "u1790626000014"],
     published: true,
   },
   {
-    id: "ann3",
+    id: "ann_1790626000003",
     title: "New Health Insurance Policy",
-    titleAr: "بوليصة التأمين الصحي الجديدة",
+    titleAr: "New Health Insurance Policy",
     body: "A new health insurance policy has been activated effective September 1st, 2026. Key updates include: expanded coverage for dental care, increased annual limit to 500,000 EGP, and added mental health support. Please review the full details with HR.",
-    bodyAr:
-      "تم تفعيل بوليصة تأمين صحي جديدة اعتباراً من 1 سبتمبر 2026. أهم التحديثات: تغطية موسعة لطب الأسنان، زيادة الحد السنوي إلى 500,000 جنيه، وإضافة دعم الصحة النفسية. يرجى مراجعة التفاصيل الكاملة مع الموارد البشرية.",
+    bodyAr: "A new health insurance policy has been activated effective September 1st, 2026. Key updates include: expanded coverage for dental care, increased annual limit to 500,000 EGP, and added mental health support. Please review the full details with HR.",
     priority: "high",
     target: "all",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-08-25T09:00:00",
     readBy: [],
     published: true,
   },
   {
-    id: "ann4",
+    id: "ann_1790626000004",
     title: "Q3 Sales Incentive Program",
-    titleAr: "برنامج حوافز المبيعات للربع الثالث",
+    titleAr: "Q3 Sales Incentive Program",
     body: "Top performing medical reps in Q3 will receive bonus incentives. Target: 110% achievement. Rewards include cash bonus and all-expenses-paid trip to Sharm El Sheikh.",
-    bodyAr:
-      "سيحصل أفضل المناديب الطبيين في الربع الثالث على حوافز إضافية. الهدف: تحقيق 110%. المكافآت تشمل مكافأة مالية ورحلة مدفوعة بالكامل إلى شرم الشيخ.",
+    bodyAr: "Top performing medical reps in Q3 will receive bonus incentives. Target: 110% achievement. Rewards include cash bonus and all-expenses-paid trip to Sharm El Sheikh.",
     priority: "normal",
     target: "rep",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-08-20T11:30:00",
-    readBy: ["rep1"],
+    readBy: ["u1790626000001"],
     published: true,
   },
   {
-    id: "ann5",
+    id: "ann_1790626000005",
     title: "Quarterly Leadership Alignment Meeting",
-    titleAr: "اجتماع المواءمة القيادية ربع السنوي",
+    titleAr: "Quarterly Leadership Alignment Meeting",
     body: "All District Managers, Line Managers, and Business Unit Heads are required to attend the quarterly leadership review next Tuesday at 11:00 AM.",
-    bodyAr:
-      "يرجى من جميع مديري المناطق ومديري الخطوط ورؤساء القطاعات حضور اجتماع المراجعة القيادية ربع السنوية يوم الثلاثاء القادم الساعة 11:00 صباحاً.",
+    bodyAr: "All District Managers, Line Managers, and Business Unit Heads are required to attend the quarterly leadership review next Tuesday at 11:00 AM.",
     priority: "high",
     target: "dm_lm_bu",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-09-05T09:00:00",
     readBy: [],
     published: true,
   },
   {
-    id: "ann7",
+    id: "ann_1790626000007",
     title: "Territory Quota Planning Session",
-    titleAr: "جلسة تخطيط الحصص البيعية للمناطق",
+    titleAr: "Territory Quota Planning Session",
     body: "Operational quota planning session for Line Managers and Business Unit Heads.",
-    bodyAr:
-      "جلسة تخطيط الحصص البيعية التشغيلية المخصصة لمديري الخطوط ورؤساء القطاعات.",
+    bodyAr: "Operational quota planning session for Line Managers and Business Unit Heads.",
     priority: "normal",
     target: "lm_bu",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-09-05T15:00:00",
     readBy: [],
     published: true,
   },
   {
-    id: "ann6",
+    id: "ann_1790626000006",
     title: "Annual Strategic Budget Briefing",
-    titleAr: "إحاطة الموازنة الاستراتيجية السنوية",
+    titleAr: "Annual Strategic Budget Briefing",
     body: "Confidential financial framework and annual targets briefing exclusively for Business Unit Heads.",
-    bodyAr:
-      "إحاطة الأطر المالية والمستهدفات السنوية السرية المخصصة لرؤساء القطاعات فقط.",
+    bodyAr: "Confidential financial framework and annual targets briefing exclusively for Business Unit Heads.",
     priority: "high",
     target: "bu",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-09-06T12:00:00",
     readBy: [],
     published: true,
   },
   {
-    id: "ann8",
+    id: "ann_1790626000008",
     title: "Internal HR & Administration Operations Review",
-    titleAr: "مراجعة العمليات الداخلية للموارد البشرية والإدارة",
+    titleAr: "Internal HR & Administration Operations Review",
     body: "Confidential internal review on staff contracts, payroll adjustments, and system administrative policies.",
-    bodyAr:
-      "مراجعة داخلية سرية حول عقود الموظفين وتعديلات مسيرات الرواتب والسياسات الإدارية للنظام.",
+    bodyAr: "Confidential internal review on staff contracts, payroll adjustments, and system administrative policies.",
     priority: "high",
     target: "hr_admin",
-    createdBy: "hr1",
+    createdBy: "u1790626000017",
     createdByName: "HR Department",
     createdAt: "2026-09-07T14:00:00",
     readBy: [],
@@ -631,7 +623,7 @@ function renderAnnouncementCard(ann) {
                     <span class="badge badge-target">
                         <i class="fas fa-bullseye"></i> ${targetLabel}
                     </span>
-                    ${!ann.published ? `<span class="badge bg-warning text-dark border border-warning-subtle"><i class="fas fa-file-alt"></i> ${lang === "ar" ? "مسودة" : "Draft"}</span>` : ""}
+                    ${!ann.published ? `<span class="badge bg-warning text-dark border border-warning-subtle"><i class="fas fa-file-alt"></i> Draft</span>` : ""}
                     ${!isRead && !isHR ? `<span class="badge badge-new" data-i18n="new">NEW</span>` : ""}
                 </div>
                 ${
@@ -959,9 +951,7 @@ function handleImageSelect(event) {
   if (!file) return;
 
   if (!file.type.startsWith("image/")) {
-    const msg = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar')
-      ? 'يرجى اختيار ملف صورة صالح.'
-      : 'Please select a valid image file.';
+    const msg = 'Please select a valid image file.';
     if (typeof showToast === 'function') showToast(msg, 'warning');
     else if (typeof window.showToast === 'function') window.showToast(msg, 'warning');
     return;
@@ -1128,10 +1118,10 @@ function saveAnnouncement() {
     targetLineId = lineVal || null;
   }
 
-  if (!title || !titleAr || !body || !bodyAr) {
-    const msg = (typeof getCurrentLang === 'function' && getCurrentLang() === 'ar')
-      ? 'يرجى ملء جميع الحقول المطلوبة.'
-      : 'Please fill all required fields.';
+  const finalTitleAr = titleAr || title;
+  const finalBodyAr = bodyAr || body;
+  if (!title || !body) {
+    const msg = 'Please fill all required fields.';
     if (typeof showToast === 'function') showToast(msg, 'warning');
     else if (typeof window.showToast === 'function') window.showToast(msg, 'warning');
     return;
@@ -1149,9 +1139,9 @@ function saveAnnouncement() {
       announcements[index] = {
         ...existing,
         title,
-        titleAr,
+        titleAr: finalTitleAr,
         body,
-        bodyAr,
+        bodyAr: finalBodyAr,
         priority,
         target,
         targetLineId: isPM ? targetLineId : (targetLineId || null),
@@ -1163,9 +1153,9 @@ function saveAnnouncement() {
     const newAnn = {
       id: "ann" + Date.now(),
       title,
-      titleAr,
+      titleAr: finalTitleAr,
       body,
-      bodyAr,
+      bodyAr: finalBodyAr,
       priority,
       target,
       targetLineId: targetLineId,

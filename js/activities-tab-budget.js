@@ -34,7 +34,7 @@
     const tbody = document.getElementById("buLmAllocationTableBody") || document.getElementById("buLmAllocTableBody");
     if (tbody) {
       if (lmsForLine.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted, var(--gray-500));">${Core.t("noLmsForLine") || "No Line Managers found for this line."}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="budget-empty-cell">${Core.t("noLmsForLine") || "No Line Managers found for this line."}</td></tr>`;
       } else {
         tbody.innerHTML = lmsForLine
           .map((lm) => {
@@ -48,16 +48,16 @@
             return `
               <tr>
                 <td>
-                  <div style="font-weight:700; color:var(--text-color, var(--gray-800));">${Core.escapeHTML(Core.getUserDisplayName(lm.id))}</div>
-                  <small style="color:var(--text-muted, var(--gray-500));">${Core.escapeHTML(lm.email || "")}</small>
+                  <div class="budget-user-name">${Core.escapeHTML(Core.getUserDisplayName(lm.id))}</div>
+                  <small class="budget-user-email">${Core.escapeHTML(lm.email || "")}</small>
                 </td>
-                <td><span class="badge" style="background:var(--surface-dim, var(--gray-100)); color:var(--text-color, var(--gray-700)); font-weight:600;">${Core.escapeHTML(lm.employeeCode || lm.id)}</span></td>
+                <td><span class="badge budget-code-badge">${Core.escapeHTML(lm.employeeCode || lm.id)}</span></td>
                 <td>
-                  <input type="number" class="form-control bu-lm-input" data-lmid="${lm.id}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" style="width:160px; font-weight:700;" />
+                  <input type="number" class="form-control bu-lm-input budget-alloc-input-bu" data-lmid="${lm.id}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" />
                 </td>
-                <td style="font-weight:700; color:var(--text-color, var(--gray-700));">${dmSum.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+                <td class="budget-sum-cell">${dmSum.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
                 <td>
-                  <button type="button" class="btn btn-outline" style="font-size:0.8rem; padding:4px 10px;" onclick="ActivitiesModule.openLmDetailModal('${lm.id}', '${lineId}')">
+                  <button type="button" class="btn btn-outline budget-inspect-btn" onclick="ActivitiesModule.openLmDetailModal('${lm.id}', '${lineId}')">
                     ${Core.t("inspectDms") || "Inspect DMs"}
                   </button>
                 </td>
@@ -98,7 +98,7 @@
   function saveBuBudgetAllocations() {
     Core._state.currentUser = Core.getAuthUser();
     if (!Core.isActionAuthorized("allocate_bu_budget", null, Core._state.currentUser)) {
-      Core.safeShowToast(Core.t("unauthorizedBudgetAction") || "غير مصرح لك بتعديل ميزانية قطاع الأعمال.", "danger");
+      Core.safeShowToast(Core.t("unauthorizedBudgetAction") || "You are not authorized to edit business unit budget.", "danger");
       return;
     }
     const buSelect = document.getElementById("buBudgetLineSelect") || document.getElementById("buProductLineSelect");
@@ -124,7 +124,7 @@
 
     if (total > 0 && totalLmAlloc > total) {
       Core.safeShowToast(
-        Core.t("budgetOverAllocated") || `تحذير: إجمالي مخصصات مديري الخطوط (${totalLmAlloc.toLocaleString()}) يتجاوز الميزانية الكلية للخط (${total.toLocaleString()}).`,
+        Core.t("budgetOverAllocated") || `Warning: Total line manager allocations (${totalLmAlloc.toLocaleString()}) exceed line total budget (${total.toLocaleString()}).`,
         "warning"
       );
     }
@@ -134,7 +134,7 @@
     budgets[lineId].lmAllocations = tempAllocations;
 
     Core.StoreAdapter.saveBudgets(budgets);
-    Core.safeShowToast(Core.t("savedBudgetMessage") || "تم حفظ مخصصات الميزانية بنجاح", "success");
+    Core.safeShowToast(Core.t("savedBudgetMessage") || "Budget allocations saved successfully.", "success");
     renderBudgetTab();
   }
 
@@ -155,7 +155,7 @@
 
     if (dms.length === 0) {
       if (bodyEl) {
-        bodyEl.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted, var(--gray-500)); font-size:14px;">
+        bodyEl.innerHTML = `<div class="budget-modal-empty">
           ${Core.t("noDmsUnderLm") || "No District Managers found under this Line Manager for the selected line."}
         </div>`;
       }
@@ -166,26 +166,26 @@
         const alloc = (lineBudget.dmAllocations && lineBudget.dmAllocations[dm.id]) || 0;
         totalAlloc += alloc;
         rows += `
-          <tr style="border-bottom:1px solid var(--border-color, #e2e8f0);">
-            <td style="padding:10px 12px; font-weight:600; color:var(--text-color, var(--gray-800));">${Core.escapeHTML(Core.getUserDisplayName(dm.id))}</td>
-            <td style="padding:10px 12px;"><span class="badge" style="background:var(--surface-dim, var(--gray-100)); color:var(--text-color, var(--gray-700)); font-weight:600;">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
-            <td style="padding:10px 12px; text-align:end; font-weight:700; color:var(--primary);">${alloc.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+          <tr class="budget-detail-tr">
+            <td class="budget-detail-td-name">${Core.escapeHTML(Core.getUserDisplayName(dm.id))}</td>
+            <td class="budget-detail-td-code"><span class="badge budget-code-badge">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
+            <td class="budget-detail-td-val">${alloc.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
           </tr>
         `;
       });
 
       if (bodyEl) {
         bodyEl.innerHTML = `
-          <div style="margin-bottom:14px; font-size:13px; color:var(--text-muted, var(--gray-600));">
-            ${Core.t("totalDmAllocation") || "Total allocated to DMs"}: <strong style="color:var(--text-color, var(--gray-900));">${totalAlloc.toLocaleString()} ${Core.t("currency") || "EGP"}</strong>
+          <div class="budget-modal-summary">
+            ${Core.t("totalDmAllocation") || "Total allocated to DMs"}: <strong class="budget-modal-total">${totalAlloc.toLocaleString()} ${Core.t("currency") || "EGP"}</strong>
           </div>
           <div class="table-responsive">
-            <table class="table" style="width:100%; border-collapse:collapse;">
+            <table class="table budget-detail-table">
               <thead>
-                <tr style="border-bottom:2px solid var(--border-color, #cbd5e1); text-align:start;">
-                  <th style="padding:8px 12px; font-size:12px; text-transform:uppercase; color:var(--text-muted);">${Core.t("name") || "District Manager"}</th>
-                  <th style="padding:8px 12px; font-size:12px; text-transform:uppercase; color:var(--text-muted);">${Core.t("code") || "Code"}</th>
-                  <th style="padding:8px 12px; font-size:12px; text-transform:uppercase; color:var(--text-muted); text-align:end;">${Core.t("allocation") || "Allocated"}</th>
+                <tr class="budget-detail-tr-head">
+                  <th class="budget-detail-th">${Core.t("name") || "District Manager"}</th>
+                  <th class="budget-detail-th">${Core.t("code") || "Code"}</th>
+                  <th class="budget-detail-th text-end">${Core.t("allocation") || "Allocated"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -229,7 +229,7 @@
     if (!tbody) return;
 
     if (dmsUnderLm.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:var(--text-muted, var(--gray-500));">No District Managers assigned to you in this line.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="budget-empty-cell">No District Managers assigned to you in this line.</td></tr>`;
       return;
     }
 
@@ -242,14 +242,14 @@
         return `
           <tr>
             <td>
-              <div style="font-weight:700; color:var(--text-color, var(--gray-800));">${Core.escapeHTML(Core.getUserDisplayName(dm.id))}</div>
-              <small style="color:var(--text-muted, var(--gray-500));">${Core.escapeHTML(dm.email || "")}</small>
+              <div class="budget-user-name">${Core.escapeHTML(Core.getUserDisplayName(dm.id))}</div>
+              <small class="budget-user-email">${Core.escapeHTML(dm.email || "")}</small>
             </td>
-            <td><span class="badge" style="background:var(--surface-dim, var(--gray-100)); color:var(--text-color, var(--gray-700)); font-weight:600;">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
+            <td><span class="badge budget-code-badge">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
             <td>
-              <input type="number" class="form-control lm-dm-alloc-input" data-dmid="${dm.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateLmAllocationPreview()" style="width:140px; font-weight:700; display:inline-block;" />
+              <input type="number" class="form-control lm-dm-alloc-input budget-alloc-input" data-dmid="${dm.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateLmAllocationPreview()" />
             </td>
-            <td style="font-weight:700; color:var(--text-color, var(--gray-700));">${dmUtilized.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+            <td class="budget-sum-cell">${dmUtilized.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
           </tr>
         `;
       })
@@ -304,7 +304,7 @@
     if (myReps.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="4" style="text-align:center; padding:1.5rem; color:var(--text-muted, var(--gray-500));">
+          <td colspan="4" class="budget-empty-cell">
             ${Core.t("noServicesFound") || "No medical reps found assigned under your district for this product line."}
           </td>
         </tr>
@@ -332,14 +332,14 @@
         return `
           <tr>
             <td>
-              <div style="font-weight:700; color:var(--text-color, var(--gray-800));">${Core.escapeHTML(Core.getUserDisplayName(rep.id))}</div>
-              <small style="color:var(--text-muted, var(--gray-500));">${Core.escapeHTML(rep.email || "")}</small>
+              <div class="budget-user-name">${Core.escapeHTML(Core.getUserDisplayName(rep.id))}</div>
+              <small class="budget-user-email">${Core.escapeHTML(rep.email || "")}</small>
             </td>
-            <td><span class="badge" style="background:var(--surface-dim, var(--gray-100)); color:var(--text-color, var(--gray-700)); font-weight:600;">${Core.escapeHTML(rep.employeeCode || rep.id)}</span></td>
+            <td><span class="badge budget-code-badge">${Core.escapeHTML(rep.employeeCode || rep.id)}</span></td>
             <td>
-              <input type="number" class="form-control dm-rep-alloc-input" data-repid="${rep.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateDmAllocationPreview()" style="width:140px; font-weight:700; display:inline-block;" />
+              <input type="number" class="form-control dm-rep-alloc-input budget-alloc-input" data-repid="${rep.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateDmAllocationPreview()" />
             </td>
-            <td style="font-weight:700; color:var(--text-color, var(--gray-700));">${repUtilized.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+            <td class="budget-sum-cell">${repUtilized.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
           </tr>
         `;
       })
@@ -377,7 +377,7 @@
   function saveDmRepAllocations() {
     Core._state.currentUser = Core.getAuthUser();
     if (!Core.isActionAuthorized("allocate_dm_budget", null, Core._state.currentUser)) {
-      Core.safeShowToast(Core.t("unauthorizedRepBudgetAction") || "غير مصرح لك بتعديل مخصصات المندوبين.", "danger");
+      Core.safeShowToast(Core.t("unauthorizedRepBudgetAction") || "You are not authorized to edit representative allocations.", "danger");
       return;
     }
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
@@ -398,11 +398,11 @@
 
     const myDmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[Core._state.currentUser.id])) || 0;
     if (myDmAlloc > 0 && totalAlloc > myDmAlloc) {
-      Core.safeShowToast(Core.t("insufficientBudgetNotice") || "تحذير: إجمالي المخصص للمندوبين يتجاوز ميزانية المنطقة المتاحة لك.", "warning");
+      Core.safeShowToast(Core.t("insufficientBudgetNotice") || "Warning: Total allocated to reps exceeds your available territory budget.", "warning");
     }
 
     Core.StoreAdapter.saveBudgets(budgets);
-    Core.safeShowToast(Core.t("savedRepBudgetMessage") || "تم حفظ مخصصات المندوبين بنجاح.", "success");
+    Core.safeShowToast(Core.t("savedRepBudgetMessage") || "Rep allocations saved successfully.", "success");
     if (window.ActivitiesServices && window.ActivitiesServices.renderServicesTab) {
       window.ActivitiesServices.renderServicesTab();
     }
@@ -411,7 +411,7 @@
   function saveDmAllocations() {
     Core._state.currentUser = Core.getAuthUser();
     if (!Core.isActionAuthorized("allocate_lm_budget", null, Core._state.currentUser)) {
-      Core.safeShowToast(Core.t("unauthorizedDmBudgetAction") || "غير مصرح لك بتعديل مخصصات مديري المناطق.", "danger");
+      Core.safeShowToast(Core.t("unauthorizedDmBudgetAction") || "You are not authorized to edit district manager allocations.", "danger");
       return;
     }
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
@@ -432,11 +432,11 @@
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
     if (myLmAlloc > 0 && totalAlloc > myLmAlloc) {
-      Core.safeShowToast(Core.t("insufficientBudgetNotice") || "تحذير: إجمالي المخصص لمديري المناطق يتجاوز ميزانية الخط المتاحة لك.", "warning");
+      Core.safeShowToast(Core.t("insufficientBudgetNotice") || "Warning: Total allocated to district managers exceeds your available line budget.", "warning");
     }
 
     Core.StoreAdapter.saveBudgets(budgets);
-    Core.safeShowToast(Core.t("savedDmBudgetMessage") || "تم حفظ مخصصات مديري المناطق بنجاح.", "success");
+    Core.safeShowToast(Core.t("savedDmBudgetMessage") || "District manager allocations saved successfully.", "success");
     if (window.ActivitiesServices && window.ActivitiesServices.renderServicesTab) {
       window.ActivitiesServices.renderServicesTab();
     }

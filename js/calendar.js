@@ -135,7 +135,7 @@ function getDynamicCalendarEvents() {
       const userActKey = `pharma_activities_data_${u.id}`;
       const raw =
         localStorage.getItem(userActKey) ||
-        (u.id === "rep1" ? localStorage.getItem("pharma_activities_data") : null);
+        (u.id === "u1790626000001" ? localStorage.getItem("pharma_activities_data") : null);
       if (raw) {
         try {
           const activities = JSON.parse(raw);
@@ -233,7 +233,7 @@ function getUserHierarchyBreadcrumb(userId, allUsers) {
     const roleInfo = getRoleBadgeInfo(curr.role);
     const name = curr.name || curr.nameAr;
     crumbs.unshift(`${roleInfo.short}: ${name}`);
-    if (!curr.managerId || curr.managerId === "admin1" || curr.role === "admin")
+    if (!curr.managerId || curr.managerId === "u1790626000010" || curr.role === "admin")
       break;
     curr = allUsers.find((u) => u.id === curr.managerId);
   }
@@ -272,7 +272,7 @@ function renderCalendar() {
   const targetId = window.currentCalendarTargetId || "all";
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     role: "admin",
-    id: "admin1",
+    id: "u1790626000010",
   };
 
   const publicHolidays =
@@ -611,7 +611,7 @@ function toggleTreeNode(nodeId, event) {
 }
 
 function selectCalendarTarget(targetId, targetName, targetRole) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "admin", id: "admin1" };
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "admin", id: "u1790626000010" };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isRep = role === "medical_rep" || role === "rep";
 
@@ -691,7 +691,7 @@ function renderOrgTreeNodes(searchTerm = "") {
   const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const currentUser = (window.checkAuth && window.checkAuth()) || {
     role: "admin",
-    id: "admin1",
+    id: "u1790626000010",
   };
   const hasFullOrgAccess =
     currentUser.role === "admin" || currentUser.role === "hr";
@@ -790,7 +790,7 @@ function renderOrgTreeNodes(searchTerm = "") {
 
     if (isInactive) {
       cardStyle = "border: 1px dashed #cbd5e1; background: #fffdf5;";
-      const vacantBadge = `<span class="badge bg-warning text-dark me-1" style="font-size:0.7rem;">[Vacant / شاغر]</span>`;
+      const vacantBadge = `<span class="badge bg-warning text-dark me-1" style="font-size:0.7rem;">[Vacant]</span>`;
       if (userNode.role === "medical_rep") {
         const areaName = userNode.vacantArea || userNode.area || "Territory";
         displayName = `${vacantBadge} Area: ${window.escapeHtml(areaName)}`;
@@ -852,7 +852,7 @@ function renderOrgTreeNodes(searchTerm = "") {
     let topManagers = allUsers.filter(
       (u) =>
         u.role === "business_unit" ||
-        (u.managerId === "admin1" && u.role !== "admin" && u.role !== "hr"),
+        (u.managerId === "u1790626000010" && u.role !== "admin" && u.role !== "hr"),
     );
     if (selectedLineId !== "all") {
       topManagers = topManagers.filter((m) => {
@@ -893,7 +893,7 @@ function populateCalendarLineFilter(user = null) {
   const lineSelect = document.getElementById("calendarLineFilter");
   if (!lineSelect) return;
 
-  const currentUser = user || (window.checkAuth && window.checkAuth()) || { role: "admin", id: "admin1" };
+  const currentUser = user || (window.checkAuth && window.checkAuth()) || { role: "admin", id: "u1790626000010" };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isRep = role === "medical_rep" || role === "rep";
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
@@ -1007,7 +1007,7 @@ function setupManagerFilter(user) {
 function setupCalendar() {
   const user = (window.checkAuth && window.checkAuth()) || {
     role: "admin",
-    id: "admin1",
+    id: "u1790626000010",
   };
   const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
   const isRep = role === "medical_rep" || role === "rep";

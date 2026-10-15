@@ -139,7 +139,7 @@
   };
 
   window.populateGpsTracingFilters = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
@@ -211,7 +211,7 @@
   };
 
   window.onGpsLineChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
@@ -281,7 +281,7 @@
   };
 
   window.onGpsDmChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const lang = "en";
@@ -369,7 +369,7 @@
     }
 
     const lang = "en";
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
 

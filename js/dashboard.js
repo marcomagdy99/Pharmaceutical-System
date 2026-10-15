@@ -318,9 +318,9 @@ window.openDmTeamModal = function (dmId) {
               <div class="dm-team-rep-card">
                 <div class="dm-team-rep-avatar">${initials}</div>
                 <div class="dm-team-rep-info">
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div class="dm-team-rep-header">
                     <div class="dm-team-rep-name">${repName}</div>
-                    <span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"}" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 6px;">
+                    <span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"} dm-team-rep-badge">
                       ${isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
@@ -336,9 +336,9 @@ window.openDmTeamModal = function (dmId) {
           })
           .join("")
       : `
-        <div style="text-align: center; padding: 30px 20px; color: var(--gray-500);">
-          <div style="font-size: 2rem; margin-bottom: 8px;">👥</div>
-          <div style="font-weight: 600;">No representatives assigned under this manager yet</div>
+        <div class="dm-team-empty">
+          <div class="dm-team-empty-icon">👥</div>
+          <div class="dm-team-empty-text">No representatives assigned under this manager yet</div>
         </div>
       `;
 
@@ -355,7 +355,7 @@ window.openDmTeamModal = function (dmId) {
             <span>•</span>
             <span>🏷️ ${dmLineText}</span>
             <span>•</span>
-            <span style="font-weight: 600; color: var(--primary);">${repsCountText}</span>
+            <span class="dm-team-count-highlight">${repsCountText}</span>
           </div>
         </div>
         <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="Close">✕</button>
@@ -364,7 +364,7 @@ window.openDmTeamModal = function (dmId) {
         ${repsHtml}
       </div>
       <div class="dm-team-modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="window.closeDmTeamModal()" style="padding: 6px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;">
+        <button type="button" class="btn btn-secondary dm-team-modal-btn" onclick="window.closeDmTeamModal()">
           Close
         </button>
       </div>
@@ -401,40 +401,40 @@ if (!window._dmTeamModalEscListenerAttached) {
  */
 function renderDashboardChartsMarkup() {
   return `
-    <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px;">
+    <div class="dashboard-card dash-analytics-card">
+      <div class="dash-analytics-header">
         <div>
-          <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
+          <h3 class="card-title dash-analytics-title">
             📊 Interactive Analytics & KPI Trends
           </h3>
-          <small style="color: var(--gray-500); font-size: 0.82rem;">
+          <small class="dash-analytics-subtitle">
             Real-time trends for sales achievement, doctor coverage and category breakdown
           </small>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px;">
-        <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
-          <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+      <div class="dash-charts-grid">
+        <div class="dash-chart-box">
+          <h4 class="dash-chart-title">
             📈 Monthly Sales vs Target Trend
           </h4>
-          <div style="position: relative; height: 250px; width: 100%;">
+          <div class="dash-chart-canvas-wrapper">
             <canvas id="dashSalesTrendChart"></canvas>
           </div>
         </div>
-        <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
-          <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+        <div class="dash-chart-box text-center">
+          <h4 class="dash-chart-title">
             🎯 Doctor Reach Gauge (This Month)
           </h4>
-          <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
+          <div class="dash-gauge-canvas-wrapper">
             <canvas id="dashCoverageGaugeChart"></canvas>
           </div>
-          <div id="dashCoverageGaugeLabel" style="font-weight: 800; font-size: 1.2rem; color: var(--primary); margin-top: -12px;"></div>
+          <div id="dashCoverageGaugeLabel" class="dash-gauge-label"></div>
         </div>
-        <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
-          <h4 style="margin: 0 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+        <div class="dash-chart-box text-center">
+          <h4 class="dash-chart-title">
             🥧 Doctor Classes & Hospitals
           </h4>
-          <div style="position: relative; height: 210px; max-width: 250px; margin: 0 auto;">
+          <div class="dash-gauge-canvas-wrapper">
             <canvas id="dashDoctorClassesChart"></canvas>
           </div>
         </div>
@@ -539,7 +539,7 @@ function getDashboardSalesData() {
 function initDashboardCharts(user) {
   if (typeof window.renderSalesTargetTrendChart !== "function") return;
 
-  const currentUserId = user?.id || "rep1";
+  const currentUserId = user?.id || "u1790626000001";
   const role = (user?.role || "rep").toLowerCase();
   const allSales = getDashboardSalesData();
   const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
@@ -717,22 +717,22 @@ function getActiveCycleCampaignBanner(user, lang) {
       const lineDisplayName = line.name;
 
       return `
-        <div class="cycle-campaign-banner mb-3 shadow-sm" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.12)); border-inline-start: 5px solid #2563eb; border-radius: 12px; padding: 14px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; position: relative;">
-          <div style="display: flex; align-items: flex-start; gap: 14px;">
-            <div style="font-size: 1.8rem; line-height: 1;">🎯</div>
+        <div class="cycle-campaign-banner mb-3 shadow-sm">
+          <div class="d-flex align-items-start gap-3">
+            <div class="cycle-campaign-icon">🎯</div>
             <div>
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span class="badge bg-primary" style="font-size: 0.8rem; font-weight: 700;">${window.escapeHtml(lineDisplayName)}</span>
-                <strong style="color: var(--primary); font-size: 0.95rem;">Current Cycle Campaign Focus</strong>
-                ${prodName ? `<span class="badge bg-success" style="font-size: 0.8rem;">📦 ${window.escapeHtml(prodName)}</span>` : ""}
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-primary fw-bold">${window.escapeHtml(lineDisplayName)}</span>
+                <strong class="cycle-campaign-title">Current Cycle Campaign Focus</strong>
+                ${prodName ? `<span class="badge bg-success">📦 ${window.escapeHtml(prodName)}</span>` : ""}
               </div>
-              <div style="margin-top: 6px; font-size: 0.9rem; color: var(--text-color, #1e293b); font-weight: 500; line-height: 1.5;">
+              <div class="cycle-campaign-msg">
                 ${window.escapeHtml(focus.focusMessage)}
               </div>
-              ${focus.updatedBy ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 4px;">👤 Set by: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
+              ${focus.updatedBy ? `<small class="text-muted cycle-campaign-meta">👤 Set by: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
             </div>
           </div>
-          <button type="button" class="btn-close" style="opacity: 0.6;" onclick="this.closest('.cycle-campaign-banner').remove()" title="Dismiss"></button>
+          <button type="button" class="btn-close opacity-75" onclick="this.closest('.cycle-campaign-banner').remove()" title="Dismiss"></button>
         </div>
       `;
     })
@@ -784,13 +784,13 @@ function renderDashboard() {
   } catch (renderErr) {
     console.error("Dashboard render failed:", renderErr);
     container.innerHTML = `
-      <div class="card" style="padding: 40px 20px; text-align: center; max-width: 480px; margin: 40px auto; border-radius: 16px; border: 1px solid var(--border-color, #e2e8f0); box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: var(--card-bg, #ffffff);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🔄</div>
-        <h3 style="font-weight: 800; margin-bottom: 8px; font-size: 1.2rem; color: var(--text-color, #1e293b);">New App Update Available</h3>
-        <p style="color: var(--text-muted, #64748b); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px;">
+      <div class="card dash-fallback-card">
+        <div class="dash-fallback-icon">🔄</div>
+        <h3 class="dash-fallback-title">New App Update Available</h3>
+        <p class="dash-fallback-msg">
           A new update has been released. Please refresh your browser cache to apply changes.
         </p>
-        <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; border-radius: 10px; cursor: pointer;">
+        <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary dash-fallback-btn">
           ⚡ Refresh & Clear Cache
         </button>
       </div>
@@ -804,7 +804,7 @@ function renderDashboard() {
 function renderRepDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const currentUserId = user?.id || "rep1";
+  const currentUserId = user?.id || "u1790626000001";
 
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
   const allDoctors =
@@ -1022,33 +1022,31 @@ function renderRepDashboard(userName, user) {
       : actualSalesTotal > 0 ? 100 : 0;
 
   const userLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-  const lineNames = userLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const lineNames = userLines.map((l) => l.name).join(", ");
 
   const planSectionTitle =
     activeTab === "overdue"
-      ? (lang === "ar" ? "الزيارات المستحقة السابقة" : "Overdue Visits")
+      ? "Overdue Visits"
       : activeTab === "tomorrow"
-      ? (lang === "ar" ? "خطة زيارات الغد" : "Tomorrow's Plan")
+      ? "Tomorrow's Plan"
       : activeTab === "upcoming"
-      ? (lang === "ar" ? "الزيارات القادمة المخططة" : "Upcoming Visits")
+      ? "Upcoming Visits"
       : activeTab === "all"
-      ? (lang === "ar" ? "كل الزيارات المخططة النشطة" : "All Active Planned Visits")
+      ? "All Active Planned Visits"
       : activeTab === "date"
-      ? (lang === "ar" ? `خطة يوم: ${window.currentRepPlanDate}` : `Plan for: ${window.currentRepPlanDate}`)
+      ? `Plan for: ${window.currentRepPlanDate}`
       : t.todays_plan;
 
   const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
     ? window.getPlannedVisitExpiryDays()
     : 7;
-  const planExpiryNote = lang === "ar"
-    ? `تنتهي الصلاحية تلقائياً بعد ${expiryDays} ${expiryDays === 1 ? "يوم" : (expiryDays === 2 ? "يومين" : (expiryDays <= 10 ? "أيام" : "يوماً"))} إذا لم تُنفذ`
-    : `Auto-expires after ${expiryDays} day${expiryDays > 1 ? "s" : ""} if not executed`;
+  const planExpiryNote = `Auto-expires after ${expiryDays} day${expiryDays > 1 ? "s" : ""} if not executed`;
 
   return `
     <div class="flex-col">
       <div class="welcome-banner rep">
-        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "المندوب الطبي" : "Medical Representative"} ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "المندوب الطبي" : "Medical Representative")}</div>
+        <h2 class="welcome-title">${t.welcome_back}, Medical Representative ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || "Medical Representative"}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -1057,63 +1055,63 @@ function renderRepDashboard(userName, user) {
           <div class="stat-card">
             <div class="stat-label">${t.total_doctors}</div>
             <div class="stat-value primary counter" data-target="${totalDoctorsCount}">${totalDoctorsCount}</div>
-            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${lang === "ar" ? "أطباء اللستة المسندين" : "Assigned Doctor List"}
+            <div class="stat-subtext">
+              Assigned Doctor List
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${lang === "ar" ? `زيارات العيادات (PM - ${quarterLabel})` : `Clinics (PM - ${quarterLabel})`}</div>
+            <div class="stat-label">Clinics (PM - ${quarterLabel})</div>
             <div class="stat-value success">
               <span class="counter" data-target="${quarterCompletedVisitsPM.length}">${quarterCompletedVisitsPM.length}</span>
-              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${quarterlyVisitTargetPM}</span>
+              <span class="stat-target-ratio"> / ${quarterlyVisitTargetPM}</span>
             </div>
-            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${lang === "ar" ? `مستهدف الزيارات / الربع (${totalDoctorsCount} أطباء)` : `Target Visits / Quarter (${totalDoctorsCount} Doctors)`}
+            <div class="stat-subtext">
+              Target Visits / Quarter (${totalDoctorsCount} Doctors)
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${lang === "ar" ? `زيارات المستشفيات (AM - ${quarterLabel})` : `Hospitals (AM - ${quarterLabel})`}</div>
-            <div class="stat-value info" style="color: var(--primary, #2563eb);">
+            <div class="stat-label">Hospitals (AM - ${quarterLabel})</div>
+            <div class="stat-value info">
               <span class="counter" data-target="${quarterCompletedVisitsAM.length}">${quarterCompletedVisitsAM.length}</span>
-              <span style="font-size: 0.9rem; color: var(--gray-500); font-weight: 600;"> / ${quarterlyVisitTargetAM}</span>
+              <span class="stat-target-ratio"> / ${quarterlyVisitTargetAM}</span>
             </div>
-            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${lang === "ar" ? `مستهدف الزيارات / الربع (${totalHospitalsCount} مستشفيات)` : `Target Visits / Quarter (${totalHospitalsCount} Hospitals)`}
+            <div class="stat-subtext">
+              Target Visits / Quarter (${totalHospitalsCount} Hospitals)
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">${lang === "ar" ? "الأطباء الذين تم زيارتهم (هذا الشهر)" : "Doctors Visited (This Month)"}</div>
+            <div class="stat-label">Doctors Visited (This Month)</div>
             <div class="stat-value success">
               <span class="counter" data-target="${coveredDoctorsCount}">${coveredDoctorsCount}</span>
-              <span style="font-size: 0.95rem; color: var(--gray-500); font-weight: 600;"> / ${totalDoctorsCount}</span>
+              <span class="stat-target-ratio"> / ${totalDoctorsCount}</span>
             </div>
-            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${lang === "ar" ? `نسبة الوصول: ${overallCoveragePct}%` : `Reach: ${overallCoveragePct}%`} • ${lang === "ar" ? `${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} متبقي` : `${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} Left`}
+            <div class="stat-subtext">
+              Reach: ${overallCoveragePct}% • ${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} Left
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-label">${t.sales_achievement || "Sales Target %"}</div>
             <div class="stat-value warning"><span class="counter" data-target="${salesAchievementPct}">${salesAchievementPct}</span>%</div>
-            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+            <div class="stat-subtext">
               ${actualSalesTotal > 0 ? `${actualSalesTotal.toLocaleString()} / ${targetSalesTotal.toLocaleString()} EGP` : "0 EGP"}
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-label">${t.active_planned}</div>
             <div class="stat-value danger counter" data-target="${allRepPlannedVisits.length}">${allRepPlannedVisits.length}</div>
-            <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
-              ${todayPlanned.length} ${lang === "ar" ? "اليوم" : "Today"}${overduePlanned.length > 0 ? ` • ${overduePlanned.length} ${lang === "ar" ? "مستحقة سابقة" : "Overdue"}` : ""} • ${upcomingPlanned.length} ${lang === "ar" ? "قادمة" : "Upcoming"}
+            <div class="stat-subtext">
+              ${todayPlanned.length} Today${overduePlanned.length > 0 ? ` • ${overduePlanned.length} Overdue` : ""} • ${upcomingPlanned.length} Upcoming
             </div>
           </div>
         </div>
 
         <div class="dashboard-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
+          <div class="plan-section-header">
             <div>
-              <h3 class="card-title" style="margin: 0; font-weight: 700;">${planSectionTitle}</h3>
-              <small style="color: var(--gray-500); font-size: 0.8rem;">⏰ ${planExpiryNote}</small>
+              <h3 class="card-title plan-section-title">${planSectionTitle}</h3>
+              <small class="plan-expiry-note">⏰ ${planExpiryNote}</small>
             </div>
-            <a href="visits.html" class="btn btn-sm btn-primary" style="padding: 6px 14px; text-decoration: none; border-radius: 8px;">
+            <a href="visits.html" class="btn btn-sm btn-primary btn-plan-new">
               + ${t.new_visit}
             </a>
           </div>
@@ -1124,8 +1122,8 @@ function renderRepDashboard(userName, user) {
                 📅 ${t.filter_today} <span class="badge">${todayPlanned.length}</span>
               </button>
               ${overduePlanned.length > 0 ? `
-              <button type="button" class="rep-plan-tab-btn ${activeTab === 'overdue' ? 'active' : ''}" onclick="switchRepPlanTab('overdue')" style="${activeTab === 'overdue' ? 'background: #dc3545; color: white;' : 'color: #dc3545; border-color: rgba(220,53,69,0.3);'}">
-                ⚠️ ${lang === 'ar' ? 'مستحقة سابقة' : 'Overdue'} <span class="badge" style="${activeTab === 'overdue' ? 'background: rgba(255,255,255,0.25); color: white;' : 'background: rgba(220,53,69,0.12); color: #dc3545;'}">${overduePlanned.length}</span>
+              <button type="button" class="rep-plan-tab-btn tab-btn-overdue ${activeTab === 'overdue' ? 'active' : ''}" onclick="switchRepPlanTab('overdue')">
+                ⚠️ Overdue <span class="badge badge-overdue">${overduePlanned.length}</span>
               </button>` : ''}
               <button type="button" class="rep-plan-tab-btn ${activeTab === 'tomorrow' ? 'active' : ''}" onclick="switchRepPlanTab('tomorrow')">
                 🌅 ${t.filter_tomorrow} <span class="badge">${tomorrowPlanned.length}</span>
@@ -1160,23 +1158,23 @@ function renderRepDashboard(userName, user) {
                         <strong class="planned-target-name">${window.escapeHtml(h.doctorName || h.targetName || "Hospital")}</strong>
                         <div class="planned-target-date">
                           <span class="date-icon">📅</span> ${h.date} ${h.time ? `• ⏰ ${h.time}` : ""}
-                          ${h.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : (h.date === tomorrowStr ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (h.date > todayStr ? `<span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
-                          ${h.visitType === "double" ? `<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+                          ${h.date === todayStr ? `<span class="badge badge-plan-today">Today</span>` : (h.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">Tomorrow</span>` : (h.date > todayStr ? `<span class="badge badge-plan-upcoming">Upcoming</span>` : `<span class="badge badge-plan-overdue">Overdue</span>`))}
+                          ${h.visitType === "double" ? `<span class="badge badge-plan-double">🤝 Double</span>` : ""}
                         </div>
                       </div>
-                      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                      <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button class="btn-convert-action" onclick="openCompletePlanModal('${h.id}', false)">
                           ✓ ${t.convert_to_actual}
                         </button>
-                        <button type="button" class="btn-reschedule-action" onclick="openRescheduleModal('${h.id}')" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
-                          🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
+                        <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${h.id}')" title="Reschedule or Missed Call">
+                          🗓️ Reschedule
                         </button>
                       </div>
                     </div>
                   `,
                         )
                         .join("")
-                    : `<p style="color: var(--gray-600); margin: 0; font-style: italic; font-size: 0.85rem;">${t.no_planned_visits}</p>`
+                    : `<p class="plan-empty-text">${t.no_planned_visits}</p>`
                 }
               </div>
             </div>
@@ -1197,23 +1195,23 @@ function renderRepDashboard(userName, user) {
                         <strong class="planned-target-name">${window.escapeHtml(d.doctorName || d.targetName || "Doctor")}</strong>
                         <div class="planned-target-date">
                           <span class="date-icon">📅</span> ${d.date} ${d.time ? `• ⏰ ${d.time}` : ""}
-                          ${d.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : (d.date === tomorrowStr ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (d.date > todayStr ? `<span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
-                          ${d.visitType === "double" ? `<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+                          ${d.date === todayStr ? `<span class="badge badge-plan-today">Today</span>` : (d.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">Tomorrow</span>` : (d.date > todayStr ? `<span class="badge badge-plan-upcoming">Upcoming</span>` : `<span class="badge badge-plan-overdue">Overdue</span>`))}
+                          ${d.visitType === "double" ? `<span class="badge badge-plan-double">🤝 Double</span>` : ""}
                         </div>
                       </div>
-                      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                      <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button class="btn-convert-action" onclick="openCompletePlanModal('${d.id}', false)">
                           ✓ ${t.convert_to_actual}
                         </button>
-                        <button type="button" class="btn-reschedule-action" onclick="openRescheduleModal('${d.id}')" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
-                          🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
+                        <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${d.id}')" title="Reschedule or Missed Call">
+                          🗓️ Reschedule
                         </button>
                       </div>
                     </div>
                   `,
                         )
                         .join("")
-                    : `<p style="color: var(--gray-600); margin: 0; font-style: italic; font-size: 0.85rem;">${t.no_planned_visits}</p>`
+                    : `<p class="plan-empty-text">${t.no_planned_visits}</p>`
                 }
               </div>
             </div>
@@ -1233,17 +1231,17 @@ function renderRepDashboard(userName, user) {
                       <strong class="planned-target-name">${window.escapeHtml(p.doctorName || p.targetName || "Pharmacy")}</strong>
                       <div class="planned-target-date">
                         <span class="date-icon">📅</span> ${p.date} ${p.time ? `• ⏰ ${p.time}` : ""}
-                        ${p.date === todayStr ? `<span class="badge" style="background: rgba(13, 110, 253, 0.12); color: #0d6efd; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "اليوم" : "Today"}</span>` : (p.date === tomorrowStr ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (p.date > todayStr ? `<span class="badge" style="background: rgba(99, 102, 241, 0.12); color: #4f46e5; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge" style="background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
-                        ${p.visitType === "double" ? `<span class="badge" style="background: rgba(111, 66, 193, 0.12); color: #6f42c1; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-inline-start: 4px;">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+                        ${p.date === todayStr ? `<span class="badge badge-plan-today">Today</span>` : (p.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">Tomorrow</span>` : (p.date > todayStr ? `<span class="badge badge-plan-upcoming">Upcoming</span>` : `<span class="badge badge-plan-overdue">Overdue</span>`))}
+                        ${p.visitType === "double" ? `<span class="badge badge-plan-double">🤝 Double</span>` : ""}
                       </div>
                     </div>
-                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
                       <button class="btn-convert-action" onclick="openCompletePlanModal('${p.id}', false)">
                         ✓ ${t.convert_to_actual}
                       </button>
-                      <button type="button" class="btn-reschedule-action" onclick="openRescheduleModal('${p.id}')" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
-                        🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
-                      </button>
+                      <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${p.id}')" title="Reschedule or Missed Call">
+                          🗓️ Reschedule
+                        </button>
                     </div>
                   </div>
                 `,
@@ -1257,17 +1255,17 @@ function renderRepDashboard(userName, user) {
 
         <div class="dashboard-card">
           <div class="table-header-row">
-            <h3 style="margin: 0; font-weight: 700;">${t.recent_visits}</h3>
-            <a href="visits.html" class="action-btn primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;">${t.view_all_visits}</a>
+            <h3 class="table-header-title">${t.recent_visits}</h3>
+            <a href="visits.html" class="action-btn primary">${t.view_all_visits}</a>
           </div>
           <div class="table-container">
-            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <table class="data-table">
               <thead>
-                <tr style="border-bottom: 2px solid var(--gray-200);">
-                  <th style="padding: 10px;">${t.target_doctor}</th>
-                  <th style="padding: 10px;">${t.date_time}</th>
-                  <th style="padding: 10px;">${t.entry_type}</th>
-                  <th style="padding: 10px;">${t.status}</th>
+                <tr>
+                  <th>${t.target_doctor}</th>
+                  <th>${t.date_time}</th>
+                  <th>${t.entry_type}</th>
+                  <th>${t.status}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1280,27 +1278,28 @@ function renderRepDashboard(userName, user) {
                         : { dayName: "", time: v.time || "10:00" };
                     return `
                   <tr>
-                    <td style="padding: 10px; font-weight: 600;">${window.escapeHtml(v.doctorName || v.targetName)}</td>
-                    <td style="padding: 10px; color: var(--gray-700);">
-                      <div style="font-weight: 700; color: var(--primary); font-size: 0.82rem; white-space: nowrap;">${dt.dayName}</div>
-                      <div style="font-weight: 600; font-size: 0.8rem; white-space: nowrap;">📅 ${v.date}</div>
-                      <div style="font-size: 0.75rem; color: var(--gray-500); font-weight: 600; white-space: nowrap;">⏰ ${dt.time}</div>
+                    <td class="cell-doctor-name">${window.escapeHtml(v.doctorName || v.targetName)}</td>
+                    <td class="cell-date-time">
+                      <div class="dt-day-name">${dt.dayName}</div>
+                      <div class="dt-date-line">📅 ${v.date}</div>
+                      <div class="dt-time-line">⏰ ${dt.time}</div>
                       ${(() => {
                         const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
                         const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00"));
-                        return `<div style="font-size: 0.72rem; color: #0d6efd; font-weight: 600; white-space: nowrap; margin-top: 3px;" title="Insertion Date & Time">📥 ${lang === 'ar' ? 'إدخال:' : 'Ins:'} ${insD} ${insT}</div>`;
+                        return `<div class="dt-ins-line" title="Insertion Date & Time">📥 Ins: ${insD} ${insT}</div>`;
                       })()}
                     </td>
-                    <td style="padding: 10px;">
+                    <td>
                       <span class="entry-type-badge ${v.source === "actual" ? "actual" : "plan"}">
                         ${v.source === "actual" ? t.direct_actual : t.from_plan}
                       </span>
                       ${v.visitType === "double" ? `<div class="double-companion-tag">[Double: ${v.doubleWithUserName || "Companion"}]</div>` : ""}
                     </td>
-                    <td style="padding: 10px;">
+                    <td>
                       <span class="status-badge completed">
                         ${t.completed}
                       </span>
+                      ${typeof window.renderOfflineBadge === "function" ? window.renderOfflineBadge(v) : ""}
                     </td>
                   </tr>
                 `;
@@ -1349,47 +1348,45 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
   const displayVisits = filterMode === "today" ? filtered : filtered.slice(0, 15);
 
   return `
-    <div class="dashboard-card" style="margin-bottom: 20px; border-inline-start: 4px solid var(--info, #0284c7);">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+    <div class="dashboard-card dm-followup-card">
+      <div class="dm-followup-header">
         <div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.3rem;">📡</span>
-            <h3 class="card-title" style="margin: 0; font-weight: 800; font-size: 1.15rem;">
-              ${lang === "ar" ? "المتابعة الحية لزيارات الفريق (Live Follow-up Feed)" : "Team Live Follow-up Feed"}
+          <div class="dm-followup-title-wrap">
+            <span class="dm-followup-icon">📡</span>
+            <h3 class="card-title dm-followup-title">
+              Team Live Follow-up Feed
             </h3>
-            <span class="badge" style="background: rgba(2, 132, 199, 0.12); color: #0284c7; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;">
-              ${displayVisits.length} ${lang === "ar" ? "زيارة معروضة" : "visits shown"}
+            <span class="badge badge-feed-count">
+              ${displayVisits.length} visits shown
             </span>
           </div>
-          <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--gray-600, #64748b);">
-            ${lang === "ar"
-              ? "متابعة فورية لحظة بلحظة للزيارات المنفذة بواسطة مناديب منطقتك وملاحظاتهم الميدانية على الدكاترة والصيدليات."
-              : "Real-time feed of completed visits and field notes logged by your medical reps across territories."}
+          <p class="text-muted small mt-1 mb-0">
+            Real-time feed of completed visits and field notes logged by your medical reps across territories.
           </p>
         </div>
 
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <button type="button" class="btn btn-sm ${filterMode === "all" ? "btn-primary" : "btn-outline"}" style="border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 5px 12px;" onclick="window.switchDmFollowUpFilter('all')">
-            ⏱️ ${lang === "ar" ? `آخر 15 زيارة (${teamCompleted.length})` : `Latest 15 Visits (${teamCompleted.length})`}
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <button type="button" class="btn btn-sm ${filterMode === "all" ? "btn-primary" : "btn-outline"} feed-filter-btn" onclick="window.switchDmFollowUpFilter('all')">
+            ⏱️ Latest 15 Visits (${teamCompleted.length})
           </button>
-          <button type="button" class="btn btn-sm ${filterMode === "today" ? "btn-primary" : "btn-outline"}" style="border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 5px 12px;" onclick="window.switchDmFollowUpFilter('today')">
-            📅 ${lang === "ar" ? `زيارات اليوم (${todayCount})` : `Today's Visits (${todayCount})`}
+          <button type="button" class="btn btn-sm ${filterMode === "today" ? "btn-primary" : "btn-outline"} feed-filter-btn" onclick="window.switchDmFollowUpFilter('today')">
+            📅 Today's Visits (${todayCount})
           </button>
-          <a href="visits.html" class="btn btn-sm btn-outline" style="border-radius: 8px; font-size: 0.8rem; font-weight: 600; padding: 5px 12px; text-decoration: none;">
-            🔍 ${lang === "ar" ? "سجل الزيارات الكامل" : "All Visits"}
+          <a href="visits.html" class="btn btn-sm btn-outline feed-filter-btn">
+            🔍 All Visits
           </a>
         </div>
       </div>
 
-      <div class="table-container" style="overflow-x: auto;">
-        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+      <div class="table-container">
+        <table class="data-table">
           <thead>
-            <tr style="border-bottom: 2px solid var(--gray-200); background: var(--gray-50, #f8fafc);">
-              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "الوقت والتاريخ" : "Time & Date"}</th>
-              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "المندوب والمنطقة" : "Rep & Territory"}</th>
-              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "العميل المستهدف" : "Target Account"}</th>
-              <th style="padding: 10px 12px; font-size: 0.82rem;">${lang === "ar" ? "المنتجات المشروحة" : "Promoted Products"}</th>
-              <th style="padding: 10px 12px; font-size: 0.82rem; min-width: 240px;">${lang === "ar" ? "ملاحظات وتغذية راجعة (Feedback / Notes)" : "Rep Feedback / Notes"}</th>
+            <tr>
+              <th class="feed-th-cell">Time & Date</th>
+              <th class="feed-th-cell">Rep & Territory</th>
+              <th class="feed-th-cell">Target Account</th>
+              <th class="feed-th-cell">Promoted Products</th>
+              <th class="feed-th-cell feed-th-notes">Rep Feedback / Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -1398,7 +1395,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                 ? displayVisits
                     .map((v) => {
                       const rep = (myReps || []).find((r) => r.id === v.repId) || allUsers.find((u) => u.id === v.repId);
-                      const repName = rep ? rep.name : (v.repName || (lang === "ar" ? "مندوب" : "Rep"));
+                      const repName = rep ? rep.name : (v.repName || "Rep");
                       const repTerritory = v.area || (rep ? (rep.territory || rep.area) : "") || "-";
 
                       const isPharm =
@@ -1410,79 +1407,79 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                         !isPharm &&
                         (v.targetType === "hospital" ||
                           (v.doctorName || "").toLowerCase().includes("hospital") ||
-                          (v.doctorName || "").toLowerCase().includes("مستشفى"));
+                          (v.doctorName || "").toLowerCase().includes("hospital"));
 
                       const targetBadge = isPharm
-                        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.72rem;">💊 ${lang === "ar" ? "صيدلية" : "Pharmacy"}</span>`
+                        ? `<span class="badge badge-target-pharmacy">💊 Pharmacy</span>`
                         : isHospital
-                          ? `<span class="badge" style="background: rgba(2, 132, 199, 0.15); color: #0284c7; font-weight: 700; font-size: 0.72rem;">🏥 ${lang === "ar" ? "مستشفى" : "Hospital"}</span>`
-                          : `<span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #4f46e5; font-weight: 700; font-size: 0.72rem;">🩺 ${lang === "ar" ? "طبيب" : "Doctor"}</span>`;
+                          ? `<span class="badge badge-target-hospital">🏥 Hospital</span>`
+                          : `<span class="badge badge-target-doctor">🩺 Doctor</span>`;
 
                       const targetClassBadge = v.doctorClass || v.class
-                        ? `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #b45309; font-weight: 700; font-size: 0.7rem; margin-inline-start: 4px;">Class ${v.doctorClass || v.class}</span>`
+                        ? `<span class="badge badge-target-class">Class ${v.doctorClass || v.class}</span>`
                         : "";
 
                       const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
                       const productsHtml = prods && prods.length
-                        ? prods.map((p) => `<span class="badge badge-product" style="display: inline-block; margin: 2px; font-size: 0.72rem;">💊 ${window.escapeHtml(p)}</span>`).join("")
-                        : `<span class="text-muted" style="font-size: 0.78rem;">-</span>`;
+                        ? prods.map((p) => `<span class="badge badge-product m-1">💊 ${window.escapeHtml(p)}</span>`).join("")
+                        : `<span class="text-muted small">-</span>`;
 
                       const notesText = (v.comment || v.feedback || v.notes || "").trim();
                       const notesHtml = notesText
                         ? `
-                          <div style="background: var(--gray-50, #f8fafc); border: 1px solid var(--gray-200, #e2e8f0); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; color: var(--gray-800, #1e293b); line-height: 1.45; word-break: break-word;">
-                            <span style="color: var(--primary, #0284c7); font-weight: 700; margin-inline-end: 4px;">💬</span>
+                          <div class="feed-notes-box">
+                            <span class="feed-notes-icon">💬</span>
                             ${window.escapeHtml(notesText)}
                           </div>
                         `
-                        : `<span style="color: var(--gray-400, #94a3b8); font-style: italic; font-size: 0.78rem;">${lang === "ar" ? "لا توجد ملاحظات مسجلة" : "No notes recorded"}</span>`;
+                        : `<span class="feed-no-notes">No notes recorded</span>`;
 
                       const rawSamples = Array.isArray(v.giveawaySamples) && v.giveawaySamples.length ? v.giveawaySamples : [];
                       const samplesHtml = rawSamples.length
-                        ? `<div style="font-size: 0.72rem; color: var(--gray-600); margin-top: 4px;">🎁 <strong>${lang === "ar" ? "عينات:" : "Samples:"}</strong> ${window.escapeHtml(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
+                        ? `<div class="feed-samples-box">🎁 <strong>Samples:</strong> ${window.escapeHtml(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
                         : "";
 
                       const isDouble = v.visitType === "double" || !!v.doubleWithUserId || !!v.doubleWithUserName;
                       const doubleBadge = isDouble
-                        ? `<span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #7e22ce; font-weight: 700; font-size: 0.7rem; margin-top: 3px; display: inline-block;">🤝 ${lang === "ar" ? "مزدوجة" : "Double"}</span>`
+                        ? `<span class="badge badge-feed-double">🤝 Double</span>`
                         : "";
 
                       const isToday = v.date === todayStr;
 
                       return `
-                        <tr style="border-bottom: 1px solid var(--gray-200); ${isToday ? "background: rgba(2, 132, 199, 0.02);" : ""}">
-                          <td style="padding: 10px 12px; white-space: nowrap;">
-                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
+                        <tr class="feed-row ${isToday ? "feed-row-today" : ""}">
+                          <td class="feed-td-cell text-nowrap">
+                            <div class="feed-cell-primary">
                               ${v.time || "11:00"}
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">
-                              ${isToday ? `<span style="color: var(--success, #059669); font-weight: 700;">🟢 ${lang === "ar" ? "اليوم" : "Today"}</span>` : (v.date || "-")}
+                            <div class="feed-cell-secondary">
+                              ${isToday ? `<span class="feed-today-text">🟢 Today</span>` : (v.date || "-")}
                             </div>
                           </td>
-                          <td style="padding: 10px 12px;">
-                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
+                          <td class="feed-td-cell">
+                            <div class="feed-cell-primary">
                               👤 ${window.escapeHtml(repName)}
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;">
+                            <div class="feed-cell-secondary">
                               📍 ${window.escapeHtml(repTerritory)}
                             </div>
                             ${doubleBadge}
                           </td>
-                          <td style="padding: 10px 12px;">
-                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--gray-900);">
+                          <td class="feed-td-cell">
+                            <div class="feed-cell-primary">
                               ${window.escapeHtml(v.doctorName || v.targetName || (v.doctorId ? "Dr. " + v.doctorId : "Target"))}
                             </div>
-                            <div style="margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap;">
+                            <div class="feed-badges-wrap">
                               ${targetBadge}
                               ${targetClassBadge}
                             </div>
                           </td>
-                          <td style="padding: 10px 12px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 4px; max-width: 220px;">
+                          <td class="feed-td-cell">
+                            <div class="feed-prods-wrap">
                               ${productsHtml}
                             </div>
                           </td>
-                          <td style="padding: 10px 12px;">
+                          <td class="feed-td-cell">
                             ${notesHtml}
                             ${samplesHtml}
                           </td>
@@ -1492,15 +1489,11 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                     .join("")
                 : `
                   <tr>
-                    <td colspan="5" style="text-align: center; padding: 28px; color: var(--gray-500); font-style: italic;">
+                    <td colspan="5" class="feed-empty-cell">
                       ${
                         filterMode === "today"
-                          ? (lang === "ar"
-                              ? "لا توجد زيارات منفذة بواسطة فريقك اليوم حتى الآن ⏳"
-                              : "No visits logged by your team today yet ⏳")
-                          : (lang === "ar"
-                              ? "لا توجد زيارات منفذة مسجلة لفريقك بعد."
-                              : "No completed visits recorded for your team yet.")
+                          ? "No visits logged by your team today yet ⏳"
+                          : "No completed visits recorded for your team yet."
                       }
                     </td>
                   </tr>
@@ -1523,7 +1516,7 @@ function renderDMDashboard(userName, user) {
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
   const dmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-  const lineNames = dmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const lineNames = dmLines.map((l) => l.name).join(", ");
   const activeDmLine = window.dmActiveLineFilter || "all";
 
   const allMyReps = allUsers.filter(
@@ -1680,8 +1673,8 @@ function renderDMDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner dm">
-        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير المنطقة" : "District Manager"} ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة المناطق" : "District Management")}</div>
+        <h2 class="welcome-title">${t.welcome_back}, District Manager ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || "District Management"}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -1690,9 +1683,9 @@ function renderDMDashboard(userName, user) {
         dmLines.length > 1
           ? `
         <div class="dashboard-line-filter">
-          <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+          <span class="line-filter-label">🏷️ Filter by Line:</span>
           <button type="button" class="line-filter-btn ${activeDmLine === "all" ? "active" : ""}" onclick="window.switchDmLineFilter('all')">
-            ${lang === "ar" ? `جميع الخطوط (${dmLines.length})` : `All Lines (${dmLines.length})`}
+            All Lines (${dmLines.length})
           </button>
           ${dmLines
             .map(
@@ -1713,60 +1706,60 @@ function renderDMDashboard(userName, user) {
           <div class="stat-label">${t.total_reps}</div>
           <div class="stat-value primary counter" data-target="${myReps.length}">${myReps.length}</div>
         </div>
-        <a href="visits.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--success);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${lang === "ar" ? "زيارات الفريق (هذا الشهر)" : "Team Visits (This Month)"}</span>
+        <a href="visits.html" class="stat-card stat-card-link-card stat-card-border-success">
+          <div class="stat-label stat-label-flex">
+            <span>Team Visits (This Month)</span>
             <span>📍</span>
           </div>
           <div class="stat-value success counter" data-target="${monthlyTeamCompletedVisits}">${monthlyTeamCompletedVisits}</div>
-          <div class="stat-card-link" style="font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
-            ${lang === "ar" ? "عرض زيارات الشهر ←" : "View Team Visits →"}
+          <div class="stat-card-link stat-card-link-text">
+            View Team Visits →
           </div>
         </a>
-        <a href="plans-review.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--warning);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${t.plans_review || (lang === "ar" ? "خطط للمراجعة" : "Plans to Review")}</span>
+        <a href="plans-review.html" class="stat-card stat-card-link-card stat-card-border-warning">
+          <div class="stat-label stat-label-flex">
+            <span>${t.plans_review || "Plans to Review"}</span>
             <span>📋</span>
           </div>
           <div class="stat-value warning counter" data-target="${pendingPlansCount}">${pendingPlansCount}</div>
-          <div class="stat-card-link" style="font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
-            ${lang === "ar" ? "مراجعة واعتماد الخطط ←" : "Review & Approve Plans →"}
+          <div class="stat-card-link stat-card-link-text">
+            Review & Approve Plans →
           </div>
         </a>
-        <a href="leaves.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--danger);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${t.leave_requests || (lang === "ar" ? "طلبات إجازة للموافقة" : "Leave Requests to Approve")}</span>
+        <a href="leaves.html" class="stat-card stat-card-link-card stat-card-border-danger">
+          <div class="stat-label stat-label-flex">
+            <span>${t.leave_requests || "Leave Requests to Approve"}</span>
             <span>🏖️</span>
           </div>
           <div class="stat-value danger counter" data-target="${pendingLeavesCount}">${pendingLeavesCount}</div>
-          <div class="stat-card-link" style="font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
-            ${lang === "ar" ? "مراجعة واعتماد الإجازات ←" : "Review & Approve Leaves →"}
+          <div class="stat-card-link stat-card-link-text">
+            Review & Approve Leaves →
           </div>
         </a>
       </div>
 
-      <div class="dashboard-card" style="margin-bottom: 20px; border-inline-start: 4px solid var(--primary);">
-        <div class="dm-schedule-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+      <div class="dashboard-card dm-schedule-card">
+        <div class="dm-schedule-header">
           <div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.3rem;">🤝</span>
-              <h3 class="card-title" style="margin: 0; font-weight: 800; font-size: 1.15rem;">
-                ${lang === "ar" ? "جدول النزول الميداني والمرافقة (Co-Visiting)" : "Field Accompaniment Schedule (Co-Visiting)"}
+            <div class="dm-schedule-header-title-wrap">
+              <span class="dm-followup-icon">🤝</span>
+              <h3 class="card-title dm-followup-title">
+                Field Accompaniment Schedule (Co-Visiting)
               </h3>
             </div>
-            <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="dm-schedule-tabs-wrap">
               <button type="button" class="dm-schedule-tab-btn ${activeTab === "all" ? "active" : ""}" onclick="window.switchDmScheduleTab('all')">
-                📋 ${lang === "ar" ? `كل الأيام المحددة (${scheduledDates.length})` : `All Scheduled Days (${scheduledDates.length})`}
+                📋 All Scheduled Days (${scheduledDates.length})
               </button>
               <button type="button" class="dm-schedule-tab-btn ${activeTab === "daily" ? "active" : ""}" onclick="window.switchDmScheduleTab('daily')">
-                📅 ${lang === "ar" ? "عرض يوم محدد" : "Daily View"}
+                📅 Daily View
               </button>
             </div>
           </div>
 
           <div class="dm-schedule-nav-btn">
             <a href="plans-review.html" class="btn btn-sm btn-primary">
-              📋 <span>${lang === "ar" ? "مراجعة الخطط وجدولة النزول الميداني" : "Review Plans & Schedule Accompaniment"}</span>
+              📋 <span>Review Plans & Schedule Accompaniment</span>
             </a>
           </div>
         </div>
@@ -1778,15 +1771,15 @@ function renderDMDashboard(userName, user) {
             scheduledDates.length === 0
               ? `
             <div class="dm-prompt-banner">
-              <div style="font-size: 2rem; margin-bottom: 8px;">📋</div>
-              <strong style="font-size: 1.05rem; display: block; margin-bottom: 6px;">
-                ${lang === "ar" ? "لم يتم جدولة أيام نزول ميداني مشتركة بعد" : "No field accompaniment days scheduled yet"}
+              <div class="prompt-icon">📋</div>
+              <strong class="prompt-title">
+                No field accompaniment days scheduled yet
               </strong>
-              <p style="font-size: 0.88rem; margin-bottom: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
-                ${lang === "ar" ? "انتقل إلى «مراجعة واعتماد الخطط» لمراجعة خطط مناديب فريقك واختيار الأيام التي ترغب بمرافقتهم فيها بالكامل." : 'Go to "Plans to Review" to review your team\'s planned schedules and choose full days to accompany them.'}
+              <p class="prompt-desc">
+                Go to "Plans to Review" to review your team's planned schedules and choose full days to accompany them.
               </p>
               <a href="plans-review.html" class="btn btn-primary btn-sm">
-                📋 ${lang === "ar" ? "الذهاب لمراجعة الخطط وحجز الأيام" : "Go to Plans to Review"}
+                📋 Go to Plans to Review
               </a>
             </div>
           `
@@ -1807,7 +1800,7 @@ function renderDMDashboard(userName, user) {
                     <span class="pill-divider">|</span>
                     ${
                       isOffice
-                        ? `<span class="pill-office">🏢 ${lang === "ar" ? "مكتبي" : "Office"}</span>`
+                        ? `<span class="pill-office">🏢 Office</span>`
                         : `<span class="pill-rep">👤 ${repObj ? repObj.name : "Rep"}</span>`
                     }
                   </div>
@@ -1817,14 +1810,14 @@ function renderDMDashboard(userName, user) {
             </div>
 
             <div class="table-container">
-              <table class="data-table dm-covisit-table" style="width: 100%;">
+              <table class="data-table dm-covisit-table">
                 <thead>
-                  <tr style="border-bottom: 2px solid var(--gray-200);">
-                    <th class="dm-covisit-sticky-col">${lang === "ar" ? "التاريخ واليوم" : "Date & Day"}</th>
-                    <th>${lang === "ar" ? "المندوب المرافق" : "Accompanied Rep"}</th>
-                    <th>${lang === "ar" ? "الهدف المخطط" : "Planned Target"}</th>
-                    <th class="dm-covisit-products-col">${lang === "ar" ? "المنتجات" : "Products"}</th>
-                    <th class="text-end covisit-action-cell">${lang === "ar" ? "إجراء المرافقة" : "Co-Visit Action"}</th>
+                  <tr>
+                    <th class="dm-covisit-sticky-col">Date & Day</th>
+                    <th>Accompanied Rep</th>
+                    <th>Planned Target</th>
+                    <th class="dm-covisit-products-col">Products</th>
+                    <th class="text-end covisit-action-cell">Co-Visit Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1847,38 +1840,32 @@ function renderDMDashboard(userName, user) {
                             const isHospital =
                               !isPharm && (sv.period || "").toUpperCase() === "AM";
                             const targetTypeBadge = isPharm
-                              ? lang === "ar"
-                                ? "صيدلية"
-                                : "Pharmacy"
+                              ? "Pharmacy"
                               : isHospital
-                                ? lang === "ar"
-                                  ? "مستشفى"
-                                  : "Hospital"
-                                : lang === "ar"
-                                  ? "عيادة طبيب"
-                                  : "Clinic Visit";
+                                ? "Hospital"
+                                : "Clinic Visit";
                             const periodBadge = isPharm
-                              ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.72rem;">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+                              ? `<span class="badge badge-period-pharm">💊 PHARM</span>`
                               : isHospital
-                                ? `<span class="badge" style="background: rgba(255, 193, 7, 0.2); color: #b45309; font-weight: 700; font-size: 0.72rem;">AM</span>`
-                                : `<span class="badge" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd; font-weight: 700; font-size: 0.72rem;">PM</span>`;
+                                ? `<span class="badge badge-period-am">AM</span>`
+                                : `<span class="badge badge-period-pm">PM</span>`;
 
                             return `
                       <tr>
-                        <td class="dm-covisit-sticky-col" style="white-space: nowrap;">
-                          <div style="font-weight: 700; color: var(--primary); font-size: 0.82rem;">📅 ${dt.dayName}</div>
-                          <div style="font-weight: 600; font-size: 0.82rem;">${sv.date}</div>
-                        </td>
-                        <td style="white-space: nowrap;">
-                          <strong style="color: var(--gray-800); font-size: 0.88rem;">👤 ${sv.repName}</strong>
-                          <div style="font-size: 0.75rem; color: var(--gray-500);">${sv.repCode}</div>
+                        <td class="dm-covisit-sticky-col">
+                          <div class="dt-day-name">📅 ${dt.dayName}</div>
+                          <div class="dt-date-line">${sv.date}</div>
                         </td>
                         <td>
-                          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                          <strong class="cell-doctor-name">👤 ${sv.repName}</strong>
+                          <div class="feed-cell-secondary">${sv.repCode}</div>
+                        </td>
+                        <td>
+                          <div class="d-flex align-items-center gap-1 flex-wrap">
                             <strong class="visit-doc-name">${window.escapeHtml(sv.doctorName || sv.targetName || "Doctor")}</strong>
                             ${periodBadge}
                           </div>
-                          <div class="target-type-badge" style="font-size: 0.75rem; margin-top: 2px;">${targetTypeBadge}</div>
+                          <div class="target-type-badge">${targetTypeBadge}</div>
                         </td>
                         <td class="dm-covisit-products-col">
                           ${(() => {
@@ -1888,7 +1875,7 @@ function renderDMDashboard(userName, user) {
                         </td>
                         <td class="text-end covisit-action-cell">
                           <button class="btn-convert-action" onclick="openCompletePlanModal('${sv.id}', true)">
-                            🤝 ${lang === "ar" ? "تسجيل الزيارة المزدوجة" : "Log Double Visit"}
+                            🤝 Log Double Visit
                           </button>
                         </td>
                       </tr>
@@ -1897,8 +1884,8 @@ function renderDMDashboard(userName, user) {
                           .join("")
                       : `
                     <tr>
-                      <td colspan="5" class="empty-table-msg" style="text-align: center; padding: 24px; font-style: italic;">
-                        ${lang === "ar" ? "لا توجد زيارات مخططة للمناديب في الأيام المحددة أعلاه، أو أن الأيام المحددة إدارية/مكتبية." : "No planned visits scheduled by reps on the confirmed dates, or the days are set as office days."}
+                      <td colspan="5" class="empty-table-msg">
+                        No planned visits scheduled by reps on the confirmed dates, or the days are set as office days.
                       </td>
                     </tr>
                   `
@@ -1914,21 +1901,21 @@ function renderDMDashboard(userName, user) {
             scheduledDates.length === 0
               ? `
             <div class="dm-prompt-banner">
-              <div style="font-size: 2rem; margin-bottom: 8px;">📋</div>
-              <strong style="font-size: 1.05rem; display: block; margin-bottom: 6px;">
-                ${lang === "ar" ? "لم يتم جدولة أيام نزول ميداني مشتركة بعد" : "No field accompaniment days scheduled yet"}
+              <div class="prompt-icon">📋</div>
+              <strong class="prompt-title">
+                No field accompaniment days scheduled yet
               </strong>
-              <p style="font-size: 0.88rem; margin-bottom: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
-                ${lang === "ar" ? "انتقل إلى «مراجعة واعتماد الخطط» لمراجعة خطط مناديب فريقك واختيار الأيام التي ترغب بمرافقتهم فيها بالكامل." : 'Go to "Plans to Review" to review your team\'s planned schedules and choose full days to accompany them.'}
+              <p class="prompt-desc">
+                Go to "Plans to Review" to review your team's planned schedules and choose full days to accompany them.
               </p>
               <a href="plans-review.html" class="btn btn-primary btn-sm">
-                📋 ${lang === "ar" ? "الذهاب لمراجعة الخطط وحجز الأيام" : "Go to Plans to Review"}
+                📋 Go to Plans to Review
               </a>
             </div>
           `
               : `
-            <div class="dm-schedule-pills-container" style="align-items: center;">
-              <span style="font-size: 0.82rem; font-weight: 700; color: var(--gray-700);">📅 ${lang === "ar" ? "الأيام المجدولة:" : "Scheduled Days:"}</span>
+            <div class="dm-schedule-pills-container dm-schedule-pills-wrap">
+              <span class="dm-schedule-pills-label">📅 Scheduled Days:</span>
               ${scheduledDates
                 .map((dateStr) => {
                   const repIdVal = storedSchedule[dateStr];
@@ -1939,7 +1926,7 @@ function renderDMDashboard(userName, user) {
                       : { dayName: "" };
                   const isAct = dateStr === selectedDate;
                   return `
-                  <button type="button" class="btn btn-sm ${isAct ? "btn-primary" : "btn-outline"}" style="border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 4px 12px;" onclick="onDmChangeDate('${dateStr}')">
+                  <button type="button" class="btn btn-sm ${isAct ? "btn-primary" : "btn-outline"} dm-schedule-date-btn" onclick="onDmChangeDate('${dateStr}')">
                     📅 ${dt.dayName ? dt.dayName + " " : ""}${dateStr} (${repObj ? repObj.name.split(" ")[0] : "Rep"})
                   </button>
                 `;
@@ -1951,54 +1938,54 @@ function renderDMDashboard(userName, user) {
               !isConfirmedForSelectedDate
                 ? `
               <div class="dm-prompt-banner">
-                <div style="font-size: 1.8rem; margin-bottom: 6px;">📅</div>
-                <strong style="font-size: 1.02rem; display: block; margin-bottom: 4px;">
-                  ${lang === "ar" ? `تاريخ ${selectedDate}: لا يوجد نزول ميداني مجدول لهذا اليوم` : `Date ${selectedDate}: No field accompaniment scheduled for this day`}
+                <div class="prompt-icon">📅</div>
+                <strong class="prompt-title">
+                  Date ${selectedDate}: No field accompaniment scheduled for this day
                 </strong>
-                <span style="font-size: 0.85rem;">
-                  ${lang === "ar" ? "اختر يوماً من الأيام المجدولة أعلاه أو انتقل إلى صفحة مراجعة الخطط لجدولة أيام جديدة." : "Select a date from the scheduled days above or go to Plans to Review to schedule new days."}
+                <span>
+                  Select a date from the scheduled days above or go to Plans to Review to schedule new days.
                 </span>
               </div>
             `
                 : isOfficeDay
                   ? `
               <div class="dm-office-banner">
-                <div style="font-size: 1.6rem; margin-bottom: 4px;">🏢</div>
-                <strong class="dm-office-title">${lang === "ar" ? `تاريخ ${selectedDate}: يوم مكتبي / عمل إداري ومتابعة` : `Date ${selectedDate}: Office Work / Administrative Day`}</strong>
+                <div class="prompt-icon">🏢</div>
+                <strong class="dm-office-title">Date ${selectedDate}: Office Work / Administrative Day</strong>
               </div>
             `
                   : accompaniedRep
                     ? `
               <div class="dm-accompanied-banner">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem;">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="dm-team-rep-avatar">
                     ${accompaniedRep.name.charAt(0)}
                   </div>
                   <div>
-                    <div class="dm-accompanied-title" style="font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                      <span>${lang === "ar" ? `نزول ميداني مشترك برفقة: ${accompaniedRep.name}` : `Joint Field Accompaniment with: ${accompaniedRep.name}`}</span>
-                      <span class="badge" style="background: var(--primary); color: white; font-size: 0.72rem;">${accompaniedRep.employeeCode || "Rep"}</span>
+                    <div class="dm-accompanied-title">
+                      <span>Joint Field Accompaniment with: ${accompaniedRep.name}</span>
+                      <span class="badge badge-primary dm-team-rep-badge">${accompaniedRep.employeeCode || "Rep"}</span>
                     </div>
-                    <div class="dm-accompanied-sub" style="font-size: 0.8rem; margin-top: 2px;">
-                      📅 ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? (lang === "ar" ? "• (اليوم)" : "• (Today)") : ""} • ${pendingAccompaniedVisits.length} ${lang === "ar" ? "زيارة مخططة للنزول المشترك" : "planned joint visits"}
+                    <div class="dm-accompanied-sub">
+                      📅 ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? "• (Today)" : ""} • ${pendingAccompaniedVisits.length} planned joint visits
                     </div>
                   </div>
                 </div>
                 <div>
-                  <a href="visits.html" class="btn btn-sm btn-primary" style="font-weight: 600; text-decoration: none;">
-                    📍 ${lang === "ar" ? "فتح في الزيارات الميدانية" : "Open in Visits Page"}
+                  <a href="visits.html" class="btn btn-sm btn-primary">
+                    📍 Open in Visits Page
                   </a>
                 </div>
               </div>
 
               <div class="table-container">
-                <table class="data-table dm-covisit-table" style="width: 100%;">
+                <table class="data-table dm-covisit-table">
                   <thead>
-                    <tr style="border-bottom: 2px solid var(--gray-200);">
-                      <th>${lang === "ar" ? "الهدف المخطط" : "Planned Target"}</th>
-                      <th>${lang === "ar" ? "الفترة" : "Period"}</th>
-                      <th class="dm-covisit-products-col">${lang === "ar" ? "المنتجات" : "Products"}</th>
-                      <th class="text-end covisit-action-cell">${lang === "ar" ? "إجراء المرافقة" : "Co-Visit Action"}</th>
+                    <tr>
+                      <th>Planned Target</th>
+                      <th>Period</th>
+                      <th class="dm-covisit-products-col">Products</th>
+                      <th class="text-end covisit-action-cell">Co-Visit Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2013,27 +2000,21 @@ function renderDMDashboard(userName, user) {
                               const isHospital =
                                 !isPharm && (pv.period || "").toUpperCase() === "AM";
                               const targetTypeBadge = isPharm
-                                ? lang === "ar"
-                                  ? "صيدلية"
-                                  : "Pharmacy"
+                                ? "Pharmacy"
                                 : isHospital
-                                  ? lang === "ar"
-                                    ? "مستشفى"
-                                    : "Hospital"
-                                  : lang === "ar"
-                                    ? "عيادة طبيب"
-                                    : "Clinic Visit";
+                                  ? "Hospital"
+                                  : "Clinic Visit";
                               const periodBadge = isPharm
-                                ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.72rem;">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+                                ? `<span class="badge badge-period-pharm">💊 PHARM</span>`
                                 : isHospital
-                                  ? `<span class="badge" style="background: rgba(255, 193, 7, 0.2); color: #b45309; font-weight: 700; font-size: 0.72rem;">AM</span>`
-                                  : `<span class="badge" style="background: rgba(13, 110, 253, 0.15); color: #0d6efd; font-weight: 700; font-size: 0.72rem;">PM</span>`;
+                                  ? `<span class="badge badge-period-am">AM</span>`
+                                  : `<span class="badge badge-period-pm">PM</span>`;
 
                               return `
                         <tr>
                           <td>
                             <strong class="visit-doc-name">${window.escapeHtml(pv.doctorName || pv.targetName || "Doctor")}</strong>
-                            <div class="target-type-badge" style="font-size: 0.75rem;">${targetTypeBadge}</div>
+                            <div class="target-type-badge">${targetTypeBadge}</div>
                           </td>
                           <td>
                             ${periodBadge}
@@ -2046,7 +2027,7 @@ function renderDMDashboard(userName, user) {
                           </td>
                           <td class="text-end covisit-action-cell">
                             <button class="btn-convert-action" onclick="openCompletePlanModal('${pv.id}', true)">
-                              🤝 ${lang === "ar" ? "تسجيل الزيارة المزدوجة" : "Log Double Visit"}
+                              🤝 Log Double Visit
                             </button>
                           </td>
                         </tr>
@@ -2055,8 +2036,8 @@ function renderDMDashboard(userName, user) {
                             .join("")
                         : `
                       <tr>
-                        <td colspan="4" class="empty-table-msg" style="text-align: center; padding: 20px; font-style: italic;">
-                          ${lang === "ar" ? `لا توجد زيارات مخططة للمندوب ${accompaniedRep ? accompaniedRep.name : ""} في تاريخ ${selectedDate}.` : `No planned visits scheduled by ${accompaniedRep ? accompaniedRep.name : "Rep"} on ${selectedDate}.`}
+                        <td colspan="4" class="empty-table-msg">
+                          No planned visits scheduled by ${accompaniedRep ? accompaniedRep.name : "Rep"} on ${selectedDate}.
                         </td>
                       </tr>
                     `
@@ -2076,18 +2057,18 @@ function renderDMDashboard(userName, user) {
       ${renderDmFollowUpSection(myReps, allVisits, lang, todayStr)}
 
       <div class="dashboard-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <h3 class="card-title" style="margin: 0; font-weight: 700;">${t.team_performance}</h3>
-          <span class="team-perf-subtitle" style="font-size: 0.8rem; font-weight: 600;">
+        <div class="team-perf-header">
+          <h3 class="card-title team-perf-title">${t.team_performance}</h3>
+          <span class="team-perf-subtitle">
             ${new Date().getFullYear()} YTD (Value)
           </span>
         </div>
         <div class="table-container">
-          <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <table class="data-table">
             <thead>
-              <tr style="border-bottom: 2px solid var(--gray-200);">
-                <th style="padding: 10px;">${t.rep_name}</th>
-                <th style="padding: 10px; text-align: right;">${t.achievement}</th>
+              <tr>
+                <th>${t.rep_name}</th>
+                <th class="text-end">${t.achievement}</th>
               </tr>
             </thead>
             <tbody>
@@ -2136,8 +2117,8 @@ function renderDMDashboard(userName, user) {
 
                   rowsHtml.push(`
                     <tr>
-                      <td class="dm-rep-name" style="padding: 10px; font-weight: 600;">${r.name}</td>
-                      <td class="dm-ach-pct" style="padding: 10px; font-weight: 700; text-align: right;">${achPct}%</td>
+                      <td class="dm-rep-name">${r.name}</td>
+                      <td class="dm-ach-pct text-end">${achPct}%</td>
                     </tr>
                   `);
                 });
@@ -2151,11 +2132,11 @@ function renderDMDashboard(userName, user) {
                   if (!area.repId || !hasRep) {
                     rowsHtml.push(`
                       <tr>
-                        <td class="dm-vacant-row" style="padding: 10px; font-weight: 600;">
-                          ${area.name} <span class="badge badge-vacant" style="margin-inline-start: 6px; font-size: 0.72rem;">${lang === "ar" ? "شاغرة" : "Vacant Area"}</span>
+                        <td class="dm-vacant-row">
+                          ${area.name} <span class="badge badge-vacant">Vacant Area</span>
                         </td>
-                        <td class="dm-vacant-text" style="padding: 10px; font-weight: 700; text-align: right; font-style: italic;">
-                          ${lang === "ar" ? "شاغر (Vacant)" : "Vacant"}
+                        <td class="dm-vacant-text text-end">
+                          Vacant
                         </td>
                       </tr>
                     `);
@@ -2165,8 +2146,8 @@ function renderDMDashboard(userName, user) {
                 if (rowsHtml.length === 0) {
                   return `
                     <tr>
-                      <td class="dm-vacant-row" style="padding: 10px; font-weight: 600;">${lang === "ar" ? "المنطقة" : "District Territory"}</td>
-                      <td class="dm-vacant-text" style="padding: 10px; font-weight: 700; text-align: right; font-style: italic;">${lang === "ar" ? "شاغر (Vacant)" : "Vacant"}</td>
+                      <td class="dm-vacant-row">District Territory</td>
+                      <td class="dm-vacant-text text-end">Vacant</td>
                     </tr>
                   `;
                 }
@@ -2195,7 +2176,7 @@ function renderLMDashboard(userName, user) {
       : window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
   const lmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-  const lineNames = lmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const lineNames = lmLines.map((l) => l.name).join(", ");
   const activeLmLine = window.lmActiveLineFilter || "all";
 
   const allMyDMs = allUsers.filter((u) => {
@@ -2262,8 +2243,8 @@ function renderLMDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner lm">
-        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير الخط" : "Line Manager"} ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة خط الإنتاج" : "Product Line Management")}</div>
+        <h2 class="welcome-title">${t.welcome_back}, Line Manager ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || "Product Line Management"}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -2272,9 +2253,9 @@ function renderLMDashboard(userName, user) {
         lmLines.length > 1
           ? `
         <div class="dashboard-line-filter">
-          <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+          <span class="line-filter-label">🏷️ Filter by Line:</span>
           <button type="button" class="line-filter-btn ${activeLmLine === "all" ? "active" : ""}" onclick="window.switchLmLineFilter('all')">
-            ${lang === "ar" ? `جميع الخطوط (${lmLines.length})` : `All Lines (${lmLines.length})`}
+            All Lines (${lmLines.length})
           </button>
           ${lmLines
             .map(
@@ -2299,37 +2280,37 @@ function renderLMDashboard(userName, user) {
           <div class="stat-label">${t.total_line_reps}</div>
           <div class="stat-value success counter" data-target="${myLineReps.length}">${myLineReps.length}</div>
         </div>
-        <a href="visits.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--primary);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${t.line_visits || (lang === "ar" ? "زيارات الخط (هذا الشهر)" : "Line Visits (This Month)")}</span>
+        <a href="visits.html" class="stat-card stat-card-link-card stat-card-border-primary">
+          <div class="stat-label stat-label-flex">
+            <span>${t.line_visits || "Line Visits (This Month)"}</span>
             <span>📍</span>
           </div>
           <div class="stat-value primary counter" data-target="${monthlyLineCompletedVisits}">${monthlyLineCompletedVisits}</div>
-          <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
-            ${lang === "ar" ? "عرض سجل الزيارات ←" : "View Completed Visits →"}
+          <div class="stat-card-link-text">
+            View Completed Visits →
           </div>
         </a>
-        <a href="leaves.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--danger);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>${t.leave_requests || (lang === "ar" ? "طلبات إجازة للموافقة" : "Leave Requests to Approve")}</span>
+        <a href="leaves.html" class="stat-card stat-card-link-card stat-card-border-danger">
+          <div class="stat-label stat-label-flex">
+            <span>${t.leave_requests || "Leave Requests to Approve"}</span>
             <span>🏖️</span>
           </div>
           <div class="stat-value danger counter" data-target="${lmPendingLeavesCount}">${lmPendingLeavesCount}</div>
-          <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
-            ${lang === "ar" ? "مراجعة واعتماد الإجازات ←" : "Review & Approve Leaves →"}
+          <div class="stat-card-link-text">
+            Review & Approve Leaves →
           </div>
         </a>
       </div>
 
-      <div class="dashboard-card" style="margin-bottom: 20px;">
-        <h3 class="card-title" style="font-weight: 700; margin-bottom: 16px;">Line Hierarchy (DMs & Field Reps)</h3>
+      <div class="dashboard-card mb-3">
+        <h3 class="card-title fw-bold mb-3">Line Hierarchy (DMs & Field Reps)</h3>
         <div class="table-container">
-          <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <table class="data-table">
             <thead>
-              <tr style="border-bottom: 2px solid var(--gray-200);">
-                <th style="padding: 10px;">${t.dm_name}</th>
-                <th style="padding: 10px;">${t.reps_under_dm}</th>
-                <th style="padding: 10px;">Status</th>
+              <tr>
+                <th>${t.dm_name}</th>
+                <th>${t.reps_under_dm}</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -2342,35 +2323,35 @@ function renderLMDashboard(userName, user) {
                         );
                         return `
                           <tr>
-                            <td style="padding: 10px; font-weight: 700;">
+                            <td class="fw-bold">
                               ${dm.name}
-                              <div style="font-size: 0.75rem; color: var(--gray-500);">${dm.employeeCode || dm.code || "DM-001"}</div>
+                              <div class="feed-cell-secondary">${dm.employeeCode || dm.code || "DM-001"}</div>
                             </td>
-                            <td style="padding: 10px;">
-                              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <span class="badge bg-primary-subtle text-primary" style="font-size: 0.82rem; padding: 4px 10px; border-radius: 8px; font-weight: 600;">
-                                  👥 ${repsForThisDM.length} ${repsForThisDM.length === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}
+                            <td>
+                              <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge bg-primary-subtle text-primary dm-schedule-day-badge">
+                                  👥 ${repsForThisDM.length} ${repsForThisDM.length === 1 ? "Rep" : "Reps"}
                                 </span>
                                 ${
                                   repsForThisDM.length > 0
                                     ? `
-                                  <button type="button" class="btn-view-team" onclick="window.openDmTeamModal('${dm.id}')" title="${lang === "ar" ? "عرض أعضاء الفريق" : "View Team Members"}">
+                                  <button type="button" class="btn-view-team" onclick="window.openDmTeamModal('${dm.id}')" title="View Team Members">
                                     <span>👁️</span>
-                                    <span>${lang === "ar" ? "عرض الفريق" : "View Team"}</span>
+                                    <span>View Team</span>
                                   </button>
                                 `
-                                    : `<span style="font-size: 0.78rem; color: var(--gray-500); font-style: italic;">${lang === "ar" ? "لا يوجد مناديب مسندين" : "No reps assigned"}</span>`
+                                    : `<span class="feed-no-notes">No reps assigned</span>`
                                 }
                               </div>
                             </td>
-                            <td style="padding: 10px;">
-                              <span class="badge bg-success-subtle text-success" style="padding: 3px 8px; border-radius: 6px;">${lang === "ar" ? "نشط" : "Active"}</span>
+                            <td>
+                              <span class="badge bg-success-subtle text-success">Active</span>
                             </td>
                           </tr>
                         `;
                       })
                       .join("")
-                  : `<tr><td colspan="3" style="text-align:center; padding:15px; color:var(--gray-500);">No DMs assigned under this Line Manager yet.</td></tr>`
+                  : `<tr><td colspan="3" class="feed-empty-cell">No DMs assigned under this Line Manager yet.</td></tr>`
               }
             </tbody>
           </table>
@@ -2387,16 +2368,16 @@ function renderLMDashboard(userName, user) {
         const allSales = getDashboardSalesData();
 
         return `
-      <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
-        <div style="margin-bottom: 1.25rem;">
-          <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
+      <div class="dashboard-card line-trend-section">
+        <div class="line-trend-section-header">
+          <h3 class="card-title line-trend-section-title">
             📈 Monthly Sales & Target Trend (Per Line)
           </h3>
-          <small style="color: var(--gray-500); font-size: 0.82rem;">
+          <small class="line-trend-section-subtitle">
             Each product line has independent target, sales, and achievement %
           </small>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+        <div class="line-trend-grid">
           ${linesToShow.map(line => {
             const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear));
             const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
@@ -2405,16 +2386,16 @@ function renderLMDashboard(userName, user) {
             const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#c2410c";
 
             return `
-          <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
-              <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+          <div class="line-trend-card">
+            <div class="line-trend-card-header">
+              <h4 class="line-trend-title">
                 📦 ${line.name}
               </h4>
-              <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
+              <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                 Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
               </span>
             </div>
-            <div style="position: relative; height: 250px; width: 100%;">
+            <div class="line-trend-canvas-wrap">
               <canvas id="dashLineTrend_${line.id}"></canvas>
             </div>
           </div>
@@ -2469,7 +2450,7 @@ function renderPMDashboard(userName, user) {
 
   return `
     <div class="flex-col">
-      <div class="welcome-banner" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #4f46e5 100%);">
+      <div class="welcome-banner pm">
         <h2 class="welcome-title">Welcome back, Product Manager ${userName}!</h2>
         <div class="welcome-subtitle">🏷️ ${lineNames || "Product Line Management"} • Nationwide Line Scope</div>
       </div>
@@ -2480,106 +2461,107 @@ function renderPMDashboard(userName, user) {
         <div class="stat-card">
           <div class="stat-label">Assigned Products</div>
           <div class="stat-value primary counter" data-target="${lineProducts.length}">${lineProducts.length}</div>
-          <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+          <div class="stat-subtext">
             Products under your marketing scope
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Line Medical Reps</div>
           <div class="stat-value success counter" data-target="${team.reps.length}">${team.reps.length}</div>
-          <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+          <div class="stat-subtext">
             Field reps in your line
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">DMs & LMs in Line</div>
-          <div class="stat-value info" style="color: #6366f1;">
+          <div class="stat-value info">
             <span class="counter" data-target="${team.dms.length}">${team.dms.length}</span> DM / <span class="counter" data-target="${team.lms.length}">${team.lms.length}</span> LM
           </div>
-          <div style="font-size: 0.72rem; color: var(--gray-500); font-weight: 600;">
+          <div class="stat-subtext">
             Supervisory & management team
           </div>
         </div>
-        <a href="visits.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--primary);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
+        <a href="visits.html" class="stat-card stat-card-link-card stat-card-border-primary">
+          <div class="stat-label stat-label-flex">
             <span>Line Visits (This Month)</span>
             <span>📍</span>
           </div>
           <div class="stat-value primary counter" data-target="${lineVisitsThisMonth}">${lineVisitsThisMonth}</div>
-          <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
+          <div class="stat-card-link-text">
             View visits log →
           </div>
         </a>
-        <a href="activities.html" class="stat-card" style="text-decoration: none; cursor: pointer; border-inline-start: 4px solid var(--warning);">
-          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center;">
+        <a href="activities.html" class="stat-card stat-card-link-card stat-card-border-warning">
+          <div class="stat-label stat-label-flex">
             <span>Pending Marketing Requests</span>
             <span>⏳</span>
           </div>
           <div class="stat-value warning counter" data-target="${pendingMarketingRequests}">${pendingMarketingRequests}</div>
-          <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; font-weight: 600;">
+          <div class="stat-card-link-text">
             Review & approve requests →
           </div>
         </a>
       </div>
 
       <!-- Quick Action Cards -->
-      <div class="pm-quick-actions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
-        <a href="visits.html?action=new" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
-          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(13, 110, 253, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+      <div class="pm-quick-actions-grid">
+        <a href="visits.html?action=new" class="pm-action-card">
+          <div class="pm-action-icon pm-icon-blue">
             🤝
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Field Double Visit</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">With line LMs & DMs</div>
+            <div class="pm-action-title">Field Double Visit</div>
+            <div class="pm-action-desc">With line LMs & DMs</div>
           </div>
         </a>
-        <a href="reports.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
-          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(13, 202, 240, 0.12); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+        <a href="reports.html" class="pm-action-card">
+          <div class="pm-action-icon pm-icon-cyan">
             📊
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Line Sales & Target</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Pharmacies & distributor sales</div>
+            <div class="pm-action-title">Line Sales & Target</div>
+            <div class="pm-action-desc">Pharmacies & distributor sales</div>
           </div>
         </a>
-        <a href="quizzes.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
-          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(25, 135, 84, 0.12); color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+        <a href="quizzes.html" class="pm-action-card">
+          <div class="pm-action-icon pm-icon-green">
             📝
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Scientific Quizzes</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Create & evaluate quizzes</div>
+            <div class="pm-action-title">Scientific Quizzes</div>
+            <div class="pm-action-desc">Create & evaluate quizzes</div>
           </div>
         </a>
-        <a href="activities.html" class="pm-action-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 12px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
-          <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(253, 126, 20, 0.12); color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+        <a href="activities.html" class="pm-action-card">
+          <div class="pm-action-icon pm-icon-orange">
             📋
           </div>
           <div>
-            <div style="font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">Requests & Budget</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Approve marketing requests</div>
+            <div class="pm-action-title">Requests & Budget</div>
+            <div class="pm-action-desc">Approve marketing requests</div>
           </div>
         </a>
       </div>
 
       <!-- Line Products Showcase -->
-      <div class="pm-portfolio-card" style="background: var(--surface, #ffffff); border: 1px solid var(--border-color, #dee2e6); border-radius: 14px; overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-        <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #dee2e6); background: var(--surface-hover, rgba(0,0,0,0.02));">
-          <h5 style="margin: 0; font-weight: 700; font-size: 1.05rem; color: var(--gray-800);">📦 Line Products Portfolio</h5>
-          <span style="background: rgba(13, 110, 253, 0.1); color: var(--primary); padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;">
+      <!-- Line Products Showcase -->
+      <div class="pm-portfolio-card">
+        <div class="pm-portfolio-header">
+          <h5 class="pm-portfolio-title">📦 Line Products Portfolio</h5>
+          <span class="pm-portfolio-badge">
             ${lineProducts.length} Registered Products
           </span>
         </div>
-        <div style="overflow-x: auto; width: 100%;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
-            <thead>
-              <tr style="background: var(--surface-dim, #f8f9fa); border-bottom: 2px solid var(--border-color, #dee2e6); color: var(--gray-700);">
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Product Name</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Dosage</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Form</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Line</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Value</th>
-                <th style="padding: 12px 18px; font-weight: 700; white-space: nowrap;">Cycle Focus</th>
+        <div class="table-container">
+          <table class="pm-portfolio-table">
+            <thead class="pm-portfolio-table-head">
+              <tr>
+                <th class="pm-portfolio-th">Product Name</th>
+                <th class="pm-portfolio-th">Dosage</th>
+                <th class="pm-portfolio-th">Form</th>
+                <th class="pm-portfolio-th">Line</th>
+                <th class="pm-portfolio-th">Value</th>
+                <th class="pm-portfolio-th">Cycle Focus</th>
               </tr>
             </thead>
             <tbody>
@@ -2587,22 +2569,22 @@ function renderPMDashboard(userName, user) {
                 const lineObj = pmLines.find((l) => l.id === p.lineId);
                 const isFocused = lineObj && lineObj.cycleCampaignFocus && lineObj.cycleCampaignFocus.active && lineObj.cycleCampaignFocus.targetProductId === p.id;
                 return `
-                  <tr style="border-bottom: 1px solid var(--border-color, #dee2e6); transition: background 0.15s ease;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 12px 18px; font-weight: 700; color: var(--gray-800);">${window.escapeHtml(p.name)}</td>
-                    <td style="padding: 12px 18px;"><span style="background: rgba(100,116,139,0.12); color: var(--gray-800); padding: 4px 9px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; display: inline-block;">${window.escapeHtml(p.dosage || "-")}</span></td>
-                    <td style="padding: 12px 18px; color: var(--gray-700);">${window.escapeHtml(p.form || "Tablet")}</td>
-                    <td style="padding: 12px 18px;"><span style="background: rgba(14,165,233,0.1); color: #0284c7; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.82rem; border: 1px solid rgba(14,165,233,0.25); display: inline-block;">${window.escapeHtml(p.lineName)}</span></td>
-                    <td style="padding: 12px 18px; font-weight: 700; color: var(--gray-800);">${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
-                    <td style="padding: 12px 18px;">
+                  <tr class="pm-portfolio-row">
+                    <td class="pm-portfolio-td pm-prod-name">${window.escapeHtml(p.name)}</td>
+                    <td class="pm-portfolio-td"><span class="pm-dosage-badge">${window.escapeHtml(p.dosage || "-")}</span></td>
+                    <td class="pm-portfolio-td pm-form-text">${window.escapeHtml(p.form || "Tablet")}</td>
+                    <td class="pm-portfolio-td"><span class="pm-line-badge">${window.escapeHtml(p.lineName)}</span></td>
+                    <td class="pm-portfolio-td pm-price-text">${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
+                    <td class="pm-portfolio-td">
                       ${isFocused 
-                        ? `<span style="background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">🎯 Priority Focus</span>` 
-                        : `<span style="color: var(--text-muted); font-size: 0.84rem;">Standard</span>`}
+                        ? `<span class="pm-focus-badge">🎯 Priority Focus</span>` 
+                        : `<span class="pm-standard-text">Standard</span>`}
                     </td>
                   </tr>
                 `;
               }).join("") : `
                 <tr>
-                  <td colspan="6" style="padding: 24px; text-align: center; color: var(--text-muted);">
+                  <td colspan="6" class="feed-empty-cell">
                     No products registered in this line yet.
                   </td>
                 </tr>
@@ -2620,11 +2602,11 @@ function renderPMDashboard(userName, user) {
         const allSales = (window.DEMO_DATA && window.DEMO_DATA.sales) || [];
         const activeYear = ((window.getSystemDate && window.getSystemDate()) || new Date()).getFullYear().toString();
         return `
-        <div style="margin-top: 24px;">
-          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: var(--gray-800);">
+        <div class="line-trend-section">
+          <h3 class="line-trend-section-title">
             📊 Monthly Sales Trends for Line Products
           </h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+          <div class="line-trend-grid">
             ${pmLines.map((line) => {
               const lineSales = allSales.filter((s) => {
                 const matchesLine = s.lineId === line.id;
@@ -2638,16 +2620,16 @@ function renderPMDashboard(userName, user) {
               const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#f59e0b" : "#ef4444";
 
               return `
-              <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
-                  <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+              <div class="line-trend-card">
+                <div class="line-trend-card-header">
+                  <h4 class="line-trend-title">
                     📦 ${line.name}
                   </h4>
-                  <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
+                  <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                     Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
                   </span>
                 </div>
-                <div style="position: relative; height: 250px; width: 100%;">
+                <div class="line-trend-canvas-wrap">
                   <canvas id="dashLineTrend_${line.id}"></canvas>
                 </div>
               </div>
@@ -2694,7 +2676,7 @@ function renderBUDashboard(userName, user) {
   );
 
   const buLines = myUserLines.length > 0 ? myUserLines : lines;
-  const lineNames = buLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+  const lineNames = buLines.map((l) => l.name).join(", ");
   const activeBuLine = window.buActiveLineFilter || "all";
 
   const filteredLines =
@@ -2730,8 +2712,8 @@ function renderBUDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner bu">
-        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "رئيس وحدة الأعمال" : "Business Unit Head"} ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة وحدة الأعمال" : "Business Unit Management")}</div>
+        <h2 class="welcome-title">${t.welcome_back}, Business Unit Head ${userName}!</h2>
+        <div class="welcome-subtitle">${lineNames || "Business Unit Management"}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -2740,9 +2722,9 @@ function renderBUDashboard(userName, user) {
         lines.length > 1
           ? `
         <div class="dashboard-line-filter">
-          <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+          <span class="line-filter-label">🏷️ Filter by Line:</span>
           <button type="button" class="line-filter-btn ${activeBuLine === "all" ? "active" : ""}" onclick="window.switchBuLineFilter('all')">
-            ${lang === "ar" ? `جميع الخطوط (${lines.length})` : `All Lines (${lines.length})`}
+            All Lines (${lines.length})
           </button>
           ${lines
             .map(
@@ -2840,7 +2822,7 @@ function renderBUDashboard(userName, user) {
                               <tr>
                                 <td>
                                   <strong>${lang === "ar" ? (line.nameAr || line.name) : line.name}</strong>
-                                  <div class="bu-line-subtext">${(line.products || []).length} ${lang === "ar" ? "منتجات نشطة" : "Products Active"}</div>
+                                  <div class="bu-line-subtext">${(line.products || []).length} Products Active</div>
                                 </td>
                                 <td>
                                   ${
@@ -2849,13 +2831,13 @@ function renderBUDashboard(userName, user) {
                                     <strong>${lm.name}</strong>
                                     ${lm.email ? `<div class="bu-line-subtext">${lm.email}</div>` : ""}
                                   `
-                                      : `<em class="text-muted">${lang === "ar" ? "غير معين" : "Unassigned"}</em>`
+                                      : `<em class="text-muted">Unassigned</em>`
                                   }
                                 </td>
                                 <td>
                                   <div class="field-force-badges">
-                                    <span class="badge bg-primary-subtle text-primary badge-dm-count">${dmsCount} ${dmsCount === 1 ? (lang === "ar" ? "مدير منطقة" : "DM") : (lang === "ar" ? "مديري مناطق" : "DMs")}</span>
-                                    <span class="badge bg-success-subtle text-success badge-rep-count">${repsCount} ${repsCount === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}</span>
+                                    <span class="badge bg-primary-subtle text-primary badge-dm-count">${dmsCount} ${dmsCount === 1 ? "DM" : "DMs"}</span>
+                                    <span class="badge bg-success-subtle text-success badge-rep-count">${repsCount} ${repsCount === 1 ? "Rep" : "Reps"}</span>
                                   </div>
                                 </td>
                               </tr>
@@ -2876,7 +2858,7 @@ function renderBUDashboard(userName, user) {
                                     (lm) => `
                                 <tr class="bu-unassigned-row">
                                   <td>
-                                    <em class="text-muted">${lang === "ar" ? "خط غير محدد" : "Unassigned Line"}</em>
+                                    <em class="text-muted">Unassigned Line</em>
                                   </td>
                                   <td>
                                     <strong>${lm.name}</strong>
@@ -2920,16 +2902,16 @@ function renderBUDashboard(userName, user) {
         const allSales = getDashboardSalesData();
 
         return `
-      <div class="dashboard-card" style="margin-top: 20px; border-radius: 12px; padding: 20px;">
-        <div style="margin-bottom: 1.25rem;">
-          <h3 class="card-title" style="margin: 0; font-weight: 700; font-size: 1.15rem;">
+      <div class="dashboard-card line-trend-section">
+        <div class="line-trend-section-header">
+          <h3 class="card-title line-trend-section-title">
             📈 Monthly Sales & Target Trend (Per Line)
           </h3>
-          <small style="color: var(--gray-500); font-size: 0.82rem;">
+          <small class="line-trend-section-subtitle">
             Actual vs Target comparison for each independent product line under your business unit
           </small>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+        <div class="line-trend-grid">
           ${linesToShow.map(line => {
             const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear));
             const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
@@ -2938,16 +2920,16 @@ function renderBUDashboard(userName, user) {
             const badgeColor = lAch >= 100 ? "#10b981" : lAch >= 80 ? "#3b82f6" : "#c2410c";
 
             return `
-          <div style="background: var(--surface-hover, #f8fafc); border-radius: 10px; padding: 16px; border: 1px solid var(--border-color, #e2e8f0);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
-              <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem; color: var(--gray-800);">
+          <div class="line-trend-card">
+            <div class="line-trend-card-header">
+              <h4 class="line-trend-title">
                 📦 ${line.name}
               </h4>
-              <span style="background: rgba(0,0,0,0.05); color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 3px 8px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;">
+              <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                 Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
               </span>
             </div>
-            <div style="position: relative; height: 250px; width: 100%;">
+            <div class="line-trend-canvas-wrap">
               <canvas id="dashLineTrend_${line.id}"></canvas>
             </div>
           </div>
@@ -3101,8 +3083,8 @@ function renderAdminDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner admin">
-        <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مسؤول النظام" : "System Administrator"} ${userName}!</h2>
-        <div class="welcome-subtitle">${lang === "ar" ? "جميع خطوط الإنتاج والعمليات" : "All Product Lines & Operations"}</div>
+        <h2 class="welcome-title">${t.welcome_back}, System Administrator ${userName}!</h2>
+        <div class="welcome-subtitle">All Product Lines & Operations</div>
       </div>
 
       <div class="stat-grid">
@@ -3178,15 +3160,15 @@ function renderHRDashboard(userName) {
 
   return `
     <div class="flex-col">
-      <div class="welcome-banner hr" style="background: linear-gradient(135deg, #6f42c1, #593196); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h2 class="welcome-title" style="margin: 0; color: white;">${t.welcome_back}, ${lang === "ar" ? "مدير الموارد البشرية" : "HR Manager"} ${userName}!</h2>
-        <div class="welcome-subtitle" style="opacity: 0.9; margin-top: 4px; font-size: 0.875rem;">${lang === "ar" ? "الموارد البشرية وشؤون الموظفين" : "Human Resources & People Operations"}</div>
+      <div class="welcome-banner hr">
+        <h2 class="welcome-title">${t.welcome_back}, HR Manager ${userName}!</h2>
+        <div class="welcome-subtitle">Human Resources & People Operations</div>
       </div>
       <div class="stat-grid">
-        <a href="users.html" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;"><div class="stat-label">${t.total_employees}</div><div class="stat-value primary counter" data-target="${totalEmployees}">${totalEmployees}</div></a>
-        <a href="leaves.html#managerSection" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;"><div class="stat-label">${t.pending_leaves}</div><div class="stat-value danger counter" data-target="${pendingLeavesCount}">${pendingLeavesCount}</div></a>
-        <a href="announcements.html" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;"><div class="stat-label">${t.published_announcements}</div><div class="stat-value success counter" data-target="${announcementsCount}">${announcementsCount}</div></a>
-        <a href="users.html" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;"><div class="stat-label">${t.departments}</div><div class="stat-value purple counter" data-target="${departmentsCount}">${departmentsCount}</div></a>
+        <a href="users.html" class="stat-card stat-card-link-card"><div class="stat-label">${t.total_employees}</div><div class="stat-value primary counter" data-target="${totalEmployees}">${totalEmployees}</div></a>
+        <a href="leaves.html#managerSection" class="stat-card stat-card-link-card"><div class="stat-label">${t.pending_leaves}</div><div class="stat-value danger counter" data-target="${pendingLeavesCount}">${pendingLeavesCount}</div></a>
+        <a href="announcements.html" class="stat-card stat-card-link-card"><div class="stat-label">${t.published_announcements}</div><div class="stat-value success counter" data-target="${announcementsCount}">${announcementsCount}</div></a>
+        <a href="users.html" class="stat-card stat-card-link-card"><div class="stat-label">${t.departments}</div><div class="stat-value purple counter" data-target="${departmentsCount}">${departmentsCount}</div></a>
       </div>
     </div>
   `;
@@ -3202,74 +3184,74 @@ function attachDashboardModal() {
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
 
   const modalHtml = `
-    <div class="modal-overlay" id="dashCompleteModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 2500; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
-      <div class="modal-box" id="dashModalCard" style="width: 90%; max-width: 490px; max-height: 90vh; overflow-y: auto; padding: 24px; pointer-events: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px;">
-          <h4 id="dashModalTitle" style="margin: 0; font-weight: 700; font-size: 1.15rem;">${t.convert_to_actual}</h4>
-          <button type="button" onclick="closeDashCompleteModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500); line-height: 1;">&times;</button>
+    <div class="modal-overlay dash-complete-modal-overlay" id="dashCompleteModal">
+      <div class="modal-box dash-complete-modal-box" id="dashModalCard">
+        <div class="dash-complete-header">
+          <h4 id="dashModalTitle" class="dash-complete-title">${t.convert_to_actual}</h4>
+          <button type="button" onclick="closeDashCompleteModal()" class="dash-complete-close-btn">&times;</button>
         </div>
         <form id="dashCompleteForm" onsubmit="handleDashCompleteSubmit(event)">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
-            <div class="form-group">
-              <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashDate">${lang === "ar" ? "يوم الزيارة" : "Visit Day"}</label>
-              <input type="date" id="dashVisitDate" class="form-control" required style="width: 100%; padding: 8px 12px; border-radius: 8px;" onchange="updateDashModalDayDisplay()">
-              <div id="dashModalDayDisplay" style="margin-top: 4px; font-size: 0.82rem; font-weight: 700; color: var(--primary);"></div>
+          <div class="row g-2 mb-3">
+            <div class="col-6 form-group">
+              <label class="form-label fw-bold small" id="lblDashDate">Visit Day</label>
+              <input type="date" id="dashVisitDate" class="form-control" required onchange="updateDashModalDayDisplay()">
+              <div id="dashModalDayDisplay" class="mt-1 small fw-bold text-primary"></div>
             </div>
-            <div class="form-group">
-              <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashTime">${lang === "ar" ? "وقت الزيارة" : "Visit Time (HH:MM)"}</label>
-              <input type="time" id="dashVisitTime" class="form-control" required style="width: 100%; padding: 8px 12px; border-radius: 8px;">
+            <div class="col-6 form-group">
+              <label class="form-label fw-bold small" id="lblDashTime">Visit Time (HH:MM)</label>
+              <input type="time" id="dashVisitTime" class="form-control" required>
             </div>
           </div>
-          <div id="dashInsertionMetaContainer" style="margin-bottom: 14px; background: rgba(13, 110, 253, 0.06); border: 1px solid rgba(13, 110, 253, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; color: var(--text-color, var(--gray-700)); display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+          <div id="dashInsertionMetaContainer" class="dash-meta-box">
             <div>
-              <strong>${lang === "ar" ? "تاريخ الإدخال:" : "Insertion Date:"}</strong>
-              <span id="dashInsertionDateDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+              <strong>Insertion Date:</strong>
+              <span id="dashInsertionDateDisplay" class="dash-meta-value">-</span>
             </div>
             <div>
-              <strong>${lang === "ar" ? "وقت الإدخال:" : "Insertion Time:"}</strong>
-              <span id="dashInsertionTimeDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+              <strong>Insertion Time:</strong>
+              <span id="dashInsertionTimeDisplay" class="dash-meta-value">-</span>
             </div>
           </div>
 
-          <div id="dashLockedDoubleBadge" style="display: none; margin-bottom: 14px; background: rgba(111,66,193,0.12); color: #6f42c1; border: 1px solid #6f42c1; padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; align-items: center; gap: 8px;">
-            <span style="font-size: 1.1rem;">🤝</span>
+          <div id="dashLockedDoubleBadge" class="dash-locked-double-badge">
+            <span class="fs-5">🤝</span>
             <span id="dashLockedDoubleText">Accompanied Double Visit</span>
           </div>
 
-          <div class="form-group" id="dashVisitTypeContainer" style="margin-bottom: 14px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashType">${t.visit_type}</label>
-            <div style="display: flex; gap: 16px; align-items: center; font-size: 0.88rem;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+          <div class="form-group mb-3" id="dashVisitTypeContainer">
+            <label class="form-label fw-bold small" id="lblDashType">${t.visit_type}</label>
+            <div class="d-flex gap-3 align-items-center small">
+              <label class="d-inline-flex align-items-center gap-1 cursor-pointer">
                 <input type="radio" name="dashVisitType" value="single" checked onchange="toggleDashDoubleVisit()">
                 <span id="lblDashSingle">${t.single_visit}</span>
               </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+              <label class="d-inline-flex align-items-center gap-1 cursor-pointer">
                 <input type="radio" name="dashVisitType" value="double" onchange="toggleDashDoubleVisit()">
                 <span id="lblDashDouble">${t.double_visit}</span>
               </label>
             </div>
           </div>
 
-          <div class="form-group" id="dashDoubleSection" style="display: none; margin-bottom: 14px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashAccompanied">${t.accompanied_by}</label>
-            <div id="dashCompanionsContainer" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="form-group mb-3" id="dashDoubleSection" style="display: none;">
+            <label class="form-label fw-bold small" id="lblDashAccompanied">${t.accompanied_by}</label>
+            <div id="dashCompanionsContainer" class="d-flex flex-wrap gap-2">
             </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 14px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashProducts">${t.products_discussed}</label>
-            <div id="dashProdContainer" style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; max-height: 140px; overflow-y: auto; padding-right: 4px;">
+          <div class="form-group mb-3">
+            <label class="form-label fw-bold small" id="lblDashProducts">${t.products_discussed}</label>
+            <div id="dashProdContainer" class="dash-prod-container">
             </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 18px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;" id="lblDashFeedback">${t.visit_feedback}</label>
-            <textarea id="dashVisitComment" class="form-control" rows="2" placeholder="Enter visit feedback..." style="width: 100%; padding: 8px 12px; border-radius: 8px;"></textarea>
+          <div class="form-group mb-3">
+            <label class="form-label fw-bold small" id="lblDashFeedback">${t.visit_feedback}</label>
+            <textarea id="dashVisitComment" class="form-control" rows="2" placeholder="Enter visit feedback..."></textarea>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--gray-200); padding-top: 14px;">
-            <button type="button" class="btn btn-secondary" onclick="closeDashCompleteModal()">${t.cancel}</button>
-            <button type="submit" class="btn btn-primary" id="btnDashSubmit">${t.confirm_actual_visit}</button>
+          <div class="dash-complete-footer">
+            <button type="button" class="btn btn-secondary px-3" onclick="closeDashCompleteModal()">${t.cancel}</button>
+            <button type="submit" class="btn btn-primary px-3 fw-bold" id="btnDashSubmit">${t.confirm_actual_visit}</button>
           </div>
         </form>
       </div>
@@ -3312,7 +3294,7 @@ function populateDashCompanions(repId) {
   }
 
   if (managers.length === 0) {
-    const fallbackRep = users.find((u) => u.id === "rep1");
+    const fallbackRep = users.find((u) => u.id === "u1790626000001");
     if (fallbackRep && typeof window.getManagerChain === "function") {
       managers = window
         .getManagerChain(fallbackRep.id)
@@ -3371,10 +3353,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
     if (typeContainer) typeContainer.style.display = "none";
     if (lockedBadge) lockedBadge.style.display = "flex";
     if (lockedText) {
-      lockedText.innerText =
-        lang === "ar"
-          ? `نزول مرافق (Double Visit) مع المندوب: ${repName}`
-          : `Double Visit with Rep: ${repName}`;
+      lockedText.innerText = `Double Visit with Rep: ${repName}`;
     }
     if (doubleSection) doubleSection.style.display = "none";
   } else {
@@ -3398,7 +3377,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
     const activeRepId =
       (target && target.repId) ||
       (window.checkAuth && window.checkAuth() ? window.checkAuth().id : null) ||
-      "rep1";
+      "u1790626000001";
     populateDashCompanions(activeRepId);
     toggleDashDoubleVisit();
 
@@ -3455,11 +3434,11 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
 
   const dashInsDateEl = document.getElementById("dashInsertionDateDisplay");
   const dashInsTimeEl = document.getElementById("dashInsertionTimeDisplay");
-  if (dashInsDateEl) dashInsDateEl.innerText = `${todayISO} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
-  if (dashInsTimeEl) dashInsTimeEl.innerText = `${timeStr} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+  if (dashInsDateEl) dashInsDateEl.innerText = `${todayISO} (Auto on Complete)`;
+  if (dashInsTimeEl) dashInsTimeEl.innerText = `${timeStr} (Auto on Complete)`;
 
   const lblDate = document.getElementById("lblDashDate");
-  if (lblDate) lblDate.innerText = t.visit_day || (lang === "ar" ? "يوم الزيارة" : "Visit Day");
+  if (lblDate) lblDate.innerText = t.visit_day || "Visit Day";
 
   document.getElementById("dashVisitComment").value =
     (target && target.comment) || "";
@@ -3489,7 +3468,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
 
     if (productsToShow.length === 0) {
       container.innerHTML =
-        '<span style="color: var(--gray-500);">No products available.</span>';
+        '<span class="text-muted small">No products available.</span>';
     } else {
       const selectedProds = (target && (target.productIds && target.productIds.length ? target.productIds : target.products)) || [];
       productsToShow.forEach((prod) => {
@@ -3555,7 +3534,7 @@ window.handleDashCompleteSubmit = function (e) {
     if (submitBtn.disabled) return;
     submitBtn.disabled = true;
     submitBtn.dataset.originalText = submitBtn.innerText;
-    submitBtn.innerText = lang === "ar" ? "جاري الحفظ... ⏳" : "Saving... ⏳";
+    submitBtn.innerText = "Saving... ⏳";
   }
 
   const resetSubmitBtn = () => {
@@ -3582,21 +3561,15 @@ window.handleDashCompleteSubmit = function (e) {
 
   if (dateVal > todayISO) {
     resetSubmitBtn();
-    const msg = lang === "ar"
-      ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
-      : "Cannot log an actual visit in a future date.";
+    const msg = "Cannot log an actual visit in a future date.";
     showToast(msg, "warning");
     return;
   }
   if (dateVal < minAllowedBacklog) {
     resetSubmitBtn();
-    const msg = lang === "ar"
-      ? (limitDays === 0
-          ? "وفقاً لسياسة الشركة، يجب تسجيل الزيارات الفعلية في نفس اليوم فقط."
-          : `وفقاً لسياسة الشركة، لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من ${limitDays} ${limitDays === 1 ? "يوم" : limitDays === 2 ? "يومين" : "أيام"} على تاريخها.`)
-      : (limitDays === 0
-          ? "Company policy requires same-day visit logging only."
-          : `Company policy does not allow logging visits older than ${limitDays} day(s).`);
+    const msg = limitDays === 0
+      ? "Company policy requires same-day visit logging only."
+      : `Company policy does not allow logging visits older than ${limitDays} day(s).`;
     showToast(msg, "warning");
     return;
   }
@@ -3635,9 +3608,7 @@ window.handleDashCompleteSubmit = function (e) {
       ).map((c) => c.value);
       if (companions.length === 0) {
         resetSubmitBtn();
-        const msg = lang === "ar"
-          ? "يرجى تحديد المرافق في الزيارة المزدوجة."
-          : "Please select at least one companion for the double visit.";
+        const msg = "Please select at least one companion for the double visit.";
         showToast(msg, "warning");
         return;
       }
@@ -3662,7 +3633,7 @@ window.handleDashCompleteSubmit = function (e) {
     (window.checkAuth && window.checkAuth()) ||
     (window.DEMO_DATA && window.DEMO_DATA.currentUser) ||
     {};
-  const targetRepId = target.repId || authUser.id || "rep1";
+  const targetRepId = target.repId || authUser.id || "u1790626000001";
 
   // SFE Audit Check: Validate public holiday and leave
   if (typeof window.checkVisitDateAllowed === "function") {
@@ -3682,12 +3653,8 @@ window.handleDashCompleteSubmit = function (e) {
       const conflictingTarget = timeConflict.conflictingVisit.doctorName || timeConflict.conflictingVisit.doctorId || "";
       const conflictingTime = timeConflict.conflictingVisit.time || timeVal;
       const msg = timeConflict.exactMatch
-        ? (lang === "ar"
-            ? `⚠️ توجد زيارة مسجلة بالفعل في نفس هذا التوقيت تماماً (${conflictingTime}) لـ (${conflictingTarget}).`
-            : `⚠️ Another visit is already recorded at the exact same time (${conflictingTime}) for (${conflictingTarget}).`)
-        : (lang === "ar"
-            ? `⚠️ الفارق الزمني بين الزيارات يجب ألا يقل عن ${timeConflict.minRequired} دقائق عند تفعيل تسجيل الزيارات بالموقع (GPS). توجد زيارة أخرى في (${conflictingTime}) لـ (${conflictingTarget}).`
-            : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`);
+        ? `⚠️ Another visit is already recorded at the exact same time (${conflictingTime}) for (${conflictingTarget}).`
+        : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
       showToast(msg, "warning");
       return;
     }
@@ -3716,6 +3683,15 @@ window.handleDashCompleteSubmit = function (e) {
     }
     target.source = "plan";
 
+    const isCurrentlyOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    if (isCurrentlyOffline) {
+      target.isOffline = true;
+      if (!target.offlineLoggedAt) target.offlineLoggedAt = nowStamp.toISOString();
+      target.syncedToCloud = false;
+    } else {
+      target.syncedToCloud = true;
+    }
+
     if (window.saveDataToStorage) {
       window.saveDataToStorage();
     }
@@ -3724,7 +3700,11 @@ window.handleDashCompleteSubmit = function (e) {
   closeDashCompleteModal();
   renderDashboard();
   if (typeof showToast === "function") {
-    showToast("Visit converted to actual successfully.", "success");
+    const isCurrentlyOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    const msg = isCurrentlyOffline
+      ? "Visit converted offline. It will automatically sync once online."
+      : "Visit converted to actual successfully.";
+    showToast(msg, isCurrentlyOffline ? "info" : "success");
   }
 };
 

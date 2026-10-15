@@ -29,7 +29,7 @@
     }
     const curDate = Core._state.currentDate;
     const curDateStr = Core.formatDate(curDate);
-    const userId = Core._state.currentUser?.id || "rep1";
+    const userId = Core._state.currentUser?.id || "u1790626000001";
 
     const dateDisp = document.getElementById("currentDateDisplay");
     if (dateDisp) {
@@ -100,7 +100,7 @@
 
     const weekStart = Core.getWeekStart(Core._state.currentDate);
     const curDateStr = Core.formatDate(Core._state.currentDate);
-    const userId = Core._state.currentUser?.id || "rep1";
+    const userId = Core._state.currentUser?.id || "u1790626000001";
 
     const companySettings = (window.store && window.store.companySettings)
       ? window.store.companySettings.get()

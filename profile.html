@@ -18,21 +18,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v196">
-    <link rel="stylesheet" href="css/profile.css?v=v196">
+    <link rel="stylesheet" href="css/style.css?v=v200">
+    <link rel="stylesheet" href="css/profile.css?v=v200">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/app.js?v=v196"></script>
-    <script src="js/store.js?v=v196"></script>
+    <script src="js/app.js?v=v200"></script>
+    <script src="js/store.js?v=v200"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v196"></script>
-    <script src="js/firebase-sync.js?v=v196"></script>
+    <script src="js/firebase-config.js?v=v200"></script>
+    <script src="js/firebase-sync.js?v=v200"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v196";
+        var EXPECTED_SW = "v200";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -196,6 +196,66 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- START: Admin System Lifecycle & Data Management Card -->
+                <div class="card" id="adminSystemManagementCard" style="display: none; margin-bottom: 24px; border: 1.5px solid #0d6efd;">
+                    <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-weight: 700;">🚀 <span data-i18n="sysMgmtTitle">System Lifecycle & Data Management</span></span>
+                        <span class="badge" style="background: #0d6efd; color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;" data-i18n="adminExclusive">Admin Exclusive</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <!-- Environment Status Banner -->
+                        <div id="systemStatusBanner" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                            <!-- Dynamically populated: Demo Mode vs Production Mode -->
+                        </div>
+
+                        <p class="text-muted small" style="margin-bottom: 20px;" data-i18n="sysMgmtDesc">
+                            Manage system backups, database snapshots, and production launch transitions for organizational onboarding.
+                        </p>
+
+                        <!-- Section: Permanent Backup & Restore -->
+                        <div style="background: var(--surface-alt, #f8f9fa); border: 1px solid var(--border-color, #dee2e6); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                            <div style="font-weight: 700; color: #0284c7; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <span>💾</span>
+                                <span data-i18n="backupSectionTitle">Database Snapshots & Disaster Recovery</span>
+                            </div>
+                            <p class="text-muted small" style="margin-bottom: 14px;" data-i18n="backupSectionDesc">
+                                Export a complete JSON archive of all catalog and operational data, or restore from a previous verified snapshot.
+                            </p>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button type="button" class="btn-primary" style="padding: 8px 18px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 8px;" onclick="exportDatabaseBackup()">
+                                    <i class="fas fa-download"></i>
+                                    <span data-i18n="exportBackupBtn">Export Full Database (JSON)</span>
+                                </button>
+                                <button type="button" class="btn-secondary" style="padding: 8px 18px; font-size: 0.88rem; background: var(--gray-200, #e2e8f0); color: var(--gray-800, #1e293b); border: none; border-radius: 10px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;" onclick="document.getElementById('dbRestoreFileInput').click()">
+                                    <i class="fas fa-upload"></i>
+                                    <span data-i18n="restoreBackupBtn">Restore Database from Backup</span>
+                                </button>
+                                <input type="file" id="dbRestoreFileInput" accept=".json,application/json" style="display: none;" onchange="handleDatabaseRestore(event)">
+                            </div>
+                        </div>
+
+                        <!-- Section: Go-Live & Production Launch (Only rendered if NOT already launched) -->
+                        <div id="goLiveLaunchSection" class="golive-launch-box">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <div class="golive-launch-title" style="font-weight: 700; margin-bottom: 6px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                                        <span>🚀</span>
+                                        <span data-i18n="goLiveCardTitle">Official Production Launch (Go-Live)</span>
+                                    </div>
+                                    <p class="golive-launch-desc small" style="margin-bottom: 0; max-width: 650px;" data-i18n="goLiveCardDesc">
+                                        Transition the system from test/demo mode to real operational production. This will archive test records, prepare a clean slate for the company, and lock the system into active production mode.
+                                    </p>
+                                </div>
+                                <button type="button" class="btn-primary" style="background: #d97706; border-color: #d97706; padding: 10px 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;" onclick="openGoLiveModal()">
+                                    <span>🚀</span>
+                                    <span data-i18n="launchProdBtn">Launch Production</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- END: Admin System Lifecycle & Data Management Card -->
 
                 <div class="card" id="adminCompanySettingsCard" style="display: none; margin-bottom: 24px; border: 1.5px solid var(--primary, #0d6efd);">
                     <div class="card-header" style="background: rgba(13, 110, 253, 0.08); display: flex; justify-content: space-between; align-items: center;">
@@ -677,9 +737,90 @@
                     </form>
                 </div>
             </div>
+
+            <!-- START: Go-Live Production Launch Modal -->
+            <div id="goLiveModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem; overflow-y: auto;">
+                <div class="go-live-modal-dialog">
+                    <div style="padding: 18px 24px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.4rem;">🚀</span>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #fff;" data-i18n="goLiveModalTitle">Production Launch & Clean Slate</h3>
+                                <small style="opacity: 0.8; font-size: 0.78rem;" data-i18n="goLiveModalSubtitle">Transition to Live Enterprise Environment</small>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeGoLiveModal()" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0 4px;">&times;</button>
+                    </div>
+
+                    <div style="padding: 22px;">
+                        <div class="modal-info-box-blue" style="border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: flex-start; gap: 10px;">
+                            <span style="font-size: 1.2rem; flex-shrink: 0;">🛡️</span>
+                            <p class="small" style="margin: 0; line-height: 1.5;" data-i18n="goLiveSafetyNotice">
+                                <strong>Automatic Safety Net:</strong> A full backup JSON file of all current database records will be automatically downloaded to your computer <strong>before any data is cleared</strong>.
+                            </p>
+                        </div>
+
+                        <label class="form-label" style="font-size: 0.92rem; font-weight: 700; margin-bottom: 12px;" data-i18n="selectLaunchMode">Select Launch Transition Mode:</label>
+
+                        <!-- Mode Option 1: Keep Setup -->
+                        <div class="modal-option-card active" style="border: 2px solid #0d6efd; background: rgba(13, 110, 253, 0.05); border-radius: 12px; padding: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;" id="labelOptionKeep" onclick="selectGoLiveOption('keep_setup')">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <input type="radio" name="goLiveOption" value="keep_setup" id="radioKeepSetup" checked style="margin-top: 4px; accent-color: #0d6efd; cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div class="modal-option-title" style="font-weight: 700; font-size: 0.92rem; margin-bottom: 4px;" data-i18n="optionKeepTitle">
+                                        Option A: Clear Test Records & Keep Company Setup (Recommended)
+                                    </div>
+                                    <p class="modal-option-desc small" style="margin-bottom: 8px;" data-i18n="optionKeepDesc">
+                                        Use this if you already configured your real company employees, lines, products, and doctors, and want to wipe only test transactions before going live.
+                                    </p>
+                                    <div class="small" style="line-height: 1.5;">
+                                        <div><span style="color: #ef4444; font-weight: 700;">• Wiped:</span> <span class="modal-option-desc">Test visits, leaves, test distributor sales, notifications, expenses.</span></div>
+                                        <div><span style="color: #10b981; font-weight: 700;">• Preserved:</span> <span class="modal-option-desc">All users/reps, lines, products, doctors, areas, brick weights, company settings.</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mode Option 2: Blank Slate -->
+                        <div class="modal-option-card" style="border: 2px solid var(--border-color, #e2e8f0); background: transparent; border-radius: 12px; padding: 14px; margin-bottom: 18px; cursor: pointer; transition: all 0.2s;" id="labelOptionBlank" onclick="selectGoLiveOption('blank_slate')">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <input type="radio" name="goLiveOption" value="blank_slate" id="radioBlankSlate" style="margin-top: 4px; accent-color: #0d6efd; cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div class="modal-option-title" style="font-weight: 700; font-size: 0.92rem; margin-bottom: 4px;" data-i18n="optionBlankTitle">
+                                        Option B: Complete Clean Slate for New Company (Blank Canvas)
+                                    </div>
+                                    <p class="modal-option-desc small" style="margin-bottom: 8px;" data-i18n="optionBlankDesc">
+                                        Use this when delivering the software to a completely new client who wants to start from 0 records and upload their own rosters.
+                                    </p>
+                                    <div class="small" style="line-height: 1.5;">
+                                        <div><span style="color: #ef4444; font-weight: 700;">• Wiped:</span> <span class="modal-option-desc">All visits, sales, leaves, expenses, plus all demo doctors, pharmacies, and demo reps.</span></div>
+                                        <div><span style="color: #10b981; font-weight: 700;">• Preserved:</span> <span class="modal-option-desc">Super Admin account, specialties catalog, governance rules, and branding.</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-info-box-red" style="border-radius: 10px; padding: 10px 14px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.1rem; flex-shrink: 0;">⚠️</span>
+                            <p class="small" style="margin: 0;" data-i18n="goLiveWarning">
+                                <strong>Permanent Action:</strong> Once launched, this button will disappear forever and the system will remain in Active Production mode.
+                            </p>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button type="button" class="btn-secondary" style="padding: 9px 18px; background: var(--gray-200, #e2e8f0); color: var(--gray-800, #1e293b); border: none; border-radius: 10px; font-weight: 600; cursor: pointer;" onclick="closeGoLiveModal()" data-i18n="cancel">Cancel</button>
+                            <button type="button" class="btn-primary" id="btnConfirmGoLive" style="padding: 9px 22px; background: #d97706; border-color: #d97706; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;" onclick="confirmAndExecuteGoLive()">
+                                <span>🚀</span>
+                                <span data-i18n="confirmLaunchBtn">Confirm & Launch Production</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- END: Go-Live Production Launch Modal -->
         </main>
     </div>
-    <script src="js/workflow-engine.js?v=v196"></script>
-    <script src="js/profile.js?v=v196"></script>
+    <script src="js/workflow-engine.js?v=v200"></script>
+    <script src="js/profile.js?v=v200"></script>
 </body>
 </html>

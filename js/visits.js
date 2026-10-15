@@ -260,7 +260,7 @@ function captureVisitLocation(callback) {
         reason: "Location timeout"
       });
     }
-  }, 4000);
+  }, 5000);
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
@@ -285,7 +285,7 @@ function captureVisitLocation(callback) {
         reason: err ? err.message : "Permission denied"
       });
     },
-    { enableHighAccuracy: true, timeout: 3500, maximumAge: 60000 }
+    { enableHighAccuracy: true, timeout: 4500, maximumAge: 120000 }
   );
 }
 
@@ -361,6 +361,25 @@ function renderGpsBadge(v, lang) {
   }
   return "";
 }
+
+function renderTimeTamperedBadge(v) {
+  if (!v || !v.timeTampered) return "";
+  const drift = v.clockDriftMinutes || 0;
+  const sign = drift > 0 ? "+" : "";
+  const text = `⏰ Time Drift (${sign}${drift}m)`;
+  const title = `Device clock differed from verified network time by ${sign}${drift} minutes. Stamped with official network time.`;
+  return `<span class="badge bg-warning text-dark border border-warning ms-1" title="${title}" style="font-size:0.75rem; vertical-align:middle;">${text}</span>`;
+}
+
+function renderOfflineBadge(v) {
+  if (!v || !v.isOffline) return "";
+  if (!v.syncedToCloud) {
+    return '<span class="badge badge-offline-pending" title="Saved locally on device (offline) • Waiting for connection to sync">📱 Offline Pending</span>';
+  }
+  const syncTimeStr = v.syncedAt ? ` (Synced: ${new Date(v.syncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : "";
+  return `<span class="badge badge-offline-synced" title="Logged offline on device and synced to cloud${syncTimeStr}">📶 Offline Synced</span>`;
+}
+window.renderOfflineBadge = renderOfflineBadge;
 
 let lastCapturedGpsResult = null;
 
@@ -1713,7 +1732,7 @@ const visitsApp = {
 
     const planDateInput = document.getElementById("bulkPlanDate");
     const currentPlanDate = (planDateInput && planDateInput.value) || todayStr;
-    const targetRepId = (currentUser && currentUser.id) || "rep1";
+    const targetRepId = (currentUser && currentUser.id) || "u1790626000001";
     filtered.forEach((target) => {
       let targetArea = target.area;
       if (!targetArea && target.areaId) {
@@ -1813,7 +1832,7 @@ const visitsApp = {
       return;
     }
 
-    const targetRepId = currentUser.id || "rep1";
+    const targetRepId = currentUser.id || "u1790626000001";
     const dateCheck = checkVisitDateAllowed(planDate, targetRepId, lang);
     if (!dateCheck.allowed) {
       resetSaveBtn();
@@ -2192,7 +2211,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
       let userActs = {};
       try {
         const raw = localStorage.getItem(`pharma_activities_data_${uId}`) ||
-          (uId === "rep1" ? localStorage.getItem("pharma_activities_data") : null);
+          (uId === "u1790626000001" ? localStorage.getItem("pharma_activities_data") : null);
         if (raw) userActs = JSON.parse(raw);
       } catch (e) {}
 
@@ -2416,6 +2435,8 @@ function renderVisitsTimeline(triggeredByShow = false) {
           <strong class="timeline-target-title">${window.escapeHtml(v.doctorName)}</strong>
           <div class="timeline-card-badges">
             ${renderGpsBadge(v, lang)}
+            ${renderOfflineBadge(v)}
+            ${renderTimeTamperedBadge(v, lang)}
             <span class="visit-badge-pill ${badgeClass}">${badgeLabel}</span>
           </div>
         </div>
@@ -2627,7 +2648,7 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
   container.replaceChildren();
 
   const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const effectiveId = targetId || currentUser.id || "rep1";
+  const effectiveId = targetId || currentUser.id || "u1790626000001";
   let candidates = [];
 
   const currentUserObj = users.find((u) => u.id === currentUser.id);
@@ -3794,7 +3815,7 @@ function openCompleteModal(visitId) {
   const compList = visit.doubleWithUserName
     ? visit.doubleWithUserName.split(", ")
     : [];
-  populateVisitCompanions(visit.repId || currentUser.id || "rep1", compList);
+  populateVisitCompanions(visit.repId || currentUser.id || "u1790626000001", compList);
 
   document.getElementById("visitComment").value = visit.comment || "";
   const samplesInput = document.getElementById("visitGiveawaySamples");
@@ -3851,15 +3872,32 @@ function saveVisit() {
     }
   };
 
+  const todayStrNow = (window.getSystemTodayStr && window.getSystemTodayStr()) || todayStr;
   const timeInput = document.getElementById("visitTime");
   const visitTime = timeInput && timeInput.value ? timeInput.value : "11:00";
   const dateInput = document.getElementById("visitDate");
-  const visitDate = dateInput && dateInput.value ? dateInput.value : todayStr;
+  const visitDate = dateInput && dateInput.value ? dateInput.value : todayStrNow;
+
+  // Anti-Timestamp Tampering Check
+  let isTimeTampered = false;
+  let clockDriftMinutes = 0;
+  if (window.NetworkTime && typeof window.NetworkTime.checkTampering === "function") {
+    const timeCheck = window.NetworkTime.checkTampering(5);
+    if (timeCheck.isTampered) {
+      isTimeTampered = true;
+      clockDriftMinutes = timeCheck.driftMinutes;
+      const driftText = Math.abs(timeCheck.driftMinutes) + " min";
+      const msg = `⚠️ Security Notice: Device clock out of sync (${driftText}). Visit stamped with official network time.`;
+      if (typeof showToast === "function") {
+        showToast(msg, "warning");
+      }
+    }
+  }
   const modalSource =
     document.getElementById("visitModal").dataset.source || "actual";
 
   if (modalSource === "plan" && !currentEditVisitId) {
-    if (visitDate < todayStr) {
+    if (visitDate < todayStrNow) {
       resetSaveBtn();
       const msg = "Cannot plan visits in the past. Please select today or a future date.";
       showToast(msg, "warning");
@@ -3867,7 +3905,7 @@ function saveVisit() {
     }
   } else {
     const twoDaysAgoStr = getTwoDaysAgoStr();
-    if (visitDate > todayStr) {
+    if (visitDate > todayStrNow) {
       resetSaveBtn();
       const msg = "Cannot log an actual visit in a future date.";
       showToast(msg, "warning");
@@ -3972,7 +4010,12 @@ function saveVisit() {
       visit.status = "completed";
       visit.date = visitDate;
       visit.time = visitTime;
-      const nowStamp = new Date();
+      const nowStamp = (window.NetworkTime && window.NetworkTime.now) ? window.NetworkTime.now() : new Date();
+      if (isTimeTampered) {
+        visit.timeTampered = true;
+        visit.clockDriftMinutes = clockDriftMinutes;
+        visit.verifiedNetworkTime = nowStamp.toISOString();
+      }
       visit.insertionDate = nowStamp.toISOString().slice(0, 10);
       visit.insertionTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
       visit.completedAt = nowStamp.toISOString();
@@ -4005,6 +4048,12 @@ function saveVisit() {
 
       const finalizeEdit = (gpsPayload) => {
         resetSaveBtn();
+        const isCurrentlyOffline = !navigator.onLine;
+        if (isCurrentlyOffline) {
+          visit.isOffline = true;
+          if (!visit.offlineLoggedAt) visit.offlineLoggedAt = new Date().toISOString();
+          visit.syncedToCloud = false;
+        }
         if (gpsPayload) {
           visit.gpsStatus = gpsPayload.status;
           if (gpsPayload.distanceMeters != null) visit.distanceMeters = gpsPayload.distanceMeters;
@@ -4016,8 +4065,10 @@ function saveVisit() {
         persistVisits();
         closeVisitModal();
         renderVisits(true);
-        const successMsg = "Visit saved successfully.";
-        showToast(successMsg, "success");
+        const successMsg = isCurrentlyOffline
+          ? "Visit saved locally offline with GPS. It will automatically sync once online."
+          : "Visit saved successfully.";
+        showToast(successMsg, isCurrentlyOffline ? "info" : "success");
       };
 
       if (companySettings.requireGpsValidation) {
@@ -4101,7 +4152,7 @@ function saveVisit() {
       if (repLines.length > 0) resolvedLineId = repLines[0].id;
     }
 
-    const nowStamp = new Date();
+    const nowStamp = (window.NetworkTime && window.NetworkTime.now) ? window.NetworkTime.now() : new Date();
     const insDate = nowStamp.toISOString().slice(0, 10);
     const insTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
 
@@ -4129,6 +4180,9 @@ function saveVisit() {
       comment: document.getElementById("visitComment").value,
       giveawaySamples: giveawaySamples,
       status: modalSource === "plan" ? "pending_approval" : "completed",
+      timeTampered: isTimeTampered,
+      clockDriftMinutes: clockDriftMinutes,
+      verifiedNetworkTime: nowStamp.toISOString(),
       source: modalSource,
       createdAt: nowStamp.toISOString(),
       insertionDate: insDate,
@@ -4138,6 +4192,14 @@ function saveVisit() {
 
     const finalizeNewSave = (gpsPayload) => {
       resetSaveBtn();
+      const isCurrentlyOffline = !navigator.onLine;
+      if (isCurrentlyOffline) {
+        newVisit.isOffline = true;
+        newVisit.offlineLoggedAt = new Date().toISOString();
+        newVisit.syncedToCloud = false;
+      } else {
+        newVisit.syncedToCloud = true;
+      }
       if (gpsPayload) {
         newVisit.gpsStatus = gpsPayload.status;
         if (gpsPayload.distanceMeters != null) newVisit.distanceMeters = gpsPayload.distanceMeters;
@@ -4152,8 +4214,12 @@ function saveVisit() {
       closeVisitModal();
       renderVisits(true);
 
-      const successMsg = modalSource === "plan" ? "Visit planned and submitted for approval successfully." : "Visit saved successfully.";
-      showToast(successMsg, "success");
+      const successMsg = modalSource === "plan"
+        ? "Visit planned and submitted for approval successfully."
+        : (isCurrentlyOffline
+            ? "Visit saved locally offline with GPS. It will automatically sync once online."
+            : "Visit saved successfully.");
+      showToast(successMsg, isCurrentlyOffline ? "info" : "success");
     };
 
     const companySettings = (window.store && window.store.companySettings)

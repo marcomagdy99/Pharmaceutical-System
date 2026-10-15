@@ -176,3 +176,207 @@
   transform: scale(1.12);
 }
 /* --- END: Company Branding Customization Styles --- */
+
+/* --- START: System Lifecycle & Data Management Styles --- */
+.sys-mgmt-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sys-mgmt-icon-prod {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #10b981;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.sys-mgmt-icon-demo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f59e0b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.sys-mgmt-tag-prod {
+  background: #10b981;
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.sys-mgmt-tag-demo {
+  background: #f59e0b;
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.sys-mgmt-dot-prod {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+}
+
+.sys-mgmt-dot-demo {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  display: inline-block;
+}
+
+.sys-mgmt-banner-demo {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+}
+[data-theme="dark"] .sys-mgmt-banner-demo {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
+}
+
+.sys-mgmt-banner-prod {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+}
+[data-theme="dark"] .sys-mgmt-banner-prod {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+}
+
+.sys-mgmt-status-title-demo {
+  color: #b45309;
+}
+[data-theme="dark"] .sys-mgmt-status-title-demo {
+  color: #fbbf24;
+}
+
+.sys-mgmt-status-title-prod {
+  color: #047857;
+}
+[data-theme="dark"] .sys-mgmt-status-title-prod {
+  color: #34d399;
+}
+
+.sys-mgmt-status-pill-demo {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+[data-theme="dark"] .sys-mgmt-status-pill-demo {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.sys-mgmt-status-pill-prod {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+[data-theme="dark"] .sys-mgmt-status-pill-prod {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.golive-launch-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1.5px dashed #f59e0b;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 10px;
+}
+[data-theme="dark"] .golive-launch-box {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1.5px dashed rgba(245, 158, 11, 0.6);
+}
+
+.golive-launch-title {
+  color: #b45309;
+}
+[data-theme="dark"] .golive-launch-title {
+  color: #fbbf24;
+}
+
+.golive-launch-desc {
+  color: #475569;
+  line-height: 1.6;
+}
+[data-theme="dark"] .golive-launch-desc {
+  color: #e2e8f0;
+}
+
+/* Go-Live Modal Theme Adapters */
+.go-live-modal-dialog {
+  background: var(--surface, #ffffff);
+  border-radius: 16px;
+  max-width: 620px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e2e8f0);
+  margin: auto;
+  color: var(--text-color, #1e293b);
+}
+[data-theme="dark"] .go-live-modal-dialog {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.modal-info-box-blue {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+[data-theme="dark"] .modal-info-box-blue {
+  background: rgba(30, 58, 138, 0.3) !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
+  color: #bfdbfe !important;
+}
+
+.modal-info-box-red {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+[data-theme="dark"] .modal-info-box-red {
+  background: rgba(153, 27, 27, 0.25) !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+  color: #fca5a5 !important;
+}
+
+[data-theme="dark"] #goLiveModal .modal-option-card {
+  border-color: #334155 !important;
+}
+[data-theme="dark"] #goLiveModal .modal-option-card.active {
+  background: rgba(37, 99, 235, 0.18) !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] #goLiveModal .modal-option-title {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] #goLiveModal .modal-option-desc {
+  color: #cbd5e1 !important;
+}
+/* --- END: System Lifecycle & Data Management Styles --- */

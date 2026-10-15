@@ -162,6 +162,8 @@
           const beforeLen = window.DEMO_DATA[collKey].length;
           window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => {
             if (!it || !it.id) return false;
+            // Never prune locally-created offline items waiting to sync
+            if (it.isOffline && !it.syncedToCloud) return true;
             return cloudIds.has(String(it.id));
           });
           if (window.DEMO_DATA[collKey].length !== beforeLen) {
@@ -282,6 +284,10 @@
   // Push local state to Firestore
   async function pushLocalToCloud(immediate = false) {
     if (window._suppressCloudPush) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      updateSyncStatusUI("offline");
+      return;
+    }
     if (!db) {
       db = initFirestore();
       if (!db) return;
@@ -375,7 +381,13 @@
     }
 
     // 2. Visits Manager view
-    if (window.visitsManager && typeof window.visitsManager.render === "function") {
+    if (typeof window.renderVisits === "function") {
+      try {
+        window.renderVisits(true);
+      } catch (e) {
+        console.warn("[FirebaseSync] renderVisits error:", e);
+      }
+    } else if (window.visitsManager && typeof window.visitsManager.render === "function") {
       try {
         window.visitsManager.render();
       } catch (e) {
@@ -453,6 +465,10 @@
   // Push distributor sales data to its own dedicated Firestore document
   async function pushSalesToCloud(immediate = false) {
     if (window._suppressCloudPush) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      updateSyncStatusUI("offline");
+      return;
+    }
     if (!db) {
       db = initFirestore();
       if (!db) return;
@@ -741,14 +757,69 @@
     }
   }
 
+  // Offline Auto-Sync: detects offline visits and syncs to cloud upon network recovery
+  function syncPendingOfflineVisits() {
+    if (!window.DEMO_DATA || !Array.isArray(window.DEMO_DATA.visits)) return;
+    const pending = window.DEMO_DATA.visits.filter((v) => v && v.isOffline && !v.syncedToCloud);
+    if (pending.length === 0) return;
+
+    const nowIso = new Date().toISOString();
+    pending.forEach((v) => {
+      v.syncedToCloud = true;
+      v.syncedAt = nowIso;
+    });
+
+    if (typeof window.saveDataToStorage === "function") {
+      window._suppressCloudPush = true;
+      window.saveDataToStorage();
+      window._suppressCloudPush = false;
+    }
+
+    pushLocalToCloud(true);
+
+    if (typeof window.showToast === "function") {
+      const msg = `📶 Back Online: ${pending.length} offline visit(s) synced to cloud successfully!`;
+      window.showToast(msg, "success");
+    }
+
+    notifyActiveViews(window.DEMO_DATA);
+  }
+
   // Hook into global scope
   window.pushLocalToCloud = pushLocalToCloud;
   window.pushSalesToCloud = pushSalesToCloud;
   window.syncFromCloudNow = fetchCloudInitial;
+  window.syncPendingOfflineVisits = syncPendingOfflineVisits;
+
+  // Network status listeners
+  window.addEventListener("online", () => {
+    console.log("[FirebaseSync] Connection restored. Synchronizing pending offline data...");
+    updateSyncStatusUI("syncing");
+    syncPendingOfflineVisits();
+    if (!db) db = initFirestore();
+    if (db) {
+      fetchCloudInitial(false);
+      if (!isListening) startCloudListener();
+      if (!isSalesListening) startSalesCloudListener();
+    }
+  });
+
+  window.addEventListener("offline", () => {
+    console.warn("[FirebaseSync] Network offline. Operating in local-first offline mode.");
+    updateSyncStatusUI("offline");
+    if (typeof window.showToast === "function") {
+      window.showToast("📶 Offline Mode: Visits will be saved locally and auto-synced once reconnected.", "info");
+    }
+  });
 
   // Initialize on load
   function init() {
     db = initFirestore();
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      syncPendingOfflineVisits();
+    } else {
+      updateSyncStatusUI("offline");
+    }
     if (db) {
       fetchCloudInitial(false);
       startCloudListener();

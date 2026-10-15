@@ -1059,8 +1059,8 @@
     if (isShared) {
       const primaryHierarchy = Core.getLiveHierarchyForArea(areaId, Core._state.currentUser.id);
       const primaryRepId = primaryHierarchy.repId || Core._state.currentUser.id;
-      const primaryDmId = primaryHierarchy.dmId || Core._state.currentUser.managerId || "dm1";
-      const primaryLmId = primaryHierarchy.lmId || "lm1";
+      const primaryDmId = primaryHierarchy.dmId || Core._state.currentUser.managerId || "u1790626000014";
+      const primaryLmId = primaryHierarchy.lmId || "u1790626000012";
 
       let primaryShareStatus = Core.REQUEST_STATUS.PENDING_DM;
       if (Core._state.currentUser.role === Core.ROLES.DM) primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
@@ -1134,10 +1134,10 @@
       } else {
         if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
           globalStatus = Core.REQUEST_STATUS.PENDING_DM;
-          nextApprover = Core._state.currentUser.managerId || "dm1";
+          nextApprover = Core._state.currentUser.managerId || "u1790626000014";
         } else if (Core._state.currentUser.role === Core.ROLES.DM) {
           globalStatus = Core.REQUEST_STATUS.PENDING_LM;
-          nextApprover = Core._state.currentUser.managerId || "lm1";
+          nextApprover = Core._state.currentUser.managerId || "u1790626000012";
         } else {
           globalStatus = Core.REQUEST_STATUS.APPROVED;
           nextApprover = null;

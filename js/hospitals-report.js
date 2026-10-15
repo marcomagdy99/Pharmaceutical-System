@@ -11,7 +11,7 @@ function getHospitalsData() {
 }
 
 function getScopedHospitals(respectActiveFilters = true) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "u1790626000001" };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
 
@@ -272,7 +272,7 @@ function openHospitalModal(hospId = null) {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: إدارة وتعديل المستشفيات للأدمن فقط." : "Permission Denied: Only Admin can manage hospitals.", "error");
+      showToast("Permission Denied: Only Admin can manage hospitals.", "error");
     }
     return;
   }
@@ -343,7 +343,7 @@ function saveHospital() {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: إضافة وتعديل المستشفيات للأدمن فقط." : "Permission Denied: Only Admin can add/edit hospitals.", "error");
+      showToast("Permission Denied: Only Admin can add/edit hospitals.", "error");
     }
     return;
   }
@@ -365,7 +365,7 @@ function saveHospital() {
   const assignedAreaId = areaSelect ? areaSelect.value.trim() : "";
 
   if (!name || !address) {
-    if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "يرجى ملء الحقول الإلزامية." : "Please fill in required fields.", "warning");
+    if (typeof showToast === "function") showToast("Please fill in required fields.", "warning");
     return;
   }
 
@@ -426,7 +426,7 @@ function saveHospital() {
 
   closeHospitalModal();
   renderHospitalsReport();
-  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حفظ المستشفى بنجاح." : "Hospital saved successfully.", "success");
+  if (typeof showToast === "function") showToast("Hospital saved successfully.", "success");
 }
 
 let hospitalToDeleteId = null;
@@ -436,7 +436,7 @@ function openDeleteHospitalModal(hospId) {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف المستشفيات للأدمن فقط." : "Permission Denied: Only Admin can delete hospitals.", "error");
+      showToast("Permission Denied: Only Admin can delete hospitals.", "error");
     }
     return;
   }
@@ -463,7 +463,7 @@ function confirmDeleteHospital() {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف المستشفيات للأدمن فقط." : "Permission Denied: Only Admin can delete hospitals.", "error");
+      showToast("Permission Denied: Only Admin can delete hospitals.", "error");
     }
     return;
   }
@@ -479,7 +479,7 @@ function confirmDeleteHospital() {
 
   closeDeleteHospitalModal();
   renderHospitalsReport();
-  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حذف المستشفى بنجاح." : "Hospital deleted successfully.", "success");
+  if (typeof showToast === "function") showToast("Hospital deleted successfully.", "success");
 }
 
 function onHospitalFilterChange() {
@@ -489,7 +489,7 @@ function onHospitalFilterChange() {
 function exportHospitalsDirectory() {
   const hosps = getScopedHospitals(true);
   if (!hosps || hosps.length === 0) {
-    if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "لا توجد مستشفيات للتصدير." : "No hospitals to export.", "info");
+    if (typeof showToast === "function") showToast("No hospitals to export.", "info");
     return;
   }
 

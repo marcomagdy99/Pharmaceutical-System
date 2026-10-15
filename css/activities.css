@@ -2055,3 +2055,140 @@ button.btn-add-shared-row,
     background: rgba(239, 68, 68, 0.25);
     color: #f87171;
 }
+
+
+/* ==========================================================================
+   Budget Tab Allocation Tables & Detail Modal (Extracted from activities-tab-budget.js)
+   ========================================================================== */
+
+/* --- Budget User Cell --- */
+.budget-user-name {
+  font-weight: 700;
+  color: var(--text-color, #1e293b);
+}
+.budget-user-email {
+  color: var(--text-muted, #64748b);
+  display: block;
+}
+
+/* --- Employee Code Badge --- */
+.budget-code-badge {
+  background: var(--surface-dim, #f1f5f9);
+  color: var(--text-color, #334155);
+  font-weight: 600;
+}
+
+/* --- Allocation Inputs --- */
+.budget-alloc-input {
+  width: 140px;
+  font-weight: 700;
+  display: inline-block;
+}
+.budget-alloc-input-bu {
+  width: 160px;
+  font-weight: 700;
+}
+
+/* --- Table Cells & Inspect Button --- */
+.budget-sum-cell {
+  font-weight: 700;
+  color: var(--text-color, #334155);
+}
+.budget-inspect-btn {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+}
+.budget-empty-cell {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-muted, #64748b);
+}
+
+/* --- LM Detail Modal Styling --- */
+.budget-modal-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted, #64748b);
+  font-size: 14px;
+}
+.budget-modal-summary {
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text-muted, #475569);
+}
+.budget-modal-total {
+  color: var(--text-color, #0f172a);
+}
+.budget-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.budget-detail-tr-head {
+  border-bottom: 2px solid var(--border-color, #cbd5e1);
+  text-align: start;
+}
+.budget-detail-th {
+  padding: 8px 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+.budget-detail-tr {
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+.budget-detail-td-name {
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--text-color, #1e293b);
+}
+.budget-detail-td-code {
+  padding: 10px 12px;
+}
+.budget-detail-td-val {
+  padding: 10px 12px;
+  text-align: end;
+  font-weight: 700;
+  color: var(--primary, #2563eb);
+}
+
+/* --- Dark Mode Overrides --- */
+[data-theme="dark"] .budget-user-name {
+  color: #f1f3f5;
+}
+[data-theme="dark"] .budget-user-email {
+  color: #94a3b8;
+}
+[data-theme="dark"] .budget-code-badge {
+  background: #282e3a;
+  color: #cbd5e1;
+}
+[data-theme="dark"] .budget-sum-cell {
+  color: #cbd5e1;
+}
+[data-theme="dark"] .budget-empty-cell {
+  color: #94a3b8;
+}
+[data-theme="dark"] .budget-modal-empty {
+  color: #94a3b8;
+}
+[data-theme="dark"] .budget-modal-summary {
+  color: #94a3b8;
+}
+[data-theme="dark"] .budget-modal-total {
+  color: #f1f3f5;
+}
+[data-theme="dark"] .budget-detail-tr-head {
+  border-bottom-color: #3b4252;
+}
+[data-theme="dark"] .budget-detail-th {
+  color: #94a3b8;
+}
+[data-theme="dark"] .budget-detail-tr {
+  border-bottom-color: #2d3340;
+}
+[data-theme="dark"] .budget-detail-td-name {
+  color: #f1f3f5;
+}
+[data-theme="dark"] .budget-detail-td-val {
+  color: #60a5fa;
+}

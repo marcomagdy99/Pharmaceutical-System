@@ -18,9 +18,7 @@ const ACH_MONTHS = (typeof window !== 'undefined' && Array.isArray(window.MONTH_
   ? window.MONTH_NAMES
   : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const ACH_MONTHS_AR = (typeof window !== 'undefined' && Array.isArray(window.MONTH_NAMES_AR) && window.MONTH_NAMES_AR.length === 12)
-  ? window.MONTH_NAMES_AR
-  : ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+const ACH_MONTHS_AR = ACH_MONTHS;
 
 window.toggleAchMonthDropdown = function(e) {
   if (e) {
@@ -62,19 +60,17 @@ function updateAchMonthDropdownLabel() {
   const checkedBoxes = Array.from(document.querySelectorAll('.ach-month-checkbox:checked'));
 
   if (checkedBoxes.length === 0) {
-    labelEl.textContent = lang === 'ar' ? 'لم يتم اختيار شهور' : 'No Months Selected';
+    labelEl.textContent = 'No Months Selected';
   } else if (checkedBoxes.length === allBoxes.length && allBoxes.length > 0) {
-    labelEl.textContent = lang === 'ar' ? 'كل الشهور' : 'All Months';
+    labelEl.textContent = 'All Months';
   } else if (checkedBoxes.length <= 2) {
     const names = checkedBoxes.map((cb) => {
       const idx = parseInt(cb.value, 10) - 1;
-      return lang === 'ar' ? ACH_MONTHS_AR[idx] : ACH_MONTHS[idx];
+      return ACH_MONTHS[idx];
     });
-    labelEl.textContent = names.join(lang === 'ar' ? '، ' : ', ');
+    labelEl.textContent = names.join(', ');
   } else {
-    labelEl.textContent = lang === 'ar'
-      ? `${checkedBoxes.length} شهور محددة`
-      : `${checkedBoxes.length} Months Selected`;
+    labelEl.textContent = `${checkedBoxes.length} Months Selected`;
   }
 }
 
@@ -142,7 +138,7 @@ function populateAchAreas(filterUser) {
   const areaSelect = document.getElementById('achAreaSelect');
   if (!areaSelect) return;
   const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
-  const allLabel = lang === 'ar' ? 'جميع المناطق' : 'All Areas';
+  const allLabel = 'All Areas';
   const prevVal = areaSelect.value;
   areaSelect.innerHTML = `<option value="all">${allLabel}</option>`;
 
@@ -175,7 +171,7 @@ function populateAchAreas(filterUser) {
     const opt = document.createElement('option');
     opt.value = a.id;
     const isVacant = !a.repId;
-    const vacantTag = isVacant ? ` [${lang === 'ar' ? 'شاغرة' : 'Vacant'}]` : '';
+    const vacantTag = isVacant ? ' [Vacant]' : '';
     opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${vacantTag}`;
     areaSelect.appendChild(opt);
   });
@@ -465,7 +461,7 @@ function renderAchievementsReport() {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-          ${lang === 'ar' ? 'يرجى اختيار شهر واحد على الأقل.' : 'Please select at least one month.'}
+          Please select at least one month.
         </td>
       </tr>
     `;
@@ -480,7 +476,7 @@ function renderAchievementsReport() {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-          ${lang === 'ar' ? 'لا توجد تارجت أو مبيعات مربوطة بمندوب ومنتج للشهور المحددة.' : 'No targets or rep/product-matched sales for selected months.'}
+          No targets or rep/product-matched sales for selected months.
         </td>
       </tr>
     `;
@@ -506,7 +502,7 @@ function renderAchievementsReport() {
           ${window.escapeHtml(g.repName)}
           ${g.areaName ? `<div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${window.escapeHtml(g.areaName)}</div>` : ''}
         </td>
-        <td>${lang === 'ar' ? 'الإجمالي' : 'TOTAL'}</td>
+        <td>TOTAL</td>
         <td>${g.totalTUnit.toLocaleString()}</td>
         <td>${g.totalSUnit.toLocaleString()}</td>
         <td>${g.totalTValue.toLocaleString()}</td>
@@ -541,8 +537,8 @@ function renderAchievementsReport() {
       grandRow.className = 'ach-grand-total-row';
       grandRow.style.cssText = "font-weight: 900; background: var(--gray-100, #f1f5f9); border-top: 3px double var(--gray-400);";
       grandRow.innerHTML = `
-        <td style="color: var(--primary); font-size: 0.95rem;">${lang === 'ar' ? 'الإجمالي العام للشركة/الخط' : 'OVERALL GRAND TOTAL'}</td>
-        <td style="color: var(--gray-600);">${lang === 'ar' ? 'جميع المنتجات' : 'ALL PRODUCTS'}</td>
+        <td style="color: var(--primary); font-size: 0.95rem;">OVERALL GRAND TOTAL</td>
+        <td style="color: var(--gray-600);">ALL PRODUCTS</td>
         <td>${grandTUnit.toLocaleString()}</td>
         <td>${grandSUnit.toLocaleString()}</td>
         <td>${grandTarget.toLocaleString()}</td>
@@ -640,20 +636,20 @@ function exportAchievementsReport() {
 
   if (!groups.length) {
     if (typeof showToast === 'function') {
-      showToast(lang === 'ar' ? 'لا توجد بيانات لتصديرها.' : 'No achievement data to export.', 'warning');
+      showToast('No achievement data to export.', 'warning');
     }
     return;
   }
 
   const headers = [
-    lang === 'ar' ? 'المندوب' : 'Representative',
-    lang === 'ar' ? 'المنطقة' : 'Territory',
-    lang === 'ar' ? 'المنتج' : 'Product',
-    lang === 'ar' ? 'مستهدف الوحدات' : 'Target Units',
-    lang === 'ar' ? 'الوحدات المحققة' : 'Actual Units',
-    lang === 'ar' ? 'قيمة المستهدف' : 'Target Value (EGP)',
-    lang === 'ar' ? 'القيمة المحققة' : 'Actual Value (EGP)',
-    lang === 'ar' ? 'نسبة التحقيق' : 'Achievement %',
+    'Representative',
+    'Territory',
+    'Product',
+    'Target Units',
+    'Actual Units',
+    'Target Value (EGP)',
+    'Actual Value (EGP)',
+    'Achievement %',
   ];
 
   const escapeCsv = (val) => {
@@ -667,7 +663,7 @@ function exportAchievementsReport() {
     rows.push([
       escapeCsv(g.repName),
       escapeCsv(g.areaName || ''),
-      escapeCsv(lang === 'ar' ? 'الإجمالي' : 'TOTAL'),
+      escapeCsv('TOTAL'),
       g.totalTUnit,
       g.totalSUnit,
       g.totalTValue,

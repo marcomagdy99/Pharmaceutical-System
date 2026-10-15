@@ -747,3 +747,67 @@ body {
     color: #9da5b1;
 }
 
+/* Force Password Change Styles */
+.force-pass-notice {
+    background: rgba(13, 110, 253, 0.08);
+    border-inline-start: 4px solid var(--primary, #0d6efd);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-primary, #1e293b);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.force-pass-notice i {
+    font-size: 1.25rem;
+    color: var(--primary, #0d6efd);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.force-pass-strength {
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+}
+
+.force-pass-strength .progress-bar {
+    height: 100%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.password-requirements {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.req-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+[data-theme="dark"] .force-pass-notice {
+    background: rgba(13, 110, 253, 0.16);
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .force-pass-strength {
+    background: #334155;
+}
+
+[data-theme="dark"] .password-requirements {
+    color: #94a3b8;
+}
+

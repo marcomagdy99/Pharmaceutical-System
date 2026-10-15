@@ -709,7 +709,7 @@ function saveArea() {
   }
 
   const existingArea = id ? (window.store && window.store.areas ? window.store.areas.getById(id) : null) : null;
-  const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line1");
+  const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line_1790626000001");
   const targetId = id || `area_${effectiveLineId}_${Date.now()}`;
 
   const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
@@ -731,7 +731,7 @@ function saveArea() {
   const allAreasGlobal = (window.store && window.store.areas) ? window.store.areas.getAll() : [];
   const isDuplicateCode = allAreasGlobal.some((a) => {
     if (a.id === targetId) return false;
-    const aLine = a.lineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line1");
+    const aLine = a.lineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line_1790626000001");
     if (aLine !== effectiveLineId) return false;
     return a.code && a.code.trim().toUpperCase() === code.toUpperCase();
   });

@@ -39,7 +39,7 @@
     }
 
     if (!authUser) {
-      const savedId = localStorage.getItem("userId") || "rep1";
+      const savedId = localStorage.getItem("userId") || "u1790626000001";
       authUser = { id: savedId, role: localStorage.getItem("userRole") || "medical_rep" };
     }
 

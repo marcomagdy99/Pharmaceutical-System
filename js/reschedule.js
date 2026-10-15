@@ -34,41 +34,41 @@ function attachRescheduleModal() {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   
   const modalHtml = `
-    <div class="modal-overlay" id="rescheduleVisitModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 3100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-      <div class="modal-box" style="background: var(--surface, #ffffff); color: var(--text-color, #1e293b); width: 92%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color, #e2e8f0); pointer-events: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color, #e2e8f0); padding-bottom: 12px;">
-          <h4 style="margin: 0; font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+    <div class="modal-overlay reschedule-modal-overlay" id="rescheduleVisitModal">
+      <div class="modal-box reschedule-modal-box">
+        <div class="reschedule-header">
+          <h4 class="reschedule-title">
             <span>🗓️</span>
             <span id="rescheduleModalHeading">Reschedule or Missed Call</span>
           </h4>
-          <button type="button" onclick="closeRescheduleModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500, #64748b); line-height: 1;">&times;</button>
+          <button type="button" onclick="closeRescheduleModal()" class="reschedule-close-btn">&times;</button>
         </div>
 
         <!-- Daily Quota Info -->
-        <div id="rescheduleQuotaBanner" style="background: rgba(13, 110, 253, 0.08); border: 1px solid rgba(13, 110, 253, 0.2); color: #0d6efd; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 14px; display: flex; align-items: center; gap: 6px;">
+        <div id="rescheduleQuotaBanner" class="reschedule-quota-banner">
           <span>ℹ️</span>
           <span id="rescheduleQuotaText">...</span>
         </div>
 
         <!-- Target Info -->
-        <div style="background: var(--surface-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 12px; margin-bottom: 16px;">
-          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;" id="rescheduleTargetName">-</div>
-          <div style="font-size: 0.82rem; color: var(--gray-500, #64748b);" id="rescheduleCurrentSchedule">-</div>
+        <div class="reschedule-target-box">
+          <div class="reschedule-target-name" id="rescheduleTargetName">-</div>
+          <div class="reschedule-target-sub" id="rescheduleCurrentSchedule">-</div>
         </div>
 
         <form id="rescheduleForm" onsubmit="handleRescheduleSubmit(event)">
           <input type="hidden" id="rescheduleVisitId" value="">
 
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.88rem;">
+          <div class="form-group mb-3">
+            <label class="form-label fw-bold small">
               Action:
             </label>
-            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-              <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; font-weight: 600;">
+            <div class="reschedule-actions-row">
+              <label class="reschedule-radio-label">
                 <input type="radio" name="rescheduleAction" value="reschedule" checked onchange="toggleRescheduleActionView()">
                 <span>🗓️ Reschedule to Later Date</span>
               </label>
-              <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: #dc3545;">
+              <label class="reschedule-radio-label reschedule-radio-label-danger">
                 <input type="radio" name="rescheduleAction" value="missed" onchange="toggleRescheduleActionView()">
                 <span>🚫 Missed Call (Unavailable)</span>
               </label>
@@ -76,19 +76,19 @@ function attachRescheduleModal() {
           </div>
 
           <!-- Date fields for rescheduling -->
-          <div id="rescheduleDateFields" style="display: block; margin-bottom: 16px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div id="rescheduleDateFields" class="mb-3">
+            <div class="reschedule-date-grid">
               <div class="form-group">
-                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">
+                <label class="form-label fw-bold small">
                   New Date (Mandatory):
                 </label>
-                <input type="date" id="rescheduleNewDate" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px;">
+                <input type="date" id="rescheduleNewDate" class="form-control">
               </div>
               <div class="form-group">
-                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">
+                <label class="form-label fw-bold small">
                   Period:
                 </label>
-                <select id="rescheduleNewPeriod" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px;">
+                <select id="rescheduleNewPeriod" class="form-control">
                   <option value="am">AM (Hospitals)</option>
                   <option value="pm" selected>PM (Doctors)</option>
                   <option value="pharmacy">Pharmacy</option>
@@ -98,11 +98,11 @@ function attachRescheduleModal() {
           </div>
 
           <!-- Reason Selection & Textarea (MANDATORY) -->
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.85rem;">
-              Reason for Reschedule / Missed Call <span style="color: #dc3545;">* (Mandatory)</span>:
+          <div class="form-group mb-3">
+            <label class="form-label fw-bold small">
+              Reason for Reschedule / Missed Call <span class="text-danger">* (Mandatory)</span>:
             </label>
-            <select id="rescheduleQuickReason" class="form-control" style="width: 100%; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;" onchange="onRescheduleQuickReasonChange()">
+            <select id="rescheduleQuickReason" class="form-control mb-2" onchange="onRescheduleQuickReasonChange()">
               <option value="">-- Select common reason or write below --</option>
               <option value="Doctor Traveling / Unavailable">✈️ Doctor Traveling / Unavailable</option>
               <option value="Emergency Surgery / Medical Conference">🏥 Emergency Surgery / Medical Conference</option>
@@ -111,14 +111,14 @@ function attachRescheduleModal() {
               <option value="Weather / Route Emergency">🌧️ Weather / Route Emergency</option>
               <option value="other">✍️ Other (Specify details)</option>
             </select>
-            <textarea id="rescheduleReasonText" class="form-control" rows="3" required placeholder="Explain the reason for rescheduling or missing the visit..." style="width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;"></textarea>
+            <textarea id="rescheduleReasonText" class="form-control small" rows="3" required placeholder="Explain the reason for rescheduling or missing the visit..."></textarea>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 14px;">
-            <button type="button" class="btn btn-secondary" onclick="closeRescheduleModal()" style="padding: 8px 16px; border-radius: 8px;">
+          <div class="reschedule-footer">
+            <button type="button" class="btn btn-secondary px-3" onclick="closeRescheduleModal()">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary" id="btnSubmitReschedule" style="padding: 8px 20px; border-radius: 8px; font-weight: 700;">
+            <button type="submit" class="btn btn-primary px-3 fw-bold" id="btnSubmitReschedule">
               Confirm & Save
             </button>
           </div>

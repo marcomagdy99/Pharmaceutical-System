@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Accounts Costing & Budget Splitting Integration Test Suite</title>
-  <link rel="stylesheet" href="css/style.css?v=v196" />
-  <link rel="stylesheet" href="css/reports.css?v=v196" />
+  <link rel="stylesheet" href="css/style.css?v=v200" />
+  <link rel="stylesheet" href="css/reports.css?v=v200" />
   <style>
     body {
       background: #0f172a;
@@ -171,10 +171,10 @@
   </style>
 
   <!-- Core Scripts -->
-  <script src="js/app.js?v=v196"></script>
-  <script src="js/store.js?v=v196"></script>
+  <script src="js/app.js?v=v200"></script>
+  <script src="js/store.js?v=v200"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/accounts-costing-report.js?v=v196"></script>
+  <script src="js/accounts-costing-report.js?v=v200"></script>
 </head>
 <body>
   <div class="test-container">
@@ -326,9 +326,9 @@
       <div class="role-toggle-bar">
         <span style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Active Perspective:</span>
         <button type="button" class="role-btn active" id="btnRoleAdmin" onclick="setSimulatorRole('admin')">Admin (All Lines)</button>
-        <button type="button" class="role-btn" id="btnRoleRep1" onclick="setSimulatorRole('rep1')">Rep Hassan (Line 1)</button>
-        <button type="button" class="role-btn" id="btnRoleRep2" onclick="setSimulatorRole('rep2')">Rep Mina (Line 2)</button>
-        <button type="button" class="role-btn" id="btnRoleDm" onclick="setSimulatorRole('dm1')">DM Cairo (Line 1 District)</button>
+        <button type="button" class="role-btn" id="btnRoleRep1" onclick="setSimulatorRole('u1790626000001')">Rep Hassan (Line 1)</button>
+        <button type="button" class="role-btn" id="btnRoleRep2" onclick="setSimulatorRole('u1790626000002')">Rep Mina (Line 2)</button>
+        <button type="button" class="role-btn" id="btnRoleDm" onclick="setSimulatorRole('u1790626000014')">DM Cairo (Line 1 District)</button>
       </div>
 
       <form id="simulatorForm" onsubmit="handleSimulatorSubmit(event)">
@@ -421,7 +421,7 @@
   <script>
     let totalPass = 0;
     let totalFail = 0;
-    let currentSimulatorUser = { id: 'admin1', role: 'admin', name: 'System Administrator' };
+    let currentSimulatorUser = { id: 'u1790626000010', role: 'admin', name: 'System Administrator' };
 
     function setSuiteResult(suiteNum, isPass, logText) {
       const badge = document.getElementById(`badge-suite-${suiteNum}`);
@@ -460,7 +460,7 @@
           );
         }
         if (window.DEMO_DATA._activitiesByUser) {
-          delete window.DEMO_DATA._activitiesByUser["rep1"];
+          delete window.DEMO_DATA._activitiesByUser["u1790626000001"];
         }
       }
 
@@ -497,8 +497,8 @@
 
       // Test Lines
       const lines = [
-        { id: 'line1', name: 'Cardiology Line' },
-        { id: 'line2', name: 'Dermatology Line' }
+        { id: 'line_1790626000001', name: 'Cardiology Line' },
+        { id: 'line_1790626000002', name: 'Dermatology Line' }
       ];
       lines.forEach(l => {
         if (!window.DEMO_DATA.productLines.find(x => x.id === l.id)) {
@@ -508,11 +508,11 @@
 
       // Test Users
       const users = [
-        { id: 'admin1', name: 'System Admin', role: 'admin' },
-        { id: 'dm1', name: 'DM Cairo Central', role: 'district_manager', lineId: 'line1', lineIds: ['line1'] },
-        { id: 'rep1', name: 'Rep Hassan', role: 'medical_rep', lineId: 'line1', lineIds: ['line1'], areaId: 'area1', areaIds: ['area1'], managerId: 'dm1' },
-        { id: 'rep2', name: 'Rep Mina', role: 'medical_rep', lineId: 'line2', lineIds: ['line2'], areaId: 'area2', areaIds: ['area2'], managerId: 'dm2' },
-        { id: 'rep3', name: 'Rep Tarek', role: 'medical_rep', lineId: 'line1', lineIds: ['line1'], areaId: 'area3', areaIds: ['area3'], managerId: 'dm1' }
+        { id: 'u1790626000010', name: 'System Admin', role: 'admin' },
+        { id: 'u1790626000014', name: 'DM Cairo Central', role: 'district_manager', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'] },
+        { id: 'u1790626000001', name: 'Rep Hassan', role: 'medical_rep', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], areaId: 'area_1790626000001', areaIds: ['area_1790626000001'], managerId: 'u1790626000014' },
+        { id: 'u1790626000002', name: 'Rep Mina', role: 'medical_rep', lineId: 'line_1790626000002', lineIds: ['line_1790626000002'], areaId: 'area_1790626000002', areaIds: ['area_1790626000002'], managerId: 'u1790626000015' },
+        { id: 'u1790626000003', name: 'Rep Tarek', role: 'medical_rep', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], areaId: 'area_1790626000003', areaIds: ['area_1790626000003'], managerId: 'u1790626000014' }
       ];
       users.forEach(u => {
         const existing = window.DEMO_DATA.users.find(x => x.id === u.id);
@@ -525,9 +525,9 @@
 
       // Test Areas
       const areas = [
-        { id: 'area1', name: 'Dokki', lineId: 'line1', repId: 'rep1' },
-        { id: 'area2', name: 'Nasr City', lineId: 'line2', repId: 'rep2' },
-        { id: 'area3', name: 'Mohandessin', lineId: 'line1', repId: 'rep3' }
+        { id: 'area_1790626000001', name: 'Dokki', lineId: 'line_1790626000001', repId: 'u1790626000001' },
+        { id: 'area_1790626000002', name: 'Nasr City', lineId: 'line_1790626000002', repId: 'u1790626000002' },
+        { id: 'area_1790626000003', name: 'Mohandessin', lineId: 'line_1790626000001', repId: 'u1790626000003' }
       ];
       areas.forEach(a => {
         const existing = window.DEMO_DATA.areas.find(x => x.id === a.id);
@@ -545,9 +545,9 @@
         clinicName: 'Elite Medical VIP Clinic',
         class: 'A',
         specialty: 'Cardiology',
-        lineId: 'line1',
-        areaId: 'area1',
-        repId: 'rep1'
+        lineId: 'line_1790626000001',
+        areaId: 'area_1790626000001',
+        repId: 'u1790626000001'
       };
       const docIdx = window.DEMO_DATA.doctors.findIndex(x => x.id === testDoc.id);
       if (docIdx >= 0) {
@@ -579,16 +579,16 @@
       document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
       if (roleKey === 'admin') {
         document.getElementById('btnRoleAdmin').classList.add('active');
-        currentSimulatorUser = { id: 'admin1', role: 'admin', name: 'System Administrator' };
-      } else if (roleKey === 'rep1') {
+        currentSimulatorUser = { id: 'u1790626000010', role: 'admin', name: 'System Administrator' };
+      } else if (roleKey === 'u1790626000001') {
         document.getElementById('btnRoleRep1').classList.add('active');
-        currentSimulatorUser = { id: 'rep1', role: 'medical_rep', name: 'Rep Hassan', lineId: 'line1', areaId: 'area1', managerId: 'dm1' };
-      } else if (roleKey === 'rep2') {
+        currentSimulatorUser = { id: 'u1790626000001', role: 'medical_rep', name: 'Rep Hassan', lineId: 'line_1790626000001', areaId: 'area_1790626000001', managerId: 'u1790626000014' };
+      } else if (roleKey === 'u1790626000002') {
         document.getElementById('btnRoleRep2').classList.add('active');
-        currentSimulatorUser = { id: 'rep2', role: 'medical_rep', name: 'Rep Mina', lineId: 'line2', areaId: 'area2', managerId: 'dm2' };
-      } else if (roleKey === 'dm1') {
+        currentSimulatorUser = { id: 'u1790626000002', role: 'medical_rep', name: 'Rep Mina', lineId: 'line_1790626000002', areaId: 'area_1790626000002', managerId: 'u1790626000015' };
+      } else if (roleKey === 'u1790626000014') {
         document.getElementById('btnRoleDm').classList.add('active');
-        currentSimulatorUser = { id: 'dm1', role: 'district_manager', name: 'DM Cairo Central', lineId: 'line1' };
+        currentSimulatorUser = { id: 'u1790626000014', role: 'district_manager', name: 'DM Cairo Central', lineId: 'line_1790626000001' };
       }
       window.checkAuth = () => currentSimulatorUser;
       window.initAccountsCostingTab();
@@ -623,9 +623,9 @@
         cost: totalCost,
         date: dateInp.value,
         status: statusSelect.value,
-        lineId: selectedDoc?.lineId || 'line1',
-        areaId: selectedDoc?.areaId || 'area1',
-        requesterId: selectedDoc?.repId || 'rep1',
+        lineId: selectedDoc?.lineId || 'line_1790626000001',
+        areaId: selectedDoc?.areaId || 'area_1790626000001',
+        requesterId: selectedDoc?.repId || 'u1790626000001',
         notes: 'Submitted via Live Simulator',
         isShared: false
       };
@@ -638,8 +638,8 @@
 
         newService.isShared = true;
         newService.shares = [
-          { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: p1, shareAmount: amt1, status: statusSelect.value },
-          { lineId: 'line2', areaId: 'area2', repId: 'rep2', sharePercent: p2, shareAmount: amt2, status: statusSelect.value }
+          { lineId: 'line_1790626000001', areaId: 'area_1790626000001', repId: 'u1790626000001', sharePercent: p1, shareAmount: amt1, status: statusSelect.value },
+          { lineId: 'line_1790626000002', areaId: 'area_1790626000002', repId: 'u1790626000002', sharePercent: p2, shareAmount: amt2, status: statusSelect.value }
         ];
       }
 
@@ -661,7 +661,7 @@
 
       // 1. Suite 1: Role Hierarchy Scoping
       try {
-        const u = { id: 'rep1', role: 'medical_rep', lineId: 'line1', areaId: 'area1', managerId: 'dm1' };
+        const u = { id: 'u1790626000001', role: 'medical_rep', lineId: 'line_1790626000001', areaId: 'area_1790626000001', managerId: 'u1790626000014' };
         window.checkAuth = () => u;
         window.initAccountsCostingTab();
 
@@ -677,7 +677,7 @@
       }
 
       // Switch to Admin context
-      window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+      window.checkAuth = () => ({ id: 'u1790626000010', role: 'admin', name: 'Admin' });
       window.initAccountsCostingTab();
       document.getElementById('accountsCostingDateFrom').value = '';
       document.getElementById('accountsCostingDateTo').value = '';
@@ -693,9 +693,9 @@
           cost: 14000,
           date: todayStr,
           status: 'approved',
-          requesterId: 'rep1',
-          lineId: 'line1',
-          areaId: 'area1'
+          requesterId: 'u1790626000001',
+          lineId: 'line_1790626000001',
+          areaId: 'area_1790626000001'
         };
         window.store.services.add(testSrv);
         window.renderAccountsCostingReport();
@@ -712,8 +712,8 @@
 
       // 3. Suite 3: Pending & Rejected Exclusion
       try {
-        const srvPending = { id: 'test_p_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'Pending Service', cost: 77777, status: 'pending_dm', requesterId: 'rep1', date: todayStr };
-        const srvRejected = { id: 'test_r_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'Rejected Service', cost: 88888, status: 'rejected', requesterId: 'rep1', date: todayStr };
+        const srvPending = { id: 'test_p_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'Pending Service', cost: 77777, status: 'pending_dm', requesterId: 'u1790626000001', date: todayStr };
+        const srvRejected = { id: 'test_r_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'Rejected Service', cost: 88888, status: 'rejected', requesterId: 'u1790626000001', date: todayStr };
         window.store.services.add(srvPending);
         window.store.services.add(srvRejected);
         window.renderAccountsCostingReport();
@@ -727,7 +727,7 @@
 
       // 4. Suite 4: Dynamic Category Generation & Sums
       try {
-        const srvConf = { id: 'test_c_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'World Medical Conference', cost: 20000, status: 'approved', requesterId: 'rep1', lineId: 'line1', areaId: 'area1', date: todayStr };
+        const srvConf = { id: 'test_c_1', targetType: 'doctor', targetId: 'doc_test_1', title: 'World Medical Conference', cost: 20000, status: 'approved', requesterId: 'u1790626000001', lineId: 'line_1790626000001', areaId: 'area_1790626000001', date: todayStr };
         window.store.services.add(srvConf);
         window.renderAccountsCostingReport();
 
@@ -741,7 +741,7 @@
       // 5. Suite 5: Event Activity Attendees (20,000 / 4 doctors = 5,000 each)
       try {
         if (window.store && window.store.activities && typeof window.store.activities.save === 'function') {
-          window.store.activities.save('rep1', todayStr, 'am', {
+          window.store.activities.save('u1790626000001', todayStr, 'am', {
             activityType: 'Round Table Discussion',
             title: 'Hypertension Guidelines RTD',
             cost: 20000,
@@ -760,10 +760,10 @@
       // 6. Suite 6: Cross-Rep Privacy & Territory Isolation
       try {
         // Create an unassigned private doctor for rep2 in line2
-        const secretDoc = { id: 'doc_secret_999', name: 'Dr. Secret Unassigned', lineId: 'line2', areaId: 'area2', repId: 'rep2' };
+        const secretDoc = { id: 'doc_secret_999', name: 'Dr. Secret Unassigned', lineId: 'line_1790626000002', areaId: 'area_1790626000002', repId: 'u1790626000002' };
         window.DEMO_DATA.doctors.push(secretDoc);
 
-        window.checkAuth = () => ({ id: 'rep1', role: 'medical_rep', lineId: 'line1', areaId: 'area1', managerId: 'dm1' });
+        window.checkAuth = () => ({ id: 'u1790626000001', role: 'medical_rep', lineId: 'line_1790626000001', areaId: 'area_1790626000001', managerId: 'u1790626000014' });
         window.initAccountsCostingTab();
         document.getElementById('accountsCostingDateFrom').value = '';
         document.getElementById('accountsCostingDateTo').value = '';
@@ -777,7 +777,7 @@
       }
 
       // Reset to Admin
-      window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+      window.checkAuth = () => ({ id: 'u1790626000010', role: 'admin', name: 'Admin' });
       window.initAccountsCostingTab();
       document.getElementById('accountsCostingDateFrom').value = '';
       document.getElementById('accountsCostingDateTo').value = '';
@@ -814,14 +814,14 @@
           status: 'approved',
           isShared: true,
           shares: [
-            { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: 60, shareAmount: 30000, status: 'approved' },
-            { lineId: 'line2', areaId: 'area2', repId: 'rep2', sharePercent: 40, shareAmount: 20000, status: 'approved' }
+            { lineId: 'line_1790626000001', areaId: 'area_1790626000001', repId: 'u1790626000001', sharePercent: 60, shareAmount: 30000, status: 'approved' },
+            { lineId: 'line_1790626000002', areaId: 'area_1790626000002', repId: 'u1790626000002', sharePercent: 40, shareAmount: 20000, status: 'approved' }
           ]
         };
         window.store.services.add(srvSharedMulti);
 
         // Rep 1 should see 30,000 EGP
-        window.checkAuth = () => ({ id: 'rep1', role: 'medical_rep', lineId: 'line1', lineIds: ['line1'], areaId: 'area1', areaIds: ['area1'], managerId: 'dm1' });
+        window.checkAuth = () => ({ id: 'u1790626000001', role: 'medical_rep', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], areaId: 'area_1790626000001', areaIds: ['area_1790626000001'], managerId: 'u1790626000014' });
         window.initAccountsCostingTab();
         document.getElementById('accountsCostingDateFrom').value = '';
         document.getElementById('accountsCostingDateTo').value = '';
@@ -831,7 +831,7 @@
         const passR1 = Boolean(txR1 && txR1.cost === 30000);
 
         // Rep 2 should see 20,000 EGP
-        window.checkAuth = () => ({ id: 'rep2', role: 'medical_rep', lineId: 'line2', lineIds: ['line2'], areaId: 'area2', areaIds: ['area2'], managerId: 'dm2' });
+        window.checkAuth = () => ({ id: 'u1790626000002', role: 'medical_rep', lineId: 'line_1790626000002', lineIds: ['line_1790626000002'], areaId: 'area_1790626000002', areaIds: ['area_1790626000002'], managerId: 'u1790626000015' });
         window.initAccountsCostingTab();
         document.getElementById('accountsCostingDateFrom').value = '';
         document.getElementById('accountsCostingDateTo').value = '';
@@ -861,13 +861,13 @@
           status: 'approved',
           isShared: true,
           shares: [
-            { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: 50, shareAmount: 12000, status: 'approved' },
-            { lineId: 'line1', areaId: 'area3', repId: 'rep3', sharePercent: 50, shareAmount: 12000, status: 'approved' }
+            { lineId: 'line_1790626000001', areaId: 'area_1790626000001', repId: 'u1790626000001', sharePercent: 50, shareAmount: 12000, status: 'approved' },
+            { lineId: 'line_1790626000001', areaId: 'area_1790626000003', repId: 'u1790626000003', sharePercent: 50, shareAmount: 12000, status: 'approved' }
           ]
         };
         window.store.services.add(srvIntra);
 
-        window.checkAuth = () => ({ id: 'rep1', role: 'medical_rep', lineId: 'line1', areaId: 'area1', managerId: 'dm1' });
+        window.checkAuth = () => ({ id: 'u1790626000001', role: 'medical_rep', lineId: 'line_1790626000001', areaId: 'area_1790626000001', managerId: 'u1790626000014' });
         window.initAccountsCostingTab();
         document.getElementById('accountsCostingDateFrom').value = '';
         document.getElementById('accountsCostingDateTo').value = '';
@@ -893,13 +893,13 @@
           status: 'pending_shared',
           isShared: true,
           shares: [
-            { lineId: 'line1', areaId: 'area1', repId: 'rep1', sharePercent: 50, shareAmount: 10000, status: 'approved' },
-            { lineId: 'line2', areaId: 'area2', repId: 'rep2', sharePercent: 50, shareAmount: 10000, status: 'pending_dm' }
+            { lineId: 'line_1790626000001', areaId: 'area_1790626000001', repId: 'u1790626000001', sharePercent: 50, shareAmount: 10000, status: 'approved' },
+            { lineId: 'line_1790626000002', areaId: 'area_1790626000002', repId: 'u1790626000002', sharePercent: 50, shareAmount: 10000, status: 'pending_dm' }
           ]
         };
         window.store.services.add(srvPartial);
 
-        window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+        window.checkAuth = () => ({ id: 'u1790626000010', role: 'admin', name: 'Admin' });
         window.initAccountsCostingTab();
         document.getElementById('accountsCostingDateFrom').value = '';
         document.getElementById('accountsCostingDateTo').value = '';
@@ -914,7 +914,7 @@
 
       // 12. Suite 12: Cumulative Ledger Grand Total Accuracy
       try {
-        window.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'Admin' });
+        window.checkAuth = () => ({ id: 'u1790626000010', role: 'admin', name: 'Admin' });
         window.initAccountsCostingTab();
         document.getElementById('accountsCostingDateFrom').value = '';
         document.getElementById('accountsCostingDateTo').value = '';

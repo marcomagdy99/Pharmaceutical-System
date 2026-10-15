@@ -42,31 +42,31 @@
         const myTotal = myShares.reduce((sum, sh) => sum + (sh.shareAmount || 0), 0);
         const myPct = myShares.reduce((sum, sh) => sum + (sh.sharePercent || 0), 0);
         if (myTotal < (item.cost || 0)) {
-          amount += ` (${Core.t("yourShare") || "حصتك"}: ${myPct}% - ${myTotal.toLocaleString()} ${Core.t("currency") || "ج.م"})`;
+          amount += ` (${Core.t("yourShare") || "Your Share"}: ${myPct}% - ${myTotal.toLocaleString()} ${Core.t("currency") || "EGP"})`;
         }
       }
     }
 
     if (decision === "approve") {
-      titleEl.textContent = Core.t("confirmApprovalTitle") || "تأكيد الاعتماد";
-      msgEl.textContent = (Core.t("confirmApproveMsg") || "هل أنت متأكد من اعتماد هذا الطلب بمبلغ {amount} للموظف {name}؟")
+      titleEl.textContent = Core.t("confirmApprovalTitle") || "Confirm Approval";
+      msgEl.textContent = (Core.t("confirmApproveMsg") || "Are you sure you want to approve this request for {amount} from {name}?")
         .replace("{amount}", amount)
         .replace("{name}", requesterName);
       confirmBtn.className = "btn btn-primary";
-      confirmBtn.textContent = Core.t("btnApprove") || "اعتماد";
+      confirmBtn.textContent = Core.t("btnApprove") || "Approve";
     } else if (decision === "reject") {
-      titleEl.textContent = Core.t("confirmRejectionTitle") || "تأكيد الرفض";
-      msgEl.textContent = (Core.t("confirmRejectMsg") || "هل أنت متأكد من رفض هذا الطلب المقدم من {name}؟")
+      titleEl.textContent = Core.t("confirmRejectionTitle") || "Confirm Rejection";
+      msgEl.textContent = (Core.t("confirmRejectMsg") || "Are you sure you want to reject this request submitted by {name}?")
         .replace("{name}", requesterName);
       confirmBtn.className = "btn btn-danger";
-      confirmBtn.textContent = Core.t("btnReject") || "رفض";
+      confirmBtn.textContent = Core.t("btnReject") || "Reject";
     } else if (decision === "disburse") {
-      titleEl.textContent = Core.t("confirmDisbursementTitle") || "تأكيد الصرف المالي";
-      msgEl.textContent = (Core.t("confirmDisburseMsg") || "هل أنت متأكد من صرف مبلغ {amount} للموظف {name}؟")
+      titleEl.textContent = Core.t("confirmDisbursementTitle") || "Confirm Disbursement";
+      msgEl.textContent = (Core.t("confirmDisburseMsg") || "Are you sure you want to disburse {amount} to employee {name}?")
         .replace("{amount}", amount)
         .replace("{name}", requesterName);
       confirmBtn.className = "btn btn-success";
-      confirmBtn.textContent = Core.t("btnDisburse") || "صرف مالي";
+      confirmBtn.textContent = Core.t("btnDisburse") || "Disburse";
     }
 
     modal.style.display = "flex";
@@ -89,7 +89,7 @@
     const comment = document.getElementById("decisionCommentInput")?.value.trim() || "";
 
     if (decision === "reject" && !comment) {
-      Core.safeShowToast(Core.t("rejectionReasonRequired") || "يرجى كتابة سبب الرفض", "warning");
+      Core.safeShowToast(Core.t("rejectionReasonRequired") || "Please enter rejection reason.", "warning");
       return;
     }
 
@@ -100,7 +100,7 @@
 
       const actionKey = `${decision}_expense`;
       if (!Core.isActionAuthorized(actionKey, exp, Core._state.currentUser)) {
-        Core.safeShowToast(Core.t("unauthorizedExpenseAction") || "غير مصرح لك بتنفيذ هذا الإجراء على هذه المطالبة وفقاً للصلاحيات الإدارية.", "warning");
+        Core.safeShowToast(Core.t("unauthorizedExpenseAction") || "You are not authorized to perform this action on this expense claim.", "warning");
         closeDecisionModal();
         return;
       }
@@ -151,11 +151,11 @@
             const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
             const requester = allUsers.find((u) => u.id === exp.requesterId);
             const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : Core._state.currentUser;
-            nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || "lm1";
+            nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || "u1790626000012";
           } else if (exp.status === Core.REQUEST_STATUS.PENDING_LM) {
             nextStatus = Core.REQUEST_STATUS.PENDING_HR;
             const hr = Core.getHrUser();
-            nextApproverId = hr ? hr.id : "hr1";
+            nextApproverId = hr ? hr.id : "u1790626000017";
           } else if (exp.status === Core.REQUEST_STATUS.PENDING_HR) {
             nextStatus = Core.REQUEST_STATUS.APPROVED;
             nextApproverId = null;
@@ -208,7 +208,7 @@
 
       const actionKey = `${decision}_service`;
       if (!Core.isActionAuthorized(actionKey, srv, Core._state.currentUser)) {
-        Core.safeShowToast(Core.t("unauthorizedServiceAction") || "غير مصرح لك بتنفيذ هذا الإجراء على هذا الطلب وفقاً للصلاحيات الإدارية.", "warning");
+        Core.safeShowToast(Core.t("unauthorizedServiceAction") || "You are not authorized to perform this action on this service request.", "warning");
         closeDecisionModal();
         return;
       }
@@ -455,7 +455,7 @@
           } else {
             if (srv.status === Core.REQUEST_STATUS.PENDING_DM) {
               const dm = Core.getUserById(srv.requesterId);
-              const lm = dm && dm.managerId ? dm.managerId : Core._state.currentUser.managerId || "lm1";
+              const lm = dm && dm.managerId ? dm.managerId : Core._state.currentUser.managerId || "u1790626000012";
               nextStatus = Core.REQUEST_STATUS.PENDING_LM;
               nextApproverId = lm;
             } else {
@@ -522,7 +522,7 @@
     }
 
     closeDecisionModal();
-    Core.safeShowToast(Core.t("successAction") || "تمت العملية بنجاح", "success");
+    Core.safeShowToast(Core.t("successAction") || "Action completed successfully.", "success");
   }
 
   function openReceiptPreviewModal(url) {

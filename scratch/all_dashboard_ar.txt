@@ -1,0 +1,150 @@
+L1025:   const lineNames = userLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+L1029:       ? (lang === "ar" ? "الزيارات المستحقة السابقة" : "Overdue Visits")
+L1031:       ? (lang === "ar" ? "خطة زيارات الغد" : "Tomorrow's Plan")
+L1033:       ? (lang === "ar" ? "الزيارات القادمة المخططة" : "Upcoming Visits")
+L1035:       ? (lang === "ar" ? "كل الزيارات المخططة النشطة" : "All Active Planned Visits")
+L1037:       ? (lang === "ar" ? `خطة يوم: ${window.currentRepPlanDate}` : `Plan for: ${window.currentRepPlanDate}`)
+L1044:     ? `تنتهي الصلاحية تلقائياً بعد ${expiryDays} ${expiryDays === 1 ? "يوم" : (expiryDays === 2 ? "يومين" : (expiryDays <= 10 ? "أيام" : "يوماً"))} إذا لم تُنفذ`
+L1050:         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "المندوب الطبي" : "Medical Representative"} ${userName}!</h2>
+L1051:         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "المندوب الطبي" : "Medical Representative")}</div>
+L1061:               ${lang === "ar" ? "أطباء اللستة المسندين" : "Assigned Doctor List"}
+L1065:             <div class="stat-label">${lang === "ar" ? `زيارات العيادات (PM - ${quarterLabel})` : `Clinics (PM - ${quarterLabel})`}</div>
+L1071:               ${lang === "ar" ? `مستهدف الزيارات / الربع (${totalDoctorsCount} أطباء)` : `Target Visits / Quarter (${totalDoctorsCount} Doctors)`}
+L1075:             <div class="stat-label">${lang === "ar" ? `زيارات المستشفيات (AM - ${quarterLabel})` : `Hospitals (AM - ${quarterLabel})`}</div>
+L1081:               ${lang === "ar" ? `مستهدف الزيارات / الربع (${totalHospitalsCount} مستشفيات)` : `Target Visits / Quarter (${totalHospitalsCount} Hospitals)`}
+L1085:             <div class="stat-label">${lang === "ar" ? "الأطباء الذين تم زيارتهم (هذا الشهر)" : "Doctors Visited (This Month)"}</div>
+L1091:               ${lang === "ar" ? `نسبة الوصول: ${overallCoveragePct}%` : `Reach: ${overallCoveragePct}%`} • ${lang === "ar" ? `${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} متبقي` : `${Math.max(0, totalDoctorsCount - coveredDoctorsCount)} Left`}
+L1105:               ${todayPlanned.length} ${lang === "ar" ? "اليوم" : "Today"}${overduePlanned.length > 0 ? ` • ${overduePlanned.length} ${lang === "ar" ? "مستحقة سابقة" : "Overdue"}` : ""} • ${upcomingPlanned.length} ${lang === "ar" ? "قادمة" : "Upcoming"}
+L1128:                 ⚠️ ${lang === 'ar' ? 'مستحقة سابقة' : 'Overdue'} <span class="badge badge-overdue">${overduePlanned.length}</span>
+L1163:                           ${h.date === todayStr ? `<span class="badge badge-plan-today">${lang === "ar" ? "اليوم" : "Today"}</span>` : (h.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (h.date > todayStr ? `<span class="badge badge-plan-upcoming">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge badge-plan-overdue">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
+L1164:                           ${h.visitType === "double" ? `<span class="badge badge-plan-double">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+L1171:                         <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${h.id}')" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
+L1172:                           🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
+L1200:                           ${d.date === todayStr ? `<span class="badge badge-plan-today">${lang === "ar" ? "اليوم" : "Today"}</span>` : (d.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (d.date > todayStr ? `<span class="badge badge-plan-upcoming">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge badge-plan-overdue">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
+L1201:                           ${d.visitType === "double" ? `<span class="badge badge-plan-double">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+L1208:                         <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${d.id}')" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
+L1209:                           🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
+L1236:                         ${p.date === todayStr ? `<span class="badge badge-plan-today">${lang === "ar" ? "اليوم" : "Today"}</span>` : (p.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">${lang === "ar" ? "غداً" : "Tomorrow"}</span>` : (p.date > todayStr ? `<span class="badge badge-plan-upcoming">${lang === "ar" ? "قادمة" : "Upcoming"}</span>` : `<span class="badge badge-plan-overdue">${lang === "ar" ? "مستحقة سابقة" : "Overdue"}</span>`))}
+L1237:                         ${p.visitType === "double" ? `<span class="badge badge-plan-double">🤝 ${lang === "ar" ? "مرافقة" : "Double"}</span>` : ""}
+L1244:                       <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${p.id}')" title="${lang === 'ar' ? 'تأجيل الزيارة أو تعذر المقابلة' : 'Reschedule or Missed Call'}">
+L1245:                         🗓️ ${lang === 'ar' ? 'تأجيل' : 'Reschedule'}
+L1291:                         return `<div class="dt-ins-line" title="Insertion Date & Time">📥 ${lang === 'ar' ? 'إدخال:' : 'Ins:'} ${insD} ${insT}</div>`;
+L1358:               ${lang === "ar" ? "المتابعة الحية لزيارات الفريق (Live Follow-up Feed)" : "Team Live Follow-up Feed"}
+L1361:               ${displayVisits.length} ${lang === "ar" ? "زيارة معروضة" : "visits shown"}
+L1366:               ? "متابعة فورية لحظة بلحظة للزيارات المنفذة بواسطة مناديب منطقتك وملاحظاتهم الميدانية على الدكاترة والصيدليات."
+L1373:             ⏱️ ${lang === "ar" ? `آخر 15 زيارة (${teamCompleted.length})` : `Latest 15 Visits (${teamCompleted.length})`}
+L1376:             📅 ${lang === "ar" ? `زيارات اليوم (${todayCount})` : `Today's Visits (${todayCount})`}
+L1379:             🔍 ${lang === "ar" ? "سجل الزيارات الكامل" : "All Visits"}
+L1388:               <th class="feed-th-cell">${lang === "ar" ? "الوقت والتاريخ" : "Time & Date"}</th>
+L1389:               <th class="feed-th-cell">${lang === "ar" ? "المندوب والمنطقة" : "Rep & Territory"}</th>
+L1390:               <th class="feed-th-cell">${lang === "ar" ? "العميل المستهدف" : "Target Account"}</th>
+L1391:               <th class="feed-th-cell">${lang === "ar" ? "المنتجات المشروحة" : "Promoted Products"}</th>
+L1392:               <th class="feed-th-cell feed-th-notes">${lang === "ar" ? "ملاحظات وتغذية راجعة (Feedback / Notes)" : "Rep Feedback / Notes"}</th>
+L1401:                       const repName = rep ? rep.name : (v.repName || (lang === "ar" ? "مندوب" : "Rep"));
+L1413:                           (v.doctorName || "").toLowerCase().includes("مستشفى"));
+L1416:                         ? `<span class="badge badge-target-pharmacy">💊 ${lang === "ar" ? "صيدلية" : "Pharmacy"}</span>`
+L1418:                           ? `<span class="badge badge-target-hospital">🏥 ${lang === "ar" ? "مستشفى" : "Hospital"}</span>`
+L1419:                           : `<span class="badge badge-target-doctor">🩺 ${lang === "ar" ? "طبيب" : "Doctor"}</span>`;
+L1438:                         : `<span class="feed-no-notes">${lang === "ar" ? "لا توجد ملاحظات مسجلة" : "No notes recorded"}</span>`;
+L1442:                         ? `<div class="feed-samples-box">🎁 <strong>${lang === "ar" ? "عينات:" : "Samples:"}</strong> ${window.escapeHtml(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
+L1447:                         ? `<span class="badge badge-feed-double">🤝 ${lang === "ar" ? "مزدوجة" : "Double"}</span>`
+L1459:                               ${isToday ? `<span class="feed-today-text">🟢 ${lang === "ar" ? "اليوم" : "Today"}</span>` : (v.date || "-")}
+L1499:                               ? "لا توجد زيارات منفذة بواسطة فريقك اليوم حتى الآن ⏳"
+L1502:                               ? "لا توجد زيارات منفذة مسجلة لفريقك بعد."
+L1526:   const lineNames = dmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+L1683:         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير المنطقة" : "District Manager"} ${userName}!</h2>
+L1684:         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة المناطق" : "District Management")}</div>
+L1693:           <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+L1695:             ${lang === "ar" ? `جميع الخطوط (${dmLines.length})` : `All Lines (${dmLines.length})`}
+L1718:             <span>${lang === "ar" ? "زيارات الفريق (هذا الشهر)" : "Team Visits (This Month)"}</span>
+L1723:             ${lang === "ar" ? "عرض زيارات الشهر ←" : "View Team Visits →"}
+L1728:             <span>${t.plans_review || (lang === "ar" ? "خطط للمراجعة" : "Plans to Review")}</span>
+L1733:             ${lang === "ar" ? "مراجعة واعتماد الخطط ←" : "Review & Approve Plans →"}
+L1738:             <span>${t.leave_requests || (lang === "ar" ? "طلبات إجازة للموافقة" : "Leave Requests to Approve")}</span>
+L1743:             ${lang === "ar" ? "مراجعة واعتماد الإجازات ←" : "Review & Approve Leaves →"}
+L1754:                 ${lang === "ar" ? "جدول النزول الميداني والمرافقة (Co-Visiting)" : "Field Accompaniment Schedule (Co-Visiting)"}
+L1759:                 📋 ${lang === "ar" ? `كل الأيام المحددة (${scheduledDates.length})` : `All Scheduled Days (${scheduledDates.length})`}
+L1762:                 📅 ${lang === "ar" ? "عرض يوم محدد" : "Daily View"}
+L1769:               📋 <span>${lang === "ar" ? "مراجعة الخطط وجدولة النزول الميداني" : "Review Plans & Schedule Accompaniment"}</span>
+L1783:                 ${lang === "ar" ? "لم يتم جدولة أيام نزول ميداني مشتركة بعد" : "No field accompaniment days scheduled yet"}
+L1786:                 ${lang === "ar" ? "انتقل إلى «مراجعة واعتماد الخطط» لمراجعة خطط مناديب فريقك واختيار الأيام التي ترغب بمرافقتهم فيها بالكامل." : 'Go to "Plans to Review" to review your team\'s planned schedules and choose full days to accompany them.'}
+L1789:                 📋 ${lang === "ar" ? "الذهاب لمراجعة الخطط وحجز الأيام" : "Go to Plans to Review"}
+L1810:                         ? `<span class="pill-office">🏢 ${lang === "ar" ? "مكتبي" : "Office"}</span>`
+L1823:                     <th class="dm-covisit-sticky-col">${lang === "ar" ? "التاريخ واليوم" : "Date & Day"}</th>
+L1824:                     <th>${lang === "ar" ? "المندوب المرافق" : "Accompanied Rep"}</th>
+L1825:                     <th>${lang === "ar" ? "الهدف المخطط" : "Planned Target"}</th>
+L1826:                     <th class="dm-covisit-products-col">${lang === "ar" ? "المنتجات" : "Products"}</th>
+L1827:                     <th class="text-end covisit-action-cell">${lang === "ar" ? "إجراء المرافقة" : "Co-Visit Action"}</th>
+L1851:                                 ? "صيدلية"
+L1855:                                   ? "مستشفى"
+L1858:                                   ? "عيادة طبيب"
+L1861:                               ? `<span class="badge badge-period-pharm">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+L1891:                             🤝 ${lang === "ar" ? "تسجيل الزيارة المزدوجة" : "Log Double Visit"}
+L1901:                         ${lang === "ar" ? "لا توجد زيارات مخططة للمناديب في الأيام المحددة أعلاه، أو أن الأيام المحددة إدارية/مكتبية." : "No planned visits scheduled by reps on the confirmed dates, or the days are set as office days."}
+L1919:                 ${lang === "ar" ? "لم يتم جدولة أيام نزول ميداني مشتركة بعد" : "No field accompaniment days scheduled yet"}
+L1922:                 ${lang === "ar" ? "انتقل إلى «مراجعة واعتماد الخطط» لمراجعة خطط مناديب فريقك واختيار الأيام التي ترغب بمرافقتهم فيها بالكامل." : 'Go to "Plans to Review" to review your team\'s planned schedules and choose full days to accompany them.'}
+L1925:                 📋 ${lang === "ar" ? "الذهاب لمراجعة الخطط وحجز الأيام" : "Go to Plans to Review"}
+L1931:               <span class="dm-schedule-pills-label">📅 ${lang === "ar" ? "الأيام المجدولة:" : "Scheduled Days:"}</span>
+L1956:                   ${lang === "ar" ? `تاريخ ${selectedDate}: لا يوجد نزول ميداني مجدول لهذا اليوم` : `Date ${selectedDate}: No field accompaniment scheduled for this day`}
+L1959:                   ${lang === "ar" ? "اختر يوماً من الأيام المجدولة أعلاه أو انتقل إلى صفحة مراجعة الخطط لجدولة أيام جديدة." : "Select a date from the scheduled days above or go to Plans to Review to schedule new days."}
+L1967:                 <strong class="dm-office-title">${lang === "ar" ? `تاريخ ${selectedDate}: يوم مكتبي / عمل إداري ومتابعة` : `Date ${selectedDate}: Office Work / Administrative Day`}</strong>
+L1979:                       <span>${lang === "ar" ? `نزول ميداني مشترك برفقة: ${accompaniedRep.name}` : `Joint Field Accompaniment with: ${accompaniedRep.name}`}</span>
+L1983:                       📅 ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? (lang === "ar" ? "• (اليوم)" : "• (Today)") : ""} • ${pendingAccompaniedVisits.length} ${lang === "ar" ? "زيارة مخططة للنزول المشترك" : "planned joint visits"}
+L1989:                     📍 ${lang === "ar" ? "فتح في الزيارات الميدانية" : "Open in Visits Page"}
+L1998:                       <th>${lang === "ar" ? "الهدف المخطط" : "Planned Target"}</th>
+L1999:                       <th>${lang === "ar" ? "الفترة" : "Period"}</th>
+L2000:                       <th class="dm-covisit-products-col">${lang === "ar" ? "المنتجات" : "Products"}</th>
+L2001:                       <th class="text-end covisit-action-cell">${lang === "ar" ? "إجراء المرافقة" : "Co-Visit Action"}</th>
+L2017:                                   ? "صيدلية"
+L2021:                                     ? "مستشفى"
+L2024:                                     ? "عيادة طبيب"
+L2027:                                 ? `<span class="badge badge-period-pharm">💊 ${lang === "ar" ? "صيدلية" : "PHARM"}</span>`
+L2049:                               🤝 ${lang === "ar" ? "تسجيل الزيارة المزدوجة" : "Log Double Visit"}
+L2059:                           ${lang === "ar" ? `لا توجد زيارات مخططة للمندوب ${accompaniedRep ? accompaniedRep.name : ""} في تاريخ ${selectedDate}.` : `No planned visits scheduled by ${accompaniedRep ? accompaniedRep.name : "Rep"} on ${selectedDate}.`}
+L2155:                           ${area.name} <span class="badge badge-vacant">${lang === "ar" ? "شاغرة" : "Vacant Area"}</span>
+L2158:                           ${lang === "ar" ? "شاغر (Vacant)" : "Vacant"}
+L2168:                       <td class="dm-vacant-row">${lang === "ar" ? "المنطقة" : "District Territory"}</td>
+L2169:                       <td class="dm-vacant-text text-end">${lang === "ar" ? "شاغر (Vacant)" : "Vacant"}</td>
+L2198:   const lineNames = lmLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+L2265:         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير الخط" : "Line Manager"} ${userName}!</h2>
+L2266:         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة خط الإنتاج" : "Product Line Management")}</div>
+L2275:           <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+L2277:             ${lang === "ar" ? `جميع الخطوط (${lmLines.length})` : `All Lines (${lmLines.length})`}
+L2304:             <span>${t.line_visits || (lang === "ar" ? "زيارات الخط (هذا الشهر)" : "Line Visits (This Month)")}</span>
+L2309:             ${lang === "ar" ? "عرض سجل الزيارات ←" : "View Completed Visits →"}
+L2314:             <span>${t.leave_requests || (lang === "ar" ? "طلبات إجازة للموافقة" : "Leave Requests to Approve")}</span>
+L2319:             ${lang === "ar" ? "مراجعة واعتماد الإجازات ←" : "Review & Approve Leaves →"}
+L2352:                                   👥 ${repsForThisDM.length} ${repsForThisDM.length === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}
+L2357:                                   <button type="button" class="btn-view-team" onclick="window.openDmTeamModal('${dm.id}')" title="${lang === "ar" ? "عرض أعضاء الفريق" : "View Team Members"}">
+L2359:                                     <span>${lang === "ar" ? "عرض الفريق" : "View Team"}</span>
+L2362:                                     : `<span class="feed-no-notes">${lang === "ar" ? "لا يوجد مناديب مسندين" : "No reps assigned"}</span>`
+L2367:                               <span class="badge bg-success-subtle text-success">${lang === "ar" ? "نشط" : "Active"}</span>
+L2698:   const lineNames = buLines.map((l) => (lang === "ar" ? (l.nameAr || l.name) : l.name)).join(lang === "ar" ? "، " : ", ");
+L2734:         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "رئيس وحدة الأعمال" : "Business Unit Head"} ${userName}!</h2>
+L2735:         <div class="welcome-subtitle">${lineNames || (lang === "ar" ? "إدارة وحدة الأعمال" : "Business Unit Management")}</div>
+L2744:           <span class="line-filter-label">🏷️ ${lang === "ar" ? "تصفية بالخط:" : "Filter by Line:"}</span>
+L2746:             ${lang === "ar" ? `جميع الخطوط (${lines.length})` : `All Lines (${lines.length})`}
+L2844:                                   <div class="bu-line-subtext">${(line.products || []).length} ${lang === "ar" ? "منتجات نشطة" : "Products Active"}</div>
+L2853:                                       : `<em class="text-muted">${lang === "ar" ? "غير معين" : "Unassigned"}</em>`
+L2858:                                     <span class="badge bg-primary-subtle text-primary badge-dm-count">${dmsCount} ${dmsCount === 1 ? (lang === "ar" ? "مدير منطقة" : "DM") : (lang === "ar" ? "مديري مناطق" : "DMs")}</span>
+L2859:                                     <span class="badge bg-success-subtle text-success badge-rep-count">${repsCount} ${repsCount === 1 ? (lang === "ar" ? "مندوب" : "Rep") : (lang === "ar" ? "مناديب" : "Reps")}</span>
+L2880:                                     <em class="text-muted">${lang === "ar" ? "خط غير محدد" : "Unassigned Line"}</em>
+L3105:         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مسؤول النظام" : "System Administrator"} ${userName}!</h2>
+L3106:         <div class="welcome-subtitle">${lang === "ar" ? "جميع خطوط الإنتاج والعمليات" : "All Product Lines & Operations"}</div>
+L3183:         <h2 class="welcome-title">${t.welcome_back}, ${lang === "ar" ? "مدير الموارد البشرية" : "HR Manager"} ${userName}!</h2>
+L3184:         <div class="welcome-subtitle">${lang === "ar" ? "الموارد البشرية وشؤون الموظفين" : "Human Resources & People Operations"}</div>
+L3215:               <label class="form-label fw-bold small" id="lblDashDate">${lang === "ar" ? "يوم الزيارة" : "Visit Day"}</label>
+L3220:               <label class="form-label fw-bold small" id="lblDashTime">${lang === "ar" ? "وقت الزيارة" : "Visit Time (HH:MM)"}</label>
+L3226:               <strong>${lang === "ar" ? "تاريخ الإدخال:" : "Insertion Date:"}</strong>
+L3230:               <strong>${lang === "ar" ? "وقت الإدخال:" : "Insertion Time:"}</strong>
+L3377:           ? `نزول مرافق (Double Visit) مع المندوب: ${repName}`
+L3459:   if (dashInsDateEl) dashInsDateEl.innerText = `${todayISO} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+L3460:   if (dashInsTimeEl) dashInsTimeEl.innerText = `${timeStr} (${lang === "ar" ? "تلقائي الآن" : "Auto on Complete"})`;
+L3463:   if (lblDate) lblDate.innerText = t.visit_day || (lang === "ar" ? "يوم الزيارة" : "Visit Day");
+L3559:     submitBtn.innerText = lang === "ar" ? "جاري الحفظ... ⏳" : "Saving... ⏳";
+L3587:       ? "لا يمكن تسجيل زيارة فعلية في تاريخ مستقبلي."
+L3596:           ? "وفقاً لسياسة الشركة، يجب تسجيل الزيارات الفعلية في نفس اليوم فقط."
+L3597:           : `وفقاً لسياسة الشركة، لا يمكن تسجيل زيارة فعلية بعد مرور أكثر من ${limitDays} ${limitDays === 1 ? "يوم" : limitDays === 2 ? "يومين" : "أيام"} على تاريخها.`)
+L3640:           ? "يرجى تحديد المرافق في الزيارة المزدوجة."
+L3687:             ? `⚠️ توجد زيارة مسجلة بالفعل في نفس هذا التوقيت تماماً (${conflictingTime}) لـ (${conflictingTarget}).`
+L3690:             ? `⚠️ الفارق الزمني بين الزيارات يجب ألا يقل عن ${timeConflict.minRequired} دقائق عند تفعيل تسجيل الزيارات بالموقع (GPS). توجد زيارة أخرى في (${conflictingTime}) لـ (${conflictingTarget}).`

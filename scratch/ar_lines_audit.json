@@ -1,0 +1,894 @@
+{
+  "calendar.js": [
+    {
+      "lineNum": 793,
+      "text": "const vacantBadge = `<span class=\"badge bg-warning text-dark me-1\" style=\"font-size:0.7rem;\">[Vacant / شاغر]</span>`;"
+    }
+  ],
+  "areas.js": [
+    {
+      "lineNum": 213,
+      "text": "nasr: \"نصر\","
+    },
+    {
+      "lineNum": 214,
+      "text": "dokki: \"دقي\","
+    },
+    {
+      "lineNum": 215,
+      "text": "maadi: \"معادي\","
+    },
+    {
+      "lineNum": 216,
+      "text": "giza: \"جيزه\","
+    },
+    {
+      "lineNum": 217,
+      "text": "october: \"اكتوبر\","
+    },
+    {
+      "lineNum": 218,
+      "text": "helwan: \"حلوان\","
+    },
+    {
+      "lineNum": 219,
+      "text": "heliopolis: \"مصر الجديده\","
+    },
+    {
+      "lineNum": 220,
+      "text": "alex: \"اسكندر\","
+    },
+    {
+      "lineNum": 221,
+      "text": "alexandria: \"اسكندر\","
+    },
+    {
+      "lineNum": 222,
+      "text": "tanta: \"طنطا\","
+    },
+    {
+      "lineNum": 223,
+      "text": "mansoura: \"منصور\","
+    },
+    {
+      "lineNum": 224,
+      "text": "shubra: \"شبرا\","
+    },
+    {
+      "lineNum": 225,
+      "text": "faisal: \"فيصل\","
+    },
+    {
+      "lineNum": 226,
+      "text": "haram: \"هرم\","
+    },
+    {
+      "lineNum": 227,
+      "text": "zamalek: \"زمالك\","
+    },
+    {
+      "lineNum": 228,
+      "text": "mohandessin: \"مهندسين\","
+    },
+    {
+      "lineNum": 229,
+      "text": "aswan: \"اسوان\","
+    },
+    {
+      "lineNum": 230,
+      "text": "assiut: \"اسيوط\","
+    },
+    {
+      "lineNum": 231,
+      "text": "sohag: \"سوهاج\","
+    },
+    {
+      "lineNum": 232,
+      "text": "qena: \"قنا\","
+    },
+    {
+      "lineNum": 233,
+      "text": "luxor: \"اقصر\","
+    },
+    {
+      "lineNum": 234,
+      "text": "hurghada: \"غردقه\","
+    },
+    {
+      "lineNum": 235,
+      "text": "sharm: \"شرم\","
+    },
+    {
+      "lineNum": 236,
+      "text": "ismailia: \"اسماعيلي\","
+    },
+    {
+      "lineNum": 237,
+      "text": "suez: \"سويس\","
+    },
+    {
+      "lineNum": 238,
+      "text": "\"port said\": \"بورسعيد\","
+    },
+    {
+      "lineNum": 239,
+      "text": "damietta: \"دمياط\","
+    },
+    {
+      "lineNum": 240,
+      "text": "zagazig: \"زقازيق\","
+    },
+    {
+      "lineNum": 241,
+      "text": "banha: \"بنها\","
+    },
+    {
+      "lineNum": 242,
+      "text": "damanhour: \"دمنهور\","
+    },
+    {
+      "lineNum": 243,
+      "text": "\"kafr el sheikh\": \"كفر الشيخ\","
+    },
+    {
+      "lineNum": 244,
+      "text": "menoufia: \"منوف\","
+    },
+    {
+      "lineNum": 245,
+      "text": "shebin: \"شبين\","
+    },
+    {
+      "lineNum": 246,
+      "text": "matrouh: \"مطروح\","
+    },
+    {
+      "lineNum": 247,
+      "text": "arish: \"عريش\","
+    },
+    {
+      "lineNum": 248,
+      "text": "obour: \"عبور\","
+    },
+    {
+      "lineNum": 249,
+      "text": "badr: \"بدر\","
+    },
+    {
+      "lineNum": 250,
+      "text": "shorouk: \"شروق\","
+    },
+    {
+      "lineNum": 251,
+      "text": "katameya: \"قطاميه\","
+    },
+    {
+      "lineNum": 252,
+      "text": "tagamoa: \"تجمع\","
+    },
+    {
+      "lineNum": 253,
+      "text": "rehab: \"رحاب\","
+    },
+    {
+      "lineNum": 254,
+      "text": "madinaty: \"مدينتي\","
+    },
+    {
+      "lineNum": 261,
+      "text": ".replace(/[أإآ]/g, \"ا\")"
+    },
+    {
+      "lineNum": 262,
+      "text": ".replace(/ة/g, \"ه\")"
+    },
+    {
+      "lineNum": 263,
+      "text": ".replace(/ى/g, \"ي\")"
+    },
+    {
+      "lineNum": 264,
+      "text": ".replace(/[ًٌٍَُِّْـ]/g, \"\")"
+    }
+  ],
+  "app.js": [
+    {
+      "lineNum": 890,
+      "text": "{ id: \"spec_internal\", code: \"IM\", name: \"Internal Medicine\", nameAr: \"باطنة\" },"
+    },
+    {
+      "lineNum": 891,
+      "text": "{ id: \"spec_pediatrics\", code: \"PED\", name: \"Pediatrics\", nameAr: \"أطفال\" },"
+    },
+    {
+      "lineNum": 892,
+      "text": "{ id: \"spec_cardiology\", code: \"CARD\", name: \"Cardiology\", nameAr: \"قلب وأوعية\" },"
+    },
+    {
+      "lineNum": 893,
+      "text": "{ id: \"spec_dermatology\", code: \"DERM\", name: \"Dermatology\", nameAr: \"جلدية\" },"
+    },
+    {
+      "lineNum": 894,
+      "text": "{ id: \"spec_ophthalmology\", code: \"OPHTH\", name: \"Ophthalmology\", nameAr: \"عيون\" },"
+    },
+    {
+      "lineNum": 895,
+      "text": "{ id: \"spec_orthopedics\", code: \"ORTHO\", name: \"Orthopedics\", nameAr: \"عظام\" },"
+    },
+    {
+      "lineNum": 896,
+      "text": "{ id: \"spec_ent\", code: \"ENT\", name: \"ENT\", nameAr: \"أنف وأذن وحنجرة\" },"
+    },
+    {
+      "lineNum": 897,
+      "text": "{ id: \"spec_neurology\", code: \"NEURO\", name: \"Neurology\", nameAr: \"مخ وأعصاب\" },"
+    },
+    {
+      "lineNum": 898,
+      "text": "{ id: \"spec_urology\", code: \"URO\", name: \"Urology\", nameAr: \"مسالك بولية\" },"
+    },
+    {
+      "lineNum": 899,
+      "text": "{ id: \"spec_gynecology\", code: \"GYN\", name: \"Gynecology\", nameAr: \"نساء وتوليد\" },"
+    },
+    {
+      "lineNum": 900,
+      "text": "{ id: \"spec_other\", code: \"OTHER\", name: \"Other\", nameAr: \"أخرى\" },"
+    },
+    {
+      "lineNum": 912,
+      "text": "nameAr: \"خط الكارديو (Cardio)\","
+    },
+    {
+      "lineNum": 927,
+      "text": "nameAr: \"خط النيورو (Neuro)\","
+    },
+    {
+      "lineNum": 944,
+      "text": "\"nameAr\": \"صيدلية العزبي\","
+    },
+    {
+      "lineNum": 956,
+      "text": "\"nameAr\": \"صيدلية سيف\","
+    },
+    {
+      "lineNum": 968,
+      "text": "\"nameAr\": \"صيدلية رشدي\","
+    },
+    {
+      "lineNum": 980,
+      "text": "\"nameAr\": \"صيدلية 19011\","
+    },
+    {
+      "lineNum": 992,
+      "text": "\"nameAr\": \"صيدلية مصر\","
+    },
+    {
+      "lineNum": 1004,
+      "text": "\"nameAr\": \"صيدلية الطرشوبي\","
+    },
+    {
+      "lineNum": 1016,
+      "text": "\"nameAr\": \"صيدلية دوائي\","
+    },
+    {
+      "lineNum": 1033,
+      "text": "titleAr: \"مواعيد العمل في رمضان\","
+    },
+    {
+      "lineNum": 1036,
+      "text": "\"يرجى العلم أن مواعيد العمل خلال شهر رمضان ستكون من 9 صباحاً حتى 3 عصراً بدءاً من الأسبوع القادم.\","
+    },
+    {
+      "lineNum": 1045,
+      "text": "titleAr: \"الحفل السنوي للشركة\","
+    },
+    {
+      "lineNum": 1048,
+      "text": "\"يسعدنا الإعلان عن الحفل السنوي للشركة يوم 15 أكتوبر في فندق فور سيزونز. جميع الموظفين مدعوون!\","
+    },
+    {
+      "lineNum": 1057,
+      "text": "titleAr: \"بوليصة التأمين الصحي الجديدة\","
+    },
+    {
+      "lineNum": 1060,
+      "text": "\"تم تفعيل بوليصة تأمين صحي جديدة. يرجى مراجعة المزايا المحدثة في بوابة الموارد البشرية.\","
+    },
+    {
+      "lineNum": 1160,
+      "text": "publicHolidays: [{ date: \"2026-10-06\", title: \"Armed Forces Day\", titleAr: \"عيد القوات المسلحة\" }],"
+    },
+    {
+      "lineNum": 2248,
+      "text": "* - Eastern Arabic digits (١٢٣)"
+    },
+    {
+      "lineNum": 2265,
+      "text": "s = s.replace(/[٠-٩]/g, (d) => \"٠١٢٣٤٥٦٧٨٩\".indexOf(d).toString());"
+    },
+    {
+      "lineNum": 3022,
+      "text": "const targetLangText = lang === \"ar\" ? \"English\" : \"عربي\";"
+    },
+    {
+      "lineNum": 3611,
+      "text": "parsed.nameAr = \"فادي عادل\";"
+    }
+  ],
+  "announcements.js": [
+    {
+      "lineNum": 6,
+      "text": "titleAr: \"مواعيد العمل في رمضان\","
+    },
+    {
+      "lineNum": 9,
+      "text": "\"يرجى العلم أن مواعيد العمل خلال شهر رمضان ستكون من 9 صباحاً حتى 3 عصراً بدءاً من الأسبوع القادم. يرجى تنظيم زياراتكم والتنسيق مع مديري المناطق لأي تغييرات في الجدول.\","
+    },
+    {
+      "lineNum": 21,
+      "text": "titleAr: \"الحفل السنوي للشركة\","
+    },
+    {
+      "lineNum": 24,
+      "text": "\"يسعدنا الإعلان عن الحفل السنوي للشركة يوم 15 أكتوبر في فندق فور سيزونز القاهرة. جميع الموظفين وعائلاتهم مدعوون! يرجى تأكيد الحضور قبل 30 سبتمبر. اللباس: رسمي عصري.\","
+    },
+    {
+      "lineNum": 36,
+      "text": "titleAr: \"بوليصة التأمين الصحي الجديدة\","
+    },
+    {
+      "lineNum": 39,
+      "text": "\"تم تفعيل بوليصة تأمين صحي جديدة اعتباراً من 1 سبتمبر 2026. أهم التحديثات: تغطية موسعة لطب الأسنان، زيادة الحد السنوي إلى 500,000 جنيه، وإضافة دعم الصحة النفسية. يرجى مراجعة التفاصيل الكاملة مع الموارد البشرية.\","
+    },
+    {
+      "lineNum": 51,
+      "text": "titleAr: \"برنامج حوافز المبيعات للربع الثالث\","
+    },
+    {
+      "lineNum": 54,
+      "text": "\"سيحصل أفضل المناديب الطبيين في الربع الثالث على حوافز إضافية. الهدف: تحقيق 110%. المكافآت تشمل مكافأة مالية ورحلة مدفوعة بالكامل إلى شرم الشيخ.\","
+    },
+    {
+      "lineNum": 66,
+      "text": "titleAr: \"اجتماع المواءمة القيادية ربع السنوي\","
+    },
+    {
+      "lineNum": 69,
+      "text": "\"يرجى من جميع مديري المناطق ومديري الخطوط ورؤساء القطاعات حضور اجتماع المراجعة القيادية ربع السنوية يوم الثلاثاء القادم الساعة 11:00 صباحاً.\","
+    },
+    {
+      "lineNum": 81,
+      "text": "titleAr: \"جلسة تخطيط الحصص البيعية للمناطق\","
+    },
+    {
+      "lineNum": 84,
+      "text": "\"جلسة تخطيط الحصص البيعية التشغيلية المخصصة لمديري الخطوط ورؤساء القطاعات.\","
+    },
+    {
+      "lineNum": 96,
+      "text": "titleAr: \"إحاطة الموازنة الاستراتيجية السنوية\","
+    },
+    {
+      "lineNum": 99,
+      "text": "\"إحاطة الأطر المالية والمستهدفات السنوية السرية المخصصة لرؤساء القطاعات فقط.\","
+    },
+    {
+      "lineNum": 111,
+      "text": "titleAr: \"مراجعة العمليات الداخلية للموارد البشرية والإدارة\","
+    },
+    {
+      "lineNum": 114,
+      "text": "\"مراجعة داخلية سرية حول عقود الموظفين وتعديلات مسيرات الرواتب والسياسات الإدارية للنظام.\","
+    },
+    {
+      "lineNum": 634,
+      "text": "${!ann.published ? `<span class=\"badge bg-warning text-dark border border-warning-subtle\"><i class=\"fas fa-file-alt\"></i> ${lang === \"ar\" ? \"مسودة\" : \"Draft\"}</span>` : \"\"}"
+    },
+    {
+      "lineNum": 963,
+      "text": "? 'يرجى اختيار ملف صورة صالح.'"
+    },
+    {
+      "lineNum": 1133,
+      "text": "? 'يرجى ملء جميع الحقول المطلوبة.'"
+    }
+  ],
+  "activities-decisions.js": [
+    {
+      "lineNum": 45,
+      "text": "amount += ` (${Core.t(\"yourShare\") || \"حصتك\"}: ${myPct}% - ${myTotal.toLocaleString()} ${Core.t(\"currency\") || \"ج.م\"})`;"
+    },
+    {
+      "lineNum": 51,
+      "text": "titleEl.textContent = Core.t(\"confirmApprovalTitle\") || \"تأكيد الاعتماد\";"
+    },
+    {
+      "lineNum": 52,
+      "text": "msgEl.textContent = (Core.t(\"confirmApproveMsg\") || \"هل أنت متأكد من اعتماد هذا الطلب بمبلغ {amount} للموظف {name}؟\")"
+    },
+    {
+      "lineNum": 56,
+      "text": "confirmBtn.textContent = Core.t(\"btnApprove\") || \"اعتماد\";"
+    },
+    {
+      "lineNum": 58,
+      "text": "titleEl.textContent = Core.t(\"confirmRejectionTitle\") || \"تأكيد الرفض\";"
+    },
+    {
+      "lineNum": 59,
+      "text": "msgEl.textContent = (Core.t(\"confirmRejectMsg\") || \"هل أنت متأكد من رفض هذا الطلب المقدم من {name}؟\")"
+    },
+    {
+      "lineNum": 62,
+      "text": "confirmBtn.textContent = Core.t(\"btnReject\") || \"رفض\";"
+    },
+    {
+      "lineNum": 64,
+      "text": "titleEl.textContent = Core.t(\"confirmDisbursementTitle\") || \"تأكيد الصرف المالي\";"
+    },
+    {
+      "lineNum": 65,
+      "text": "msgEl.textContent = (Core.t(\"confirmDisburseMsg\") || \"هل أنت متأكد من صرف مبلغ {amount} للموظف {name}؟\")"
+    },
+    {
+      "lineNum": 69,
+      "text": "confirmBtn.textContent = Core.t(\"btnDisburse\") || \"صرف مالي\";"
+    },
+    {
+      "lineNum": 92,
+      "text": "Core.safeShowToast(Core.t(\"rejectionReasonRequired\") || \"يرجى كتابة سبب الرفض\", \"warning\");"
+    },
+    {
+      "lineNum": 103,
+      "text": "Core.safeShowToast(Core.t(\"unauthorizedExpenseAction\") || \"غير مصرح لك بتنفيذ هذا الإجراء على هذه المطالبة وفقاً للصلاحيات الإدارية.\", \"warning\");"
+    },
+    {
+      "lineNum": 211,
+      "text": "Core.safeShowToast(Core.t(\"unauthorizedServiceAction\") || \"غير مصرح لك بتنفيذ هذا الإجراء على هذا الطلب وفقاً للصلاحيات الإدارية.\", \"warning\");"
+    },
+    {
+      "lineNum": 525,
+      "text": "Core.safeShowToast(Core.t(\"successAction\") || \"تمت العملية بنجاح\", \"success\");"
+    }
+  ],
+  "activities-tab-budget.js": [
+    {
+      "lineNum": 101,
+      "text": "Core.safeShowToast(Core.t(\"unauthorizedBudgetAction\") || \"غير مصرح لك بتعديل ميزانية قطاع الأعمال.\", \"danger\");"
+    },
+    {
+      "lineNum": 127,
+      "text": "Core.t(\"budgetOverAllocated\") || `تحذير: إجمالي مخصصات مديري الخطوط (${totalLmAlloc.toLocaleString()}) يتجاوز الميزانية الكلية للخط (${total.toLocaleString()}).`,"
+    },
+    {
+      "lineNum": 137,
+      "text": "Core.safeShowToast(Core.t(\"savedBudgetMessage\") || \"تم حفظ مخصصات الميزانية بنجاح\", \"success\");"
+    },
+    {
+      "lineNum": 380,
+      "text": "Core.safeShowToast(Core.t(\"unauthorizedRepBudgetAction\") || \"غير مصرح لك بتعديل مخصصات المندوبين.\", \"danger\");"
+    },
+    {
+      "lineNum": 401,
+      "text": "Core.safeShowToast(Core.t(\"insufficientBudgetNotice\") || \"تحذير: إجمالي المخصص للمندوبين يتجاوز ميزانية المنطقة المتاحة لك.\", \"warning\");"
+    },
+    {
+      "lineNum": 405,
+      "text": "Core.safeShowToast(Core.t(\"savedRepBudgetMessage\") || \"تم حفظ مخصصات المندوبين بنجاح.\", \"success\");"
+    },
+    {
+      "lineNum": 414,
+      "text": "Core.safeShowToast(Core.t(\"unauthorizedDmBudgetAction\") || \"غير مصرح لك بتعديل مخصصات مديري المناطق.\", \"danger\");"
+    },
+    {
+      "lineNum": 435,
+      "text": "Core.safeShowToast(Core.t(\"insufficientBudgetNotice\") || \"تحذير: إجمالي المخصص لمديري المناطق يتجاوز ميزانية الخط المتاحة لك.\", \"warning\");"
+    },
+    {
+      "lineNum": 439,
+      "text": "Core.safeShowToast(Core.t(\"savedDmBudgetMessage\") || \"تم حفظ مخصصات مديري المناطق بنجاح.\", \"success\");"
+    }
+  ],
+  "achievements-report.js": [
+    {
+      "lineNum": 23,
+      "text": ": ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];"
+    },
+    {
+      "lineNum": 65,
+      "text": "labelEl.textContent = lang === 'ar' ? 'لم يتم اختيار شهور' : 'No Months Selected';"
+    },
+    {
+      "lineNum": 67,
+      "text": "labelEl.textContent = lang === 'ar' ? 'كل الشهور' : 'All Months';"
+    },
+    {
+      "lineNum": 73,
+      "text": "labelEl.textContent = names.join(lang === 'ar' ? '، ' : ', ');"
+    },
+    {
+      "lineNum": 76,
+      "text": "? `${checkedBoxes.length} شهور محددة`"
+    },
+    {
+      "lineNum": 145,
+      "text": "const allLabel = lang === 'ar' ? 'جميع المناطق' : 'All Areas';"
+    },
+    {
+      "lineNum": 178,
+      "text": "const vacantTag = isVacant ? ` [${lang === 'ar' ? 'شاغرة' : 'Vacant'}]` : '';"
+    },
+    {
+      "lineNum": 468,
+      "text": "${lang === 'ar' ? 'يرجى اختيار شهر واحد على الأقل.' : 'Please select at least one month.'}"
+    },
+    {
+      "lineNum": 483,
+      "text": "${lang === 'ar' ? 'لا توجد تارجت أو مبيعات مربوطة بمندوب ومنتج للشهور المحددة.' : 'No targets or rep/product-matched sales for selected months.'}"
+    },
+    {
+      "lineNum": 509,
+      "text": "<td>${lang === 'ar' ? 'الإجمالي' : 'TOTAL'}</td>"
+    },
+    {
+      "lineNum": 544,
+      "text": "<td style=\"color: var(--primary); font-size: 0.95rem;\">${lang === 'ar' ? 'الإجمالي العام للشركة/الخط' : 'OVERALL GRAND TOTAL'}</td>"
+    },
+    {
+      "lineNum": 545,
+      "text": "<td style=\"color: var(--gray-600);\">${lang === 'ar' ? 'جميع المنتجات' : 'ALL PRODUCTS'}</td>"
+    },
+    {
+      "lineNum": 643,
+      "text": "showToast(lang === 'ar' ? 'لا توجد بيانات لتصديرها.' : 'No achievement data to export.', 'warning');"
+    },
+    {
+      "lineNum": 649,
+      "text": "lang === 'ar' ? 'المندوب' : 'Representative',"
+    },
+    {
+      "lineNum": 650,
+      "text": "lang === 'ar' ? 'المنطقة' : 'Territory',"
+    },
+    {
+      "lineNum": 651,
+      "text": "lang === 'ar' ? 'المنتج' : 'Product',"
+    },
+    {
+      "lineNum": 652,
+      "text": "lang === 'ar' ? 'مستهدف الوحدات' : 'Target Units',"
+    },
+    {
+      "lineNum": 653,
+      "text": "lang === 'ar' ? 'الوحدات المحققة' : 'Actual Units',"
+    },
+    {
+      "lineNum": 654,
+      "text": "lang === 'ar' ? 'قيمة المستهدف' : 'Target Value (EGP)',"
+    },
+    {
+      "lineNum": 655,
+      "text": "lang === 'ar' ? 'القيمة المحققة' : 'Actual Value (EGP)',"
+    },
+    {
+      "lineNum": 656,
+      "text": "lang === 'ar' ? 'نسبة التحقيق' : 'Achievement %',"
+    },
+    {
+      "lineNum": 670,
+      "text": "escapeCsv(lang === 'ar' ? 'الإجمالي' : 'TOTAL'),"
+    }
+  ],
+  "coverage-report.js": [
+    {
+      "lineNum": 121,
+      "text": "rulesEl.innerHTML = `💡 <strong>قواعد التغطية${lineTag}:</strong> أطباء فئة A = ${freqA} زيارات/ربع سنوي | أطباء فئة B = ${freqB} زيارات/ربع سنوي | مستشفيات = 2 زيارة/شهر`;"
+    },
+    {
+      "lineNum": 397,
+      "text": "${lang === 'ar' ? 'لا توجد بيانات مطابقة للموظفين المحددين في هذه الفترة.' : 'No employee data matching the selected filter.'}"
+    },
+    {
+      "lineNum": 413,
+      "text": "title=\"${lang === 'ar' ? 'عرض كل أطباء هذا المندوب' : 'Show all doctors for this rep'}\""
+    },
+    {
+      "lineNum": 423,
+      "text": "title=\"${lang === 'ar' ? 'عرض الأطباء المزارين فقط' : 'Show visited doctors only'}\""
+    },
+    {
+      "lineNum": 433,
+      "text": "title=\"${lang === 'ar' ? 'عرض الأطباء غير المزارين' : 'Show unvisited doctors only'}\""
+    },
+    {
+      "lineNum": 443,
+      "text": "title=\"${lang === 'ar' ? 'عرض أطباء الزيارات الفعلية' : 'Show actual visits doctors'}\""
+    },
+    {
+      "lineNum": 464,
+      "text": "<td style=\"color: var(--primary);\">${lang === 'ar' ? 'الإجمالي' : 'TOTAL'}</td>"
+    },
+    {
+      "lineNum": 465,
+      "text": "<td>${lang === 'ar' ? 'كافة المناطق' : 'All Territories'}</td>"
+    },
+    {
+      "lineNum": 470,
+      "text": "onclick=\"setCoverageDrilldown('all', null, '${lang === 'ar' ? 'الكل' : 'All'}')\""
+    },
+    {
+      "lineNum": 471,
+      "text": "title=\"${lang === 'ar' ? 'عرض كافة الأطباء للجميع' : 'Show all doctors'}\""
+    },
+    {
+      "lineNum": 480,
+      "text": "onclick=\"setCoverageDrilldown('visited', null, '${lang === 'ar' ? 'الكل' : 'All'}')\""
+    },
+    {
+      "lineNum": 481,
+      "text": "title=\"${lang === 'ar' ? 'عرض كافة الأطباء المزارين' : 'Show all visited doctors'}\""
+    },
+    {
+      "lineNum": 490,
+      "text": "onclick=\"setCoverageDrilldown('unvisited', null, '${lang === 'ar' ? 'الكل' : 'All'}')\""
+    },
+    {
+      "lineNum": 491,
+      "text": "title=\"${lang === 'ar' ? 'عرض كافة الأطباء غير المزارين' : 'Show all unvisited doctors'}\""
+    },
+    {
+      "lineNum": 500,
+      "text": "onclick=\"setCoverageDrilldown('actual', null, '${lang === 'ar' ? 'الكل' : 'All'}')\""
+    },
+    {
+      "lineNum": 501,
+      "text": "title=\"${lang === 'ar' ? 'عرض كافة أطباء الزيارات الفعلية' : 'Show all actual visit doctors'}\""
+    },
+    {
+      "lineNum": 522,
+      "text": "typeLabel = lang === 'ar' ? 'الأطباء المزارين فقط' : 'Visited Doctors Only';"
+    },
+    {
+      "lineNum": 524,
+      "text": "typeLabel = lang === 'ar' ? 'الأطباء غير المزارين' : 'Unvisited Doctors Only';"
+    },
+    {
+      "lineNum": 526,
+      "text": "typeLabel = lang === 'ar' ? 'أطباء الزيارات الفعلية (Actual)' : 'Actual Visits Doctors';"
+    },
+    {
+      "lineNum": 528,
+      "text": "typeLabel = lang === 'ar' ? 'كافة الأطباء' : 'All Doctors';"
+    },
+    {
+      "lineNum": 534,
+      "text": "? `عرض مخصص: ${typeLabel}${repLabel}`"
+    },
+    {
+      "lineNum": 568,
+      "text": "${lang === 'ar' ? 'لا توجد أهداف مطابقة لهذا الاختيار المحدد.' : 'No targets match the selected drill-down filter.'}"
+    },
+    {
+      "lineNum": 583,
+      "text": "const typeLabel = isAct ? (lang === 'ar' ? 'فعلية' : 'Actual') : (lang === 'ar' ? 'خطة' : 'Plan');"
+    },
+    {
+      "lineNum": 598,
+      "text": "return `<div style=\"font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;\">📥 ${lang === 'ar' ? 'إدخال:' : 'Ins:'} ${insD} ${insT}</div>`;"
+    },
+    {
+      "lineNum": 604,
+      "text": "timestampsHtml = `<span style=\"color: var(--gray-400); font-style: italic; font-size: 0.8rem;\">${lang === 'ar' ? 'لا توجد زيارات في هذه الفترة' : 'No visits in this period'}</span>`;"
+    },
+    {
+      "lineNum": 656,
+      "text": "if (elTargetsSubtext) elTargetsSubtext.textContent = lang === 'ar' ? 'الأطباء والمستشفيات المزارة' : 'Doctors/Hospitals Visited';"
+    }
+  ],
+  "shared-report.js": [
+    {
+      "lineNum": 506,
+      "text": "'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',"
+    },
+    {
+      "lineNum": 507,
+      "text": "'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'"
+    },
+    {
+      "lineNum": 1279,
+      "text": "const name = String(r.doctorname || r.name || r.doctor || r['اسمالطبيب'] || r['الطبيب'] || '').trim();"
+    },
+    {
+      "lineNum": 1280,
+      "text": "const specialty = String(r.specialty || r.speciality || r.spec || r['التخصص'] || 'Internal Medicine').trim();"
+    },
+    {
+      "lineNum": 1281,
+      "text": "let docClass = String(r.class || r.classification || r['الفئة'] || 'A').trim().toUpperCase();"
+    },
+    {
+      "lineNum": 1283,
+      "text": "const address = String(r.address || r.clinicaddress || r['العنوان'] || '').trim();"
+    },
+    {
+      "lineNum": 1284,
+      "text": "const phone = String(r.phone || r.mobile || r.telephone || r['الهاتف'] || '').trim();"
+    },
+    {
+      "lineNum": 1286,
+      "text": "const repKey = String(r.repcode || r.repid || r.rep || r.assignedrep || r['المندوب'] || '').trim();"
+    },
+    {
+      "lineNum": 1523,
+      "text": "const name = String(r.pharmacyname || r.name || r.pharmacy || r['اسمالصيدلية'] || r['الصيدلية'] || '').trim();"
+    },
+    {
+      "lineNum": 1524,
+      "text": "const address = String(r.address || r['العنوان'] || '').trim();"
+    },
+    {
+      "lineNum": 1525,
+      "text": "const contactPerson = String(r.contactperson || r.contact || r['المسؤول'] || '').trim();"
+    },
+    {
+      "lineNum": 1526,
+      "text": "const phone = String(r.phone || r.mobile || r.telephone || r['الهاتف'] || '').trim();"
+    },
+    {
+      "lineNum": 1528,
+      "text": "const repKey = String(r.repcode || r.repid || r.rep || r.assignedrep || r['المندوب'] || '').trim();"
+    }
+  ],
+  "store.js": [
+    {
+      "lineNum": 433,
+      "text": ".replace(/[أإآ]/g, \"ا\")"
+    },
+    {
+      "lineNum": 434,
+      "text": ".replace(/ة/g, \"ه\")"
+    },
+    {
+      "lineNum": 435,
+      "text": ".replace(/ى/g, \"ي\")"
+    },
+    {
+      "lineNum": 436,
+      "text": ".replace(/[ًٌٍَُِّْـ]/g, \"\")"
+    },
+    {
+      "lineNum": 447,
+      "text": "nasr: \"نصر\","
+    },
+    {
+      "lineNum": 448,
+      "text": "dokki: \"دقي\","
+    },
+    {
+      "lineNum": 449,
+      "text": "maadi: \"معادي\","
+    },
+    {
+      "lineNum": 450,
+      "text": "giza: \"جيزه\","
+    },
+    {
+      "lineNum": 451,
+      "text": "october: \"اكتوبر\","
+    },
+    {
+      "lineNum": 452,
+      "text": "helwan: \"حلوان\","
+    },
+    {
+      "lineNum": 453,
+      "text": "heliopolis: \"مصر الجديده\","
+    },
+    {
+      "lineNum": 454,
+      "text": "alex: \"اسكندر\","
+    },
+    {
+      "lineNum": 455,
+      "text": "alexandria: \"اسكندر\","
+    },
+    {
+      "lineNum": 456,
+      "text": "tanta: \"طنطا\","
+    },
+    {
+      "lineNum": 457,
+      "text": "mansoura: \"منصور\","
+    },
+    {
+      "lineNum": 458,
+      "text": "shubra: \"شبرا\","
+    },
+    {
+      "lineNum": 459,
+      "text": "faisal: \"فيصل\","
+    },
+    {
+      "lineNum": 460,
+      "text": "haram: \"هرم\","
+    },
+    {
+      "lineNum": 461,
+      "text": "zamalek: \"زمالك\","
+    },
+    {
+      "lineNum": 462,
+      "text": "mohandessin: \"مهندسين\","
+    },
+    {
+      "lineNum": 463,
+      "text": "aswan: \"اسوان\","
+    },
+    {
+      "lineNum": 464,
+      "text": "assiut: \"اسيوط\","
+    },
+    {
+      "lineNum": 465,
+      "text": "sohag: \"سوهاج\","
+    },
+    {
+      "lineNum": 466,
+      "text": "qena: \"قنا\","
+    },
+    {
+      "lineNum": 467,
+      "text": "luxor: \"اقصر\","
+    },
+    {
+      "lineNum": 468,
+      "text": "hurghada: \"غردقه\","
+    },
+    {
+      "lineNum": 469,
+      "text": "sharm: \"شرم\","
+    },
+    {
+      "lineNum": 470,
+      "text": "ismailia: \"اسماعيلي\","
+    },
+    {
+      "lineNum": 471,
+      "text": "suez: \"سويس\","
+    },
+    {
+      "lineNum": 472,
+      "text": "\"port said\": \"بورسعيد\","
+    },
+    {
+      "lineNum": 473,
+      "text": "damietta: \"دمياط\","
+    },
+    {
+      "lineNum": 474,
+      "text": "zagazig: \"زقازيق\","
+    },
+    {
+      "lineNum": 475,
+      "text": "banha: \"بنها\","
+    },
+    {
+      "lineNum": 2487,
+      "text": "taglineAr: \"نمكّن المناديب الطبيين\","
+    },
+    {
+      "lineNum": 2489,
+      "text": "descAr: \"قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.\","
+    },
+    {
+      "lineNum": 2564,
+      "text": "taglineAr: \"نمكّن المناديب الطبيين\","
+    },
+    {
+      "lineNum": 2566,
+      "text": "descAr: \"قم بتبسيط سير عملك وإدارة علاقاتك وتعزيز الأداء مع حل إدارة علاقات العملاء الشامل لدينا.\","
+    }
+  ]
+}

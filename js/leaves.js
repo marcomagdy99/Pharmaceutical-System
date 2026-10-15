@@ -31,8 +31,8 @@ let demoLeaves = (window.store && window.store.leaves
   : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [
   {
     id: "l1",
-    userId: "rep1",
-    userName: resolveLeaveUserName("rep1", "Medical Rep"),
+    userId: "u1790626000001",
+    userName: resolveLeaveUserName("u1790626000001", "Medical Rep"),
     userRole: "medical_rep",
     type: "annual",
     dayDuration: "full",
@@ -45,19 +45,19 @@ let demoLeaves = (window.store && window.store.leaves
     approvals: {
       dm: {
         status: "approved",
-        approverId: "dm1",
-        approverName: resolveLeaveUserName("dm1", "District Manager"),
+        approverId: "u1790626000014",
+        approverName: resolveLeaveUserName("u1790626000014", "District Manager"),
         updatedAt: "2026-07-28 10:30 AM",
       },
       lm: {
         status: "approved",
-        approverId: "lm1",
-        approverName: resolveLeaveUserName("lm1", "Line Manager"),
+        approverId: "u1790626000012",
+        approverName: resolveLeaveUserName("u1790626000012", "Line Manager"),
         updatedAt: "2026-07-28 02:15 PM",
       },
       hr: {
         status: "approved",
-        approverId: "hr1",
+        approverId: "u1790626000017",
         approverName: "HR Department",
         updatedAt: "2026-07-29 09:00 AM",
       },
@@ -65,8 +65,8 @@ let demoLeaves = (window.store && window.store.leaves
   },
   {
     id: "l2",
-    userId: "rep1",
-    userName: resolveLeaveUserName("rep1", "Medical Rep"),
+    userId: "u1790626000001",
+    userName: resolveLeaveUserName("u1790626000001", "Medical Rep"),
     userRole: "medical_rep",
     type: "sick",
     dayDuration: "full",
@@ -84,8 +84,8 @@ let demoLeaves = (window.store && window.store.leaves
   },
   {
     id: "l3",
-    userId: "dm1",
-    userName: resolveLeaveUserName("dm1", "District Manager"),
+    userId: "u1790626000014",
+    userName: resolveLeaveUserName("u1790626000014", "District Manager"),
     userRole: "district_manager",
     type: "casual",
     dayDuration: "full",
@@ -289,7 +289,7 @@ function initLeaves() {
   if (Array.isArray(demoLeaves)) {
     let changed = false;
     demoLeaves.forEach((lv) => {
-      const isDM = lv.userRole === "district_manager" || lv.userRole === "dm" || lv.userId === "dm1";
+      const isDM = lv.userRole === "district_manager" || lv.userRole === "dm" || lv.userId === "u1790626000014";
       if (isDM && lv.approvals && lv.approvals.dm) {
         delete lv.approvals.dm;
         changed = true;
@@ -1773,8 +1773,8 @@ Object.assign(leavesApp, {
           hr: { status: "pending", approverName: null, updatedAt: null },
         };
       }
-      const applicantIsDM = leave.userRole === "district_manager" || leave.userRole === "dm" || leave.userId === "dm1";
-      const applicantIsLM = leave.userRole === "line_manager" || leave.userRole === "lm" || leave.userId === "lm1";
+      const applicantIsDM = leave.userRole === "district_manager" || leave.userRole === "dm" || leave.userId === "u1790626000014";
+      const applicantIsLM = leave.userRole === "line_manager" || leave.userRole === "lm" || leave.userId === "u1790626000012";
       const applicantIsBU = leave.userRole === "business_unit" || leave.userRole === "bu";
 
       if (!applicantIsDM && !applicantIsLM && !applicantIsBU && !leave.approvals.dm) {

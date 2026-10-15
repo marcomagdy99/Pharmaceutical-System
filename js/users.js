@@ -8,7 +8,7 @@
 const userTranslations = {
   en: {
     menu_users: "Users",
-    switch_lang: "عربي",
+    switch_lang: "English",
     logout: "Logout",
     user_management: "User Management",
     total_users_badge: "total users",
@@ -124,9 +124,7 @@ const userMgmt = {
     ) {
       if (typeof showToast === "function") {
         showToast(
-          (window.getCurrentLang && window.getCurrentLang() === "ar")
-            ? "غير مصرح: صفحة المستخدمين مخصصة للإدارة والموارد البشرية فقط."
-            : "Access Denied: Admins & HR only.",
+          "Access Denied: Admins & HR only.",
           "error"
         );
       }
@@ -245,19 +243,19 @@ if (typeof renderSidebar === "function") {
     if (!window.store) return;
     if (this.lines.length === 0) {
       window.store.productLines.save({
-        id: "line1",
+        id: "line_1790626000001",
         name: "Cardio Line",
         desc: "Cardiology & Hypertension",
         status: "Active",
       });
       window.store.productLines.save({
-        id: "line2",
+        id: "line_1790626000002",
         name: "Neuro Line",
         desc: "Neurology & CNS",
         status: "Active",
       });
       window.store.productLines.save({
-        id: "line3",
+        id: "line_1790626000003",
         name: "Derma Line",
         desc: "Dermatology & Skin Care",
         status: "Active",
@@ -271,7 +269,7 @@ if (typeof renderSidebar === "function") {
     if (this.users.length === 0) {
       const defaultUsers = [
         {
-          id: "admin1",
+          id: "u1790626000010",
           name: "System Admin",
           email: "admin@pharmacare.com",
           code: "ADM-001",
@@ -281,63 +279,63 @@ if (typeof renderSidebar === "function") {
           managerId: null,
         },
         {
-          id: "bu1",
+          id: "u1790626000011",
           name: "George Marzok",
           email: "bu@pharmacare.com",
           code: "BU-001",
           employeeCode: "BU-001",
           role: "business_unit",
           status: "Active",
-          managerId: "admin1",
-          lineId: "line1",
-          lineIds: ["line1", "line2"],
+          managerId: "u1790626000010",
+          lineId: "line_1790626000001",
+          lineIds: ["line_1790626000001", "line_1790626000002"],
         },
         {
-          id: "lm1",
+          id: "u1790626000012",
           name: "John Mahfouz",
           email: "lm@pharmacare.com",
           code: "LM-001",
           employeeCode: "LM-001",
           role: "line_manager",
           status: "Active",
-          managerId: "bu1",
-          lineIds: ["line1", "line2"],
+          managerId: "u1790626000011",
+          lineIds: ["line_1790626000001", "line_1790626000002"],
         },
         {
-          id: "dm1",
+          id: "u1790626000014",
           name: "Amir Ayoup",
           email: "dm@pharmacare.com",
           code: "DM-001",
           employeeCode: "DM-001",
           role: "district_manager",
           status: "Active",
-          managerId: "lm1",
-          lineIds: ["line1"],
+          managerId: "u1790626000012",
+          lineIds: ["line_1790626000001"],
         },
         {
-          id: "rep1",
+          id: "u1790626000001",
           name: "Marco Magdy",
           email: "rep1@pharmacare.com",
           code: "REP-001",
           employeeCode: "REP-001",
           role: "medical_rep",
           status: "Active",
-          managerId: "dm1",
-          lineIds: ["line1"],
+          managerId: "u1790626000014",
+          lineIds: ["line_1790626000001"],
         },
         {
-          id: "rep2",
+          id: "u1790626000002",
           name: "Kerolos Boules",
           email: "rep2@pharmacare.com",
           code: "REP-002",
           employeeCode: "REP-002",
           role: "medical_rep",
           status: "Active",
-          managerId: "dm1",
-          lineIds: ["line1"],
+          managerId: "u1790626000014",
+          lineIds: ["line_1790626000001"],
         },
         {
-          id: "hr1",
+          id: "u1790626000017",
           name: "Fatma El-Sherif",
           email: "hr@pharmacare.com",
           code: "HR-001",
@@ -704,7 +702,7 @@ if (typeof renderSidebar === "function") {
     }
 
     if (user.role === "PM") {
-      return `<span class="badge border" style="background:#f3e8ff; color:#7e22ce;">Nationwide (Line)</span>`;
+      return `<span class="badge badge-nationwide">Nationwide (Line)</span>`;
     }
 
     return `<span class="text-muted">-</span>`;
@@ -785,12 +783,12 @@ if (typeof renderSidebar === "function") {
           <td>${this.getManagerNameWithVacant(u.managerId)}</td>
           <td>${this.renderLinesSummary(u)}</td>
           <td>${this.renderAreasSummary(u)}</td>
-          <td><span class="text-muted small" style="white-space: nowrap;">📅 ${u.hireDate || "-"}</span></td>
+          <td><span class="text-muted small text-nowrap">📅 ${u.hireDate || "-"}</span></td>
           <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${dispStatus}</span></td>
           <td class="text-end pe-4 user-actions-cell">
-            ${canImpersonate ? `<button class="btn btn-sm btn-info text-white me-1" title="${loginAsTooltip}" onclick="userMgmt.impersonateUser('${u.id}')" style="background-color: #0284c7; border-color: #0284c7;"><i class="fas fa-sign-in-alt"></i></button>` : ""}
+            ${canImpersonate ? `<button class="btn btn-sm btn-user-impersonate me-1" title="${loginAsTooltip}" onclick="userMgmt.impersonateUser('${u.id}')"><i class="fas fa-sign-in-alt"></i></button>` : ""}
             <button class="btn btn-sm btn-light text-primary me-1" onclick="userMgmt.openEditModal('${u.id}')"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-sm btn-light text-warning me-1" onclick="userMgmt.openResetPwdModal('${u.id}')"><i class="fas fa-key"></i></button>
+            ${isRealAdmin ? `<button class="btn btn-sm btn-light text-warning me-1" title="Reset Password" onclick="userMgmt.openResetPwdModal('${u.id}')"><i class="fas fa-key"></i></button>` : ""}
             <button class="btn btn-sm btn-light text-${dispStatus === "Active" ? "danger" : "success"}" onclick="userMgmt.openDeactivateModal('${u.id}')"><i class="fas fa-${dispStatus === "Active" ? "ban" : "check"}"></i></button>
           </td>
         </tr>`;
@@ -812,7 +810,7 @@ if (typeof renderSidebar === "function") {
       ${children
         .map((u) => {
           const isInactive = u.status === "Inactive";
-          const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1" style="font-size:0.65em">${u.role}</span>`;
+          const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1 tree-role-badge">${u.role}</span>`;
           const canImpersonate = isRealAdmin && u.id !== authUser.id && !isInactive;
           const loginAsTooltip = `Log in as ${u.name}`;
           const treeImpersonateBtn = canImpersonate
@@ -824,11 +822,11 @@ if (typeof renderSidebar === "function") {
             const repAreaTag = areaName ? ` • Area: ${areaName}` : "";
             return `
             <div class="tree-node">
-              <div class="node-content shadow-sm border border-dashed border-warning-subtle" style="background:#fffbeb; opacity:0.9;">
-                <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">⚠️</div>
+              <div class="node-content shadow-sm tree-node-vacant">
+                <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">⚠️</div>
                 <div class="flex-grow-1">
-                  <div class="fw-bold small mb-0 text-dark"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${u.role} Branch`} ${roleBadge}</div>
-                  <small class="text-muted" style="font-size:0.75rem;">(Position Open • Former: ${u.name})</small>
+                  <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${u.role} Branch`} ${roleBadge}</div>
+                  <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${u.name})</small>
                 </div>
               </div>
               ${this.buildTree(u.id, nextVisited)}
@@ -837,10 +835,10 @@ if (typeof renderSidebar === "function") {
           return `
           <div class="tree-node">
             <div class="node-content shadow-sm">
-              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">${u.name.charAt(0)}</div>
+              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">${u.name.charAt(0)}</div>
               <div class="flex-grow-1">
                 <div class="fw-bold small mb-0 user-name-text">${u.name} ${roleBadge} ${treeImpersonateBtn}</div>
-                <small class="text-muted" style="font-size:0.75rem;">${u.code} ${u.area ? `• Area: ${u.area}` : ""}</small>
+                <small class="text-muted tree-text-muted-xs">${u.code} ${u.area ? `• Area: ${u.area}` : ""}</small>
               </div>
             </div>
             ${this.buildTree(u.id, nextVisited)}
@@ -858,15 +856,15 @@ if (typeof renderSidebar === "function") {
     let html = "";
     topLevelUsers.forEach((u) => {
       const isInactive = u.status === "Inactive";
-      const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1" style="font-size:0.65em">${u.role}</span>`;
+      const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1 tree-role-badge">${u.role}</span>`;
       if (isInactive) {
         html += `
           <div class="tree-node ms-0 ps-0 border-0">
-            <div class="node-content shadow-sm border border-dashed border-warning-subtle" style="background:#fffbeb; opacity:0.9;">
-              <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">⚠️</div>
+            <div class="node-content shadow-sm tree-node-vacant">
+              <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">⚠️</div>
               <div class="flex-grow-1">
-                <div class="fw-bold small mb-0 user-name-text"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role} Position ${roleBadge}</div>
-                <small class="text-muted" style="font-size:0.75rem;">(Position Open • Former: ${u.name})</small>
+                <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role} Position ${roleBadge}</div>
+                <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${u.name})</small>
               </div>
             </div>
             ${this.buildTree(u.id)}
@@ -875,10 +873,10 @@ if (typeof renderSidebar === "function") {
         html += `
           <div class="tree-node ms-0 ps-0 border-0">
             <div class="node-content shadow-sm">
-              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width:30px; height:30px; font-size:12px;">${u.name.charAt(0)}</div>
+              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">${u.name.charAt(0)}</div>
               <div class="flex-grow-1">
                 <div class="fw-bold small mb-0 user-name-text">${u.name} ${roleBadge}</div>
-                <small class="text-muted" style="font-size:0.75rem;">${u.code}</small>
+                <small class="text-muted tree-text-muted-xs">${u.code}</small>
               </div>
             </div>
             ${this.buildTree(u.id)}
@@ -1257,7 +1255,7 @@ if (typeof renderSidebar === "function") {
 
     let passwordHash = rawExistingUser ? rawExistingUser.passwordHash : null;
     if (enteredPwd) passwordHash = await window.hashPassword(enteredPwd);
-    else if (!rawExistingUser) passwordHash = await window.hashPassword("123456");
+    else if (!rawExistingUser) passwordHash = await window.hashPassword("Pharma@2026");
 
     const storeRoleMap = {
       Admin: "admin",
@@ -1299,6 +1297,7 @@ if (typeof renderSidebar === "function") {
       titleCode: role,
       level: ({"admin": 5, "business_unit": 4, "hr": 4, "line_manager": 3, "product_manager": 3, "district_manager": 2, "medical_rep": 1}[effectiveBaseRole] || 1),
       passwordHash,
+      mustChangePassword: id ? (rawExistingUser ? Boolean(rawExistingUser.mustChangePassword) : false) : true,
       phone: document.getElementById("uPhone")
         ? document.getElementById("uPhone").value.trim()
         : "",
@@ -1410,13 +1409,50 @@ if (typeof renderSidebar === "function") {
   },
 
   openResetPwdModal(id) {
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
+    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    if (!isRealAdmin) {
+      if (typeof showToast === "function") showToast("Permission Denied: Only Administrator can reset passwords.", "error");
+      return;
+    }
     this.selectedUserId = id;
+    const user = this.users.find((u) => u.id === id) || (window.store && window.store.users && window.store.users.getById(id));
+    const nameEl = document.getElementById("resetPwdUserName");
+    if (nameEl) nameEl.textContent = user ? user.name : "this user";
     this.showModal("resetPwd");
   },
-  confirmResetPassword() {
+  async confirmResetPassword() {
     if (!this.selectedUserId) return;
+    const authUser = (window.checkAuth && window.checkAuth()) || {};
+    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
+    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    if (!isRealAdmin) {
+      this.closeModal("resetPwd");
+      if (typeof showToast === "function") showToast("Permission Denied: Only Administrator can reset passwords.", "error");
+      return;
+    }
+
+    const user = this.users.find((u) => u.id === this.selectedUserId) || (window.store && window.store.users && window.store.users.getById(this.selectedUserId));
+    if (!user) {
+      this.closeModal("resetPwd");
+      return;
+    }
+
+    const defaultPwd = "Pharma@2026";
+    const newHash = await window.hashPassword(defaultPwd);
+    user.passwordHash = newHash;
+    user.mustChangePassword = true;
+
+    if (window.store && window.store.users && typeof window.store.users.save === "function") {
+      window.store.users.save(user);
+    } else if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)) {
+      const idx = window.DEMO_DATA.users.findIndex((u) => u.id === user.id);
+      if (idx !== -1) window.DEMO_DATA.users[idx] = { ...window.DEMO_DATA.users[idx], ...user };
+    }
+
     this.closeModal("resetPwd");
-    showToast("Password reset link has been sent to user email.", "info");
+    showToast(`Password for ${user.name} reset to ${defaultPwd} successfully. User must set a new password on next login.`, "success");
   },
 
   openDeactivateModal(id) {

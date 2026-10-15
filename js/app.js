@@ -59,14 +59,171 @@ function escapeHtml(str) {
 window.escapeHtml = escapeHtml;
 
 // ============================================================================
+// Section 0.4: Dual Anti-Timestamp Tampering Engine (Network Time Protocol)
+// Primary: Current Host Origin (window.location.origin HEAD Date header - RFC 7231)
+// Fallback: Cloudflare Edge Trace (https://cloudflare.com/cdn-cgi/trace)
+// Monotonic Guard: performance.now() tracks true elapsed time immune to device clock hacks
+// ============================================================================
+const NetworkTime = {
+  offsetMs: 0,
+  isSynced: false,
+  syncSource: "none",
+  basePerf: 0,
+  baseServerMs: 0,
+  lastSyncTime: 0,
+  _syncPromise: null,
+
+  async sync() {
+    if (this._syncPromise) return this._syncPromise;
+    this._syncPromise = this._doSync().finally(() => {
+      this._syncPromise = null;
+    });
+    return this._syncPromise;
+  },
+
+  async _doSync() {
+    // Attempt 1: Current Server Origin (HEAD request reads standard RFC 7231 Date header)
+    try {
+      const origin = (typeof window !== "undefined" && window.location && window.location.origin)
+        ? window.location.origin
+        : "";
+      if (origin && !origin.startsWith("file:")) {
+        const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 3500) : null;
+        const res = await fetch(origin, {
+          method: "HEAD",
+          cache: "no-store",
+          signal: controller ? controller.signal : undefined
+        });
+        if (timeoutId) clearTimeout(timeoutId);
+        const dateHeader = res.headers ? res.headers.get("date") : null;
+        if (dateHeader) {
+          const serverMs = new Date(dateHeader).getTime();
+          if (!isNaN(serverMs) && serverMs > 0) {
+            this._applySync(serverMs, "origin");
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      // Origin HEAD failed or offline, fall through to Cloudflare
+    }
+
+    // Attempt 2: Cloudflare Edge Trace Fallback
+    try {
+      const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+      const res = await fetch("https://cloudflare.com/cdn-cgi/trace", {
+        cache: "no-store",
+        signal: controller ? controller.signal : undefined
+      });
+      if (timeoutId) clearTimeout(timeoutId);
+      const text = await res.text();
+      const match = text.match(/ts=([0-9.]+)/);
+      if (match) {
+        const serverMs = Math.floor(parseFloat(match[1]) * 1000);
+        if (!isNaN(serverMs) && serverMs > 0) {
+          this._applySync(serverMs, "cloudflare");
+          return true;
+        }
+      }
+    } catch (e) {
+      // Cloudflare fallback failed or offline
+    }
+
+    // Attempt 3: Restore cached session sync if available
+    try {
+      if (typeof sessionStorage !== "undefined") {
+        const cachedOffset = sessionStorage.getItem("pharma_net_time_offset");
+        const cachedPerf = sessionStorage.getItem("pharma_net_time_perf");
+        const cachedBase = sessionStorage.getItem("pharma_net_time_base");
+        if (cachedOffset !== null && cachedPerf !== null && cachedBase !== null) {
+          this.offsetMs = parseInt(cachedOffset, 10) || 0;
+          this.basePerf = parseFloat(cachedPerf) || 0;
+          this.baseServerMs = parseInt(cachedBase, 10) || 0;
+          this.isSynced = true;
+          this.syncSource = "session_cache";
+          return true;
+        }
+      }
+    } catch (e) {}
+
+    return false;
+  },
+
+  _applySync(serverMs, source) {
+    const localMs = Date.now();
+    this.offsetMs = serverMs - localMs;
+    this.baseServerMs = serverMs;
+    this.basePerf = (typeof performance !== "undefined" && typeof performance.now === "function")
+      ? performance.now()
+      : 0;
+    this.isSynced = true;
+    this.syncSource = source;
+    this.lastSyncTime = localMs;
+
+    try {
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem("pharma_net_time_offset", String(this.offsetMs));
+        sessionStorage.setItem("pharma_net_time_perf", String(this.basePerf));
+        sessionStorage.setItem("pharma_net_time_base", String(this.baseServerMs));
+      }
+    } catch (e) {}
+  },
+
+  now() {
+    if (this.isSynced && this.basePerf && typeof performance !== "undefined" && typeof performance.now === "function") {
+      const elapsed = performance.now() - this.basePerf;
+      return new Date(this.baseServerMs + elapsed);
+    }
+    if (this.isSynced && this.offsetMs) {
+      return new Date(Date.now() + this.offsetMs);
+    }
+    return new Date();
+  },
+
+  checkTampering(maxAllowedDriftMinutes = 5) {
+    const verified = this.now();
+    const device = new Date();
+    const diffMs = device.getTime() - verified.getTime();
+    const driftMinutes = Math.round(diffMs / 60000);
+    const thresholdMs = maxAllowedDriftMinutes * 60 * 1000;
+    const isTampered = Math.abs(diffMs) > thresholdMs;
+
+    return {
+      isTampered,
+      driftMinutes,
+      diffMs,
+      isSynced: this.isSynced,
+      syncSource: this.syncSource,
+      serverTime: verified,
+      deviceTime: device
+    };
+  }
+};
+
+window.NetworkTime = NetworkTime;
+
+// Auto-trigger sync on load and on reconnect
+if (typeof window !== "undefined") {
+  NetworkTime.sync();
+  if (typeof window.addEventListener === "function") {
+    window.addEventListener("online", () => NetworkTime.sync());
+  }
+}
+
+// ============================================================================
 // Section 0.5: Unified System Date Synchronizer
 // Ensures visits, calendar, activities, and dashboard stay synchronized.
-// If DEMO_DATA.systemDate is configured, it takes priority; otherwise uses live Date.
+// If DEMO_DATA.systemDate is configured, it takes priority; otherwise uses NetworkTime.
 // ============================================================================
 function getSystemDate() {
   if (typeof window !== "undefined" && window.DEMO_DATA && window.DEMO_DATA.systemDate) {
     const d = new Date(window.DEMO_DATA.systemDate);
     if (!isNaN(d.getTime())) return d;
+  }
+  if (typeof window !== "undefined" && window.NetworkTime && typeof window.NetworkTime.now === "function") {
+    return window.NetworkTime.now();
   }
   return new Date();
 }
@@ -108,7 +265,7 @@ window.sortBilingualByName = sortBilingualByName;
 // ============================================================================
 const DEFAULT_DEMO_DATA = {
   currentUser: {
-    id: "admin1",
+    id: "u1790626000010",
     email: "admin@pharmacare.com",
     name: "System Admin",
     nameAr: "System Admin",
@@ -127,7 +284,7 @@ const DEFAULT_DEMO_DATA = {
   },
   users: [
     {
-        "id": "admin1",
+        "id": "u1790626000010",
         "name": "System Admin",
         "nameAr": "System Admin",
         "role": "admin",
@@ -141,22 +298,22 @@ const DEFAULT_DEMO_DATA = {
         "status": "Active"
     },
     {
-        "id": "bu1",
+        "id": "u1790626000011",
         "name": "George Marzok",
         "nameAr": "George Marzok",
         "role": "business_unit",
         "employeeCode": "BU-001",
-        "managerId": "admin1",
+        "managerId": "u1790626000010",
         "areaIds": [],
         "area": null,
         "areaId": null,
         "hireDate": "2021-06-01",
         "email": "bu@pharmacare.com",
         "phone": "+20100222333",
-        "lineId": "line1",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1",
-            "line2"
+            "line_1790626000001",
+            "line_1790626000002"
         ],
         "status": "Active",
         "code": "BU-001",
@@ -171,16 +328,16 @@ const DEFAULT_DEMO_DATA = {
         }
     },
     {
-        "id": "lm1",
+        "id": "u1790626000012",
         "name": "John Mahfouz",
         "nameAr": "John Mahfouz",
         "role": "line_manager",
         "employeeCode": "LM-001",
-        "managerId": "bu1",
-        "lineId": "line1",
+        "managerId": "u1790626000011",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1",
-            "line2"
+            "line_1790626000001",
+            "line_1790626000002"
         ],
         "areaIds": [],
         "area": null,
@@ -201,15 +358,15 @@ const DEFAULT_DEMO_DATA = {
         }
     },
     {
-        "id": "lm2",
+        "id": "u1790626000013",
         "name": "Mario Magdy",
         "nameAr": "Mario Magdy",
         "role": "line_manager",
         "employeeCode": "LM-002",
-        "managerId": "bu1",
-        "lineId": "line_1790626036368",
+        "managerId": "u1790626000011",
+        "lineId": "line_1790626000002",
         "lineIds": [
-            "line_1790626036368"
+            "line_1790626000002"
         ],
         "areaIds": [],
         "area": null,
@@ -230,16 +387,16 @@ const DEFAULT_DEMO_DATA = {
         "productIds": []
     },
     {
-        "id": "dm1",
+        "id": "u1790626000014",
         "name": "Amir Ayoup",
         "nameAr": "Amir Ayoup",
         "role": "district_manager",
         "employeeCode": "DM-001",
-        "managerId": "lm1",
-        "lineId": "line1",
+        "managerId": "u1790626000012",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1",
-            "line2"
+            "line_1790626000001",
+            "line_1790626000002"
         ],
         "areaIds": [],
         "area": null,
@@ -260,16 +417,16 @@ const DEFAULT_DEMO_DATA = {
         }
     },
     {
-        "id": "dm2",
+        "id": "u1790626000015",
         "name": "Jonathan Erian",
         "nameAr": "Jonathan Erian",
         "role": "district_manager",
         "employeeCode": "DM-002",
-        "managerId": "lm1",
-        "lineId": "line1",
+        "managerId": "u1790626000012",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1",
-            "line2"
+            "line_1790626000001",
+            "line_1790626000002"
         ],
         "areaIds": [],
         "area": null,
@@ -290,15 +447,15 @@ const DEFAULT_DEMO_DATA = {
         }
     },
     {
-        "id": "dm3",
+        "id": "u1790626000016",
         "name": "Marian Magdy",
         "nameAr": "Marian Magdy",
         "role": "district_manager",
         "employeeCode": "DM-003",
-        "managerId": "lm2",
-        "lineId": "line_1790626036368",
+        "managerId": "u1790626000013",
+        "lineId": "line_1790626000002",
         "lineIds": [
-            "line_1790626036368"
+            "line_1790626000002"
         ],
         "areaIds": [],
         "area": null,
@@ -319,16 +476,16 @@ const DEFAULT_DEMO_DATA = {
         "productIds": []
     },
     {
-        "id": "rep1",
+        "id": "u1790626000001",
         "name": "Marco Magdy",
         "nameAr": "Marco Magdy",
         "role": "medical_rep",
         "employeeCode": "REP-001",
-        "managerId": "dm1",
-        "areaId": "area1",
-        "lineId": "line1",
+        "managerId": "u1790626000014",
+        "areaId": "area_1790626000001",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1"
+            "line_1790626000001"
         ],
         "email": "rep@pharmacare.com",
         "code": "REP-001",
@@ -343,7 +500,7 @@ const DEFAULT_DEMO_DATA = {
         },
         "area": "Mohndseen, Bolak El Dakror",
         "areaIds": [
-            "area1",
+            "area_1790626000001",
             "area_line1_1790688157353"
         ],
         "hireDate": "2024-01-15",
@@ -351,16 +508,16 @@ const DEFAULT_DEMO_DATA = {
         "productIds": []
     },
     {
-        "id": "rep2",
+        "id": "u1790626000002",
         "name": "Kerolos Boules",
         "nameAr": "Kerolos Boules",
         "role": "medical_rep",
         "employeeCode": "REP-002",
-        "managerId": "dm2",
+        "managerId": "u1790626000015",
         "areaId": "area_line1_1790674637363",
-        "lineId": "line1",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1"
+            "line_1790626000001"
         ],
         "areaIds": [
             "area_line1_1790674637363"
@@ -382,16 +539,16 @@ const DEFAULT_DEMO_DATA = {
         "productIds": []
     },
     {
-        "id": "rep3",
+        "id": "u1790626000003",
         "name": "Mina Mikhael",
         "nameAr": "Mina Mikhael",
         "role": "medical_rep",
         "employeeCode": "REP-003",
-        "managerId": "dm2",
+        "managerId": "u1790626000015",
         "areaId": "area_line1_1790674718201",
-        "lineId": "line1",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1"
+            "line_1790626000001"
         ],
         "areaIds": [
             "area_line1_1790674718201"
@@ -413,16 +570,16 @@ const DEFAULT_DEMO_DATA = {
         "productIds": []
     },
     {
-        "id": "rep4",
+        "id": "u1790626000004",
         "name": "David Emad",
         "nameAr": "David Emad",
         "role": "medical_rep",
         "employeeCode": "REP-004",
-        "managerId": "dm1",
+        "managerId": "u1790626000014",
         "areaId": "area_line2_1790674745627",
-        "lineId": "line2",
+        "lineId": "line_1790626000002",
         "lineIds": [
-            "line2"
+            "line_1790626000002"
         ],
         "areaIds": [
             "area_line2_1790674745627",
@@ -445,13 +602,13 @@ const DEFAULT_DEMO_DATA = {
         "productIds": []
     },
     {
-        "id": "hr1",
+        "id": "u1790626000017",
         "name": "Fatma El-Sherif",
         "nameAr": "Fatma El-Sherif",
         "role": "hr",
         "employeeCode": "HR-001",
         "email": "hr@pharmacare.com",
-        "managerId": "admin1",
+        "managerId": "u1790626000010",
         "areaIds": [],
         "area": null,
         "areaId": null,
@@ -467,23 +624,23 @@ const DEFAULT_DEMO_DATA = {
         }
     },
     {
-        "id": "pm1",
+        "id": "u1790626000018",
         "name": "Mina Kadry",
         "nameAr": "Mina Kadry",
         "role": "product_manager",
         "employeeCode": "PM-001",
         "email": "pm@pharmacare.com",
         "phone": "+20100999111",
-        "managerId": "bu1",
-        "lineId": "line1",
+        "managerId": "u1790626000011",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1"
+            "line_1790626000001"
         ],
         "productIds": [
-            "prod1",
-            "prod2",
-            "prod3",
-            "prod4",
+            "prod_1790626000001",
+            "prod_1790626000002",
+            "prod_1790626000003",
+            "prod_1790626000004",
             "prod_1790625546491",
             "prod_1790625561525",
             "prod_1790625585077",
@@ -509,17 +666,17 @@ const DEFAULT_DEMO_DATA = {
         "code": "PM-001"
     },
     {
-        "id": "rep5",
+        "id": "u1790626000005",
         "name": "Mohamed Ramadan",
         "nameAr": "Mohamed Ramadan",
         "role": "medical_rep",
         "employeeCode": "REP-005",
         "email": "rep5@pharmacare.com",
         "phone": "+20100999222",
-        "managerId": "dm2",
-        "lineId": "line1",
+        "managerId": "u1790626000015",
+        "lineId": "line_1790626000001",
         "lineIds": [
-            "line1"
+            "line_1790626000001"
         ],
         "productIds": [],
         "status": "Active",
@@ -541,25 +698,25 @@ const DEFAULT_DEMO_DATA = {
         "code": "REP-005"
     },
     {
-        "id": "pm2",
+        "id": "u1790626000019",
         "name": "Fady Adel",
         "nameAr": "Fady Adel",
         "email": "pm2@pharmacare.com",
         "code": "PM-002",
         "employeeCode": "PM-002",
         "role": "product_manager",
-        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
         "phone": "",
         "hireDate": "2026-09-28",
-        "managerId": "bu1",
+        "managerId": "u1790626000011",
         "status": "Active",
         "lineIds": [
-            "line2"
+            "line_1790626000002"
         ],
-        "lineId": "line2",
+        "lineId": "line_1790626000002",
         "productIds": [
-            "prod5",
-            "prod6"
+            "prod_1790626000005",
+            "prod_1790626000006"
         ],
         "leaveBalance": {
             "annual": 21,
@@ -580,15 +737,15 @@ const DEFAULT_DEMO_DATA = {
         "code": "REP-007",
         "employeeCode": "REP-007",
         "role": "medical_rep",
-        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
         "phone": "",
         "hireDate": "2026-09-28",
-        "managerId": "dm3",
+        "managerId": "u1790626000016",
         "status": "Active",
         "lineIds": [
-            "line_1790626036368"
+            "line_1790626000002"
         ],
-        "lineId": "line_1790626036368",
+        "lineId": "line_1790626000002",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -611,15 +768,15 @@ const DEFAULT_DEMO_DATA = {
         "code": "REP-006",
         "employeeCode": "REP-006",
         "role": "medical_rep",
-        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
         "phone": "01202379833",
         "hireDate": "2026-09-28",
-        "managerId": "dm2",
+        "managerId": "u1790626000015",
         "status": "Active",
         "lineIds": [
-            "line2"
+            "line_1790626000002"
         ],
-        "lineId": "line2",
+        "lineId": "line_1790626000002",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -642,15 +799,15 @@ const DEFAULT_DEMO_DATA = {
         "code": "REP-009",
         "employeeCode": "REP-009",
         "role": "medical_rep",
-        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
         "phone": "+201001234567",
         "hireDate": "2026-09-29",
-        "managerId": "dm3",
+        "managerId": "u1790626000016",
         "status": "Active",
         "lineIds": [
-            "line_1790626036368"
+            "line_1790626000002"
         ],
-        "lineId": "line_1790626036368",
+        "lineId": "line_1790626000002",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -673,15 +830,15 @@ const DEFAULT_DEMO_DATA = {
         "code": "REP-011",
         "employeeCode": "REP-011",
         "role": "medical_rep",
-        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
         "phone": "",
         "hireDate": "2026-09-29",
-        "managerId": "dm1",
+        "managerId": "u1790626000014",
         "status": "Active",
         "lineIds": [
-            "line1"
+            "line_1790626000001"
         ],
-        "lineId": "line1",
+        "lineId": "line_1790626000001",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -704,15 +861,15 @@ const DEFAULT_DEMO_DATA = {
         "code": "REP-012",
         "employeeCode": "REP-012",
         "role": "medical_rep",
-        "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
         "phone": "",
         "hireDate": "2026-09-29",
-        "managerId": "dm1",
+        "managerId": "u1790626000014",
         "status": "Active",
         "lineIds": [
-            "line2"
+            "line_1790626000002"
         ],
-        "lineId": "line2",
+        "lineId": "line_1790626000002",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -730,51 +887,51 @@ const DEFAULT_DEMO_DATA = {
     }
 ],
   specialties: [
-    { id: "spec_internal", code: "IM", name: "Internal Medicine", nameAr: "باطنة" },
-    { id: "spec_pediatrics", code: "PED", name: "Pediatrics", nameAr: "أطفال" },
-    { id: "spec_cardiology", code: "CARD", name: "Cardiology", nameAr: "قلب وأوعية" },
-    { id: "spec_dermatology", code: "DERM", name: "Dermatology", nameAr: "جلدية" },
-    { id: "spec_ophthalmology", code: "OPHTH", name: "Ophthalmology", nameAr: "عيون" },
-    { id: "spec_orthopedics", code: "ORTHO", name: "Orthopedics", nameAr: "عظام" },
-    { id: "spec_ent", code: "ENT", name: "ENT", nameAr: "أنف وأذن وحنجرة" },
-    { id: "spec_neurology", code: "NEURO", name: "Neurology", nameAr: "مخ وأعصاب" },
-    { id: "spec_urology", code: "URO", name: "Urology", nameAr: "مسالك بولية" },
-    { id: "spec_gynecology", code: "GYN", name: "Gynecology", nameAr: "نساء وتوليد" },
-    { id: "spec_other", code: "OTHER", name: "Other", nameAr: "أخرى" },
+    { id: "spec_internal", code: "IM", name: "Internal Medicine", nameAr: "Internal Medicine" },
+    { id: "spec_pediatrics", code: "PED", name: "Pediatrics", nameAr: "Pediatrics" },
+    { id: "spec_cardiology", code: "CARD", name: "Cardiology", nameAr: "Cardiology" },
+    { id: "spec_dermatology", code: "DERM", name: "Dermatology", nameAr: "Dermatology" },
+    { id: "spec_ophthalmology", code: "OPHTH", name: "Ophthalmology", nameAr: "Ophthalmology" },
+    { id: "spec_orthopedics", code: "ORTHO", name: "Orthopedics", nameAr: "Orthopedics" },
+    { id: "spec_ent", code: "ENT", name: "ENT", nameAr: "ENT" },
+    { id: "spec_neurology", code: "NEURO", name: "Neurology", nameAr: "Neurology" },
+    { id: "spec_urology", code: "URO", name: "Urology", nameAr: "Urology" },
+    { id: "spec_gynecology", code: "GYN", name: "Gynecology", nameAr: "Gynecology" },
+    { id: "spec_other", code: "OTHER", name: "Other", nameAr: "Other" },
   ],
   areas: [
-    { id: "area1", name: "Nasr City", code: "CAI-N01", repId: "rep1", lineId: "line1" },
-    { id: "area2", name: "Heliopolis", code: "CAI-H01", repId: "rep2", lineId: "line1" },
-    { id: "area3", name: "Nasr City", code: "CAI-N01", repId: "rep4", lineId: "line2" },
-    { id: "area4", name: "Maadi", code: "CAI-M01", repId: null, lineId: "line2" },
+    { id: "area_1790626000001", name: "Nasr City", code: "CAI-N01", repId: "u1790626000001", lineId: "line_1790626000001" },
+    { id: "area_1790626000002", name: "Heliopolis", code: "CAI-H01", repId: "u1790626000002", lineId: "line_1790626000001" },
+    { id: "area_1790626000003", name: "Nasr City", code: "CAI-N01", repId: "u1790626000004", lineId: "line_1790626000002" },
+    { id: "area_1790626000004", name: "Maadi", code: "CAI-M01", repId: null, lineId: "line_1790626000002" },
   ],
   productLines: [
     {
-      id: "line1",
+      id: "line_1790626000001",
       name: "Cardio Line",
-      nameAr: "خط الكارديو (Cardio)",
+      nameAr: "Cardio Line",
       status: "Active",
-      lineManagerId: "lm1",
+      lineManagerId: "u1790626000012",
       lineManagerName: "Line Manager",
       callFrequency: { classA: 4, classB: 3, classC: 1 },
       products: [
-        { id: "prod1", name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet" },
-        { id: "prod2", name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops" },
-        { id: "prod3", name: "Omeprazole 20mg", dosage: "20mg", form: "Capsule" },
-        { id: "prod4", name: "Azithromycin 250mg", dosage: "250mg", form: "Tablet" },
+        { id: "prod_1790626000001", name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet" },
+        { id: "prod_1790626000002", name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops" },
+        { id: "prod_1790626000003", name: "Omeprazole 20mg", dosage: "20mg", form: "Capsule" },
+        { id: "prod_1790626000004", name: "Azithromycin 250mg", dosage: "250mg", form: "Tablet" },
       ],
     },
     {
-      id: "line2",
+      id: "line_1790626000002",
       name: "Neuro Line",
-      nameAr: "خط النيورو (Neuro)",
+      nameAr: "Neuro Line",
       status: "Active",
-      lineManagerId: "lm2",
+      lineManagerId: "u1790626000013",
       lineManagerName: "Line Manager",
       callFrequency: { classA: 4, classB: 2, classC: 1 },
       products: [
-        { id: "prod5", name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule" },
-        { id: "prod6", name: "Carbamazepine 200mg", dosage: "200mg", form: "Tablet" },
+        { id: "prod_1790626000005", name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule" },
+        { id: "prod_1790626000006", name: "Carbamazepine 200mg", dosage: "200mg", form: "Tablet" },
       ],
     },
   ],
@@ -782,87 +939,87 @@ const DEFAULT_DEMO_DATA = {
   hospitals: [],
   pharmacies: [
   {
-    "id": "p1",
+    "id": "ph_1790626000001",
     "name": "Al-Ezaby Pharmacy",
-    "nameAr": "صيدلية العزبي",
+    "nameAr": "El-Ezaby Pharmacy",
     "address": "15 Abbas Al-Akkad, Nasr City",
     "phone": "01001112233",
     "contactPerson": "Mohamed Ibrahim",
-    "areaId": "area1",
-    "repId": "rep1",
-    "lineId": "line1",
+    "areaId": "area_1790626000001",
+    "repId": "u1790626000001",
+    "lineId": "line_1790626000001",
     "area": "Mohndseen"
   },
   {
-    "id": "p2",
+    "id": "ph_1790626000002",
     "name": "Seif Pharmacy",
-    "nameAr": "صيدلية سيف",
+    "nameAr": "Seif Pharmacy",
     "address": "28 Mostafa El-Nahas, Nasr City",
     "phone": "01009998877",
     "contactPerson": "Youssef Ahmed",
-    "areaId": "area1",
-    "repId": "rep1",
-    "lineId": "line1",
+    "areaId": "area_1790626000001",
+    "repId": "u1790626000001",
+    "lineId": "line_1790626000001",
     "area": "Mohndseen"
   },
   {
-    "id": "p3",
+    "id": "ph_1790626000003",
     "name": "Roshdy Pharmacy",
-    "nameAr": "صيدلية رشدي",
+    "nameAr": "Roshdy Pharmacy",
     "address": "5 Tayaran St, Nasr City",
     "phone": "01155566677",
     "contactPerson": "Ramy Adel",
-    "areaId": "area1",
-    "repId": "rep1",
-    "lineId": "line1",
+    "areaId": "area_1790626000001",
+    "repId": "u1790626000001",
+    "lineId": "line_1790626000001",
     "area": "Mohndseen"
   },
   {
-    "id": "p4",
+    "id": "ph_1790626000004",
     "name": "19011 Pharmacy",
-    "nameAr": "صيدلية 19011",
+    "nameAr": "19011 Pharmacy",
     "address": "42 Makram Ebeid, Nasr City",
     "phone": "01234567890",
     "contactPerson": "Sara Maher",
-    "areaId": "area1",
-    "repId": "rep1",
-    "lineId": "line1",
+    "areaId": "area_1790626000001",
+    "repId": "u1790626000001",
+    "lineId": "line_1790626000001",
     "area": "Mohndseen"
   },
   {
-    "id": "p5",
+    "id": "ph_1790626000005",
     "name": "Misr Pharmacy",
-    "nameAr": "صيدلية مصر",
+    "nameAr": "Misr Pharmacy",
     "address": "18 Al-Ahram St, Heliopolis",
     "phone": "01099887766",
     "contactPerson": "Hazem Tarek",
-    "areaId": "area2",
+    "areaId": "area_1790626000002",
     "repId": null,
-    "lineId": "line1",
+    "lineId": "line_1790626000001",
     "area": "Heliopolis"
   },
   {
-    "id": "p6",
+    "id": "ph_1790626000006",
     "name": "El-Tarshouby Pharmacy",
-    "nameAr": "صيدلية الطرشوبي",
+    "nameAr": "El-Tarshouby Pharmacy",
     "address": "10 Abbas Al-Akkad, Nasr City",
     "phone": "01223344556",
     "contactPerson": "Mina Magdy",
-    "areaId": "area1",
-    "repId": "rep1",
-    "lineId": "line1",
+    "areaId": "area_1790626000001",
+    "repId": "u1790626000001",
+    "lineId": "line_1790626000001",
     "area": "Mohndseen"
   },
   {
-    "id": "p7",
+    "id": "ph_1790626000007",
     "name": "Dawaee Pharmacy",
-    "nameAr": "صيدلية دوائي",
+    "nameAr": "Dawaee Pharmacy",
     "address": "25 Beirut St, Heliopolis",
     "phone": "01122334455",
     "contactPerson": "Hoda Sameh",
-    "areaId": "area2",
+    "areaId": "area_1790626000002",
     "repId": null,
-    "lineId": "line1",
+    "lineId": "line_1790626000001",
     "area": "Heliopolis"
   }
 ],
@@ -871,46 +1028,46 @@ const DEFAULT_DEMO_DATA = {
   sales: [],
   announcements: [
     {
-      id: "ann1",
+      id: "ann_1790626000001",
       title: "Ramadan Working Hours",
-      titleAr: "مواعيد العمل في رمضان",
+      titleAr: "Ramadan Working Hours",
       body: "Please note that working hours during Ramadan will be from 9 AM to 3 PM starting next week.",
       bodyAr:
-        "يرجى العلم أن مواعيد العمل خلال شهر رمضان ستكون من 9 صباحاً حتى 3 عصراً بدءاً من الأسبوع القادم.",
+        "Please note that working hours during Ramadan will be from 9 AM to 3 PM starting next week.",
       priority: "high",
-      createdBy: "hr1",
+      createdBy: "u1790626000017",
       createdAt: "2026-09-01",
       read: false,
     },
     {
-      id: "ann2",
+      id: "ann_1790626000002",
       title: "Annual Company Event",
-      titleAr: "الحفل السنوي للشركة",
+      titleAr: "Annual Company Event",
       body: "We are excited to announce our annual company event on October 15th at the Four Seasons Hotel. All employees are invited!",
       bodyAr:
-        "يسعدنا الإعلان عن الحفل السنوي للشركة يوم 15 أكتوبر في فندق فور سيزونز. جميع الموظفين مدعوون!",
+        "We are excited to announce our annual company event on October 15th at the Four Seasons Hotel. All employees are invited!",
       priority: "normal",
-      createdBy: "hr1",
+      createdBy: "u1790626000017",
       createdAt: "2026-08-28",
       read: true,
     },
     {
-      id: "ann3",
+      id: "ann_1790626000003",
       title: "New Health Insurance Policy",
-      titleAr: "بوليصة التأمين الصحي الجديدة",
+      titleAr: "New Health Insurance Policy",
       body: "A new health insurance policy has been activated. Please review the updated benefits in your HR portal.",
       bodyAr:
-        "تم تفعيل بوليصة تأمين صحي جديدة. يرجى مراجعة المزايا المحدثة في بوابة الموارد البشرية.",
+        "A new health insurance policy has been activated. Please review updated benefits in HR portal.",
       priority: "high",
-      createdBy: "hr1",
+      createdBy: "u1790626000017",
       createdAt: "2026-08-25",
       read: false,
     },
   ],
   notifications: [
     {
-      id: "notif_rep_1",
-      userId: "rep1",
+      id: "notif_1790626000001",
+      userId: "u1790626000001",
       type: "plan_approval",
       title: "Field Plan Approved",
       message: "District Manager approved your field plan for 2026-09-20.",
@@ -923,8 +1080,8 @@ const DEFAULT_DEMO_DATA = {
       action: "approved",
     },
     {
-      id: "notif_rep_2",
-      userId: "rep1",
+      id: "notif_1790626000002",
+      userId: "u1790626000001",
       type: "leave_approval",
       title: "Leave Request Approved",
       message: "HR Department approved your annual leave request.",
@@ -937,8 +1094,8 @@ const DEFAULT_DEMO_DATA = {
       action: "approved",
     },
     {
-      id: "notif_rep_3",
-      userId: "rep1",
+      id: "notif_1790626000003",
+      userId: "u1790626000001",
       type: "visit_rejection",
       title: "Visit Directive / Rejection",
       message: "Visit for Dr. Ahmed Mostafa rejected with note: Please reschedule to morning period.",
@@ -952,8 +1109,8 @@ const DEFAULT_DEMO_DATA = {
       action: "rejected",
     },
     {
-      id: "notif_dm_1",
-      userId: "dm1",
+      id: "notif_1790626000004",
+      userId: "u1790626000014",
       type: "plan_submission",
       title: "Field Plan for Review",
       message: "Medical Rep submitted a new field plan for your review.",
@@ -966,8 +1123,8 @@ const DEFAULT_DEMO_DATA = {
       action: "submitted",
     },
     {
-      id: "notif_dm_2",
-      userId: "dm1",
+      id: "notif_1790626000005",
+      userId: "u1790626000014",
       type: "leave_submission",
       title: "New Leave Request",
       message: "Annual leave request submitted (2 days) awaiting your approval.",
@@ -980,8 +1137,8 @@ const DEFAULT_DEMO_DATA = {
       action: "submitted",
     },
     {
-      id: "notif_hr_1",
-      userId: "hr1",
+      id: "notif_1790626000006",
+      userId: "u1790626000017",
       type: "leave_submission",
       title: "Leave Request Final Approval",
       message: "Line Manager approved leave, awaiting HR final confirmation.",
@@ -995,12 +1152,12 @@ const DEFAULT_DEMO_DATA = {
     },
   ],
   distributors: [
-    { id: "dist1", name: "Ibn Sina Pharma", type: "commercial", columnMap: null },
-    { id: "dist2", name: "United Company of Pharmacists (UCP)", type: "commercial", columnMap: null },
-    { id: "dist3", name: "Overseas", type: "commercial", columnMap: null },
+    { id: "dist_1790626000001", name: "Ibn Sina Pharma", type: "commercial", columnMap: null },
+    { id: "dist_1790626000002", name: "United Company of Pharmacists (UCP)", type: "commercial", columnMap: null },
+    { id: "dist_1790626000003", name: "Overseas", type: "commercial", columnMap: null },
   ],
   pharmacyOverrides: [],
-  publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day", titleAr: "عيد القوات المسلحة" }],
+  publicHolidays: [{ date: "2026-10-06", title: "Armed Forces Day", titleAr: "Armed Forces Day" }],
 };
 
 // ============================================================================
@@ -1033,7 +1190,7 @@ function loadDataFromStorage() {
           // Normalize Mohamed Ramadan and Fady Adel IDs
           data.users.forEach((u) => {
             if (u.email === "rep5@pharmacare.com" || u.code === "REP-005" || u.code === "EMP-005" || u.employeeCode === "REP-005" || u.employeeCode === "EMP-005") {
-              u.id = "rep5";
+              u.id = "u1790626000005";
               u.email = "rep5@pharmacare.com";
               u.employeeCode = "REP-005";
               u.code = "REP-005";
@@ -1041,16 +1198,16 @@ function loadDataFromStorage() {
               u.role = "medical_rep";
             }
             if (u.email === "pm2@pharmacare.com" || u.code === "PM-002" || u.employeeCode === "PM-002") {
-              u.id = "pm2";
+              u.id = "u1790626000019";
               u.role = "product_manager";
               u.email = "pm2@pharmacare.com";
               u.code = "PM-002";
               u.employeeCode = "PM-002";
               u.name = "Fady Adel";
-              u.lineId = "line2";
-              u.lineIds = ["line2"];
+              u.lineId = "line_1790626000002";
+              u.lineIds = ["line_1790626000002"];
               if (!Array.isArray(u.productIds) || u.productIds.length === 0) {
-                u.productIds = ["prod5", "prod6"];
+                u.productIds = ["prod_1790626000005", "prod_1790626000006"];
               }
             }
           });
@@ -1142,7 +1299,7 @@ function loadDataFromStorage() {
           data.productLines = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.productLines));
         }
         // Ensure clean collections and purge all legacy demo data
-        const demoUserIds = ["rep1", "rep2", "rep3", "rep4", "rep5", "dm1", "dm2", "dm3", "lm1", "lm2", "bu1", "pm1", "pm2", "hr1"];
+        const demoUserIds = ["u1790626000001", "u1790626000002", "u1790626000003", "u1790626000004", "u1790626000005", "u1790626000014", "u1790626000015", "u1790626000016", "u1790626000012", "u1790626000013", "u1790626000011", "u1790626000018", "u1790626000019", "u1790626000017"];
 
         if (!Array.isArray(data.doctors)) data.doctors = [];
         data.doctors = data.doctors.filter((d) => d && d.id && !d.id.startsWith("d"));
@@ -1208,6 +1365,96 @@ function loadDataFromStorage() {
 
       if (Array.isArray(data.targets)) {
         data.targets = data.targets.filter((t) => t && t.id && !t.id.startsWith("target_s"));
+      }
+
+      // Auto-migrate any legacy IDs (users, lines, areas, products, pharmacies, dists, anns, notifs) in cached localStorage
+      const legacyIdMap = {
+        rep1: "u1790626000001", rep2: "u1790626000002", rep3: "u1790626000003", rep4: "u1790626000004", rep5: "u1790626000005",
+        admin1: "u1790626000010", bu1: "u1790626000011", lm1: "u1790626000012", lm2: "u1790626000013",
+        dm1: "u1790626000014", dm2: "u1790626000015", dm3: "u1790626000016", hr1: "u1790626000017",
+        pm1: "u1790626000018", pm2: "u1790626000019"
+      };
+      const legacyLineMap = { line1: "line_1790626000001", line2: "line_1790626000002", line3: "line_1790626000003", line_1790626036368: "line_1790626000002" };
+      const legacyAreaMap = { area1: "area_1790626000001", area2: "area_1790626000002", area3: "area_1790626000003", area4: "area_1790626000004" };
+      const legacyProdMap = { prod1: "prod_1790626000001", prod2: "prod_1790626000002", prod3: "prod_1790626000003", prod4: "prod_1790626000004", prod5: "prod_1790626000005", prod6: "prod_1790626000006" };
+      const legacyPharmMap = { p1: "ph_1790626000001", p2: "ph_1790626000002", p3: "ph_1790626000003", p4: "ph_1790626000004", p5: "ph_1790626000005", p6: "ph_1790626000006", p7: "ph_1790626000007" };
+      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+      const legacyAnnMap = { ann1: "ann_1790626000001", ann2: "ann_1790626000002", ann3: "ann_1790626000003", ann4: "ann_1790626000004", ann5: "ann_1790626000005", ann6: "ann_1790626000006", ann7: "ann_1790626000007", ann8: "ann_1790626000008" };
+      const legacyNotifMap = { notif_rep_1: "notif_1790626000001", notif_rep_2: "notif_1790626000002", notif_rep_3: "notif_1790626000003", notif_dm_1: "notif_1790626000004", notif_dm_2: "notif_1790626000005", notif_hr_1: "notif_1790626000006" };
+
+      const legacyOldHashes = [
+        "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+        "d041f6dd2d671f68144bd4d667f96a6146dbf2ed0f71f19b532ce1e2826f8f92",
+        "89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b",
+        "d174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869",
+        "9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2",
+        "ae087349bb953601482c9c52169257c0cb0371cbac3d921b5896a9aba8cc8a43",
+        "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf"
+      ];
+      if (Array.isArray(data.users)) {
+        data.users.forEach((u) => {
+          if (legacyIdMap[u.id]) u.id = legacyIdMap[u.id];
+          if (u.passwordHash && legacyOldHashes.includes(u.passwordHash)) {
+            u.passwordHash = "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f";
+            u.mustChangePassword = true;
+          }
+          if (legacyIdMap[u.managerId]) u.managerId = legacyIdMap[u.managerId];
+          if (legacyLineMap[u.lineId]) u.lineId = legacyLineMap[u.lineId];
+          if (Array.isArray(u.lineIds)) u.lineIds = u.lineIds.map((l) => legacyLineMap[l] || l);
+          if (legacyAreaMap[u.areaId]) u.areaId = legacyAreaMap[u.areaId];
+          if (Array.isArray(u.areaIds)) u.areaIds = u.areaIds.map((a) => legacyAreaMap[a] || a);
+          if (Array.isArray(u.productIds)) u.productIds = u.productIds.map((p) => legacyProdMap[p] || p);
+        });
+      }
+      if (Array.isArray(data.areas)) {
+        data.areas.forEach((a) => {
+          if (legacyAreaMap[a.id]) a.id = legacyAreaMap[a.id];
+          if (legacyLineMap[a.lineId]) a.lineId = legacyLineMap[a.lineId];
+          if (legacyIdMap[a.repId]) a.repId = legacyIdMap[a.repId];
+        });
+      }
+      if (Array.isArray(data.productLines)) {
+        data.productLines.forEach((l) => {
+          if (legacyLineMap[l.id]) l.id = legacyLineMap[l.id];
+          if (legacyIdMap[l.lineManagerId]) l.lineManagerId = legacyIdMap[l.lineManagerId];
+          if (Array.isArray(l.products)) {
+            l.products.forEach((p) => {
+              if (legacyProdMap[p.id]) p.id = legacyProdMap[p.id];
+            });
+          }
+        });
+      }
+      if (Array.isArray(data.pharmacies)) {
+        data.pharmacies.forEach((ph) => {
+          if (legacyPharmMap[ph.id]) ph.id = legacyPharmMap[ph.id];
+          if (legacyAreaMap[ph.areaId]) ph.areaId = legacyAreaMap[ph.areaId];
+          if (legacyLineMap[ph.lineId]) ph.lineId = legacyLineMap[ph.lineId];
+          if (legacyIdMap[ph.repId]) ph.repId = legacyIdMap[ph.repId];
+        });
+      }
+      if (Array.isArray(data.distributors)) {
+        data.distributors.forEach((d) => {
+          if (legacyDistMap[d.id]) d.id = legacyDistMap[d.id];
+        });
+      }
+      if (Array.isArray(data.announcements)) {
+        data.announcements.forEach((an) => {
+          if (legacyAnnMap[an.id]) an.id = legacyAnnMap[an.id];
+        });
+      }
+      if (Array.isArray(data.notifications)) {
+        data.notifications.forEach((n) => {
+          if (legacyNotifMap[n.id]) n.id = legacyNotifMap[n.id];
+          if (legacyIdMap[n.userId]) n.userId = legacyIdMap[n.userId];
+        });
+      }
+      if (Array.isArray(data.visits)) {
+        data.visits.forEach((v) => {
+          if (legacyIdMap[v.repId]) v.repId = legacyIdMap[v.repId];
+          if (legacyLineMap[v.lineId]) v.lineId = legacyLineMap[v.lineId];
+          if (legacyAreaMap[v.areaId]) v.areaId = legacyAreaMap[v.areaId];
+        });
       }
 
       return data;
@@ -2101,8 +2348,8 @@ function resolveUserForAuth(user) {
   }
   const rawRole = localStorage.getItem("userRole");
   if (rawRole)
-    return { role: rawRole, id: localStorage.getItem("userId") || "rep1" };
-  return { role: "medical_rep", id: "rep1" };
+    return { role: rawRole, id: localStorage.getItem("userId") || "u1790626000001" };
+  return { role: "medical_rep", id: "u1790626000001" };
 }
 
 function isAdmin(user) {
@@ -2584,26 +2831,26 @@ function renderSidebar(activePage) {
   const { primaryNavItems, managementNavItems } = getNavItemsForRole(user.role);
 
   let html = `
-    <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--gray-100);">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div class="company-logo-badge" style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #0d6efd, #0a58ca); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem;">
+    <div class="sidebar-header">
+      <div class="sidebar-brand-box">
+        <div class="company-logo-badge">
           ⚕
         </div>
-        <div>
-          <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--gray-800); margin: 0; line-height: 1.1;">PharmaCare</h2>
-          <span style="font-size: 0.7rem; color: var(--gray-500);">CRM Healthcare</span>
+        <div class="sidebar-brand-titles">
+          <h2 class="sidebar-brand-h2">PharmaCare</h2>
+          <span class="sidebar-brand-sub">CRM Healthcare</span>
         </div>
       </div>
-      <button class="sidebar-close-btn" onclick="closeMobileSidebar()" style="background: none; border: none; font-size: 1.6rem; color: var(--gray-500); cursor: pointer; padding: 2px 6px;">
+      <button class="sidebar-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">
         &times;
       </button>
     </div>
     
     <div class="sidebar-nav">
-      <div style="padding: 10px 24px 4px; font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px;">
+      <div class="sidebar-section-title">
         Main Menu
       </div>
-      <ul style="list-style: none; padding: 0; margin: 0;">
+      <ul class="sidebar-nav-list">
   `;
 
   primaryNavItems.forEach((item) => {
@@ -2611,12 +2858,12 @@ function renderSidebar(activePage) {
     const pendingCount = getNavPendingCount(item.id, user);
     const badgeHtml =
       pendingCount > 0
-        ? `<span class="badge bg-danger rounded-pill nav-pending-badge ms-auto" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
+        ? `<span class="badge bg-danger rounded-pill nav-pending-badge sidebar-pending-badge ms-auto">${pendingCount}</span>`
         : "";
     html += `
       <li class="nav-item">
-        <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === resolved ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === resolved ? "600" : "500"}; background: ${item.id === resolved ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
-          <span style="font-size: 1.1rem; width: 22px; text-align: center;">${getIconSymbol(item.id)}</span>
+        <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link sidebar-nav-link ${activeClass}">
+          <span class="sidebar-nav-icon">${getIconSymbol(item.id)}</span>
           <span data-i18n="${item.i18n}">${(translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id}</span>
           ${badgeHtml}
         </a>
@@ -2626,8 +2873,8 @@ function renderSidebar(activePage) {
 
   if (managementNavItems.length > 0) {
     html += `
-      <li class="nav-header" role="presentation" style="list-style: none;">
-        <div style="padding: 16px 24px 4px; font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px;">
+      <li class="nav-header" role="presentation">
+        <div class="sidebar-section-title sidebar-section-title-mt">
           Management & Data
         </div>
       </li>
@@ -2637,12 +2884,12 @@ function renderSidebar(activePage) {
       const pendingCount = getNavPendingCount(item.id, user);
       const badgeHtml =
         pendingCount > 0
-          ? `<span class="badge bg-danger rounded-pill nav-pending-badge ms-auto" style="font-size: 0.72rem; padding: 2px 7px; box-shadow: 0 2px 4px rgba(220,53,69,0.3); font-weight: 700;">${pendingCount}</span>`
+          ? `<span class="badge bg-danger rounded-pill nav-pending-badge sidebar-pending-badge ms-auto">${pendingCount}</span>`
           : "";
       html += `
         <li class="nav-item">
-          <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link ${activeClass}" style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; color: ${item.id === resolved ? "var(--primary)" : "var(--gray-600)"}; font-weight: ${item.id === resolved ? "600" : "500"}; background: ${item.id === resolved ? "var(--primary-light)" : "transparent"}; border-radius: 8px; margin: 2px 12px; text-decoration: none;">
-            <span style="font-size: 1.1rem; width: 22px; text-align: center;">${getIconSymbol(item.id)}</span>
+          <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link sidebar-nav-link ${activeClass}">
+            <span class="sidebar-nav-icon">${getIconSymbol(item.id)}</span>
             <span data-i18n="${item.i18n}">${(translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id}</span>
             ${badgeHtml}
           </a>
@@ -2652,16 +2899,16 @@ function renderSidebar(activePage) {
   }
 
   html += `</ul></div>
-    <div class="sidebar-footer" style="padding: 16px 20px; border-top: 1px solid var(--gray-100); background: var(--gray-50); margin-top: auto;">
-      <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
-        <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+    <div class="sidebar-footer">
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-avatar">
           ${user.name ? user.name.charAt(0) : "U"}
         </div>
-        <div class="details" style="flex: 1; min-width: 0;">
-          <div class="name" style="font-weight: 600; font-size: 0.88rem; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <div class="sidebar-user-details">
+          <div class="sidebar-user-name">
             ${lang === "ar" ? user.nameAr || user.name : user.name}
           </div>
-          <div class="role" style="font-size: 0.75rem; color: var(--gray-500);">
+          <div class="sidebar-user-role">
             ${getRoleBadge(user.role, lang)}
           </div>
         </div>
@@ -2740,7 +2987,6 @@ function renderTopbar(force = false) {
         topbarEl.insertBefore(bannerEl, topbarEl.firstChild);
       }
       bannerEl.className = "pharma-impersonation-top-alert";
-      bannerEl.style.cssText = "";
       bannerEl.innerHTML = `
         <div class="pharma-impersonation-content">
           <span class="pharma-impersonation-icon">⚠️</span>
@@ -2773,7 +3019,7 @@ function renderTopbar(force = false) {
 
     const langLabelEl = topbarEl.querySelector("#langLabel");
     if (langLabelEl) {
-      const targetLangText = lang === "ar" ? "English" : "عربي";
+      const targetLangText = "English";
       if (langLabelEl.textContent !== targetLangText) langLabelEl.textContent = targetLangText;
     }
 
@@ -2797,9 +3043,9 @@ function renderTopbar(force = false) {
         notifWrapper.innerHTML = `
           <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="Notifications" aria-label="Notifications">
             <span class="notif-bell-icon">🔔</span>
-            <span class="notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+            <span class="notif-unread-count-badge ${unreadNotifCount > 0 ? '' : 'd-none'}" id="topbarNotifBadge">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
           </button>
-          <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
+          <div class="pharma-notif-dropdown" id="workflowNotifDropdown" onclick="event.stopPropagation()"></div>
         `;
         actionsGroup.insertBefore(notifWrapper, actionsGroup.firstChild);
       }
@@ -2822,7 +3068,7 @@ function renderTopbar(force = false) {
           if (textEl) {
             const expectedText = translations[lang]?.[item.i18n] || item.id;
             const pCount = getNavPendingCount(item.id, user);
-            const badge = pCount > 0 ? ` <span class="badge bg-danger rounded-pill nav-pending-badge ms-1" style="font-size: 0.65rem; padding: 1px 5px;">${pCount}</span>` : "";
+            const badge = pCount > 0 ? ` <span class="badge bg-danger rounded-pill nav-pending-badge topbar-nav-pending-badge ms-1">${pCount}</span>` : "";
             textEl.innerHTML = `${expectedText}${badge}`;
           }
         }
@@ -2832,7 +3078,7 @@ function renderTopbar(force = false) {
       allTopNavItems.forEach((item) => {
         const isAct = item.id === activePage;
         const pCount = getNavPendingCount(item.id, user);
-        const badge = pCount > 0 ? ` <span class="badge bg-danger rounded-pill nav-pending-badge ms-1" style="font-size: 0.65rem; padding: 1px 5px;">${pCount}</span>` : "";
+        const badge = pCount > 0 ? ` <span class="badge bg-danger rounded-pill nav-pending-badge topbar-nav-pending-badge ms-1">${pCount}</span>` : "";
         topNavLinksHtml += `
           <a href="${item.link}" class="pharma-nav-item ${isAct ? "active" : ""}">
             <span class="nav-item-icon">${getIconSymbol(item.id)}</span>
@@ -2880,7 +3126,7 @@ function renderTopbar(force = false) {
           &#9776;
         </button>
         <a href="index.html" class="pharma-brand-link">
-          <img src="images/pharma-icon-192.png" alt="PharmaCare Logo" class="pharma-brand-img" width="34" height="34" style="border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 6px rgba(13,110,253,0.35);">
+          <img src="images/pharma-icon-192.png" alt="PharmaCare Logo" class="pharma-brand-img" width="34" height="34">
           <span class="pharma-brand-title">PharmaCare</span>
         </a>
       </div>
@@ -2894,9 +3140,9 @@ function renderTopbar(force = false) {
         <span class="user-role-tag">${roleBadge}</span>
       </div>
       
-      <div id="cloudSyncStatus" style="display: inline-flex; align-items: center; margin-inline: 8px;">
-        <span style="display: inline-flex; align-items: center; gap: 4px; color: #10b981; font-size: 0.75rem; font-weight: 600;" title="Realtime Cloud Sync Active">
-          <span style="font-size: 0.7rem;">●</span> Cloud Live
+      <div id="cloudSyncStatus" class="cloud-sync-status-wrap">
+        <span class="cloud-sync-live-pill" title="Realtime Cloud Sync Active">
+          <span class="cloud-sync-dot">●</span> Cloud Live
         </span>
       </div>
 
@@ -2905,10 +3151,10 @@ function renderTopbar(force = false) {
         <div class="pharma-notif-wrapper" id="pharmaNotifWrapper">
           <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="Notifications" aria-label="Notifications">
             <span class="notif-bell-icon">🔔</span>
-            <span class="notif-unread-count-badge" id="topbarNotifBadge" style="${unreadNotifCount > 0 ? '' : 'display: none;'}">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+            <span class="notif-unread-count-badge ${unreadNotifCount > 0 ? '' : 'd-none'}" id="topbarNotifBadge">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
           </button>
           
-          <div class="pharma-notif-dropdown" id="workflowNotifDropdown" style="display: none;" onclick="event.stopPropagation()"></div>
+          <div class="pharma-notif-dropdown" id="workflowNotifDropdown" onclick="event.stopPropagation()"></div>
         </div>
         
         <button class="pharma-action-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Theme">
@@ -3010,7 +3256,7 @@ window.currentNotifFilter = "all";
 window.updateWorkflowNotifUI = function () {
   let user = window.checkAuth ? window.checkAuth() : null;
   if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "rep1";
+  const userId = user ? user.id : "u1790626000001";
 
   const unread = (window.store && window.store.notifications)
     ? window.store.notifications.getUnreadCount(userId)
@@ -3054,7 +3300,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
   const lang = window.getCurrentLang ? window.getCurrentLang() : "en";
   let user = window.checkAuth ? window.checkAuth() : null;
   if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "rep1";
+  const userId = user ? user.id : "u1790626000001";
 
   const allNotifs = (window.store && window.store.notifications)
     ? window.store.notifications.getForUser(userId)
@@ -3072,9 +3318,9 @@ window.renderWorkflowNotifContent = function (filter = "all") {
   if (displayList.length === 0) {
     itemsHtml = `
       <div class="notif-empty-state">
-        <div style="font-size: 2.2rem; margin-bottom: 8px;">🔕</div>
+        <div class="notif-empty-icon">🔕</div>
         <div class="fw-bold fs-6 mb-1">No notifications</div>
-        <div class="text-muted small" style="max-width: 260px; margin: 0 auto; line-height: 1.45;">
+        <div class="text-muted small notif-empty-desc">
           Workflow approvals, rejections, and directives will appear here live.
         </div>
       </div>
@@ -3088,27 +3334,22 @@ window.renderWorkflowNotifContent = function (filter = "all") {
         const timeStr = window.formatWorkflowNotifTime(item.createdAt, lang);
 
         let icon = item.icon || "🔔";
-        let iconBg = "rgba(13, 110, 253, 0.12)";
-        let iconColor = "#0d6efd";
+        let iconTypeClass = "type-default";
 
         if (item.type && item.type.includes("approval")) {
-          iconBg = "rgba(25, 135, 84, 0.14)";
-          iconColor = "#198754";
+          iconTypeClass = "type-approval";
           if (!item.icon) icon = "✅";
         } else if (
           item.type &&
           (item.type.includes("rejection") || item.type.includes("reject"))
         ) {
-          iconBg = "rgba(220, 53, 69, 0.14)";
-          iconColor = "#dc3545";
+          iconTypeClass = "type-rejection";
           if (!item.icon) icon = "❌";
         } else if (item.type && item.type.includes("leave")) {
-          iconBg = "rgba(13, 202, 240, 0.14)";
-          iconColor = "#0891b2";
+          iconTypeClass = "type-leave";
           if (!item.icon) icon = "🏖️";
         } else if (item.type && item.type.includes("plan")) {
-          iconBg = "rgba(111, 66, 193, 0.14)";
-          iconColor = "#6f42c1";
+          iconTypeClass = "type-plan";
           if (!item.icon) icon = "🗓️";
         }
 
@@ -3126,7 +3367,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
 
         return `
           <div class="notif-item ${isUnread ? "unread" : "read"}" onclick="window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
-            <div class="notif-item-icon" style="background: ${iconBg}; color: ${iconColor};">
+            <div class="notif-item-icon ${iconTypeClass}">
               ${icon}
             </div>
             <div class="notif-item-body">
@@ -3165,15 +3406,15 @@ window.renderWorkflowNotifContent = function (filter = "all") {
       <h5>
         <span>🔔</span>
         <span>Notifications</span>
-        <span class="badge ${unreadCount > 0 ? "bg-danger" : "bg-secondary"} rounded-pill" style="font-size: 0.72rem; padding: 2px 7px;">
+        <span class="badge ${unreadCount > 0 ? "bg-danger" : "bg-secondary"} rounded-pill notif-header-badge">
           ${unreadCount} New
         </span>
       </h5>
-      <div style="display: flex; gap: 8px; align-items: center;">
+      <div class="notif-header-actions">
         ${
           unreadCount > 0
             ? `
-          <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" style="font-size: 0.78rem; font-weight: 600; color: #2563eb;" onclick="window.markAllWorkflowNotifsRead(event)">
+          <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 notif-mark-read-btn" onclick="window.markAllWorkflowNotifsRead(event)">
             ✓ Mark all read
           </button>
         `
@@ -3200,7 +3441,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
         ? `
       <div class="notif-dropdown-footer">
         <span class="small text-muted">${totalCount} total</span>
-        <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 small" style="font-size: 0.75rem;" onclick="window.clearAllWorkflowNotifs(event)">
+        <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 notif-clear-btn" onclick="window.clearAllWorkflowNotifs(event)">
           🗑️ Clear all
         </button>
       </div>
@@ -3256,7 +3497,7 @@ window.markAllWorkflowNotifsRead = function (event) {
   }
   let user = window.checkAuth ? window.checkAuth() : null;
   if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "rep1";
+  const userId = user ? user.id : "u1790626000001";
 
   if (window.store && window.store.notifications) {
     window.store.notifications.markAllAsRead(userId);
@@ -3276,7 +3517,7 @@ window.clearAllWorkflowNotifs = function (event) {
   }
   let user = window.checkAuth ? window.checkAuth() : null;
   if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "rep1";
+  const userId = user ? user.id : "u1790626000001";
 
   if (window.store && window.store.notifications) {
     window.store.notifications.clearAll(userId);
@@ -3299,7 +3540,7 @@ window.addWorkflowNotification = function (notif) {
       id: "notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
       createdAt: new Date().toISOString(),
       read: false,
-      userId: notif.userId || "rep1",
+      userId: notif.userId || "u1790626000001",
       type: notif.type || "system",
       title: notif.title || notif.titleEn || "New Notification",
       message: notif.message || notif.messageEn || "",
@@ -3364,20 +3605,20 @@ function checkAuth() {
   if (userStr) {
     try {
       const parsed = JSON.parse(userStr);
-      if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "pm2") && parsed.role === "medical_rep") {
-        parsed.id = "pm2";
+      if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "u1790626000019") && parsed.role === "medical_rep") {
+        parsed.id = "u1790626000019";
         parsed.name = "Fady Adel";
-        parsed.nameAr = "فادي عادل";
+        parsed.nameAr = "Fady Adel";
         parsed.role = "product_manager";
         parsed.employeeCode = "PM-002";
         parsed.code = "PM-002";
-        parsed.lineId = "line2";
-        parsed.lineIds = ["line2"];
-        parsed.productIds = ["prod5", "prod6"];
+        parsed.lineId = "line_1790626000002";
+        parsed.lineIds = ["line_1790626000002"];
+        parsed.productIds = ["prod_1790626000005", "prod_1790626000006"];
         sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
         localStorage.setItem("pharmaUser", JSON.stringify(parsed));
         localStorage.setItem("userRole", "product_manager");
-        localStorage.setItem("userId", "pm2");
+        localStorage.setItem("userId", "u1790626000019");
       }
       if (
         parsed &&
@@ -3445,6 +3686,13 @@ window.enforcePageRoleSecurity = enforcePageRoleSecurity;
 function requireAuth() {
   const user = checkAuth();
   if (!user && !window.location.href.includes("login.html")) {
+    window.location.replace("login.html");
+    return null;
+  }
+  // Defense-in-depth: if user must change password, deny access and redirect to login
+  if (user && user.mustChangePassword && !window.location.href.includes("login.html")) {
+    sessionStorage.removeItem("pharmaUser");
+    localStorage.removeItem("pharmaUser");
     window.location.replace("login.html");
     return null;
   }
@@ -3547,24 +3795,23 @@ function createExcelProgressModal() {
   if (!modalEl) {
     modalEl = document.createElement("div");
     modalEl.id = "excelImportProgressModal";
-    modalEl.className = "modal-overlay";
-    modalEl.style.cssText = "display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);";
+    modalEl.className = "modal-overlay excel-progress-overlay";
     modalEl.innerHTML = `
-      <div style="background: var(--card-bg, #ffffff); color: var(--text-color, #1e293b); border-radius: 14px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #e2e8f0); text-align: center;">
-        <div style="font-size: 2.2rem; margin-bottom: 8px;" id="excelProgressIcon">📊</div>
-        <h5 style="margin: 0 0 6px 0; font-weight: 700; color: var(--text-color, #1e293b);" id="excelProgressTitle">Processing Sales Import</h5>
-        <div style="font-size: 0.85rem; color: var(--gray-500, #64748b); margin-bottom: 16px; word-break: break-all;" id="excelProgressFileName">-</div>
+      <div class="excel-progress-card">
+        <div class="excel-progress-icon" id="excelProgressIcon">📊</div>
+        <h5 class="excel-progress-title" id="excelProgressTitle">Processing Sales Import</h5>
+        <div class="excel-progress-file" id="excelProgressFileName">-</div>
         
-        <div style="background: rgba(0,0,0,0.08); border-radius: 8px; height: 14px; overflow: hidden; margin-bottom: 12px; position: relative;">
-          <div id="excelProgressBar" style="background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; width: 0%; transition: width 0.15s ease; border-radius: 8px;"></div>
+        <div class="excel-progress-track">
+          <div id="excelProgressBar" class="excel-progress-bar"></div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; color: var(--gray-600, #475569); margin-bottom: 8px;">
+        <div class="excel-progress-stats">
           <span id="excelProgressPercent">0%</span>
           <span id="excelProgressCount">0 / 0</span>
         </div>
 
-        <div style="font-size: 0.82rem; color: var(--gray-500, #64748b); min-height: 20px;" id="excelProgressStatus">Preparing file...</div>
+        <div class="excel-progress-status" id="excelProgressStatus">Preparing file...</div>
       </div>
     `;
     document.body.appendChild(modalEl);
@@ -3649,8 +3896,7 @@ function checkAndRenderImpersonationBanner() {
 
   const banner = document.createElement("div");
   banner.id = "pharmaImpersonationBanner";
-  banner.className = "pharma-impersonation-top-alert";
-  banner.style.cssText = "position: sticky; top: 0; left: 0; right: 0; z-index: 999999;";
+  banner.className = "pharma-impersonation-top-alert pharma-impersonation-standalone";
 
   banner.innerHTML = `
     <div class="pharma-impersonation-content">

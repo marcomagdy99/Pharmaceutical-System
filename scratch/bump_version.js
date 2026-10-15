@@ -4,7 +4,7 @@ const path = require("path");
 const baseDir = path.resolve(__dirname, "..");
 const files = fs.readdirSync(baseDir).filter(f => f.endsWith(".html"));
 
-const targetVersion = "v196";
+const targetVersion = "v200";
 let updatedCount = 0;
 
 for (const file of files) {
@@ -17,7 +17,6 @@ for (const file of files) {
 
   // 2. Update all js script tags (excluding external/vendor)
   content = content.replace(/src="js\/([^"]+?\.js)(?:\?[^"]*)?"/g, (match, scriptName) => {
-    // Keep chart.umd.min.js without version or with version
     if (scriptName.includes("chart.umd.min.js")) {
       return match;
     }
@@ -45,10 +44,13 @@ if (fs.existsSync(swPath)) {
   console.log(`Updated sw.js to ${targetVersion}`);
 }
 
+// Update profile.js version string
+const profilePath = path.join(baseDir, "js", "profile.js");
+if (fs.existsSync(profilePath)) {
+  let pContent = fs.readFileSync(profilePath, "utf8");
+  pContent = pContent.replace(/pharmaCareVersion:\s*["']v\d+["']/g, `pharmaCareVersion: "${targetVersion}"`);
+  fs.writeFileSync(profilePath, pContent, "utf8");
+  console.log(`Updated profile.js pharmaCareVersion to ${targetVersion}`);
+}
+
 console.log(`Successfully bumped all assets to ${targetVersion} in ${updatedCount} HTML files and sw.js.`);
-
-
-
-
-
-

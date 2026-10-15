@@ -1709,6 +1709,32 @@
     gap: 4px;
 }
 
+.badge-offline-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-offline-synced {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .badge-gps-map-link {
     display: inline-flex;
     align-items: center;
@@ -1747,6 +1773,18 @@
     background: #450a0a;
     color: #fca5a5;
     border: 1px solid #991b1b;
+}
+
+[data-theme="dark"] .badge-offline-pending {
+    background: #451a03;
+    color: #fde68a;
+    border: 1px solid #78350f;
+}
+
+[data-theme="dark"] .badge-offline-synced {
+    background: #082f49;
+    color: #7dd3fc;
+    border: 1px solid #0369a1;
 }
 
 .stat-value-primary {

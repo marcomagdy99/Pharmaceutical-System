@@ -277,21 +277,21 @@ if (backToDept) backToDept.addEventListener('click', showDepartmentSelection);
  */
 function getAllAuthenticatableUsers() {
   const defaultAccounts = [
-    { email: 'admin@pharmacare.com', passwordHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'admin1' },
-    { email: 'bu@pharmacare.com', passwordHash: 'd041f6dd2d671f68144bd4d667f96a6146dbf2ed0f71f19b532ce1e2826f8f92', role: 'business_unit', name: 'George Marzok', dept: 'sales', employeeCode: 'BU-001', id: 'bu1' },
-    { email: 'lm@pharmacare.com', passwordHash: '89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b', role: 'line_manager', name: 'John Mahfouz', dept: 'sales', employeeCode: 'LM-001', id: 'lm1' },
-    { email: 'lm2@pharmacare.com', passwordHash: '89f47494d297f9d32d560ed935ab7628ce85107354c58f48fe3208edd663cb3b', role: 'line_manager', name: 'Mario Magdy', dept: 'sales', employeeCode: 'LM-002', id: 'lm2' },
-    { email: 'dm@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'dm1' },
-    { email: 'dm2@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'dm2' },
-    { email: 'dm3@pharmacare.com', passwordHash: 'd174dafe4358df15f9e096a2f0c930ae700e37f145e17211f876a0b303c32869', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'dm3' },
-    { email: 'rep@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'REP-001', id: 'rep1' },
-    { email: 'rep2@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'REP-002', id: 'rep2' },
-    { email: 'rep3@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'REP-003', id: 'rep3' },
-    { email: 'rep4@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'REP-004', id: 'rep4' },
-    { email: 'rep5@pharmacare.com', passwordHash: '9c410f599d2b705887a40ba8d3b769dda7721929e5a9ef6999c409bc6125fda2', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'REP-005', id: 'rep5' },
-    { email: 'pm@pharmacare.com', passwordHash: 'ae087349bb953601482c9c52169257c0cb0371cbac3d921b5896a9aba8cc8a43', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'pm1', lineId: 'line1', lineIds: ['line1'], productIds: ['prod1', 'prod2', 'prod3', 'prod4'] },
-    { email: 'pm2@pharmacare.com', passwordHash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'pm2', lineId: 'line2', lineIds: ['line2'], productIds: ['prod5', 'prod6'] },
-    { email: 'hr@pharmacare.com', passwordHash: '070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'hr1' }
+    { email: 'admin@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'u1790626000010', mustChangePassword: true },
+    { email: 'bu@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'business_unit', name: 'George Marzok', dept: 'sales', employeeCode: 'BU-001', id: 'u1790626000011', mustChangePassword: true },
+    { email: 'lm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'John Mahfouz', dept: 'sales', employeeCode: 'LM-001', id: 'u1790626000012', mustChangePassword: true },
+    { email: 'lm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'Mario Magdy', dept: 'sales', employeeCode: 'LM-002', id: 'u1790626000013', mustChangePassword: true },
+    { email: 'dm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'u1790626000014', mustChangePassword: true },
+    { email: 'dm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'u1790626000015', mustChangePassword: true },
+    { email: 'dm3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'u1790626000016', mustChangePassword: true },
+    { email: 'rep@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'REP-001', id: 'u1790626000001', mustChangePassword: true },
+    { email: 'rep2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'REP-002', id: 'u1790626000002', mustChangePassword: true },
+    { email: 'rep3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'REP-003', id: 'u1790626000003', mustChangePassword: true },
+    { email: 'rep4@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'REP-004', id: 'u1790626000004', mustChangePassword: true },
+    { email: 'rep5@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'REP-005', id: 'u1790626000005', mustChangePassword: true },
+    { email: 'pm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'u1790626000018', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], productIds: ['prod_1790626000001', 'prod_1790626000002', 'prod_1790626000003', 'prod_1790626000004'], mustChangePassword: true },
+    { email: 'pm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'u1790626000019', lineId: 'line_1790626000002', lineIds: ['line_1790626000002'], productIds: ['prod_1790626000005', 'prod_1790626000006'], mustChangePassword: true },
+    { email: 'hr@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'u1790626000017', mustChangePassword: true }
   ];
 
   let storedUsers = [];
@@ -316,19 +316,19 @@ function getAllAuthenticatableUsers() {
     let uEmail = (u.email || '').toLowerCase().trim();
 
     // Stale data repair: if pm2 was recorded as medical_rep or has EMP-005
-    if (uEmail === 'pm2@pharmacare.com' || uId === 'pm2' || u.code === 'PM-002') {
+    if (uEmail === 'pm2@pharmacare.com' || uId === 'u1790626000019' || u.code === 'PM-002') {
       if (u.employeeCode === 'REP-005' || u.employeeCode === 'EMP-005' || u.name === 'Mohamed Ramadan') {
-        uId = 'rep5';
+        uId = 'u1790626000005';
         uEmail = 'rep5@pharmacare.com';
         uRole = 'medical_rep';
       } else {
         uRole = 'product_manager';
-        uId = 'pm2';
+        uId = 'u1790626000019';
       }
     }
 
     const defaultAcc = defaultAccounts.find((da) => (da.email || '').toLowerCase() === uEmail || da.id === uId);
-    const resolvedHash = u.passwordHash || (defaultAcc ? defaultAcc.passwordHash : '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92');
+    const resolvedHash = u.passwordHash || (defaultAcc ? defaultAcc.passwordHash : '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f');
 
     return {
       email: uEmail,
@@ -382,8 +382,7 @@ async function handleLogin() {
       if (!email && emailInput) emailInput.classList.add('is-invalid');
       if (!password && passwordInput) passwordInput.classList.add('is-invalid');
 
-      const emptyMsg = (translations[currentLang] && translations[currentLang].error_empty) || 
-                       (currentLang === 'ar' ? "يرجى ملء جميع الحقول." : "Please fill in all fields.");
+      const emptyMsg = (translations[currentLang] && translations[currentLang].error_empty) || "Please fill in all fields.";
       showLoginError(emptyMsg);
 
       if (loginBox) {
@@ -417,26 +416,26 @@ async function handleLogin() {
             uCode === email ||
             emailPrefix === email ||
             uName === email ||
-            (email === 'hr' && (uRole === 'hr' || uId === 'hr1')) ||
-            (email === 'hr1' && (uRole === 'hr' || uId === 'hr1')) ||
-            (email === 'fatma' && (uRole === 'hr' || uId === 'hr1')) ||
-            (email === 'admin' && (uRole === 'admin' || uId === 'admin1')) ||
-            (email === 'admin1' && (uRole === 'admin' || uId === 'admin1')) ||
-            (email === 'rep' && (uRole === 'medical_rep' || uId === 'rep1')) ||
-            (email === 'rep1' && (uRole === 'medical_rep' || uId === 'rep1')) ||
-            (email === 'rep2' && (uRole === 'medical_rep' || uId === 'rep2')) ||
-            (email === 'rep3' && (uRole === 'medical_rep' || uId === 'rep3')) ||
-            (email === 'rep4' && (uRole === 'medical_rep' || uId === 'rep4')) ||
-            (email === 'rep5' && (uRole === 'medical_rep' || uId === 'rep5')) ||
-            (email === 'dm' && (uRole === 'district_manager' || uId === 'dm1')) ||
-            (email === 'dm1' && (uRole === 'district_manager' || uId === 'dm1')) ||
-            (email === 'lm' && (uRole === 'line_manager' || uId === 'lm1')) ||
-            (email === 'lm1' && (uRole === 'line_manager' || uId === 'lm1')) ||
-            (email === 'bu' && (uRole === 'business_unit' || uId === 'bu1')) ||
-            (email === 'bu1' && (uRole === 'business_unit' || uId === 'bu1')) ||
-            (email === 'pm' && (uRole === 'product_manager' || uId === 'pm1')) ||
-            (email === 'pm1' && (uRole === 'product_manager' || uId === 'pm1')) ||
-            (email === 'pm2' && (uRole === 'product_manager' || uId === 'pm2'))
+            (email === 'hr' && (uRole === 'hr' || uId === 'u1790626000017')) ||
+            (email === 'u1790626000017' && (uRole === 'hr' || uId === 'u1790626000017')) ||
+            (email === 'fatma' && (uRole === 'hr' || uId === 'u1790626000017')) ||
+            (email === 'admin' && (uRole === 'admin' || uId === 'u1790626000010')) ||
+            (email === 'u1790626000010' && (uRole === 'admin' || uId === 'u1790626000010')) ||
+            (email === 'rep' && (uRole === 'medical_rep' || uId === 'u1790626000001')) ||
+            (email === 'u1790626000001' && (uRole === 'medical_rep' || uId === 'u1790626000001')) ||
+            (email === 'u1790626000002' && (uRole === 'medical_rep' || uId === 'u1790626000002')) ||
+            (email === 'u1790626000003' && (uRole === 'medical_rep' || uId === 'u1790626000003')) ||
+            (email === 'u1790626000004' && (uRole === 'medical_rep' || uId === 'u1790626000004')) ||
+            (email === 'u1790626000005' && (uRole === 'medical_rep' || uId === 'u1790626000005')) ||
+            (email === 'dm' && (uRole === 'district_manager' || uId === 'u1790626000014')) ||
+            (email === 'u1790626000014' && (uRole === 'district_manager' || uId === 'u1790626000014')) ||
+            (email === 'lm' && (uRole === 'line_manager' || uId === 'u1790626000012')) ||
+            (email === 'u1790626000012' && (uRole === 'line_manager' || uId === 'u1790626000012')) ||
+            (email === 'bu' && (uRole === 'business_unit' || uId === 'u1790626000011')) ||
+            (email === 'u1790626000011' && (uRole === 'business_unit' || uId === 'u1790626000011')) ||
+            (email === 'pm' && (uRole === 'product_manager' || uId === 'u1790626000018')) ||
+            (email === 'u1790626000018' && (uRole === 'product_manager' || uId === 'u1790626000018')) ||
+            (email === 'u1790626000019' && (uRole === 'product_manager' || uId === 'u1790626000019'))
           );
         });
 
@@ -451,8 +450,7 @@ async function handleLogin() {
           if (loginBtn) loginBtn.classList.remove('loading');
           if (emailInput) emailInput.classList.add('is-invalid');
           if (passwordInput) passwordInput.classList.add('is-invalid');
-          const invalidMsg = (translations[currentLang] && translations[currentLang].error_invalid) ||
-                             (currentLang === 'ar' ? "البريد الإلكتروني أو كلمة المرور غير صحيحة." : "Invalid email or password.");
+          const invalidMsg = (translations[currentLang] && translations[currentLang].error_invalid) || "Invalid email or password.";
           showLoginError(invalidMsg);
           if (loginBox) {
             void loginBox.offsetWidth;
@@ -469,8 +467,7 @@ async function handleLogin() {
         if (selectedDepartment && userDept !== selectedDepartment) {
           if (loginBtn) loginBtn.classList.remove('loading');
           if (emailInput) emailInput.classList.add('is-invalid');
-          const deptMsg = (translations[currentLang] && translations[currentLang].error_wrong_dept) ||
-                          (currentLang === 'ar' ? "هذا الحساب لا ينتمي للقسم المختار. يرجى اختيار القسم الصحيح." : "This account does not belong to the selected department.");
+          const deptMsg = (translations[currentLang] && translations[currentLang].error_wrong_dept) || "This account does not belong to the selected department.";
           showLoginError(deptMsg);
           if (loginBox) {
             void loginBox.offsetWidth;
@@ -491,6 +488,13 @@ async function handleLogin() {
           token: 'token_' + Date.now()
         };
 
+        // First-Time Login / Security Reset Check
+        if (matchedUser.mustChangePassword) {
+          if (loginBtn) loginBtn.classList.remove('loading');
+          showForcePasswordBox(matchedUser, sessionData);
+          return;
+        }
+
         sessionStorage.removeItem('pharma_logged_out');
         sessionStorage.setItem('pharmaUser', JSON.stringify(sessionData));
         localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
@@ -502,7 +506,7 @@ async function handleLogin() {
       } catch (err) {
         console.error("Login processing error:", err);
         if (loginBtn) loginBtn.classList.remove('loading');
-        showLoginError(currentLang === 'ar' ? "حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة مجدداً." : "An error occurred during login. Please try again.");
+        showLoginError("An error occurred during login. Please try again.");
       }
     }, 300);
   } catch (outerErr) {
@@ -537,4 +541,207 @@ window.hideLoginError = hideLoginError;
 window.getAllAuthenticatableUsers = getAllAuthenticatableUsers;
 
 setLanguage(currentLang);
+
+  // ============================================================================
+  // Force Password Change on First Login Engine
+  // ============================================================================
+  let _pendingForceUser = null;
+  let _pendingForceSession = null;
+
+  function toggleForcePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPass = input.type === "password";
+    input.type = isPass ? "text" : "password";
+    const icon = btn.querySelector("i");
+    if (icon) {
+      icon.className = isPass ? "fas fa-eye-slash" : "fas fa-eye";
+    }
+  }
+  window.toggleForcePasswordVisibility = toggleForcePasswordVisibility;
+
+  function showForcePasswordBox(user, sessionData) {
+    _pendingForceUser = user;
+    _pendingForceSession = sessionData;
+
+    const deptView = document.getElementById("departmentView");
+    const logBox = document.getElementById("loginBox");
+    const forceBox = document.getElementById("forcePasswordBox");
+
+    if (deptView) deptView.style.display = "none";
+    if (logBox) logBox.style.display = "none";
+    if (forceBox) {
+      forceBox.style.display = "block";
+
+      const notice = document.getElementById("forcePassNoticeText");
+      if (notice) {
+        notice.textContent = "Welcome, " + user.name + "! For security, you must set a new personal password for your account to continue.";
+      }
+
+      const newPassInput = document.getElementById("forceNewPassword");
+      if (newPassInput) {
+        newPassInput.value = "";
+        setTimeout(() => newPassInput.focus(), 150);
+      }
+
+      const confirmInput = document.getElementById("forceConfirmPassword");
+      if (confirmInput) {
+        confirmInput.value = "";
+      }
+
+      updateForcePasswordChecklist();
+    }
+  }
+  window.showForcePasswordBox = showForcePasswordBox;
+
+  function updateForcePasswordChecklist() {
+    const p1 = document.getElementById("forceNewPassword")?.value || "";
+    const p2 = document.getElementById("forceConfirmPassword")?.value || "";
+
+    const hasLen = p1.length >= 8;
+    const hasComplex = /[a-zA-Z]/.test(p1) && /[0-9]/.test(p1);
+    const hasMatch = p1.length > 0 && p1 === p2;
+
+    const setItem = (id, valid) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const icon = el.querySelector("i");
+      if (icon) {
+        icon.className = valid ? "fas fa-check-circle text-success me-1" : "fas fa-circle text-muted me-1";
+      }
+      el.style.color = valid ? "#198754" : "#64748b";
+    };
+
+    setItem("chkLength", hasLen);
+    setItem("chkComplexity", hasComplex);
+    setItem("chkMatch", hasMatch);
+
+    const bar = document.getElementById("forceStrengthBar");
+    if (bar) {
+      let score = 0;
+      if (p1.length >= 8) score += 35;
+      if (p1.length >= 10) score += 15;
+      if (hasComplex) score += 30;
+      if (/[^A-Za-z0-9]/.test(p1)) score += 20;
+      bar.style.width = Math.min(100, score) + "%";
+      if (score < 50) {
+        bar.className = "progress-bar bg-danger";
+      } else if (score < 80) {
+        bar.className = "progress-bar bg-warning";
+      } else {
+        bar.className = "progress-bar bg-success";
+      }
+    }
+  }
+
+  // Bind live checklist updates
+  if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const p1 = document.getElementById("forceNewPassword");
+      const p2 = document.getElementById("forceConfirmPassword");
+      if (p1) p1.addEventListener("input", updateForcePasswordChecklist);
+      if (p2) p2.addEventListener("input", updateForcePasswordChecklist);
+    });
+  }
+
+  async function submitForcePasswordChange() {
+    const errBox = document.getElementById("forcePassError");
+    const errText = document.getElementById("forcePassErrorText");
+    const submitBtn = document.getElementById("btnSubmitForcePassword");
+    const p1 = document.getElementById("forceNewPassword")?.value || "";
+    const p2 = document.getElementById("forceConfirmPassword")?.value || "";
+
+    const showError = (msg) => {
+      if (errBox && errText) {
+        errText.textContent = msg;
+        errBox.style.display = "flex";
+      }
+      if (submitBtn) submitBtn.classList.remove("loading");
+    };
+
+    if (p1.length < 8) {
+      showError("Password must be at least 8 characters long.");
+      return;
+    }
+    if (!(/[a-zA-Z]/.test(p1) && /[0-9]/.test(p1))) {
+      showError("Password must contain both letters and numbers.");
+      return;
+    }
+    if (p1 !== p2) {
+      showError("Passwords do not match.");
+      return;
+    }
+
+    if (errBox) errBox.style.display = "none";
+    if (submitBtn) submitBtn.classList.add("loading");
+
+    try {
+      const hasher = window.hashPassword || (async (x) => x);
+      const newHash = await hasher(p1);
+
+      if (_pendingForceUser) {
+        _pendingForceUser.passwordHash = newHash;
+        delete _pendingForceUser.password;
+        _pendingForceUser.mustChangePassword = false;
+        _pendingForceUser.passwordChangedAt = new Date().toISOString();
+
+        // 1. Update in window.store if available
+        if (window.store && window.store.users && typeof window.store.users.save === "function") {
+          window.store.users.save(_pendingForceUser);
+        }
+
+        // 2. Update in pharma_master_data
+        try {
+          const rawMaster = localStorage.getItem("pharma_master_data");
+          if (rawMaster) {
+            const master = JSON.parse(rawMaster);
+            if (Array.isArray(master.users)) {
+              const idx = master.users.findIndex(u => u.id === _pendingForceUser.id);
+              if (idx !== -1) {
+                master.users[idx].passwordHash = newHash;
+                delete master.users[idx].password;
+                master.users[idx].mustChangePassword = false;
+                master.users[idx].passwordChangedAt = _pendingForceUser.passwordChangedAt;
+                localStorage.setItem("pharma_master_data", JSON.stringify(master));
+              }
+            }
+          }
+        } catch (e) {}
+
+        // 3. Update in pharma_users_list
+        try {
+          const rawList = localStorage.getItem("pharma_users_list");
+          if (rawList) {
+            const list = JSON.parse(rawList);
+            if (Array.isArray(list)) {
+              const idx = list.findIndex(u => u.id === _pendingForceUser.id);
+              if (idx !== -1) {
+                list[idx].passwordHash = newHash;
+                delete list[idx].password;
+                list[idx].mustChangePassword = false;
+                localStorage.setItem("pharma_users_list", JSON.stringify(list));
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Complete authentication session
+      if (_pendingForceSession) {
+        sessionStorage.removeItem("pharma_logged_out");
+        sessionStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));
+        localStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));
+        localStorage.setItem("userRole", _pendingForceSession.role);
+        localStorage.setItem("userId", _pendingForceSession.id);
+        window.currentUser = _pendingForceSession;
+      }
+
+      window.location.replace("index.html");
+    } catch (err) {
+      console.error("Error saving new password:", err);
+      showError("Error saving password. Please try again.");
+    }
+  }
+  window.submitForcePasswordChange = submitForcePasswordChange;
+
 })(window, document);

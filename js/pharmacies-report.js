@@ -22,7 +22,7 @@ function sortBilingualPharmacies(a, b) {
 }
 
 function getScopedPharmacies(respectActiveFilters = true) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "rep1" };
+  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "u1790626000001" };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
   const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
 
@@ -229,12 +229,12 @@ function renderPharmaciesReport() {
   grid.innerHTML = filtered
     .map((p) => {
       const areaObj = allAreas.find((a) => a.id === p.areaId);
-      const areaName = areaObj ? (areaObj.name || areaObj.id) : (p.area || (lang === "ar" ? "عام" : "General"));
+      const areaName = areaObj ? (areaObj.name || areaObj.id) : (p.area || "General");
       const lineObj = allLines.find((l) => l.id === (areaObj?.lineId || p.lineId));
       const lineName = lineObj ? (lang === "ar" && lineObj.nameAr ? lineObj.nameAr : lineObj.name) : "";
       const effectiveRepId = areaObj ? (areaObj.repId || null) : (p.repId || null);
       const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
-      const repName = repObj ? repObj.name : (lang === "ar" ? "غير مسند" : "Unassigned");
+      const repName = repObj ? repObj.name : "Unassigned";
 
       return `
       <div class="directory-card card">
@@ -253,7 +253,7 @@ function renderPharmaciesReport() {
           </div>
           <div class="directory-info-row">
             <span class="info-icon">🏢</span>
-            <span class="info-text">${lang === 'ar' ? 'المنطقة:' : 'Area:'} <strong>${window.escapeHtml(areaName)}</strong></span>
+            <span class="info-text">Area: <strong>${window.escapeHtml(areaName)}</strong></span>
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👨‍🔬</span>
@@ -265,16 +265,16 @@ function renderPharmaciesReport() {
           </div>
           <div class="directory-info-row">
             <span class="info-icon">👤</span>
-            <span class="info-text">${lang === 'ar' ? 'المندوب المسؤول:' : 'Rep:'} <strong>${window.escapeHtml(repName)}</strong></span>
+            <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         ${isAdmin ? `
         <div class="directory-card-footer">
           <button class="btn btn-sm btn-outline-primary" onclick="openPharmacyModal('${p.id}')">
-            ✏️ ${lang === 'ar' ? 'تعديل' : 'Edit'}
+            ✏️ Edit
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="openDeletePharmacyModal('${p.id}')">
-            🗑️ ${lang === 'ar' ? 'حذف' : 'Delete'}
+            🗑️ Delete
           </button>
         </div>
         ` : ''}
@@ -289,7 +289,7 @@ function openPharmacyModal(pharmId = null) {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: إدارة وتعديل الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can manage pharmacies.", "error");
+      showToast("Permission Denied: Only Admin can manage pharmacies.", "error");
     }
     return;
   }
@@ -357,7 +357,7 @@ function savePharmacy() {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: إضافة وتعديل الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can add/edit pharmacies.", "error");
+      showToast("Permission Denied: Only Admin can add/edit pharmacies.", "error");
     }
     return;
   }
@@ -439,7 +439,7 @@ function savePharmacy() {
 
   closePharmacyModal();
   renderPharmaciesReport();
-  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حفظ الصيدلية بنجاح." : "Pharmacy saved successfully.", "success");
+  if (typeof showToast === "function") showToast("Pharmacy saved successfully.", "success");
 }
 
 let pharmacyToDeleteId = null;
@@ -449,7 +449,7 @@ function openDeletePharmacyModal(pharmId) {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can delete pharmacies.", "error");
+      showToast("Permission Denied: Only Admin can delete pharmacies.", "error");
     }
     return;
   }
@@ -476,7 +476,7 @@ function confirmDeletePharmacy() {
   const isAdmin = window.isAdmin ? window.isAdmin(currentUser) : ((currentUser && currentUser.role) === 'admin');
   if (!isAdmin) {
     if (typeof showToast === "function") {
-      showToast(getCurrentLang() === "ar" ? "غير مصرح: حذف الصيدليات للأدمن فقط." : "Permission Denied: Only Admin can delete pharmacies.", "error");
+      showToast("Permission Denied: Only Admin can delete pharmacies.", "error");
     }
     return;
   }
@@ -492,7 +492,7 @@ function confirmDeletePharmacy() {
 
   closeDeletePharmacyModal();
   renderPharmaciesReport();
-  if (typeof showToast === "function") showToast(getCurrentLang() === "ar" ? "تم حذف الصيدلية بنجاح." : "Pharmacy deleted successfully.", "info");
+  if (typeof showToast === "function") showToast("Pharmacy deleted successfully.", "info");
 }
 
 function onPharmacyFilterChange() {

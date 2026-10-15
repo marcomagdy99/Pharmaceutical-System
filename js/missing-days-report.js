@@ -86,7 +86,7 @@
    * Populates Line, DM, and Rep dropdowns according to logged-in user permissions.
    */
   window.populateMissingDaysFilters = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
@@ -161,7 +161,7 @@
    * Cascading handler when line is changed.
    */
   window.onMissingDaysLineChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
@@ -233,7 +233,7 @@
    * Cascading handler when DM is changed.
    */
   window.onMissingDaysDmChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
@@ -380,7 +380,7 @@
       periodPill.textContent = `📅 Period: ${fromDateStr} to ${toDateStr}`;
     }
 
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "admin1" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
@@ -449,7 +449,7 @@
     targetReps.forEach((rep) => {
       // 1. Line info
       const repLines = rep.lineIds || (rep.lineId ? [rep.lineId] : []);
-      const matchedLine = allLines.find((l) => repLines.includes(l.id)) || { name: "CIRA Line", nameAr: "خط الإنتاج" };
+      const matchedLine = allLines.find((l) => repLines.includes(l.id)) || { name: "CIRA Line" };
       const lineName = matchedLine.name || matchedLine.nameAr;
 
       // 2. DM & AM info
@@ -617,15 +617,15 @@
       // Badge styling for Missing Days
       let missingBadge = "";
       if (r.missing > 0) {
-        missingBadge = `<span class="badge" style="background:#fee2e2; color:#b91c1c; font-weight:700; padding:6px 12px; border-radius:20px; font-size:0.9rem;">⚠️ +${r.missing} Day${r.missing > 1 ? 's' : ''}</span>`;
+        missingBadge = `<span class="badge badge-missing-alert">⚠️ +${r.missing} Day${r.missing > 1 ? 's' : ''}</span>`;
       } else if (r.missing === 0) {
-        missingBadge = `<span class="badge" style="background:#dcfce7; color:#15803d; font-weight:700; padding:6px 12px; border-radius:20px; font-size:0.9rem;">✅ 0 (Full)</span>`;
+        missingBadge = `<span class="badge badge-missing-full">✅ 0 (Full)</span>`;
       } else {
-        missingBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700; padding:6px 12px; border-radius:20px; font-size:0.9rem;">🌟 ${r.missing} (Over)</span>`;
+        missingBadge = `<span class="badge badge-missing-over">🌟 ${r.missing} (Over)</span>`;
       }
 
       tr.innerHTML = `
-        <td style="font-weight:600;"><span class="badge" style="background:var(--gray-100); color:var(--gray-700);">${window.escapeHtml(r.lineName)}</span></td>
+        <td style="font-weight:600;"><span class="badge badge-missing-line">${window.escapeHtml(r.lineName)}</span></td>
         <td class="text-muted">${window.escapeHtml(r.amName)}</td>
         <td style="font-weight:600; color:var(--gray-800);">${window.escapeHtml(r.dmName)}</td>
         <td style="font-weight:700; color:var(--primary); cursor:pointer;" onclick="openMissingDaysDetailsModal('${r.repId}')" title="Click to view full days breakdown">
@@ -691,32 +691,30 @@
         const isSecondaryDay = (secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4);
 
         const item = document.createElement("div");
-        item.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--gray-100); font-size:0.88rem;";
-
         const dayName = cur.toLocaleDateString("en", { weekday: "short" });
 
         if (isFriday || (isSecondaryDay && secMode === "full_day")) {
-          item.style.background = "var(--gray-50)";
+          item.className = "missing-day-item missing-day-weekend";
           item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-secondary">Weekend</span>`;
         } else if (isSecondaryDay && secMode === "pm_only" && !repData.fieldDates.includes(dStr) && !repData.nonFdDates.includes(dStr) && !repData.vacationDates.includes(dStr)) {
-          item.style.background = "#f8fafc";
-          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge" style="background:#e2e8f0; color:#475569;">🌙 PM Weekend (AM Work Available)</span>`;
+          item.className = "missing-day-item missing-day-pm-weekend";
+          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge badge-pm-weekend">🌙 PM Weekend (AM Work Available)</span>`;
         } else if (repData.fieldDates.includes(dStr)) {
-          item.style.background = "#f0fdf4";
+          item.className = "missing-day-item missing-day-field";
           item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-success">🚶‍♂️ Field Day (Visits Logged)</span>`;
         } else if (repData.nonFdDates.includes(dStr)) {
-          item.style.background = "#f0f9ff";
+          item.className = "missing-day-item missing-day-office";
           item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-info text-dark">🏢 Office / Activity</span>`;
         } else if (repData.vacationDates.includes(dStr)) {
-          item.style.background = "#fffbeb";
+          item.className = "missing-day-item missing-day-vacation";
           item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-warning text-dark">🏖️ Vacation</span>`;
         } else if (cur > todayDate) {
-          item.style.background = "#f8fafc";
-          item.innerHTML = `<span class="text-muted">📅 ${dStr} (${dayName})</span> <span class="badge" style="background:#e2e8f0; color:#64748b;">⏳ Upcoming</span>`;
+          item.className = "missing-day-item missing-day-upcoming";
+          item.innerHTML = `<span class="text-muted">📅 ${dStr} (${dayName})</span> <span class="badge badge-upcoming">⏳ Upcoming</span>`;
         } else {
           // Missing Day!
-          item.style.background = "#fef2f2";
-          item.innerHTML = `<span style="color:#b91c1c; font-weight:bold;">📅 ${dStr} (${dayName})</span> <span class="badge bg-danger">⚠️ Missing / No Log</span>`;
+          item.className = "missing-day-item missing-day-missing";
+          item.innerHTML = `<span class="missing-day-missing-text">📅 ${dStr} (${dayName})</span> <span class="badge bg-danger">⚠️ Missing / No Log</span>`;
         }
 
         listEl.appendChild(item);

@@ -30,7 +30,7 @@ function populateUploadControls() {
   if (distSelect) {
     const currentVal = distSelect.value;
     const distributors = (window.store && window.store.distributors.getAll()) || [];
-    const placeholder = lang === 'ar' ? '-- اختار الموزّع --' : '-- Select Distributor --';
+    const placeholder = '-- Select Distributor --';
     distSelect.innerHTML = `<option value="">${placeholder}</option>`;
     distributors.forEach((d) => {
       const hasMapping = !!(d.columnMap && d.columnMap.product && d.columnMap.value);
@@ -38,7 +38,7 @@ function populateUploadControls() {
       opt.value = d.id;
       opt.textContent = hasMapping
         ? d.name
-        : `${d.name} ${lang === 'ar' ? '(غير مضبوط)' : '(not configured)'}`;
+        : `${d.name} (not configured)`;
       distSelect.appendChild(opt);
     });
     if (currentVal && distributors.some((d) => d.id === currentVal)) {
@@ -125,19 +125,17 @@ function updatePharmSalesMonthDropdownLabel() {
   const checkedBoxes = Array.from(document.querySelectorAll('.pharm-sales-month-checkbox:checked'));
 
   if (checkedBoxes.length === 0) {
-    labelEl.textContent = lang === 'ar' ? 'لم يتم اختيار شهور' : 'No Months Selected';
+    labelEl.textContent = 'No Months Selected';
   } else if (checkedBoxes.length === allBoxes.length && allBoxes.length > 0) {
-    labelEl.textContent = lang === 'ar' ? 'كل الشهور' : 'All Months';
+    labelEl.textContent = 'All Months';
   } else if (checkedBoxes.length <= 2) {
     const names = checkedBoxes.map((cb) => {
       const idx = parseInt(cb.value, 10) - 1;
-      return lang === 'ar' ? MONTH_NAMES_AR[idx] : MONTH_NAMES[idx];
+      return MONTH_NAMES[idx];
     });
-    labelEl.textContent = names.join(lang === 'ar' ? '، ' : ', ');
+    labelEl.textContent = names.join(', ');
   } else {
-    labelEl.textContent = lang === 'ar'
-      ? `${checkedBoxes.length} شهور محددة`
-      : `${checkedBoxes.length} Months Selected`;
+    labelEl.textContent = `${checkedBoxes.length} Months Selected`;
   }
 }
 
@@ -196,7 +194,7 @@ function initPharmSalesFilters(user) {
 
   if (distSelect) {
     const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
-    const allLabel = lang === 'ar' ? 'جميع الموزعين' : 'All Distributors';
+    const allLabel = 'All Distributors';
     distSelect.innerHTML = `<option value="all">${allLabel}</option>`;
     distributors.forEach((d) => {
       const opt = document.createElement('option');
@@ -210,7 +208,7 @@ function initPharmSalesFilters(user) {
     const areaSelect = document.getElementById('pharmSalesAreaSelect');
     if (!areaSelect) return;
     const curLang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
-    const allLabel = curLang === 'ar' ? 'جميع المناطق' : 'All Areas';
+    const allLabel = 'All Areas';
     const prevVal = areaSelect.value;
     areaSelect.innerHTML = `<option value="all">${allLabel}</option>`;
 
@@ -246,7 +244,7 @@ function initPharmSalesFilters(user) {
       const opt = document.createElement('option');
       opt.value = a.id;
       const isVacant = !a.repId;
-      const vacantTag = isVacant ? ` [${curLang === 'ar' ? 'شاغرة' : 'Vacant'}]` : '';
+      const vacantTag = isVacant ? ' [Vacant]' : '';
       opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${vacantTag}`;
       areaSelect.appendChild(opt);
     });
@@ -277,7 +275,7 @@ function initPharmSalesFilters(user) {
     const effLineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
     const prevVal = pSelect.value;
-    const allLabel = curLang === 'ar' ? 'جميع الأدوية' : 'All Products';
+    const allLabel = 'All Products';
     pSelect.innerHTML = `<option value="all">${allLabel}</option>`;
 
     let products = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
@@ -617,8 +615,8 @@ function renderSalesReport() {
   const monthText = labelEl ? labelEl.textContent.trim() : '';
 
   if (periodLabel) {
-    const periodText = monthText ? `${monthText} ${yearVal}`.trim() : (lang === 'ar' ? 'كل الفترات' : 'All periods');
-    periodLabel.textContent = `${lang === 'ar' ? 'الفترة:' : 'Period:'} ${periodText}`;
+    const periodText = monthText ? `${monthText} ${yearVal}`.trim() : 'All periods';
+    periodLabel.textContent = `Period: ${periodText}`;
   }
 
   const selectedMonths = typeof getSelectedPharmSalesMonths === 'function' ? getSelectedPharmSalesMonths() : [];
@@ -626,7 +624,7 @@ function renderSalesReport() {
     tbody.innerHTML = `
       <tr>
         <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-          ${lang === 'ar' ? 'يرجى اختيار شهر واحد على الأقل.' : 'Please select at least one month.'}
+          Please select at least one month.
         </td>
       </tr>
     `;
@@ -651,7 +649,7 @@ function renderSalesReport() {
     tbody.innerHTML = `
       <tr>
         <td colspan="9" style="text-align: center; padding: 30px; color: var(--gray-500); font-style: italic;">
-          ${lang === 'ar' ? 'لا توجد بيانات مبيعات صيدليات لهذا الاختيار.' : 'No pharmacy sales found for this selection.'}
+          No pharmacy sales found for this selection.
         </td>
       </tr>
     `;
@@ -672,8 +670,8 @@ function renderSalesReport() {
       const rep = row.repId ? allUsers.find((u) => u.id === row.repId) : null;
       const area = row.areaId ? areas.find((a) => a.id === row.areaId) : null;
       const dist = row.distributorId ? distributors.find((d) => d.id === row.distributorId) : null;
-      const areaLabel = area ? area.name : (row.areaRaw || (lang === 'ar' ? 'غير مربوط' : 'Unmatched'));
-      const repLabel = rep ? rep.name : (lang === 'ar' ? 'غير مربوط' : 'Unassigned');
+      const areaLabel = area ? area.name : (row.areaRaw || 'Unmatched');
+      const repLabel = rep ? rep.name : 'Unassigned';
 
       const pharmacyDisplay = row.pharmacyName
         ? (row.pharmacyCode
@@ -722,26 +720,21 @@ function triggerExcelUpload() {
   const user = checkAuth();
   const lang = getCurrentLang();
   if (window.isAdmin && !window.isAdmin(user)) {
-    showToast(lang === 'ar' ? 'عفواً، الأدمن فقط هو المصرح له برفع شيت المبيعات' : 'Permission Denied: Admin only.', 'error');
+    showToast('Permission Denied: Admin only.', 'error');
     return;
   }
 
   const distSelect = document.getElementById('uploadDistributorSelect');
   const distId = distSelect ? distSelect.value : '';
   if (!distId) {
-    showToast(lang === 'ar' ? 'اختار الموزّع الأول.' : 'Select a distributor first.', 'warning');
+    showToast('Select a distributor first.', 'warning');
     return;
   }
 
   const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
   const hasMapping = !!(dist && dist.columnMap && dist.columnMap.product && dist.columnMap.value);
   if (!hasMapping) {
-    showToast(
-      lang === 'ar'
-        ? 'الموزّع ده لسه مفيهوش ربط أعمدة. اضبطه من صفحة الموزعين الأول.'
-        : "This distributor's sheet columns aren't mapped yet. Configure it from the Distributors page first.",
-      'error',
-    );
+    showToast("This distributor's sheet columns aren't mapped yet. Configure it from the Distributors page first.", 'error');
     return;
   }
 
@@ -763,13 +756,13 @@ function handleExcelUpload(e) {
   const dist = window.store && window.store.distributors ? window.store.distributors.getById(distId) : null;
 
   if (!dist || !dist.columnMap || !dist.columnMap.product || !dist.columnMap.value || !month || !year) {
-    showToast(lang === 'ar' ? 'محتاج تختار الموزّع والشهر والسنة الأول.' : 'Select a distributor, month, and year first.', 'warning');
+    showToast('Select a distributor, month, and year first.', 'warning');
     e.target.value = '';
     return;
   }
 
   if (typeof XLSX === 'undefined') {
-    showToast(lang === 'ar' ? 'مكتبة قراءة الإكسيل غير محملة.' : 'Excel reader library failed to load.', 'error');
+    showToast('Excel reader library failed to load.', 'error');
     e.target.value = '';
     return;
   }
@@ -782,9 +775,7 @@ function handleExcelUpload(e) {
 
   if (existingBatch) {
     const uploadedDate = existingBatch.uploadedAt ? new Date(existingBatch.uploadedAt).toLocaleString() : '';
-    const confirmMsg = lang === 'ar'
-      ? `اتعملت رفعة قبل كده لـ "${dist.name}" لشهر ${monthKey} (${existingBatch.rowCount} صف${uploadedDate ? '، بتاريخ ' + uploadedDate : ''}). لو كملت، الرفعة القديمة هتتمسح ويتحل محلها الملف الجديد بالكامل (مش هتتضاف فوق بعض). عايز تكمل؟`
-      : `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ', on ' + uploadedDate : ''}). Continuing will replace that previous upload entirely with this new file (not add on top of it). Continue?`;
+    const confirmMsg = `A sheet was already uploaded for "${dist.name}" / ${monthKey} (${existingBatch.rowCount} rows${uploadedDate ? ', on ' + uploadedDate : ''}). Continuing will replace that previous upload entirely with this new file (not add on top of it). Continue?`;
     if (!confirm(confirmMsg)) {
       e.target.value = '';
       return;
@@ -792,7 +783,7 @@ function handleExcelUpload(e) {
     replacingPreviousBatch = true;
   }
 
-  showToast(lang === 'ar' ? `جاري معالجة الشيت: ${file.name}...` : `Processing file: ${file.name}...`, 'info');
+  showToast(`Processing file: ${file.name}...`, 'info');
 
   const reader = new FileReader();
   reader.onload = async function (ev) {
@@ -826,7 +817,7 @@ function handleExcelUpload(e) {
       const totalRows = rows.length;
       if (typeof window.openExcelImportProgress === 'function') {
         progress = window.openExcelImportProgress({
-          title: lang === 'ar' ? `جاري استيراد مبيعات: ${dist.name}` : `Importing Sales: ${dist.name}`,
+          title: `Importing Sales: ${dist.name}`,
           fileName: file.name,
           totalRows: totalRows,
         });
@@ -918,7 +909,7 @@ function handleExcelUpload(e) {
       }
 
       if (progress) {
-        progress.update(totalRows, totalRows, lang === 'ar' ? 'جاري حفظ وتخزين البيانات...' : 'Saving imported records...');
+        progress.update(totalRows, totalRows, 'Saving imported records...');
       }
 
       if (replacingPreviousBatch && existingBatch && window.store && window.store.distributorSales) {
@@ -944,33 +935,19 @@ function handleExcelUpload(e) {
       const panel = document.getElementById('salesImportResultsPanel');
       if (panel) {
         panel.style.display = 'block';
-        const replacedNote = replacingPreviousBatch
-          ? (lang === 'ar' ? ' (استبدلت رفعة سابقة لنفس الشهر/الموزّع)' : ' (replaced a previous upload for this month/distributor)')
-          : '';
-        panel.innerHTML = lang === 'ar'
-          ? `✅ اتسجل <strong>${imported.length.toLocaleString()}</strong> صف من "${dist.name}" لشهر ${monthKey}${replacedNote} (شاملة ${returnsCount} صف مرتجعات بالسالب اتخصمت تلقائي). صافي القيمة: ${totalValue.toLocaleString()}. اتجاهل ${skippedInvalid} صف بيانات ناقصة (منتج أو قيمة مش واضحة).<br><span style="font-weight:600;">هام:</span> هتظهر الصفوف دي في جدول Pharmacies Sales فورًا، لكن لو فيها مناطق أو منتجات مش مربوطة لسه، مش هتتحسب في تبويب Achievements ولا في فلتر الـ Line لحد ما تربطها من صفحة الموزعين.`
-          : `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
+        const replacedNote = replacingPreviousBatch ? ' (replaced a previous upload for this month/distributor)' : '';
+        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
       }
 
       if (progress) {
-        progress.finish(lang === 'ar' ? `تم استيراد ${imported.length.toLocaleString()} سجل بنجاح!` : `Successfully imported ${imported.length.toLocaleString()} rows!`);
+        progress.finish(`Successfully imported ${imported.length.toLocaleString()} rows!`);
       }
 
-      showToast(
-        lang === 'ar'
-          ? `تم استيراد ${imported.length.toLocaleString()} صف بنجاح.`
-          : `Successfully imported ${imported.length.toLocaleString()} rows.`,
-        'success',
-      );
+      showToast(`Successfully imported ${imported.length.toLocaleString()} rows.`, 'success');
     } catch (err) {
       if (progress) progress.close();
       console.error('Error parsing distributor sheet:', err);
-      showToast(
-        lang === 'ar'
-          ? 'تعذرت قراءة الملف. تأكد إنه بنفس شكل الشيت اللي اتعمل عليه الربط.'
-          : "Couldn't read this file. Make sure it matches the sheet layout the mapping was configured from.",
-        'error',
-      );
+      showToast("Couldn't read this file. Make sure it matches the sheet layout the mapping was configured from.", 'error');
     }
     e.target.value = '';
   };
@@ -1159,7 +1136,7 @@ function openTargetsModal() {
   const user = checkAuth();
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
   if (!isAdmin) {
-    if (typeof showToast === 'function') showToast(getCurrentLang() === 'ar' ? 'غير مصرح: إدارة الأهداف للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
   targetsModalEl = document.getElementById('targetsModal');
@@ -1238,7 +1215,7 @@ function saveTarget() {
   const user = checkAuth();
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
   if (!isAdmin) {
-    if (typeof showToast === 'function') showToast(getCurrentLang() === 'ar' ? 'غير مصرح: إدارة الأهداف للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
   const editId = document.getElementById('targetEditId').value;
@@ -1264,7 +1241,7 @@ function saveTarget() {
     const prod = getAllProductsFlat().find((p) => p.id === productId);
     if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
       if (typeof showToast === 'function') {
-        showToast(getCurrentLang() === 'ar' ? 'خطأ: الصنف المختار لا ينتمي لخط الإنتاج المخصص لهذا المندوب.' : 'Error: Selected product does not belong to this rep\'s assigned line.', 'error');
+        showToast('Error: Selected product does not belong to this rep\'s assigned line.', 'error');
       }
       return;
     }
@@ -1295,7 +1272,7 @@ function deleteTarget(id) {
   const user = checkAuth();
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
   if (!isAdmin) {
-    if (typeof showToast === 'function') showToast(getCurrentLang() === 'ar' ? 'غير مصرح: إدارة الأهداف للأدمن فقط.' : 'Permission Denied: Admin only.', 'error');
+    if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
   if (!confirm('Delete this target?')) return;

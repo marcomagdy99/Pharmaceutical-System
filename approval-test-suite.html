@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Approval Sequence & Multi-Tier Workflows Test Suite</title>
-  <link rel="stylesheet" href="css/style.css?v=v196" />
+  <link rel="stylesheet" href="css/style.css?v=v200" />
   <style>
     body {
       background: #0b1120;
@@ -294,19 +294,19 @@
   </div>
 </div>
 
-<script src="js/store.js?v=v196"></script>
-<script src="js/workflow-engine.js?v=v196"></script>
+<script src="js/store.js?v=v200"></script>
+<script src="js/workflow-engine.js?v=v200"></script>
 
 <script>
   // Standard Self-Contained Test Fixtures (independent of whatever exists in localStorage)
   const TEST_FIXTURES = {
     admin: { id: "test_admin", name: "System Admin", role: "admin" },
-    bu: { id: "test_bu", name: "BU Manager", role: "business_unit", lineId: "line1", lineIds: ["line1", "line2"] },
-    pm1: { id: "test_pm1", name: "PM Line 1", role: "product_manager", lineId: "line1", lineIds: ["line1"] },
-    pm2: { id: "test_pm2", name: "PM Line 2", role: "product_manager", lineId: "line2", lineIds: ["line2"] },
-    lm: { id: "test_lm", name: "Line Manager", role: "line_manager", lineId: "line1", managerId: "test_bu" },
-    dm: { id: "test_dm", name: "District Manager", role: "district_manager", lineId: "line1", managerId: "test_lm" },
-    rep: { id: "test_rep", name: "Medical Rep", role: "medical_rep", lineId: "line1", areaId: "area1", managerId: "test_dm" },
+    bu: { id: "test_bu", name: "BU Manager", role: "business_unit", lineId: "line_1790626000001", lineIds: ["line_1790626000001", "line_1790626000002"] },
+    pm1: { id: "test_pm1", name: "PM Line 1", role: "product_manager", lineId: "line_1790626000001", lineIds: ["line_1790626000001"] },
+    pm2: { id: "test_pm2", name: "PM Line 2", role: "product_manager", lineId: "line_1790626000002", lineIds: ["line_1790626000002"] },
+    lm: { id: "test_lm", name: "Line Manager", role: "line_manager", lineId: "line_1790626000001", managerId: "test_bu" },
+    dm: { id: "test_dm", name: "District Manager", role: "district_manager", lineId: "line_1790626000001", managerId: "test_lm" },
+    rep: { id: "test_rep", name: "Medical Rep", role: "medical_rep", lineId: "line_1790626000001", areaId: "area_1790626000001", managerId: "test_dm" },
     hr: { id: "test_hr", name: "HR Manager", role: "hr" },
   };
 
@@ -336,7 +336,7 @@
       desc: "Resolves full upward supervisory escalation chain (Rep -> DM -> LM -> BU) and line-assigned PM.",
       run: function() {
         const WE = window.WorkflowEngine;
-        const hier = WE.resolveHierarchy("line1", "area1", "rep1");
+        const hier = WE.resolveHierarchy("line_1790626000001", "area_1790626000001", "u1790626000001");
         if (!hier.dmId) throw new Error("DM resolution missing in hierarchy");
         if (!hier.lmId) throw new Error("LM resolution missing in hierarchy");
         if (!hier.buId) throw new Error("BU resolution missing in hierarchy");
@@ -350,7 +350,7 @@
       desc: "Verifies default sequential steps for commercial service (DM -> LM -> BU -> Approved).",
       run: function() {
         const WE = window.WorkflowEngine;
-        const srv = { department: "commercial", cost: 4000, lineId: "line1" };
+        const srv = { department: "commercial", cost: 4000, lineId: "line_1790626000001" };
         const steps = WE.getServiceSteps(srv);
         if (steps.length !== 3) throw new Error("Expected 3 steps, got " + steps.length);
         if (steps[0].role !== "dm" || steps[1].role !== "lm" || steps[2].role !== "bu") {
@@ -378,11 +378,11 @@
             }
           });
 
-          const cheap = WE.getServiceSteps({ department: "commercial", cost: 3500, lineId: "line1" });
+          const cheap = WE.getServiceSteps({ department: "commercial", cost: 3500, lineId: "line_1790626000001" });
           if (cheap.length !== 2) throw new Error("Service below 5,000 should have 2 steps, got " + cheap.length);
           if (cheap.some(s => s.role === "bu")) throw new Error("BU should be omitted below threshold");
 
-          const expensive = WE.getServiceSteps({ department: "commercial", cost: 8500, lineId: "line1" });
+          const expensive = WE.getServiceSteps({ department: "commercial", cost: 8500, lineId: "line_1790626000001" });
           if (expensive.length !== 3) throw new Error("Service above 5,000 should have 3 steps, got " + expensive.length);
           if (!expensive.some(s => s.role === "bu")) throw new Error("BU must be present above threshold");
 
@@ -401,7 +401,7 @@
         const dm = TEST_FIXTURES.dm;
         const lm = TEST_FIXTURES.lm;
         const bu = TEST_FIXTURES.bu;
-        const srv = { department: "commercial", cost: 6000, lineId: "line1" };
+        const srv = { department: "commercial", cost: 6000, lineId: "line_1790626000001" };
 
         const dmInit = WE.resolveInitialServiceStatus(srv, dm);
         if (dmInit.status !== "pending_lm") throw new Error("DM submission should skip DM to pending_lm, got: " + dmInit.status);
@@ -421,7 +421,7 @@
       desc: "Verifies marketing service approval chain: PM -> BU -> Approved.",
       run: function() {
         const WE = window.WorkflowEngine;
-        const mktSrv = { department: "marketing", cost: 15000, lineId: "line1" };
+        const mktSrv = { department: "marketing", cost: 15000, lineId: "line_1790626000001" };
         const steps = WE.getServiceSteps(mktSrv);
         if (steps.length !== 2) throw new Error("Expected 2 steps (PM & BU), got: " + steps.length);
         if (steps[0].role !== "pm" || steps[1].role !== "bu") {
@@ -437,8 +437,8 @@
       run: function() {
         const WE = window.WorkflowEngine;
         const pm1 = TEST_FIXTURES.pm1; // Assigned to Line 1
-        const req1 = { department: "marketing", lineId: "line1", status: "pending_pm", requesterId: "rep_any" };
-        const req2 = { department: "marketing", lineId: "line2", status: "pending_pm", requesterId: "rep_any" };
+        const req1 = { department: "marketing", lineId: "line_1790626000001", status: "pending_pm", requesterId: "rep_any" };
+        const req2 = { department: "marketing", lineId: "line_1790626000002", status: "pending_pm", requesterId: "rep_any" };
 
         const authLine1 = WE.isServiceAuthorized(req1, pm1, "approve_service");
         const authLine2 = WE.isServiceAuthorized(req2, pm1, "approve_service");
@@ -458,7 +458,7 @@
         const dm = TEST_FIXTURES.dm;
         const lm = TEST_FIXTURES.lm;
         const hr = TEST_FIXTURES.hr;
-        const exp = { amount: 2000, requesterId: "rep1", status: "pending_dm" };
+        const exp = { amount: 2000, requesterId: "u1790626000001", status: "pending_dm" };
 
         const s1 = WE.advanceExpenseApproval(exp, dm);
         if (s1.nextStatus !== "pending_lm") throw new Error("DM advance should yield pending_lm, got: " + s1.nextStatus);
@@ -493,11 +493,11 @@
             }
           });
 
-          const smallExp = { amount: 3500, requesterId: "rep1", status: "pending_lm" };
+          const smallExp = { amount: 3500, requesterId: "u1790626000001", status: "pending_lm" };
           const smallRes = WE.advanceExpenseApproval(smallExp, TEST_FIXTURES.lm);
           if (smallRes.nextStatus !== "pending_hr") throw new Error("Under 10,000 should bypass BU, got: " + smallRes.nextStatus);
 
-          const bigExp = { amount: 15000, requesterId: "rep1", status: "pending_lm" };
+          const bigExp = { amount: 15000, requesterId: "u1790626000001", status: "pending_lm" };
           const bigRes = WE.advanceExpenseApproval(bigExp, TEST_FIXTURES.lm);
           if (bigRes.nextStatus !== "pending_bu") throw new Error("Over 10,000 must route to BU, got: " + bigRes.nextStatus);
 
@@ -513,7 +513,7 @@
       desc: "Verifies that only HR (or Admin) can disburse an approved expense claim. Reps, DMs, and LMs are blocked.",
       run: function() {
         const WE = window.WorkflowEngine;
-        const approvedExp = { status: "approved", requesterId: "rep1", amount: 4000 };
+        const approvedExp = { status: "approved", requesterId: "u1790626000001", amount: 4000 };
 
         const hr = TEST_FIXTURES.hr;
         const admin = TEST_FIXTURES.admin;
@@ -577,12 +577,12 @@
             }
           });
 
-          let srv = { department: "commercial", cost: 10000, lineId: "line1" };
+          let srv = { department: "commercial", cost: 10000, lineId: "line_1790626000001" };
           let stepsWithGm = WE.getServiceSteps(srv);
           if (!stepsWithGm.some(s => s.role === "gm")) throw new Error("GM step did not appear dynamically!");
 
           srv.status = "pending_bu";
-          let advToGm = WE.advanceServiceApproval(srv, { id: "bu1", role: "business_unit" });
+          let advToGm = WE.advanceServiceApproval(srv, { id: "u1790626000011", role: "business_unit" });
           if (advToGm.nextStatus !== "pending_gm") throw new Error("BU did not advance to GM!");
 
           // Dynamic Mutation 2: Change Threshold from 5,000 to 50,000 EGP
@@ -599,7 +599,7 @@
             }
           });
 
-          let srv30k = { department: "commercial", cost: 30000, lineId: "line1" };
+          let srv30k = { department: "commercial", cost: 30000, lineId: "line_1790626000001" };
           let steps30k = WE.getServiceSteps(srv30k);
           if (steps30k.some(s => s.role === "bu")) throw new Error("30k service should now skip BU under 50k threshold!");
 
@@ -717,7 +717,7 @@
 
     try {
       const mockSubmitter = { id: "user_sim", role: role };
-      const srv = { department: dept, cost: cost, lineId: "line1" };
+      const srv = { department: dept, cost: cost, lineId: "line_1790626000001" };
 
       let steps = [];
       let initStatus = "";

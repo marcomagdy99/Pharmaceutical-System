@@ -6,11 +6,11 @@
 
 // Default seed quizzes
 const demoQuizzes = [
-  { id: 'q1', title: 'Product Knowledge Q3', date: '2026-08-15', totalMarks: 50, createdBy: 'admin1' },
-  { id: 'q2', title: 'Q2 Assessment', date: '2026-07-01', totalMarks: 50, createdBy: 'admin1' },
-  { id: 'q3', title: 'New Launch Quiz', date: '2026-06-10', totalMarks: 30, createdBy: 'admin1' },
-  { id: 'q4', title: 'Compliance Training', date: '2026-05-20', totalMarks: 40, createdBy: 'admin1' },
-  { id: 'q5', title: 'Sales Techniques', date: '2026-04-15', totalMarks: 50, createdBy: 'admin1' }
+  { id: 'q1', title: 'Product Knowledge Q3', date: '2026-08-15', totalMarks: 50, createdBy: 'u1790626000010' },
+  { id: 'q2', title: 'Q2 Assessment', date: '2026-07-01', totalMarks: 50, createdBy: 'u1790626000010' },
+  { id: 'q3', title: 'New Launch Quiz', date: '2026-06-10', totalMarks: 30, createdBy: 'u1790626000010' },
+  { id: 'q4', title: 'Compliance Training', date: '2026-05-20', totalMarks: 40, createdBy: 'u1790626000010' },
+  { id: 'q5', title: 'Sales Techniques', date: '2026-04-15', totalMarks: 50, createdBy: 'u1790626000010' }
 ];
 
 function resolveQuizUserName(userId, fallback) {
@@ -28,32 +28,32 @@ function resolveQuizUserName(userId, fallback) {
 // Default seed scores across team members in different lines/districts
 const demoScores = [
   // Rep 1 (DM: Amir Ayoup, LM: John Mahfouz, BU: George Marzok)
-  { quizId: 'q1', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 42, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 35, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 28, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 32, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep1', userName: resolveQuizUserName('rep1', 'Marco Magdy'), score: 41, totalMarks: 50 },
+  { quizId: 'q1', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 42, totalMarks: 50 },
+  { quizId: 'q2', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 35, totalMarks: 50 },
+  { quizId: 'q3', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 28, totalMarks: 30 },
+  { quizId: 'q4', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 32, totalMarks: 40 },
+  { quizId: 'q5', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 41, totalMarks: 50 },
 
   // Rep 2 (DM: Amir Ayoup, LM: John Mahfouz, BU: George Marzok)
-  { quizId: 'q1', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 38, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 30, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 25, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 36, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep2', userName: resolveQuizUserName('rep2', 'Kerolos Boules'), score: 44, totalMarks: 50 },
+  { quizId: 'q1', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 38, totalMarks: 50 },
+  { quizId: 'q2', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 30, totalMarks: 50 },
+  { quizId: 'q3', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 25, totalMarks: 30 },
+  { quizId: 'q4', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 36, totalMarks: 40 },
+  { quizId: 'q5', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 44, totalMarks: 50 },
 
   // Rep 3 (DM: Jonathan Erian, LM: John Mahfouz, BU: George Marzok)
-  { quizId: 'q1', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 45, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 40, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 29, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 38, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep3', userName: resolveQuizUserName('rep3', 'Mina Mikhael'), score: 48, totalMarks: 50 },
+  { quizId: 'q1', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 45, totalMarks: 50 },
+  { quizId: 'q2', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 40, totalMarks: 50 },
+  { quizId: 'q3', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 29, totalMarks: 30 },
+  { quizId: 'q4', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 38, totalMarks: 40 },
+  { quizId: 'q5', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 48, totalMarks: 50 },
 
   // Rep 4 (DM: Marian Magdy, LM: Mario Magdy, BU: George Marzok)
-  { quizId: 'q1', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 40, totalMarks: 50 },
-  { quizId: 'q2', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 38, totalMarks: 50 },
-  { quizId: 'q3', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 27, totalMarks: 30 },
-  { quizId: 'q4', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 34, totalMarks: 40 },
-  { quizId: 'q5', userId: 'rep4', userName: resolveQuizUserName('rep4', 'David Emad'), score: 42, totalMarks: 50 }
+  { quizId: 'q1', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 40, totalMarks: 50 },
+  { quizId: 'q2', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 38, totalMarks: 50 },
+  { quizId: 'q3', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 27, totalMarks: 30 },
+  { quizId: 'q4', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 34, totalMarks: 40 },
+  { quizId: 'q5', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 42, totalMarks: 50 }
 ];
 
 // Multilingual dictionary for Quizzes module
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const authUser = (typeof checkAuth === 'function') ? checkAuth() : null;
   const rawRole = (authUser && authUser.role) ? authUser.role : (localStorage.getItem('userRole') || 'medical_rep');
   const userRole = (typeof normalizeRole === 'function') ? normalizeRole(rawRole) : rawRole;
-  const userId = (authUser && authUser.id) ? authUser.id : (localStorage.getItem('userId') || 'rep1');
+  const userId = (authUser && authUser.id) ? authUser.id : (localStorage.getItem('userId') || 'u1790626000001');
 
   const isRep = (userRole === 'medical_rep' || userRole === 'rep');
   const isAdminUser = (userRole === 'admin' || userRole === 'product_manager');
@@ -808,7 +808,7 @@ function setupAdminQuizTools(allReps) {
       const role = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : currentUser.role) : null;
       if (role !== "admin") {
         if (typeof showToast === 'function') {
-          showToast(currentLang === 'ar' ? "عفواً، إنشاء الاختبارات مقتصر على مدير النظام فقط." : "Permission Denied: Admins only.", "error");
+          showToast("Permission Denied: Admins only.", "error");
         }
         return;
       }
@@ -826,7 +826,7 @@ function setupAdminQuizTools(allReps) {
         title: title,
         date: date,
         totalMarks: marks,
-        createdBy: (currentUser && currentUser.id) || 'admin1'
+        createdBy: (currentUser && currentUser.id) || 'u1790626000010'
       };
 
       const quizzes = getStoredQuizzes();
@@ -862,7 +862,7 @@ document.addEventListener("languageChanged", (e) => {
   const authUser = (typeof checkAuth === 'function') ? checkAuth() : null;
   const rawRole = (authUser && authUser.role) ? authUser.role : (localStorage.getItem('userRole') || 'medical_rep');
   const userRole = (typeof normalizeRole === 'function') ? normalizeRole(rawRole) : rawRole;
-  const userId = (authUser && authUser.id) ? authUser.id : (localStorage.getItem('userId') || 'rep1');
+  const userId = (authUser && authUser.id) ? authUser.id : (localStorage.getItem('userId') || 'u1790626000001');
   const isRep = (userRole === 'medical_rep' || userRole === 'rep');
   if (isRep) {
     initRepView(userId);
