@@ -72,9 +72,7 @@
       toInput.value = formatDateForInput(now);
     }
 
-    if (typeof window.renderMissingDaysReport === "function") {
-      window.renderMissingDaysReport();
-    }
+    // Preset updated; render strictly on Show button click
   };
 
   function formatDateForInput(d) {
@@ -307,10 +305,7 @@
   };
 
   window.onMissingDaysFilterChange = function () {
-    const results = document.getElementById("missingDaysResultsContainer");
-    if (results && results.style.display !== "none" && typeof window.renderMissingDaysReport === "function") {
-      window.renderMissingDaysReport();
-    }
+    // Filter updated; render strictly on Show button click
   };
 
   /**

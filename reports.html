@@ -19,7 +19,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v209";
+        var EXPECTED_SW = "v210";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -51,17 +51,17 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v209" />
-    <link rel="stylesheet" href="css/reports.css?v=v209" />
+    <link rel="stylesheet" href="css/style.css?v=v210" />
+    <link rel="stylesheet" href="css/reports.css?v=v210" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v209"></script>
-    <script src="js/store.js?v=v209"></script>
+    <script src="js/app.js?v=v210"></script>
+    <script src="js/store.js?v=v210"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v209"></script>
-    <script src="js/firebase-sync.js?v=v209"></script>
+    <script src="js/firebase-config.js?v=v210"></script>
+    <script src="js/firebase-sync.js?v=v210"></script>
   </head>
   <body>
     <div class="app">
@@ -1648,7 +1648,7 @@
                 <!-- Search Input -->
                 <div class="sales-filter-field col-search">
                   <label for="accountsCostingSearchInput">Search Account / Doctor:</label>
-                  <input type="text" id="accountsCostingSearchInput" class="form-control" placeholder="Type doctor or clinic name..." oninput="onAccountsCostingSearchInput(this.value)" />
+                  <input type="text" id="accountsCostingSearchInput" class="form-control" placeholder="Type doctor or clinic name..." oninput="onAccountsCostingSearchInput(this.value)" onkeyup="if (event.key === 'Enter') renderAccountsCostingReport();" />
                 </div>
                 <!-- Action Buttons -->
                 <div class="sales-filter-field col-btn costing-filter-actions">
@@ -1671,7 +1671,7 @@
                 </div>
                 <div class="costing-options-wrap">
                   <label class="costing-expenses-check">
-                    <input type="checkbox" id="accountsCostingOnlyWithExpenses" onchange="renderAccountsCostingReport()" />
+                    <input type="checkbox" id="accountsCostingOnlyWithExpenses" />
                     <span>Show accounts with expenses only</span>
                   </label>
                   <div class="costing-period-buttons-group">
@@ -1685,19 +1685,31 @@
               </div>
             </div>
 
-            <!-- Direct Table Container -->
-            <div class="table-container" style="margin-top: 16px; overflow-x: auto;">
-              <table class="report-table" id="accountsCostingTable">
-                <thead id="accountsCostingThead">
-                  <!-- Generated dynamically in accounts-costing-report.js -->
-                </thead>
-                <tbody id="accountsCostingTbody">
-                  <!-- Generated dynamically in accounts-costing-report.js -->
-                </tbody>
-                <tfoot id="accountsCostingTfoot">
-                  <!-- Summary totals row generated dynamically in accounts-costing-report.js -->
-                </tfoot>
-              </table>
+            <!-- Accounts Costing Prompt Placeholder -->
+            <div class="report-show-prompt" id="accountsCostingPromptContainer">
+              <div class="report-show-prompt-icon">💼</div>
+              <h3 class="report-show-prompt-title" data-i18n="promptShowCostingTitle">Click Show to View Accounts Costing Report</h3>
+              <p class="report-show-prompt-desc" data-i18n="promptShowCostingDesc">Select date range and employee filters, then click Show to calculate account investments, clinic services, and sponsorship expenses.</p>
+              <button type="button" class="btn btn-primary" onclick="renderAccountsCostingReport()">
+                <span>🔍</span> <span data-i18n="btnShow">Show Report</span>
+              </button>
+            </div>
+
+            <!-- Accounts Costing Results Container -->
+            <div id="accountsCostingResultsContainer" style="display: none;">
+              <div class="table-container" style="margin-top: 16px; overflow-x: auto;">
+                <table class="report-table" id="accountsCostingTable">
+                  <thead id="accountsCostingThead">
+                    <!-- Generated dynamically in accounts-costing-report.js -->
+                  </thead>
+                  <tbody id="accountsCostingTbody">
+                    <!-- Generated dynamically in accounts-costing-report.js -->
+                  </tbody>
+                  <tfoot id="accountsCostingTfoot">
+                    <!-- Summary totals row generated dynamically in accounts-costing-report.js -->
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -3093,20 +3105,20 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v209"></script>
+    <script src="js/interactive-charts.js?v=v210"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v209"></script>
-    <script src="js/shared-report.js?v=v209"></script>
-    <script src="js/sales-report.js?v=v209"></script>
-    <script src="js/achievements-report.js?v=v209"></script>
-    <script src="js/timeline-report.js?v=v209"></script>
-    <script src="js/coverage-report.js?v=v209"></script>
-    <script src="js/doctors-report.js?v=v209"></script>
-    <script src="js/hospitals-report.js?v=v209"></script>
-    <script src="js/pharmacies-report.js?v=v209"></script>
-    <script src="js/missing-days-report.js?v=v209"></script>
-    <script src="js/gps-tracing-report.js?v=v209"></script>
-    <script src="js/accounts-costing-report.js?v=v209"></script>
+    <script src="js/excel-templates-data.js?v=v210"></script>
+    <script src="js/shared-report.js?v=v210"></script>
+    <script src="js/sales-report.js?v=v210"></script>
+    <script src="js/achievements-report.js?v=v210"></script>
+    <script src="js/timeline-report.js?v=v210"></script>
+    <script src="js/coverage-report.js?v=v210"></script>
+    <script src="js/doctors-report.js?v=v210"></script>
+    <script src="js/hospitals-report.js?v=v210"></script>
+    <script src="js/pharmacies-report.js?v=v210"></script>
+    <script src="js/missing-days-report.js?v=v210"></script>
+    <script src="js/gps-tracing-report.js?v=v210"></script>
+    <script src="js/accounts-costing-report.js?v=v210"></script>
   </body>
 </html>
 

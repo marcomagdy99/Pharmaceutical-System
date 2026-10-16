@@ -110,10 +110,7 @@
       dateInput.value = formatDateForInput(y);
     }
 
-    const resultsContainer = document.getElementById("gpsTracingResultsContainer");
-    if (resultsContainer && resultsContainer.style.display !== "none") {
-      window.renderGpsTracingReport();
-    }
+    // Preset updated; render strictly on Show button click
   };
 
   function formatDateForInput(d) {
@@ -353,10 +350,7 @@
   };
 
   window.onGpsFilterChange = function () {
-    const resultsContainer = document.getElementById("gpsTracingResultsContainer");
-    if (resultsContainer && resultsContainer.style.display !== "none" && typeof window.renderGpsTracingReport === "function") {
-      window.renderGpsTracingReport();
-    }
+    // Filter updated; render strictly on Show button click
   };
 
   // Keep reference of current filtered rows for full route mapping

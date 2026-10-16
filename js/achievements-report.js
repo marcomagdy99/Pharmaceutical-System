@@ -125,29 +125,13 @@ function populateAchFilters() {
 
   populateAchAreas();
 
-  function triggerAchAutoRefresh() {
-    const achRes = document.getElementById('achResultsContainer');
-    if (achRes && achRes.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
-      renderAchievementsReport();
-    }
-  }
-
   const achRepEl = document.getElementById('achRepSelect');
   if (achRepEl && !achRepEl.dataset.achAreaListenerBound) {
     achRepEl.dataset.achAreaListenerBound = 'true';
     achRepEl.addEventListener('change', () => {
       populateAchAreas();
-      triggerAchAutoRefresh();
     });
   }
-
-  ['achAreaSelect', 'achSalesTypeSelect', 'achYearSelect'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el && !el.dataset.autoRefreshBound) {
-      el.dataset.autoRefreshBound = 'true';
-      el.addEventListener('change', triggerAchAutoRefresh);
-    }
-  });
 }
 
 function populateAchAreas(filterUser) {
@@ -372,27 +356,31 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       // Keep all
     } else {
       const selUser = usersMap.get(selectedRepVal);
-      const selRole = selUser ? (window.normalizeRole ? window.normalizeRole(selUser.role) : selUser.role) : '';
+      const selRole = selUser ? (window.normalizeRole ? window.normalizeRole(selUser.role) : (selUser.role || '').toLowerCase()) : '';
       if (selRole === 'district_manager' || selRole === 'dm') {
         const dmReps = allUsers.filter((u) => u.managerId === selectedRepVal).map((u) => u.id);
+        const dmUserAreaIds = selUser ? (selUser.areaIds || (selUser.areaId ? [selUser.areaId] : [])) : [];
         filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
           const a = areasMap.get(id);
           if (!a) return false;
           if (a.repId && dmReps.includes(a.repId)) return true;
+          if (dmUserAreaIds.includes(a.id)) return true;
           const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
           return mgrId === selectedRepVal;
         }));
       } else if (selRole === 'line_manager' || selRole === 'lm') {
         const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
         const lmReps = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+        const lmUserLineIds = selUser ? (selUser.lineIds || (selUser.lineId ? [selUser.lineId] : [])) : [];
         filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
           const a = areasMap.get(id);
-          return a && ((a.repId && lmReps.includes(a.repId)) || (selUser.lineId && a.lineId === selUser.lineId));
+          return a && ((a.repId && (lmReps.includes(a.repId) || dms.includes(a.repId))) || (a.lineId && lmUserLineIds.includes(a.lineId)));
         }));
       } else {
+        const repUserAreaIds = selUser ? (selUser.areaIds || (selUser.areaId ? [selUser.areaId] : [])) : [];
         filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
           const a = areasMap.get(id);
-          return a && a.repId === selectedRepVal;
+          return a && (a.repId === selectedRepVal || repUserAreaIds.includes(a.id));
         }));
       }
     }
@@ -457,12 +445,20 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   }
 
   // 4. Map Targets & Sales into cellMap keyed by (areaId + '||' + productId)
+  const areaNameToIdMap = new Map();
+  allAreas.forEach((a) => {
+    if (a.name) areaNameToIdMap.set(a.name.toLowerCase().trim(), a.id);
+  });
+
   const cellMap = {};
 
   targets.forEach((t) => {
     let tAreaId = t.areaId;
     if (!tAreaId && t.repId) {
       tAreaId = repToAreaMap.get(t.repId);
+    }
+    if (!tAreaId && t.area) {
+      tAreaId = areaNameToIdMap.get(t.area.toLowerCase().trim());
     }
     if (!tAreaId || !filteredAreaIds.has(tAreaId)) return;
 
@@ -486,6 +482,12 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     let sAreaId = s.areaId;
     if (!sAreaId && s.repId) {
       sAreaId = repToAreaMap.get(s.repId);
+    }
+    if (!sAreaId && s.area) {
+      sAreaId = areaNameToIdMap.get(s.area.toLowerCase().trim());
+    }
+    if (!sAreaId && s.areaRaw) {
+      sAreaId = areaNameToIdMap.get(s.areaRaw.toLowerCase().trim());
     }
     if (!sAreaId || !filteredAreaIds.has(sAreaId)) return;
 

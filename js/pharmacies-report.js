@@ -135,17 +135,36 @@ function getScopedPharmacies(respectActiveFilters = true) {
         if (isLM) {
           const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
           const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-          pharms = pharms.filter((p) => p.repId && repsUnderLM.includes(p.repId) && (!allowedTeamIds || allowedTeamIds.includes(p.repId)));
+          const lmTeamIds = [repId, ...dmsUnderLM, ...repsUnderLM];
+          const lmUser = allUsers.find((u) => u.id === repId);
+          const lmUserLineIds = lmUser ? (lmUser.lineIds || (lmUser.lineId ? [lmUser.lineId] : [])) : [];
+          const lmAreaIds = allAreas.filter((a) => (a.repId && lmTeamIds.includes(a.repId)) || (a.lineId && lmUserLineIds.includes(a.lineId))).map((a) => a.id);
+          pharms = pharms.filter((p) => (p.repId && lmTeamIds.includes(p.repId)) || (p.areaId && lmAreaIds.includes(p.areaId)));
         } else if (isDM) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-          pharms = pharms.filter((p) => p.repId && (repsUnderDM.includes(p.repId) || p.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(p.repId)));
-        } else {
-          const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
-          const repAreaNames = allAreas.filter((a) => a.repId === repId).map((a) => (a.name || "").toLowerCase().trim());
+          const dmTeamIds = [repId, ...repsUnderDM];
+          const dmUser = allUsers.find((u) => u.id === repId);
+          const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
+          const dmAreaIds = allAreas.filter((a) => (a.repId && dmTeamIds.includes(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === repId).map((a) => a.id);
           pharms = pharms.filter((p) =>
+            (p.repId && dmTeamIds.includes(p.repId)) ||
+            (p.areaId && dmAreaIds.includes(p.areaId))
+          );
+        } else {
+          const repUser = allUsers.find((u) => u.id === repId);
+          const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
+          const repAreaIds = allAreas.filter((a) => a.repId === repId || repUserAreaIds.includes(a.id)).map((a) => a.id);
+          const repAreaNames = allAreas.filter((a) => a.repId === repId || repUserAreaIds.includes(a.id)).map((a) => (a.name || "").toLowerCase().trim());
+          if (repUser && repUser.area) {
+            repUser.area.split(',').forEach((s) => {
+              const t = s.trim().toLowerCase();
+              if (t) repAreaNames.push(t);
+            });
+          }
+          pharms = pharms.filter((p) =>
+            p.repId === repId ||
             (p.areaId && repAreaIds.includes(p.areaId)) ||
-            (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim())) ||
-            p.repId === repId
+            (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
           );
         }
       }
@@ -232,7 +251,7 @@ function renderPharmaciesReport() {
       const areaName = areaObj ? (areaObj.name || areaObj.id) : (p.area || "General");
       const lineObj = allLines.find((l) => l.id === (areaObj?.lineId || p.lineId));
       const lineName = lineObj ? (lang === "ar" && lineObj.nameAr ? lineObj.nameAr : lineObj.name) : "";
-      const effectiveRepId = areaObj ? (areaObj.repId || null) : (p.repId || null);
+      const effectiveRepId = p.repId || (areaObj ? (areaObj.repId || null) : null);
       const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
       const repName = repObj ? repObj.name : "Unassigned";
 

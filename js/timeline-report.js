@@ -86,8 +86,15 @@ function renderDailyTimeline() {
     visitsInRange = visitsInRange.filter((v) => allowedTeamIds.includes(v.repId) || allowedTeamIds.includes(v.doubleWithUserId));
   } else if (selectedRep) {
     const selectedUserObj = allUsers.find((u) => u.id === selectedRep);
-    const isDM = selectedUserObj && (selectedUserObj.role === 'district_manager' || selectedUserObj.role === 'dm');
-    if (isDM) {
+    const selRole = selectedUserObj ? (window.normalizeRole ? window.normalizeRole(selectedUserObj.role) : (selectedUserObj.role || '').toLowerCase()) : '';
+    const isDM = selRole === 'district_manager' || selRole === 'dm';
+    const isLM = selRole === 'line_manager' || selRole === 'lm';
+    if (isLM) {
+      const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+      const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
+      visitsInRange = visitsInRange.filter((v) => (v.repId && lmTeamIds.includes(v.repId)) || (v.doubleWithUserId && lmTeamIds.includes(v.doubleWithUserId)));
+    } else if (isDM) {
       const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
       visitsInRange = visitsInRange.filter((v) => v.repId === selectedRep || v.doubleWithUserId === selectedRep || (v.repId && dmReps.includes(v.repId)));
     } else {
@@ -109,7 +116,18 @@ function renderDailyTimeline() {
   if (isRep) {
     activityTargetIds = [user.id];
   } else if (selectedRep && selectedRep !== 'all') {
-    activityTargetIds = [selectedRep];
+    const selectedUserObj = allUsers.find((u) => u.id === selectedRep);
+    const selRole = selectedUserObj ? (window.normalizeRole ? window.normalizeRole(selectedUserObj.role) : (selectedUserObj.role || '').toLowerCase()) : '';
+    if (selRole === 'line_manager' || selRole === 'lm') {
+      const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+      activityTargetIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
+    } else if (selRole === 'district_manager' || selRole === 'dm') {
+      const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+      activityTargetIds = [selectedRep, ...dmReps];
+    } else {
+      activityTargetIds = [selectedRep];
+    }
   } else {
     activityTargetIds = allowedTeamIds.length > 0 ? allowedTeamIds : allUsers.map((u) => u.id);
   }

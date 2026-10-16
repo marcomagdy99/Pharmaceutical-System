@@ -328,7 +328,6 @@
     const currentUser = getCurrentUser();
     populateCostingFilters(currentUser);
     setDefaultCostingDates();
-    renderAccountsCostingReport();
     CostingState.initialized = true;
   }
 
@@ -389,8 +388,7 @@
       fromInput.value = "";
       toInput.value = "";
     }
-
-    renderAccountsCostingReport();
+    // Preset updated; rendered strictly on Show button click
   }
 
   /**
@@ -577,23 +575,19 @@
   function onAccountsCostingLineChange() {
     populateCostingRepOptions();
     populateCostingAreaOptions();
-    renderAccountsCostingReport();
   }
 
   function onAccountsCostingDmChange() {
     populateCostingRepOptions();
     populateCostingAreaOptions();
-    renderAccountsCostingReport();
   }
 
   function onAccountsCostingRepChange() {
     populateCostingAreaOptions();
-    renderAccountsCostingReport();
   }
 
   function onAccountsCostingSearchInput(val) {
     CostingState.searchTerm = (val || "").trim().toLowerCase();
-    filterAndDisplayCostingRows();
   }
 
   function resetAccountsCostingFilters() {
@@ -828,6 +822,10 @@
    * Main builder: aggregates transactions per doctor/account and builds the matrix
    */
   function renderAccountsCostingReport() {
+    const promptEl = document.getElementById("accountsCostingPromptContainer");
+    const resultsEl = document.getElementById("accountsCostingResultsContainer");
+    if (promptEl) promptEl.style.display = "none";
+    if (resultsEl) resultsEl.style.display = "block";
     const user = getCurrentUser();
     const scope = resolveUserCostingScope(user);
 
@@ -986,17 +984,25 @@
       );
     }
     if (repVal && repVal !== "all") {
+      const repUser = allUsers.find((u) => u.id === repVal);
+      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
+      const repAreaIds = new Set(allAreas.filter((a) => a.repId === repVal || repUserAreaIds.includes(a.id)).map((a) => a.id));
       accountRows = accountRows.filter((r) =>
         r.repId === repVal ||
-        (r.transactions && r.transactions.some((t) => t.repId === repVal))
+        (r.areaId && repAreaIds.has(r.areaId)) ||
+        (r.transactions && r.transactions.some((t) => t.repId === repVal || (t.areaId && repAreaIds.has(t.areaId))))
       );
     }
     if (dmVal && dmVal !== "all" && !scope.isDM && !scope.isRep) {
-      const dmSubUsers = allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal);
+      const dmSubUsers = allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
       const dmRepIds = new Set(dmSubUsers.map((u) => u.id));
+      const dmUser = allUsers.find((u) => u.id === dmVal);
+      const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
+      const dmAreaIds = new Set(allAreas.filter((a) => (a.repId && dmRepIds.has(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === dmVal).map((a) => a.id));
       accountRows = accountRows.filter((r) =>
         dmRepIds.has(r.repId) ||
-        (r.transactions && r.transactions.some((t) => dmRepIds.has(t.repId)))
+        (r.areaId && dmAreaIds.has(r.areaId)) ||
+        (r.transactions && r.transactions.some((t) => dmRepIds.has(t.repId) || (t.areaId && dmAreaIds.has(t.areaId))))
       );
     }
     if (classVal && classVal !== "all") {

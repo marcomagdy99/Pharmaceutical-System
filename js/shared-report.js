@@ -649,25 +649,34 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
 
   if (selects.length === 0) return;
 
+  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
   const effectiveLineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
+  const role = window.normalizeRole ? window.normalizeRole(effectiveUser.role) : (effectiveUser.role || '').toLowerCase();
   const allUsers = getSharedReportUsers();
   const scopedTeam = window.getScopedTeamForLine
-    ? window.getScopedTeamForLine(effectiveLineId, user)
+    ? window.getScopedTeamForLine(effectiveLineId, effectiveUser)
     : allUsers;
 
-  const isRep = role === 'medical_rep' || role === 'rep';
+  const isRep = window.isRepRole ? window.isRepRole(effectiveUser) : (role === 'medical_rep' || role === 'rep');
   const isDM = role === 'district_manager' || role === 'dm';
 
   selects.forEach((selectEl) => {
     const prevVal = selectEl.value;
+    const lineKey = `${effectiveLineId}_${effectiveUser.id}_${role}`;
+    if (selectEl.dataset.populatedKey === lineKey && selectEl.options.length > 1) {
+      if (prevVal && Array.from(selectEl.options).some((o) => o.value === prevVal)) {
+        selectEl.value = prevVal;
+      }
+      return;
+    }
+    selectEl.dataset.populatedKey = lineKey;
     selectEl.replaceChildren();
 
     if (isRep) {
       const opt = document.createElement('option');
-      opt.value = user.id;
-      opt.textContent = `${user.name} (${user.employeeCode || 'Rep'})`;
+      opt.value = effectiveUser.id;
+      opt.textContent = `${effectiveUser.name} (${effectiveUser.employeeCode || 'Rep'})`;
       opt.selected = true;
       selectEl.appendChild(opt);
       selectEl.disabled = true;
@@ -682,7 +691,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
     if (effectiveLineId !== 'all') {
       vacantAreas = vacantAreas.filter((a) => a.lineId === effectiveLineId);
     } else if (role !== 'admin' && role !== 'hr') {
-      const userLines = window.getUserLines ? window.getUserLines(user?.id) : [];
+      const userLines = window.getUserLines ? window.getUserLines(effectiveUser.id) : [];
       const userLineIds = userLines.map((l) => l.id);
       if (userLineIds.length > 0) {
         vacantAreas = vacantAreas.filter((a) => !a.lineId || userLineIds.includes(a.lineId));
@@ -696,13 +705,13 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
       allOpt.textContent = allLabel;
       selectEl.appendChild(allOpt);
 
-      const reps = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'medical_rep' || u.role === 'rep'));
+      const reps = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'medical_rep' : (u.role === 'medical_rep' || u.role === 'rep')));
       appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
 
       // Vacant areas under this DM
       const myVacantAreas = vacantAreas.filter((a) => {
         const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
-        return mgrId === user.id || (!mgrId && (!a.lineId || (user.lineIds && user.lineIds.includes(a.lineId)) || user.lineId === a.lineId));
+        return mgrId === effectiveUser.id || (!mgrId && (!a.lineId || (effectiveUser.lineIds && effectiveUser.lineIds.includes(a.lineId)) || effectiveUser.lineId === a.lineId));
       });
       myVacantAreas.forEach((area) => {
         const opt = document.createElement('option');
@@ -718,8 +727,8 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
       allOpt.textContent = allLabel;
       selectEl.appendChild(allOpt);
 
-      const dms = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'district_manager' || u.role === 'dm'));
-      const reps = scopedTeam.filter((u) => u.id !== user.id && (u.role === 'medical_rep' || u.role === 'rep'));
+      const dms = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+      const reps = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'medical_rep' : (u.role === 'medical_rep' || u.role === 'rep')));
 
       if (dms.length > 0) {
         const dmGroup = document.createElement('optgroup');
@@ -744,7 +753,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
               const opt = document.createElement('option');
               opt.value = `vacant:${area.id}`;
               const areaName = area.name;
-        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+              opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
               group.appendChild(opt);
             });
             selectEl.appendChild(group);
@@ -761,7 +770,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
             const opt = document.createElement('option');
             opt.value = `vacant:${area.id}`;
             const areaName = area.name;
-        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+            opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
             group.appendChild(opt);
           });
           selectEl.appendChild(group);
@@ -774,7 +783,7 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
           const opt = document.createElement('option');
           opt.value = `vacant:${area.id}`;
           const areaName = area.name;
-        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+          opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
           repGroup.appendChild(opt);
         });
         selectEl.appendChild(repGroup);

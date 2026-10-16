@@ -281,29 +281,13 @@ function initPharmSalesFilters(user) {
 
   window.populatePharmSalesAreas(user);
 
-  function triggerPharmSalesAutoRefresh() {
-    const salesRes = document.getElementById('salesResultsContainer');
-    if (salesRes && salesRes.style.display !== 'none' && typeof renderSalesReport === 'function') {
-      renderSalesReport();
-    }
-  }
-
   const pharmRepSelectEl = document.getElementById('pharmSalesRepSelect');
   if (pharmRepSelectEl && !pharmRepSelectEl.dataset.areaListenerBound) {
     pharmRepSelectEl.dataset.areaListenerBound = 'true';
     pharmRepSelectEl.addEventListener('change', () => {
       window.populatePharmSalesAreas(user);
-      triggerPharmSalesAutoRefresh();
     });
   }
-
-  ['pharmSalesAreaSelect', 'pharmSalesProductSelect', 'pharmSalesDistributorSelect', 'pharmSalesYearSelect', 'pharmSalesTypeSelect'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el && !el.dataset.autoRefreshBound) {
-      el.dataset.autoRefreshBound = 'true';
-      el.addEventListener('change', triggerPharmSalesAutoRefresh);
-    }
-  });
 
   window.updatePharmSalesProductsForLine = function (selectedLineId) {
     const pSelect = document.getElementById('pharmSalesProductSelect');
@@ -571,23 +555,41 @@ function getFilteredPharmSalesRows() {
         );
       } else if (isDM) {
         const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        const dmAreaIds = allAreas.filter((a) => {
+        const dmUser = allUsers.find((u) => u.id === selectedRep);
+        const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
+        const dmAreaObjs = allAreas.filter((a) => {
           if (a.repId && repsUnderDM.includes(a.repId)) return true;
+          if (dmUserAreaIds.includes(a.id)) return true;
           const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
           return mgrId === selectedRep;
-        }).map((a) => a.id);
+        });
+        const dmAreaIds = new Set(dmAreaObjs.map((a) => a.id));
+        const dmAreaNames = new Set(dmAreaObjs.map((a) => (a.name || '').toLowerCase().trim()).filter(Boolean));
         rows = rows.filter((r) =>
           r.dmId === selectedRep ||
           (r.repId && repsUnderDM.includes(r.repId)) ||
-          (r.areaId && dmAreaIds.includes(r.areaId))
+          (r.areaId && dmAreaIds.has(r.areaId)) ||
+          (r.area && dmAreaNames.has(r.area.toLowerCase().trim())) ||
+          (r.areaRaw && dmAreaNames.has(r.areaRaw.toLowerCase().trim()))
         );
       } else {
-        const targetRepAreas = (window.store && window.store.areas ? window.store.areas.getByRep(selectedRep) : []);
+        const repUser = allUsers.find((u) => u.id === selectedRep);
+        const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
+        const targetRepAreas = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id));
         const targetRepAreaIds = new Set(targetRepAreas.map((a) => a.id));
+        const targetRepAreaNames = new Set(targetRepAreas.map((a) => (a.name || '').toLowerCase().trim()).filter(Boolean));
+        if (repUser && repUser.area) {
+          repUser.area.split(',').forEach((s) => {
+            const t = s.trim().toLowerCase();
+            if (t) targetRepAreaNames.add(t);
+          });
+        }
         rows = rows.filter((r) =>
           r.repId === selectedRep ||
+          r.dmId === selectedRep ||
           (r.areaId && targetRepAreaIds.has(r.areaId)) ||
-          r.dmId === selectedRep
+          (r.area && targetRepAreaNames.has(r.area.toLowerCase().trim())) ||
+          (r.areaRaw && targetRepAreaNames.has(r.areaRaw.toLowerCase().trim()))
         );
       }
     }
@@ -1197,15 +1199,27 @@ function populateTargetFormSelects() {
   }
 }
 
-function renderTargetsTable() {
+function renderTargetsTable(filterLineId) {
   const tbody = document.getElementById('targetsTableBody');
   if (!tbody) return;
-  const targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  const effLineId = filterLineId || (lineSelect ? lineSelect.value : 'all');
+  let targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
     .slice()
     .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
   const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+
+  if (effLineId && effLineId !== 'all') {
+    targets = targets.filter((t) => {
+      const prod = allProducts.find((p) => p.id === t.productId);
+      if (prod && prod.lineId === effLineId) return true;
+      const area = allAreas.find((a) => a.id === t.areaId || (t.repId && a.repId === t.repId));
+      if (area && area.lineId === effLineId) return true;
+      return false;
+    });
+  }
 
   tbody.replaceChildren();
   if (!targets.length) {

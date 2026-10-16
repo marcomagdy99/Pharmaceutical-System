@@ -162,17 +162,33 @@ function getScopedDoctors(respectActiveFilters = true) {
         if (isLM) {
           const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
           const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-          docs = docs.filter((d) => d.repId && repsUnderLM.includes(d.repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+          const lmTeamIds = [repId, ...dmsUnderLM, ...repsUnderLM];
+          const lmUser = allUsers.find((u) => u.id === repId);
+          const lmUserLineIds = lmUser ? (lmUser.lineIds || (lmUser.lineId ? [lmUser.lineId] : [])) : [];
+          const lmAreaIds = allAreas.filter((a) => (a.repId && lmTeamIds.includes(a.repId)) || (a.lineId && lmUserLineIds.includes(a.lineId))).map((a) => a.id);
+          docs = docs.filter((d) => (d.repId && lmTeamIds.includes(d.repId)) || (d.areaId && lmAreaIds.includes(d.areaId)));
         } else if (isDM) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-          docs = docs.filter((d) => d.repId && (repsUnderDM.includes(d.repId) || d.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(d.repId)));
+          const dmTeamIds = [repId, ...repsUnderDM];
+          const dmUser = allUsers.find((u) => u.id === repId);
+          const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
+          const dmAreaIds = allAreas.filter((a) => (a.repId && dmTeamIds.includes(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === repId).map((a) => a.id);
+          docs = docs.filter((d) => (d.repId && dmTeamIds.includes(d.repId)) || (d.areaId && dmAreaIds.includes(d.areaId)));
         } else {
-          const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
-          const repAreaNames = allAreas.filter((a) => a.repId === repId).map((a) => (a.name || "").toLowerCase().trim());
+          const repUser = allUsers.find((u) => u.id === repId);
+          const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
+          const repAreaIds = allAreas.filter((a) => a.repId === repId || repUserAreaIds.includes(a.id)).map((a) => a.id);
+          const repAreaNames = allAreas.filter((a) => a.repId === repId || repUserAreaIds.includes(a.id)).map((a) => (a.name || "").toLowerCase().trim());
+          if (repUser && repUser.area) {
+            repUser.area.split(',').forEach((s) => {
+              const t = s.trim().toLowerCase();
+              if (t) repAreaNames.push(t);
+            });
+          }
           docs = docs.filter((d) =>
+            d.repId === repId ||
             (d.areaId && repAreaIds.includes(d.areaId)) ||
-            (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim())) ||
-            d.repId === repId
+            (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim()))
           );
         }
       }
@@ -326,7 +342,7 @@ function renderDoctorsReport() {
       const areaName = areaObj ? (areaObj.name || areaObj.id) : (d.area || "General");
       const lineObj = allLines.find((l) => l.id === (areaObj?.lineId || d.lineId));
       const lineName = lineObj ? (lang === "ar" && lineObj.nameAr ? lineObj.nameAr : lineObj.name) : "";
-      const effectiveRepId = areaObj ? (areaObj.repId || null) : (d.repId || null);
+      const effectiveRepId = d.repId || (areaObj ? (areaObj.repId || null) : null);
       const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
       const repName = repObj ? repObj.name : "Unassigned";
       const isClassA = d.class === "A";
