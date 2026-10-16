@@ -429,6 +429,10 @@ function getFilteredPharmSalesRows() {
       if (prodNameLineIdMap.has(pName)) return prodNameLineIdMap.get(pName);
     }
     if (r.lineId) return r.lineId;
+    if (r.areaId && window.store && window.store.areas) {
+      const a = window.store.areas.getById(r.areaId);
+      if (a && a.lineId) return a.lineId;
+    }
     return null;
   };
 
@@ -539,25 +543,6 @@ function getFilteredPharmSalesRows() {
         );
       }
     }
-  }
-
-  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-  if (selectedLineId !== 'all') {
-    rows = rows.filter((r) => {
-      if (r.lineId) return r.lineId === selectedLineId;
-      if (r.areaId) {
-        const a = (window.store && window.store.areas) ? window.store.areas.getById(r.areaId) : null;
-        if (a && a.lineId) return a.lineId === selectedLineId;
-      }
-      if (r.repId) {
-        const u = (window.store && window.store.users) ? window.store.users.getById(r.repId) : null;
-        if (u) {
-          const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-          if (uLines.includes(selectedLineId)) return true;
-        }
-      }
-      return false;
-    });
   }
 
   const areaSelect = document.getElementById('pharmSalesAreaSelect');

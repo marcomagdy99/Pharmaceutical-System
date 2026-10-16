@@ -528,6 +528,7 @@ function populateReportLineFilter(user) {
   const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
   const isRep = role === 'medical_rep' || role === 'rep';
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
   const curVal = lineSelect.value;
 
@@ -559,14 +560,21 @@ function populateReportLineFilter(user) {
   lineSelect.disabled = false;
   const isFullAdmin = role === 'admin' || role === 'hr';
 
-  if (isFullAdmin || userLines.length > 1) {
+  let linesToDisplay = userLines;
+  if (isFullAdmin || role === 'business_unit' || !linesToDisplay || linesToDisplay.length === 0) {
+    if (isFullAdmin || !linesToDisplay || linesToDisplay.length === 0) {
+      linesToDisplay = allLines;
+    }
+  }
+
+  if (isFullAdmin || linesToDisplay.length > 1 || linesToDisplay.length === 0) {
     const optAll = document.createElement('option');
     optAll.value = 'all';
     optAll.textContent = '🌐 All Product Lines';
     lineSelect.appendChild(optAll);
   }
 
-  userLines.forEach((l) => {
+  linesToDisplay.forEach((l) => {
     const opt = document.createElement('option');
     opt.value = l.id;
     opt.textContent = `📦 ${l.name}`;
@@ -587,6 +595,55 @@ window.onReportLineFilterChange = function (selectedLineId) {
   populateUnifiedReportEmployeeFilters(user, selectedLineId);
   if (typeof window.updatePharmSalesProductsForLine === 'function') {
     window.updatePharmSalesProductsForLine(selectedLineId);
+  }
+  if (typeof window.populatePharmSalesAreas === 'function') {
+    window.populatePharmSalesAreas(user);
+  }
+  if (typeof window.populateAchAreas === 'function') {
+    window.populateAchAreas();
+  }
+
+  const activeBtn = document.querySelector('.report-tab-btn.active');
+  const activeTab = activeBtn ? activeBtn.dataset.tab : 'sales';
+
+  if (activeTab === 'sales') {
+    const salesRes = document.getElementById('salesResultsContainer');
+    if (salesRes && salesRes.style.display !== 'none' && typeof window.renderSalesReport === 'function') {
+      window.renderSalesReport();
+    }
+  } else if (activeTab === 'achievements') {
+    const achRes = document.getElementById('achResultsContainer');
+    if (achRes && achRes.style.display !== 'none' && typeof window.renderAchievementsReport === 'function') {
+      window.renderAchievementsReport();
+    }
+  } else if (activeTab === 'timeline') {
+    if (typeof window.renderTimelineReport === 'function') {
+      window.renderTimelineReport();
+    }
+  } else if (activeTab === 'coverage') {
+    if (typeof window.renderCoverageReport === 'function') {
+      window.renderCoverageReport();
+    }
+  } else if (activeTab === 'doctors') {
+    if (typeof window.renderDoctorsReport === 'function') {
+      window.renderDoctorsReport();
+    }
+  } else if (activeTab === 'hospitals') {
+    if (typeof window.renderHospitalsReport === 'function') {
+      window.renderHospitalsReport();
+    }
+  } else if (activeTab === 'pharmacies') {
+    if (typeof window.renderPharmaciesReport === 'function') {
+      window.renderPharmaciesReport();
+    }
+  } else if (activeTab === 'missing-days') {
+    if (typeof window.renderMissingDaysReport === 'function') {
+      window.renderMissingDaysReport();
+    }
+  } else if (activeTab === 'gps-tracing') {
+    if (typeof window.renderGpsTracingReport === 'function') {
+      window.renderGpsTracingReport();
+    }
   }
 };
 

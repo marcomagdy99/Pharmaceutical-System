@@ -366,7 +366,14 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   if (selectedLineId && selectedLineId !== 'all') {
     filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
       const a = areasMap.get(id);
-      return a && a.lineId === selectedLineId;
+      if (!a) return false;
+      if (a.lineId) return a.lineId === selectedLineId;
+      if (a.repId) {
+        const rep = usersMap.get(a.repId);
+        const repLines = rep ? (window.getUserLines ? window.getUserLines(rep.id).map((l) => l.id) : (rep.lineIds || (rep.lineId ? [rep.lineId] : []))) : [];
+        if (repLines.includes(selectedLineId)) return true;
+      }
+      return false;
     }));
   }
 
