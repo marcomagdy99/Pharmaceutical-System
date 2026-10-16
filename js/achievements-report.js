@@ -219,7 +219,7 @@ function getAchievementsScopeRepIds(user) {
 
   if (selectedRep && selectedRep !== 'all') {
     if (selectedRep.startsWith('vacant:')) {
-      return [];
+      return ['vacant'];
     }
     if (selectedRep === 'all_reps' || selectedRep === 'all_dms') {
       return allowedRepIds;
@@ -257,12 +257,9 @@ function getAchievementsScopeRepIds(user) {
 }
 
 /**
- * Builds the Rep -> Product breakdown for one month. Every
- * (repId, productId) combination that has EITHER a target OR any matched
- * sales gets a row -- so a rep with a target but zero sales still shows
- * up (0% achievement), and a rep with sales but no target set shows up
- * too (target columns at 0, so achievement is left as "--" rather than
- * a misleading percentage).
+ * Builds the Territory/Area -> Product breakdown for achievements.
+ * Territory-centric calculation supporting both assigned reps and vacant territories.
+ * Ensures vacant territories with sales or targets are fully tracked and roll up to DMs/LMs.
  */
 function buildAchievementsData(monthKeys, scopeRepIds) {
   const keys = Array.isArray(monthKeys) ? monthKeys : [monthKeys];
@@ -270,41 +267,125 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   const curUser = (typeof checkAuth === 'function' ? checkAuth() : null) || {};
   const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+  const userRole = window.normalizeRole ? window.normalizeRole(curUser.role) : (curUser.role || '').toLowerCase();
 
   const keysSet = new Set(keys);
-  const repScopeSet = scopeRepIds ? new Set(scopeRepIds) : null;
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
-  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
-  const areasMap = new Map(allAreas.map((a) => [a.id, a]));
-
-  const getRowEffectiveRepId = (s) => {
-    if (s.areaId) {
-      const area = areasMap.get(s.areaId);
-      if (area && area.repId) return area.repId;
-    }
-    if (s.repId) return s.repId;
-    return null;
-  };
-
-  let targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
-    .filter((t) => keysSet.has(t.month) && (!repScopeSet || repScopeSet.has(t.repId)));
-  let salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-    .filter((s) => {
-      if (!keysSet.has(s.month) || !s.productId) return false;
-      const effectiveRepId = getRowEffectiveRepId(s);
-      if (repScopeSet) {
-        return effectiveRepId && repScopeSet.has(effectiveRepId);
-      }
-      return true;
-    });
-
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
-
-  // O(1) Hash Map indices to replace repetitive O(N) .find searches in large datasets
-  const usersMap = new Map(allUsers.map((u) => [u.id, u]));
   const allProducts = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
   const productsMap = new Map(allProducts.map((p) => [p.id, p]));
+  const usersMap = new Map(allUsers.map((u) => [u.id, u]));
+  const areasMap = new Map(allAreas.map((a) => [a.id, a]));
+
+  const repToAreaMap = new Map();
+  allAreas.forEach((a) => {
+    if (a.repId) repToAreaMap.set(a.repId, a.id);
+  });
+
+  // 1. Determine allowed areas based on viewer's role
+  let allowedAreaIds = null;
+  if (isRep) {
+    const repAreas = allAreas.filter((a) => a.repId === curUser.id || (curUser.areaIds && curUser.areaIds.includes(a.id)));
+    allowedAreaIds = new Set(repAreas.map((a) => a.id));
+  } else if (userRole === 'district_manager' || userRole === 'dm') {
+    const dmReps = allUsers.filter((u) => u.managerId === curUser.id).map((u) => u.id);
+    const dmAreas = allAreas.filter((a) => {
+      if (a.repId && dmReps.includes(a.repId)) return true;
+      const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+      if (mgrId === curUser.id) return true;
+      if (!mgrId && (!a.lineId || (curUser.lineIds && curUser.lineIds.includes(a.lineId)) || curUser.lineId === a.lineId)) return true;
+      return false;
+    });
+    allowedAreaIds = new Set(dmAreas.map((a) => a.id));
+  } else if (userRole === 'line_manager' || userRole === 'lm') {
+    const dms = allUsers.filter((u) => u.managerId === curUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+    const dmIds = dms.map((d) => d.id);
+    const lmReps = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    const lmAreas = allAreas.filter((a) => {
+      if (a.repId && lmReps.includes(a.repId)) return true;
+      if (curUser.lineId && a.lineId === curUser.lineId) return true;
+      if (curUser.lineIds && curUser.lineIds.includes(a.lineId)) return true;
+      return false;
+    });
+    allowedAreaIds = new Set(lmAreas.map((a) => a.id));
+  }
+
+  // 2. Apply UI filters (rep filter / vacant filter & area filter)
+  const achRepSelect = document.getElementById('achRepSelect');
+  const selectedRepVal = achRepSelect ? achRepSelect.value : 'all';
+  const achAreaSelect = document.getElementById('achAreaSelect');
+  const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
+
+  let filteredAreaIds = allowedAreaIds ? new Set(allowedAreaIds) : new Set(allAreas.map((a) => a.id));
+
+  if (selectedRepVal && selectedRepVal !== 'all') {
+    if (selectedRepVal.startsWith('vacant:')) {
+      const vAreaId = selectedRepVal.split(':')[1];
+      filteredAreaIds = new Set([vAreaId]);
+    } else if (selectedRepVal === 'all_reps') {
+      filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
+        const a = areasMap.get(id);
+        return a && a.repId;
+      }));
+    } else if (selectedRepVal === 'all_dms') {
+      // Keep all
+    } else {
+      const selUser = usersMap.get(selectedRepVal);
+      const selRole = selUser ? (window.normalizeRole ? window.normalizeRole(selUser.role) : selUser.role) : '';
+      if (selRole === 'district_manager' || selRole === 'dm') {
+        const dmReps = allUsers.filter((u) => u.managerId === selectedRepVal).map((u) => u.id);
+        filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
+          const a = areasMap.get(id);
+          if (!a) return false;
+          if (a.repId && dmReps.includes(a.repId)) return true;
+          const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+          return mgrId === selectedRepVal;
+        }));
+      } else if (selRole === 'line_manager' || selRole === 'lm') {
+        const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
+        const lmReps = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+        filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
+          const a = areasMap.get(id);
+          return a && ((a.repId && lmReps.includes(a.repId)) || (selUser.lineId && a.lineId === selUser.lineId));
+        }));
+      } else {
+        filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
+          const a = areasMap.get(id);
+          return a && a.repId === selectedRepVal;
+        }));
+      }
+    }
+  }
+
+  if (selectedArea && selectedArea !== 'all') {
+    filteredAreaIds = new Set([selectedArea]);
+  }
+
+  if (selectedLineId && selectedLineId !== 'all') {
+    filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
+      const a = areasMap.get(id);
+      return a && a.lineId === selectedLineId;
+    }));
+  }
+
+  // 3. Load Targets and Distributor Sales
+  let targets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
+    .filter((t) => keysSet.has(t.month));
+
+  let salesRows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
+    .filter((s) => keysSet.has(s.month) && s.productId);
+
+  // Sales type filter (Total / Private / Bulk)
+  const achSalesTypeSelect = document.getElementById('achSalesTypeSelect');
+  const activeAchType = achSalesTypeSelect ? achSalesTypeSelect.value : 'all';
+  if (activeAchType === "private") {
+    salesRows = salesRows.filter((s) => s.salesType !== "bulk");
+  } else if (activeAchType === "bulk") {
+    salesRows = salesRows.filter((s) => s.salesType === "bulk");
+  }
+
   const curAllowedLineIds = (typeof getPharmSalesAllowedLineIds === 'function')
     ? getPharmSalesAllowedLineIds(curUser)
     : null;
@@ -329,69 +410,66 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     });
   }
 
-  // 🔹 Sales Type filter (Total / Private / Bulk)
-  const achSalesTypeSelect = document.getElementById('achSalesTypeSelect');
-  const activeAchType = achSalesTypeSelect ? achSalesTypeSelect.value : 'all';
-  if (activeAchType === "private") {
-    salesRows = salesRows.filter((s) => s.salesType !== "bulk");
-  } else if (activeAchType === "bulk") {
-    salesRows = salesRows.filter((s) => s.salesType === "bulk");
-  }
-
-  const achAreaSelect = document.getElementById('achAreaSelect');
-  const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
-  const achRepSelect = document.getElementById('achRepSelect');
-  const selectedRepVal = achRepSelect ? achRepSelect.value : 'all';
-  if (selectedRepVal && selectedRepVal.startsWith('vacant:')) {
-    const vAreaId = selectedRepVal.split(':')[1];
-    salesRows = salesRows.filter((s) => s.areaId === vAreaId);
-  } else if (selectedArea && selectedArea !== 'all') {
-    salesRows = salesRows.filter((s) => s.areaId === selectedArea);
-  }
-
+  // 4. Map Targets & Sales into cellMap keyed by (areaId + '||' + productId)
   const cellMap = {};
+
   targets.forEach((t) => {
-    const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(t.repId) : [];
-    if (repLines.length > 0) {
-      const prod = productsMap.get(t.productId);
-      const repLineIds = repLines.map((l) => l.id);
-      if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
-        return;
-      }
+    let tAreaId = t.areaId;
+    if (!tAreaId && t.repId) {
+      tAreaId = repToAreaMap.get(t.repId);
     }
-    const key = t.repId + '||' + t.productId;
-    if (!cellMap[key]) cellMap[key] = { repId: t.repId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+    if (!tAreaId || !filteredAreaIds.has(tAreaId)) return;
+
+    const area = areasMap.get(tAreaId);
+    if (area && area.lineId) {
+      const prod = productsMap.get(t.productId);
+      if (prod && prod.lineId && prod.lineId !== area.lineId) return;
+    }
+
+    const key = tAreaId + '||' + t.productId;
+    if (!cellMap[key]) {
+      cellMap[key] = { areaId: tAreaId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+    }
     cellMap[key].tUnit += parseFloat(t.targetUnits) || 0;
     cellMap[key].tValue += t.target != null
       ? parseFloat(t.target) || 0
       : (parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0);
   });
+
   salesRows.forEach((s) => {
-    const rowRepId = getRowEffectiveRepId(s);
-    if (!rowRepId) return;
-    if (isRep && rowRepId !== curUser.id) return;
-    const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(rowRepId) : [];
-    if (repLines.length > 0) {
-      const prod = productsMap.get(s.productId);
-      const repLineIds = repLines.map((l) => l.id);
-      if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
-        return;
-      }
+    let sAreaId = s.areaId;
+    if (!sAreaId && s.repId) {
+      sAreaId = repToAreaMap.get(s.repId);
     }
-    const key = rowRepId + '||' + s.productId;
-    if (!cellMap[key]) cellMap[key] = { repId: rowRepId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+    if (!sAreaId || !filteredAreaIds.has(sAreaId)) return;
+
+    const area = areasMap.get(sAreaId);
+    if (area && area.lineId) {
+      const prod = productsMap.get(s.productId);
+      if (prod && prod.lineId && prod.lineId !== area.lineId) return;
+    }
+
+    const key = sAreaId + '||' + s.productId;
+    if (!cellMap[key]) {
+      cellMap[key] = { areaId: sAreaId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+    }
     cellMap[key].sUnit += parseFloat(s.quantity) || 0;
     cellMap[key].sValue += parseFloat(s.value) || 0;
   });
 
-  const repGroups = {};
+  // 5. Build Territory/Area Groups
+  const areaGroups = {};
   Object.values(cellMap).forEach((cell) => {
-    if (!repGroups[cell.repId]) {
-      const rep = usersMap.get(cell.repId);
-      repGroups[cell.repId] = {
-        repId: cell.repId,
-        repName: rep ? rep.name : cell.repId,
-        areaName: rep && rep.area ? rep.area : '',
+    if (!areaGroups[cell.areaId]) {
+      const area = areasMap.get(cell.areaId);
+      const rep = area && area.repId ? usersMap.get(area.repId) : null;
+      areaGroups[cell.areaId] = {
+        areaId: cell.areaId,
+        areaName: area ? area.name : cell.areaId,
+        areaCode: area ? area.code : '',
+        repId: area ? area.repId : null,
+        repName: rep ? rep.name : 'Vacant',
+        isVacant: !rep,
         totalSUnit: 0,
         totalSValue: 0,
         totalTUnit: 0,
@@ -399,7 +477,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
         products: [],
       };
     }
-    const g = repGroups[cell.repId];
+    const g = areaGroups[cell.areaId];
     const prod = productsMap.get(cell.productId);
     g.products.push({
       productId: cell.productId,
@@ -416,12 +494,17 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     g.totalTValue += cell.tValue;
   });
 
-  const groups = Object.values(repGroups);
+  const groups = Object.values(areaGroups);
   groups.forEach((g) => {
     g.totalPct = g.totalTValue > 0 ? (g.totalSValue / g.totalTValue) * 100 : null;
     g.products.sort((a, b) => a.productName.localeCompare(b.productName));
   });
-  groups.sort((a, b) => a.repName.localeCompare(b.repName));
+
+  // Sort: assigned reps first, then vacant areas
+  groups.sort((a, b) => {
+    if (a.isVacant !== b.isVacant) return a.isVacant ? 1 : -1;
+    return (a.isVacant ? a.areaName : a.repName).localeCompare(b.isVacant ? b.areaName : b.repName);
+  });
   return groups;
 }
 
@@ -497,11 +580,15 @@ function renderAchievementsReport() {
       const totalRow = document.createElement('tr');
       totalRow.className = 'ach-total-row';
       totalRow.style.fontWeight = '800';
+
+      const titleCellHtml = g.isVacant
+        ? `<div><strong>${window.escapeHtml(g.areaName)}</strong> <span class="badge bg-warning text-dark ms-1" style="font-size: 0.72rem; padding: 2px 6px;">Vacant</span></div>
+           <div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${g.areaCode ? window.escapeHtml(g.areaCode) + ' • ' : ''}Unassigned Territory</div>`
+        : `<div><strong>${window.escapeHtml(g.repName)}</strong></div>
+           <div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${window.escapeHtml(g.areaName)}${g.areaCode ? ' (' + window.escapeHtml(g.areaCode) + ')' : ''}</div>`;
+
       totalRow.innerHTML = `
-        <td>
-          ${window.escapeHtml(g.repName)}
-          ${g.areaName ? `<div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${window.escapeHtml(g.areaName)}</div>` : ''}
-        </td>
+        <td>${titleCellHtml}</td>
         <td>TOTAL</td>
         <td>${g.totalTUnit.toLocaleString()}</td>
         <td>${g.totalSUnit.toLocaleString()}</td>
@@ -551,7 +638,13 @@ function renderAchievementsReport() {
   if (kpiTarget) kpiTarget.textContent = grandTarget.toLocaleString();
   if (kpiActual) kpiActual.textContent = grandActual.toLocaleString();
   if (kpiPct) kpiPct.textContent = grandTarget > 0 ? ((grandActual / grandTarget) * 100).toFixed(1) + '%' : '—';
-  if (kpiReps) kpiReps.textContent = groups.length;
+  if (kpiReps) {
+    const activeCount = groups.filter((g) => !g.isVacant).length;
+    const vacantCount = groups.filter((g) => g.isVacant).length;
+    kpiReps.innerHTML = vacantCount > 0
+      ? `${activeCount} <small style="font-size: 0.72rem; color: var(--gray-500);">(+${vacantCount} Vacant)</small>`
+      : `${activeCount}`;
+  }
 
   if (typeof window.renderSalesTargetTrendChart === 'function') {
         const chartLabels = selectedMonths.map((mVal) => {
@@ -573,9 +666,9 @@ function renderAchievementsReport() {
     const chartTargets = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
       let mTargets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
-        .filter((t) => t.month === mKey && (!scopeRepIds || scopeRepIds.includes(t.repId)));
-      if (selectedArea !== 'all' && selectedAreaRepId) {
-        mTargets = mTargets.filter((t) => t.repId === selectedAreaRepId);
+        .filter((t) => t.month === mKey);
+      if (selectedArea !== 'all') {
+        mTargets = mTargets.filter((t) => t.areaId === selectedArea || (selectedAreaRepId && t.repId === selectedAreaRepId));
       }
       if (selectedLineId !== 'all') {
         mTargets = mTargets.filter((t) => {

@@ -1470,29 +1470,53 @@
       getById(id) {
         return this.getAll().find((t) => t.id === id);
       },
-      find(repId, productId, month) {
+      find(areaOrRepId, productId, month) {
         return this.getAll().find(
-          (t) => t.repId === repId && t.productId === productId && t.month === month,
+          (t) =>
+            (t.areaId === areaOrRepId || t.repId === areaOrRepId) &&
+            t.productId === productId &&
+            t.month === month,
         );
       },
-      getValue(repId, productId, month) {
-        const t = this.find(repId, productId, month);
+      findByArea(areaId, productId, month) {
+        return this.getAll().find(
+          (t) => t.areaId === areaId && t.productId === productId && t.month === month,
+        );
+      },
+      getByArea(areaId) {
+        return this.getAll().filter((t) => t.areaId === areaId);
+      },
+      getValue(areaOrRepId, productId, month) {
+        const t = this.find(areaOrRepId, productId, month);
         return t ? parseFloat(t.target) || 0 : 0;
       },
       /**
-       * Upserts by (repId, productId, month) -- saving a target for a
+       * Upserts by (areaId, productId, month) -- saving a target for a
        * combination that already has one updates it in place rather than
-       * creating a duplicate row.
+       * creating a duplicate row. Supports legacy repId resolution.
        */
       save(targetObj) {
         if (!window.DEMO_DATA.targets) window.DEMO_DATA.targets = [];
         const list = window.DEMO_DATA.targets;
+
+        // Auto-resolve repId from area if areaId provided
+        if (targetObj.areaId && targetObj.repId === undefined && window.DEMO_DATA.areas) {
+          const matchedArea = window.DEMO_DATA.areas.find((a) => a.id === targetObj.areaId);
+          if (matchedArea) {
+            targetObj.repId = matchedArea.repId || null;
+          }
+        } else if (targetObj.repId && !targetObj.areaId && window.DEMO_DATA.areas) {
+          const matchedArea = window.DEMO_DATA.areas.find((a) => a.repId === targetObj.repId);
+          if (matchedArea) {
+            targetObj.areaId = matchedArea.id;
+          }
+        }
+
         const idx = list.findIndex(
           (t) =>
             t.id === targetObj.id ||
-            (t.repId === targetObj.repId &&
-              t.productId === targetObj.productId &&
-              t.month === targetObj.month),
+            (targetObj.areaId && t.areaId === targetObj.areaId && t.productId === targetObj.productId && t.month === targetObj.month) ||
+            (!targetObj.areaId && t.repId === targetObj.repId && t.productId === targetObj.productId && t.month === targetObj.month),
         );
         if (idx >= 0) {
           list[idx] = { ...list[idx], ...targetObj, id: list[idx].id };

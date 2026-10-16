@@ -1013,20 +1013,24 @@ function getAllProductsFlat() {
   return out;
 }
 
-function updateTargetProductSelectForRep(selectedRepId) {
+function updateTargetProductSelectForArea(selectedAreaId) {
   const productSelect = document.getElementById('targetProductSelect');
   if (!productSelect) return;
   const prevVal = productSelect.value;
   productSelect.replaceChildren();
 
-  const repLines = (selectedRepId && typeof window.getUserLines === 'function')
-    ? window.getUserLines(selectedRepId)
-    : [];
-  const repLineIds = repLines.map((l) => l.id);
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const area = allAreas.find((a) => a.id === selectedAreaId);
 
   let lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
-  if (repLineIds.length > 0) {
-    lines = lines.filter((l) => repLineIds.includes(l.id));
+  if (area && area.lineId) {
+    lines = lines.filter((l) => l.id === area.lineId);
+  } else if (area && area.repId) {
+    const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(area.repId) : [];
+    const repLineIds = repLines.map((l) => l.id);
+    if (repLineIds.length > 0) {
+      lines = lines.filter((l) => repLineIds.includes(l.id));
+    }
   }
 
   lines.forEach((line) => {
@@ -1049,23 +1053,49 @@ function updateTargetProductSelectForRep(selectedRepId) {
   onTargetProductSelectChange();
 }
 
+function updateTargetProductSelectForRep(selectedRepId) {
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const area = allAreas.find((a) => a.repId === selectedRepId);
+  updateTargetProductSelectForArea(area ? area.id : null);
+}
+
 function populateTargetFormSelects() {
-  const repSelect = document.getElementById('targetRepSelect');
+  const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
   const monthSelect = document.getElementById('targetMonthSelect');
   const yearSelect = document.getElementById('targetYearSelect');
 
-  if (repSelect) {
-    const reps = (window.store && window.store.users ? window.store.users.getReps() : []);
-    renderSelectOptions(repSelect, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
-    if (!repSelect.dataset.targetRepBound) {
-      repSelect.dataset.targetRepBound = 'true';
-      repSelect.addEventListener('change', () => {
-        updateTargetProductSelectForRep(repSelect.value);
+  if (areaSelect) {
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+
+    const prevAreaVal = areaSelect.value;
+    areaSelect.replaceChildren();
+
+    allAreas.forEach((a) => {
+      const rep = allUsers.find((u) => u.id === a.repId);
+      const line = allLines.find((l) => l.id === a.lineId);
+      const repLabel = rep ? `Rep: ${rep.name}` : `[Vacant]`;
+      const lineLabel = line ? ` — ${line.name}` : '';
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${lineLabel} (${repLabel})`;
+      areaSelect.appendChild(opt);
+    });
+
+    if (prevAreaVal && Array.from(areaSelect.options).some((o) => o.value === prevAreaVal)) {
+      areaSelect.value = prevAreaVal;
+    }
+
+    if (!areaSelect.dataset.targetAreaBound) {
+      areaSelect.dataset.targetAreaBound = 'true';
+      areaSelect.addEventListener('change', () => {
+        updateTargetProductSelectForArea(areaSelect.value);
       });
     }
   }
 
-  updateTargetProductSelectForRep(repSelect ? repSelect.value : null);
+  updateTargetProductSelectForArea(areaSelect ? areaSelect.value : null);
 
   if (monthSelect && !monthSelect.dataset.populated) {
     const now = new Date();
@@ -1102,22 +1132,34 @@ function renderTargetsTable() {
     .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
   const allProducts = getAllProductsFlat();
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
 
   tbody.replaceChildren();
   if (!targets.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 16px; color: var(--gray-500); font-style: italic;">No targets set yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 16px; color: var(--gray-500); font-style: italic;">No targets set yet.</td></tr>`;
     return;
   }
 
   targets.forEach((t) => {
-    const rep = allUsers.find((u) => u.id === t.repId);
+    let area = allAreas.find((a) => a.id === t.areaId);
+    if (!area && t.repId) {
+      area = allAreas.find((a) => a.repId === t.repId);
+    }
+    const rep = allUsers.find((u) => u.id === t.repId || (area && u.id === area.repId));
     const prod = allProducts.find((p) => p.id === t.productId);
     const units = parseFloat(t.targetUnits) || 0;
     const unitPrice = parseFloat(t.unitPrice) || 0;
     const storedValue = t.target != null ? parseFloat(t.target) || 0 : units * unitPrice;
+    const isVacant = !rep;
+    const repDisplay = isVacant
+      ? `<span class="badge bg-warning text-dark">Vacant</span>`
+      : window.escapeHtml(rep.name);
+    const areaDisplay = area ? `${window.escapeHtml(area.name)}${area.code ? ' <small class="text-muted">(' + window.escapeHtml(area.code) + ')</small>' : ''}` : '—';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${window.escapeHtml(rep ? rep.name : t.repId)}</td>
+      <td><strong>${areaDisplay}</strong></td>
+      <td>${repDisplay}</td>
       <td>${window.escapeHtml(prod ? prod.name : t.productId)}</td>
       <td>${window.escapeHtml(t.month)}</td>
       <td>${units.toLocaleString()}</td>
@@ -1169,18 +1211,14 @@ function resetTargetForm() {
   if (label) label.textContent = 'Add Target';
   const cancelBtn = document.getElementById('cancelTargetEditBtn');
   if (cancelBtn) cancelBtn.style.display = 'none';
-  const repSelect = document.getElementById('targetRepSelect');
-  updateTargetProductSelectForRep(repSelect ? repSelect.value : null);
+  const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
+  updateTargetProductSelectForArea(areaSelect ? areaSelect.value : null);
 }
 
 function onTargetProductSelectChange() {
   const productId = document.getElementById('targetProductSelect').value;
   const prod = getAllProductsFlat().find((p) => p.id === productId);
   const priceInput = document.getElementById('targetUnitPriceInput');
-  // Auto-fills from the product's catalog price (set in Products page) as
-  // a starting point -- this is a convenience default, not a lock: the
-  // admin can still type a different price here for this specific
-  // rep/month as an exception, same as before.
   if (prod && prod.price !== null && priceInput) {
     priceInput.value = prod.price;
   }
@@ -1196,9 +1234,19 @@ function updateComputedTargetValue() {
 function editTarget(id) {
   const t = window.store && window.store.targets ? window.store.targets.getById(id) : null;
   if (!t) return;
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  let areaId = t.areaId;
+  if (!areaId && t.repId) {
+    const a = allAreas.find((ar) => ar.repId === t.repId);
+    if (a) areaId = a.id;
+  }
+
   document.getElementById('targetEditId').value = t.id;
-  document.getElementById('targetRepSelect').value = t.repId;
-  updateTargetProductSelectForRep(t.repId);
+  const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
+  if (areaSelect && areaId) {
+    areaSelect.value = areaId;
+  }
+  updateTargetProductSelectForArea(areaId);
   document.getElementById('targetProductSelect').value = t.productId;
   document.getElementById('targetMonthSelect').value = t.month.split('-')[1];
   document.getElementById('targetYearSelect').value = t.month.split('-')[0];
@@ -1219,29 +1267,29 @@ function saveTarget() {
     return;
   }
   const editId = document.getElementById('targetEditId').value;
-  const repId = document.getElementById('targetRepSelect').value;
+  const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
+  const areaId = areaSelect ? areaSelect.value : null;
   const productId = document.getElementById('targetProductSelect').value;
   const month = document.getElementById('targetMonthSelect').value;
   const year = document.getElementById('targetYearSelect').value;
   const units = parseFloat(document.getElementById('targetUnitsInput').value);
   const unitPrice = parseFloat(document.getElementById('targetUnitPriceInput').value);
-  // Normally units * unitPrice, but the admin can type directly into this
-  // field to override the computed figure -- whatever it holds at save
-  // time is what gets stored as the actual target value.
   const targetValue = parseFloat(document.getElementById('targetComputedValueDisplay').value);
 
-  if (!repId || !productId || !month || !year || isNaN(units) || units < 0 || isNaN(unitPrice) || unitPrice < 0 || isNaN(targetValue) || targetValue < 0) {
-    if (typeof showToast === 'function') showToast('Fill in Rep, Product, Month, Year, Target Units, Unit Price, and a valid Target Value (all non-negative).', 'warning');
+  if (!areaId || !productId || !month || !year || isNaN(units) || units < 0 || isNaN(unitPrice) || unitPrice < 0 || isNaN(targetValue) || targetValue < 0) {
+    if (typeof showToast === 'function') showToast('Fill in Area, Product, Month, Year, Target Units, Unit Price, and a valid Target Value (all non-negative).', 'warning');
     return;
   }
 
-  const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(repId) : [];
-  if (repLines.length > 0) {
-    const repLineIds = repLines.map((l) => l.id);
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const area = allAreas.find((a) => a.id === areaId);
+  const repId = area ? (area.repId || null) : null;
+
+  if (area && area.lineId) {
     const prod = getAllProductsFlat().find((p) => p.id === productId);
-    if (prod && prod.lineId && !repLineIds.includes(prod.lineId)) {
+    if (prod && prod.lineId && prod.lineId !== area.lineId) {
       if (typeof showToast === 'function') {
-        showToast('Error: Selected product does not belong to this rep\'s assigned line.', 'error');
+        showToast('Error: Selected product does not belong to this area\'s assigned line.', 'error');
       }
       return;
     }
@@ -1250,6 +1298,7 @@ function saveTarget() {
   if (window.store && window.store.targets) {
     window.store.targets.save({
       id: editId || undefined,
+      areaId,
       repId,
       productId,
       month: `${year}-${month}`,
@@ -1265,7 +1314,7 @@ function saveTarget() {
   if (achResults && achResults.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
     renderAchievementsReport();
   }
-  if (typeof showToast === 'function') showToast('Target saved.', 'success');
+  if (typeof showToast === 'function') showToast('Target saved successfully.', 'success');
 }
 
 function deleteTarget(id) {

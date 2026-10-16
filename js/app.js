@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v205";
+  const EXPECTED_SW = "v206";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1454,6 +1454,17 @@ function loadDataFromStorage() {
           if (legacyIdMap[v.repId]) v.repId = legacyIdMap[v.repId];
           if (legacyLineMap[v.lineId]) v.lineId = legacyLineMap[v.lineId];
           if (legacyAreaMap[v.areaId]) v.areaId = legacyAreaMap[v.areaId];
+        });
+      }
+      if (Array.isArray(data.targets)) {
+        data.targets.forEach((t) => {
+          if (legacyIdMap[t.repId]) t.repId = legacyIdMap[t.repId];
+          if (legacyProdMap[t.productId]) t.productId = legacyProdMap[t.productId];
+          if (legacyAreaMap[t.areaId]) t.areaId = legacyAreaMap[t.areaId];
+          if (!t.areaId && t.repId && Array.isArray(data.areas)) {
+            const matchedArea = data.areas.find((a) => a.repId === t.repId);
+            if (matchedArea) t.areaId = matchedArea.id;
+          }
         });
       }
 
