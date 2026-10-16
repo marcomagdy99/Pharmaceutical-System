@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v210";
+  const EXPECTED_SW = "v211";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1872,12 +1872,16 @@ function getScopedTeamForLine(lineIdOrUser, maybeUser) {
   if (lineId && lineId !== 'all') {
     result = candidateUsers.filter((u) => {
       if (u.id === user.id) return true;
-      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
+      const uLineIds = typeof window.getUserLines === 'function'
+        ? window.getUserLines(u.id).map((l) => l.id)
+        : (u.lineIds || (u.lineId ? [u.lineId] : []));
       if (uLineIds.includes(lineId)) return true;
 
       const subs = users.filter((sub) => sub.managerId === u.id);
       return subs.some((sub) => {
-        const subLines = sub.lineIds || (sub.lineId ? [sub.lineId] : []);
+        const subLines = typeof window.getUserLines === 'function'
+          ? window.getUserLines(sub.id).map((l) => l.id)
+          : (sub.lineIds || (sub.lineId ? [sub.lineId] : []));
         return subLines.includes(lineId);
       });
     });
@@ -1885,7 +1889,7 @@ function getScopedTeamForLine(lineIdOrUser, maybeUser) {
 
   result.lms = result.filter((u) => u.role === 'line_manager' || u.role === 'lm');
   result.dms = result.filter((u) => u.role === 'district_manager' || u.role === 'dm');
-  result.reps = result.filter((u) => u.role === 'medical_rep' || u.role === 'rep');
+  result.reps = result.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')));
   return result;
 }
 

@@ -118,6 +118,13 @@ function getScopedHospitals(respectActiveFilters = true) {
           }
           return false;
         });
+      } else if (repId === "all_reps") {
+        const repIds = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === "medical_rep" || u.role === "rep"))).map((u) => u.id);
+        hosps = hosps.filter((h) => h.repId && repIds.includes(h.repId));
+      } else if (repId === "all_dms") {
+        const dmIds = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === "district_manager" : (u.role === "district_manager" || u.role === "dm"))).map((u) => u.id);
+        const dmTeamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+        hosps = hosps.filter((h) => (h.repId && (dmIds.includes(h.repId) || dmTeamRepIds.includes(h.repId))) || (h.dmId && dmIds.includes(h.dmId)));
       } else {
         const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
         const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));

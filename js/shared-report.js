@@ -699,99 +699,96 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
     }
 
     if (isDM) {
-      const allLabel = 'All Team Reps in Line';
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
-      allOpt.textContent = allLabel;
+      allOpt.textContent = '🌐 All Team Reps in Line';
       selectEl.appendChild(allOpt);
 
-      const reps = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'medical_rep' : (u.role === 'medical_rep' || u.role === 'rep')));
-      appendSelectOptions(selectEl, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || 'Rep'})`);
+      const reps = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.isRepRole ? window.isRepRole(u) : (window.normalizeRole ? window.normalizeRole(u.role) === 'medical_rep' : (u.role === 'medical_rep' || u.role === 'rep'))));
+      if (reps.length > 0) {
+        const repGroup = document.createElement('optgroup');
+        repGroup.label = '👤 Medical Representatives';
+        const sortedReps = [...reps].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        appendSelectOptions(repGroup, sortedReps, (r) => r.id, (r) => `🩺 ${r.name} (${r.employeeCode || 'Rep'})`);
+        selectEl.appendChild(repGroup);
+      }
 
       // Vacant areas under this DM
       const myVacantAreas = vacantAreas.filter((a) => {
         const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
         return mgrId === effectiveUser.id || (!mgrId && (!a.lineId || (effectiveUser.lineIds && effectiveUser.lineIds.includes(a.lineId)) || effectiveUser.lineId === a.lineId));
       });
-      myVacantAreas.forEach((area) => {
-        const opt = document.createElement('option');
-        opt.value = `vacant:${area.id}`;
-        const areaName = area.name;
-        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
-        selectEl.appendChild(opt);
-      });
+      if (myVacantAreas.length > 0) {
+        const vacantGroup = document.createElement('optgroup');
+        vacantGroup.label = '📍 Vacant Territory Areas';
+        myVacantAreas.forEach((area) => {
+          const opt = document.createElement('option');
+          opt.value = `vacant:${area.id}`;
+          opt.textContent = `📍 [Vacant] ${area.name}${area.code ? ' (' + area.code + ')' : ''}`;
+          vacantGroup.appendChild(opt);
+        });
+        selectEl.appendChild(vacantGroup);
+      }
     } else {
-      const allLabel = 'All Team in Line';
+      // Admin, BU, LM:
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
-      allOpt.textContent = allLabel;
+      allOpt.textContent = '🌐 All Employees (DMs & Reps)';
       selectEl.appendChild(allOpt);
 
-      const dms = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
-      const reps = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'medical_rep' : (u.role === 'medical_rep' || u.role === 'rep')));
+      const allRepsOpt = document.createElement('option');
+      allRepsOpt.value = 'all_reps';
+      allRepsOpt.textContent = '👥 All Medical Reps';
+      selectEl.appendChild(allRepsOpt);
 
+      const allDmsOpt = document.createElement('option');
+      allDmsOpt.value = 'all_dms';
+      allDmsOpt.textContent = '💼 All District Managers (DMs)';
+      selectEl.appendChild(allDmsOpt);
+
+      const dms = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+      const reps = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.isRepRole ? window.isRepRole(u) : (window.normalizeRole ? window.normalizeRole(u.role) === 'medical_rep' : (u.role === 'medical_rep' || u.role === 'rep'))));
+
+      // 1. Prominent Medical Representatives optgroup FIRST
+      if (reps.length > 0) {
+        const repGroup = document.createElement('optgroup');
+        repGroup.label = '👤 Medical Representatives';
+        const sortedReps = [...reps].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        appendSelectOptions(repGroup, sortedReps, (rep) => rep.id, (rep) => {
+          const mgr = allUsers.find((u) => u.id === rep.managerId);
+          const mgrSuffix = mgr ? ` - DM: ${mgr.name}` : '';
+          return `🩺 ${rep.name} (${rep.employeeCode || 'Rep'}${mgrSuffix})`;
+        });
+        selectEl.appendChild(repGroup);
+      }
+
+      // 2. District Managers optgroup SECOND
       if (dms.length > 0) {
         const dmGroup = document.createElement('optgroup');
-        dmGroup.label = 'District Managers (DMs)';
-        appendSelectOptions(dmGroup, dms, (dm) => dm.id, (dm) => `💼 ${dm.name} (${dm.employeeCode || 'DM'})`);
+        dmGroup.label = '💼 District Managers (DMs)';
+        const sortedDms = [...dms].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        appendSelectOptions(dmGroup, sortedDms, (dm) => dm.id, (dm) => `💼 ${dm.name} (${dm.employeeCode || 'DM'})`);
         selectEl.appendChild(dmGroup);
+      }
 
-        const assignedVacantIds = new Set();
-        dms.forEach((dm) => {
-          const dmReps = reps.filter((r) => r.managerId === dm.id);
-          const dmVacantAreas = vacantAreas.filter((a) => {
-            const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
-            return mgrId === dm.id;
-          });
-          dmVacantAreas.forEach((a) => assignedVacantIds.add(a.id));
-
-          if (dmReps.length > 0 || dmVacantAreas.length > 0) {
-            const group = document.createElement('optgroup');
-            group.label = `Team ${dm.name} (Reps)`;
-            appendSelectOptions(group, dmReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
-            dmVacantAreas.forEach((area) => {
-              const opt = document.createElement('option');
-              opt.value = `vacant:${area.id}`;
-              const areaName = area.name;
-              opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
-              group.appendChild(opt);
-            });
-            selectEl.appendChild(group);
-          }
-        });
-
-        const otherReps = reps.filter((r) => !dms.some((dm) => dm.id === r.managerId));
-        const unassignedVacant = vacantAreas.filter((a) => !assignedVacantIds.has(a.id));
-        if (otherReps.length > 0 || unassignedVacant.length > 0) {
-          const group = document.createElement('optgroup');
-          group.label = 'Other Reps & Vacant Areas';
-          appendSelectOptions(group, otherReps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
-          unassignedVacant.forEach((area) => {
-            const opt = document.createElement('option');
-            opt.value = `vacant:${area.id}`;
-            const areaName = area.name;
-            opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
-            group.appendChild(opt);
-          });
-          selectEl.appendChild(group);
-        }
-      } else if (reps.length > 0 || vacantAreas.length > 0) {
-        const repGroup = document.createElement('optgroup');
-        repGroup.label = 'Team Reps & Areas';
-        appendSelectOptions(repGroup, reps, (rep) => rep.id, (rep) => `🩺 ${rep.name} (${rep.employeeCode || 'Rep'})`);
+      // 3. Vacant Territory Areas optgroup THIRD
+      if (vacantAreas.length > 0) {
+        const vacantGroup = document.createElement('optgroup');
+        vacantGroup.label = '📍 Vacant Territory Areas';
         vacantAreas.forEach((area) => {
           const opt = document.createElement('option');
           opt.value = `vacant:${area.id}`;
-          const areaName = area.name;
-          opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
-          repGroup.appendChild(opt);
+          opt.textContent = `📍 [Vacant] ${area.name}${area.code ? ' (' + area.code + ')' : ''}`;
+          vacantGroup.appendChild(opt);
         });
-        selectEl.appendChild(repGroup);
+        selectEl.appendChild(vacantGroup);
       }
     }
 
     if (prevVal && Array.from(selectEl.options).some((o) => o.value === prevVal)) {
       selectEl.value = prevVal;
+    } else {
+      selectEl.value = 'all';
     }
   });
 

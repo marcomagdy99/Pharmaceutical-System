@@ -480,7 +480,10 @@
     const dmVal = document.getElementById("accountsCostingDmSelect")?.value;
 
     if (lineVal && lineVal !== "all") {
-      reps = reps.filter((r) => !r.lineId || r.lineId === lineVal);
+      reps = reps.filter((r) => {
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(r.id).map((l) => l.id) : (r.lineIds || (r.lineId ? [r.lineId] : []));
+        return uLines.includes(lineVal);
+      });
     }
     if (dmVal && dmVal !== "all") {
       reps = reps.filter((r) => r.dmId === dmVal || r.managerId === dmVal);

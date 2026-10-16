@@ -218,22 +218,31 @@ function renderCoverageReport() {
       }
     }
   } else if (selectedRep && selectedRep !== 'all') {
-    const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-    if (isDM) {
-      const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-      targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+    if (selectedRep === 'all_reps') {
+      const repIds = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))).map((u) => u.id);
+      targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
+    } else if (selectedRep === 'all_dms') {
+      const dmIds = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm'))).map((u) => u.id);
+      const dmTeamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      targetList = targetList.filter((d) => d.repId && (dmIds.includes(d.repId) || dmTeamRepIds.includes(d.repId)));
     } else {
-      const repUser = allUsers.find((u) => u.id === selectedRep);
-      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-      const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-      if (repUser && repUser.area) {
-        repUser.area.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) repAreaNames.push(t);
-        });
+      const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      if (isDM) {
+        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+      } else {
+        const repUser = allUsers.find((u) => u.id === selectedRep);
+        const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
+        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
+        const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
+        if (repUser && repUser.area) {
+          repUser.area.split(',').forEach((s) => {
+            const t = s.trim().toLowerCase();
+            if (t) repAreaNames.push(t);
+          });
+        }
+        targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim())));
       }
-      targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim())));
     }
   }
 
@@ -797,22 +806,31 @@ function exportCoverageReport() {
       }
     }
   } else if (selectedRep && selectedRep !== 'all') {
-    const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-    if (isDM) {
-      const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-      targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+    if (selectedRep === 'all_reps') {
+      const repIds = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))).map((u) => u.id);
+      targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
+    } else if (selectedRep === 'all_dms') {
+      const dmIds = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm'))).map((u) => u.id);
+      const dmTeamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      targetList = targetList.filter((d) => d.repId && (dmIds.includes(d.repId) || dmTeamRepIds.includes(d.repId)));
     } else {
-      const repUser = allUsers.find((u) => u.id === selectedRep);
-      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-      const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-      if (repUser && repUser.area) {
-        repUser.area.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) repAreaNames.push(t);
-        });
+      const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      if (isDM) {
+        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
+        targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
+      } else {
+        const repUser = allUsers.find((u) => u.id === selectedRep);
+        const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
+        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
+        const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
+        if (repUser && repUser.area) {
+          repUser.area.split(',').forEach((s) => {
+            const t = s.trim().toLowerCase();
+            if (t) repAreaNames.push(t);
+          });
+        }
+        targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim())));
       }
-      targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim())));
     }
   }
 
