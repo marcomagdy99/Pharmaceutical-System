@@ -277,21 +277,21 @@ if (backToDept) backToDept.addEventListener('click', showDepartmentSelection);
  */
 function getAllAuthenticatableUsers() {
   const defaultAccounts = [
-    { email: 'admin@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'u1790626000010', mustChangePassword: true },
-    { email: 'bu@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'business_unit', name: 'George Marzok', dept: 'sales', employeeCode: 'BU-001', id: 'u1790626000011', mustChangePassword: true },
-    { email: 'lm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'John Mahfouz', dept: 'sales', employeeCode: 'LM-001', id: 'u1790626000012', mustChangePassword: true },
-    { email: 'lm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'Mario Magdy', dept: 'sales', employeeCode: 'LM-002', id: 'u1790626000013', mustChangePassword: true },
-    { email: 'dm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'u1790626000014', mustChangePassword: true },
-    { email: 'dm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'u1790626000015', mustChangePassword: true },
-    { email: 'dm3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'u1790626000016', mustChangePassword: true },
-    { email: 'rep@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'REP-001', id: 'u1790626000001', mustChangePassword: true },
-    { email: 'rep2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'REP-002', id: 'u1790626000002', mustChangePassword: true },
-    { email: 'rep3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'REP-003', id: 'u1790626000003', mustChangePassword: true },
-    { email: 'rep4@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'REP-004', id: 'u1790626000004', mustChangePassword: true },
-    { email: 'rep5@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'REP-005', id: 'u1790626000005', mustChangePassword: true },
-    { email: 'pm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'u1790626000018', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], productIds: ['prod_1790626000001', 'prod_1790626000002', 'prod_1790626000003', 'prod_1790626000004'], mustChangePassword: true },
-    { email: 'pm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'u1790626000019', lineId: 'line_1790626000002', lineIds: ['line_1790626000002'], productIds: ['prod_1790626000005', 'prod_1790626000006'], mustChangePassword: true },
-    { email: 'hr@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'u1790626000017', mustChangePassword: true }
+    { email: 'admin@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'u1790626000010', mustChangePassword: false },
+    { email: 'bu@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'business_unit', name: 'George Marzok', dept: 'sales', employeeCode: 'BU-001', id: 'u1790626000011', mustChangePassword: false },
+    { email: 'lm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'John Mahfouz', dept: 'sales', employeeCode: 'LM-001', id: 'u1790626000012', mustChangePassword: false },
+    { email: 'lm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'Mario Magdy', dept: 'sales', employeeCode: 'LM-002', id: 'u1790626000013', mustChangePassword: false },
+    { email: 'dm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'u1790626000014', mustChangePassword: false },
+    { email: 'dm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'u1790626000015', mustChangePassword: false },
+    { email: 'dm3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'u1790626000016', mustChangePassword: false },
+    { email: 'rep@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'REP-001', id: 'u1790626000001', mustChangePassword: false },
+    { email: 'rep2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'REP-002', id: 'u1790626000002', mustChangePassword: false },
+    { email: 'rep3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'REP-003', id: 'u1790626000003', mustChangePassword: false },
+    { email: 'rep4@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'REP-004', id: 'u1790626000004', mustChangePassword: false },
+    { email: 'rep5@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'REP-005', id: 'u1790626000005', mustChangePassword: false },
+    { email: 'pm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'u1790626000018', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], productIds: ['prod_1790626000001', 'prod_1790626000002', 'prod_1790626000003', 'prod_1790626000004'], mustChangePassword: false },
+    { email: 'pm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'u1790626000019', lineId: 'line_1790626000002', lineIds: ['line_1790626000002'], productIds: ['prod_1790626000005', 'prod_1790626000006'], mustChangePassword: false },
+    { email: 'hr@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'u1790626000017', mustChangePassword: false }
   ];
 
   let storedUsers = [];
@@ -508,6 +508,7 @@ async function handleLogin() {
           lineId: matchedUser.lineId || null,
           lineIds: matchedUser.lineIds || [],
           productIds: matchedUser.productIds || [],
+          mustChangePassword: false,
           token: 'token_' + Date.now()
         };
 

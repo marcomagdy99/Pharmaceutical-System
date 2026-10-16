@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v204";
+  const EXPECTED_SW = "v205";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1397,7 +1397,7 @@ function loadDataFromStorage() {
           if (legacyIdMap[u.id]) u.id = legacyIdMap[u.id];
           if (u.passwordHash && legacyOldHashes.includes(u.passwordHash)) {
             u.passwordHash = "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f";
-            u.mustChangePassword = true;
+            u.mustChangePassword = false;
           }
           if (legacyIdMap[u.managerId]) u.managerId = legacyIdMap[u.managerId];
           if (legacyLineMap[u.lineId]) u.lineId = legacyLineMap[u.lineId];
@@ -4002,7 +4002,10 @@ function checkAuth() {
       ) {
         const freshUser = DEMO_DATA.users.find((u) => u.id === parsed.id);
         if (freshUser) {
-          const merged = { ...parsed, ...freshUser };
+          const merged = { ...freshUser, ...parsed };
+          if (merged.role === "admin" || merged.email === "admin@pharmacare.com") {
+            merged.mustChangePassword = false;
+          }
           sessionStorage.setItem("pharmaUser", JSON.stringify(merged));
           localStorage.setItem("pharmaUser", JSON.stringify(merged));
           localStorage.setItem("userRole", merged.role);
@@ -4011,6 +4014,9 @@ function checkAuth() {
         }
       }
       if (parsed && parsed.id) {
+        if (parsed.role === "admin" || parsed.email === "admin@pharmacare.com") {
+          parsed.mustChangePassword = false;
+        }
         sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
         localStorage.setItem("pharmaUser", JSON.stringify(parsed));
         if (parsed.role) localStorage.setItem("userRole", parsed.role);
@@ -4060,13 +4066,6 @@ window.enforcePageRoleSecurity = enforcePageRoleSecurity;
 function requireAuth() {
   const user = checkAuth();
   if (!user && !window.location.href.includes("login.html")) {
-    window.location.replace("login.html");
-    return null;
-  }
-  // Defense-in-depth: if user must change password, deny access and redirect to login
-  if (user && user.mustChangePassword && !window.location.href.includes("login.html")) {
-    sessionStorage.removeItem("pharmaUser");
-    localStorage.removeItem("pharmaUser");
     window.location.replace("login.html");
     return null;
   }
