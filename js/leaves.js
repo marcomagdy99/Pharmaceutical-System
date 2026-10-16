@@ -1165,10 +1165,7 @@ function renderHistory() {
         </div>
       </td>
       <td>
-        <div class="d-flex flex-column align-items-start gap-1">
-          <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
-            ${(l.status || "").toUpperCase()}
-          </span>
+          ${window.renderStatusBadge ? window.renderStatusBadge(l.status) : `<span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">${(l.status || "").toUpperCase()}</span>`}
           ${
             canDelete
               ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1 leave-delete-btn" onclick="deleteMyLeave('${l.id}')">
@@ -1634,9 +1631,7 @@ function renderHrAllLeaves() {
           </div>
         </td>
         <td>
-          <span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">
-            ${(l.status || "").toUpperCase()}
-          </span>
+          ${window.renderStatusBadge ? window.renderStatusBadge(l.status) : `<span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">${(l.status || "").toUpperCase()}</span>`}
           ${
             l.status === "rejected" && l.rejectionReason
               ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">

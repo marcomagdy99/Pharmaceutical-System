@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v201";
+  const EXPECTED_SW = "v202";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2325,6 +2325,30 @@ window.parseDateStrict = parseDateStrict;
 // ============================================================================
 // Section 3.5: Centralized Role & Permission Engine (Single Source of Truth)
 // ============================================================================
+
+/**
+ * Standard Role Constants Enum (Immutable).
+ * Centralizes all system role identifiers to prevent typos and ensure strict type-safety.
+ */
+const ROLES = Object.freeze({
+  ADMIN: "admin",
+  GM: "general_manager",
+  BU: "business_unit",
+  PM: "product_manager",
+  LM: "line_manager",
+  DM: "district_manager",
+  REP: "medical_rep",
+  HR: "hr",
+
+  // Long-form canonical aliases
+  GENERAL_MANAGER: "general_manager",
+  BUSINESS_UNIT: "business_unit",
+  PRODUCT_MANAGER: "product_manager",
+  LINE_MANAGER: "line_manager",
+  DISTRICT_MANAGER: "district_manager",
+  MEDICAL_REP: "medical_rep",
+});
+
 function normalizeRole(role) {
   if (!role) return "";
   const r = String(role).toLowerCase().trim();
@@ -2352,14 +2376,22 @@ function resolveUserForAuth(user) {
   return { role: "medical_rep", id: "u1790626000001" };
 }
 
+/**
+ * Safely extracts and normalizes the role from a user object, string, or active session.
+ */
+function extractUserRole(userOrRole) {
+  if (!userOrRole) return "";
+  if (typeof userOrRole === "object") return normalizeRole(userOrRole.role);
+  return normalizeRole(userOrRole);
+}
+
 function isAdmin(user) {
-  const u = resolveUserForAuth(user);
-  return normalizeRole(u?.role) === "admin";
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "admin";
 }
 
 function isManagerRole(user) {
-  const u = resolveUserForAuth(user);
-  const r = normalizeRole(u?.role);
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
   return [
     "admin",
     "general_manager",
@@ -2367,31 +2399,363 @@ function isManagerRole(user) {
     "line_manager",
     "district_manager",
     "product_manager",
-  ].includes(r);
+  ].includes(u);
 }
 
 function isRepRole(user) {
-  const u = resolveUserForAuth(user);
-  return normalizeRole(u?.role) === "medical_rep";
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "medical_rep";
 }
 
 function isPMRole(user) {
-  const u = resolveUserForAuth(user);
-  return normalizeRole(u?.role) === "product_manager";
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "product_manager";
+}
+
+function isDMRole(user) {
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "district_manager";
+}
+
+function isLMRole(user) {
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "line_manager";
+}
+
+function isBURole(user) {
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "business_unit";
+}
+
+function isGMRole(user) {
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "general_manager";
+}
+
+function isHRRole(user) {
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return u === "hr";
+}
+
+function isRoleMatch(userOrRole, targetRole) {
+  const u = userOrRole ? extractUserRole(userOrRole) : normalizeRole(resolveUserForAuth()?.role);
+  return u === normalizeRole(targetRole);
 }
 
 function hasAnyRole(allowedRoles = [], user) {
-  const u = resolveUserForAuth(user);
-  const current = normalizeRole(u?.role);
-  return allowedRoles.map(normalizeRole).includes(current);
+  const u = user ? extractUserRole(user) : normalizeRole(resolveUserForAuth()?.role);
+  return allowedRoles.map(normalizeRole).includes(u);
 }
 
+window.ROLES = ROLES;
 window.normalizeRole = normalizeRole;
+window.extractUserRole = extractUserRole;
 window.isAdmin = isAdmin;
 window.isManagerRole = isManagerRole;
 window.isRepRole = isRepRole;
 window.isPMRole = isPMRole;
+window.isDMRole = isDMRole;
+window.isLMRole = isLMRole;
+window.isBURole = isBURole;
+window.isGMRole = isGMRole;
+window.isHRRole = isHRRole;
+window.isRoleMatch = isRoleMatch;
 window.hasAnyRole = hasAnyRole;
+
+// ============================================================================
+// Section 3.6: Centralized Storage Dictionary & Utilities (Single Source of Truth)
+// ============================================================================
+
+/**
+ * Standard LocalStorage & SessionStorage Keys Dictionary (Immutable).
+ * Centralizes all storage keys across the system to prevent key fragmentation and typos.
+ */
+const STORAGE_KEYS = Object.freeze({
+  // Session & Authentication
+  USER: "pharmaUser",
+  USER_ID: "userId",
+  USER_ROLE: "userRole",
+  LOGGED_OUT: "pharma_logged_out",
+  IMPERSONATING_ADMIN: "impersonating_admin",
+
+  // Preferences & Appearance
+  THEME: "pharmaTheme",
+  LANG: "pharmaLang",
+  FALLBACK_LANG: "lang",
+
+  // Master & Core Data Stores
+  MASTER_DATA: "pharma_master_data",
+  SALES_DATA: "pharma_sales_data",
+  COMPANY_SETTINGS: "pharma_company_settings",
+  SERVICES_DATA: "pharma_services_data",
+  EXPENSES_DATA: "pharma_expenses_data",
+  SALES_BUDGETS: "pharma_sales_budgets",
+  ANNOUNCEMENTS: "pharmaAnnouncements",
+  PUBLIC_HOLIDAYS: "pharma_public_holidays",
+  DM_ACCOMPANIMENTS: "pharma_dm_accompaniments",
+  ACTIVITIES_DATA: "pharma_activities_data",
+  REPORTS_DATA: "pharma_reports_data",
+  QUIZZES: "pharma_quizzes",
+  QUIZ_SCORES: "pharma_quiz_scores",
+
+  // Offline & Synchronization
+  OFFLINE_QUEUE: "pharma_offline_queue",
+  OFFLINE_SYNC_LOG: "pharma_offline_sync_log",
+});
+
+/**
+ * Safe Storage Access Utility with built-in JSON parsing, error boundaries, and quota protection.
+ */
+const StorageUtil = Object.freeze({
+  get(key, defaultValue = null) {
+    try {
+      const val = localStorage.getItem(key);
+      if (val === null || val === undefined) return defaultValue;
+      try {
+        return JSON.parse(val);
+      } catch {
+        return val;
+      }
+    } catch (e) {
+      console.warn("StorageUtil.get failed for key:", key, e);
+      return defaultValue;
+    }
+  },
+  set(key, value) {
+    try {
+      const str = typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
+      localStorage.setItem(key, str);
+      return true;
+    } catch (e) {
+      console.warn("StorageUtil.set failed for key:", key, e);
+      return false;
+    }
+  },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (e) {
+      console.warn("StorageUtil.remove failed for key:", key, e);
+      return false;
+    }
+  },
+});
+
+window.STORAGE_KEYS = STORAGE_KEYS;
+window.StorageUtil = StorageUtil;
+
+// ============================================================================
+// Section 3.7: Centralized Status Engine & Badge Generators (Single Source of Truth)
+// ============================================================================
+
+/**
+ * Standard System Status Constants (Immutable).
+ * Centralizes workflow, request, and entity lifecycle states.
+ */
+const STATUS = Object.freeze({
+  // Generic & Workflow States
+  PENDING: "pending",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+  CANCELLED: "cancelled",
+  COMPLETED: "completed",
+  PLANNED: "planned",
+  DRAFT: "draft",
+  DISBURSED: "disbursed",
+
+  // Multi-tier Approvals
+  PENDING_DM: "pending_dm",
+  PENDING_LM: "pending_lm",
+  PENDING_HR: "pending_hr",
+  PENDING_BU: "pending_bu",
+  PENDING_PM: "pending_pm",
+  PENDING_GM: "pending_gm",
+  PENDING_SHARED: "pending_shared",
+
+  // Account & Entity Lifecycle
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+});
+
+/**
+ * Normalizes any status string into a clean, canonical format.
+ */
+function normalizeStatus(status) {
+  if (!status) return "";
+  return String(status).toLowerCase().trim().replace(/[\s-]+/g, "_");
+}
+
+/**
+ * Retrieves the appropriate CSS class and default text for a given status.
+ */
+function getStatusBadgeConfig(status) {
+  const s = normalizeStatus(status);
+  switch (s) {
+    case "approved":
+      return { css: "bg-success", text: "Approved" };
+    case "completed":
+      return { css: "bg-success", text: "Completed" };
+    case "active":
+      return { css: "bg-success", text: "Active" };
+    case "disbursed":
+      return { css: "bg-success", text: "Disbursed" };
+    case "rejected":
+      return { css: "bg-danger", text: "Rejected" };
+    case "inactive":
+      return { css: "bg-danger", text: "Inactive" };
+    case "pending":
+      return { css: "bg-warning text-dark", text: "Pending" };
+    case "pending_dm":
+      return { css: "bg-warning text-dark", text: "Pending DM" };
+    case "pending_hr":
+      return { css: "bg-warning text-dark", text: "Pending HR" };
+    case "pending_lm":
+      return { css: "bg-info text-dark", text: "Pending LM" };
+    case "pending_bu":
+      return { css: "bg-primary", text: "Pending BU" };
+    case "pending_gm":
+      return { css: "bg-dark", text: "Pending GM" };
+    case "pending_shared":
+      return { css: "bg-warning text-dark", text: "Pending Shared" };
+    case "planned":
+      return { css: "bg-info text-dark", text: "Planned" };
+    case "draft":
+      return { css: "bg-secondary", text: "Draft" };
+    case "cancelled":
+      return { css: "bg-secondary", text: "Cancelled" };
+    default:
+      return { css: "bg-secondary", text: status || "Unknown" };
+  }
+}
+
+/**
+ * Generates an accessible, theme-consistent Bootstrap status badge HTML element.
+ */
+function renderStatusBadge(status, customLabel = null) {
+  const config = getStatusBadgeConfig(status);
+  const label = customLabel || config.text;
+  return `<span class="badge ${config.css} status-badge">${label}</span>`;
+}
+
+function isStatusPending(status) {
+  return normalizeStatus(status).startsWith("pending");
+}
+
+function isStatusApproved(status) {
+  const s = normalizeStatus(status);
+  return s === "approved" || s === "completed";
+}
+
+function isStatusRejected(status) {
+  const s = normalizeStatus(status);
+  return s === "rejected" || s === "cancelled";
+}
+
+window.STATUS = STATUS;
+window.normalizeStatus = normalizeStatus;
+window.getStatusBadgeConfig = getStatusBadgeConfig;
+window.renderStatusBadge = renderStatusBadge;
+window.isStatusPending = isStatusPending;
+window.isStatusApproved = isStatusApproved;
+window.isStatusRejected = isStatusRejected;
+
+// ============================================================================
+// Section 3.8: Centralized Currency, Number & Date Formatters (Single Source of Truth)
+// ============================================================================
+
+/**
+ * Formats a numeric value into a localized currency string with thousand separators.
+ * Safe against null, undefined, and NaN inputs.
+ */
+function formatCurrency(amount, currency = "EGP", decimals = 2) {
+  const n = Number(amount);
+  if (isNaN(n) || amount === null || amount === undefined || amount === "") {
+    return (0).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (currency ? ` ${currency}` : "");
+  }
+  return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (currency ? ` ${currency}` : "");
+}
+
+/**
+ * Fast currency number formatter specifically tailored for EGP financial reporting.
+ */
+function formatEGP(amount, includeSymbol = false) {
+  const n = Number(amount) || 0;
+  const str = n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return includeSymbol ? `${str} EGP` : str;
+}
+
+/**
+ * Universal date formatter supporting ISO (YYYY-MM-DD), British (DD/MM/YYYY), short (DD/MM), and human-readable formats.
+ * Safe against invalid, null, or undefined dates (returns empty string instead of NaN-NaN-NaN).
+ */
+function formatDate(dateInput, format = "YYYY-MM-DD") {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  switch (format) {
+    case "YYYY-MM-DD":
+      return `${y}-${m}-${day}`;
+    case "DD/MM/YYYY":
+      return `${day}/${m}/${y}`;
+    case "DD/MM":
+      return `${day}/${m}`;
+    case "human":
+    case "medium": {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${day} ${monthNames[d.getMonth()]} ${y}`;
+    }
+    default:
+      return `${y}-${m}-${day}`;
+  }
+}
+
+/**
+ * Formats general numeric quantities with localized thousand separators.
+ */
+function formatNumber(val, decimals = 0) {
+  const n = Number(val);
+  if (isNaN(n) || val === null || val === undefined) return "0";
+  return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+/**
+ * Safely triggers an immediate file download in the browser from string content or Blob.
+ * Handles Blob creation, temporary link lifecycle, and proper memory cleanup via revokeObjectURL.
+ */
+function downloadBlob(contentOrBlob, filename = "download.txt", mimeType = "text/plain;charset=utf-8;") {
+  if (contentOrBlob === null || contentOrBlob === undefined) return false;
+  if (typeof window === "undefined" || !window.document) return true;
+  try {
+    const blob = contentOrBlob instanceof Blob ? contentOrBlob : new Blob([contentOrBlob], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+    return true;
+  } catch (err) {
+    console.warn("downloadBlob failed:", err);
+    return false;
+  }
+}
+
+window.formatCurrency = formatCurrency;
+window.formatEGP = formatEGP;
+window.formatDate = formatDate;
+window.formatNumber = formatNumber;
+window.downloadBlob = downloadBlob;
 
 // ============================================================================
 // Section 4: Localization Dictionary
@@ -2643,6 +3007,7 @@ function getIconSymbol(id) {
 }
 
 function getRoleBadge(role) {
+  const norm = normalizeRole(role);
   const roleNames = {
     admin: "Admin",
     business_unit: "BU Head",
@@ -2651,8 +3016,9 @@ function getRoleBadge(role) {
     medical_rep: "Medical Rep",
     product_manager: "Product Manager",
     hr: "HR Manager",
+    general_manager: "General Manager",
   };
-  return roleNames[role] || role;
+  return roleNames[norm] || roleNames[role] || role;
 }
 
 function getNavItemsForRole(role) {

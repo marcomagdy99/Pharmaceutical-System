@@ -99,20 +99,7 @@
       const st = req.status || "pending";
       const isPending = st !== "approved" && st !== "rejected";
 
-      let statusBadge = `<span class="badge bg-warning text-dark">Pending</span>`;
-      if (st === "approved") {
-        statusBadge = `<span class="badge bg-success">Approved</span>`;
-      } else if (st === "rejected") {
-        statusBadge = `<span class="badge bg-danger">Rejected</span>`;
-      } else if (st === "pending_dm") {
-        statusBadge = `<span class="badge bg-warning text-dark">Pending DM</span>`;
-      } else if (st === "pending_lm") {
-        statusBadge = `<span class="badge bg-info text-dark">Pending LM</span>`;
-      } else if (st === "pending_bu") {
-        statusBadge = `<span class="badge bg-primary">Pending BU</span>`;
-      } else if (st === "pending_gm") {
-        statusBadge = `<span class="badge bg-dark">Pending GM</span>`;
-      }
+      const statusBadge = window.renderStatusBadge ? window.renderStatusBadge(st) : `<span class="badge bg-warning text-dark">Pending</span>`;
 
       let canApproveStage = false;
       const targetRepId = req.repId || req.userId;

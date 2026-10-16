@@ -992,13 +992,15 @@ if (typeof renderSidebar === "function") {
     document.getElementById("totalCountBadge").textContent = this.users.length;
     document.getElementById("stat-total").textContent = this.users.length;
     document.getElementById("stat-admins").textContent = this.users.filter(
-      (u) => u.role === "Admin",
+      (u) => window.isAdmin ? window.isAdmin(u) : u.role === "Admin",
     ).length;
     document.getElementById("stat-managers").textContent = this.users.filter(
-      (u) => ["BU", "LM", "DM"].includes(u.role),
+      (u) => window.isBURole && window.isLMRole && window.isDMRole
+        ? (window.isBURole(u) || window.isLMRole(u) || window.isDMRole(u))
+        : ["BU", "LM", "DM"].includes(u.role),
     ).length;
     document.getElementById("stat-reps").textContent = this.users.filter(
-      (u) => u.role === "Rep",
+      (u) => window.isRepRole ? window.isRepRole(u) : u.role === "Rep",
     ).length;
   },
   getFilteredUsers() {
@@ -1076,7 +1078,7 @@ if (typeof renderSidebar === "function") {
     nextVisited.add(parentId);
 
     const authUser = (window.checkAuth && window.checkAuth()) || {};
-    const isRealAdmin = (authUser.role === "admin") || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    const isRealAdmin = (window.isAdmin ? window.isAdmin(authUser) : authUser.role === "admin") || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
 
     const children = this.users.filter((u) => u.managerId === parentId && !nextVisited.has(u.id));
     if (children.length === 0) return "";
