@@ -349,9 +349,7 @@
       }
     }
 
-    if (typeof window.onGpsFilterChange === "function") {
-      window.onGpsFilterChange();
-    }
+    // cascading filter updated
   };
 
   window.onGpsFilterChange = function () {

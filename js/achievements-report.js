@@ -40,10 +40,6 @@ window.toggleSelectAllAchMonths = function(isChecked) {
     cb.checked = isChecked;
   });
   updateAchMonthDropdownLabel();
-  const achRes = document.getElementById('achResultsContainer');
-  if (achRes && achRes.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
-    renderAchievementsReport();
-  }
 };
 
 window.onAchMonthCheckboxChange = function() {
@@ -54,10 +50,6 @@ window.onAchMonthCheckboxChange = function() {
     selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
   }
   updateAchMonthDropdownLabel();
-  const achRes = document.getElementById('achResultsContainer');
-  if (achRes && achRes.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
-    renderAchievementsReport();
-  }
 };
 
 function updateAchMonthDropdownLabel() {
@@ -266,7 +258,7 @@ function getAchievementsScopeRepIds(user) {
 
   if (selectedRep && selectedRep !== 'all') {
     if (selectedRep.startsWith('vacant:')) {
-      return ['vacant'];
+      return null;
     }
     if (selectedRep === 'all_reps' || selectedRep === 'all_dms') {
       return allowedRepIds;
@@ -743,7 +735,7 @@ function renderAchievementsReport() {
     const chartActuals = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
       let mSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-        .filter((s) => s.month === mKey && s.repId && s.productId && (!scopeRepIds || scopeRepIds.includes(s.repId)));
+        .filter((s) => s.month === mKey && s.productId && (!scopeRepIds || (s.repId && scopeRepIds.includes(s.repId))));
       if (selectedArea !== 'all') {
         mSales = mSales.filter((s) => s.areaId === selectedArea);
       }

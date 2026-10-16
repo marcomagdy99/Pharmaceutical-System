@@ -127,14 +127,19 @@ function getScopedHospitals(respectActiveFilters = true) {
           hosps = hosps.filter((h) => h.repId && repsUnderLM.includes(h.repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
         } else if (isDM) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-          hosps = hosps.filter((h) => h.repId && (repsUnderDM.includes(h.repId) || h.repId === repId) && (!allowedTeamIds || allowedTeamIds.includes(h.repId)));
+          const dmTeamIds = [repId, ...repsUnderDM];
+          const dmAreaIds = allAreas.filter((a) => (a.repId && dmTeamIds.includes(a.repId)) || a.dmId === repId).map((a) => a.id);
+          hosps = hosps.filter((h) =>
+            (h.repId && dmTeamIds.includes(h.repId)) ||
+            (h.areaId && dmAreaIds.includes(h.areaId))
+          );
         } else {
           const repAreaIds = allAreas.filter((a) => a.repId === repId).map((a) => a.id);
           const repAreaNames = allAreas.filter((a) => a.repId === repId).map((a) => (a.name || "").toLowerCase().trim());
           hosps = hosps.filter((h) =>
+            h.repId === repId ||
             (h.areaId && repAreaIds.includes(h.areaId)) ||
-            (!h.areaId && h.area && repAreaNames.includes(h.area.toLowerCase().trim())) ||
-            (!h.areaId && h.repId === repId)
+            (h.area && repAreaNames.includes(h.area.toLowerCase().trim()))
           );
         }
       }

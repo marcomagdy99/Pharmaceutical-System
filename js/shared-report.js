@@ -625,48 +625,8 @@ window.onReportLineFilterChange = function (selectedLineId) {
     }
   }
 
-  const activeBtn = document.querySelector('.report-tab-btn.active');
-  const activeTab = activeBtn ? activeBtn.dataset.tab : 'sales';
-
-  if (activeTab === 'sales') {
-    const salesRes = document.getElementById('salesResultsContainer');
-    if (salesRes && salesRes.style.display !== 'none' && typeof window.renderSalesReport === 'function') {
-      window.renderSalesReport();
-    }
-  } else if (activeTab === 'achievements') {
-    const achRes = document.getElementById('achResultsContainer');
-    if (achRes && achRes.style.display !== 'none' && typeof window.renderAchievementsReport === 'function') {
-      window.renderAchievementsReport();
-    }
-  } else if (activeTab === 'timeline') {
-    if (typeof window.renderTimelineReport === 'function') {
-      window.renderTimelineReport();
-    }
-  } else if (activeTab === 'coverage') {
-    if (typeof window.renderCoverageReport === 'function') {
-      window.renderCoverageReport();
-    }
-  } else if (activeTab === 'doctors') {
-    if (typeof window.renderDoctorsReport === 'function') {
-      window.renderDoctorsReport();
-    }
-  } else if (activeTab === 'hospitals') {
-    if (typeof window.renderHospitalsReport === 'function') {
-      window.renderHospitalsReport();
-    }
-  } else if (activeTab === 'pharmacies') {
-    if (typeof window.renderPharmaciesReport === 'function') {
-      window.renderPharmaciesReport();
-    }
-  } else if (activeTab === 'missing-days') {
-    if (typeof window.renderMissingDaysReport === 'function') {
-      window.renderMissingDaysReport();
-    }
-  } else if (activeTab === 'gps-tracing') {
-    if (typeof window.renderGpsTracingReport === 'function') {
-      window.renderGpsTracingReport();
-    }
-  }
+  // Line filter cascades dependent selects (reps, areas, products).
+  // Report data is rendered strictly when the user clicks the Show button.
 };
 
 /**

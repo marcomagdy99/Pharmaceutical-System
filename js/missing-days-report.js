@@ -234,9 +234,7 @@
     if (typeof window.onMissingDaysDmChange === "function") {
       window.onMissingDaysDmChange();
     }
-    if (typeof window.onMissingDaysFilterChange === "function") {
-      window.onMissingDaysFilterChange();
-    }
+    // cascading filter updated
   };
 
   /**
@@ -305,9 +303,7 @@
       repSelect.appendChild(opt);
     });
     repSelect.disabled = false;
-    if (typeof window.onMissingDaysFilterChange === "function") {
-      window.onMissingDaysFilterChange();
-    }
+    // cascading filter updated
   };
 
   window.onMissingDaysFilterChange = function () {

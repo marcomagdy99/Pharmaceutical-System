@@ -19,7 +19,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v208";
+        var EXPECTED_SW = "v209";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -51,17 +51,17 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v208" />
-    <link rel="stylesheet" href="css/reports.css?v=v208" />
+    <link rel="stylesheet" href="css/style.css?v=v209" />
+    <link rel="stylesheet" href="css/reports.css?v=v209" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v208"></script>
-    <script src="js/store.js?v=v208"></script>
+    <script src="js/app.js?v=v209"></script>
+    <script src="js/store.js?v=v209"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v208"></script>
-    <script src="js/firebase-sync.js?v=v208"></script>
+    <script src="js/firebase-config.js?v=v209"></script>
+    <script src="js/firebase-sync.js?v=v209"></script>
   </head>
   <body>
     <div class="app">
@@ -587,31 +587,18 @@
               <div class="sales-filter-form-grid">
                 <div class="sales-filter-field col-rep" id="timelineRepFilterContainer">
                   <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select
-                    id="timelineRepSelect"
-                    class="form-control"
-                    onchange="if (typeof onTimelineFilterChange === 'function') onTimelineFilterChange();"
+                  <select id="timelineRepSelect" class="form-control"
                   >
                     <option value="all">All Employees</option>
                   </select>
                 </div>
                 <div class="sales-filter-field col-date">
                   <label data-i18n="timelineFrom">From:</label>
-                  <input
-                    type="date"
-                    id="timelineDateFrom"
-                    class="form-control"
-                    onchange="if (typeof onTimelineFilterChange === 'function') onTimelineFilterChange();"
-                  />
+                  <input type="date" id="timelineDateFrom" class="form-control" />
                 </div>
                 <div class="sales-filter-field col-date">
                   <label data-i18n="timelineTo">To:</label>
-                  <input
-                    type="date"
-                    id="timelineDateTo"
-                    class="form-control"
-                    onchange="if (typeof onTimelineFilterChange === 'function') onTimelineFilterChange();"
-                  />
+                  <input type="date" id="timelineDateTo" class="form-control" />
                 </div>
                 <div class="sales-filter-field col-btn">
                   <button
@@ -686,38 +673,22 @@
               <div class="sales-filter-form-grid">
                 <div class="sales-filter-field col-rep" id="coverageRepFilterContainer">
                   <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select
-                    id="coverageRepSelect"
-                    class="form-control"
-                    onchange="if (typeof onCoverageFilterChange === 'function') onCoverageFilterChange();"
+                  <select id="coverageRepSelect" class="form-control"
                   >
                     <option value="all">All Employees</option>
                   </select>
                 </div>
                 <div class="sales-filter-field col-date">
                   <label data-i18n="timelineFrom">From:</label>
-                  <input
-                    type="date"
-                    id="coverageStartDate"
-                    class="form-control"
-                    onchange="if (typeof onCoverageFilterChange === 'function') onCoverageFilterChange();"
-                  />
+                  <input type="date" id="coverageStartDate" class="form-control" />
                 </div>
                 <div class="sales-filter-field col-date">
                   <label data-i18n="timelineTo">To:</label>
-                  <input
-                    type="date"
-                    id="coverageEndDate"
-                    class="form-control"
-                    onchange="if (typeof onCoverageFilterChange === 'function') onCoverageFilterChange();"
-                  />
+                  <input type="date" id="coverageEndDate" class="form-control" />
                 </div>
                 <div class="sales-filter-field col-class">
                   <label data-i18n="doctorClass">Class:</label>
-                  <select
-                    id="coverageClassFilter"
-                    class="form-control"
-                    onchange="if (typeof onCoverageFilterChange === 'function') onCoverageFilterChange();"
+                  <select id="coverageClassFilter" class="form-control"
                   >
                     <option value="all" data-i18n="allTargets">All Targets (A, B & Hospitals)</option>
                     <option value="all_doctors" data-i18n="allDoctorsClassAB">
@@ -938,10 +909,7 @@
                 <!-- Employee Filter -->
                 <div class="sales-filter-field col-rep" id="doctorRepFilterContainer">
                   <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select
-                    id="doctorRepSelect"
-                    class="form-control"
-                    onchange="if (typeof onDoctorFilterChange === 'function') onDoctorFilterChange();"
+                  <select id="doctorRepSelect" class="form-control"
                   >
                     <option value="all" data-i18n="allReps">All Employees</option>
                   </select>
@@ -949,22 +917,12 @@
                 <!-- Search -->
                 <div class="sales-filter-field col-search">
                   <label data-i18n="searchDoctors">Search:</label>
-                  <input
-                    type="text"
-                    id="doctorSearchInput"
-                    class="form-control"
-                    data-i18n-placeholder="searchDoctorsPlaceholder"
-                    placeholder="Search by name, clinic, phone..."
-                    oninput="if (typeof onDoctorFilterChange === 'function') onDoctorFilterChange();"
-                  />
+                  <input type="text" id="doctorSearchInput" class="form-control" data-i18n-placeholder="searchDoctorsPlaceholder" placeholder="Search by name, clinic, phone..." />
                 </div>
                 <!-- Specialty Filter -->
                 <div class="sales-filter-field col-specialty">
                   <label data-i18n="specialty">Specialty:</label>
-                  <select
-                    id="doctorSpecialtyFilter"
-                    class="form-control"
-                    onchange="if (typeof onDoctorFilterChange === 'function') onDoctorFilterChange();"
+                  <select id="doctorSpecialtyFilter" class="form-control"
                   >
                     <option value="all" data-i18n="allSpecialties">
                       All Specialties
@@ -974,10 +932,7 @@
                 <!-- Class Filter -->
                 <div class="sales-filter-field col-class">
                   <label data-i18n="doctorClass">Class:</label>
-                  <select
-                    id="doctorClassFilter"
-                    class="form-control"
-                    onchange="if (typeof onDoctorFilterChange === 'function') onDoctorFilterChange();"
+                  <select id="doctorClassFilter" class="form-control"
                   >
                     <option value="all" data-i18n="allClasses">
                       All Classes (A &amp; B)
@@ -1130,10 +1085,7 @@
                 <!-- Employee Filter -->
                 <div class="sales-filter-field col-rep" id="hospitalRepFilterContainer">
                   <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select
-                    id="hospitalRepSelect"
-                    class="form-control"
-                    onchange="if (typeof onHospitalFilterChange === 'function') onHospitalFilterChange();"
+                  <select id="hospitalRepSelect" class="form-control"
                   >
                     <option value="all" data-i18n="allReps">All Employees</option>
                   </select>
@@ -1147,7 +1099,7 @@
                     class="form-control"
                     data-i18n-placeholder="searchHospitalsPlaceholder"
                     placeholder="Search by hospital name, address, phone..."
-                    oninput="if (typeof onHospitalFilterChange === 'function') onHospitalFilterChange();"
+                    
                     onkeyup="if (event.key === 'Enter') renderHospitalsReport();"
                   />
                 </div>
@@ -1281,10 +1233,7 @@
                 <!-- Employee Filter -->
                 <div class="sales-filter-field col-rep" id="pharmacyRepFilterContainer">
                   <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select
-                    id="pharmacyRepSelect"
-                    class="form-control"
-                    onchange="if (typeof onPharmacyFilterChange === 'function') onPharmacyFilterChange();"
+                  <select id="pharmacyRepSelect" class="form-control"
                   >
                     <option value="all" data-i18n="allReps">All Employees</option>
                   </select>
@@ -1298,7 +1247,7 @@
                     class="form-control"
                     data-i18n-placeholder="searchPharmaciesPlaceholder"
                     placeholder="Search by pharmacy name, address, contact..."
-                    oninput="if (typeof onPharmacyFilterChange === 'function') onPharmacyFilterChange();"
+                    
                   />
                 </div>
                 <div class="sales-filter-field col-btn">
@@ -1372,12 +1321,12 @@
                 <!-- Date From -->
                 <div class="sales-filter-field col-month">
                   <label for="missingDateFrom" data-i18n="labelDateFrom">From Date:</label>
-                  <input type="date" id="missingDateFrom" class="form-control" onchange="if (typeof onMissingDaysFilterChange === 'function') onMissingDaysFilterChange();" />
+                  <input type="date" id="missingDateFrom" class="form-control" />
                 </div>
                 <!-- Date To -->
                 <div class="sales-filter-field col-month">
                   <label for="missingDateTo" data-i18n="labelDateTo">To Date:</label>
-                  <input type="date" id="missingDateTo" class="form-control" onchange="if (typeof onMissingDaysFilterChange === 'function') onMissingDaysFilterChange();" />
+                  <input type="date" id="missingDateTo" class="form-control" />
                 </div>
                 <!-- Line Filter -->
                 <div class="sales-filter-field col-product">
@@ -1392,7 +1341,7 @@
                 <!-- Rep Filter -->
                 <div class="sales-filter-field col-rep">
                   <label for="missingRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
-                  <select id="missingRepSelect" class="form-control" onchange="if (typeof onMissingDaysFilterChange === 'function') onMissingDaysFilterChange();"></select>
+                  <select id="missingRepSelect" class="form-control"></select>
                 </div>
                 <!-- Show Button -->
                 <div class="sales-filter-field col-btn">
@@ -1506,12 +1455,12 @@
                 <!-- Visit Date -->
                 <div class="sales-filter-field col-month">
                   <label for="gpsTracingDate" data-i18n="labelGpsDate">Visit Date:</label>
-                  <input type="date" id="gpsTracingDate" class="form-control" onchange="if (typeof onGpsFilterChange === 'function') onGpsFilterChange();" />
+                  <input type="date" id="gpsTracingDate" class="form-control" />
                 </div>
                 <!-- Shift Filter (AM / PM / All) -->
                 <div class="sales-filter-field col-product">
                   <label for="gpsShiftSelect" data-i18n="labelGpsShift">Shift / Period:</label>
-                  <select id="gpsShiftSelect" class="form-control" onchange="if (typeof onGpsFilterChange === 'function') onGpsFilterChange();">
+                  <select id="gpsShiftSelect" class="form-control">
                     <option value="all" data-i18n="shiftAll">All Shifts (AM & PM)</option>
                     <option value="am" data-i18n="shiftAM">AM (Hospitals & Morning)</option>
                     <option value="pm" data-i18n="shiftPM">PM (Doctors & Evening)</option>
@@ -1520,7 +1469,7 @@
                 <!-- GPS Audit Status Filter -->
                 <div class="sales-filter-field col-distributor">
                   <label for="gpsStatusFilterSelect" data-i18n="labelGpsStatusFilter">GPS Verification:</label>
-                  <select id="gpsStatusFilterSelect" class="form-control" onchange="if (typeof onGpsFilterChange === 'function') onGpsFilterChange();">
+                  <select id="gpsStatusFilterSelect" class="form-control">
                     <option value="all" data-i18n="allGpsStatuses">All Verification Statuses</option>
                     <option value="verified" data-i18n="gpsStatusVerified">✅ In Geofence (< Max Radius)</option>
                     <option value="out_of_range" data-i18n="gpsStatusOutRange">⚠️ Out of Geofence (> Max Radius)</option>
@@ -1541,7 +1490,7 @@
                 <!-- Rep Filter -->
                 <div class="sales-filter-field col-rep">
                   <label for="gpsRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
-                  <select id="gpsRepSelect" class="form-control" onchange="if (typeof onGpsFilterChange === 'function') onGpsFilterChange();"></select>
+                  <select id="gpsRepSelect" class="form-control"></select>
                 </div>
                 <!-- Show Button -->
                 <div class="sales-filter-field col-btn">
@@ -2908,6 +2857,16 @@
             <!-- Add/Edit target form -->
             <div class="modal-form-grid">
               <input type="hidden" id="targetEditId" />
+              <div class="form-group col-span-2">
+                <label class="form-label" data-i18n="lineFilterLabel">Product Line Filter</label>
+                <select
+                  id="targetLineFilterSelect"
+                  class="form-control modern-select"
+                  onchange="onTargetLineFilterChange()"
+                >
+                  <option value="all">All Product Lines</option>
+                </select>
+              </div>
               <div class="form-group col-span-1">
                 <label class="form-label" data-i18n="labelAreaTerritory">Area / Territory</label>
                 <select
@@ -3134,20 +3093,20 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v208"></script>
+    <script src="js/interactive-charts.js?v=v209"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v208"></script>
-    <script src="js/shared-report.js?v=v208"></script>
-    <script src="js/sales-report.js?v=v208"></script>
-    <script src="js/achievements-report.js?v=v208"></script>
-    <script src="js/timeline-report.js?v=v208"></script>
-    <script src="js/coverage-report.js?v=v208"></script>
-    <script src="js/doctors-report.js?v=v208"></script>
-    <script src="js/hospitals-report.js?v=v208"></script>
-    <script src="js/pharmacies-report.js?v=v208"></script>
-    <script src="js/missing-days-report.js?v=v208"></script>
-    <script src="js/gps-tracing-report.js?v=v208"></script>
-    <script src="js/accounts-costing-report.js?v=v208"></script>
+    <script src="js/excel-templates-data.js?v=v209"></script>
+    <script src="js/shared-report.js?v=v209"></script>
+    <script src="js/sales-report.js?v=v209"></script>
+    <script src="js/achievements-report.js?v=v209"></script>
+    <script src="js/timeline-report.js?v=v209"></script>
+    <script src="js/coverage-report.js?v=v209"></script>
+    <script src="js/doctors-report.js?v=v209"></script>
+    <script src="js/hospitals-report.js?v=v209"></script>
+    <script src="js/pharmacies-report.js?v=v209"></script>
+    <script src="js/missing-days-report.js?v=v209"></script>
+    <script src="js/gps-tracing-report.js?v=v209"></script>
+    <script src="js/accounts-costing-report.js?v=v209"></script>
   </body>
 </html>
 

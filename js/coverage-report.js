@@ -156,7 +156,10 @@ function renderCoverageReport() {
     if (selectedRep === 'all') {
       targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
     } else {
-      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
+      {
+        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep).map((a) => a.id);
+        targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId))) && (!d.repId || allowedIds.includes(d.repId)));
+      }
     }
   } else if (role === 'line_manager') {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
@@ -171,7 +174,10 @@ function renderCoverageReport() {
       const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
       targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
     } else if (selectedRep) {
-      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
+      {
+        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep).map((a) => a.id);
+        targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId))) && (!d.repId || allowedIds.includes(d.repId)));
+      }
     }
   } else if (role === 'business_unit') {
     const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
@@ -203,7 +209,10 @@ function renderCoverageReport() {
       const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
       targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
     } else {
-      targetList = targetList.filter((d) => d.repId === selectedRep);
+      {
+      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep).map((a) => a.id);
+      targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)));
+    }
     }
   }
 
@@ -703,7 +712,10 @@ function exportCoverageReport() {
     if (selectedRep === 'all') {
       targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
     } else {
-      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
+      {
+        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep).map((a) => a.id);
+        targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId))) && (!d.repId || allowedIds.includes(d.repId)));
+      }
     }
   } else if (role === 'line_manager' || role === 'lm') {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
@@ -718,7 +730,10 @@ function exportCoverageReport() {
       const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
       targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
     } else if (selectedRep) {
-      targetList = targetList.filter((d) => d.repId === selectedRep && allowedIds.includes(d.repId));
+      {
+        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep).map((a) => a.id);
+        targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId))) && (!d.repId || allowedIds.includes(d.repId)));
+      }
     }
   } else if (role === 'business_unit' || role === 'bu') {
     const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
@@ -750,7 +765,10 @@ function exportCoverageReport() {
       const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
       targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
     } else {
-      targetList = targetList.filter((d) => d.repId === selectedRep);
+      {
+      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep).map((a) => a.id);
+      targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)));
+    }
     }
   }
 

@@ -172,7 +172,7 @@ function getScopedDoctors(respectActiveFilters = true) {
           docs = docs.filter((d) =>
             (d.areaId && repAreaIds.includes(d.areaId)) ||
             (!d.areaId && d.area && repAreaNames.includes(d.area.toLowerCase().trim())) ||
-            (!d.areaId && d.repId === repId)
+            d.repId === repId
           );
         }
       }
@@ -622,12 +622,7 @@ function confirmDeleteDoctor() {
   if (typeof showToast === "function") showToast("Doctor deleted successfully.", "info");
 }
 
-function onDoctorFilterChange() {
-  const results = document.getElementById("doctorsResultsContainer");
-  if (results && results.style.display !== "none" && typeof renderDoctorsReport === "function") {
-    renderDoctorsReport();
-  }
-}
+function onDoctorFilterChange() {}
 
 function onDoctorLmChange() {}
 function onDoctorDmChange() {}

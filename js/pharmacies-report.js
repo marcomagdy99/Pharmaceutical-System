@@ -145,7 +145,7 @@ function getScopedPharmacies(respectActiveFilters = true) {
           pharms = pharms.filter((p) =>
             (p.areaId && repAreaIds.includes(p.areaId)) ||
             (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim())) ||
-            (!p.areaId && p.repId === repId)
+            p.repId === repId
           );
         }
       }
@@ -495,12 +495,7 @@ function confirmDeletePharmacy() {
   if (typeof showToast === "function") showToast("Pharmacy deleted successfully.", "info");
 }
 
-function onPharmacyFilterChange() {
-  const results = document.getElementById("pharmaciesResultsContainer");
-  if (results && results.style.display !== "none" && typeof renderPharmaciesReport === "function") {
-    renderPharmaciesReport();
-  }
-}
+function onPharmacyFilterChange() {}
 
 function onPharmacyLmChange() {}
 function onPharmacyDmChange() {}

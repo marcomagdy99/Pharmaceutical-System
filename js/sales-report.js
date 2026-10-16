@@ -105,10 +105,6 @@ window.toggleSelectAllPharmSalesMonths = function(isChecked) {
     cb.checked = isChecked;
   });
   updatePharmSalesMonthDropdownLabel();
-  const salesRes = document.getElementById('salesResultsContainer');
-  if (salesRes && salesRes.style.display !== 'none' && typeof renderSalesReport === 'function') {
-    renderSalesReport();
-  }
 };
 
 window.onPharmSalesMonthCheckboxChange = function() {
@@ -119,10 +115,6 @@ window.onPharmSalesMonthCheckboxChange = function() {
     selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
   }
   updatePharmSalesMonthDropdownLabel();
-  const salesRes = document.getElementById('salesResultsContainer');
-  if (salesRes && salesRes.style.display !== 'none' && typeof renderSalesReport === 'function') {
-    renderSalesReport();
-  }
 };
 
 function updatePharmSalesMonthDropdownLabel() {
@@ -1041,7 +1033,7 @@ function exportSalesReport() {
 let targetsModalEl = null;
 
 function getAllProductsFlat() {
-  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
   const out = [];
   lines.forEach((line) => {
     (line.products || []).forEach((p) => {
@@ -1054,24 +1046,50 @@ function getAllProductsFlat() {
   return out;
 }
 
-function updateTargetProductSelectForArea(selectedAreaId) {
+window.populateTargetLineFilter = function () {
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  if (!lineSelect) return;
+  const prev = lineSelect.value;
+  lineSelect.replaceChildren();
+
+  const optAll = document.createElement('option');
+  optAll.value = 'all';
+  optAll.textContent = 'All Product Lines';
+  lineSelect.appendChild(optAll);
+
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
+  allLines.forEach((l) => {
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = l.name;
+    lineSelect.appendChild(opt);
+  });
+
+  if (prev && Array.from(lineSelect.options).some((o) => o.value === prev)) {
+    lineSelect.value = prev;
+  } else {
+    lineSelect.value = 'all';
+  }
+};
+
+window.onTargetLineFilterChange = function () {
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  const lineId = lineSelect ? lineSelect.value : 'all';
+  updateTargetProductSelect(lineId);
+  populateTargetAreaSelect(lineId);
+  renderTargetsTable(lineId);
+};
+
+function updateTargetProductSelect(filterLineId = 'all') {
   const productSelect = document.getElementById('targetProductSelect');
   if (!productSelect) return;
   const prevVal = productSelect.value;
   productSelect.replaceChildren();
 
-  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-  const area = allAreas.find((a) => a.id === selectedAreaId);
-
-  let lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
-  if (area && area.lineId) {
-    lines = lines.filter((l) => l.id === area.lineId);
-  } else if (area && area.repId) {
-    const repLines = typeof window.getUserLines === 'function' ? window.getUserLines(area.repId) : [];
-    const repLineIds = repLines.map((l) => l.id);
-    if (repLineIds.length > 0) {
-      lines = lines.filter((l) => repLineIds.includes(l.id));
-    }
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
+  let lines = allLines;
+  if (filterLineId && filterLineId !== 'all') {
+    lines = allLines.filter((l) => l.id === filterLineId);
   }
 
   lines.forEach((line) => {
@@ -1094,49 +1112,63 @@ function updateTargetProductSelectForArea(selectedAreaId) {
   onTargetProductSelectChange();
 }
 
+function updateTargetProductSelectForArea(selectedAreaId) {
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  const filterLineId = lineSelect ? lineSelect.value : 'all';
+  updateTargetProductSelect(filterLineId);
+}
+
 function updateTargetProductSelectForRep(selectedRepId) {
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  const filterLineId = lineSelect ? lineSelect.value : 'all';
+  updateTargetProductSelect(filterLineId);
+}
+
+function populateTargetAreaSelect(filterLineId = 'all') {
+  const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
+  if (!areaSelect) return;
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-  const area = allAreas.find((a) => a.repId === selectedRepId);
-  updateTargetProductSelectForArea(area ? area.id : null);
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
+
+  let areasToDisplay = allAreas;
+  if (filterLineId && filterLineId !== 'all') {
+    areasToDisplay = allAreas.filter((a) => !a.lineId || a.lineId === filterLineId);
+    if (areasToDisplay.length === 0) areasToDisplay = allAreas;
+  }
+
+  const prevAreaVal = areaSelect.value;
+  areaSelect.replaceChildren();
+
+  areasToDisplay.forEach((a) => {
+    const rep = allUsers.find((u) => u.id === a.repId);
+    const line = allLines.find((l) => l.id === a.lineId);
+    const repLabel = rep ? `Rep: ${rep.name}` : `[Vacant]`;
+    const lineLabel = line ? ` — ${line.name}` : '';
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${lineLabel} (${repLabel})`;
+    areaSelect.appendChild(opt);
+  });
+
+  if (prevAreaVal && Array.from(areaSelect.options).some((o) => o.value === prevAreaVal)) {
+    areaSelect.value = prevAreaVal;
+  }
+
+  if (!areaSelect.dataset.targetAreaBound) {
+    areaSelect.dataset.targetAreaBound = 'true';
+    areaSelect.addEventListener('change', () => {
+      updateTargetProductSelectForArea(areaSelect.value);
+    });
+  }
 }
 
 function populateTargetFormSelects() {
-  const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
-  const monthSelect = document.getElementById('targetMonthSelect');
-  const yearSelect = document.getElementById('targetYearSelect');
-
-  if (areaSelect) {
-    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : []);
-    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : []);
-
-    const prevAreaVal = areaSelect.value;
-    areaSelect.replaceChildren();
-
-    allAreas.forEach((a) => {
-      const rep = allUsers.find((u) => u.id === a.repId);
-      const line = allLines.find((l) => l.id === a.lineId);
-      const repLabel = rep ? `Rep: ${rep.name}` : `[Vacant]`;
-      const lineLabel = line ? ` — ${line.name}` : '';
-      const opt = document.createElement('option');
-      opt.value = a.id;
-      opt.textContent = `${a.name}${a.code ? ' (' + a.code + ')' : ''}${lineLabel} (${repLabel})`;
-      areaSelect.appendChild(opt);
-    });
-
-    if (prevAreaVal && Array.from(areaSelect.options).some((o) => o.value === prevAreaVal)) {
-      areaSelect.value = prevAreaVal;
-    }
-
-    if (!areaSelect.dataset.targetAreaBound) {
-      areaSelect.dataset.targetAreaBound = 'true';
-      areaSelect.addEventListener('change', () => {
-        updateTargetProductSelectForArea(areaSelect.value);
-      });
-    }
-  }
-
-  updateTargetProductSelectForArea(areaSelect ? areaSelect.value : null);
+  populateTargetLineFilter();
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  const filterLineId = lineSelect ? lineSelect.value : 'all';
+  populateTargetAreaSelect(filterLineId);
+  updateTargetProductSelect(filterLineId);
 
   if (monthSelect && !monthSelect.dataset.populated) {
     const now = new Date();
