@@ -348,6 +348,17 @@
         repSelect.value = eligibleReps.length > 0 ? eligibleReps[0].id : "all";
       }
     }
+
+    if (typeof window.onGpsFilterChange === "function") {
+      window.onGpsFilterChange();
+    }
+  };
+
+  window.onGpsFilterChange = function () {
+    const resultsContainer = document.getElementById("gpsTracingResultsContainer");
+    if (resultsContainer && resultsContainer.style.display !== "none" && typeof window.renderGpsTracingReport === "function") {
+      window.renderGpsTracingReport();
+    }
   };
 
   // Keep reference of current filtered rows for full route mapping

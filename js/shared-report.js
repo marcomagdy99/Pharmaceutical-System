@@ -603,6 +603,28 @@ window.onReportLineFilterChange = function (selectedLineId) {
     window.populateAchAreas();
   }
 
+  const missingLine = document.getElementById('missingLineSelect');
+  if (missingLine && !missingLine.disabled) {
+    if (Array.from(missingLine.options).some((o) => o.value === selectedLineId)) {
+      missingLine.value = selectedLineId;
+      if (typeof window.onMissingDaysLineChange === 'function') window.onMissingDaysLineChange();
+    }
+  }
+  const gpsLine = document.getElementById('gpsLineSelect');
+  if (gpsLine && !gpsLine.disabled) {
+    if (Array.from(gpsLine.options).some((o) => o.value === selectedLineId)) {
+      gpsLine.value = selectedLineId;
+      if (typeof window.onGpsLineChange === 'function') window.onGpsLineChange();
+    }
+  }
+  const costingLine = document.getElementById('accountsCostingLineSelect');
+  if (costingLine && !costingLine.disabled) {
+    if (Array.from(costingLine.options).some((o) => o.value === selectedLineId)) {
+      costingLine.value = selectedLineId;
+      if (typeof window.onAccountsCostingLineChange === 'function') window.onAccountsCostingLineChange();
+    }
+  }
+
   const activeBtn = document.querySelector('.report-tab-btn.active');
   const activeTab = activeBtn ? activeBtn.dataset.tab : 'sales';
 

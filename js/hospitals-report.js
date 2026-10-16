@@ -483,7 +483,10 @@ function confirmDeleteHospital() {
 }
 
 function onHospitalFilterChange() {
-  // Only render on Show button click
+  const results = document.getElementById("hospitalsResultsContainer");
+  if (results && results.style.display !== "none" && typeof renderHospitalsReport === "function") {
+    renderHospitalsReport();
+  }
 }
 
 function exportHospitalsDirectory() {

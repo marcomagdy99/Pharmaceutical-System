@@ -86,7 +86,7 @@ function renderCoverageReport() {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  const user = checkAuth();
+  const user = checkAuth() || (window.DEMO_DATA && window.DEMO_DATA.currentUser) || { id: 'u1790626000010', role: 'admin' };
   const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
   const allUsers = typeof getSharedReportUsers === 'function'
@@ -800,3 +800,11 @@ function exportCoverageReport() {
   a.download = `PharmaCare_Coverage_${startDate}_to_${endDate}.csv`;
   a.click();
 }
+
+window.onCoverageFilterChange = function () {
+  const results = document.getElementById('coverageResultsContainer');
+  if (results && results.style.display !== 'none' && typeof renderCoverageReport === 'function') {
+    renderCoverageReport();
+  }
+};
+

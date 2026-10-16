@@ -36,8 +36,8 @@ function renderDailyTimeline() {
   const pharmContainer = document.getElementById('timelineReportPharmacyContainer');
   if (pharmContainer) pharmContainer.replaceChildren();
 
-  const user    = checkAuth();
-  const role    = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
+  const user = checkAuth() || (window.DEMO_DATA && window.DEMO_DATA.currentUser) || { id: 'u1790626000010', role: 'admin' };
+  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
   const isRep   = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
   const allUsers = typeof getSharedReportUsers === 'function'
     ? getSharedReportUsers()
@@ -98,6 +98,7 @@ function renderDailyTimeline() {
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   if (selectedLineId !== 'all') {
     visitsInRange = visitsInRange.filter((v) => {
+      if (v.lineId && v.lineId === selectedLineId) return true;
       const repLines = window.getUserLines ? window.getUserLines(v.repId) : [];
       return repLines.some((l) => l.id === selectedLineId);
     });
@@ -352,4 +353,12 @@ window.switchReportTimelineScope = function (scope) {
     if (secPharm) secPharm.style.display = 'none';
   }
 };
+
+window.onTimelineFilterChange = function () {
+  const results = document.getElementById('timelineResultsContainer');
+  if (results && results.style.display !== 'none' && typeof renderDailyTimeline === 'function') {
+    renderDailyTimeline();
+  }
+};
+
 

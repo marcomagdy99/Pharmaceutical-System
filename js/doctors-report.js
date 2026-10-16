@@ -623,7 +623,10 @@ function confirmDeleteDoctor() {
 }
 
 function onDoctorFilterChange() {
-  // Only render on Show button click
+  const results = document.getElementById("doctorsResultsContainer");
+  if (results && results.style.display !== "none" && typeof renderDoctorsReport === "function") {
+    renderDoctorsReport();
+  }
 }
 
 function onDoctorLmChange() {}

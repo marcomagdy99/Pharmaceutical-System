@@ -496,7 +496,10 @@ function confirmDeletePharmacy() {
 }
 
 function onPharmacyFilterChange() {
-  // Only render on Show button click
+  const results = document.getElementById("pharmaciesResultsContainer");
+  if (results && results.style.display !== "none" && typeof renderPharmaciesReport === "function") {
+    renderPharmaciesReport();
+  }
 }
 
 function onPharmacyLmChange() {}

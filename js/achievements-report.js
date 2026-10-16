@@ -40,6 +40,10 @@ window.toggleSelectAllAchMonths = function(isChecked) {
     cb.checked = isChecked;
   });
   updateAchMonthDropdownLabel();
+  const achRes = document.getElementById('achResultsContainer');
+  if (achRes && achRes.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
+    renderAchievementsReport();
+  }
 };
 
 window.onAchMonthCheckboxChange = function() {
@@ -50,6 +54,10 @@ window.onAchMonthCheckboxChange = function() {
     selectAll.checked = (allCheckboxes.length > 0 && allCheckboxes.length === checkedBoxes.length);
   }
   updateAchMonthDropdownLabel();
+  const achRes = document.getElementById('achResultsContainer');
+  if (achRes && achRes.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
+    renderAchievementsReport();
+  }
 };
 
 function updateAchMonthDropdownLabel() {
@@ -125,13 +133,29 @@ function populateAchFilters() {
 
   populateAchAreas();
 
+  function triggerAchAutoRefresh() {
+    const achRes = document.getElementById('achResultsContainer');
+    if (achRes && achRes.style.display !== 'none' && typeof renderAchievementsReport === 'function') {
+      renderAchievementsReport();
+    }
+  }
+
   const achRepEl = document.getElementById('achRepSelect');
   if (achRepEl && !achRepEl.dataset.achAreaListenerBound) {
     achRepEl.dataset.achAreaListenerBound = 'true';
     achRepEl.addEventListener('change', () => {
       populateAchAreas();
+      triggerAchAutoRefresh();
     });
   }
+
+  ['achAreaSelect', 'achSalesTypeSelect', 'achYearSelect'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.autoRefreshBound) {
+      el.dataset.autoRefreshBound = 'true';
+      el.addEventListener('change', triggerAchAutoRefresh);
+    }
+  });
 }
 
 function populateAchAreas(filterUser) {
@@ -150,13 +174,36 @@ function populateAchAreas(filterUser) {
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   let areasToDisplay = [];
 
-  if (isRep) {
+  if (isRep && curUser) {
     areasToDisplay = (window.store && window.store.areas ? window.store.areas.getByRep(curUser.id) : allAreas.filter((a) => a.repId === curUser.id));
   } else if (selectedRepVal && selectedRepVal.startsWith('vacant:')) {
     const vacantAreaId = selectedRepVal.split(':')[1];
     areasToDisplay = allAreas.filter((a) => a.id === vacantAreaId);
   } else if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms') {
-    areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const selUser = allUsers.find((u) => u.id === selectedRepVal);
+    const isLM = selUser && (selUser.role === 'line_manager' || selUser.role === 'lm');
+    const isDM = selUser && (selUser.role === 'district_manager' || selUser.role === 'dm');
+
+    if (isDM) {
+      const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRepVal).map((u) => u.id);
+      areasToDisplay = allAreas.filter((a) => {
+        if (a.repId && repsUnderDM.includes(a.repId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+        return mgrId === selectedRepVal;
+      });
+    } else if (isLM) {
+      const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
+      const lmReps = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+      areasToDisplay = allAreas.filter((a) => {
+        if (a.repId && lmReps.includes(a.repId)) return true;
+        if (selUser.lineId && a.lineId === selUser.lineId) return true;
+        if (selUser.lineIds && selUser.lineIds.includes(a.lineId)) return true;
+        return false;
+      });
+    } else {
+      areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
+    }
     if (areasToDisplay.length === 0) areasToDisplay = allAreas;
   } else {
     const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';

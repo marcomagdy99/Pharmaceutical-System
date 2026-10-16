@@ -45,7 +45,7 @@
       toInput.value = formatDateForInput(today);
     }
 
-    populateMissingDaysFilters();
+    window.populateMissingDaysFilters();
   };
 
   /**
@@ -72,7 +72,9 @@
       toInput.value = formatDateForInput(now);
     }
 
-    renderMissingDaysReport();
+    if (typeof window.renderMissingDaysReport === "function") {
+      window.renderMissingDaysReport();
+    }
   };
 
   function formatDateForInput(d) {
@@ -155,7 +157,9 @@
     }
 
     // Trigger hierarchy cascading
-    onMissingDaysLineChange();
+    if (typeof window.onMissingDaysLineChange === "function") {
+      window.onMissingDaysLineChange();
+    }
   };
 
   /**
@@ -212,7 +216,7 @@
 
         if (selectedLine !== "all") {
           dms = dms.filter((dm) => {
-            const lines = dm.lineIds || (dm.lineId ? [dm.lineId] : []);
+            const lines = window.getUserLines ? window.getUserLines(dm.id).map((l) => l.id) : (dm.lineIds || (dm.lineId ? [dm.lineId] : []));
             return lines.includes(selectedLine);
           });
         }
@@ -227,7 +231,12 @@
       }
     }
 
-    onMissingDaysDmChange();
+    if (typeof window.onMissingDaysDmChange === "function") {
+      window.onMissingDaysDmChange();
+    }
+    if (typeof window.onMissingDaysFilterChange === "function") {
+      window.onMissingDaysFilterChange();
+    }
   };
 
   /**
@@ -284,7 +293,7 @@
 
     if (selectedLine !== "all") {
       reps = reps.filter((r) => {
-        const lines = r.lineIds || (r.lineId ? [r.lineId] : []);
+        const lines = window.getUserLines ? window.getUserLines(r.id).map((l) => l.id) : (r.lineIds || (r.lineId ? [r.lineId] : []));
         return lines.includes(selectedLine);
       });
     }
@@ -296,6 +305,16 @@
       repSelect.appendChild(opt);
     });
     repSelect.disabled = false;
+    if (typeof window.onMissingDaysFilterChange === "function") {
+      window.onMissingDaysFilterChange();
+    }
+  };
+
+  window.onMissingDaysFilterChange = function () {
+    const results = document.getElementById("missingDaysResultsContainer");
+    if (results && results.style.display !== "none" && typeof window.renderMissingDaysReport === "function") {
+      window.renderMissingDaysReport();
+    }
   };
 
   /**
@@ -313,6 +332,7 @@
    * If secondary weekend is pm_only (half-day off), each such day contributes 0.5 to working days.
    */
   function calculateWorkingDays(startDate, endDate, companySettings) {
+    if (!startDate || !endDate) return 0;
     const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
     const secMode = companySettings?.secondaryWeekendMode || "full_day";
 
@@ -362,8 +382,8 @@
     const startDate = parseLocalDate(fromDateStr);
     const endDate = parseLocalDate(toDateStr);
 
-    if (startDate > endDate) {
-      if (typeof window.showToast === "function") {
+    if (!startDate || !endDate || startDate > endDate) {
+      if (typeof window.showToast === "function" && startDate && endDate && startDate > endDate) {
         window.showToast("From Date cannot be later than To Date.", "warning");
       }
       return;
