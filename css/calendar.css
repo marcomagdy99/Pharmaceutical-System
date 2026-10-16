@@ -157,7 +157,7 @@
 
 .calendar-day.today .day-number {
     background-color: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 /* --- START: Event Indicators --- */
@@ -390,7 +390,7 @@
 
 [data-theme="dark"] .calendar-nav button:hover {
     background-color: #2d3340;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .calendar-legend {
@@ -832,13 +832,13 @@
 
 .btn-select-node:hover {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .btn-select-node.active-target {
     background: var(--success);
     border-color: var(--success);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 /* Nested Branch Structure */
@@ -971,7 +971,7 @@
 
 [data-theme="dark"] .org-node-toggle:hover {
     background: #363e4f;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .org-node-children {
@@ -986,13 +986,13 @@
 
 [data-theme="dark"] .btn-select-node:hover {
     background: #3b82f6;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .btn-select-node.active-target {
     background: #10b981;
     border-color: #10b981;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .role-admin { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
@@ -1133,7 +1133,7 @@
         box-sizing: border-box;
     }
     .event-indicator.leave-block {
-        color: var(--white);
+        color: var(--text-white);
         padding: 1px 3px;
         border-radius: 3px;
         font-weight: 600;

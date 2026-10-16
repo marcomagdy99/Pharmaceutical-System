@@ -28,7 +28,7 @@
     height: 40px;
     box-shadow: 0 2px 6px rgba(13, 110, 253, 0.25);
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     border: none;
     cursor: pointer;
     transition: all 0.2s;
@@ -138,7 +138,7 @@
 .badge-high { background: #fee2e2; color: #b91c1c; }
 .badge-normal { background: #dbeafe; color: #1d4ed8; }
 .badge-low { background: #f1f5f9; color: #475569; }
-.badge-new { background: var(--primary); color: var(--white); }
+.badge-new { background: var(--primary); color: var(--text-white); }
 
 .actions {
     display: flex;
@@ -404,7 +404,7 @@
 
 .btn-primary {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
 }
 .btn-primary:hover { background: var(--primary-dark); }
 
@@ -423,7 +423,7 @@
 
 .btn-danger {
     background: var(--danger);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .btn-sm {
@@ -506,7 +506,7 @@
 
 .btn-change-image {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
 }
 .btn-change-image:hover {
     background: #0b5ed7;
@@ -514,7 +514,7 @@
 
 .btn-remove-image {
     background: #dc3545;
-    color: var(--white);
+    color: var(--text-white);
 }
 .btn-remove-image:hover {
     background: #bb2d3b;
@@ -573,7 +573,7 @@
     position: absolute;
     top: -40px;
     right: 0;
-    color: var(--white);
+    color: var(--text-white);
     font-size: 26px;
     background: none;
     border: none;
@@ -747,7 +747,7 @@
 
 [data-theme="dark"] .badge-new {
     background: #1f6feb;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .badge-target {
@@ -781,7 +781,7 @@
 }
 
 [data-theme="dark"] .modal-header h2 {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .btn-close {
@@ -789,7 +789,7 @@
 }
 
 [data-theme="dark"] .btn-close:hover {
-    color: var(--white);
+    color: var(--text-white);
     background-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -824,7 +824,7 @@
 
 [data-theme="dark"] .btn-secondary:hover {
     background: #3d4554;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] select.form-control option,
@@ -848,7 +848,7 @@
 
 [data-theme="dark"] .btn-outline-primary:hover {
     background: rgba(56, 139, 253, 0.2);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .image-upload-dropzone {

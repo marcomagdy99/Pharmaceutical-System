@@ -128,7 +128,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--gradient-primary);
-  color: var(--white);
+  color: var(--text-white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -349,7 +349,7 @@
 
 [data-theme="dark"] .leave-balance-card h6,
 [data-theme="dark"] .leave-balance-card h3 {
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .leaves-page-subtitle {
@@ -449,7 +449,7 @@
 
 [data-theme="dark"] .card-header {
   background-color: var(--surface-alt);
-  color: var(--white);
+  color: var(--text-white);
   border-bottom: 1px solid var(--gray-200);
 }
 
@@ -525,7 +525,7 @@
 [data-theme="dark"] .form-select {
   background-color: var(--surface-alt);
   border-color: var(--gray-300);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .form-control::placeholder {
@@ -549,7 +549,7 @@
   --bs-table-bg: var(--white);
   --bs-table-color: var(--gray-800);
   --bs-table-hover-bg: var(--surface-hover);
-  --bs-table-hover-color: var(--white);
+  --bs-table-hover-color: var(--text-white);
   --bs-table-border-color: var(--gray-200);
   background-color: var(--white);
   color: var(--gray-800);
@@ -559,20 +559,20 @@
 [data-theme="dark"] .table thead th,
 [data-theme="dark"] .table-light th {
   background-color: var(--surface-alt);
-  color: var(--white);
+  color: var(--text-white);
   border-bottom: 2px solid var(--gray-200);
 }
 
 [data-theme="dark"] .table tbody tr,
 [data-theme="dark"] .table tbody td {
   background-color: var(--white);
-  color: var(--white);
+  color: var(--text-white);
   border-bottom: 1px solid var(--gray-200);
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover td {
   background-color: var(--surface-hover);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .leave-item-title {

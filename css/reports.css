@@ -373,7 +373,7 @@
 
 #manageTargetsBtn:hover {
     background: #4f46e5;
-    color: var(--white);
+    color: var(--text-white);
     border-color: #4f46e5;
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
@@ -381,7 +381,7 @@
 [data-theme="dark"] #manageTargetsBtn,
 [data-theme="dark"] .achievements-action-group .btn-outline {
     background: #4f46e5;
-    color: var(--white);
+    color: var(--text-white);
     border: 1px solid #6366f1;
     font-weight: 700;
     box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
@@ -1537,7 +1537,7 @@
 }
 
 [data-theme="dark"] .kpi-label { color: var(--gray-500); }
-[data-theme="dark"] .kpi-value { color: var(--white); }
+[data-theme="dark"] .kpi-value { color: var(--text-white); }
 [data-theme="dark"] .kpi-subtext { color: #727b88; }
 
 [data-theme="dark"] .sales-filter-card,
@@ -1569,7 +1569,7 @@
 [data-theme="dark"] .multi-select-btn {
     background-color: var(--surface-alt);
     border-color: var(--gray-300);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .multi-select-menu {
@@ -1594,12 +1594,12 @@
     background-color: #3d4554;
 }
 
-[data-theme="dark"] .sales-actions-left h3 { color: var(--white); }
+[data-theme="dark"] .sales-actions-left h3 { color: var(--text-white); }
 [data-theme="dark"] .sales-actions-left p { color: var(--gray-500); }
 
 [data-theme="dark"] #salesFilterPeriodLabel {
     background-color: var(--surface-alt);
-    color: var(--white);
+    color: var(--text-white);
     border: 1px solid var(--gray-300);
 }
 
@@ -1610,7 +1610,7 @@
 
 [data-theme="dark"] .report-table th {
     background-color: var(--surface-alt);
-    color: var(--white);
+    color: var(--text-white);
     border-bottom-color: var(--gray-200);
 }
 
@@ -1648,7 +1648,7 @@
     border-color: var(--gray-200);
     color: var(--gray-800);
 }
-[data-theme="dark"] .timeline-content-box strong { color: var(--white); }
+[data-theme="dark"] .timeline-content-box strong { color: var(--text-white); }
 
 [data-theme="dark"] .legend-box {
     background-color: var(--surface-alt);
@@ -1664,7 +1664,7 @@
     box-shadow: none;
 }
 [data-theme="dark"] #timelineEventsContainer > div h4 {
-    color: var(--white);
+    color: var(--text-white);
 }
 [data-theme="dark"] #timelineEventsContainer > div p {
     color: var(--gray-500);
@@ -1806,7 +1806,7 @@
 .directory-card-footer .btn-outline-primary:hover,
 .directory-actions-footer .btn-outline-primary:hover {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     border-color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
@@ -1822,7 +1822,7 @@
 .directory-card-footer .btn-outline-danger:hover,
 .directory-actions-footer .btn-outline-danger:hover {
     background: var(--danger);
-    color: var(--white);
+    color: var(--text-white);
     border-color: var(--danger);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
@@ -2116,7 +2116,7 @@
 }
 
 [data-theme="dark"] .directory-name {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .directory-detail-row {
@@ -2139,7 +2139,7 @@
 [data-theme="dark"] .directory-actions-footer .btn-outline-primary:hover {
     background: #0284c7;
     border-color: #0284c7;
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
 }
 
@@ -2154,7 +2154,7 @@
 [data-theme="dark"] .directory-actions-footer .btn-outline-danger:hover {
     background: #dc2626;
     border-color: #dc2626;
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
 }
 
@@ -2167,13 +2167,13 @@
 [data-theme="dark"] .custom-modal-content {
     background-color: var(--white);
     border-color: var(--gray-300);
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
 }
 
 [data-theme="dark"] .custom-modal-header {
     border-bottom-color: var(--gray-200);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .modern-modal-header {
@@ -2181,7 +2181,7 @@
 }
 
 [data-theme="dark"] .modal-header-left h3 {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .modal-subtitle {
@@ -2195,7 +2195,7 @@
 
 [data-theme="dark"] .custom-modal-close:hover {
     background: var(--surface-hover);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .form-label {
@@ -2206,7 +2206,7 @@
 [data-theme="dark"] .modern-select {
     background: var(--surface-alt);
     border-color: var(--gray-300);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .modern-input:focus,
@@ -2412,7 +2412,7 @@
 }
 
 [data-theme="dark"] .step-title {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .import-step-desc {
@@ -2427,7 +2427,7 @@
 
 [data-theme="dark"] .btn-download-template:hover {
     background: #162a4a;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .file-drop-zone {
@@ -2442,7 +2442,7 @@
 }
 
 [data-theme="dark"] .drop-zone-text {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .drop-zone-subtext {
@@ -2459,7 +2459,7 @@
 }
 
 [data-theme="dark"] .preview-title {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .import-preview-table-wrapper {
@@ -2468,7 +2468,7 @@
 
 [data-theme="dark"] .import-preview-table th {
     background: var(--surface-alt);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .import-preview-table td {
@@ -2841,7 +2841,7 @@
 }
 
 [data-theme="dark"] .chart-card-title {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .sales-filter-card,
@@ -2897,7 +2897,7 @@
 }
 
 [data-theme="dark"] .directory-info-row .info-text strong {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .report-table th {
@@ -2951,7 +2951,7 @@
 }
 
 [data-theme="dark"] .kpi-card .kpi-value {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .kpi-card .kpi-label {
@@ -2965,7 +2965,7 @@
 
 [data-theme="dark"] .ach-total-row td {
     background-color: var(--surface-alt, #232731);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .timeline-empty-card {
@@ -2978,7 +2978,7 @@
 }
 
 [data-theme="dark"] .timeline-empty-card h4 {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 
@@ -2989,7 +2989,7 @@
 }
 
 [data-theme="dark"] .timeline-target-title {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .timeline-entry-timestamp {
@@ -3102,13 +3102,13 @@
     color: var(--gray-400, #9da5b1);
 }
 [data-theme="dark"] .directory-empty-state h4 {
-    color: var(--white);
+    color: var(--text-white);
 }
 [data-theme="dark"] .directory-empty-state .text-muted {
     color: var(--gray-400, #9da5b1);
 }
 [data-theme="dark"] .directory-card .directory-name {
-    color: var(--white);
+    color: var(--text-white);
 }
 [data-theme="dark"] .directory-avatar.doctor { background: #1e3a8a; }
 [data-theme="dark"] .directory-avatar.pharmacy { background: #064e3b; }
@@ -3195,7 +3195,7 @@ a.gps-action-map-btn {
 .btn-excel,
 .btn.btn-excel {
     background: #107c41;
-    color: var(--white);
+    color: var(--text-white);
     border: 1px solid #0e6b37;
     font-weight: 600;
     display: inline-flex;
@@ -3211,7 +3211,7 @@ a.gps-action-map-btn {
 .btn.btn-excel:hover {
     background: #0b5a2f;
     border-color: #084222;
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 4px 8px rgba(16, 124, 65, 0.35);
     transform: translateY(-1px);
 }

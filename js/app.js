@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v202";
+  const EXPECTED_SW = "v203";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {

@@ -14,10 +14,10 @@
   font-weight: 600;
   font-size: 0.85rem;
 }
-.grade-a { background-color: var(--success); color: var(--white); }
-.grade-b { background-color: var(--primary); color: var(--white); }
-.grade-c { background-color: var(--warning); color: var(--white); }
-.grade-f { background-color: var(--danger); color: var(--white); }
+.grade-a { background-color: var(--success); color: var(--text-white); }
+.grade-b { background-color: var(--primary); color: var(--text-white); }
+.grade-c { background-color: var(--warning); color: var(--text-white); }
+.grade-f { background-color: var(--danger); color: var(--text-white); }
 /* --- END: Grade Badges --- */
 
 /* --- START: Role Views --- */
@@ -110,7 +110,7 @@
 }
 
 [data-theme="dark"] .stat-value {
-  color: var(--white);
+  color: var(--text-white);
 }
 
 /* Cards & Containers */
@@ -163,7 +163,7 @@
 [data-theme="dark"] .form-select:focus {
   background-color: var(--surface-alt);
   border-color: var(--primary);
-  color: var(--white);
+  color: var(--text-white);
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.3);
 }
 
@@ -178,7 +178,7 @@
   --bs-table-bg: var(--white);
   --bs-table-color: var(--gray-800);
   --bs-table-hover-bg: var(--surface-hover);
-  --bs-table-hover-color: var(--white);
+  --bs-table-hover-color: var(--text-white);
   --bs-table-border-color: var(--gray-200);
   background-color: var(--white);
   color: var(--gray-800);
@@ -188,7 +188,7 @@
 [data-theme="dark"] .table-light th,
 [data-theme="dark"] .quiz-table-head th {
   background-color: var(--surface-alt);
-  color: var(--white);
+  color: var(--text-white);
   border-bottom: 2px solid var(--gray-200);
 }
 
@@ -201,7 +201,7 @@
 
 [data-theme="dark"] .table-hover tbody tr:hover td {
   background-color: var(--surface-hover);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .table .text-secondary {

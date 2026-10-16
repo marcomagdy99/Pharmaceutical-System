@@ -7,13 +7,13 @@
 /* --- START: Role Badges --- */
 .role-badge { font-size: 0.8em; padding: 0.3em 0.6em; }
 .bg-admin { background-color: var(--danger) !important; color: white !important; }
-.bg-gm { background-color: var(--role-gm) !important; color: var(--white) !important; }
-.bg-bu { background-color: var(--role-bu) !important; color: var(--white) !important; }
-.bg-pm { background-color: var(--role-pm) !important; color: var(--white) !important; }
+.bg-gm { background-color: var(--role-gm) !important; color: var(--text-white) !important; }
+.bg-bu { background-color: var(--role-bu) !important; color: var(--text-white) !important; }
+.bg-pm { background-color: var(--role-pm) !important; color: var(--text-white) !important; }
 .bg-lm { background-color: var(--primary) !important; color: white !important; }
 .bg-dm { background-color: var(--success) !important; color: white !important; }
 .bg-rep { background-color: var(--gray-600, #6c757d) !important; color: white !important; }
-.bg-hr { background-color: var(--role-hr) !important; color: var(--white) !important; }
+.bg-hr { background-color: var(--role-hr) !important; color: var(--text-white) !important; }
 
 .hierarchy-level-pill {
   font-size: 0.72rem !important;
@@ -257,7 +257,7 @@
 [data-theme="dark"] select:focus {
   background-color: var(--surface-subtle);
   border-color: var(--primary);
-  color: var(--white);
+  color: var(--text-white);
   box-shadow: 0 0 0 0.25rem rgba(56, 139, 253, 0.25);
 }
 
@@ -317,7 +317,7 @@
 }
 
 [data-theme="dark"] .modal-title {
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .btn-close {
@@ -332,7 +332,7 @@
 
 [data-theme="dark"] .btn-light:hover {
   background-color: var(--border-subtle);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .btn-outline-primary {
@@ -344,7 +344,7 @@
 [data-theme="dark"] .btn-check:checked + .btn-outline-primary {
   background-color: var(--primary);
   border-color: var(--primary);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] .btn-outline-secondary {
@@ -354,7 +354,7 @@
 
 [data-theme="dark"] .btn-outline-secondary:hover {
   background-color: var(--border-subtle);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 [data-theme="dark"] {
@@ -468,7 +468,7 @@
 
 [data-theme="dark"] #linesModal .action-btn:hover {
   background: var(--border-subtle);
-  color: var(--white);
+  color: var(--text-white);
 }
 
 /* --- START: Users Module Theme Adapters & Refactoring --- */
@@ -486,17 +486,17 @@
 .btn-user-impersonate {
   background-color: #0284c7 !important;
   border-color: #0284c7 !important;
-  color: var(--white) !important;
+  color: var(--text-white) !important;
 }
 .btn-user-impersonate:hover {
   background-color: #0369a1 !important;
   border-color: #0369a1 !important;
-  color: var(--white) !important;
+  color: var(--text-white) !important;
 }
 [data-theme="dark"] .btn-user-impersonate {
   background-color: #0369a1 !important;
   border-color: #38bdf8 !important;
-  color: var(--white) !important;
+  color: var(--text-white) !important;
 }
 
 .tree-node-vacant {

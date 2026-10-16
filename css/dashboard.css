@@ -186,7 +186,7 @@
     font-weight: 700;
 }
 .badge-plan-count {
-    color: var(--white);
+    color: var(--text-white);
     padding: 3px 8px;
     border-radius: 10px;
     font-size: 0.75rem;
@@ -489,7 +489,7 @@
 }
 .btn-confirm-accompaniment {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     border: none;
     border-radius: 6px;
     height: 34px;
@@ -666,7 +666,7 @@
 
 [data-theme="dark"] .btn-confirm-accompaniment {
     background: #2563eb;
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
 }
 [data-theme="dark"] .btn-confirm-accompaniment:hover {
@@ -1086,7 +1086,7 @@
     border-radius: 8px;
     padding: 7px 16px;
     box-shadow: var(--shadow-sm);
-    color: var(--white);
+    color: var(--text-white);
     background: var(--primary);
     transition: var(--transition);
 }
@@ -1095,7 +1095,7 @@
 .dm-schedule-nav-btn a:focus,
 .dm-schedule-nav-btn a:active,
 .dm-schedule-nav-btn a:visited {
-    color: var(--white);
+    color: var(--text-white);
     background: var(--primary-dark);
 }
 
@@ -1109,21 +1109,21 @@
 [data-theme="dark"] .dm-schedule-nav-btn a:focus,
 [data-theme="dark"] .dm-schedule-nav-btn a:active,
 [data-theme="dark"] .dm-schedule-nav-btn a:visited {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .dm-prompt-banner .btn {
     text-decoration: none;
     font-weight: 700;
     padding: 6px 18px;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .dm-prompt-banner .btn:hover,
 .dm-prompt-banner .btn:focus,
 .dm-prompt-banner .btn:active,
 .dm-prompt-banner .btn:visited {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 /* Dashboard Line Filter Controls */
@@ -1165,7 +1165,7 @@
 
 .line-filter-btn.active {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     border-color: var(--primary);
     box-shadow: 0 2px 6px rgba(13, 110, 253, 0.25);
 }
@@ -1182,7 +1182,7 @@
 
 [data-theme="dark"] .line-filter-btn.active {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     border-color: var(--primary);
 }
 
@@ -1199,14 +1199,14 @@
         justify-content: center;
         font-size: 0.82rem;
         padding: 8px 12px;
-        color: var(--white);
+        color: var(--text-white);
         text-align: center;
     }
     .dm-schedule-nav-btn a:hover,
     .dm-schedule-nav-btn a:focus,
     .dm-schedule-nav-btn a:active,
     .dm-schedule-nav-btn a:visited {
-        color: var(--white);
+        color: var(--text-white);
         background: var(--primary-dark);
     }
     .dm-schedule-pill {
@@ -1371,7 +1371,7 @@
 
 .rep-plan-tab-btn.active {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     border-color: var(--primary);
 }
 
@@ -1386,7 +1386,7 @@
 
 .rep-plan-tab-btn.active .badge {
     background: rgba(255, 255, 255, 0.25);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .rep-plan-date-picker-wrap {
@@ -1425,7 +1425,7 @@
 [data-theme="dark"] .rep-plan-tab-btn.active {
     background: var(--primary);
     border-color: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .rep-plan-date-label {
@@ -1474,7 +1474,7 @@
 
 .btn-view-team:hover {
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .btn-view-team {
@@ -1485,7 +1485,7 @@
 [data-theme="dark"] .btn-view-team:hover {
     background: #2563eb;
     border-color: #2563eb;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 .dm-team-modal-overlay {
@@ -1630,7 +1630,7 @@
     height: 42px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary), #1e40af);
-    color: var(--white);
+    color: var(--text-white);
     display: flex;
     align-items: center;
     justify-content: center;

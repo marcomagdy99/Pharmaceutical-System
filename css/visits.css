@@ -193,7 +193,7 @@
 
 .btn-outline-danger:hover {
     background: var(--danger);
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 2px 6px rgba(220, 53, 69, 0.35);
 }
 
@@ -205,7 +205,7 @@
 [data-theme="dark"] .btn-outline-danger:hover {
     background: #dc2626;
     border-color: #dc2626;
-    color: var(--white);
+    color: var(--text-white);
 }
 
 /* ==========================================================================
@@ -937,7 +937,7 @@
 }
 
 [data-theme="dark"] .timeline-meta-row strong {
-    color: var(--white);
+    color: var(--text-white);
 }
 
 [data-theme="dark"] .timeline-container::before {
@@ -1183,7 +1183,7 @@
 
 .visits-scope-tab-btn.active {
     background-color: var(--primary);
-    color: var(--white);
+    color: var(--text-white);
     box-shadow: 0 2px 6px rgba(13, 110, 253, 0.25);
 }
 
