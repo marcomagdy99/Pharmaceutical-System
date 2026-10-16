@@ -202,6 +202,7 @@ if (typeof renderSidebar === "function") {
       resetPwd: "resetPwdModal",
       deactivate: "deactivateModal",
       lines: "linesModal",
+      userTerritories: "userTerritoriesModal",
     };
     const id = idMap[type];
     if (!id) return;
@@ -226,6 +227,7 @@ if (typeof renderSidebar === "function") {
       resetPwd: "resetPwdModal",
       deactivate: "deactivateModal",
       lines: "linesModal",
+      userTerritories: "userTerritoriesModal",
     };
     const id = idMap[type];
     if (!id) return;
@@ -626,86 +628,358 @@ if (typeof renderSidebar === "function") {
       return `<span class="badge bg-primary-subtle text-primary">${matched[0].name}</span>`;
     return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => m.name).join(", ")})</span>`;
   },
-  showAreasToast(allNames) {
-    const prefix = "Assigned Areas:";
-    if (typeof showToast === "function") {
-      showToast(`${prefix} ${allNames}`, "info");
+  currentTerritoriesModalData: null,
+  activeTerritoriesLineFilter: "all",
+
+  getUserAssignedAreas(user) {
+    if (!user) return [];
+    const norm = (this.normalizeRole ? this.normalizeRole(user.role) : (user.role || "")).toUpperCase();
+    const allUsers = this.users || (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+
+    // 1. Rep: Direct assigned areas
+    if (norm === "REP") {
+      return allAreas.filter((a) => a.repId === user.id);
     }
+
+    // 2. DM: Reps under DM
+    if (norm === "DM") {
+      const repIds = new Set(allUsers.filter((u) => u.managerId === user.id).map((u) => u.id));
+      const res = [];
+      const seenAreaIds = new Set();
+      allAreas.forEach((a) => {
+        if ((repIds.has(a.repId) || a.repId === user.id) && !seenAreaIds.has(a.id)) {
+          seenAreaIds.add(a.id);
+          res.push(a);
+        }
+      });
+      return res;
+    }
+
+    // 3. LM: DMs under LM, Reps under those DMs or directly under LM
+    if (norm === "LM") {
+      const dmIds = new Set(allUsers.filter((u) => u.managerId === user.id).map((u) => u.id));
+      const repIds = new Set(allUsers.filter((u) => dmIds.has(u.managerId) || u.managerId === user.id).map((u) => u.id));
+      const res = [];
+      const seenAreaIds = new Set();
+      allAreas.forEach((a) => {
+        if ((repIds.has(a.repId) || dmIds.has(a.repId) || a.repId === user.id) && !seenAreaIds.has(a.id)) {
+          seenAreaIds.add(a.id);
+          res.push(a);
+        }
+      });
+      return res;
+    }
+
+    // 4. BU: All hierarchy under BU, or product lines
+    if (norm === "BU") {
+      const lmIds = new Set(allUsers.filter((u) => u.managerId === user.id).map((u) => u.id));
+      const dmIds = new Set(allUsers.filter((u) => lmIds.has(u.managerId) || u.managerId === user.id).map((u) => u.id));
+      const repIds = new Set(allUsers.filter((u) => dmIds.has(u.managerId) || lmIds.has(u.managerId) || u.managerId === user.id).map((u) => u.id));
+      const res = [];
+      const seenAreaIds = new Set();
+      allAreas.forEach((a) => {
+        if ((repIds.has(a.repId) || dmIds.has(a.repId) || lmIds.has(a.repId) || a.repId === user.id) && !seenAreaIds.has(a.id)) {
+          seenAreaIds.add(a.id);
+          res.push(a);
+        }
+      });
+      if (res.length === 0) {
+        let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+        if (userLineIds.length > 0) {
+          allAreas.forEach((a) => {
+            if (userLineIds.includes(a.lineId) && !seenAreaIds.has(a.id)) {
+              seenAreaIds.add(a.id);
+              res.push(a);
+            }
+          });
+        }
+      }
+      return res;
+    }
+
+    // 5. PM: Areas belonging to assigned lines
+    if (norm === "PM") {
+      let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+      if (userLineIds.length > 0) {
+        return allAreas.filter((a) => userLineIds.includes(a.lineId));
+      }
+    }
+
+    return [];
   },
-  formatAreasBadges(areas, badgeClass = "badge-neutral border") {
+
+  formatAreasBadges(areas, badgeClass = "badge-neutral border", user = null) {
     if (!areas || areas.length === 0) return `<span class="text-muted">-</span>`;
+
+    const userId = user ? user.id : "";
+    const openModalAttr = userId
+      ? `onclick="event.stopPropagation(); userMgmt.openUserTerritoriesModal('${userId}');"`
+      : "";
 
     if (areas.length <= 2) {
       return areas
         .map(
           (a) =>
-            `<span class="badge ${badgeClass} me-1" title="${window.escapeHtml(a.code || a.name)}">${window.escapeHtml(a.name)}</span>`,
+            `<span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${window.escapeHtml(a.name)}</span>`,
         )
         .join("");
     }
 
     const firstOne = areas[0];
     const remainingCount = areas.length - 1;
-    const allNames = areas.map((a) => a.name).join(", ");
     const moreText = `+${remainingCount} more`;
-    const escapedNames = window.escapeHtml(allNames).replace(/'/g, "\\'");
 
     return `
-      <span class="badge ${badgeClass} me-1" title="${window.escapeHtml(firstOne.code || firstOne.name)}">${window.escapeHtml(firstOne.name)}</span>
-      <span class="badge bg-secondary-subtle text-secondary border fw-bold" title="${window.escapeHtml(allNames)}" style="cursor: pointer;" onclick="event.stopPropagation(); userMgmt.showAreasToast('${escapedNames}');">${moreText}</span>
+      <span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${window.escapeHtml(firstOne.name)}</span>
+      <button type="button" class="badge badge-more-areas" title="Click to view and filter all ${areas.length} assigned territories" ${openModalAttr}>📍 ${moreText}</button>
     `;
   },
+
   renderAreasSummary(user) {
-    if (user.role === "Rep") {
-      const assignedAreas = window.store.areas
-        ? window.store.areas.getByRep(user.id)
-        : [];
-      return this.formatAreasBadges(assignedAreas, "badge-neutral border");
+    const norm = (this.normalizeRole ? this.normalizeRole(user.role) : (user.role || "")).toUpperCase();
+    if (norm === "ADMIN" || norm === "HR") {
+      return `<span class="badge bg-secondary-subtle text-secondary border">Global Access</span>`;
     }
 
-    if (user.role === "DM") {
-      const teamReps = this.users.filter((u) => u.managerId === user.id);
-      const teamAreaIds = new Set();
-      const teamAreas = [];
-      teamReps.forEach((rep) => {
-        const areas = window.store.areas
-          ? window.store.areas.getByRep(rep.id)
-          : [];
-        areas.forEach((a) => {
-          if (!teamAreaIds.has(a.id)) {
-            teamAreaIds.add(a.id);
-            teamAreas.push(a);
-          }
-        });
+    const assignedAreas = this.getUserAssignedAreas(user);
+    let badgeClass = "badge-neutral border";
+    if (norm === "DM") badgeClass = "bg-primary-subtle text-primary border";
+    else if (norm === "LM") badgeClass = "bg-info-subtle text-info-emphasis border";
+    else if (norm === "BU") badgeClass = "bg-warning-subtle text-warning-emphasis border";
+    else if (norm === "PM") badgeClass = "bg-purple-subtle text-purple border";
+
+    return this.formatAreasBadges(assignedAreas, badgeClass, user);
+  },
+
+  openUserTerritoriesModal(userId) {
+    const user = (this.users || []).find((u) => u.id === userId) || (window.store && window.store.users ? window.store.users.getById(userId) : null);
+    if (!user) return;
+
+    const allLines = this.lines || (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+    const allUsers = this.users || (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+
+    // Get all assigned areas dynamically
+    const areas = this.getUserAssignedAreas(user);
+
+    // Map each area to enrich with lineName and repName
+    const enrichedAreas = areas.map((a) => {
+      const lineObj = allLines.find((l) => l.id === a.lineId);
+      const repObj = allUsers.find((u) => u.id === a.repId);
+      return {
+        id: a.id,
+        name: a.name || a.nameAr || "Unnamed Area",
+        code: a.code || "-",
+        lineId: a.lineId || null,
+        lineName: lineObj ? (lineObj.name || lineObj.nameAr) : "General Line",
+        repId: a.repId || null,
+        repName: repObj ? repObj.name : "Unassigned",
+      };
+    });
+
+    this.currentTerritoriesModalData = {
+      user: user,
+      areas: enrichedAreas,
+    };
+    this.activeTerritoriesLineFilter = "all";
+
+    // Set Header
+    const nameEl = document.getElementById("territoriesModalUserName");
+    const roleEl = document.getElementById("territoriesModalUserRole");
+    const countEl = document.getElementById("territoriesModalCountBadge");
+    const searchInput = document.getElementById("territoriesModalSearch");
+
+    if (nameEl) nameEl.textContent = user.name;
+    if (roleEl) {
+      const roleStr = user.role || "User";
+      roleEl.innerHTML = `<span class="badge rounded-pill ${this.getRoleBadgeClass(roleStr)} me-1">${roleStr}</span> • Code: <strong>${user.employeeCode || user.code || "-"}</strong>`;
+    }
+    if (countEl) countEl.textContent = `${enrichedAreas.length} Areas`;
+    if (searchInput) searchInput.value = "";
+
+    // Render Line Filters
+    this.renderTerritoriesLineFilters();
+
+    // Render Territories Grid
+    this.filterTerritoriesModal();
+
+    // Show Modal
+    this.showModal("userTerritories");
+  },
+
+  renderTerritoriesLineFilters() {
+    const container = document.getElementById("territoriesModalLineFilters");
+    if (!container) return;
+
+    const data = this.currentTerritoriesModalData;
+    if (!data || !data.areas || data.areas.length === 0) {
+      container.innerHTML = "";
+      return;
+    }
+
+    // Extract unique lines present in this user's areas
+    const lineMap = new Map();
+    data.areas.forEach((a) => {
+      const key = a.lineId || "unassigned_line";
+      if (!lineMap.has(key)) {
+        lineMap.set(key, { lineId: a.lineId, lineName: a.lineName, count: 0 });
+      }
+      lineMap.get(key).count++;
+    });
+
+    // If only 1 line or 0 lines, show subtle indicator without filter tabs
+    if (lineMap.size <= 1) {
+      const singleLineName = data.areas[0] ? data.areas[0].lineName : "General";
+      container.innerHTML = `<span class="badge bg-secondary-subtle text-secondary border px-2 py-1"><i class="fas fa-layer-group me-1"></i> Line: <strong>${window.escapeHtml(singleLineName)}</strong></span>`;
+      return;
+    }
+
+    // Multiple lines: Render Filter Pills!
+    let pillsHtml = `
+      <button type="button" class="line-filter-pill ${this.activeTerritoriesLineFilter === "all" ? "active" : ""}" onclick="userMgmt.setTerritoriesLineFilter('all')">
+        All Lines (${data.areas.length})
+      </button>
+    `;
+
+    lineMap.forEach((info) => {
+      const key = info.lineId || "unassigned_line";
+      const isActive = this.activeTerritoriesLineFilter === key;
+      pillsHtml += `
+        <button type="button" class="line-filter-pill ${isActive ? "active" : ""}" onclick="userMgmt.setTerritoriesLineFilter('${key}')">
+          💊 ${window.escapeHtml(info.lineName)} (${info.count})
+        </button>
+      `;
+    });
+
+    container.innerHTML = pillsHtml;
+  },
+
+  setTerritoriesLineFilter(lineKey) {
+    this.activeTerritoriesLineFilter = lineKey;
+    this.renderTerritoriesLineFilters();
+    this.filterTerritoriesModal();
+  },
+
+  filterTerritoriesModal() {
+    const gridEl = document.getElementById("territoriesModalGrid");
+    const countEl = document.getElementById("territoriesModalCountBadge");
+    if (!gridEl) return;
+
+    const data = this.currentTerritoriesModalData;
+    if (!data || !data.areas || data.areas.length === 0) {
+      gridEl.innerHTML = `<div class="text-center py-4 text-muted fst-italic">No territories assigned to this user.</div>`;
+      if (countEl) countEl.textContent = "0 Areas";
+      return;
+    }
+
+    const searchInput = document.getElementById("territoriesModalSearch");
+    const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+    const activeLine = this.activeTerritoriesLineFilter;
+
+    // Filter by Line
+    let filtered = data.areas.filter((a) => {
+      if (activeLine === "all") return true;
+      const key = a.lineId || "unassigned_line";
+      return key === activeLine;
+    });
+
+    // Filter by Search Query
+    if (query) {
+      filtered = filtered.filter((a) => {
+        return (
+          a.name.toLowerCase().includes(query) ||
+          a.code.toLowerCase().includes(query) ||
+          a.lineName.toLowerCase().includes(query) ||
+          a.repName.toLowerCase().includes(query)
+        );
       });
-      return this.formatAreasBadges(teamAreas, "bg-primary-subtle text-primary border");
     }
 
-    if (user.role === "LM") {
-      const teamDMs = this.users.filter((u) => u.managerId === user.id);
-      const dmIds = new Set(teamDMs.map((d) => d.id));
-      const teamReps = this.users.filter((u) => dmIds.has(u.managerId));
-      const teamAreaIds = new Set();
-      const teamAreas = [];
-      teamReps.forEach((rep) => {
-        const areas = window.store.areas
-          ? window.store.areas.getByRep(rep.id)
-          : [];
-        areas.forEach((a) => {
-          if (!teamAreaIds.has(a.id)) {
-            teamAreaIds.add(a.id);
-            teamAreas.push(a);
-          }
-        });
+    if (countEl) {
+      countEl.textContent = `${filtered.length} of ${data.areas.length} Areas`;
+    }
+
+    if (filtered.length === 0) {
+      gridEl.innerHTML = `
+        <div class="text-center py-5 text-muted">
+          <i class="fas fa-search-location fa-2x mb-2 text-secondary"></i>
+          <div>No matching areas found for your search.</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Render territory cards
+    gridEl.innerHTML = filtered
+      .map((a) => {
+        const isAssigned = a.repName !== "Unassigned";
+        const repBadge = isAssigned
+          ? `<span class="badge bg-light text-dark border"><i class="fas fa-user-tie text-primary me-1"></i>${window.escapeHtml(a.repName)}</span>`
+          : `<span class="badge bg-warning-subtle text-warning border"><i class="fas fa-exclamation-triangle me-1"></i>Unassigned</span>`;
+
+        return `
+          <div class="territory-item-card">
+            <div class="territory-item-name">
+              <span>${window.escapeHtml(a.name)}</span>
+              <span class="territory-item-code">${window.escapeHtml(a.code)}</span>
+            </div>
+            <div class="territory-item-line">
+              <span class="badge bg-primary-subtle text-primary border-0">
+                <i class="fas fa-pills me-1"></i>${window.escapeHtml(a.lineName)}
+              </span>
+            </div>
+            <div class="territory-item-rep mt-1">
+              ${repBadge}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  },
+
+  copyTerritoriesList() {
+    const data = this.currentTerritoriesModalData;
+    if (!data || !data.areas || data.areas.length === 0) return;
+
+    const searchInput = document.getElementById("territoriesModalSearch");
+    const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+    const activeLine = this.activeTerritoriesLineFilter;
+
+    let targetAreas = data.areas.filter((a) => {
+      if (activeLine === "all") return true;
+      const key = a.lineId || "unassigned_line";
+      return key === activeLine;
+    });
+
+    if (query) {
+      targetAreas = targetAreas.filter((a) => {
+        return (
+          a.name.toLowerCase().includes(query) ||
+          a.code.toLowerCase().includes(query) ||
+          a.lineName.toLowerCase().includes(query) ||
+          a.repName.toLowerCase().includes(query)
+        );
       });
-      return this.formatAreasBadges(teamAreas, "bg-info-subtle text-info-emphasis border");
     }
 
-    if (user.role === "PM") {
-      return `<span class="badge badge-nationwide">Nationwide (Line)</span>`;
-    }
+    const lines = targetAreas.map((a) => `${a.name} (${a.code}) - ${a.lineName} [${a.repName}]`);
+    const textToCopy = lines.join("\n");
 
-    return `<span class="text-muted">-</span>`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        if (typeof showToast === "function") {
+          showToast(`Copied ${targetAreas.length} territories to clipboard!`, "success");
+        }
+      }).catch(() => {
+        if (typeof showToast === "function") {
+          showToast(`Areas list: ${targetAreas.map((a) => a.name).join(", ")}`, "info");
+        }
+      });
+    } else {
+      if (typeof showToast === "function") {
+        showToast(`Areas: ${targetAreas.map((a) => a.name).join(", ")}`, "info");
+      }
+    }
   },
 
   render() {

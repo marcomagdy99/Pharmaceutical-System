@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v196";
+  const EXPECTED_SW = "v201";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -3211,6 +3211,10 @@ window.toggleTheme = function () {
   const currentTheme =
     document.documentElement.getAttribute("data-theme") || "light";
   const newTheme = currentTheme === "dark" ? "light" : "dark";
+  
+  // Smooth theme transition class
+  document.documentElement.classList.add("theme-transitioning");
+
   document.documentElement.setAttribute("data-theme", newTheme);
   if (document.body) document.body.setAttribute("data-theme", newTheme);
   try {
@@ -3218,6 +3222,10 @@ window.toggleTheme = function () {
   } catch (e) {}
   window.updateThemeUI(newTheme);
   document.dispatchEvent(new CustomEvent("themeChanged", { detail: newTheme }));
+
+  setTimeout(() => {
+    document.documentElement.classList.remove("theme-transitioning");
+  }, 260);
 };
 
 window.initTheme = function () {

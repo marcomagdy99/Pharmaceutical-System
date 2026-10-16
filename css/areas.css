@@ -51,71 +51,71 @@
    Dark Mode Styles for Areas Page
    ========================================================================== */
 [data-theme="dark"] .card {
-    background-color: #1e2229;
-    border-color: #2d3340;
-    color: #f1f3f5;
+    background-color: var(--surface-card);
+    border-color: var(--border-main);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .card-body {
-    color: #f1f3f5;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .area-card {
-    background-color: #1e2229;
-    border-color: #2d3340;
+    background-color: var(--surface-card);
+    border-color: var(--border-main);
 }
 
 [data-theme="dark"] .area-code-badge {
     background-color: var(--primary-light);
-    color: #58a6ff;
+    color: var(--primary-light);
 }
 
 [data-theme="dark"] .avatar-circle {
     background-color: var(--primary-light);
-    color: #58a6ff;
+    color: var(--primary-light);
 }
 
 [data-theme="dark"] .table {
-    color: #dee2e6;
-    border-color: #2d3340;
+    color: var(--text-secondary);
+    border-color: var(--border-main);
 }
 
 [data-theme="dark"] .table thead,
 [data-theme="dark"] .table thead th,
 [data-theme="dark"] .table thead.bg-light {
-    background-color: #232731;
-    color: #f1f3f5;
-    border-bottom-color: #2d3340;
+    background-color: var(--surface-subtle);
+    color: var(--text-primary);
+    border-bottom-color: var(--border-main);
 }
 
 [data-theme="dark"] .table tbody tr {
-    border-bottom-color: #2d3340;
+    border-bottom-color: var(--border-main);
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover {
-    background-color: #282d38;
-    color: #ffffff;
+    background-color: var(--surface-hover);
+    color: var(--white);
 }
 
 [data-theme="dark"] .input-group-text,
 [data-theme="dark"] .input-group-text.bg-white {
-    background-color: #232731;
-    border-color: #3d4554;
-    color: #9da5b1;
+    background-color: var(--surface-subtle);
+    border-color: var(--border-subtle);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
-    background-color: #232731;
-    border-color: #3d4554;
-    color: #f1f3f5;
+    background-color: var(--surface-subtle);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus {
-    background-color: #232731;
-    border-color: #388bfd;
-    color: #ffffff;
+    background-color: var(--surface-subtle);
+    border-color: var(--primary);
+    color: var(--white);
     box-shadow: 0 0 0 0.25rem rgba(56, 139, 253, 0.25);
 }
 
@@ -132,27 +132,27 @@
 }
 
 [data-theme="dark"] .form-label {
-    color: #f1f3f5;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-text {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .modal-content {
-    background-color: #1e2229;
-    color: #f1f3f5;
-    border: 1px solid #3d4554;
+    background-color: var(--surface-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
 }
 
 [data-theme="dark"] .modal-header,
 [data-theme="dark"] .modal-footer {
-    border-color: #2d3340;
+    border-color: var(--border-main);
 }
 
 [data-theme="dark"] .modal-title {
-    color: #ffffff;
+    color: var(--white);
 }
 
 [data-theme="dark"] .btn-close {
@@ -161,52 +161,52 @@
 
 [data-theme="dark"] .btn-light {
     background-color: #2d3340;
-    border-color: #3d4554;
-    color: #dee2e6;
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .btn-light:hover {
     background-color: #3d4554;
-    color: #ffffff;
+    color: var(--white);
 }
 
 [data-theme="dark"] .btn-outline-secondary {
-    border-color: #3d4554;
-    color: #9da5b1;
+    border-color: var(--border-subtle);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .btn-outline-secondary:hover,
 [data-theme="dark"] .btn-check:checked + .btn-outline-secondary {
-    background-color: #388bfd;
-    border-color: #388bfd;
-    color: #ffffff;
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
 }
 
 [data-theme="dark"] .dropdown-menu {
-    background-color: #232731;
-    border: 1px solid #3d4554;
+    background-color: var(--surface-subtle);
+    border: 1px solid var(--border-subtle);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 [data-theme="dark"] .dropdown-item {
-    color: #dee2e6;
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .dropdown-item:hover {
     background-color: #2d3340;
-    color: #ffffff;
+    color: var(--white);
 }
 
 [data-theme="dark"] .text-muted {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .text-secondary {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .border-top {
-    border-top-color: #2d3340;
+    border-top-color: var(--border-main);
 }
 
 [data-theme="dark"] .badge.bg-success.bg-opacity-10 {
@@ -259,15 +259,15 @@
 }
 
 [data-theme="dark"] #table-view .table th:first-child {
-    background-color: #232731;
+    background-color: var(--surface-subtle);
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] #table-view .table td:first-child {
-    background-color: #1e2229;
+    background-color: var(--surface-card);
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.35);
 }
 [data-theme="dark"] #table-view .table-hover tbody tr:hover td:first-child {
-    background-color: #282d38;
+    background-color: var(--surface-hover);
 }
 
 /* ==========================================================================
@@ -277,7 +277,7 @@
     display: none !important;
 }
 .dist-mobile-card {
-    background: var(--card-bg, #fff);
+    background: var(--surface-card);
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 14px;
     padding: 16px;
@@ -307,14 +307,14 @@
 
 /* Dark mode for distributor mobile cards */
 [data-theme="dark"] .dist-mobile-card {
-    background: #1e2229;
-    border-color: #2d3340;
+    background: var(--surface-card);
+    border-color: var(--border-main);
 }
 [data-theme="dark"] .dist-mobile-card h6 {
     color: #e5e7eb;
 }
 [data-theme="dark"] .dist-mobile-card .text-dark {
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 [data-theme="dark"] .dist-mobile-card .btn-light {
     background: #2d3340;
@@ -325,21 +325,21 @@
     background: #3a4150;
 }
 [data-theme="dark"] .dist-mobile-card .border-top {
-    border-top-color: #2d3340;
+    border-top-color: var(--border-main);
 }
 
 /* Badge styling in dark mode for areas page and mobile cards */
 [data-theme="dark"] .dist-mobile-card .badge.bg-light.text-dark,
 [data-theme="dark"] .badge.bg-light.text-dark {
-    background-color: #282d38;
-    color: #f1f3f5;
-    border-color: #3d4554;
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
 }
 [data-theme="dark"] .dist-mobile-card .badge.bg-secondary-subtle,
 [data-theme="dark"] .badge.bg-secondary-subtle {
     background-color: rgba(148, 163, 184, 0.15);
-    color: #cbd5e1;
-    border-color: #3d4554;
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
 }
 [data-theme="dark"] .dist-mobile-card .badge.bg-primary-subtle,
 [data-theme="dark"] .badge.bg-primary-subtle {
@@ -354,12 +354,12 @@
     border-color: rgba(210, 153, 34, 0.35);
 }
 [data-theme="dark"] .dist-mobile-card .btn-outline-primary {
-    color: #58a6ff;
-    border-color: #388bfd;
+    color: var(--primary-light);
+    border-color: var(--primary);
 }
 [data-theme="dark"] .dist-mobile-card .btn-outline-primary:hover {
-    background-color: #388bfd;
-    color: #ffffff;
+    background-color: var(--primary);
+    color: var(--white);
 }
 [data-theme="dark"] .dist-mobile-card .btn-outline-danger {
     color: #f85149;
@@ -367,7 +367,7 @@
 }
 [data-theme="dark"] .dist-mobile-card .btn-outline-danger:hover {
     background-color: #da3633;
-    color: #ffffff;
+    color: var(--white);
 }
 
 /* --- START: IMS Bricks Selector --- */
@@ -383,7 +383,7 @@
 }
 .brick-checkbox-card:hover,
 #modalBricksContainer .brick-checkbox-card:hover {
-    border-color: var(--primary, #0d6efd);
+    border-color: var(--primary);
 }
 .brick-checkbox-card.selected,
 #modalBricksContainer .brick-checkbox-card.selected {
@@ -392,12 +392,12 @@
 }
 [data-theme="dark"] #modalBricksContainer {
     background-color: #1a1e24;
-    border-color: #2d3340;
+    border-color: var(--border-main);
 }
 [data-theme="dark"] .brick-checkbox-card,
 [data-theme="dark"] #modalBricksContainer .brick-checkbox-card {
-    background-color: #232731;
-    border-color: #2d3340;
+    background-color: var(--surface-subtle);
+    border-color: var(--border-main);
     color: #e2e8f0;
 }
 [data-theme="dark"] .brick-checkbox-card:hover,
@@ -414,7 +414,7 @@
 /* --- Active Mapped Aliases Segmented Tabs --- */
 .alias-tabs-wrapper {
     background-color: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-main);
     max-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -427,7 +427,7 @@
     margin-bottom: 0;
 }
 .alias-tabs-wrapper .nav-pills .nav-link {
-    color: #64748b;
+    color: var(--text-muted);
     background: transparent;
     border: none;
     transition: all 0.2s ease;
@@ -438,8 +438,8 @@
     background-color: rgba(0, 0, 0, 0.04);
 }
 .alias-tabs-wrapper .nav-pills .nav-link.active {
-    background-color: var(--primary, #0d6efd);
-    color: #ffffff;
+    background-color: var(--primary);
+    color: var(--white);
     box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
 }
 
@@ -470,18 +470,18 @@
 
 [data-theme="dark"] .alias-tabs-wrapper {
     background-color: #181b20;
-    border: 1px solid #2d3340;
+    border: 1px solid var(--border-main);
 }
 [data-theme="dark"] .alias-tabs-wrapper .nav-pills .nav-link {
-    color: #94a3b8;
+    color: var(--text-muted);
     background: transparent;
 }
 [data-theme="dark"] .alias-tabs-wrapper .nav-pills .nav-link:hover {
-    color: #f1f5f9;
+    color: var(--text-primary);
     background-color: rgba(255, 255, 255, 0.05);
 }
 [data-theme="dark"] .alias-tabs-wrapper .nav-pills .nav-link.active {
     background-color: #2563eb;
-    color: #ffffff;
+    color: var(--white);
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
 }

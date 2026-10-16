@@ -14,10 +14,10 @@
   font-weight: 600;
   font-size: 0.85rem;
 }
-.grade-a { background-color: var(--success, #198754); color: #ffffff; }
-.grade-b { background-color: var(--primary, #0d6efd); color: #ffffff; }
-.grade-c { background-color: var(--warning, #fd7e14); color: #ffffff; }
-.grade-f { background-color: var(--danger, #dc3545); color: #ffffff; }
+.grade-a { background-color: var(--success); color: var(--white); }
+.grade-b { background-color: var(--primary); color: var(--white); }
+.grade-c { background-color: var(--warning); color: var(--white); }
+.grade-f { background-color: var(--danger); color: var(--white); }
 /* --- END: Grade Badges --- */
 
 /* --- START: Role Views --- */
@@ -106,11 +106,11 @@
    ========================================================================== */
 
 [data-theme="dark"] .page-main-title {
-  color: #f1f3f5;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .stat-value {
-  color: #ffffff;
+  color: var(--white);
 }
 
 /* Cards & Containers */
@@ -124,7 +124,7 @@
 [data-theme="dark"] .card-header {
   background-color: var(--surface-alt);
   border-bottom: 1px solid var(--gray-200);
-  color: #f1f3f5;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .card-body {
@@ -135,42 +135,42 @@
 /* Stat card icon contrast in dark mode */
 [data-theme="dark"] .card .opacity-25 {
   opacity: 0.45;
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 /* Form Controls and Filters */
 [data-theme="dark"] .form-label {
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] #quiz-filter-subtitle {
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
   background-color: var(--surface-alt);
   border-color: var(--gray-300);
-  color: #f1f3f5;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-select option {
-  background-color: #232731;
-  color: #f1f3f5;
+  background-color: var(--surface-subtle);
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-control:focus,
 [data-theme="dark"] .form-select:focus {
   background-color: var(--surface-alt);
   border-color: var(--primary);
-  color: #ffffff;
+  color: var(--white);
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.3);
 }
 
 [data-theme="dark"] .quiz-input-addon {
   background-color: var(--surface-alt);
   border-color: var(--gray-300);
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
 /* Table Dark Mode */
@@ -178,7 +178,7 @@
   --bs-table-bg: var(--white);
   --bs-table-color: var(--gray-800);
   --bs-table-hover-bg: var(--surface-hover);
-  --bs-table-hover-color: #ffffff;
+  --bs-table-hover-color: var(--white);
   --bs-table-border-color: var(--gray-200);
   background-color: var(--white);
   color: var(--gray-800);
@@ -188,50 +188,50 @@
 [data-theme="dark"] .table-light th,
 [data-theme="dark"] .quiz-table-head th {
   background-color: var(--surface-alt);
-  color: #ffffff;
+  color: var(--white);
   border-bottom: 2px solid var(--gray-200);
 }
 
 [data-theme="dark"] .table tbody tr,
 [data-theme="dark"] .table tbody td {
   background-color: var(--white);
-  color: #f1f3f5;
+  color: var(--text-primary);
   border-bottom: 1px solid var(--gray-200);
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover td {
   background-color: var(--surface-hover);
-  color: #ffffff;
+  color: var(--white);
 }
 
 [data-theme="dark"] .table .text-secondary {
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .table .text-muted {
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .quiz-meta-sub {
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .quiz-perc-badge {
-  background-color: #232731;
-  color: #f1f3f5;
-  border-color: #3d4554;
+  background-color: var(--surface-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
 /* Modal Dark Mode */
 [data-theme="dark"] .modal-content {
   background-color: var(--white);
   border: 1px solid var(--gray-300);
-  color: #f1f3f5;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .modal-header {
   border-bottom-color: var(--gray-200);
-  color: #f1f3f5;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .modal-header .btn-close {
@@ -240,12 +240,12 @@
 
 /* Empty State Message */
 [data-theme="dark"] #no-reps-message {
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] #no-reps-message .opacity-50 {
   opacity: 0.7;
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 /* ==========================================================================

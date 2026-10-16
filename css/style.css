@@ -28,22 +28,105 @@
   --gray-800: #212529;
   --white: #fff;
   --surface: #ffffff;
+  --surface-card: #ffffff;
+  --surface-body: #f4f6f9;
+  --surface-subtle: #f8fafc;
+  --surface-hover: #f1f5f9;
   --surface-alt: var(--gray-50);
   --surface-dim: var(--gray-100);
-  --surface-hover: var(--gray-100);
   --border-color: #dee2e6;
+  --border-main: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
   --text-muted: #64748b;
+  --primary-subtle: #e0e7ff;
+  --success-subtle: #dcfce7;
+  --warning-subtle: #fef3c7;
+  --danger-subtle: #fee2e2;
+  --info-subtle: #e0f2fe;
+  --card-bg: var(--surface-card);
+  --text-color: var(--text-primary);
+  --role-admin: #dc3545;
+  --role-gm: #1e293b;
+  --role-bu: #6f42c1;
+  --role-pm: #0891b2;
+  --role-lm: #0d6efd;
+  --role-dm: #198754;
+  --role-rep: #64748b;
+  --role-hr: #7e22ce;
+  --purple-subtle: #f3e8ff;
+  --purple-text: #6b21a8;
+  --purple-border: #d8b4fe;
   
   --sidebar-width: 280px; 
-  --radius: 14px;
-  --radius-sm: 10px;
+
+  /* --- Border Radius Scale --- */
   --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-card: 14px;
+  --radius: 14px;
+  --radius-pill: 9999px;
+  --radius-full: 50%;
   
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
-  
+  /* --- Transitions System --- */
+  --transition-fast: all 0.15s ease;
+  --transition-base: all 0.2s ease;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* --- Elevation & Shadows (Light Theme) --- */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 4px 14px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 20px 45px rgba(0, 0, 0, 0.18);
+  --shadow-focus: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+
+  /* --- Z-Index Layering Hierarchy --- */
+  --z-sticky: 100;
+  --z-topbar: 1050;
+  --z-backdrop: 2490;
+  --z-modal: 2500;
+  --z-banner: 99999;
+  --z-max: 999999;
+
+  /* --- Spacing Scale --- */
+  --space-2xs: 4px;
+  --space-xs: 6px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  /* --- Linear Gradients (Brand & Status) --- */
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  --gradient-success: linear-gradient(135deg, #10b981, #059669);
+  --gradient-progress: linear-gradient(90deg, #3b82f6, #10b981);
+  --gradient-card: linear-gradient(180deg, var(--surface-card), var(--surface-subtle));
+
+  /* --- Glassmorphism & Backdrop Blur --- */
+  --blur-xs: blur(2px);
+  --blur-sm: blur(4px);
+  --blur-md: blur(8px);
+  --blur-lg: blur(12px);
+
+  /* --- Custom Scrollbar Engine --- */
+  --scrollbar-size: 6px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: var(--border-color);
+  --scrollbar-thumb-hover: var(--text-muted);
+
+  /* --- Typography Scale & Base --- */
+  --font-xs: 0.72rem;
+  --font-sm: 0.75rem;
+  --font-md: 0.82rem;
+  --font-base: 0.875rem;
   --font-main: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --bg-color: #f4f6f9;
 }
@@ -97,6 +180,98 @@ button {
 
 input, select, textarea {
   font-family: var(--font-main);
+}
+/* --- Global Custom Scrollbar Engine --- */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* --- Smooth Theme Switch Transition --- */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease !important;
+  transition-delay: 0s !important;
+}
+
+/* --- Universal Accessible Focus Ring --- */
+.form-control:focus,
+.form-select:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="search"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: var(--shadow-focus) !important;
+  outline: none;
+}
+/* --- Branded Text Selection ---
+   Provides clean, high-contrast text selection using the system primary token
+   instead of browser default harsh blue across both light and dark themes. */
+::selection {
+  background-color: var(--primary-subtle);
+  color: var(--primary);
+}
+
+/* --- Mobile Instant Tap Response ---
+   Eliminates the 300ms click delay on mobile touch devices (touch-action manipulation)
+   making all interactive buttons, pills, and links respond instantaneously. */
+button,
+.btn,
+a,
+input,
+select,
+textarea,
+.badge-more-areas,
+.line-filter-pill,
+.role-badge,
+.nav-link {
+  touch-action: manipulation;
+}
+
+/* --- iOS Auto-Zoom Prevention on Form Controls ---
+   Prevents unwanted viewport zoom on iOS/Safari devices when field reps focus on
+   form inputs by ensuring the mobile input font-size meets the 16px requirement. */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* --- Accessible Reduced Motion Support ---
+   Respects user operating system settings for reduced motion to prevent dizziness,
+   improve accessibility (WCAG), and conserve device battery on mobile in the field. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 /* --- END: Reset & Base Styles --- */
 
@@ -935,13 +1110,48 @@ body[data-theme="dark"],
   --gray-800: #f1f3f5;
   --primary-light: #162a4a;
   --surface: #1e2229;
+  --surface-card: #1e2229;
+  --surface-body: #121418;
+  --surface-subtle: #232731;
+  --surface-hover: #282d38;
   --surface-alt: #232731;
   --surface-dim: #16191f;
-  --surface-hover: #282d38;
   --border-color: #2d3340;
-  --text-muted: #cbd5e1;
+  --border-main: #2d3340;
+  --border-subtle: #3d4554;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --primary-subtle: rgba(99, 102, 241, 0.2);
+  --success-subtle: rgba(16, 185, 129, 0.2);
+  --warning-subtle: rgba(245, 158, 11, 0.2);
+  --danger-subtle: rgba(239, 68, 68, 0.2);
+  --info-subtle: rgba(14, 165, 233, 0.2);
   --bs-secondary-color: #cbd5e1;
   --bs-secondary-rgb: 203, 213, 225;
+  --card-bg: var(--surface-card);
+  --text-color: var(--text-primary);
+  --purple-subtle: rgba(168, 85, 247, 0.2);
+  --purple-text: #d8b4fe;
+  --purple-border: rgba(168, 85, 247, 0.4);
+
+  /* --- Elevation & Shadows (Dark Theme) --- */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 20px 45px rgba(0, 0, 0, 0.75);
+  --shadow-focus: 0 0 0 0.25rem rgba(56, 139, 253, 0.3);
+
+  /* --- Linear Gradients (Dark Theme) --- */
+  --gradient-card: linear-gradient(180deg, #232731, #1e2229);
+  --gradient-card-dark: linear-gradient(180deg, #232731, #1e2229);
+
+  /* --- Custom Scrollbar Engine (Dark Theme) --- */
+  --scrollbar-track: rgba(255, 255, 255, 0.03);
+  --scrollbar-thumb: #3d4554;
+  --scrollbar-thumb-hover: #64748b;
 }
 
 html[data-theme="dark"],
@@ -1592,7 +1802,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   z-index: 3100;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--blur-sm);
   -webkit-backdrop-filter: blur(4px);
 }
 
@@ -1764,7 +1974,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #0d6efd, #0a58ca);
+  background: var(--gradient-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2014,7 +2224,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   position: relative;
 }
 .excel-progress-bar {
-  background: linear-gradient(90deg, #3b82f6, #10b981);
+  background: var(--gradient-progress);
   height: 100%;
   width: 0%;
   transition: width 0.15s ease;
@@ -2131,7 +2341,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 999999;
+  z-index: var(--z-max);
 }
 
 /* Offline PWA Visit Badges */
@@ -2171,4 +2381,42 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: rgba(14, 165, 233, 0.2);
   color: #38bdf8;
   border-color: rgba(14, 165, 233, 0.4);
+}
+
+/* Badge More Areas with high-contrast Dark Mode support */
+.badge-more-areas {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #c7d2fe;
+  background: #e0e7ff;
+  color: #3730a3;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.badge-more-areas:hover {
+  background: #c7d2fe;
+  color: #312e81;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+}
+
+[data-theme="dark"] .badge-more-areas {
+  background: rgba(99, 102, 241, 0.28);
+  color: #e0e7ff;
+  border-color: rgba(165, 180, 252, 0.5);
+}
+
+[data-theme="dark"] .badge-more-areas:hover {
+  background: rgba(99, 102, 241, 0.45);
+  color: #ffffff;
+  border-color: rgba(199, 210, 254, 0.75);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
 }

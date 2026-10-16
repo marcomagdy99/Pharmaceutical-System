@@ -98,19 +98,19 @@
 }
 
 [data-theme="dark"] .form-label {
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] .form-control {
   background-color: var(--surface-alt);
   border-color: var(--gray-300);
-  color: #f1f3f5;
+  color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-control[readonly] {
   background-color: var(--surface-alt);
   border-color: var(--gray-300);
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 
 [data-theme="dark"] .admin-only-note {
@@ -120,7 +120,7 @@
 }
 
 [data-theme="dark"] .req-list {
-  color: #9da5b1;
+  color: var(--text-muted);
 }
 /* --- END: Dark Mode Support --- */
 
@@ -171,8 +171,8 @@
 }
 
 .gradient-preset-btn.active {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 2px var(--primary, #0d6efd);
+  border-color: var(--white);
+  box-shadow: 0 0 0 2px var(--primary);
   transform: scale(1.12);
 }
 /* --- END: Company Branding Customization Styles --- */
@@ -194,7 +194,7 @@
   height: 44px;
   border-radius: 12px;
   background: #10b981;
-  color: #fff;
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,7 +206,7 @@
   height: 44px;
   border-radius: 12px;
   background: #f59e0b;
-  color: #fff;
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,7 +215,7 @@
 
 .sys-mgmt-tag-prod {
   background: #10b981;
-  color: #fff;
+  color: var(--white);
   font-size: 0.72rem;
   padding: 3px 8px;
   border-radius: 6px;
@@ -223,7 +223,7 @@
 
 .sys-mgmt-tag-demo {
   background: #f59e0b;
-  color: #fff;
+  color: var(--white);
   font-size: 0.72rem;
   padding: 3px 8px;
   border-radius: 6px;
@@ -328,20 +328,20 @@
 
 /* Go-Live Modal Theme Adapters */
 .go-live-modal-dialog {
-  background: var(--surface, #ffffff);
+  background: var(--surface-card);
   border-radius: 16px;
   max-width: 620px;
   width: 100%;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  border: 1px solid var(--border-color, #e2e8f0);
+  border: 1px solid var(--border-main);
   margin: auto;
-  color: var(--text-color, #1e293b);
+  color: var(--text-primary);
 }
 [data-theme="dark"] .go-live-modal-dialog {
   background: #1e293b;
   border-color: #334155;
-  color: #f8fafc;
+  color: var(--text-primary);
 }
 
 .modal-info-box-blue {

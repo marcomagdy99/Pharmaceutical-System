@@ -40,7 +40,7 @@ body {
     justify-content: center;
     align-items: center;
     padding: 2rem;
-    background-color: #ffffff;
+    background-color: var(--surface-card);
     position: relative;
 }
 
@@ -56,7 +56,7 @@ body {
 
 .theme-toggle,
 .language-toggle {
-    background: #ffffff;
+    background: var(--surface-card);
     border: 1px solid #cbd5e1;
     border-radius: 10px;
     padding: 0.45rem 0.85rem;
@@ -74,9 +74,9 @@ body {
 
 .theme-toggle:hover,
 .language-toggle:hover {
-    color: var(--primary, #0d6efd);
-    border-color: var(--primary, #0d6efd);
-    background-color: var(--primary-light, #e7f1ff);
+    color: var(--primary);
+    border-color: var(--primary);
+    background-color: var(--primary-light);
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(13, 110, 253, 0.15);
 }
@@ -113,12 +113,12 @@ body {
     font-size: 1.75rem;
     font-weight: 800;
     margin: 0;
-    color: #0f172a;
+    color: var(--text-primary);
     letter-spacing: -0.5px;
 }
 
 .logo-subtitle {
-    color: #64748b;
+    color: var(--text-muted);
     margin-top: 0.5rem;
     font-size: 0.95rem;
     font-weight: 500;
@@ -137,7 +137,7 @@ body {
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 2rem;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .dept-cards {
@@ -155,14 +155,14 @@ body {
     text-align: center;
     cursor: pointer;
     transition: all 0.25s ease;
-    background-color: #ffffff;
+    background-color: var(--surface-card);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
 
 .dept-card:hover {
-    border-color: var(--primary, #0d6efd);
+    border-color: var(--primary);
     background-color: #f0f7ff;
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(13, 110, 253, 0.18);
@@ -173,12 +173,12 @@ body {
     height: 60px;
     margin: 0 auto 1.25rem auto;
     border-radius: 16px;
-    background: #e7f1ff;
+    background: var(--primary-light);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: transform 0.25s ease;
-    color: var(--primary, #0d6efd);
+    color: var(--primary);
 }
 
 .dept-card:hover .dept-icon-wrapper {
@@ -200,7 +200,7 @@ body {
     margin: 0 0 0.5rem 0;
     font-size: 1.15rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .dept-card p {
@@ -392,7 +392,7 @@ body {
 }
 
 .error-message {
-    color: #dc3545;
+    color: var(--danger);
     background: rgba(220, 53, 69, 0.08);
     border: 1px solid rgba(220, 53, 69, 0.3);
     border-radius: 10px;
@@ -572,7 +572,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #64748b;
+    color: var(--text-muted);
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
@@ -591,7 +591,7 @@ body {
     justify-content: space-between;
     padding: 0.65rem 0.9rem;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-main);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -601,7 +601,7 @@ body {
 }
 
 .quick-user-chip:hover {
-    background: #e7f1ff;
+    background: var(--primary-light);
     border-color: #3b82f6;
     transform: translateX(4px);
 }
@@ -614,12 +614,12 @@ body {
 .quick-chip-name {
     font-size: 0.88rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .quick-chip-role {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .quick-chip-arrow {
@@ -632,30 +632,30 @@ body {
    Dark Mode Engine for Login Page
    ========================================================================== */
 [data-theme="dark"] body {
-    background-color: #121418;
-    color: #f1f3f5;
+    background-color: var(--surface-body);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .login-left {
     background-color: #181b21;
-    color: #f1f3f5;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .logo-title,
 [data-theme="dark"] .department-title,
 [data-theme="dark"] .dept-card h3 {
-    color: #ffffff;
+    color: var(--white);
 }
 
 [data-theme="dark"] .logo-subtitle,
 [data-theme="dark"] .dept-card p,
 [data-theme="dark"] .login-footer {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .dept-card {
-    background-color: #232731;
-    border-color: #3d4554;
+    background-color: var(--surface-subtle);
+    border-color: var(--border-subtle);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
@@ -675,32 +675,32 @@ body {
 
 [data-theme="dark"] .dept-card i,
 [data-theme="dark"] .dept-card svg {
-    color: #58a6ff;
+    color: var(--primary-light);
 }
 
 [data-theme="dark"] .theme-toggle,
 [data-theme="dark"] .language-toggle {
-    border-color: #3d4554;
+    border-color: var(--border-subtle);
     color: #e2e8f0;
-    background-color: #232731;
+    background-color: var(--surface-subtle);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .theme-toggle:hover,
 [data-theme="dark"] .language-toggle:hover {
     border-color: #3b82f6;
-    color: #ffffff;
+    color: var(--white);
     background-color: #162a4a;
 }
 
 [data-theme="dark"] .form-label {
-    color: #dee2e6;
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .form-control {
-    background-color: #232731;
-    border-color: #3d4554;
-    color: #ffffff;
+    background-color: var(--surface-subtle);
+    border-color: var(--border-subtle);
+    color: var(--white);
 }
 
 [data-theme="dark"] .form-control:focus {
@@ -709,48 +709,48 @@ body {
 }
 
 [data-theme="dark"] .back-btn {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .back-btn:hover {
-    color: #58a6ff;
+    color: var(--primary-light);
 }
 
 [data-theme="dark"] .forgot-password,
 [data-theme="dark"] .remember-me span {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .quick-login-wrapper {
-    border-top-color: #2d3340;
+    border-top-color: var(--border-main);
 }
 
 [data-theme="dark"] .quick-login-title {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .quick-user-chip {
-    background: #232731;
-    border-color: #3d4554;
+    background: var(--surface-subtle);
+    border-color: var(--border-subtle);
 }
 
 [data-theme="dark"] .quick-user-chip:hover {
-    background: #282d38;
+    background: var(--surface-hover);
     border-color: #3b82f6;
 }
 
 [data-theme="dark"] .quick-chip-name {
-    color: #ffffff;
+    color: var(--white);
 }
 
 [data-theme="dark"] .quick-chip-role {
-    color: #9da5b1;
+    color: var(--text-muted);
 }
 
 /* Force Password Change Styles */
 .force-pass-notice {
     background: rgba(13, 110, 253, 0.08);
-    border-inline-start: 4px solid var(--primary, #0d6efd);
+    border-inline-start: 4px solid var(--primary);
     border-radius: 10px;
     padding: 0.85rem 1rem;
     margin-bottom: 1.25rem;
@@ -764,7 +764,7 @@ body {
 
 .force-pass-notice i {
     font-size: 1.25rem;
-    color: var(--primary, #0d6efd);
+    color: var(--primary);
     flex-shrink: 0;
     margin-top: 2px;
 }
@@ -784,7 +784,7 @@ body {
 
 .password-requirements {
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--text-muted);
     line-height: 1.7;
     margin-bottom: 1.25rem;
     display: flex;
@@ -800,7 +800,7 @@ body {
 
 [data-theme="dark"] .force-pass-notice {
     background: rgba(13, 110, 253, 0.16);
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .force-pass-strength {
@@ -808,6 +808,6 @@ body {
 }
 
 [data-theme="dark"] .password-requirements {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
