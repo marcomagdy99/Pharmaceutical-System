@@ -146,7 +146,7 @@ function renderDailyTimeline() {
     activityTargetIds = allowedTeamIds.length > 0 ? allowedTeamIds : allUsers.map((u) => u.id);
   }
 
-  if (selectedLineId !== 'all' && (!selectedRep || selectedRep === 'all')) {
+  if (selectedLineId !== 'all' && (!selectedRep || selectedRep === 'all' || selectedRep === 'all_reps' || selectedRep === 'all_dms')) {
     activityTargetIds = activityTargetIds.filter((tId) => {
       const repLines = window.getUserLines ? window.getUserLines(tId) : [];
       return repLines.some((l) => l.id === selectedLineId);

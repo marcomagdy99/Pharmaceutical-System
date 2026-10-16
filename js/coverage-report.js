@@ -249,11 +249,17 @@ function renderCoverageReport() {
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
   if (selectedLineId !== 'all') {
     targetList = targetList.filter((d) => {
+      if (d.areaId) {
+        const a = allAreas.find((x) => x.id === d.areaId);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
       if (d.lineId) return d.lineId === selectedLineId;
       if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
-      if (!d.repId) return role === 'admin' || role === 'hr';
-      const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
-      return repLines.some((l) => l.id === selectedLineId);
+      if (d.repId) {
+        const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
+        if (repLines.some((l) => l.id === selectedLineId)) return true;
+      }
+      return !d.repId && (role === 'admin' || role === 'hr');
     });
   }
 

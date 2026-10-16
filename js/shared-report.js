@@ -493,6 +493,9 @@ function switchReportTab(tabKey) {
   if (tabKey === 'accounts-costing') {
     if (typeof window.initAccountsCostingTab === 'function') window.initAccountsCostingTab();
   }
+  if (typeof window.refreshActiveReportIfVisible === 'function') {
+    window.refreshActiveReportIfVisible();
+  }
 }
 
 // ============================================================================
@@ -625,8 +628,88 @@ window.onReportLineFilterChange = function (selectedLineId) {
     }
   }
 
-  // Line filter cascades dependent selects (reps, areas, products).
-  // Report data is rendered strictly when the user clicks the Show button.
+  // If the active tab has already been rendered (results are visible), refresh it with the new line
+  if (typeof window.refreshActiveReportIfVisible === 'function') {
+    window.refreshActiveReportIfVisible();
+  }
+};
+
+window.refreshActiveReportIfVisible = function () {
+  const activeBtn = document.querySelector('.report-tab-btn.active');
+  const activeTab = activeBtn ? activeBtn.dataset.tab : 'sales';
+
+  switch (activeTab) {
+    case 'sales': {
+      const res = document.getElementById('salesResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderSalesReport === 'function') window.renderSalesReport();
+      }
+      break;
+    }
+    case 'achievements': {
+      const res = document.getElementById('achievementsResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderAchievementsReport === 'function') window.renderAchievementsReport();
+      }
+      break;
+    }
+    case 'timeline': {
+      const res = document.getElementById('timelineResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderDailyTimeline === 'function') window.renderDailyTimeline();
+      }
+      break;
+    }
+    case 'coverage': {
+      const res = document.getElementById('coverageResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderCoverageReport === 'function') window.renderCoverageReport();
+      }
+      break;
+    }
+    case 'doctors': {
+      const res = document.getElementById('doctorsResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderDoctorsReport === 'function') window.renderDoctorsReport();
+      }
+      break;
+    }
+    case 'hospitals': {
+      const res = document.getElementById('hospitalsResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderHospitalsReport === 'function') window.renderHospitalsReport();
+      }
+      break;
+    }
+    case 'pharmacies': {
+      const res = document.getElementById('pharmaciesResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderPharmaciesReport === 'function') window.renderPharmaciesReport();
+      }
+      break;
+    }
+    case 'missing-days': {
+      const res = document.getElementById('missingDaysResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderMissingDaysReport === 'function') window.renderMissingDaysReport();
+      }
+      break;
+    }
+    case 'gps-tracing': {
+      const res = document.getElementById('gpsTracingResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderGpsTracingReport === 'function') window.renderGpsTracingReport();
+      }
+      break;
+    }
+    case 'accounts-costing': {
+      const res = document.getElementById('accountsCostingResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderAccountsCostingReport === 'function') window.renderAccountsCostingReport();
+      }
+      break;
+    }
+  }
 };
 
 /**
