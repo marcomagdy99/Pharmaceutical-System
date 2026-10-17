@@ -210,13 +210,18 @@ function getScopedDoctors(respectActiveFilters = true) {
         const a = allAreas.find((x) => x.id === d.areaId);
         if (a && a.lineId) return a.lineId === selectedLineId;
       }
+      if (d.area) {
+        const aName = (d.area || '').toLowerCase().trim();
+        const a = allAreas.find((x) => (x.nameEn || '').toLowerCase().trim() === aName || (x.nameAr || '').toLowerCase().trim() === aName);
+        if (a && a.lineId) return a.lineId === selectedLineId;
+      }
       if (d.lineId) return d.lineId === selectedLineId;
       if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
       if (d.repId) {
         const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
         if (repLines.some((l) => l.id === selectedLineId)) return true;
       }
-      return !d.repId && (role === 'admin' || role === 'hr');
+      return false;
     });
   }
 

@@ -146,6 +146,7 @@ function populateAchAreas(filterUser) {
   const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
   const repSelect = document.getElementById('achRepSelect');
   const selectedRepVal = repSelect ? repSelect.value : 'all';
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   let areasToDisplay = [];
@@ -182,13 +183,23 @@ function populateAchAreas(filterUser) {
     }
     if (areasToDisplay.length === 0) areasToDisplay = allAreas;
   } else {
-    const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
     if (selectedLineId !== 'all') {
       areasToDisplay = allAreas.filter((a) => a.lineId === selectedLineId);
     } else {
       areasToDisplay = allAreas;
     }
   }
+
+  // Strict line isolation: filter areas by selected line if a line is active
+  if (selectedLineId !== 'all') {
+    areasToDisplay = areasToDisplay.filter((a) => a.lineId === selectedLineId);
+  }
+
+  areaSelect.replaceChildren();
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = 'all';
+  defaultOpt.textContent = 'All Areas';
+  areaSelect.appendChild(defaultOpt);
 
   areasToDisplay.forEach((a) => {
     const opt = document.createElement('option');

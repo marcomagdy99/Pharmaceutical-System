@@ -150,7 +150,11 @@
           lineSelect.appendChild(opt);
         });
         lineSelect.disabled = false;
-        lineSelect.value = "all";
+        if (window.selectedReportLineId && window.selectedReportLineId !== "all" && Array.from(lineSelect.options).some((o) => o.value === window.selectedReportLineId)) {
+          lineSelect.value = window.selectedReportLineId;
+        } else {
+          lineSelect.value = "all";
+        }
       }
     }
 

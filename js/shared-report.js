@@ -478,8 +478,14 @@ function switchReportTab(tabKey) {
   if (typeof populateUnifiedReportEmployeeFilters === 'function') {
     populateUnifiedReportEmployeeFilters(currentUser, window.selectedReportLineId);
   }
+  if (tabKey === 'sales') {
+    if (typeof window.initPharmSalesFilters === 'function') window.initPharmSalesFilters(currentUser);
+    if (typeof window.updatePharmSalesProductsForLine === 'function') window.updatePharmSalesProductsForLine(window.selectedReportLineId || 'all');
+    if (typeof window.populatePharmSalesAreas === 'function') window.populatePharmSalesAreas(currentUser);
+  }
   if (tabKey === 'achievements') {
     if (typeof populateAchFilters === 'function') populateAchFilters();
+    if (typeof window.populateAchAreas === 'function') window.populateAchAreas();
   }
   if (tabKey === 'doctors') {
     if (typeof populateDoctorSpecialtyFilter === 'function') populateDoctorSpecialtyFilter();
@@ -610,21 +616,21 @@ window.onReportLineFilterChange = function (selectedLineId) {
   if (missingLine && !missingLine.disabled) {
     if (Array.from(missingLine.options).some((o) => o.value === selectedLineId)) {
       missingLine.value = selectedLineId;
-      if (typeof window.onMissingDaysLineChange === 'function') window.onMissingDaysLineChange();
+      try { if (typeof window.onMissingDaysLineChange === 'function') window.onMissingDaysLineChange(); } catch (e) {}
     }
   }
   const gpsLine = document.getElementById('gpsLineSelect');
   if (gpsLine && !gpsLine.disabled) {
     if (Array.from(gpsLine.options).some((o) => o.value === selectedLineId)) {
       gpsLine.value = selectedLineId;
-      if (typeof window.onGpsLineChange === 'function') window.onGpsLineChange();
+      try { if (typeof window.onGpsLineChange === 'function') window.onGpsLineChange(); } catch (e) {}
     }
   }
   const costingLine = document.getElementById('accountsCostingLineSelect');
   if (costingLine && !costingLine.disabled) {
     if (Array.from(costingLine.options).some((o) => o.value === selectedLineId)) {
       costingLine.value = selectedLineId;
-      if (typeof window.onAccountsCostingLineChange === 'function') window.onAccountsCostingLineChange();
+      try { if (typeof window.onAccountsCostingLineChange === 'function') window.onAccountsCostingLineChange(); } catch (e) {}
     }
   }
 
@@ -816,17 +822,17 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
       // Admin, BU, LM:
       const allOpt = document.createElement('option');
       allOpt.value = 'all';
-      allOpt.textContent = '🌐 All Employees (DMs & Reps)';
+      allOpt.textContent = effectiveLineId !== 'all' ? '🌐 All Employees in Line' : '🌐 All Employees (DMs & Reps)';
       selectEl.appendChild(allOpt);
 
       const allRepsOpt = document.createElement('option');
       allRepsOpt.value = 'all_reps';
-      allRepsOpt.textContent = '👥 All Medical Reps';
+      allRepsOpt.textContent = effectiveLineId !== 'all' ? '👥 All Medical Reps in Line' : '👥 All Medical Reps';
       selectEl.appendChild(allRepsOpt);
 
       const allDmsOpt = document.createElement('option');
       allDmsOpt.value = 'all_dms';
-      allDmsOpt.textContent = '💼 All District Managers (DMs)';
+      allDmsOpt.textContent = effectiveLineId !== 'all' ? '💼 All District Managers in Line' : '💼 All District Managers (DMs)';
       selectEl.appendChild(allDmsOpt);
 
       const dms = scopedTeam.filter((u) => u.id !== effectiveUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));

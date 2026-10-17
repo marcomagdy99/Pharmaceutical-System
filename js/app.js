@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v212";
+  const EXPECTED_SW = "v213";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1803,23 +1803,32 @@ function getUserLines(userId) {
     });
   }
 
-  if (assignedLineIds.length === 0 && user.managerId) {
-    const mgr = users.find((u) => u.id === user.managerId);
-    if (mgr) {
-      const mgrLines = mgr.lineIds || (mgr.lineId ? [mgr.lineId] : []);
-      mgrLines.forEach((lId) => {
-        if (!assignedLineIds.includes(lId)) assignedLineIds.push(lId);
-      });
-    }
-  }
-
   if (assignedLineIds.length === 0) {
     const areas = (window.store && window.store.areas ? window.store.areas.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
     areas.forEach((a) => {
-      if (a.repId === userId && a.lineId && !assignedLineIds.includes(a.lineId)) {
+      const isAssigned = a.repId === userId || (user.areaIds && user.areaIds.includes(a.id));
+      if (isAssigned && a.lineId && !assignedLineIds.includes(a.lineId)) {
         assignedLineIds.push(a.lineId);
       }
     });
+  }
+
+  if (assignedLineIds.length === 0 && user.managerId) {
+    const mgr = users.find((u) => u.id === user.managerId);
+    if (mgr) {
+      const isRep = window.isRepRole ? window.isRepRole(user) : (role === 'medical_rep' || role === 'rep');
+      if (isRep) {
+        const primaryLine = mgr.lineId || (mgr.lineIds && mgr.lineIds[0]);
+        if (primaryLine && !assignedLineIds.includes(primaryLine)) {
+          assignedLineIds.push(primaryLine);
+        }
+      } else {
+        const mgrLines = mgr.lineIds || (mgr.lineId ? [mgr.lineId] : []);
+        mgrLines.forEach((lId) => {
+          if (!assignedLineIds.includes(lId)) assignedLineIds.push(lId);
+        });
+      }
+    }
   }
 
   return lines.filter((l) => assignedLineIds.includes(l.id));
@@ -1872,9 +1881,27 @@ function getScopedTeamForLine(lineIdOrUser, maybeUser) {
   if (lineId && lineId !== 'all') {
     result = candidateUsers.filter((u) => {
       if (u.id === user.id) return true;
+      const isRep = window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep');
+      const isDM = (u.role === 'district_manager' || u.role === 'dm');
       const uLineIds = typeof window.getUserLines === 'function'
         ? window.getUserLines(u.id).map((l) => l.id)
         : (u.lineIds || (u.lineId ? [u.lineId] : []));
+
+      if (isRep) {
+        return uLineIds.includes(lineId);
+      }
+
+      if (isDM) {
+        if (uLineIds.includes(lineId)) return true;
+        const subs = users.filter((sub) => sub.managerId === u.id);
+        return subs.some((sub) => {
+          const subLines = typeof window.getUserLines === 'function'
+            ? window.getUserLines(sub.id).map((l) => l.id)
+            : (sub.lineIds || (sub.lineId ? [sub.lineId] : []));
+          return subLines.includes(lineId);
+        });
+      }
+
       if (uLineIds.includes(lineId)) return true;
 
       const subs = users.filter((sub) => sub.managerId === u.id);
