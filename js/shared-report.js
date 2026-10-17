@@ -598,6 +598,21 @@ function populateReportLineFilter(user) {
   window.selectedReportLineId = lineSelect.value;
 }
 
+window.populateReportLineFilter = populateReportLineFilter;
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('pharma:store:changed', (e) => {
+    if (e && e.detail && (e.detail.entity === 'productLines' || e.detail.entity === 'all')) {
+      const u = typeof checkAuth === 'function' ? checkAuth() : null;
+      populateReportLineFilter(u);
+    }
+  });
+  document.addEventListener('pharma:storage:synced', () => {
+    const u = typeof checkAuth === 'function' ? checkAuth() : null;
+    populateReportLineFilter(u);
+  });
+}
+
 window.onReportLineFilterChange = function (selectedLineId) {
   window.selectedReportLineId = selectedLineId;
   const user = typeof checkAuth === 'function' ? checkAuth() : null;
