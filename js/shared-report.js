@@ -492,12 +492,27 @@ function switchReportTab(tabKey) {
   }
   if (tabKey === 'missing-days') {
     if (typeof window.initMissingDaysTab === 'function') window.initMissingDaysTab();
+    const missingLine = document.getElementById('missingLineSelect');
+    if (missingLine && window.selectedReportLineId) {
+      missingLine.value = window.selectedReportLineId;
+      try { if (typeof window.onMissingDaysLineChange === 'function') window.onMissingDaysLineChange(); } catch (e) {}
+    }
   }
   if (tabKey === 'gps-tracing') {
     if (typeof window.initGpsTracingTab === 'function') window.initGpsTracingTab();
+    const gpsLine = document.getElementById('gpsLineSelect');
+    if (gpsLine && window.selectedReportLineId) {
+      gpsLine.value = window.selectedReportLineId;
+      try { if (typeof window.onGpsLineChange === 'function') window.onGpsLineChange(); } catch (e) {}
+    }
   }
   if (tabKey === 'accounts-costing') {
     if (typeof window.initAccountsCostingTab === 'function') window.initAccountsCostingTab();
+    const costingLine = document.getElementById('accountsCostingLineSelect');
+    if (costingLine && window.selectedReportLineId) {
+      costingLine.value = window.selectedReportLineId;
+      try { if (typeof window.onAccountsCostingLineChange === 'function') window.onAccountsCostingLineChange(); } catch (e) {}
+    }
   }
   if (typeof window.refreshActiveReportIfVisible === 'function') {
     window.refreshActiveReportIfVisible();
