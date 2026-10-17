@@ -1328,7 +1328,7 @@ if (typeof renderSidebar === "function") {
         <div class="form-check form-check-sm mb-1">
           <input class="form-check-input pm-product-cb" type="checkbox" value="${p.id}" id="pm_prod_${p.id}" ${checked ? 'checked' : ''}>
           <label class="form-check-label" for="pm_prod_${p.id}" style="font-size: 0.8rem;">
-            ${p.name} <span class="text-muted">(${p.dosage || ''} ${p.form || ''})</span>
+            ${p.name} ${p.form ? `<span class="text-muted">(${p.form})</span>` : ''}
           </label>
         </div>
       `;

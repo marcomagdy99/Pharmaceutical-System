@@ -317,7 +317,6 @@ function renderProductLines(activeLineId) {
                 <thead class="product-table-head">
                     <tr>
                         <th data-i18n="productName">Product Name</th>
-                        <th data-i18n="dosage">Dosage</th>
                         <th data-i18n="form">Form</th>
                         <th data-i18n="price">Value</th>
                         <th class="text-end" data-i18n="actions">Actions</th>
@@ -326,8 +325,7 @@ function renderProductLines(activeLineId) {
                 <tbody>
                     ${line.products.map((prod) => `
                         <tr>
-                            <td class="fw-bold text-primary-emphasis">${window.escapeHtml(prod.name)}</td>
-                            <td><span class="badge product-dosage-badge">${window.escapeHtml(prod.dosage)}</span></td>
+                            <td class="fw-bold product-name-cell">${window.escapeHtml(prod.name)}</td>
                             <td><span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span></td>
                             <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}${prod.cutPoint ? ` <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7em;">⚡CP: ${prod.cutPoint}</span>` : ""}</td>
                             <td class="text-end product-actions-cell">
@@ -357,7 +355,6 @@ function renderProductLines(activeLineId) {
                     <div class="d-flex flex-column gap-1 pe-2" style="min-width: 0;">
                         <span class="fw-bold fs-6 text-truncate product-mobile-name">${window.escapeHtml(prod.name)}</span>
                         <div class="d-flex align-items-center gap-1 flex-wrap">
-                            <span class="badge product-dosage-badge">${window.escapeHtml(prod.dosage)}</span>
                             <span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span>
                             ${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">${Number(prod.price).toLocaleString()} EGP</span>` : ""}
                             ${prod.cutPoint ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">⚡CP: ${prod.cutPoint}</span>` : ""}
@@ -592,7 +589,8 @@ function openEditProduct(lineId, prodId) {
       document.getElementById("targetLineId").value = lineId;
       document.getElementById("productId").value = prod.id;
       document.getElementById("productName").value = prod.name || "";
-      document.getElementById("productDosage").value = prod.dosage || "";
+      const dosageEl = document.getElementById("productDosage");
+      if (dosageEl) dosageEl.value = prod.dosage || "";
       document.getElementById("productFormSelect").value = prod.form || "Tablet";
       document.getElementById("productDescription").value = prod.description || "";
       document.getElementById("productPrice").value = prod.price !== undefined && prod.price !== null ? prod.price : "";
@@ -627,7 +625,8 @@ function saveProduct() {
   }
   const prodId = document.getElementById("productId").value;
   const name = (document.getElementById("productName").value || "").trim();
-  const dosage = (document.getElementById("productDosage").value || "").trim();
+  const dosageEl = document.getElementById("productDosage");
+  const dosage = dosageEl ? dosageEl.value.trim() : "";
   const form = document.getElementById("productFormSelect").value;
   const description = (document.getElementById("productDescription").value || "").trim();
   const priceInput = document.getElementById("productPrice").value;
@@ -647,12 +646,6 @@ function saveProduct() {
     return;
   }
 
-  if (!dosage) {
-    const msg = "Please enter Dosage.";
-    showToast(msg, "warning");
-    return;
-  }
-
   const line = window.store.productLines.getById(targetLineId);
   if (!line) {
     const msg = "Target line not found.";
@@ -664,11 +657,10 @@ function saveProduct() {
 
   const isDuplicate = line.products.some(
     (p) => p.id !== prodId &&
-           p.name.trim().toLowerCase() === name.toLowerCase() &&
-           p.dosage.trim().toLowerCase() === dosage.toLowerCase()
+           p.name.trim().toLowerCase() === name.toLowerCase()
   );
   if (isDuplicate) {
-    const msg = "This product with the same dosage already exists in this line.";
+    const msg = "This product already exists in this line.";
     showToast(msg, "warning");
     return;
   }
@@ -677,22 +669,23 @@ function saveProduct() {
     const prod = line.products.find((p) => p.id === prodId);
     if (prod) {
       prod.name = name;
-      prod.dosage = dosage;
+      if (dosage) prod.dosage = dosage;
       prod.form = form;
       prod.description = description;
       prod.price = price;
       prod.cutPoint = cutPoint;
     }
   } else {
-    line.products.push({
+    const newProd = {
       id: "prod_" + Date.now(),
       name,
-      dosage,
       form,
       description,
       price,
       cutPoint,
-    });
+    };
+    if (dosage) newProd.dosage = dosage;
+    line.products.push(newProd);
   }
 
   window.store.productLines.save(line);
@@ -729,7 +722,7 @@ function openCampaignFocusModal(lineId) {
   prodSelect.innerHTML = `<option value="">${genOpt}</option>`;
   if (Array.isArray(line.products)) {
     line.products.forEach((p) => {
-      prodSelect.innerHTML += `<option value="${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)} (${window.escapeHtml(p.dosage || "")})</option>`;
+      prodSelect.innerHTML += `<option value="${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)}</option>`;
     });
   }
 
@@ -866,7 +859,7 @@ function openTransferModal(lineId, productId) {
 
   document.getElementById("transferSourceLineId").value = lineId;
   document.getElementById("transferProductId").value = productId;
-  document.getElementById("transferProductName").value = `${prod.name} (${prod.dosage} - ${prod.form})`;
+  document.getElementById("transferProductName").value = `${prod.name}${prod.form ? " (" + prod.form + ")" : ""}`;
   document.getElementById("transferCurrentLineName").value = sourceLine.name;
 
   const selectEl = document.getElementById("transferTargetLineSelect");
@@ -996,7 +989,7 @@ function openBrickWeightsModal(lineId, prodId) {
 
   document.getElementById("brickWeightsProductId").value = prodId;
   document.getElementById("brickWeightsLineId").value = lineId;
-  document.getElementById("brickWeightsProdName").textContent = prod.name + " " + (prod.dosage || "");
+  document.getElementById("brickWeightsProdName").textContent = prod.name;
 
   populateBrickWeightsTable(lineId, prodId);
 

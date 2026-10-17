@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v219";
+  const EXPECTED_SW = "v220";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1294,6 +1294,13 @@ function loadDataFromStorage() {
             if (!pl.callFrequency) {
               pl.callFrequency = { classA: 4, classB: 3, classC: 1 };
             }
+            if (Array.isArray(pl.products)) {
+              pl.products.forEach((p) => {
+                if (p.dosage && p.name && !p.name.toLowerCase().includes(p.dosage.toLowerCase())) {
+                  p.name = `${p.name} ${p.dosage}`.trim();
+                }
+              });
+            }
           });
         } else {
           data.productLines = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.productLines));
@@ -1426,6 +1433,9 @@ function loadDataFromStorage() {
           if (Array.isArray(l.products)) {
             l.products.forEach((p) => {
               if (legacyProdMap[p.id]) p.id = legacyProdMap[p.id];
+              if (p.dosage && p.name && !p.name.toLowerCase().includes(p.dosage.toLowerCase())) {
+                p.name = `${p.name} ${p.dosage}`.trim();
+              }
               if (Array.isArray(p.aliases)) {
                 p.aliases.forEach((al) => {
                   if (legacyDistMap[al.distributorId]) al.distributorId = legacyDistMap[al.distributorId];

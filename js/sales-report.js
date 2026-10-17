@@ -1144,7 +1144,7 @@ function updateTargetProductSelect(filterLineId = 'all') {
     products.forEach((p) => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = p.name + (p.dosage ? ' ' + p.dosage : '');
+      opt.textContent = p.dosage && !p.name.toLowerCase().includes(p.dosage.toLowerCase()) ? `${p.name} ${p.dosage}` : p.name;
       group.appendChild(opt);
     });
     productSelect.appendChild(group);

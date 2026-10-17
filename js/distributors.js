@@ -980,7 +980,7 @@ function renderPendingProducts() {
         const opts = products
           .map(
             (p) =>
-              `<option value="${window.escapeHtml(line.id)}::${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)}${p.dosage ? " " + window.escapeHtml(p.dosage) : ""}</option>`,
+              `<option value="${window.escapeHtml(line.id)}::${window.escapeHtml(p.id)}">${window.escapeHtml(p.name)}</option>`,
           )
           .join("");
         return `<optgroup label="${window.escapeHtml(line.name)}">${opts}</optgroup>`;
@@ -2037,7 +2037,7 @@ function openEditProductAlias(lineId, productId, distributorId, rawText) {
       products.forEach((p) => {
         const opt = document.createElement("option");
         opt.value = `${line.id}::${p.id}`;
-        opt.textContent = `${p.name}${p.dosage ? " " + p.dosage : ""}`;
+        opt.textContent = p.name;
         if (line.id === lineId && p.id === productId) opt.selected = true;
         group.appendChild(opt);
       });

@@ -2557,7 +2557,6 @@ function renderPMDashboard(userName, user) {
             <thead class="pm-portfolio-table-head">
               <tr>
                 <th class="pm-portfolio-th">Product Name</th>
-                <th class="pm-portfolio-th">Dosage</th>
                 <th class="pm-portfolio-th">Form</th>
                 <th class="pm-portfolio-th">Line</th>
                 <th class="pm-portfolio-th">Value</th>
@@ -2571,7 +2570,6 @@ function renderPMDashboard(userName, user) {
                 return `
                   <tr class="pm-portfolio-row">
                     <td class="pm-portfolio-td pm-prod-name">${window.escapeHtml(p.name)}</td>
-                    <td class="pm-portfolio-td"><span class="pm-dosage-badge">${window.escapeHtml(p.dosage || "-")}</span></td>
                     <td class="pm-portfolio-td pm-form-text">${window.escapeHtml(p.form || "Tablet")}</td>
                     <td class="pm-portfolio-td"><span class="pm-line-badge">${window.escapeHtml(p.lineName)}</span></td>
                     <td class="pm-portfolio-td pm-price-text">${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
