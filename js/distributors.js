@@ -148,6 +148,24 @@ function getDistributorsList() {
   return (window.store && window.store.distributors.getAll()) || [];
 }
 
+function resolveDistributorItem(distId, distList) {
+  if (!distId) return null;
+  const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+  const targetId = legacyDistMap[distId] || distId;
+  const list = distList || getDistributorsList();
+  return (
+    list.find((d) => d.id === targetId || d.id === distId) ||
+    (window.store && window.store.distributors && window.store.distributors.getById
+      ? window.store.distributors.getById(distId)
+      : null)
+  );
+}
+
+function getDistributorItemName(distId, distList) {
+  const d = resolveDistributorItem(distId, distList);
+  return d ? d.name : (distId || "");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const user = (window.checkAuth && window.checkAuth()) || {};
   if (
@@ -844,7 +862,7 @@ function renderPendingAreas() {
   if (mobileContainer) mobileContainer.replaceChildren();
 
   pending.forEach((entry, idx) => {
-    const dist = distributors.find((d) => d.id === entry.distributorId);
+    const dist = resolveDistributorItem(entry.distributorId, distributors);
     const rowId = `pendingArea_${idx}`;
 
     const tr = document.createElement("tr");
@@ -952,7 +970,7 @@ function renderPendingProducts() {
   const lines = window.store.productLines.getAll();
 
   pending.forEach((entry, idx) => {
-    const dist = distributors.find((d) => d.id === entry.distributorId);
+    const dist = resolveDistributorItem(entry.distributorId, distributors);
     const rowId = `pendingProduct_${idx}`;
 
     const optionsHtml = lines
@@ -1118,11 +1136,16 @@ function renderMappedAliases() {
 
     let areaAliases = allAreaAliases;
     if (filterDist) {
-      areaAliases = areaAliases.filter(a => a.distributorId === filterDist);
+      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+      const targetDist = legacyDistMap[filterDist] || filterDist;
+      areaAliases = areaAliases.filter(a => {
+        const aDist = legacyDistMap[a.distributorId] || a.distributorId;
+        return aDist === targetDist || a.distributorId === filterDist;
+      });
     }
     if (query) {
       areaAliases = areaAliases.filter(a => {
-        const d = distributors.find(dist => dist.id === a.distributorId);
+        const d = resolveDistributorItem(a.distributorId, distributors);
         const dName = d ? d.name.toLowerCase() : "";
         return (
           dName.includes(query) ||
@@ -1148,7 +1171,7 @@ function renderMappedAliases() {
     } else {
       areasTbody.innerHTML = "";
       areaAliases.forEach((entry) => {
-        const dist = distributors.find((d) => d.id === entry.distributorId);
+        const dist = resolveDistributorItem(entry.distributorId, distributors);
         const distName = dist ? dist.name : entry.distributorId;
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -1210,11 +1233,16 @@ function renderMappedAliases() {
 
     let prodAliases = allProdAliases;
     if (filterDist) {
-      prodAliases = prodAliases.filter(p => p.distributorId === filterDist);
+      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+      const targetDist = legacyDistMap[filterDist] || filterDist;
+      prodAliases = prodAliases.filter(p => {
+        const pDist = legacyDistMap[p.distributorId] || p.distributorId;
+        return pDist === targetDist || p.distributorId === filterDist;
+      });
     }
     if (query) {
       prodAliases = prodAliases.filter(p => {
-        const d = distributors.find(dist => dist.id === p.distributorId);
+        const d = resolveDistributorItem(p.distributorId, distributors);
         const dName = d ? d.name.toLowerCase() : "";
         return (
           dName.includes(query) ||
@@ -1240,7 +1268,7 @@ function renderMappedAliases() {
     } else {
       prodsTbody.innerHTML = "";
       prodAliases.forEach((entry) => {
-        const dist = distributors.find((d) => d.id === entry.distributorId);
+        const dist = resolveDistributorItem(entry.distributorId, distributors);
         const distName = dist ? dist.name : entry.distributorId;
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -1299,11 +1327,16 @@ function renderMappedAliases() {
 
     let overrides = allOverrides;
     if (filterDist) {
-      overrides = overrides.filter(o => o.distributorId === filterDist);
+      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+      const targetDist = legacyDistMap[filterDist] || filterDist;
+      overrides = overrides.filter(o => {
+        const oDist = legacyDistMap[o.distributorId] || o.distributorId;
+        return oDist === targetDist || o.distributorId === filterDist;
+      });
     }
     if (query) {
       overrides = overrides.filter(o => {
-        const d = distributors.find(dist => dist.id === o.distributorId);
+        const d = resolveDistributorItem(o.distributorId, distributors);
         const dName = d ? d.name.toLowerCase() : "";
         return (
           dName.includes(query) ||
@@ -1331,7 +1364,7 @@ function renderMappedAliases() {
       const users = (window.store.users && window.store.users.getAll()) || [];
 
       overrides.forEach((entry) => {
-        const dist = distributors.find((d) => d.id === entry.distributorId);
+        const dist = resolveDistributorItem(entry.distributorId, distributors);
         const distName = dist ? dist.name : entry.distributorId;
         const area = areas.find((a) => a.id === entry.areaId);
         const rep =
@@ -2140,11 +2173,16 @@ function renderImportBatches() {
 
   let filteredBatches = batches;
   if (filterDist) {
-    filteredBatches = filteredBatches.filter(b => b.distributorId === filterDist);
+    const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+    const targetDist = legacyDistMap[filterDist] || filterDist;
+    filteredBatches = filteredBatches.filter(b => {
+      const bDist = legacyDistMap[b.distributorId] || b.distributorId;
+      return bDist === targetDist || b.distributorId === filterDist;
+    });
   }
   if (query) {
     filteredBatches = filteredBatches.filter(b => {
-      const dist = distributors.find(d => d.id === b.distributorId);
+      const dist = resolveDistributorItem(b.distributorId, distributors);
       const distName = dist ? dist.name.toLowerCase() : "";
       return (
         distName.includes(query) ||
@@ -2170,7 +2208,7 @@ function renderImportBatches() {
   if (emptyMsg) emptyMsg.style.display = "none";
 
   filteredBatches.forEach((b) => {
-    const dist = distributors.find((d) => d.id === b.distributorId);
+    const dist = resolveDistributorItem(b.distributorId, distributors);
     const uploadedLabel = b.uploadedAt
       ? new Date(b.uploadedAt).toLocaleString("en-US")
       : "";

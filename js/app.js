@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v217";
+  const EXPECTED_SW = "v218";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1412,6 +1412,11 @@ function loadDataFromStorage() {
           if (legacyAreaMap[a.id]) a.id = legacyAreaMap[a.id];
           if (legacyLineMap[a.lineId]) a.lineId = legacyLineMap[a.lineId];
           if (legacyIdMap[a.repId]) a.repId = legacyIdMap[a.repId];
+          if (Array.isArray(a.aliases)) {
+            a.aliases.forEach((al) => {
+              if (legacyDistMap[al.distributorId]) al.distributorId = legacyDistMap[al.distributorId];
+            });
+          }
         });
       }
       if (Array.isArray(data.productLines)) {
@@ -1421,6 +1426,11 @@ function loadDataFromStorage() {
           if (Array.isArray(l.products)) {
             l.products.forEach((p) => {
               if (legacyProdMap[p.id]) p.id = legacyProdMap[p.id];
+              if (Array.isArray(p.aliases)) {
+                p.aliases.forEach((al) => {
+                  if (legacyDistMap[al.distributorId]) al.distributorId = legacyDistMap[al.distributorId];
+                });
+              }
             });
           }
         });
@@ -1436,6 +1446,18 @@ function loadDataFromStorage() {
       if (Array.isArray(data.distributors)) {
         data.distributors.forEach((d) => {
           if (legacyDistMap[d.id]) d.id = legacyDistMap[d.id];
+        });
+      }
+      if (Array.isArray(data.importBatches)) {
+        data.importBatches.forEach((b) => {
+          if (legacyDistMap[b.distributorId]) b.distributorId = legacyDistMap[b.distributorId];
+        });
+      }
+      if (Array.isArray(data.pharmacyOverrides)) {
+        data.pharmacyOverrides.forEach((po) => {
+          if (legacyDistMap[po.distributorId]) po.distributorId = legacyDistMap[po.distributorId];
+          if (legacyAreaMap[po.areaId]) po.areaId = legacyAreaMap[po.areaId];
+          if (legacyPharmMap[po.pharmacyId]) po.pharmacyId = legacyPharmMap[po.pharmacyId];
         });
       }
       if (Array.isArray(data.announcements)) {
@@ -1467,6 +1489,40 @@ function loadDataFromStorage() {
           }
         });
       }
+      if (Array.isArray(data.distributorSales)) {
+        let salesMigrated = false;
+        data.distributorSales.forEach((s) => {
+          if (s.distributorId && legacyDistMap[s.distributorId]) {
+            s.distributorId = legacyDistMap[s.distributorId];
+            salesMigrated = true;
+          }
+          if (s.productId && legacyProdMap[s.productId]) {
+            s.productId = legacyProdMap[s.productId];
+            salesMigrated = true;
+          }
+          if (s.pharmacyId && legacyPharmMap[s.pharmacyId]) {
+            s.pharmacyId = legacyPharmMap[s.pharmacyId];
+            salesMigrated = true;
+          }
+          if (s.lineId && legacyLineMap[s.lineId]) {
+            s.lineId = legacyLineMap[s.lineId];
+            salesMigrated = true;
+          }
+          if (s.areaId && legacyAreaMap[s.areaId]) {
+            s.areaId = legacyAreaMap[s.areaId];
+            salesMigrated = true;
+          }
+          if (s.repId && legacyIdMap[s.repId]) {
+            s.repId = legacyIdMap[s.repId];
+            salesMigrated = true;
+          }
+        });
+        if (salesMigrated) {
+          try {
+            localStorage.setItem("pharma_sales_data", JSON.stringify(data.distributorSales));
+          } catch (e) {}
+        }
+      }
 
       return data;
     }
@@ -1480,6 +1536,21 @@ function loadDataFromStorage() {
     const cachedSales = localStorage.getItem("pharma_sales_data");
     if (cachedSales) {
       fallbackSales = JSON.parse(cachedSales);
+      if (Array.isArray(fallbackSales)) {
+        let changed = false;
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        fallbackSales.forEach((s) => {
+          if (s && s.distributorId && legacyDistMap[s.distributorId]) {
+            s.distributorId = legacyDistMap[s.distributorId];
+            changed = true;
+          }
+        });
+        if (changed) {
+          try {
+            localStorage.setItem("pharma_sales_data", JSON.stringify(fallbackSales));
+          } catch (e) {}
+        }
+      }
     }
   } catch (e) {}
   defaultData.distributorSales = Array.isArray(fallbackSales) ? fallbackSales : [];

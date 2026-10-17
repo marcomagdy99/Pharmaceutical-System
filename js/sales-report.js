@@ -460,7 +460,14 @@ function getFilteredPharmSalesRows() {
       });
     }
   }
-  if (selectedDistributor !== 'all') rows = rows.filter((r) => r.distributorId === selectedDistributor);
+  if (selectedDistributor !== 'all') {
+    const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+    const mappedSelected = legacyDistMap[selectedDistributor] || selectedDistributor;
+    rows = rows.filter((r) => {
+      const rDistId = legacyDistMap[r.distributorId] || r.distributorId;
+      return rDistId === mappedSelected || r.distributorId === selectedDistributor;
+    });
+  }
   const allProdsList = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
   const prodLineIdMap = new Map(allProdsList.map((p) => [p.id, p.lineId]));
   const prodNameLineIdMap = new Map(allProdsList.map((p) => [p.name.trim().toLowerCase(), p.lineId]));
@@ -733,7 +740,10 @@ function renderSalesReport() {
 
       const rep = row.repId ? allUsers.find((u) => u.id === row.repId) : null;
       const area = row.areaId ? areas.find((a) => a.id === row.areaId) : null;
-      const dist = row.distributorId ? distributors.find((d) => d.id === row.distributorId) : null;
+      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+      const resolvedDistId = (row.distributorId && legacyDistMap[row.distributorId]) ? legacyDistMap[row.distributorId] : row.distributorId;
+      const dist = resolvedDistId ? (distributors.find((d) => d.id === resolvedDistId || d.id === row.distributorId) || (window.store && window.store.distributors ? window.store.distributors.getById(resolvedDistId) : null)) : null;
+      const distName = dist ? dist.name : (row.distributorId || '—');
       const areaLabel = area ? area.name : (row.areaRaw || 'Unmatched');
       const repLabel = rep ? rep.name : 'Unassigned';
 
@@ -759,7 +769,7 @@ function renderSalesReport() {
         <td style="white-space: nowrap;">${window.escapeHtml(row.date || row.month)}</td>
         <td>${pharmacyDisplay}</td>
         <td><span class="sales-product-badge">💊 ${window.escapeHtml(row.product || 'General Product')}</span></td>
-        <td style="white-space: nowrap;">${window.escapeHtml(dist ? dist.name : (row.distributorId || '—'))}</td>
+        <td style="white-space: nowrap;">${window.escapeHtml(distName)}</td>
         <td style="white-space: nowrap;">${window.escapeHtml(areaLabel)}</td>
         <td style="white-space: nowrap;">${window.escapeHtml(repLabel)}</td>
         <td style="font-weight: 600;">${qty.toLocaleString()}</td>
@@ -1029,13 +1039,16 @@ function exportSalesReport() {
   rows.forEach((r) => {
     const rep = r.repId ? allUsers.find((u) => u.id === r.repId) : null;
     const area = r.areaId ? areas.find((a) => a.id === r.areaId) : null;
-    const dist = r.distributorId ? distributors.find((d) => d.id === r.distributorId) : null;
+    const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+    const resolvedDistId = (r.distributorId && legacyDistMap[r.distributorId]) ? legacyDistMap[r.distributorId] : r.distributorId;
+    const dist = resolvedDistId ? (distributors.find((d) => d.id === resolvedDistId || d.id === r.distributorId) || (window.store && window.store.distributors ? window.store.distributors.getById(resolvedDistId) : null)) : null;
+    const distName = dist ? dist.name : (r.distributorId || '');
     const areaLabel = area ? area.name : (r.areaRaw || '');
     const repLabel = rep ? rep.name : '';
     const qty = parseFloat(r.quantity) || 0;
     const value = parseFloat(r.value) || 0;
     const typeLabel = (r.salesType === 'bulk' ? 'Bulk' : 'Private') + (r.splitPercent ? ` (Split ${r.splitPercent}%)` : '');
-    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.pharmacyCode || '')},${safeCsv(r.product)},${safeCsv(dist ? dist.name : (r.distributorId || ''))},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value},${safeCsv(typeLabel)}\n`;
+    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.pharmacyCode || '')},${safeCsv(r.product)},${safeCsv(distName)},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value},${safeCsv(typeLabel)}\n`;
   });
 
   const yearSelect = document.getElementById('pharmSalesYearSelect');

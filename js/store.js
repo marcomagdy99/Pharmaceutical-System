@@ -283,6 +283,8 @@
         if (!rawText) return null;
         const normalized = String(rawText).trim().toLowerCase();
         const defaultLine = this._defaultLineId();
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        const targetDist = legacyDistMap[distributorId] || distributorId;
         return (window.DEMO_DATA.areas || []).find(
           (a) => {
             // Line filter: match if area belongs to the given line
@@ -293,9 +295,13 @@
             return (
               Array.isArray(a.aliases) &&
               a.aliases.some(
-                (al) =>
-                  al.distributorId === distributorId &&
-                  String(al.rawText).trim().toLowerCase() === normalized,
+                (al) => {
+                  const alDist = legacyDistMap[al.distributorId] || al.distributorId;
+                  return (
+                    (alDist === targetDist || al.distributorId === distributorId) &&
+                    String(al.rawText).trim().toLowerCase() === normalized
+                  );
+                },
               )
             );
           },
@@ -407,13 +413,19 @@
       findByAliasText(distributorId, rawText) {
         if (!rawText) return null;
         const normalized = String(rawText).trim().toLowerCase();
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        const targetDist = legacyDistMap[distributorId] || distributorId;
         const matches = (window.DEMO_DATA.areas || []).filter(
           (a) =>
             Array.isArray(a.aliases) &&
             a.aliases.some(
-              (al) =>
-                al.distributorId === distributorId &&
-                String(al.rawText).trim().toLowerCase() === normalized,
+              (al) => {
+                const alDist = legacyDistMap[al.distributorId] || al.distributorId;
+                return (
+                  (alDist === targetDist || al.distributorId === distributorId) &&
+                  String(al.rawText).trim().toLowerCase() === normalized
+                );
+              },
             ),
         );
         if (!matches.length) return null;
@@ -835,8 +847,12 @@
         const cleanName = String(pharmacyName || "").trim().toLowerCase();
         if (!cleanCode && !cleanName) return null;
 
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        const targetDist = legacyDistMap[distributorId] || distributorId;
+
         return (window.DEMO_DATA.pharmacyOverrides || []).find((o) => {
-          if (o.distributorId !== distributorId) return false;
+          const oDist = legacyDistMap[o.distributorId] || o.distributorId;
+          if (oDist !== targetDist && o.distributorId !== distributorId) return false;
 
           let matchesIdentity = false;
           if (cleanCode && o.pharmacyCode) {
@@ -1268,6 +1284,8 @@
       findProductByAlias(distributorId, rawText) {
         if (!rawText) return null;
         const normalized = String(rawText).trim().toLowerCase();
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        const targetDist = legacyDistMap[distributorId] || distributorId;
         const lines = window.DEMO_DATA.productLines || [];
         for (const line of lines) {
           if (!Array.isArray(line.products)) continue;
@@ -1275,9 +1293,13 @@
             (p) =>
               Array.isArray(p.aliases) &&
               p.aliases.some(
-                (al) =>
-                  al.distributorId === distributorId &&
-                  String(al.rawText).trim().toLowerCase() === normalized,
+                (al) => {
+                  const alDist = legacyDistMap[al.distributorId] || al.distributorId;
+                  return (
+                    (alDist === targetDist || al.distributorId === distributorId) &&
+                    String(al.rawText).trim().toLowerCase() === normalized
+                  );
+                },
               ),
           );
           if (prod) return { line, product: prod };
@@ -1420,10 +1442,23 @@
       getAll() {
         return window.DEMO_DATA.distributors || [];
       },
-      getById(id) {
-        return (window.DEMO_DATA.distributors || []).find(
-          (d) => d.id === id,
+      resolve(id) {
+        if (!id) return null;
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        const resolvedId = legacyDistMap[id] || id;
+        return (
+          (window.DEMO_DATA.distributors || []).find(
+            (d) => d.id === resolvedId || d.id === id,
+          ) || null
         );
+      },
+      getName(id) {
+        if (!id) return "";
+        const d = this.resolve(id);
+        return d ? d.name : id;
+      },
+      getById(id) {
+        return this.resolve(id);
       },
       /**
        * "commercial" or "tender". Defaults to "commercial" for older
@@ -1590,10 +1625,29 @@
     // ==========================================
     distributorSales: {
       getAll() {
-        return window.DEMO_DATA.distributorSales || [];
+        const sales = window.DEMO_DATA.distributorSales || [];
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        let hasLegacy = false;
+        sales.forEach((s) => {
+          if (s && s.distributorId && legacyDistMap[s.distributorId]) {
+            s.distributorId = legacyDistMap[s.distributorId];
+            hasLegacy = true;
+          }
+        });
+        if (hasLegacy) {
+          try {
+            localStorage.setItem("pharma_sales_data", JSON.stringify(sales));
+          } catch (e) {}
+        }
+        return sales;
       },
       getByDistributor(distributorId) {
-        return this.getAll().filter((s) => s.distributorId === distributorId);
+        const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+        const targetId = legacyDistMap[distributorId] || distributorId;
+        return this.getAll().filter((s) => {
+          const sDistId = legacyDistMap[s.distributorId] || s.distributorId;
+          return sDistId === targetId || s.distributorId === distributorId;
+        });
       },
       getUnassigned() {
         return this.getAll().filter((s) => !s.repId);
