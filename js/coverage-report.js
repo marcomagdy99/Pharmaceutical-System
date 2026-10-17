@@ -79,8 +79,10 @@ function renderCoverageReport() {
   const startDate = document.getElementById('coverageStartDate')?.value || _coverageStart();
   const endDate = document.getElementById('coverageEndDate')?.value || _coverageEnd();
   const classFilter = document.getElementById('coverageClassFilter')?.value || 'all';
+  const lmSelect = document.getElementById('coverageLmSelect');
+  const dmSelect = document.getElementById('coverageDmSelect');
   const repSelect = document.getElementById('coverageRepSelect');
-  const selectedRep = repSelect ? repSelect.value : 'all';
+  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
   const lang = getCurrentLang();
 
   const start = new Date(startDate);
@@ -707,8 +709,10 @@ function exportCoverageReport() {
   const startDate = document.getElementById('coverageStartDate')?.value || _coverageStart();
   const endDate = document.getElementById('coverageEndDate')?.value || _coverageEnd();
   const classFilter = document.getElementById('coverageClassFilter')?.value || 'all';
+  const lmSelect = document.getElementById('coverageLmSelect');
+  const dmSelect = document.getElementById('coverageDmSelect');
   const repSelect = document.getElementById('coverageRepSelect');
-  const selectedRep = repSelect ? repSelect.value : 'all';
+  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
 
   const start = new Date(startDate);
   const end = new Date(endDate);

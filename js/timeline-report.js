@@ -24,8 +24,10 @@ function renderDailyTimeline() {
   const fromDate  = (fromInput && fromInput.value) ? fromInput.value : _todayStr;
   const toDate    = (toInput   && toInput.value)   ? toInput.value   : _todayStr;
 
+  const lmSelect   = document.getElementById('timelineLmSelect');
+  const dmSelect   = document.getElementById('timelineDmSelect');
   const repSelect  = document.getElementById('timelineRepSelect');
-  const selectedRep = repSelect ? repSelect.value : 'all';
+  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
 
   const container  = document.getElementById('timelineEventsContainer');
   const summaryBar = document.getElementById('timelineSummaryBar');

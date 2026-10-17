@@ -90,8 +90,10 @@ function getScopedPharmacies(respectActiveFilters = true) {
       allowedAreaNames = buAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
     }
 
+    const lmFilter = document.getElementById("pharmacyLmSelect");
+    const dmFilter = document.getElementById("pharmacyDmSelect");
     const repFilter = document.getElementById("pharmacyRepSelect");
-    const repId = (repFilter && repFilter.value) ? repFilter.value : "all";
+    const repId = (repFilter && repFilter.value !== "all") ? repFilter.value : ((dmFilter && dmFilter.value !== "all") ? dmFilter.value : ((lmFilter && lmFilter.value !== "all") ? lmFilter.value : "all"));
 
     if (allowedTeamIds) {
       pharms = pharms.filter((p) => {

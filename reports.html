@@ -19,7 +19,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v215";
+        var EXPECTED_SW = "v216";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -51,17 +51,17 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v215" />
-    <link rel="stylesheet" href="css/reports.css?v=v215" />
+    <link rel="stylesheet" href="css/style.css?v=v216" />
+    <link rel="stylesheet" href="css/reports.css?v=v216" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v215"></script>
-    <script src="js/store.js?v=v215"></script>
+    <script src="js/app.js?v=v216"></script>
+    <script src="js/store.js?v=v216"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v215"></script>
-    <script src="js/firebase-sync.js?v=v215"></script>
+    <script src="js/firebase-config.js?v=v216"></script>
+    <script src="js/firebase-sync.js?v=v216"></script>
   </head>
   <body>
     <div class="app">
@@ -207,14 +207,27 @@
                  achievements-report.js. -->
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
-                <!-- Employee Filter: Second in hierarchy (scoped to line) -->
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="pharmSalesLmFilterContainer">
+                  <label for="pharmSalesLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="pharmSalesLmSelect" class="form-control" onchange="onReportLmChange('sales')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-dm" id="pharmSalesDmFilterContainer">
+                  <label for="pharmSalesDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="pharmSalesDmSelect" class="form-control" onchange="onReportDmChange('sales')">
+                    <option value="all">All District Managers</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-rep" id="pharmSalesRepFilterContainer">
-                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                  <label for="pharmSalesRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
                   <select
                     id="pharmSalesRepSelect"
                     class="form-control"
+                    onchange="onReportRepChange('sales')"
                   >
-                    <option value="all">All Employees</option>
+                    <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
                 <!-- Territory / Area Filter: scoped to rep or line -->
@@ -425,13 +438,27 @@
             <div class="sales-filter-card">
               <div class="achievements-filter-bar">
                 <div class="achievements-filter-group">
+                  <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                  <div class="sales-filter-field col-lm" id="achLmFilterContainer">
+                    <label for="achLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                    <select id="achLmSelect" class="form-control" onchange="onReportLmChange('achievements')">
+                      <option value="all">All Line Managers</option>
+                    </select>
+                  </div>
+                  <div class="sales-filter-field col-dm" id="achDmFilterContainer">
+                    <label for="achDmSelect" data-i18n="filterDm">District / DM:</label>
+                    <select id="achDmSelect" class="form-control" onchange="onReportDmChange('achievements')">
+                      <option value="all">All District Managers</option>
+                    </select>
+                  </div>
                   <div class="sales-filter-field col-rep" id="achRepFilterContainer">
-                    <label data-i18n="teamFilterLabel">Employee Filter:</label>
+                    <label for="achRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
                     <select
                       id="achRepSelect"
                       class="form-control"
+                      onchange="onReportRepChange('achievements')"
                     >
-                      <option value="all">All Employees</option>
+                      <option value="all">All Medical Reps in Line</option>
                     </select>
                   </div>
                   <!-- Territory / Area Filter -->
@@ -585,11 +612,23 @@
           <div class="report-content-panel" id="tabPanel-timeline">
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="timelineLmFilterContainer">
+                  <label for="timelineLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="timelineLmSelect" class="form-control" onchange="onReportLmChange('timeline')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-dm" id="timelineDmFilterContainer">
+                  <label for="timelineDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="timelineDmSelect" class="form-control" onchange="onReportDmChange('timeline')">
+                    <option value="all">All District Managers</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-rep" id="timelineRepFilterContainer">
-                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select id="timelineRepSelect" class="form-control"
-                  >
-                    <option value="all">All Employees</option>
+                  <label for="timelineRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
+                  <select id="timelineRepSelect" class="form-control">
+                    <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
                 <div class="sales-filter-field col-date">
@@ -671,11 +710,23 @@
           <div class="report-content-panel" id="tabPanel-coverage">
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="coverageLmFilterContainer">
+                  <label for="coverageLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="coverageLmSelect" class="form-control" onchange="onReportLmChange('coverage')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-dm" id="coverageDmFilterContainer">
+                  <label for="coverageDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="coverageDmSelect" class="form-control" onchange="onReportDmChange('coverage')">
+                    <option value="all">All District Managers</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-rep" id="coverageRepFilterContainer">
-                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select id="coverageRepSelect" class="form-control"
-                  >
-                    <option value="all">All Employees</option>
+                  <label for="coverageRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
+                  <select id="coverageRepSelect" class="form-control">
+                    <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
                 <div class="sales-filter-field col-date">
@@ -906,12 +957,23 @@
               </div>
               <!-- Filters Grid -->
               <div class="sales-filter-form-grid">
-                <!-- Employee Filter -->
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="doctorLmFilterContainer">
+                  <label for="doctorLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="doctorLmSelect" class="form-control" onchange="onReportLmChange('doctors')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-dm" id="doctorDmFilterContainer">
+                  <label for="doctorDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="doctorDmSelect" class="form-control" onchange="onReportDmChange('doctors')">
+                    <option value="all">All District Managers</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-rep" id="doctorRepFilterContainer">
-                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select id="doctorRepSelect" class="form-control"
-                  >
-                    <option value="all" data-i18n="allReps">All Employees</option>
+                  <label for="doctorRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
+                  <select id="doctorRepSelect" class="form-control">
+                    <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
                 <!-- Search -->
@@ -951,24 +1013,7 @@
                     <span>🔍</span> <span data-i18n="btnShow">Show</span>
                   </button>
                 </div>
-                <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
-                <div style="display: none" id="doctorLmFilterGroup">
-                  <select
-                    id="doctorLmSelect"
-                    onchange="onDoctorLmChange()"
-                  ></select>
-                </div>
-                <div style="display: none" id="doctorDmFilterGroup">
-                  <select
-                    id="doctorDmSelect"
-                    onchange="onDoctorDmChange()"
-                  ></select>
-                </div>
-                <div style="display: none" id="doctorRepFilterGroup">
-                  <select
-                    id="doctorRepSelectLegacy"
-                  ></select>
-                </div>
+
               </div>
             </div>
 
@@ -1082,12 +1127,23 @@
               </div>
               <!-- Filters Grid -->
               <div class="sales-filter-form-grid">
-                <!-- Employee Filter -->
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="hospitalLmFilterContainer">
+                  <label for="hospitalLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="hospitalLmSelect" class="form-control" onchange="onReportLmChange('hospitals')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-dm" id="hospitalDmFilterContainer">
+                  <label for="hospitalDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="hospitalDmSelect" class="form-control" onchange="onReportDmChange('hospitals')">
+                    <option value="all">All District Managers</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-rep" id="hospitalRepFilterContainer">
-                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select id="hospitalRepSelect" class="form-control"
-                  >
-                    <option value="all" data-i18n="allReps">All Employees</option>
+                  <label for="hospitalRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
+                  <select id="hospitalRepSelect" class="form-control">
+                    <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
                 <!-- Search -->
@@ -1230,12 +1286,23 @@
               </div>
               <!-- Filters Grid -->
               <div class="sales-filter-form-grid">
-                <!-- Employee Filter -->
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="pharmacyLmFilterContainer">
+                  <label for="pharmacyLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="pharmacyLmSelect" class="form-control" onchange="onReportLmChange('pharmacies')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
+                <div class="sales-filter-field col-dm" id="pharmacyDmFilterContainer">
+                  <label for="pharmacyDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="pharmacyDmSelect" class="form-control" onchange="onReportDmChange('pharmacies')">
+                    <option value="all">All District Managers</option>
+                  </select>
+                </div>
                 <div class="sales-filter-field col-rep" id="pharmacyRepFilterContainer">
-                  <label data-i18n="teamFilterLabel">Employee Filter:</label>
-                  <select id="pharmacyRepSelect" class="form-control"
-                  >
-                    <option value="all" data-i18n="allReps">All Employees</option>
+                  <label for="pharmacyRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
+                  <select id="pharmacyRepSelect" class="form-control">
+                    <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
                 <!-- Search -->
@@ -1260,24 +1327,7 @@
                     <span>🔍</span> <span data-i18n="btnShow">Show</span>
                   </button>
                 </div>
-                <!-- Hidden legacy hierarchy selects kept for JS compatibility -->
-                <div style="display: none" id="pharmacyLmFilterGroup">
-                  <select
-                    id="pharmacyLmSelect"
-                    onchange="onPharmacyLmChange()"
-                  ></select>
-                </div>
-                <div style="display: none" id="pharmacyDmFilterGroup">
-                  <select
-                    id="pharmacyDmSelect"
-                    onchange="onPharmacyDmChange()"
-                  ></select>
-                </div>
-                <div style="display: none" id="pharmacyRepFilterGroup">
-                  <select
-                    id="pharmacyRepSelectLegacy"
-                  ></select>
-                </div>
+
               </div>
             </div>
 
@@ -1333,13 +1383,18 @@
                   <label for="missingLineSelect" data-i18n="lineFilterLabel">Product Line:</label>
                   <select id="missingLineSelect" class="form-control" onchange="onMissingDaysLineChange()"></select>
                 </div>
-                <!-- DM Filter -->
-                <div class="sales-filter-field col-distributor">
-                  <label for="missingDmSelect" data-i18n="filterDm">District / DM:</label>
-                  <select id="missingDmSelect" class="form-control" onchange="onMissingDaysDmChange()"></select>
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="missingLmFilterContainer">
+                  <label for="missingLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="missingLmSelect" class="form-control" onchange="onReportLmChange('missing-days')">
+                    <option value="all">All Line Managers</option>
+                  </select>
                 </div>
-                <!-- Rep Filter -->
-                <div class="sales-filter-field col-rep">
+                <div class="sales-filter-field col-dm" id="missingDmFilterContainer">
+                  <label for="missingDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="missingDmSelect" class="form-control" onchange="onReportDmChange('missing-days')"></select>
+                </div>
+                <div class="sales-filter-field col-rep" id="missingRepFilterContainer">
                   <label for="missingRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
                   <select id="missingRepSelect" class="form-control"></select>
                 </div>
@@ -1482,13 +1537,18 @@
                   <label for="gpsLineSelect" data-i18n="lineFilterLabel">Product Line:</label>
                   <select id="gpsLineSelect" class="form-control" onchange="onGpsLineChange()"></select>
                 </div>
-                <!-- DM Filter -->
-                <div class="sales-filter-field col-distributor">
-                  <label for="gpsDmSelect" data-i18n="filterDm">District / DM:</label>
-                  <select id="gpsDmSelect" class="form-control" onchange="onGpsDmChange()"></select>
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="gpsLmFilterContainer">
+                  <label for="gpsLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="gpsLmSelect" class="form-control" onchange="onReportLmChange('gps-tracing')">
+                    <option value="all">All Line Managers</option>
+                  </select>
                 </div>
-                <!-- Rep Filter -->
-                <div class="sales-filter-field col-rep">
+                <div class="sales-filter-field col-dm" id="gpsDmFilterContainer">
+                  <label for="gpsDmSelect" data-i18n="filterDm">District / DM:</label>
+                  <select id="gpsDmSelect" class="form-control" onchange="onReportDmChange('gps-tracing')"></select>
+                </div>
+                <div class="sales-filter-field col-rep" id="gpsRepFilterContainer">
                   <label for="gpsRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
                   <select id="gpsRepSelect" class="form-control"></select>
                 </div>
@@ -1615,14 +1675,21 @@
                   <label for="accountsCostingLineSelect">Product Line:</label>
                   <select id="accountsCostingLineSelect" class="form-control" onchange="onAccountsCostingLineChange()"></select>
                 </div>
+                <!-- Hierarchy Filter: LM -> DM -> Rep -->
+                <div class="sales-filter-field col-lm" id="accountsCostingLmFilterContainer">
+                  <label for="accountsCostingLmSelect" data-i18n="filterLm">Line Manager (LM):</label>
+                  <select id="accountsCostingLmSelect" class="form-control" onchange="onReportLmChange('accounts-costing')">
+                    <option value="all">All Line Managers</option>
+                  </select>
+                </div>
                 <!-- District / DM Filter -->
-                <div class="sales-filter-field col-dm">
-                  <label for="accountsCostingDmSelect">District / DM:</label>
+                <div class="sales-filter-field col-dm" id="accountsCostingDmFilterContainer">
+                  <label for="accountsCostingDmSelect" data-i18n="filterDm">District / DM:</label>
                   <select id="accountsCostingDmSelect" class="form-control" onchange="onAccountsCostingDmChange()"></select>
                 </div>
                 <!-- Medical Rep Filter -->
-                <div class="sales-filter-field col-rep">
-                  <label for="accountsCostingRepSelect">Medical Rep:</label>
+                <div class="sales-filter-field col-rep" id="accountsCostingRepFilterContainer">
+                  <label for="accountsCostingRepSelect" data-i18n="teamFilterLabel">Medical Rep:</label>
                   <select id="accountsCostingRepSelect" class="form-control" onchange="onAccountsCostingRepChange()"></select>
                 </div>
                 <!-- Territory / Area Filter -->
@@ -3105,20 +3172,20 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v215"></script>
+    <script src="js/interactive-charts.js?v=v216"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v215"></script>
-    <script src="js/shared-report.js?v=v215"></script>
-    <script src="js/sales-report.js?v=v215"></script>
-    <script src="js/achievements-report.js?v=v215"></script>
-    <script src="js/timeline-report.js?v=v215"></script>
-    <script src="js/coverage-report.js?v=v215"></script>
-    <script src="js/doctors-report.js?v=v215"></script>
-    <script src="js/hospitals-report.js?v=v215"></script>
-    <script src="js/pharmacies-report.js?v=v215"></script>
-    <script src="js/missing-days-report.js?v=v215"></script>
-    <script src="js/gps-tracing-report.js?v=v215"></script>
-    <script src="js/accounts-costing-report.js?v=v215"></script>
+    <script src="js/excel-templates-data.js?v=v216"></script>
+    <script src="js/shared-report.js?v=v216"></script>
+    <script src="js/sales-report.js?v=v216"></script>
+    <script src="js/achievements-report.js?v=v216"></script>
+    <script src="js/timeline-report.js?v=v216"></script>
+    <script src="js/coverage-report.js?v=v216"></script>
+    <script src="js/doctors-report.js?v=v216"></script>
+    <script src="js/hospitals-report.js?v=v216"></script>
+    <script src="js/pharmacies-report.js?v=v216"></script>
+    <script src="js/missing-days-report.js?v=v216"></script>
+    <script src="js/gps-tracing-report.js?v=v216"></script>
+    <script src="js/accounts-costing-report.js?v=v216"></script>
   </body>
 </html>
 

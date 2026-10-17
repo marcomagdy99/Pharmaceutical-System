@@ -258,6 +258,7 @@
 }
 
 .sales-filter-field.col-line,
+.sales-filter-field.col-lm,
 .sales-filter-field.col-dm {
     min-width: 180px;
     max-width: 260px;
@@ -1201,6 +1202,7 @@
         grid-column: 1 / 3;
         min-width: 0;
     }
+    .sales-filter-field.col-lm,
     .sales-filter-field.col-dm {
         grid-column: 1 / 3;
         min-width: 0;
@@ -3429,6 +3431,7 @@ a.gps-action-map-btn {
 
     /* Full-width fields on mobile */
     #tabPanel-accounts-costing .sales-filter-field.col-product,
+    #tabPanel-accounts-costing .sales-filter-field.col-lm,
     #tabPanel-accounts-costing .sales-filter-field.col-dm,
     #tabPanel-accounts-costing .sales-filter-field.col-rep,
     #tabPanel-accounts-costing .sales-filter-field.col-area,

@@ -144,8 +144,10 @@ function populateAchAreas(filterUser) {
 
   const curUser = filterUser || (typeof checkAuth === 'function' ? checkAuth() : null);
   const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+  const lmSelect = document.getElementById('achLmSelect');
+  const dmSelect = document.getElementById('achDmSelect');
   const repSelect = document.getElementById('achRepSelect');
-  const selectedRepVal = repSelect ? repSelect.value : 'all';
+  const selectedRepVal = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -248,8 +250,10 @@ function getAchievementsScopeRepIds(user) {
       .map((u) => u.id);
   }
 
+  const lmSelect = document.getElementById('achLmSelect');
+  const dmSelect = document.getElementById('achDmSelect');
   const repSelect = document.getElementById('achRepSelect');
-  const selectedRep = repSelect ? repSelect.value : 'all';
+  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
 
   if (selectedRep && selectedRep !== 'all') {
     if (selectedRep.startsWith('vacant:')) {
@@ -347,8 +351,10 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   }
 
   // 2. Apply UI filters (rep filter / vacant filter & area filter)
+  const achLmSelect = document.getElementById('achLmSelect');
+  const achDmSelect = document.getElementById('achDmSelect');
   const achRepSelect = document.getElementById('achRepSelect');
-  const selectedRepVal = achRepSelect ? achRepSelect.value : 'all';
+  const selectedRepVal = (achRepSelect && achRepSelect.value !== 'all') ? achRepSelect.value : ((achDmSelect && achDmSelect.value !== 'all') ? achDmSelect.value : ((achLmSelect && achLmSelect.value !== 'all') ? achLmSelect.value : 'all'));
   const achAreaSelect = document.getElementById('achAreaSelect');
   const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
 

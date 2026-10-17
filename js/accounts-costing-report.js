@@ -426,44 +426,32 @@
       }
     }
 
-    // 2. District / DM Select
-    const dmSelect = document.getElementById("accountsCostingDmSelect");
-    if (dmSelect) {
-      if (scope.isRep) {
-        const myDM = scope.allowedDMs[0];
-        const dmName = myDM ? (myDM.name || myDM.username) : "Assigned District Manager";
-        const dmId = myDM ? myDM.id : "dm";
-        dmSelect.innerHTML = `<option value="${dmId}">${window.escapeHtml(dmName)}</option>`;
-        dmSelect.value = dmId;
-        dmSelect.disabled = true;
-      } else if (scope.isDM) {
-        dmSelect.innerHTML = `<option value="${user.id}">${window.escapeHtml(user.name || user.username)}</option>`;
-        dmSelect.value = user.id;
-        dmSelect.disabled = true;
-      } else {
-        // Admin or LM
-        dmSelect.innerHTML = `<option value="all">All Districts / DMs</option>` +
-          scope.allowedDMs.map((u) => `<option value="${u.id}">${window.escapeHtml(u.name || u.username)}</option>`).join("");
-        dmSelect.disabled = false;
-        dmSelect.value = "all";
-      }
+    const currentLineVal = lineSelect?.value || window.selectedReportLineId || "all";
+
+    // 2. Populate Unified LM, DM, Rep Hierarchy
+    if (typeof window.populateTabHierarchyFilters === "function") {
+      window.populateTabHierarchyFilters("accounts-costing", user, currentLineVal);
+    } else {
+      populateCostingRepOptions();
     }
 
-    // 3. Medical Rep Select
-    populateCostingRepOptions();
-
-    // 4. Territory / Area Select
+    // 3. Territory / Area Select
     populateCostingAreaOptions();
 
-    // 5. Specialty Select (Never empty - loaded from master specialties catalog)
+    // 4. Specialty Select (Never empty - loaded from master specialties catalog)
     populateCostingSpecialtyOptions();
   }
 
   /**
-   * Populates Rep options based on selected Line & DM within user's allowed scope
+   * Populates Rep options based on selected Line, LM & DM within user's allowed scope
    */
   function populateCostingRepOptions() {
     const user = getCurrentUser();
+    const lineVal = document.getElementById("accountsCostingLineSelect")?.value || window.selectedReportLineId || "all";
+    if (typeof window.populateTabRepOptions === "function") {
+      window.populateTabRepOptions("accounts-costing", user, lineVal);
+      return;
+    }
     const scope = resolveUserCostingScope(user);
     const repSelect = document.getElementById("accountsCostingRepSelect");
     if (!repSelect) return;
@@ -476,7 +464,6 @@
     }
 
     let reps = scope.allowedReps;
-    const lineVal = document.getElementById("accountsCostingLineSelect")?.value;
     const dmVal = document.getElementById("accountsCostingDmSelect")?.value;
 
     if (lineVal && lineVal !== "all") {
@@ -497,7 +484,7 @@
   }
 
   /**
-   * Populates Area options based on selected Line & Rep within user's allowed scope
+   * Populates Area options based on selected Line, LM, DM & Rep within user's allowed scope
    */
   function populateCostingAreaOptions() {
     const user = getCurrentUser();
@@ -527,6 +514,8 @@
     // For Managers & Admin
     let areas = scope.allowedAreas;
     const lineVal = document.getElementById("accountsCostingLineSelect")?.value;
+    const lmVal = document.getElementById("accountsCostingLmSelect")?.value;
+    const dmVal = document.getElementById("accountsCostingDmSelect")?.value;
     const repVal = document.getElementById("accountsCostingRepSelect")?.value;
 
     if (lineVal && lineVal !== "all") {
@@ -534,6 +523,20 @@
     }
     if (repVal && repVal !== "all") {
       areas = areas.filter((a) => a.repId === repVal);
+    } else if (dmVal && dmVal !== "all") {
+      const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const dmSubUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(dmVal)
+        : allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
+      const dmRepIds = new Set(dmSubUsers.map((u) => u.id));
+      areas = areas.filter((a) => a.dmId === dmVal || (a.repId && dmRepIds.has(a.repId)));
+    } else if (lmVal && lmVal !== "all") {
+      const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const lmSubUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(lmVal)
+        : allUsers.filter((u) => u.managerId === lmVal);
+      const lmRepIds = new Set([lmVal, ...lmSubUsers.map((u) => u.id)]);
+      areas = areas.filter((a) => lmRepIds.has(a.repId));
     }
 
     const allLabel = scope.isDM ? "All District Areas" : "All Territories / Areas";
@@ -576,12 +579,38 @@
    * Event handlers for cascading filter changes
    */
   function onAccountsCostingLineChange() {
-    populateCostingRepOptions();
+    const user = getCurrentUser();
+    const lineVal = document.getElementById("accountsCostingLineSelect")?.value || "all";
+    if (typeof window.populateTabHierarchyFilters === "function") {
+      window.populateTabHierarchyFilters("accounts-costing", user, lineVal);
+    } else {
+      populateCostingRepOptions();
+    }
+    populateCostingAreaOptions();
+  }
+
+  function onAccountsCostingLmChange() {
+    const user = getCurrentUser();
+    const lineVal = document.getElementById("accountsCostingLineSelect")?.value || "all";
+    if (typeof window.populateTabDmOptions === "function") {
+      window.populateTabDmOptions("accounts-costing", user, lineVal);
+    }
+    if (typeof window.populateTabRepOptions === "function") {
+      window.populateTabRepOptions("accounts-costing", user, lineVal);
+    } else {
+      populateCostingRepOptions();
+    }
     populateCostingAreaOptions();
   }
 
   function onAccountsCostingDmChange() {
-    populateCostingRepOptions();
+    const user = getCurrentUser();
+    const lineVal = document.getElementById("accountsCostingLineSelect")?.value || "all";
+    if (typeof window.populateTabRepOptions === "function") {
+      window.populateTabRepOptions("accounts-costing", user, lineVal);
+    } else {
+      populateCostingRepOptions();
+    }
     populateCostingAreaOptions();
   }
 
@@ -835,6 +864,7 @@
     const fromVal = document.getElementById("accountsCostingDateFrom")?.value;
     const toVal = document.getElementById("accountsCostingDateTo")?.value;
     const lineVal = document.getElementById("accountsCostingLineSelect")?.value;
+    const lmVal = document.getElementById("accountsCostingLmSelect")?.value;
     const dmVal = document.getElementById("accountsCostingDmSelect")?.value;
     const repVal = document.getElementById("accountsCostingRepSelect")?.value;
     const areaVal = document.getElementById("accountsCostingAreaSelect")?.value;
@@ -857,11 +887,22 @@
     const userMap = {};
     allUsers.forEach((u) => { userMap[u.id] = u.name || u.username; });
 
+    // Determine LM filtered subordinates if LM filter is applied
+    let allowedLmRepIds = null;
+    if (lmVal && lmVal !== "all" && !scope.isLM && !scope.isDM && !scope.isRep) {
+      const lmSubUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(lmVal)
+        : allUsers.filter((u) => u.managerId === lmVal);
+      allowedLmRepIds = new Set([lmVal, ...lmSubUsers.map((u) => u.id)]);
+    }
+
     // Determine DM filtered subordinates if DM filter is applied
     let allowedDmRepIds = null;
     if (dmVal && dmVal !== "all" && !scope.isDM && !scope.isRep) {
-      const dmSubUsers = allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
-      allowedDmRepIds = new Set(dmSubUsers.map((u) => u.id));
+      const dmSubUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(dmVal)
+        : allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
+      allowedDmRepIds = new Set([dmVal, ...dmSubUsers.map((u) => u.id)]);
     }
 
     // Fetch and filter raw transactions strictly within role scope
@@ -872,6 +913,7 @@
       if (lineVal && lineVal !== "all" && tx.lineId && tx.lineId !== lineVal) return false;
       if (repVal && repVal !== "all" && tx.repId && tx.repId !== repVal) return false;
       if (allowedDmRepIds && tx.repId && !allowedDmRepIds.has(tx.repId)) return false;
+      if (allowedLmRepIds && tx.repId && !allowedLmRepIds.has(tx.repId)) return false;
       if (areaVal && areaVal !== "all" && tx.areaId && tx.areaId !== areaVal) return false;
       return true;
     });
@@ -997,8 +1039,10 @@
       );
     }
     if (dmVal && dmVal !== "all" && !scope.isDM && !scope.isRep) {
-      const dmSubUsers = allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
-      const dmRepIds = new Set(dmSubUsers.map((u) => u.id));
+      const dmSubUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(dmVal)
+        : allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
+      const dmRepIds = new Set([dmVal, ...dmSubUsers.map((u) => u.id)]);
       const dmUser = allUsers.find((u) => u.id === dmVal);
       const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
       const dmAreaIds = new Set(allAreas.filter((a) => (a.repId && dmRepIds.has(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === dmVal).map((a) => a.id));
@@ -1006,6 +1050,20 @@
         dmRepIds.has(r.repId) ||
         (r.areaId && dmAreaIds.has(r.areaId)) ||
         (r.transactions && r.transactions.some((t) => dmRepIds.has(t.repId) || (t.areaId && dmAreaIds.has(t.areaId))))
+      );
+    }
+    if (lmVal && lmVal !== "all" && !scope.isLM && !scope.isDM && !scope.isRep) {
+      const lmSubUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(lmVal)
+        : allUsers.filter((u) => u.managerId === lmVal);
+      const lmRepIds = new Set([lmVal, ...lmSubUsers.map((u) => u.id)]);
+      const lmUser = allUsers.find((u) => u.id === lmVal);
+      const lmUserAreaIds = lmUser ? (lmUser.areaIds || (lmUser.areaId ? [lmUser.areaId] : [])) : [];
+      const lmAreaIds = new Set(allAreas.filter((a) => (a.repId && lmRepIds.has(a.repId)) || lmUserAreaIds.includes(a.id)).map((a) => a.id));
+      accountRows = accountRows.filter((r) =>
+        lmRepIds.has(r.repId) ||
+        (r.areaId && lmAreaIds.has(r.areaId)) ||
+        (r.transactions && r.transactions.some((t) => lmRepIds.has(t.repId) || (t.areaId && lmAreaIds.has(t.areaId))))
       );
     }
     if (classVal && classVal !== "all") {
@@ -1323,6 +1381,7 @@
   window.renderAccountsCostingReport = renderAccountsCostingReport;
   window.setAccountsCostingPeriodPreset = setAccountsCostingPeriodPreset;
   window.onAccountsCostingLineChange = onAccountsCostingLineChange;
+  window.onAccountsCostingLmChange = onAccountsCostingLmChange;
   window.onAccountsCostingDmChange = onAccountsCostingDmChange;
   window.onAccountsCostingRepChange = onAccountsCostingRepChange;
   window.onAccountsCostingSearchInput = onAccountsCostingSearchInput;

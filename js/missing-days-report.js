@@ -401,7 +401,9 @@
     const isRep = role === "medical_rep" || role === "rep";
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     
-    const selectedLine = lineSelect ? lineSelect.value : "all";
+    const lmSelect = document.getElementById("missingLmSelect");
+    const selectedLm = lmSelect ? lmSelect.value : "all";
+    const selectedLine = window.selectedReportLineId || (lineSelect ? lineSelect.value : "all");
     const selectedDm = dmSelect ? dmSelect.value : "all";
     const selectedRep = repSelect ? repSelect.value : "all";
 
@@ -436,16 +438,20 @@
       const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
       const subIds = new Set(subs.map((s) => s.id));
       targetReps = targetReps.filter((r) => subIds.has(r.id));
-      if (selectedDm !== "all") {
-        targetReps = targetReps.filter((r) => r.managerId === selectedDm);
-      }
-    } else if (selectedDm !== "all") {
+    }
+
+    if (selectedLm !== "all") {
+      const lmDmIds = allUsers.filter((u) => u.managerId === selectedLm).map((u) => u.id);
+      targetReps = targetReps.filter((r) => lmDmIds.includes(r.managerId));
+    }
+
+    if (selectedDm !== "all") {
       targetReps = targetReps.filter((r) => r.managerId === selectedDm);
     }
 
     if (selectedLine !== "all") {
       targetReps = targetReps.filter((r) => {
-        const lines = r.lineIds || (r.lineId ? [r.lineId] : []);
+        const lines = window.getUserLines ? window.getUserLines(r.id).map((l) => l.id) : (r.lineIds || (r.lineId ? [r.lineId] : []));
         return lines.includes(selectedLine);
       });
     }

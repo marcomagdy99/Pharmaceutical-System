@@ -227,8 +227,10 @@ window.populatePharmSalesAreas = function (filterUser) {
 
   const curUser = filterUser || (typeof checkAuth === 'function' ? checkAuth() : null);
   const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
+  const lmSelect = document.getElementById('pharmSalesLmSelect');
+  const dmSelect = document.getElementById('pharmSalesDmSelect');
   const repSelect = document.getElementById('pharmSalesRepSelect');
-  const selectedRepVal = repSelect ? repSelect.value : 'all';
+  const selectedRepVal = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
   const effLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -549,8 +551,10 @@ function getFilteredPharmSalesRows() {
     );
   }
 
+  const lmSelect = document.getElementById('pharmSalesLmSelect');
+  const dmSelect = document.getElementById('pharmSalesDmSelect');
   const repSelect = document.getElementById('pharmSalesRepSelect');
-  const selectedRep = repSelect ? repSelect.value : 'all';
+  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
 
   if (selectedRep && selectedRep !== 'all') {
     if (selectedRep.startsWith('vacant:')) {

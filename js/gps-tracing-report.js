@@ -391,7 +391,9 @@
     const targetDate = dateInput ? dateInput.value : "";
     const selectedShift = shiftSelect ? shiftSelect.value : "all";
     const selectedGpsFilter = gpsStatusSelect ? gpsStatusSelect.value : "all";
-    const selectedLine = lineSelect ? lineSelect.value : "all";
+    const lmSelect = document.getElementById("gpsLmSelect");
+    const selectedLm = lmSelect ? lmSelect.value : "all";
+    const selectedLine = window.selectedReportLineId || (lineSelect ? lineSelect.value : "all");
     const selectedDm = dmSelect ? dmSelect.value : "all";
     const selectedRep = repSelect ? repSelect.value : (isRep ? user.id : "all");
 
@@ -427,6 +429,13 @@
       const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
       const subIds = new Set([user.id, ...subs.map((s) => s.id)]);
       visits = visits.filter((v) => subIds.has(v.repId));
+    }
+
+    if (selectedLm !== "all" && selectedDm === "all" && selectedRep === "all") {
+      const lmDms = allUsers.filter((u) => u.managerId === selectedLm).map((u) => u.id);
+      const lmReps = allUsers.filter((u) => lmDms.includes(u.managerId)).map((u) => u.id);
+      const lmTeamIds = new Set([selectedLm, ...lmDms, ...lmReps]);
+      visits = visits.filter((v) => lmTeamIds.has(v.repId));
     }
 
     if (selectedDm !== "all" && selectedRep === "all") {
