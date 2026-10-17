@@ -66,13 +66,16 @@
 }
 
 [data-theme="dark"] .area-code-badge {
-    background-color: var(--primary-light);
-    color: var(--primary-light);
+    background-color: rgba(56, 139, 253, 0.15);
+    color: #58a6ff !important;
+    border: 1px solid rgba(56, 139, 253, 0.35);
 }
 
 [data-theme="dark"] .avatar-circle {
-    background-color: var(--primary-light);
-    color: var(--primary-light);
+    background-color: #1e3a5f;
+    color: #f8fafc !important;
+    border: 1px solid rgba(88, 166, 255, 0.35);
+    font-weight: 700;
 }
 
 [data-theme="dark"] .table {
@@ -354,8 +357,8 @@
     border-color: rgba(210, 153, 34, 0.35);
 }
 [data-theme="dark"] .dist-mobile-card .btn-outline-primary {
-    color: var(--primary-light);
-    border-color: var(--primary);
+    color: #58a6ff;
+    border-color: #388bfd;
 }
 [data-theme="dark"] .dist-mobile-card .btn-outline-primary:hover {
     background-color: var(--primary);
