@@ -1,0 +1,172 @@
+[
+  {
+    "lineNum": 15,
+    "hex": "#6c757d",
+    "text": ".bg-rep { background-color: var(--gray-600, #6c757d) !important; color: white !important; }"
+  },
+  {
+    "lineNum": 175,
+    "hex": "#79c0ff",
+    "text": "color: #79c0ff;"
+  },
+  {
+    "lineNum": 340,
+    "hex": "#58a6ff",
+    "text": "color: #58a6ff;"
+  },
+  {
+    "lineNum": 376,
+    "hex": "#6ea8fe",
+    "text": "color: #6ea8fe;"
+  },
+  {
+    "lineNum": 381,
+    "hex": "#ea868f",
+    "text": "color: #ea868f;"
+  },
+  {
+    "lineNum": 386,
+    "hex": "#75b798",
+    "text": "color: #75b798;"
+  },
+  {
+    "lineNum": 401,
+    "hex": "#75b798",
+    "text": "color: #75b798;"
+  },
+  {
+    "lineNum": 406,
+    "hex": "#ced4da",
+    "text": "color: #ced4da;"
+  },
+  {
+    "lineNum": 424,
+    "hex": "#fffbeb",
+    "text": "[data-theme=\"dark\"] .tree-node .node-content[style*=\"background:#fffbeb\"] {"
+  },
+  {
+    "lineNum": 425,
+    "hex": "#252219",
+    "text": "background: #252219 !important;"
+  },
+  {
+    "lineNum": 426,
+    "hex": "#785a10",
+    "text": "border-color: #785a10 !important;"
+  },
+  {
+    "lineNum": 454,
+    "hex": "#bfdbfe",
+    "text": "border-color: #bfdbfe;"
+  },
+  {
+    "lineNum": 460,
+    "hex": "#fecaca",
+    "text": "border-color: #fecaca;"
+  },
+  {
+    "lineNum": 487,
+    "hex": "#0284c7",
+    "text": "background-color: #0284c7 !important;"
+  },
+  {
+    "lineNum": 488,
+    "hex": "#0284c7",
+    "text": "border-color: #0284c7 !important;"
+  },
+  {
+    "lineNum": 492,
+    "hex": "#0369a1",
+    "text": "background-color: #0369a1 !important;"
+  },
+  {
+    "lineNum": 493,
+    "hex": "#0369a1",
+    "text": "border-color: #0369a1 !important;"
+  },
+  {
+    "lineNum": 497,
+    "hex": "#0369a1",
+    "text": "background-color: #0369a1 !important;"
+  },
+  {
+    "lineNum": 498,
+    "hex": "#38bdf8",
+    "text": "border-color: #38bdf8 !important;"
+  },
+  {
+    "lineNum": 504,
+    "hex": "#fcd34d",
+    "text": "border: 1px dashed #fcd34d !important;"
+  },
+  {
+    "lineNum": 554,
+    "hex": "#6366f1",
+    "text": "border-color: #6366f1;"
+  },
+  {
+    "lineNum": 601,
+    "hex": "#c7d2fe",
+    "text": "border: 1px solid #c7d2fe;"
+  },
+  {
+    "lineNum": 602,
+    "hex": "#e0e7ff",
+    "text": "background: #e0e7ff;"
+  },
+  {
+    "lineNum": 603,
+    "hex": "#3730a3",
+    "text": "color: #3730a3;"
+  },
+  {
+    "lineNum": 609,
+    "hex": "#c7d2fe",
+    "text": "background: #c7d2fe;"
+  },
+  {
+    "lineNum": 610,
+    "hex": "#312e81",
+    "text": "color: #312e81;"
+  },
+  {
+    "lineNum": 629,
+    "hex": "#4f46e5",
+    "text": "background: #4f46e5;"
+  },
+  {
+    "lineNum": 630,
+    "hex": "#ffffff",
+    "text": "color: #ffffff;"
+  },
+  {
+    "lineNum": 631,
+    "hex": "#4f46e5",
+    "text": "border-color: #4f46e5;"
+  },
+  {
+    "lineNum": 657,
+    "hex": "#e0e7ff",
+    "text": "color: #e0e7ff;"
+  },
+  {
+    "lineNum": 663,
+    "hex": "#ffffff",
+    "text": "color: #ffffff;"
+  },
+  {
+    "lineNum": 676,
+    "hex": "#6366f1",
+    "text": "background: #6366f1;"
+  },
+  {
+    "lineNum": 677,
+    "hex": "#ffffff",
+    "text": "color: #ffffff;"
+  },
+  {
+    "lineNum": 678,
+    "hex": "#6366f1",
+    "text": "border-color: #6366f1;"
+  }
+]
