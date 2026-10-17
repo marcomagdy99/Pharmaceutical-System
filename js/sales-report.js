@@ -1214,9 +1214,13 @@ function populateTargetFormSelects() {
   populateTargetAreaSelect(filterLineId);
   updateTargetProductSelect(filterLineId);
 
+  const monthSelect = document.getElementById('targetMonthSelect');
+  const yearSelect = document.getElementById('targetYearSelect');
+  const months = (typeof MONTH_NAMES !== 'undefined' ? MONTH_NAMES : (window.MONTH_NAMES || ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']));
+
   if (monthSelect && !monthSelect.dataset.populated) {
     const now = new Date();
-    MONTH_NAMES.forEach((m, idx) => {
+    months.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, '0');
       const opt = document.createElement('option');
       opt.value = val;
@@ -1304,8 +1308,8 @@ function renderTargetsTable(filterLineId) {
 }
 
 function openTargetsModal() {
-  const user = checkAuth();
-  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  const user = typeof checkAuth === 'function' ? checkAuth() : (window.currentUser || null);
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && (user.role === 'admin' || user.role === 'business_unit')));
   if (!isAdmin) {
     if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
@@ -1332,10 +1336,14 @@ function closeTargetsModal() {
 }
 
 function resetTargetForm() {
-  document.getElementById('targetEditId').value = '';
-  document.getElementById('targetUnitsInput').value = '';
-  document.getElementById('targetUnitPriceInput').value = '';
-  document.getElementById('targetComputedValueDisplay').value = '0';
+  const editIdEl = document.getElementById('targetEditId');
+  if (editIdEl) editIdEl.value = '';
+  const unitsEl = document.getElementById('targetUnitsInput');
+  if (unitsEl) unitsEl.value = '';
+  const priceEl = document.getElementById('targetUnitPriceInput');
+  if (priceEl) priceEl.value = '';
+  const compValEl = document.getElementById('targetComputedValueDisplay');
+  if (compValEl) compValEl.value = '0';
   const label = document.getElementById('saveTargetBtnLabel');
   if (label) label.textContent = 'Add Target';
   const cancelBtn = document.getElementById('cancelTargetEditBtn');
@@ -1345,7 +1353,8 @@ function resetTargetForm() {
 }
 
 function onTargetProductSelectChange() {
-  const productId = document.getElementById('targetProductSelect').value;
+  const prodSelect = document.getElementById('targetProductSelect');
+  const productId = prodSelect ? prodSelect.value : '';
   const prod = getAllProductsFlat().find((p) => p.id === productId);
   const priceInput = document.getElementById('targetUnitPriceInput');
   if (prod && prod.price !== null && priceInput) {
@@ -1355,9 +1364,12 @@ function onTargetProductSelectChange() {
 }
 
 function updateComputedTargetValue() {
-  const units = parseFloat(document.getElementById('targetUnitsInput').value) || 0;
-  const price = parseFloat(document.getElementById('targetUnitPriceInput').value) || 0;
-  document.getElementById('targetComputedValueDisplay').value = units * price;
+  const unitsEl = document.getElementById('targetUnitsInput');
+  const priceEl = document.getElementById('targetUnitPriceInput');
+  const compValEl = document.getElementById('targetComputedValueDisplay');
+  const units = parseFloat(unitsEl ? unitsEl.value : 0) || 0;
+  const price = parseFloat(priceEl ? priceEl.value : 0) || 0;
+  if (compValEl) compValEl.value = units * price;
 }
 
 function editTarget(id) {
@@ -1447,8 +1459,8 @@ function saveTarget() {
 }
 
 function deleteTarget(id) {
-  const user = checkAuth();
-  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
+  const user = typeof checkAuth === 'function' ? checkAuth() : (window.currentUser || null);
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && (user.role === 'admin' || user.role === 'business_unit')));
   if (!isAdmin) {
     if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
@@ -1464,3 +1476,15 @@ function deleteTarget(id) {
   }
   if (typeof showToast === 'function') showToast('Target deleted.', 'info');
 }
+
+// Expose Targets Modal functions to window for global access
+window.openTargetsModal = openTargetsModal;
+window.closeTargetsModal = closeTargetsModal;
+window.saveTarget = saveTarget;
+window.editTarget = editTarget;
+window.deleteTarget = deleteTarget;
+window.resetTargetForm = resetTargetForm;
+window.updateComputedTargetValue = updateComputedTargetValue;
+window.onTargetProductSelectChange = onTargetProductSelectChange;
+window.populateTargetFormSelects = populateTargetFormSelects;
+window.renderTargetsTable = renderTargetsTable;
