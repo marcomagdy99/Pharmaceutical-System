@@ -174,11 +174,12 @@
 }
 
 .sales-filter-form-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     align-items: flex-end;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 12px 14px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .sales-filter-field {
@@ -186,6 +187,9 @@
     flex-direction: column;
     gap: 6px;
     justify-content: flex-end;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .sales-filter-field > label {
@@ -244,66 +248,58 @@
     opacity: 0.95;
 }
 
-.sales-filter-field.col-month {
-    min-width: 170px;
-}
+/* Unified Symmetrical Grid Templates per Tab */
+@media (min-width: 1100px) {
+    #tabPanel-sales .sales-filter-form-grid,
+    #tabPanel-accounts-costing .sales-filter-form-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
 
-.sales-filter-field.col-year {
-    min-width: 90px;
-}
+    #tabPanel-achievements .achievements-filter-group {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px 14px;
+        align-items: flex-end;
+        width: 100%;
+    }
 
-.sales-filter-field.col-product {
-    min-width: 220px;
-    flex: 1.2;
-}
+    #tabPanel-timeline .sales-filter-form-grid,
+    #tabPanel-coverage .sales-filter-form-grid,
+    #tabPanel-gps-tracing .sales-filter-form-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 
-.sales-filter-field.col-line,
-.sales-filter-field.col-lm,
-.sales-filter-field.col-dm {
-    min-width: 180px;
-    max-width: 260px;
-    flex: 0 1 220px;
-}
+    #tabPanel-doctors .sales-filter-form-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    #tabPanel-doctors .sales-filter-field.col-search {
+        grid-column: span 2;
+    }
 
-.sales-filter-field.col-rep,
-.sales-filter-field.col-area {
-    min-width: 180px;
-    max-width: 260px;
-    flex: 0 1 220px;
-}
+    #tabPanel-hospitals .sales-filter-form-grid,
+    #tabPanel-pharmacies .sales-filter-form-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
 
-.sales-filter-field.col-search {
-    min-width: 220px;
-    max-width: 380px;
-    flex: 1 1 260px;
-}
-
-.sales-filter-field.col-date {
-    min-width: 140px;
-    max-width: 170px;
-    flex: 0 1 150px;
-}
-
-.sales-filter-field.col-sales-type {
-    min-width: 130px;
-    max-width: 170px;
-    flex: 0 1 140px;
-}
-
-.sales-filter-field.col-class,
-.sales-filter-field.col-specialty {
-    min-width: 170px;
-    max-width: 230px;
-    flex: 0 1 200px;
+    #tabPanel-missing-days .sales-filter-form-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    #tabPanel-missing-days .sales-filter-field.col-btn {
+        grid-column: span 2;
+    }
 }
 
 .sales-filter-field.col-btn {
     display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    gap: 8px;
-    flex-shrink: 0;
-    height: 64px;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+}
+
+.sales-filter-field.col-btn button:not(.costing-btn-reset) {
+    width: 100%;
 }
 
 .sales-filter-field.col-btn button,
@@ -339,26 +335,27 @@
 
 .achievements-filter-bar {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 14px;
     width: 100%;
 }
 
 .achievements-filter-group {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px 14px;
     align-items: flex-end;
-    gap: 12px;
-    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .achievements-action-group {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     margin-inline-start: auto;
-    height: 64px;
+    width: 100%;
 }
 
 #manageTargetsBtn {
