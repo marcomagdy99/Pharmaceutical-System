@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v224";
+  const EXPECTED_SW = "v225";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -3122,61 +3122,56 @@ window.closeMobileSidebar = function () {
 };
 
 // ============================================================================
-// Section 6: Active Route Auto-Detector
+// Section 6: Unified Declarative Navigation Registry
 // ============================================================================
+const NAV_CONFIG = [
+  // Primary Navigation
+  { id: "home", file: "index.html", icon: "🏠", i18n: "navHome", section: "primary" },
+  { id: "users", file: "users.html", icon: "👥", i18n: "navUsers", section: "management", hrPrimary: true, roles: ["admin"] },
+  { id: "visits", file: "visits.html", icon: "📍", i18n: "navVisits", section: "primary" },
+  { id: "calendar", file: "calendar.html", icon: "📅", i18n: "navCalendar", section: "primary" },
+  { id: "activities", file: "activities.html", icon: "🔄", i18n: "navRequests", section: "primary" },
+  { id: "leaves", file: "leaves.html", icon: "🏖️", i18n: "navVacations", section: "primary" },
+  { id: "announcements", file: "announcements.html", icon: "🔔", i18n: "navNotifications", section: "primary" },
+  { id: "reports", file: "reports.html", icon: "📊", i18n: "navReports", section: "primary", excludeRoles: ["hr"] },
+  { id: "profile", file: "profile.html", icon: "⚙️", i18n: "navSettings", section: "primary" },
+
+  // Management & Operations Navigation
+  { id: "plans-review", file: "plans-review.html", icon: "📋", i18n: "navPlansReview", section: "management", roles: ["district_manager", "line_manager", "business_unit"] },
+  { id: "distributors", file: "distributors.html", icon: "🚚", i18n: "navDistributors", section: "management", roles: ["admin"] },
+  { id: "areas", file: "areas.html", icon: "🗺️", i18n: "navAreas", section: "management", roles: ["admin", "hr"] },
+  { id: "products", file: "products.html", icon: "📦", i18n: "navProducts", section: "management", roles: ["admin"] },
+  { id: "quizzes", file: "quizzes.html", icon: "📋", i18n: "navQuizzes", section: "management", roles: ["all"], excludeRoles: ["hr"] },
+];
+window.NAV_CONFIG = NAV_CONFIG;
+
 function resolveActivePage() {
-  const path =
-    window.location.pathname.split("/").pop().split("?")[0] || "index.html";
-  const pageMap = {
-    "index.html": "home",
-    "": "home",
-    "visits.html": "visits",
-    "calendar.html": "calendar",
-    "activities.html": "activities",
-    "leaves.html": "leaves",
-    "announcements.html": "announcements",
-    "reports.html": "reports",
-    "profile.html": "profile",
-    "users.html": "users",
-    "products.html": "products",
-    "quizzes.html": "quizzes",
-    "areas.html": "areas",
-    "distributors.html": "distributors",
-    "plans-review.html": "plans-review",
-  };
-  return pageMap[path] || "home";
+  const path = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
+  const found = NAV_CONFIG.find((item) => item.file === path);
+  return found ? found.id : "home";
 }
 
 // ============================================================================
 // Section 7: Navigation Generators (Topbar & Mobile Sidebar)
 // ============================================================================
 function getIconSymbol(id) {
-  const map = {
-    home: "🏠",
-    visits: "📍",
-    calendar: "📅",
-    activities: "🔄",
-    leaves: "🏖️",
-    announcements: "🔔",
-    profile: "⚙️",
-    reports: "📊",
-    users: "👥",
+  const found = NAV_CONFIG.find((item) => item.id === id);
+  if (found) return found.icon;
+  const legacyIcons = {
     doctors: "👨‍⚕️",
     pharmacies: "💊",
-    areas: "🗺️",
-    distributors: "🚚",
-    products: "📦",
     sales: "📈",
     plan: "🗓️",
     coverage: "🎯",
-    quizzes: "📋",
-    "plans-review": "📋",
   };
-  return map[id] || "📌";
+  return legacyIcons[id] || "📌";
 }
 
-function getRoleBadge(role) {
+function getRoleBadge(role, lang = "en") {
   const norm = normalizeRole(role);
+  if (translations && translations[lang] && translations[lang][norm]) {
+    return translations[lang][norm];
+  }
   const roleNames = {
     admin: "Admin",
     business_unit: "BU Head",
@@ -3191,65 +3186,27 @@ function getRoleBadge(role) {
 }
 
 function getNavItemsForRole(role) {
-  let primaryNavItems = [
-    { id: "home", i18n: "navHome", link: "index.html" },
-    { id: "visits", i18n: "navVisits", link: "visits.html" },
-    { id: "calendar", i18n: "navCalendar", link: "calendar.html" },
-    { id: "activities", i18n: "navRequests", link: "activities.html" },
-    { id: "leaves", i18n: "navVacations", link: "leaves.html" },
-    {
-      id: "announcements",
-      i18n: "navNotifications",
-      link: "announcements.html",
-    },
-    { id: "reports", i18n: "navReports", link: "reports.html" },
-    { id: "profile", i18n: "navSettings", link: "profile.html" },
-  ];
-
+  const norm = normalizeRole(role);
+  const primaryNavItems = [];
   const managementNavItems = [];
 
-  if (role === "hr") {
-    primaryNavItems = primaryNavItems.filter((item) => item.id !== "reports");
-    primaryNavItems.splice(1, 0, {
-      id: "users",
-      i18n: "navUsers",
-      link: "users.html",
-    });
-    managementNavItems.push({
-      id: "areas",
-      i18n: "navAreas",
-      link: "areas.html",
-    });
-  } else if (role === "admin") {
-    managementNavItems.push(
-      { id: "users", i18n: "navUsers", link: "users.html" },
-      {
-        id: "distributors",
-        i18n: "navDistributors",
-        link: "distributors.html",
-      },
-      { id: "areas", i18n: "navAreas", link: "areas.html" },
-      { id: "products", i18n: "navProducts", link: "products.html" },
-      { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
-    );
-  } else if (role === "product_manager") {
-    managementNavItems.push(
-      { id: "quizzes", i18n: "navQuizzes", link: "quizzes.html" },
-    );
-  } else {
-    if (role === "district_manager" || role === "line_manager" || role === "business_unit") {
-      managementNavItems.push({
-        id: "plans-review",
-        i18n: "navPlansReview",
-        link: "plans-review.html",
-      });
+  NAV_CONFIG.forEach((item) => {
+    if (item.excludeRoles && item.excludeRoles.includes(norm)) return;
+
+    if (norm === "hr" && item.hrPrimary) {
+      primaryNavItems.push({ id: item.id, i18n: item.i18n, link: item.file });
+      return;
     }
-    managementNavItems.push({
-      id: "quizzes",
-      i18n: "navQuizzes",
-      link: "quizzes.html",
-    });
-  }
+
+    if (item.section === "primary") {
+      primaryNavItems.push({ id: item.id, i18n: item.i18n, link: item.file });
+    } else if (item.section === "management") {
+      const allowed = !item.roles || item.roles.includes("all") || item.roles.includes(norm);
+      if (allowed) {
+        managementNavItems.push({ id: item.id, i18n: item.i18n, link: item.file });
+      }
+    }
+  });
 
   return { primaryNavItems, managementNavItems };
 }
@@ -3356,6 +3313,26 @@ function getNavPendingCount(itemId, user) {
   return 0;
 }
 
+function renderSidebarNavList(items, resolved, user, lang) {
+  return items.map((item) => {
+    const activeClass = item.id === resolved ? "active" : "";
+    const pendingCount = getNavPendingCount(item.id, user);
+    const badgeHtml = pendingCount > 0
+      ? `<span class="badge bg-danger rounded-pill nav-pending-badge sidebar-pending-badge ms-auto">${pendingCount}</span>`
+      : "";
+    const label = (translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id;
+    return `
+      <li class="nav-item">
+        <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link sidebar-nav-link ${activeClass}">
+          <span class="sidebar-nav-icon">${getIconSymbol(item.id)}</span>
+          <span data-i18n="${item.i18n}">${label}</span>
+          ${badgeHtml}
+        </a>
+      </li>
+    `;
+  }).join("");
+}
+
 function renderSidebar(activePage) {
   const resolved = activePage || resolveActivePage();
   window.currentActivePage = resolved;
@@ -3365,7 +3342,17 @@ function renderSidebar(activePage) {
   const lang = getCurrentLang();
   const { primaryNavItems, managementNavItems } = getNavItemsForRole(user.role);
 
-  let html = `
+  const primaryHtml = renderSidebarNavList(primaryNavItems, resolved, user, lang);
+  const managementHtml = managementNavItems.length > 0 ? `
+    <li class="nav-header" role="presentation">
+      <div class="sidebar-section-title sidebar-section-title-mt">
+        Management & Data
+      </div>
+    </li>
+    ${renderSidebarNavList(managementNavItems, resolved, user, lang)}
+  ` : "";
+
+  const html = `
     <div class="sidebar-header">
       <div class="sidebar-brand-box">
         <div class="company-logo-badge">
@@ -3386,54 +3373,10 @@ function renderSidebar(activePage) {
         Main Menu
       </div>
       <ul class="sidebar-nav-list">
-  `;
-
-  primaryNavItems.forEach((item) => {
-    const activeClass = item.id === resolved ? "active" : "";
-    const pendingCount = getNavPendingCount(item.id, user);
-    const badgeHtml =
-      pendingCount > 0
-        ? `<span class="badge bg-danger rounded-pill nav-pending-badge sidebar-pending-badge ms-auto">${pendingCount}</span>`
-        : "";
-    html += `
-      <li class="nav-item">
-        <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link sidebar-nav-link ${activeClass}">
-          <span class="sidebar-nav-icon">${getIconSymbol(item.id)}</span>
-          <span data-i18n="${item.i18n}">${(translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id}</span>
-          ${badgeHtml}
-        </a>
-      </li>
-    `;
-  });
-
-  if (managementNavItems.length > 0) {
-    html += `
-      <li class="nav-header" role="presentation">
-        <div class="sidebar-section-title sidebar-section-title-mt">
-          Management & Data
-        </div>
-      </li>
-    `;
-    managementNavItems.forEach((item) => {
-      const activeClass = item.id === resolved ? "active" : "";
-      const pendingCount = getNavPendingCount(item.id, user);
-      const badgeHtml =
-        pendingCount > 0
-          ? `<span class="badge bg-danger rounded-pill nav-pending-badge sidebar-pending-badge ms-auto">${pendingCount}</span>`
-          : "";
-      html += `
-        <li class="nav-item">
-          <a href="${item.link}" onclick="closeMobileSidebar()" class="nav-link sidebar-nav-link ${activeClass}">
-            <span class="sidebar-nav-icon">${getIconSymbol(item.id)}</span>
-            <span data-i18n="${item.i18n}">${(translations[lang] && translations[lang][item.i18n]) || (translations.en && translations.en[item.i18n]) || item.id}</span>
-            ${badgeHtml}
-          </a>
-        </li>
-      `;
-    });
-  }
-
-  html += `</ul></div>
+        ${primaryHtml}
+        ${managementHtml}
+      </ul>
+    </div>
     <div class="sidebar-footer">
       <div class="sidebar-user-info">
         <div class="sidebar-user-avatar">

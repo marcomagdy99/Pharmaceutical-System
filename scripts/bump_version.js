@@ -116,4 +116,16 @@ if (fs.existsSync(appJs)) {
   }
 }
 
+// 5. Update js/cache-bust.js
+const cacheBustJs = path.join(rootDir, 'js/cache-bust.js');
+if (fs.existsSync(cacheBustJs)) {
+  const content = fs.readFileSync(cacheBustJs, 'utf8');
+  const updated = content.replaceAll(fromVer, toVer);
+  if (content !== updated) {
+    fs.writeFileSync(cacheBustJs, updated, 'utf8');
+    console.log(`Updated js/cache-bust.js`);
+    totalReplacements++;
+  }
+}
+
 console.log(`Successfully bumped version from ${fromVer} to ${toVer} (${totalReplacements} references updated).`);

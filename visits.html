@@ -24,43 +24,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v224">
-    <link rel="stylesheet" href="css/visits.css?v=v224">
+    <link rel="stylesheet" href="css/style.css?v=v225">
+    <link rel="stylesheet" href="css/visits.css?v=v225">
       <!-- Core Application & Store -->
-    <script src="js/app.js?v=v224"></script>
-    <script src="js/store.js?v=v224"></script>
+    <script src="js/app.js?v=v225"></script>
+    <script src="js/store.js?v=v225"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v224"></script>
-    <script src="js/firebase-sync.js?v=v224"></script>
-    <!-- Aggressive Service Worker cache clearing for new releases -->
-    <script>
-      (function () {
-        var EXPECTED_SW = "v224";
-        var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
-        try {
-          if (localStorage.getItem(FLAG) !== "1") {
-            if ("caches" in window) {
-              caches.keys().then(function (names) {
-                return Promise.all(
-                  names.map(function (n) {
-                    return caches.delete(n);
-                  })
-                );
-              }).then(function() {
-                localStorage.setItem(FLAG, "1");
-                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                  window.location.reload();
-                }
-              });
-            } else {
-              localStorage.setItem(FLAG, "1");
-            }
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <script src="js/firebase-config.js?v=v225"></script>
+    <script src="js/firebase-sync.js?v=v225"></script>
+    <!-- Centralized Cache Invalidation & Force Reload helper -->
+    <script src="js/cache-bust.js?v=v225"></script>
   </head>
 <body>
     <div class="app">
@@ -421,8 +396,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/workflow-engine.js?v=v224"></script>
-    <script src="js/reschedule.js?v=v224"></script>
-    <script src="js/visits.js?v=v224"></script>
+    <script src="js/workflow-engine.js?v=v225"></script>
+    <script src="js/reschedule.js?v=v225"></script>
+    <script src="js/visits.js?v=v225"></script>
 </body>
 </html>
