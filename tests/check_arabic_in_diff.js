@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 
 const gitPath = 'C:\\Users\\DeLL\\AppData\\Local\\GitHubDesktop\\app-3.6.7\\resources\\app\\git\\cmd\\git.exe';
 const gitArg = process.argv[2] || 'diff';
-const diff = execSync(`"${gitPath}" ${gitArg}`).toString('utf8');
+const diff = execSync(`"${gitPath}" ${gitArg}`, { maxBuffer: 50 * 1024 * 1024 }).toString('utf8');
 
 const arabicRegex = /[\u0600-\u06FF]/;
 const lines = diff.split(/\r?\n/);

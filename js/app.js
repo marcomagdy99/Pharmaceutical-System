@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v222";
+  const EXPECTED_SW = "v223";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1375,8 +1375,10 @@ function loadDataFromStorage() {
         data.targets = data.targets.filter((t) => t && t.id && !t.id.startsWith("target_s"));
       }
 
-      // Auto-migrate any legacy IDs (users, lines, areas, products, pharmacies, dists, anns, notifs) in cached localStorage
-      const legacyIdMap = {
+      // One-time auto-migration for legacy IDs in cached localStorage (bypasses overhead on subsequent page loads)
+      const isAlreadyMigrated = typeof localStorage !== "undefined" && localStorage.getItem("pharma_legacy_migrated_v2") === "true";
+      if (!isAlreadyMigrated) {
+        const legacyIdMap = {
         rep1: "u1790626000001", rep2: "u1790626000002", rep3: "u1790626000003", rep4: "u1790626000004", rep5: "u1790626000005",
         admin1: "u1790626000010", bu1: "u1790626000011", lm1: "u1790626000012", lm2: "u1790626000013",
         dm1: "u1790626000014", dm2: "u1790626000015", dm3: "u1790626000016", hr1: "u1790626000017",
@@ -1534,6 +1536,13 @@ function loadDataFromStorage() {
           } catch (e) {}
         }
       }
+
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("pharma_legacy_migrated_v2", "true");
+        }
+      } catch (e) {}
+    }
 
       return data;
     }
