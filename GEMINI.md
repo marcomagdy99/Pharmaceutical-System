@@ -29,21 +29,16 @@ This document outlines the strict project guidelines and coding standards establ
   // ==========================================
   ```
 
-## 4. Zero Arabic Comments Rule
+## 4. UI Language Standard & Zero Arabic Comments
 - **STRICT**: Absolutely ZERO Arabic text inside comments (`//`, `/* ... */`, or `<!-- ... -->`).
 - All code comments, documentation, commit messages, and logs must be in English.
-- Arabic is ONLY permitted inside user-facing translation strings (e.g. `translations.ar = { ... }`).
+- The platform user interface (UI elements, menus, navigation bars, buttons, table headers, system alerts) is 100% Pure English.
 
-## 5. Translation & i18n Architecture
-- Never redefine or overwrite `window.applyTranslations` in individual page scripts.
-- Always merge local translation dictionaries into the global registry:
-  ```javascript
-  if (typeof window.translations !== "undefined") {
-    if (window.translations.en && localTranslations.en) Object.assign(window.translations.en, localTranslations.en);
-    if (window.translations.ar && localTranslations.ar) Object.assign(window.translations.ar, localTranslations.ar);
-  }
-  ```
-- Use `window.applyTranslations(lang)` to apply translations globally.
+## 5. Data & Input Flexibility Standard (Bilingual Input Support)
+- User-entered data, field notes, client names, and distributor imports natively support both Arabic and English text.
+- Single Unified Form Fields: Forms must never force separate English and Arabic duplicate fields (e.g. no separate `nameEn` and `nameAr` in user forms). Always provide a single, unified input field that accepts English or Arabic text freely.
+- Egyptian Market Domain Data: Preserve Egyptian IMS bricks (`egypt-bricks-data.js`) and distributor Excel column header matching keywords.
+- Search & Collation: Searching and alphabetical sorting must natively support both Latin and Arabic scripts using `localeCompare(['en', 'ar'], { numeric: true, sensitivity: 'base' })`.
 
 ## 6. Topbar & Navigation Layout Uniformity
 - All HTML pages must use the unified topbar structure:

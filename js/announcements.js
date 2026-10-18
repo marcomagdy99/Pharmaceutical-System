@@ -140,10 +140,8 @@ const announcementTranslations = {
     filterNormal: "Normal Priority",
     filterLow: "Low Priority",
     filterUnread: "Unread Only",
-    titleEn: "Title (English)",
-    titleAr: "Title (Arabic)",
-    bodyEn: "Body (English)",
-    bodyAr: "Body (Arabic)",
+    title: "Title",
+    body: "Body",
     priority: "Priority",
     targetAudience: "Target Audience",
     publishNow: "Publish Immediately",
@@ -576,8 +574,8 @@ function renderAnnouncementCard(ann) {
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
 
-  const title = escapeHtml(lang === "ar" ? ann.titleAr : ann.title);
-  const body = escapeHtml(lang === "ar" ? ann.bodyAr : ann.body);
+  const title = escapeHtml(ann.title || ann.titleAr || "");
+  const body = escapeHtml(ann.body || ann.bodyAr || "");
   const authorName = escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
   const safeImage = ann.image ? escapeHtml(ann.image) : "";
 
@@ -681,23 +679,13 @@ function renderModals() {
                 </div>
                 <div class="modal-body">
                     <form id="announcementForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label data-i18n="titleEn">Title (English)</label>
-                                <input type="text" id="annTitle" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label data-i18n="titleAr">Title (Arabic)</label>
-                                <input type="text" id="annTitleAr" class="form-control" required>
-                            </div>
+                        <div class="form-group">
+                            <label data-i18n="title">Title</label>
+                            <input type="text" id="annTitle" class="form-control" required placeholder="Enter announcement title">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="bodyEn">Body (English)</label>
-                            <textarea id="annBody" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label data-i18n="bodyAr">Body (Arabic)</label>
-                            <textarea id="annBodyAr" class="form-control" rows="4" required></textarea>
+                            <label data-i18n="body">Body</label>
+                            <textarea id="annBody" class="form-control" rows="4" required placeholder="Enter announcement details"></textarea>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -899,10 +887,8 @@ function openAnnouncementModal(id = null) {
   }
 
   if (existingAnn) {
-    document.getElementById("annTitle").value = existingAnn.title || "";
-    document.getElementById("annTitleAr").value = existingAnn.titleAr || "";
-    document.getElementById("annBody").value = existingAnn.body || "";
-    document.getElementById("annBodyAr").value = existingAnn.bodyAr || "";
+    document.getElementById("annTitle").value = existingAnn.title || existingAnn.titleAr || "";
+    document.getElementById("annBody").value = existingAnn.body || existingAnn.bodyAr || "";
     document.getElementById("annPriority").value = existingAnn.priority || "normal";
     document.getElementById("annTarget").value = existingAnn.target || "all";
     if (lineSelect && !isPM) {
@@ -1101,9 +1087,7 @@ function saveAnnouncement() {
   }
 
   const title = (document.getElementById("annTitle").value || "").trim();
-  const titleAr = (document.getElementById("annTitleAr").value || "").trim();
   const body = (document.getElementById("annBody").value || "").trim();
-  const bodyAr = (document.getElementById("annBodyAr").value || "").trim();
   const priority = document.getElementById("annPriority").value;
   const target = document.getElementById("annTarget").value;
   const published = document.getElementById("annPublish").checked;
@@ -1118,8 +1102,6 @@ function saveAnnouncement() {
     targetLineId = lineVal || null;
   }
 
-  const finalTitleAr = titleAr || title;
-  const finalBodyAr = bodyAr || body;
   if (!title || !body) {
     const msg = 'Please fill all required fields.';
     if (typeof showToast === 'function') showToast(msg, 'warning');
@@ -1139,9 +1121,9 @@ function saveAnnouncement() {
       announcements[index] = {
         ...existing,
         title,
-        titleAr: finalTitleAr,
+        titleAr: title,
         body,
-        bodyAr: finalBodyAr,
+        bodyAr: body,
         priority,
         target,
         targetLineId: isPM ? targetLineId : (targetLineId || null),
@@ -1153,9 +1135,9 @@ function saveAnnouncement() {
     const newAnn = {
       id: "ann" + Date.now(),
       title,
-      titleAr: finalTitleAr,
+      titleAr: title,
       body,
-      bodyAr: finalBodyAr,
+      bodyAr: body,
       priority,
       target,
       targetLineId: targetLineId,

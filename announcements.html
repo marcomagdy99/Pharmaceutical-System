@@ -20,22 +20,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- START CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=v221">
-    <link rel="stylesheet" href="css/announcements.css?v=v221">
+    <link rel="stylesheet" href="css/style.css?v=v222">
+    <link rel="stylesheet" href="css/announcements.css?v=v222">
     <!-- END CSS -->
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v221"></script>
-    <script src="js/store.js?v=v221"></script>
+    <script src="js/app.js?v=v222"></script>
+    <script src="js/store.js?v=v222"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v221"></script>
-    <script src="js/firebase-sync.js?v=v221"></script>
+    <script src="js/firebase-config.js?v=v222"></script>
+    <script src="js/firebase-sync.js?v=v222"></script>
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v221";
+        var EXPECTED_SW = "v222";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -92,23 +92,13 @@
                 </div>
                 <div class="modal-body">
                     <form id="announcementForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label data-i18n="titleEn">Title (English)</label>
-                                <input type="text" id="annTitle" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label data-i18n="titleAr">Title (Arabic)</label>
-                                <input type="text" id="annTitleAr" class="form-control" required>
-                            </div>
+                        <div class="form-group">
+                            <label data-i18n="title">Title</label>
+                            <input type="text" id="annTitle" class="form-control" required placeholder="Enter announcement title">
                         </div>
                         <div class="form-group">
-                            <label data-i18n="bodyEn">Body (English)</label>
-                            <textarea id="annBody" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label data-i18n="bodyAr">Body (Arabic)</label>
-                            <textarea id="annBodyAr" class="form-control" rows="4" required></textarea>
+                            <label data-i18n="body">Body</label>
+                            <textarea id="annBody" class="form-control" rows="4" required placeholder="Enter announcement details"></textarea>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -195,7 +185,7 @@
     </div>
 
     <!-- START SCRIPTS -->
-    <script src="js/announcements.js?v=v221"></script>
+    <script src="js/announcements.js?v=v222"></script>
     <!-- END SCRIPTS -->
 </body>
 </html>

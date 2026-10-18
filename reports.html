@@ -19,7 +19,7 @@
     <!-- Aggressive Service Worker cache clearing for new releases -->
     <script>
       (function () {
-        var EXPECTED_SW = "v221";
+        var EXPECTED_SW = "v222";
         var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
         try {
           if (localStorage.getItem(FLAG) !== "1") {
@@ -51,17 +51,17 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v221" />
-    <link rel="stylesheet" href="css/reports.css?v=v221" />
+    <link rel="stylesheet" href="css/style.css?v=v222" />
+    <link rel="stylesheet" href="css/reports.css?v=v222" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/app.js?v=v221"></script>
-    <script src="js/store.js?v=v221"></script>
+    <script src="js/app.js?v=v222"></script>
+    <script src="js/store.js?v=v222"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v221"></script>
-    <script src="js/firebase-sync.js?v=v221"></script>
+    <script src="js/firebase-config.js?v=v222"></script>
+    <script src="js/firebase-sync.js?v=v222"></script>
   </head>
   <body>
     <div class="app">
@@ -2299,11 +2299,11 @@
             >
               <input type="hidden" id="hospitalId" />
               <div class="modal-form-grid">
-                <!-- Hospital Name (EN) -->
-                <div class="form-group col-span-1">
+                <!-- Hospital Name -->
+                <div class="form-group col-span-2">
                   <label class="form-label" for="hospitalNameInput">
                     <span class="label-icon">🏥</span>
-                    <span data-i18n="hospitalName">Hospital Name (EN)</span>
+                    <span data-i18n="hospitalName">Hospital Name</span>
                     <span class="required-star">*</span>
                   </label>
                   <input
@@ -2312,19 +2312,6 @@
                     class="form-control modern-input"
                     required
                     placeholder="e.g. Al-Salam International Hospital"
-                  />
-                </div>
-                <!-- Hospital Name (AR) -->
-                <div class="form-group col-span-1">
-                  <label class="form-label" for="hospitalNameArInput">
-                    <span class="label-icon">🏥</span>
-                    <span data-i18n="hospitalNameAr">Hospital Name (AR)</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="hospitalNameArInput"
-                    class="form-control modern-input"
-                    placeholder="e.g. Al-Salam Hospital (AR)"
                   />
                 </div>
                 <!-- Hospital Address -->
@@ -3172,20 +3159,20 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v221"></script>
+    <script src="js/interactive-charts.js?v=v222"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v221"></script>
-    <script src="js/shared-report.js?v=v221"></script>
-    <script src="js/sales-report.js?v=v221"></script>
-    <script src="js/achievements-report.js?v=v221"></script>
-    <script src="js/timeline-report.js?v=v221"></script>
-    <script src="js/coverage-report.js?v=v221"></script>
-    <script src="js/doctors-report.js?v=v221"></script>
-    <script src="js/hospitals-report.js?v=v221"></script>
-    <script src="js/pharmacies-report.js?v=v221"></script>
-    <script src="js/missing-days-report.js?v=v221"></script>
-    <script src="js/gps-tracing-report.js?v=v221"></script>
-    <script src="js/accounts-costing-report.js?v=v221"></script>
+    <script src="js/excel-templates-data.js?v=v222"></script>
+    <script src="js/shared-report.js?v=v222"></script>
+    <script src="js/sales-report.js?v=v222"></script>
+    <script src="js/achievements-report.js?v=v222"></script>
+    <script src="js/timeline-report.js?v=v222"></script>
+    <script src="js/coverage-report.js?v=v222"></script>
+    <script src="js/doctors-report.js?v=v222"></script>
+    <script src="js/hospitals-report.js?v=v222"></script>
+    <script src="js/pharmacies-report.js?v=v222"></script>
+    <script src="js/missing-days-report.js?v=v222"></script>
+    <script src="js/gps-tracing-report.js?v=v222"></script>
+    <script src="js/accounts-costing-report.js?v=v222"></script>
   </body>
 </html>
 

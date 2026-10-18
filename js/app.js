@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v221";
+  const EXPECTED_SW = "v222";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -259,6 +259,7 @@ function sortBilingualByName(a, b) {
   return nameA.localeCompare(nameB, locales, { numeric: true, sensitivity: "base" });
 }
 window.sortBilingualByName = sortBilingualByName;
+window.sortByName = sortBilingualByName;
 
 // ============================================================================
 // Section 1: Default Master Seed Data

@@ -315,7 +315,6 @@ function openHospitalModal(hospId = null) {
 
   const idInput = document.getElementById("hospitalId");
   const nameInput = document.getElementById("hospitalNameInput");
-  const nameArInput = document.getElementById("hospitalNameArInput");
   const addressInput = document.getElementById("hospitalAddressInput");
   const phoneInput = document.getElementById("hospitalPhoneInput");
   const areaInput = document.getElementById("hospitalAreaInput");
@@ -343,8 +342,7 @@ function openHospitalModal(hospId = null) {
     const hosp = hosps.find((h) => h.id === hospId);
     if (hosp) {
       if (idInput) idInput.value = hosp.id;
-      if (nameInput) nameInput.value = hosp.name || "";
-      if (nameArInput) nameArInput.value = hosp.nameAr || "";
+      if (nameInput) nameInput.value = hosp.name || hosp.nameAr || "";
       if (addressInput) addressInput.value = hosp.address || "";
       if (phoneInput) phoneInput.value = hosp.phone || "";
       if (areaInput && hosp.areaId) areaInput.value = hosp.areaId;
@@ -353,7 +351,6 @@ function openHospitalModal(hospId = null) {
   } else {
     if (idInput) idInput.value = "";
     if (nameInput) nameInput.value = "";
-    if (nameArInput) nameArInput.value = "";
     if (addressInput) addressInput.value = "";
     if (phoneInput) phoneInput.value = "";
     if (modalTitle) modalTitle.textContent = "Add Hospital";
@@ -383,7 +380,6 @@ function saveHospital() {
 
   const idInput = document.getElementById("hospitalId");
   const nameInput = document.getElementById("hospitalNameInput");
-  const nameArInput = document.getElementById("hospitalNameArInput");
   const addressInput = document.getElementById("hospitalAddressInput");
   const phoneInput = document.getElementById("hospitalPhoneInput");
   const areaSelect = document.getElementById("hospitalAreaInput");
@@ -392,7 +388,6 @@ function saveHospital() {
 
   const id = idInput ? idInput.value : "";
   const name = nameInput.value.trim();
-  const nameAr = nameArInput ? nameArInput.value.trim() : "";
   const address = addressInput.value.trim();
   const phone = phoneInput ? phoneInput.value.trim() : "";
   const assignedAreaId = areaSelect ? areaSelect.value.trim() : "";
@@ -532,14 +527,13 @@ function exportHospitalsDirectory() {
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
 
-  const headers = ["ID", "Name (EN)", "Name (AR)", "Address", "Phone", "Rep", "Area", "Line"];
+  const headers = ["ID", "Hospital Name", "Address", "Phone", "Rep", "Area", "Line"];
   const rows = hosps.map((h) => {
     const rep = allUsers.find((u) => u.id === h.repId)?.name || "Unassigned";
     const area = allAreas.find((a) => a.id === h.areaId)?.name || h.area || "";
     return [
       `"${h.id}"`,
-      `"${(h.name || '').replace(/"/g, '""')}"`,
-      `"${(h.nameAr || '').replace(/"/g, '""')}"`,
+      `"${(h.name || h.nameAr || '').replace(/"/g, '""')}"`,
       `"${(h.address || '').replace(/"/g, '""')}"`,
       `"${(h.phone || '').replace(/"/g, '""')}"`,
       `"${rep.replace(/"/g, '""')}"`,

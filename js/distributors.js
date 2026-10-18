@@ -342,9 +342,7 @@ function openAddModal() {
   document.getElementById("distributorId").value = "";
   document.getElementById("distributorType").value = "commercial";
   document.getElementById("distributorModalTitle").textContent =
-    document.documentElement.dir === "rtl"
-      ? distributorTranslations.ar.add_distributor
-      : distributorTranslations.en.add_distributor;
+    distributorTranslations.en.add_distributor;
   distributorModal.show();
 }
 
@@ -356,9 +354,7 @@ function openEditModal(id) {
     document.getElementById("distributorType").value =
       dist.type === "tender" ? "tender" : "commercial";
     document.getElementById("distributorModalTitle").textContent =
-      document.documentElement.dir === "rtl"
-        ? distributorTranslations.ar.edit
-        : distributorTranslations.en.edit;
+      distributorTranslations.en.edit;
     distributorModal.show();
   }
 }

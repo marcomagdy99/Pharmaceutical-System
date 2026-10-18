@@ -18,8 +18,6 @@ const ACH_MONTHS = (typeof window !== 'undefined' && Array.isArray(window.MONTH_
   ? window.MONTH_NAMES
   : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const ACH_MONTHS_AR = ACH_MONTHS;
-
 window.toggleAchMonthDropdown = function(e) {
   if (e) {
     if (typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -99,7 +97,7 @@ function populateAchFilters() {
       if (val === currentMonthVal) cb.checked = true;
       cb.addEventListener('change', window.onAchMonthCheckboxChange);
       const span = document.createElement('span');
-      span.textContent = lang === 'ar' ? ACH_MONTHS_AR[idx] : m;
+      span.textContent = m;
       label.appendChild(cb);
       label.appendChild(span);
       container.appendChild(label);

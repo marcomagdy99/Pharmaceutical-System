@@ -61,10 +61,8 @@ const profileTranslations = {
     uploadLogo: "Upload Logo",
     resetDefault: "Reset Default",
     logoConstraintHint: "PNG, JPG, or SVG. Auto-scaled & optimized to fit perfectly within standard 96x96 box without distortion.",
-    taglineEnLabel: "Slogan / Tagline (English)",
-    taglineArLabel: "Slogan / Tagline (Arabic)",
-    descEnLabel: "Description (English)",
-    descArLabel: "Description (Arabic)",
+    taglineEnLabel: "Slogan / Tagline",
+    descEnLabel: "Description",
     bannerThemeLabel: "Login Panel Theme Color & Gradient",
     saveBrandingSettings: "Save Branding Settings",
     brandingSettingsSaved: "Company branding & login appearance saved successfully!",
@@ -576,15 +574,11 @@ function loadUserProfile() {
       if (previewBox && branding.gradient) previewBox.style.background = branding.gradient;
 
       const taglineEn = document.getElementById("brandTaglineEn");
-      const taglineAr = document.getElementById("brandTaglineAr");
       const descEn = document.getElementById("brandDescEn");
-      const descAr = document.getElementById("brandDescAr");
       const gradInput = document.getElementById("brandGradientValue");
 
-      if (taglineEn) taglineEn.value = branding.taglineEn || "";
-      if (taglineAr) taglineAr.value = branding.taglineAr || "";
-      if (descEn) descEn.value = branding.descEn || "";
-      if (descAr) descAr.value = branding.descAr || "";
+      if (taglineEn) taglineEn.value = branding.taglineEn || branding.taglineAr || "";
+      if (descEn) descEn.value = branding.descEn || branding.descAr || "";
       if (gradInput) gradInput.value = branding.gradient || "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)";
 
       document.querySelectorAll(".gradient-preset-btn").forEach((btn) => {
@@ -1104,18 +1098,16 @@ function handleSaveBrandingSettings(e) {
     return;
   }
 
-  const taglineEn = (document.getElementById("brandTaglineEn")?.value || "").trim();
-  const taglineAr = (document.getElementById("brandTaglineAr")?.value || "").trim();
-  const descEn = (document.getElementById("brandDescEn")?.value || "").trim();
-  const descAr = (document.getElementById("brandDescAr")?.value || "").trim();
+  const tagline = (document.getElementById("brandTaglineEn")?.value || "").trim();
+  const desc = (document.getElementById("brandDescEn")?.value || "").trim();
   const gradient = document.getElementById("brandGradientValue")?.value || "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)";
 
   const brandingObj = {
     logoUrl: currentBrandLogoData || "images/pharma-icon-192.png",
-    taglineEn: taglineEn || "Empowering Medical Representatives",
-    
-    descEn: descEn || "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
-    
+    taglineEn: tagline || "Empowering Medical Representatives",
+    taglineAr: tagline || "Empowering Medical Representatives",
+    descEn: desc || "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
+    descAr: desc || "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
     gradient: gradient
   };
 
@@ -1241,7 +1233,7 @@ window.exportDatabaseBackup = function () {
     }
 
     const fullSnapshot = {
-      pharmaCareVersion: "v221",
+      pharmaCareVersion: "v222",
       exportedAt: new Date().toISOString(),
       exportedBy: (window.currentUser && (window.currentUser.email || window.currentUser.name)) || "Admin",
       masterData: masterData,

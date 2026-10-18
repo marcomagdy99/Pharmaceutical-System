@@ -52,7 +52,7 @@ function populateUploadControls() {
       const val = String(idx + 1).padStart(2, '0');
       const opt = document.createElement('option');
       opt.value = val;
-      opt.textContent = lang === 'ar' ? MONTH_NAMES_AR[idx] : m;
+      opt.textContent = m;
       if (idx === now.getMonth()) opt.selected = true;
       monthSelect.appendChild(opt);
     });
@@ -160,8 +160,6 @@ function initPharmSalesFilters(user) {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const monthListAr = window.MONTH_NAMES_AR || monthList;
-
   if (monthContainer && !monthContainer.dataset.populated) {
     monthContainer.textContent = '';
     const currentMonthVal = String(now.getMonth() + 1).padStart(2, '0');
@@ -176,7 +174,7 @@ function initPharmSalesFilters(user) {
       if (val === currentMonthVal) cb.checked = true;
       cb.addEventListener('change', window.onPharmSalesMonthCheckboxChange);
       const span = document.createElement('span');
-      span.textContent = lang === 'ar' ? monthListAr[idx] : m;
+      span.textContent = m;
       label.appendChild(cb);
       label.appendChild(span);
       monthContainer.appendChild(label);
