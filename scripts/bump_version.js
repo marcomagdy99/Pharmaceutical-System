@@ -128,4 +128,52 @@ if (fs.existsSync(cacheBustJs)) {
   }
 }
 
+// 6. Update js/gps-service.js
+const gpsJs = path.join(rootDir, 'js/gps-service.js');
+if (fs.existsSync(gpsJs)) {
+  const content = fs.readFileSync(gpsJs, 'utf8');
+  const updated = content.replaceAll(fromVer, toVer);
+  if (content !== updated) {
+    fs.writeFileSync(gpsJs, updated, 'utf8');
+    console.log(`Updated js/gps-service.js`);
+    totalReplacements++;
+  }
+}
+
+// 7. Update js/visits-bulk-planner.js
+const bulkPlannerJs = path.join(rootDir, 'js/visits-bulk-planner.js');
+if (fs.existsSync(bulkPlannerJs)) {
+  const content = fs.readFileSync(bulkPlannerJs, 'utf8');
+  const updated = content.replaceAll(fromVer, toVer);
+  if (content !== updated) {
+    fs.writeFileSync(bulkPlannerJs, updated, 'utf8');
+    console.log(`Updated js/visits-bulk-planner.js`);
+    totalReplacements++;
+  }
+}
+
+// 8. Update js/export-service.js
+const exportJs = path.join(rootDir, 'js/export-service.js');
+if (fs.existsSync(exportJs)) {
+  const content = fs.readFileSync(exportJs, 'utf8');
+  const updated = content.replaceAll(fromVer, toVer);
+  if (content !== updated) {
+    fs.writeFileSync(exportJs, updated, 'utf8');
+    console.log(`Updated js/export-service.js`);
+    totalReplacements++;
+  }
+}
+
+// 9. Update js/auth-service.js
+const authJs = path.join(rootDir, 'js/auth-service.js');
+if (fs.existsSync(authJs)) {
+  const content = fs.readFileSync(authJs, 'utf8');
+  const updated = content.replaceAll(fromVer, toVer);
+  if (content !== updated) {
+    fs.writeFileSync(authJs, updated, 'utf8');
+    console.log(`Updated js/auth-service.js`);
+    totalReplacements++;
+  }
+}
+
 console.log(`Successfully bumped version from ${fromVer} to ${toVer} (${totalReplacements} references updated).`);

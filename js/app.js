@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v225";
+  const EXPECTED_SW = "v226";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2898,6 +2898,9 @@ function formatNumber(val, decimals = 0) {
  * Handles Blob creation, temporary link lifecycle, and proper memory cleanup via revokeObjectURL.
  */
 function downloadBlob(contentOrBlob, filename = "download.txt", mimeType = "text/plain;charset=utf-8;") {
+  if (typeof window !== "undefined" && window.ExportService && typeof window.ExportService.downloadBlob === "function") {
+    return window.ExportService.downloadBlob(contentOrBlob, filename, mimeType);
+  }
   if (contentOrBlob === null || contentOrBlob === undefined) return false;
   if (typeof window === "undefined" || !window.document) return true;
   try {
@@ -4093,6 +4096,9 @@ const SESSION_SIGNATURE_SALT = "pharma_sec_token_2026_#9xK2@pLm!";
  * @returns {string} Hex signature hash
  */
 function computeSessionSignature(user) {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.computeSessionSignature === "function") {
+    return window.AuthService.computeSessionSignature(user);
+  }
   if (!user || !user.id) return "";
   const canonical = [
     String(user.id).trim(),
@@ -4114,6 +4120,9 @@ function computeSessionSignature(user) {
 window.computeSessionSignature = computeSessionSignature;
 
 function purgeTamperedSession(reason) {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.purgeTamperedSession === "function") {
+    return window.AuthService.purgeTamperedSession(reason);
+  }
   console.warn("[Security Guard] Tampered or invalid session terminated:", reason);
   try {
     sessionStorage.removeItem("pharmaUser");
@@ -4131,6 +4140,9 @@ function purgeTamperedSession(reason) {
 window.purgeTamperedSession = purgeTamperedSession;
 
 function checkAuth() {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.checkAuth === "function") {
+    return window.AuthService.checkAuth();
+  }
   const sessionStr = sessionStorage.getItem("pharmaUser");
   const localStr = localStorage.getItem("pharmaUser");
   const userStr = sessionStr || localStr;
@@ -4199,6 +4211,9 @@ function checkAuth() {
 }
 
 function enforcePageRoleSecurity() {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.enforcePageRoleSecurity === "function") {
+    return window.AuthService.enforcePageRoleSecurity();
+  }
   const user = checkAuth();
   if (!user) return;
   const path = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
@@ -4223,6 +4238,9 @@ function enforcePageRoleSecurity() {
 window.enforcePageRoleSecurity = enforcePageRoleSecurity;
 
 function requireAuth() {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.requireAuth === "function") {
+    return window.AuthService.requireAuth();
+  }
   const user = checkAuth();
   if (!user && !window.location.href.includes("login.html")) {
     window.location.replace("login.html");
@@ -4245,6 +4263,9 @@ window.requireAuth = requireAuth;
 })();
 
 function logout() {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.logout === "function") {
+    return window.AuthService.logout();
+  }
   sessionStorage.clear();
   localStorage.removeItem("pharmaUser");
   localStorage.removeItem("userRole");
@@ -4452,6 +4473,9 @@ function checkAndRenderImpersonationBanner() {
 }
 
 window.exitImpersonation = function () {
+  if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.exitImpersonation === "function") {
+    return window.AuthService.exitImpersonation();
+  }
   const impersonatingAdminStr = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
   if (!impersonatingAdminStr) {
     window.location.replace("users.html");

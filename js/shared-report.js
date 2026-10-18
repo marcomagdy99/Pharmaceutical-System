@@ -2183,54 +2183,11 @@ function parseExcelFile(file, callback) {
 }
 
 /**
- * Generic Excel (.xlsx) or UTF-8 CSV exporter with BOM
+ * Generic Excel (.xlsx) or UTF-8 CSV exporter with BOM (Delegated to js/export-service.js)
  */
 function downloadExcelOrCsv(filename, sheetName, dataRows, headers) {
-  
-  if (typeof XLSX !== 'undefined') {
-    const wsData = [headers, ...dataRows];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Auto-fit column widths
-    const colWidths = headers.map((h, i) => {
-      let maxLen = (h ? h.toString().length : 10);
-      dataRows.forEach((row) => {
-        const cell = row[i];
-        if (cell !== null && cell !== undefined) {
-          const len = cell.toString().length;
-          if (len > maxLen) maxLen = Math.min(len, 50);
-        }
-      });
-      return { wch: Math.max(maxLen + 4, 14) };
-    });
-    ws['!cols'] = colWidths;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
-    XLSX.writeFile(wb, `${filename}.xlsx`);
-    const successMsg = 'Excel file exported successfully (.xlsx)';
-    if (typeof showToast === 'function') showToast(successMsg, 'success');
-  } else {
-    // Fallback to UTF-8 CSV with BOM
-    const escapeCsv = (val) => {
-      const s = val === null || val === undefined ? '' : String(val);
-      if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
-        return '"' + s.replace(/"/g, '""') + '"';
-      }
-      return s;
-    };
-    const csvContent = [headers.map(escapeCsv).join(','), ...dataRows.map((r) => r.map(escapeCsv).join(','))].join('\r\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    const successMsg = 'Directory exported successfully (.csv)';
-    if (typeof showToast === 'function') showToast(successMsg, 'success');
+  if (window.ExportService && typeof window.ExportService.downloadExcelOrCsv === "function") {
+    return window.ExportService.downloadExcelOrCsv(filename, sheetName, dataRows, headers);
   }
 }
 window.downloadExcelOrCsv = downloadExcelOrCsv;
