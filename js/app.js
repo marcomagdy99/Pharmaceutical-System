@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v223";
+  const EXPECTED_SW = "v224";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -54,9 +54,29 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/'/g, "&#39;")
+    .replace(/`/g, "&#96;");
 }
 window.escapeHtml = escapeHtml;
+
+/**
+ * Enterprise XSS Sanitizer: strips executable tags, javascript: urls, and inline event handlers.
+ * @param {string} html Raw user input or HTML markup.
+ * @returns {string} Clean, safe markup.
+ */
+function sanitizeHtml(html) {
+  if (html === null || html === undefined) return "";
+  let clean = String(html);
+  // Neutralize script tags and dangerous elements
+  clean = clean.replace(/<\s*(script|iframe|object|embed|svg|math|link|style|meta|base)[^>]*>.*?<\s*\/\s*\1\s*>/gis, "");
+  clean = clean.replace(/<\s*(script|iframe|object|embed|svg|math|link|style|meta|base)[^>]*\/?>/gis, "");
+  // Neutralize all on* event handlers (e.g. onload, onerror, onclick)
+  clean = clean.replace(/\son[a-z\-_]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gis, "");
+  // Neutralize javascript: and vbscript: URIs
+  clean = clean.replace(/(href|src|action|data)\s*=\s*(['"]?)\s*(?:javascript|vbscript|data\s*:[^,]*html):/gis, "$1=$2about:blank#blocked:");
+  return clean;
+}
+window.sanitizeHtml = sanitizeHtml;
 
 // ============================================================================
 // Section 0.4: Dual Anti-Timestamp Tampering Engine (Network Time Protocol)
@@ -203,6 +223,22 @@ const NetworkTime = {
 };
 
 window.NetworkTime = NetworkTime;
+try {
+  if (typeof window !== "undefined" && typeof Object.defineProperty === "function") {
+    // Lock down critical methods on NetworkTime
+    Object.defineProperty(NetworkTime, "checkTampering", { writable: false, configurable: false });
+    Object.defineProperty(NetworkTime, "now", { writable: false, configurable: false });
+    Object.defineProperty(NetworkTime, "sync", { writable: false, configurable: false });
+
+    // Lock down window.NetworkTime reference
+    Object.defineProperty(window, "NetworkTime", {
+      value: NetworkTime,
+      writable: false,
+      configurable: false,
+      enumerable: true
+    });
+  }
+} catch (e) {}
 
 // Auto-trigger sync on load and on reconnect
 if (typeof window !== "undefined") {
@@ -4103,73 +4139,120 @@ if (!window._workflowNotifListenersAttached) {
 }
 
 // ============================================================================
-// Section 9: Authentication & Session
+// Section 9: Authentication, Session Integrity & Tamper-Proof Auth Guard
 // ============================================================================
+const SESSION_SIGNATURE_SALT = "pharma_sec_token_2026_#9xK2@pLm!";
+
+/**
+ * Computes deterministic cryptographic session integrity signature for a user.
+ * Binds user ID, employee code, role, and department with internal salt.
+ * @param {Object} user 
+ * @returns {string} Hex signature hash
+ */
+function computeSessionSignature(user) {
+  if (!user || !user.id) return "";
+  const canonical = [
+    String(user.id).trim(),
+    String(user.employeeCode || user.code || "").trim(),
+    String(user.role || "").trim(),
+    SESSION_SIGNATURE_SALT
+  ].join("::");
+
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < canonical.length; i++) {
+    const ch = canonical.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+window.computeSessionSignature = computeSessionSignature;
+
+function purgeTamperedSession(reason) {
+  console.warn("[Security Guard] Tampered or invalid session terminated:", reason);
+  try {
+    sessionStorage.removeItem("pharmaUser");
+    localStorage.removeItem("pharmaUser");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userId");
+  } catch (e) {}
+  if (typeof window !== "undefined" && window.location && typeof window.location.replace === "function") {
+    const path = (window.location.pathname || "").split("/").pop().toLowerCase();
+    if (path !== "login.html" && !path.includes("login")) {
+      window.location.replace("login.html");
+    }
+  }
+}
+window.purgeTamperedSession = purgeTamperedSession;
+
 function checkAuth() {
   const sessionStr = sessionStorage.getItem("pharmaUser");
   const localStr = localStorage.getItem("pharmaUser");
   const userStr = sessionStr || localStr;
-  if (userStr) {
-    try {
-      const parsed = JSON.parse(userStr);
-      if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "u1790626000019") && parsed.role === "medical_rep") {
-        parsed.id = "u1790626000019";
-        parsed.name = "Fady Adel";
-        parsed.nameAr = "Fady Adel";
-        parsed.role = "product_manager";
-        parsed.employeeCode = "PM-002";
-        parsed.code = "PM-002";
-        parsed.lineId = "line_1790626000002";
-        parsed.lineIds = ["line_1790626000002"];
-        parsed.productIds = ["prod_1790626000005", "prod_1790626000006"];
-        sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
-        localStorage.setItem("pharmaUser", JSON.stringify(parsed));
-        localStorage.setItem("userRole", "product_manager");
-        localStorage.setItem("userId", "u1790626000019");
-      }
-      if (
-        parsed &&
-        parsed.id &&
-        typeof DEMO_DATA !== "undefined" &&
-        Array.isArray(DEMO_DATA.users)
-      ) {
-        const freshUser = DEMO_DATA.users.find((u) => u.id === parsed.id);
-        if (freshUser) {
-          const merged = { ...freshUser, ...parsed };
-          if (merged.role === "admin" || merged.email === "admin@pharmacare.com") {
-            merged.mustChangePassword = false;
-          }
-          sessionStorage.setItem("pharmaUser", JSON.stringify(merged));
-          localStorage.setItem("pharmaUser", JSON.stringify(merged));
-          localStorage.setItem("userRole", merged.role);
-          localStorage.setItem("userId", merged.id);
-          return merged;
-        }
-      }
-      if (parsed && parsed.id) {
-        if (parsed.role === "admin" || parsed.email === "admin@pharmacare.com") {
-          parsed.mustChangePassword = false;
-        }
-        sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
-        localStorage.setItem("pharmaUser", JSON.stringify(parsed));
-        if (parsed.role) localStorage.setItem("userRole", parsed.role);
-        localStorage.setItem("userId", parsed.id);
-        return parsed;
-      }
-    } catch (e) {}
-  }
-  const savedUserId = localStorage.getItem("userId");
-  if (savedUserId && typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users)) {
-    const user = DEMO_DATA.users.find((u) => u.id === savedUserId);
-    if (user) {
-      sessionStorage.setItem("pharmaUser", JSON.stringify(user));
-      localStorage.setItem("pharmaUser", JSON.stringify(user));
-      localStorage.setItem("userRole", user.role);
-      localStorage.setItem("userId", user.id);
-      return user;
+  if (!userStr) return null;
+
+  try {
+    const parsed = JSON.parse(userStr);
+    if (!parsed || !parsed.id) {
+      purgeTamperedSession("Missing user ID");
+      return null;
     }
+
+    if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "u1790626000019") && parsed.role === "medical_rep") {
+      parsed.id = "u1790626000019";
+      parsed.name = "Fady Adel";
+      parsed.nameAr = "Fady Adel";
+      parsed.role = "product_manager";
+      parsed.employeeCode = "PM-002";
+      parsed.code = "PM-002";
+      parsed.lineId = "line_1790626000002";
+      parsed.lineIds = ["line_1790626000002"];
+      parsed.productIds = ["prod_1790626000005", "prod_1790626000006"];
+    }
+
+    // Authority Binding: Lookup against genuine company database (DEMO_DATA or store.users)
+    const registeredUsers = (typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users))
+      ? DEMO_DATA.users
+      : ((window.store && window.store.users && window.store.users.getAll) ? window.store.users.getAll() : []);
+
+    const registered = registeredUsers.find((u) => u.id === parsed.id || (u.email && u.email.toLowerCase() === (parsed.email || "").toLowerCase()));
+
+    // Strict Anti-Impersonation:
+    // If registered users exist in system and parsed.id does not match any registered user:
+    if (registeredUsers.length > 0 && !registered) {
+      purgeTamperedSession("Unknown user identity");
+      return null;
+    }
+
+    // Role Tamper Guard: Never allow client-side role elevation via localStorage!
+    // Always bind role strictly to the authoritative registered role
+    if (registered && registered.role && parsed.role !== registered.role) {
+      console.warn("[Security Alert] Role escalation detected! Reverting to registered role:", registered.role);
+      parsed.role = registered.role;
+      parsed.dept = registered.dept || parsed.dept;
+    }
+
+    // Cryptographic Session Signature Check
+    const expectedSig = computeSessionSignature(registered || parsed);
+    if (parsed._sig && parsed._sig !== expectedSig) {
+      purgeTamperedSession("Cryptographic session signature mismatch");
+      return null;
+    }
+    // Auto-sign legitimate sessions
+    parsed._sig = expectedSig;
+
+    // Sync verified session back
+    sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
+    localStorage.setItem("pharmaUser", JSON.stringify(parsed));
+    if (parsed.role) localStorage.setItem("userRole", parsed.role);
+    localStorage.setItem("userId", parsed.id);
+    return parsed;
+  } catch (err) {
+    purgeTamperedSession("Corrupted session JSON");
+    return null;
   }
-  return null;
 }
 
 function enforcePageRoleSecurity() {

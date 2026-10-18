@@ -509,7 +509,9 @@ async function handleLogin() {
           lineIds: matchedUser.lineIds || [],
           productIds: matchedUser.productIds || [],
           mustChangePassword: false,
-          token: 'token_' + Date.now()
+          token: 'token_' + Date.now(),
+          _sig: (typeof window.computeSessionSignature === 'function') ? window.computeSessionSignature(matchedUser) : undefined,
+          _signedAt: Date.now()
         };
 
         // First-Time Login / Security Reset Check
@@ -752,6 +754,10 @@ setLanguage(currentLang);
 
       // Complete authentication session
       if (_pendingForceSession) {
+        if (typeof window.computeSessionSignature === 'function') {
+          _pendingForceSession._sig = window.computeSessionSignature(_pendingForceSession);
+          _pendingForceSession._signedAt = Date.now();
+        }
         sessionStorage.removeItem("pharma_logged_out");
         sessionStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));
         localStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));

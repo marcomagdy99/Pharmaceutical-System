@@ -591,7 +591,7 @@
     const userLines = Core.getUserAssignedLines(Core._state.currentUser);
     const lineSelect = document.getElementById("serviceFormLineSelect");
     if (lineSelect) {
-      lineSelect.innerHTML = userLines.map((l) => `<option value="${l.id}">${l.name}</option>`).join("");
+      lineSelect.innerHTML = userLines.map((l) => `<option value="${l.id}">${Core.escapeHTML(l.name)}</option>`).join("");
       const activeBudgetLine = document.getElementById("serviceBudgetLineSelect")?.value;
       if (activeBudgetLine && userLines.some((l) => l.id === activeBudgetLine)) {
         lineSelect.value = activeBudgetLine;
@@ -637,7 +637,7 @@
       areaSelect.innerHTML = `<option value="" disabled selected>No areas assigned to you for this line</option>`;
       areaSelect.value = "";
     } else {
-      areaSelect.innerHTML = areas.map((a) => `<option value="${a.id}">${a.name} (${a.code || a.id})</option>`).join("");
+      areaSelect.innerHTML = areas.map((a) => `<option value="${a.id}">${Core.escapeHTML(a.name)} (${Core.escapeHTML(a.code || a.id)})</option>`).join("");
       if (Core._state.currentUser.areaId && areas.some((a) => a.id === Core._state.currentUser.areaId)) {
         areaSelect.value = Core._state.currentUser.areaId;
       } else {
@@ -672,7 +672,7 @@
       if (filteredHosp.length === 0) {
         hospSelect.innerHTML = `<option value="" disabled selected>No hospitals available</option>`;
       } else {
-        hospSelect.innerHTML = filteredHosp.map((h) => `<option value="${h.id}">${h.name}</option>`).join("");
+        hospSelect.innerHTML = filteredHosp.map((h) => `<option value="${h.id}">${Core.escapeHTML(h.name)}</option>`).join("");
       }
     }
 
@@ -685,7 +685,7 @@
         const currentDocLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
         docSelect.innerHTML = filteredDoc.map((d) => {
           const docName = (currentDocLang === "ar" && d.nameAr) ? d.nameAr : (d.name || d.nameAr || "");
-          return `<option value="${d.id}">${docName} (${d.specialty || "-"})</option>`;
+          return `<option value="${d.id}">${Core.escapeHTML(docName)} (${Core.escapeHTML(d.specialty || "-")})</option>`;
         }).join("");
       }
     }
@@ -865,7 +865,7 @@
     const badgeEl = document.getElementById(`sharedRepBadge_${index}`);
 
     if (areaSelect) {
-      areaSelect.innerHTML = areasForLine.map(a => `<option value="${a.id}" ${a.id === newAreaId ? "selected" : ""}>${a.name} (${a.code || a.id})</option>`).join("");
+      areaSelect.innerHTML = areasForLine.map(a => `<option value="${a.id}" ${a.id === newAreaId ? "selected" : ""}>${Core.escapeHTML(a.name)} (${Core.escapeHTML(a.code || a.id)})</option>`).join("");
       if (badgeEl) {
         const liveRep = Core.getLiveRepForArea(newAreaId);
         const repLabel = liveRep
