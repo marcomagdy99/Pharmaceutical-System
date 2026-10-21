@@ -34,9 +34,9 @@ function getScopedPharmacies(respectActiveFilters = true) {
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
     pharms = pharms.filter((p) =>
+      p.repId === currentUser.id ||
       (p.areaId && repAreaIds.includes(p.areaId)) ||
-      (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim())) ||
-      (!p.areaId && p.repId === currentUser.id)
+      (p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
     );
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -173,7 +173,7 @@ function getScopedPharmacies(respectActiveFilters = true) {
           pharms = pharms.filter((p) =>
             p.repId === repId ||
             (p.areaId && repAreaIds.includes(p.areaId)) ||
-            (!p.areaId && p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
+            (p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
           );
         }
       }
@@ -439,8 +439,22 @@ function savePharmacy() {
     assignedLineId = areaObj.lineId || "";
   }
 
-  // Pharmacy strictly belongs to Area; representative is whoever is assigned to that Area
-  const assignedRepId = areaObj ? (areaObj.repId || null) : null;
+  const repSelectEl = document.getElementById("pharmacyRepInput");
+  const modalRepId = (repSelectEl && repSelectEl.value && repSelectEl.value !== "all") ? repSelectEl.value : null;
+  const assignedRepId = modalRepId || (areaObj ? (areaObj.repId || null) : null);
+
+  const allUsersList = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+  let assignedDmId = null;
+  let assignedLmId = null;
+  if (assignedRepId) {
+    const repUserObj = allUsersList.find(u => u.id === assignedRepId);
+    if (repUserObj && repUserObj.managerId) {
+      assignedDmId = repUserObj.managerId;
+      const dmUserObj = allUsersList.find(u => u.id === repUserObj.managerId);
+      if (dmUserObj && dmUserObj.managerId) assignedLmId = dmUserObj.managerId;
+    }
+  }
+
   const existingPharm = id ? ((window.store && window.store.pharmacies ? window.store.pharmacies.getById(id) : null) || (window.DEMO_DATA?.pharmacies?.find((p) => p.id === id))) : null;
 
   const pharmacyObj = {
@@ -451,6 +465,8 @@ function savePharmacy() {
     contactPerson,
     phone,
     repId: assignedRepId,
+    dmId: assignedDmId,
+    lmId: assignedLmId,
     areaId: assignedAreaId,
     area: assignedAreaName,
     lineId: assignedLineId,

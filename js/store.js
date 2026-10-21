@@ -760,9 +760,17 @@
         if (docObj.areaId && store.areas) {
           const a = store.areas.getById(docObj.areaId);
           if (a) {
-            docObj.repId = a.repId || null;
+            if (!docObj.repId && a.repId) docObj.repId = a.repId;
             if (a.name) docObj.area = a.name;
-            if (a.lineId) docObj.lineId = a.lineId;
+            if (a.lineId && !docObj.lineId) docObj.lineId = a.lineId;
+          }
+        }
+        if (docObj.repId && store.users) {
+          const rep = store.users.getById(docObj.repId);
+          if (rep && rep.managerId && !docObj.dmId) {
+            docObj.dmId = rep.managerId;
+            const dm = store.users.getById(rep.managerId);
+            if (dm && dm.managerId && !docObj.lmId) docObj.lmId = dm.managerId;
           }
         }
         const docs = window.DEMO_DATA.doctors;
@@ -806,9 +814,17 @@
         if (pharmObj.areaId && store.areas) {
           const a = store.areas.getById(pharmObj.areaId);
           if (a) {
-            pharmObj.repId = a.repId || null;
+            if (!pharmObj.repId && a.repId) pharmObj.repId = a.repId;
             if (a.name) pharmObj.area = a.name;
-            if (a.lineId) pharmObj.lineId = a.lineId;
+            if (a.lineId && !pharmObj.lineId) pharmObj.lineId = a.lineId;
+          }
+        }
+        if (pharmObj.repId && store.users) {
+          const rep = store.users.getById(pharmObj.repId);
+          if (rep && rep.managerId && !pharmObj.dmId) {
+            pharmObj.dmId = rep.managerId;
+            const dm = store.users.getById(rep.managerId);
+            if (dm && dm.managerId && !pharmObj.lmId) pharmObj.lmId = dm.managerId;
           }
         }
         const pharms = window.DEMO_DATA.pharmacies;
@@ -1163,9 +1179,17 @@
         if (hospObj.areaId && store.areas) {
           const a = store.areas.getById(hospObj.areaId);
           if (a) {
-            hospObj.repId = a.repId || null;
+            if (!hospObj.repId && a.repId) hospObj.repId = a.repId;
             if (a.name) hospObj.area = a.name;
-            if (a.lineId) hospObj.lineId = a.lineId;
+            if (a.lineId && !hospObj.lineId) hospObj.lineId = a.lineId;
+          }
+        }
+        if (hospObj.repId && store.users) {
+          const rep = store.users.getById(hospObj.repId);
+          if (rep && rep.managerId && !hospObj.dmId) {
+            hospObj.dmId = rep.managerId;
+            const dm = store.users.getById(rep.managerId);
+            if (dm && dm.managerId && !hospObj.lmId) hospObj.lmId = dm.managerId;
           }
         }
         const hosps = window.DEMO_DATA.hospitals;

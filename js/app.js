@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v229";
+  const EXPECTED_SW = "v230";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1364,23 +1364,25 @@ function loadDataFromStorage() {
         // Ensure clean collections and purge all legacy demo data
         const demoUserIds = ["u1790626000001", "u1790626000002", "u1790626000003", "u1790626000004", "u1790626000005", "u1790626000014", "u1790626000015", "u1790626000016", "u1790626000012", "u1790626000013", "u1790626000011", "u1790626000018", "u1790626000019", "u1790626000017"];
 
+        // Purge only ancient legacy single-digit demo mock IDs (e.g. d1, ph1, h1, v1, s1, l1).
+        // NEVER purge legitimate system-generated entities (doc_*, pharm_*, hosp_*, visit_*, leave_*, etc.)!
         if (!Array.isArray(data.doctors)) data.doctors = [];
-        data.doctors = data.doctors.filter((d) => d && d.id && !d.id.startsWith("d"));
+        data.doctors = data.doctors.filter((d) => d && d.id && !/^d\d{1,4}$/.test(d.id));
 
         if (!Array.isArray(data.pharmacies)) data.pharmacies = [];
-        data.pharmacies = data.pharmacies.filter((p) => p && p.id && !p.id.startsWith("ph"));
+        data.pharmacies = data.pharmacies.filter((p) => p && p.id && !/^ph\d{1,4}$/.test(p.id));
 
         if (!Array.isArray(data.hospitals)) data.hospitals = [];
-        data.hospitals = data.hospitals.filter((h) => h && h.id && !h.id.startsWith("h"));
+        data.hospitals = data.hospitals.filter((h) => h && h.id && !/^h\d{1,4}$/.test(h.id));
 
         if (!Array.isArray(data.visits)) data.visits = [];
-        data.visits = data.visits.filter((v) => v && v.id && !v.id.startsWith("v") && !v.id.startsWith("today_v"));
+        data.visits = data.visits.filter((v) => v && v.id && !/^v\d{1,4}$/.test(v.id) && !/^today_v\d+$/.test(v.id));
 
         if (!Array.isArray(data.sales)) data.sales = [];
-        data.sales = data.sales.filter((s) => s && s.id && !s.id.startsWith("s") && !s.id.startsWith("ds_s"));
+        data.sales = data.sales.filter((s) => s && s.id && !/^s\d{1,4}$/.test(s.id) && !/^ds_s\d+$/.test(s.id));
 
         if (!Array.isArray(data.leaves)) data.leaves = [];
-        data.leaves = data.leaves.filter((l) => l && l.id && !l.id.startsWith("l"));
+        data.leaves = data.leaves.filter((l) => l && l.id && !/^l\d{1,4}$/.test(l.id));
 
         if (!Array.isArray(data.pharmacyOverrides)) data.pharmacyOverrides = [];
         if (!Array.isArray(data.notifications)) data.notifications = [];
