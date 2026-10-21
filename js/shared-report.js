@@ -345,8 +345,23 @@ const directoryTranslations = {
 };
 
 // ============================================================================
-// Section 2: Page Lifecycle Initialization
+// Section 2: Page Lifecycle Initialization & Unified Tab Configs
 // ============================================================================
+const REPORT_TAB_CONFIGS = {
+  sales: { lmId: 'pharmSalesLmSelect', dmId: 'pharmSalesDmSelect', repId: 'pharmSalesRepSelect', hasArea: true, areaId: 'pharmSalesAreaSelect' },
+  achievements: { lmId: 'achLmSelect', dmId: 'achDmSelect', repId: 'achRepSelect', hasArea: true, areaId: 'achAreaSelect' },
+  timeline: { lmId: 'timelineLmSelect', dmId: 'timelineDmSelect', repId: 'timelineRepSelect' },
+  coverage: { lmId: 'coverageLmSelect', dmId: 'coverageDmSelect', repId: 'coverageRepSelect' },
+  doctors: { lmId: 'doctorLmSelect', dmId: 'doctorDmSelect', repId: 'doctorRepSelect' },
+  hospitals: { lmId: 'hospitalLmSelect', dmId: 'hospitalDmSelect', repId: 'hospitalRepSelect' },
+  pharmacies: { lmId: 'pharmacyLmSelect', dmId: 'pharmacyDmSelect', repId: 'pharmacyRepSelect' },
+  'missing-days': { lmId: 'missingLmSelect', dmId: 'missingDmSelect', repId: 'missingRepSelect' },
+  'gps-tracing': { lmId: 'gpsLmSelect', dmId: 'gpsDmSelect', repId: 'gpsRepSelect' },
+  'accounts-costing': { lmId: 'accountsCostingLmSelect', dmId: 'accountsCostingDmSelect', repId: 'accountsCostingRepSelect', hasArea: true, areaId: 'accountsCostingAreaSelect' }
+};
+
+window.REPORT_TAB_CONFIGS = REPORT_TAB_CONFIGS;
+
 function initializeReportsPage() {
   // Merge directory translations
   if (window.translations) {
@@ -761,20 +776,7 @@ function getAreaManagerId(area, allUsers = []) {
 // Across all 10 Report Tabs
 // ============================================================================
 
-const REPORT_TAB_CONFIGS = {
-  sales: { lmId: 'pharmSalesLmSelect', dmId: 'pharmSalesDmSelect', repId: 'pharmSalesRepSelect', hasArea: true, areaId: 'pharmSalesAreaSelect' },
-  achievements: { lmId: 'achLmSelect', dmId: 'achDmSelect', repId: 'achRepSelect', hasArea: true, areaId: 'achAreaSelect' },
-  timeline: { lmId: 'timelineLmSelect', dmId: 'timelineDmSelect', repId: 'timelineRepSelect' },
-  coverage: { lmId: 'coverageLmSelect', dmId: 'coverageDmSelect', repId: 'coverageRepSelect' },
-  doctors: { lmId: 'doctorLmSelect', dmId: 'doctorDmSelect', repId: 'doctorRepSelect' },
-  hospitals: { lmId: 'hospitalLmSelect', dmId: 'hospitalDmSelect', repId: 'hospitalRepSelect' },
-  pharmacies: { lmId: 'pharmacyLmSelect', dmId: 'pharmacyDmSelect', repId: 'pharmacyRepSelect' },
-  'missing-days': { lmId: 'missingLmSelect', dmId: 'missingDmSelect', repId: 'missingRepSelect' },
-  'gps-tracing': { lmId: 'gpsLmSelect', dmId: 'gpsDmSelect', repId: 'gpsRepSelect' },
-  'accounts-costing': { lmId: 'accountsCostingLmSelect', dmId: 'accountsCostingDmSelect', repId: 'accountsCostingRepSelect', hasArea: true, areaId: 'accountsCostingAreaSelect' }
-};
-
-window.REPORT_TAB_CONFIGS = REPORT_TAB_CONFIGS;
+// REPORT_TAB_CONFIGS is declared above before initializeReportsPage
 
 function isUserInLine(userObj, targetLineId) {
   if (!targetLineId || targetLineId === 'all') return true;
