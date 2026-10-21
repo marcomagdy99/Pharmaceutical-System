@@ -136,6 +136,40 @@
         parsed.dept = registered.dept || parsed.dept;
       }
 
+      // Synchronize organizational hierarchy and profile details from registered user
+      if (registered) {
+        if (registered.managerId !== undefined) {
+          parsed.managerId = registered.managerId;
+        }
+        if (registered.lineId !== undefined) {
+          parsed.lineId = registered.lineId;
+        }
+        if (Array.isArray(registered.lineIds)) {
+          parsed.lineIds = registered.lineIds;
+        }
+        if (Array.isArray(registered.areaIds)) {
+          parsed.areaIds = registered.areaIds;
+        }
+        if (registered.areaId !== undefined) {
+          parsed.areaId = registered.areaId;
+        }
+        if (!parsed.employeeCode && (registered.employeeCode || registered.code)) {
+          parsed.employeeCode = registered.employeeCode || registered.code;
+        }
+        if (!parsed.name && registered.name) {
+          parsed.name = registered.name;
+        }
+        if (!parsed.nameAr && registered.nameAr) {
+          parsed.nameAr = registered.nameAr;
+        }
+        if (!parsed.hireDate && registered.hireDate) {
+          parsed.hireDate = registered.hireDate;
+        }
+        if (!parsed.phone && registered.phone) {
+          parsed.phone = registered.phone;
+        }
+      }
+
       // Cryptographic Session Signature Check
       const expectedSig = computeSessionSignature(registered || parsed);
       if (parsed._sig && parsed._sig !== expectedSig) {

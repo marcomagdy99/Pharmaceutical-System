@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v226";
+  const EXPECTED_SW = "v227";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1285,10 +1285,24 @@ function loadDataFromStorage() {
             }
           });
 
+          // Self-healing: Repair missing managerId and hierarchy for existing stored users from default seed
           data.users.forEach((u) => {
-            if (!u.hireDate) {
-              const def = DEFAULT_DEMO_DATA.users.find((du) => du.id === u.id);
-              u.hireDate = def?.hireDate || "2024-01-15";
+            const def = DEFAULT_DEMO_DATA.users.find((du) => du.id === u.id || ((u.email || "").toLowerCase() === (du.email || "").toLowerCase()));
+            if (def) {
+              if (u.managerId === undefined || u.managerId === null) {
+                u.managerId = def.managerId !== undefined ? def.managerId : null;
+              }
+              if (!u.lineId && def.lineId) {
+                u.lineId = def.lineId;
+              }
+              if ((!u.lineIds || !u.lineIds.length) && Array.isArray(def.lineIds)) {
+                u.lineIds = def.lineIds;
+              }
+              if (!u.hireDate && def.hireDate) {
+                u.hireDate = def.hireDate;
+              }
+            } else if (!u.hireDate) {
+              u.hireDate = "2024-01-15";
             }
           });
         }
@@ -1298,9 +1312,14 @@ function loadDataFromStorage() {
             if (n.messageEn) n.message = n.messageEn;
           });
         }
-        if (data.currentUser && !data.currentUser.hireDate) {
-          const defCurrent = DEFAULT_DEMO_DATA.users.find((du) => du.id === data.currentUser.id);
-          data.currentUser.hireDate = defCurrent?.hireDate || "2024-01-15";
+        if (data.currentUser) {
+          const defCurrent = DEFAULT_DEMO_DATA.users.find((du) => du.id === data.currentUser.id || ((data.currentUser.email || "").toLowerCase() === (du.email || "").toLowerCase()));
+          if (defCurrent && (data.currentUser.managerId === undefined || data.currentUser.managerId === null)) {
+            data.currentUser.managerId = defCurrent.managerId !== undefined ? defCurrent.managerId : null;
+          }
+          if (!data.currentUser.hireDate) {
+            data.currentUser.hireDate = defCurrent?.hireDate || "2024-01-15";
+          }
         }
         if (!Array.isArray(data.distributors) || data.distributors.length === 0) {
           data.distributors = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.distributors));
@@ -4187,6 +4206,40 @@ function checkAuth() {
       console.warn("[Security Alert] Role escalation detected! Reverting to registered role:", registered.role);
       parsed.role = registered.role;
       parsed.dept = registered.dept || parsed.dept;
+    }
+
+    // Synchronize organizational hierarchy and profile details from registered user
+    if (registered) {
+      if (registered.managerId !== undefined) {
+        parsed.managerId = registered.managerId;
+      }
+      if (registered.lineId !== undefined) {
+        parsed.lineId = registered.lineId;
+      }
+      if (Array.isArray(registered.lineIds)) {
+        parsed.lineIds = registered.lineIds;
+      }
+      if (Array.isArray(registered.areaIds)) {
+        parsed.areaIds = registered.areaIds;
+      }
+      if (registered.areaId !== undefined) {
+        parsed.areaId = registered.areaId;
+      }
+      if (!parsed.employeeCode && (registered.employeeCode || registered.code)) {
+        parsed.employeeCode = registered.employeeCode || registered.code;
+      }
+      if (!parsed.name && registered.name) {
+        parsed.name = registered.name;
+      }
+      if (!parsed.nameAr && registered.nameAr) {
+        parsed.nameAr = registered.nameAr;
+      }
+      if (!parsed.hireDate && registered.hireDate) {
+        parsed.hireDate = registered.hireDate;
+      }
+      if (!parsed.phone && registered.phone) {
+        parsed.phone = registered.phone;
+      }
     }
 
     // Cryptographic Session Signature Check

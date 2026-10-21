@@ -399,10 +399,19 @@ function loadUserProfile() {
     productLineInput.value = line ? line.name : ("All Product Lines");
   }
 
-  const manager = allUsers.find((u) => u.id === user.managerId);
+  const freshUser = allUsers.find((u) => u.id === user.id) || user;
+  const activeManagerId = freshUser.managerId || user.managerId;
+  const manager = activeManagerId ? allUsers.find((u) => u.id === activeManagerId) : null;
   if (managerInput) {
-    const managerName = manager ? manager.name : "Executive Management";
-    managerInput.value = managerName;
+    if (manager) {
+      const managerRole = roleLabels[manager.role] || manager.title || manager.role || "";
+      const managerLine = allLines.find((l) => l.id === manager.lineId || (l.products && manager.lineIds && manager.lineIds.includes(l.id)));
+      const lineSuffix = managerLine ? ` - ${managerLine.name}` : "";
+      const roleText = managerRole ? ` (${managerRole}${lineSuffix})` : "";
+      managerInput.value = `${manager.name}${roleText}`;
+    } else {
+      managerInput.value = "Executive Management";
+    }
   }
 
   if (profileInitials && displayName) {
@@ -441,7 +450,6 @@ function loadUserProfile() {
     else if (l.type === "unpaid") used.unpaid += d;
   });
 
-  const freshUser = allUsers.find((u) => u.id === user.id) || user;
   const userBalance = freshUser.leaveBalance || user.leaveBalance || {};
   const rollover = getEmployeeLeaveRollover(user.id);
   const isWithinGrace = rollover && rollover.isValid;
@@ -603,6 +611,92 @@ function loadUserProfile() {
       adminApprovalCard.style.display = "none";
     }
   }
+
+  // Render Direct Reports & Supervisory Team section
+  renderDirectReports(freshUser, allUsers, allAreas, allLines, roleLabels);
+}
+
+/**
+ * Renders direct subordinates / team members for supervisory roles (DM, LM, BU, Admin, HR).
+ */
+function renderDirectReports(activeUser, allUsers, allAreas, allLines, roleLabels) {
+  const card = document.getElementById("directReportsCard");
+  const container = document.getElementById("directReportsContainer");
+  const countBadge = document.getElementById("directReportsCountBadge");
+  if (!card || !container) return;
+
+  const esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s || ""));
+
+  // Identify direct reports whose managerId matches the active user
+  const directReports = allUsers.filter((u) => {
+    if (!u || !u.id || u.id === activeUser.id) return false;
+    if (u.status === "Inactive" || u.status === "inactive") return false;
+    return u.managerId === activeUser.id;
+  });
+
+  if (!directReports.length) {
+    card.style.display = "none";
+    return;
+  }
+
+  card.style.display = "block";
+  if (countBadge) {
+    countBadge.textContent = `${directReports.length} ${directReports.length === 1 ? "Member" : "Members"}`;
+  }
+
+  container.innerHTML = directReports.map((rep) => {
+    const repName = rep.name || "Team Member";
+    const nameParts = repName.trim().split(/\s+/);
+    let inits = nameParts[0] ? nameParts[0][0] : "U";
+    if (nameParts.length > 1) inits += nameParts[nameParts.length - 1][0];
+    inits = inits.toUpperCase();
+
+    const roleName = roleLabels[rep.role] || rep.title || rep.role || "Representative";
+    const area = allAreas.find((a) => a.id === rep.areaId || a.repId === rep.id);
+    const areaName = area ? `${area.name} (${area.code})` : "Territory Unassigned";
+    const line = allLines.find((l) => l.id === rep.lineId || (l.products && rep.lineIds && rep.lineIds.includes(l.id)));
+    const lineName = line ? line.name : "All Lines";
+    const code = rep.employeeCode || rep.code || "EMP";
+    const phone = rep.phone || "";
+    const email = rep.email || "";
+
+    return `
+      <div class="direct-report-card">
+        <div class="direct-report-top">
+          <div class="direct-report-avatar">${esc(inits)}</div>
+          <div class="direct-report-info">
+            <div class="direct-report-name" title="${esc(repName)}">${esc(repName)}</div>
+            <div class="direct-report-meta">
+              <span class="badge badge-role" style="font-size: 0.72rem; padding: 2px 7px;">${esc(roleName)}</span>
+              <span class="badge bg-light text-dark border" style="font-size: 0.72rem; padding: 2px 7px;">${esc(code)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="direct-report-details">
+          <div class="direct-report-row">
+            <span>Area:</span>
+            <span style="font-weight: 500; text-align: right;">${esc(areaName)}</span>
+          </div>
+          <div class="direct-report-row">
+            <span>Line:</span>
+            <span style="font-weight: 500; text-align: right;">${esc(lineName)}</span>
+          </div>
+          ${phone ? `
+            <div class="direct-report-row">
+              <span>Phone:</span>
+              <a href="tel:${esc(phone)}" class="direct-report-link">${esc(phone)}</a>
+            </div>
+          ` : ""}
+          ${email ? `
+            <div class="direct-report-row">
+              <span>Email:</span>
+              <a href="mailto:${esc(email)}" class="direct-report-link" title="${esc(email)}">${esc(email)}</a>
+            </div>
+          ` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function loadApprovalWorkflows() {
@@ -1233,7 +1327,7 @@ window.exportDatabaseBackup = function () {
     }
 
     const fullSnapshot = {
-      pharmaCareVersion: "v226",
+      pharmaCareVersion: "v227",
       exportedAt: new Date().toISOString(),
       exportedBy: (window.currentUser && (window.currentUser.email || window.currentUser.name)) || "Admin",
       masterData: masterData,

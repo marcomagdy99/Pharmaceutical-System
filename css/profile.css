@@ -380,3 +380,95 @@
   color: #cbd5e1 !important;
 }
 /* --- END: System Lifecycle & Data Management Styles --- */
+
+/* --- Direct Reports Section --- */
+.direct-reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+.direct-report-card {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.direct-report-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .direct-report-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.direct-report-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.direct-report-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.direct-report-info {
+  flex: 1;
+  min-width: 0;
+}
+.direct-report-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary, #0f172a);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.direct-report-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.direct-report-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-color, #e2e8f0);
+  font-size: 0.82rem;
+  color: var(--text-secondary, #475569);
+}
+[data-theme="dark"] .direct-report-details {
+  border-top-color: #334155;
+  color: #cbd5e1;
+}
+.direct-report-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.direct-report-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.direct-report-link:hover {
+  color: var(--primary, #0d6efd);
+  text-decoration: underline;
+}
