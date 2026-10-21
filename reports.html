@@ -17,7 +17,7 @@
       })();
     </script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v231"></script>
+    <script src="js/cache-bust.js?v=v232"></script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,18 +26,18 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v231" />
-    <link rel="stylesheet" href="css/reports.css?v=v231" />
+    <link rel="stylesheet" href="css/style.css?v=v232" />
+    <link rel="stylesheet" href="css/reports.css?v=v232" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v231"></script>
-  <script src="js/app.js?v=v231"></script>
-    <script src="js/store.js?v=v231"></script>
+    <script src="js/auth-service.js?v=v232"></script>
+  <script src="js/app.js?v=v232"></script>
+    <script src="js/store.js?v=v232"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v231"></script>
-    <script src="js/firebase-sync.js?v=v231"></script>
+    <script src="js/firebase-config.js?v=v232"></script>
+    <script src="js/firebase-sync.js?v=v232"></script>
   </head>
   <body>
     <div class="app">
@@ -705,14 +705,6 @@
                     <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
-                <div class="sales-filter-field col-date">
-                  <label data-i18n="timelineFrom">From:</label>
-                  <input type="date" id="coverageStartDate" class="form-control" />
-                </div>
-                <div class="sales-filter-field col-date">
-                  <label data-i18n="timelineTo">To:</label>
-                  <input type="date" id="coverageEndDate" class="form-control" />
-                </div>
                 <div class="sales-filter-field col-class">
                   <label data-i18n="doctorClass">Class:</label>
                   <select id="coverageClassFilter" class="form-control"
@@ -727,6 +719,14 @@
                       Hospitals Only
                     </option>
                   </select>
+                </div>
+                <div class="sales-filter-field col-date">
+                  <label data-i18n="timelineFrom">From:</label>
+                  <input type="date" id="coverageStartDate" class="form-control" />
+                </div>
+                <div class="sales-filter-field col-date">
+                  <label data-i18n="timelineTo">To:</label>
+                  <input type="date" id="coverageEndDate" class="form-control" />
                 </div>
                 <div class="sales-filter-field col-btn">
                   <button
@@ -952,6 +952,18 @@
                     <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
+                <!-- Class Filter -->
+                <div class="sales-filter-field col-class">
+                  <label data-i18n="doctorClass">Class:</label>
+                  <select id="doctorClassFilter" class="form-control"
+                  >
+                    <option value="all" data-i18n="allClasses">
+                      All Classes (A &amp; B)
+                    </option>
+                    <option value="A">Class A</option>
+                    <option value="B">Class B</option>
+                  </select>
+                </div>
                 <!-- Search -->
                 <div class="sales-filter-field col-search">
                   <label data-i18n="searchDoctors">Search:</label>
@@ -965,18 +977,6 @@
                     <option value="all" data-i18n="allSpecialties">
                       All Specialties
                     </option>
-                  </select>
-                </div>
-                <!-- Class Filter -->
-                <div class="sales-filter-field col-class">
-                  <label data-i18n="doctorClass">Class:</label>
-                  <select id="doctorClassFilter" class="form-control"
-                  >
-                    <option value="all" data-i18n="allClasses">
-                      All Classes (A &amp; B)
-                    </option>
-                    <option value="A">Class A</option>
-                    <option value="B">Class B</option>
                   </select>
                 </div>
                 <div class="sales-filter-field col-btn">
@@ -1344,16 +1344,6 @@
             <!-- Filter Card -->
             <div class="sales-filter-card">
               <div class="sales-filter-form-grid">
-                <!-- Date From -->
-                <div class="sales-filter-field col-month">
-                  <label for="missingDateFrom" data-i18n="labelDateFrom">From Date:</label>
-                  <input type="date" id="missingDateFrom" class="form-control" />
-                </div>
-                <!-- Date To -->
-                <div class="sales-filter-field col-month">
-                  <label for="missingDateTo" data-i18n="labelDateTo">To Date:</label>
-                  <input type="date" id="missingDateTo" class="form-control" />
-                </div>
                 <!-- Line Filter (Hidden to prevent duplicate UI conflict with global #reportLineFilter) -->
                 <div class="sales-filter-field col-product" style="display: none;">
                   <label for="missingLineSelect" data-i18n="lineFilterLabel">Product Line:</label>
@@ -1373,6 +1363,16 @@
                 <div class="sales-filter-field col-rep" id="missingRepFilterContainer">
                   <label for="missingRepSelect" data-i18n="filterRep">Medical Rep:</label>
                   <select id="missingRepSelect" class="form-control"></select>
+                </div>
+                <!-- Date From -->
+                <div class="sales-filter-field col-month">
+                  <label for="missingDateFrom" data-i18n="labelDateFrom">From Date:</label>
+                  <input type="date" id="missingDateFrom" class="form-control" />
+                </div>
+                <!-- Date To -->
+                <div class="sales-filter-field col-month">
+                  <label for="missingDateTo" data-i18n="labelDateTo">To Date:</label>
+                  <input type="date" id="missingDateTo" class="form-control" />
                 </div>
                 <!-- Show Button -->
                 <div class="sales-filter-field col-btn">
@@ -3135,22 +3135,22 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v231"></script>
+    <script src="js/interactive-charts.js?v=v232"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v231"></script>
-    <script src="js/export-service.js?v=v231"></script>
-    <script src="js/shared-report.js?v=v231"></script>
-    <script src="js/sales-report.js?v=v231"></script>
-    <script src="js/achievements-report.js?v=v231"></script>
-    <script src="js/timeline-report.js?v=v231"></script>
-    <script src="js/coverage-report.js?v=v231"></script>
-    <script src="js/doctors-report.js?v=v231"></script>
-    <script src="js/hospitals-report.js?v=v231"></script>
-    <script src="js/pharmacies-report.js?v=v231"></script>
-    <script src="js/missing-days-report.js?v=v231"></script>
-    <script src="js/gps-service.js?v=v231"></script>
-    <script src="js/gps-tracing-report.js?v=v231"></script>
-    <script src="js/accounts-costing-report.js?v=v231"></script>
+    <script src="js/excel-templates-data.js?v=v232"></script>
+    <script src="js/export-service.js?v=v232"></script>
+    <script src="js/shared-report.js?v=v232"></script>
+    <script src="js/sales-report.js?v=v232"></script>
+    <script src="js/achievements-report.js?v=v232"></script>
+    <script src="js/timeline-report.js?v=v232"></script>
+    <script src="js/coverage-report.js?v=v232"></script>
+    <script src="js/doctors-report.js?v=v232"></script>
+    <script src="js/hospitals-report.js?v=v232"></script>
+    <script src="js/pharmacies-report.js?v=v232"></script>
+    <script src="js/missing-days-report.js?v=v232"></script>
+    <script src="js/gps-service.js?v=v232"></script>
+    <script src="js/gps-tracing-report.js?v=v232"></script>
+    <script src="js/accounts-costing-report.js?v=v232"></script>
   </body>
 </html>
 
