@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v228";
+  const EXPECTED_SW = "v229";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2359,41 +2359,47 @@ window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
  * @returns {string|null} District Manager user ID or null.
  */
 function getAreaManagerId(area, allUsers = []) {
-  if (!area) return null;
-  if (area.dmId) return area.dmId;
-  if (area.managerId) return area.managerId;
+  try {
+    if (!area) return null;
+    if (area.dmId) return area.dmId;
+    if (area.managerId) return area.managerId;
 
-  const userList = (Array.isArray(allUsers) && allUsers.length > 0)
-    ? allUsers
-    : ((window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const userList = (Array.isArray(allUsers) && allUsers.length > 0)
+      ? allUsers
+      : ((window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || []);
 
-  if (area.repId) {
-    const rep = userList.find((u) => u.id === area.repId);
-    if (rep && rep.managerId) return rep.managerId;
-  }
-
-  const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-  const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && d.area.toLowerCase() === (area.name || "").toLowerCase())) && d.repId);
-  if (docWithRep) {
-    const docRep = userList.find((u) => u.id === docWithRep.repId);
-    if (docRep && docRep.managerId) return docRep.managerId;
-  }
-
-  const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
-  const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && s.area.toLowerCase() === (area.name || "").toLowerCase())) && s.dmId);
-  if (saleWithDm) return saleWithDm.dmId;
-
-  if (area.lineId) {
-    const dmsInLine = userList.filter((u) =>
-      (u.role === "district_manager" || u.role === "dm") &&
-      ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
-    );
-    if (dmsInLine.length === 1) {
-      return dmsInLine[0].id;
+    if (area.repId) {
+      const rep = userList.find((u) => u.id === area.repId);
+      if (rep && rep.managerId) return rep.managerId;
     }
-  }
 
-  return null;
+    const areaNameLower = String(area.name || "").toLowerCase().trim();
+
+    const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+    const docWithRep = allDocs.find((d) => (d.areaId === area.id || (d.area && String(d.area).toLowerCase().trim() === areaNameLower)) && d.repId);
+    if (docWithRep) {
+      const docRep = userList.find((u) => u.id === docWithRep.repId);
+      if (docRep && docRep.managerId) return docRep.managerId;
+    }
+
+    const allSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : (window.DEMO_DATA && window.DEMO_DATA.sales) || []);
+    const saleWithDm = allSales.find((s) => (s.areaId === area.id || (s.area && String(s.area).toLowerCase().trim() === areaNameLower)) && s.dmId);
+    if (saleWithDm) return saleWithDm.dmId;
+
+    if (area.lineId) {
+      const dmsInLine = userList.filter((u) =>
+        (u.role === "district_manager" || u.role === "dm") &&
+        ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
+      );
+      if (dmsInLine.length === 1) {
+        return dmsInLine[0].id;
+      }
+    }
+
+    return null;
+  } catch (err) {
+    return null;
+  }
 }
 window.getAreaManagerId = getAreaManagerId;
 

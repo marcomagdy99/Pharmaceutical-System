@@ -494,6 +494,12 @@ function switchReportTab(tabKey) {
   if (typeof populateUnifiedReportEmployeeFilters === 'function') {
     populateUnifiedReportEmployeeFilters(currentUser, window.selectedReportLineId);
   }
+  // Explicitly ensure the activated tab's employee hierarchy is refreshed
+  if (typeof populateTabHierarchyFilters === 'function') {
+    try {
+      populateTabHierarchyFilters(tabKey, currentUser, window.selectedReportLineId);
+    } catch (e) {}
+  }
   if (tabKey === 'sales') {
     if (typeof window.initPharmSalesFilters === 'function') window.initPharmSalesFilters(currentUser);
     if (typeof window.updatePharmSalesProductsForLine === 'function') window.updatePharmSalesProductsForLine(window.selectedReportLineId || 'all');
@@ -1039,32 +1045,36 @@ function populateTabRepOptions(tabKey, user, lineId) {
 
   // Vacant territory areas (for tabs with areas or Sales/Achievements)
   if (cfg.hasArea || tabKey === 'sales' || tabKey === 'achievements') {
-    let vacantAreas = allAreas.filter(a => !a.repId);
-    if (lineId && lineId !== 'all') {
-      vacantAreas = vacantAreas.filter(a => a.lineId === lineId);
-    }
-    if (selectedDmId && selectedDmId !== 'all') {
-      vacantAreas = vacantAreas.filter(a => {
-        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
-        return mgrId === selectedDmId;
-      });
-    } else if (isDM) {
-      vacantAreas = vacantAreas.filter(a => {
-        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
-        return mgrId === effectiveUser.id;
-      });
-    }
+    try {
+      let vacantAreas = allAreas.filter(a => !a.repId);
+      if (lineId && lineId !== 'all') {
+        vacantAreas = vacantAreas.filter(a => a.lineId === lineId);
+      }
+      if (selectedDmId && selectedDmId !== 'all') {
+        vacantAreas = vacantAreas.filter(a => {
+          const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+          return mgrId === selectedDmId;
+        });
+      } else if (isDM) {
+        vacantAreas = vacantAreas.filter(a => {
+          const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+          return mgrId === effectiveUser.id;
+        });
+      }
 
-    if (vacantAreas.length > 0) {
-      const vacantGroup = document.createElement('optgroup');
-      vacantGroup.label = '📍 Vacant Territory Areas';
-      vacantAreas.forEach(a => {
-        const opt = document.createElement('option');
-        opt.value = `vacant:${a.id}`;
-        opt.textContent = `📍 [Vacant] ${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
-        vacantGroup.appendChild(opt);
-      });
-      repSelect.appendChild(vacantGroup);
+      if (vacantAreas.length > 0) {
+        const vacantGroup = document.createElement('optgroup');
+        vacantGroup.label = '📍 Vacant Territory Areas';
+        vacantAreas.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = `vacant:${a.id}`;
+          opt.textContent = `📍 [Vacant] ${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+          vacantGroup.appendChild(opt);
+        });
+        repSelect.appendChild(vacantGroup);
+      }
+    } catch (vacantErr) {
+      console.warn('[Vacant Territory Warning] Tab ' + tabKey + ':', vacantErr);
     }
   }
 
@@ -1077,11 +1087,10 @@ function populateTabRepOptions(tabKey, user, lineId) {
 
 function populateTabHierarchyFilters(tabKey, user, selectedLineId) {
   const lineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-  populateTabLmOptions(tabKey, user, lineId);
-  populateTabDmOptions(tabKey, user, lineId);
-  populateTabRepOptions(tabKey, user, lineId);
+  try { populateTabLmOptions(tabKey, user, lineId); } catch (e) { console.warn('[LM Option Warning] ' + tabKey + ':', e); }
+  try { populateTabDmOptions(tabKey, user, lineId); } catch (e) { console.warn('[DM Option Warning] ' + tabKey + ':', e); }
+  try { populateTabRepOptions(tabKey, user, lineId); } catch (e) { console.warn('[Rep Option Warning] ' + tabKey + ':', e); }
 }
-
 window.populateTabHierarchyFilters = populateTabHierarchyFilters;
 
 function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
@@ -1089,17 +1098,29 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
   const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
 
   Object.keys(REPORT_TAB_CONFIGS).forEach(tabKey => {
-    populateTabHierarchyFilters(tabKey, effectiveUser, lineId);
+    try {
+      populateTabHierarchyFilters(tabKey, effectiveUser, lineId);
+    } catch (tabErr) {
+      console.warn('[Report Hierarchy Warning] Tab ' + tabKey + ':', tabErr);
+    }
   });
 
-  if (typeof window.populatePharmSalesAreas === 'function') {
-    window.populatePharmSalesAreas(effectiveUser);
+  try {
+    if (typeof window.populatePharmSalesAreas === 'function') {
+      window.populatePharmSalesAreas(effectiveUser);
+    }
+  } catch (e) {
+    console.warn('[Pharm Sales Areas Warning]:', e);
   }
-  if (typeof window.populateAchAreas === 'function') {
-    window.populateAchAreas(effectiveUser);
+
+  try {
+    if (typeof window.populateAchAreas === 'function') {
+      window.populateAchAreas(effectiveUser);
+    }
+  } catch (e) {
+    console.warn('[Ach Areas Warning]:', e);
   }
 }
-
 window.populateUnifiedReportEmployeeFilters = populateUnifiedReportEmployeeFilters;
 window.populateDirectoryRepFilters = populateUnifiedReportEmployeeFilters;
 window.populateTimelineAndCoverageFilters = populateUnifiedReportEmployeeFilters;
