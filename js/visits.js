@@ -886,7 +886,8 @@ function populateVisitsLineFilter() {
  * Determines the manager ID (typically DM) responsible for an area (delegated to app.js).
  */
 function getAreaManagerId(area, allUsers = []) {
-  return window.getAreaManagerId ? window.getAreaManagerId(area, allUsers) : null;
+  const fn = (typeof window !== "undefined" && window.__appGetAreaManagerId);
+  return (typeof fn === "function") ? fn(area, allUsers) : null;
 }
 
 

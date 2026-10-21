@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v230";
+  const EXPECTED_SW = "v231";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2404,6 +2404,7 @@ function getAreaManagerId(area, allUsers = []) {
   }
 }
 window.getAreaManagerId = getAreaManagerId;
+window.__appGetAreaManagerId = getAreaManagerId;
 
 /**
  * Retrieves the DM accompaniment schedule mapping from local cache.

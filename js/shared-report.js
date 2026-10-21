@@ -772,11 +772,12 @@ window.refreshActiveReportIfVisible = function () {
 };
 
 /**
- * Determines the manager ID (typically DM) responsible for an area (delegated to app.js).
+ * Determines the manager ID (typically DM) responsible for an area.
+ * NOTE: Do NOT declare a local getAreaManagerId here — app.js defines the
+ * canonical implementation and exports it as window.getAreaManagerId.
+ * A local function with the same name shadows window.getAreaManagerId,
+ * causing infinite recursion (Maximum call stack size exceeded).
  */
-function getAreaManagerId(area, allUsers = []) {
-  return window.getAreaManagerId ? window.getAreaManagerId(area, allUsers) : null;
-}
 
 // ============================================================================
 // Section 4.5: Unified 4-Tier Cascading Hierarchy Engine (Line -> LM -> DM -> Rep)
