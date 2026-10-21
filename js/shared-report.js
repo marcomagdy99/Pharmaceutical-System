@@ -534,6 +534,7 @@ function switchReportTab(tabKey) {
     window.refreshActiveReportIfVisible();
   }
 }
+window.switchReportTab = switchReportTab;
 
 // ============================================================================
 // Section 6: Cascading Hierarchy Filters Setup
