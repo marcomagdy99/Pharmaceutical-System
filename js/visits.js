@@ -943,7 +943,19 @@ function populateManagerRepDropdown(selectedLineId = "all") {
     );
     const myVacantAreas = vacantAreas.filter((a) => {
       const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
-      return mgrId === currentUser.id || (!mgrId && (!a.lineId || (currentUser.lineIds && currentUser.lineIds.includes(a.lineId)) || currentUser.lineId === a.lineId));
+      if (mgrId === currentUser.id || a.dmId === currentUser.id || a.districtManagerId === currentUser.id) return true;
+      if (currentUser.areaIds && currentUser.areaIds.includes(a.id)) return true;
+      if (currentUser.areaId && currentUser.areaId === a.id) return true;
+      if (!mgrId && !a.dmId && !a.districtManagerId && a.lineId) {
+        const dmsInLine = allUsers.filter((u) =>
+          (u.role === "district_manager" || u.role === "dm") &&
+          ((u.lineIds && u.lineIds.includes(a.lineId)) || u.lineId === a.lineId)
+        );
+        if (dmsInLine.length === 1 && dmsInLine[0].id === currentUser.id) {
+          return true;
+        }
+      }
+      return false;
     });
 
     if (reps.length > 0 || myVacantAreas.length > 0) {
@@ -1229,9 +1241,16 @@ function getAvailableAreas() {
         if (a.repId) return false;
         const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
         if (mgrId === activeUser.id || a.dmId === activeUser.id || a.districtManagerId === activeUser.id) return true;
-        if (!mgrId && !a.dmId && !a.districtManagerId) {
-          const userLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
-          return a.lineId && userLineIds.includes(a.lineId);
+        if (activeUser.areaIds && activeUser.areaIds.includes(a.id)) return true;
+        if (activeUser.areaId && activeUser.areaId === a.id) return true;
+        if (!mgrId && !a.dmId && !a.districtManagerId && a.lineId) {
+          const dmsInLine = allUsers.filter((u) =>
+            (u.role === "district_manager" || u.role === "dm") &&
+            ((u.lineIds && u.lineIds.includes(a.lineId)) || u.lineId === a.lineId)
+          );
+          if (dmsInLine.length === 1 && dmsInLine[0].id === activeUser.id) {
+            return true;
+          }
         }
         return false;
       });

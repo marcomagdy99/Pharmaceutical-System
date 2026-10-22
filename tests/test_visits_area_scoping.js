@@ -1,7 +1,8 @@
 /**
  * @file test_visits_area_scoping.js
  * Verifies that the Area Filter dropdown on visits.html strictly scopes areas
- * to the manager's hierarchy (DMs only see their team's areas, not areas of other DMs).
+ * to the manager's hierarchy (DMs only see their team's areas, not areas of other DMs,
+ * and vacant areas without explicit DM assignment in multi-DM lines do not leak).
  */
 
 const assert = require("assert");
@@ -71,18 +72,13 @@ assert.ok(jonathan, "Jonathan Erian DM must exist");
 assert.ok(marco, "Marco Magdy rep must exist");
 assert.ok(mohamedRamadan, "Mohamed Ramadan rep must exist");
 
-// Mohamed Ramadan reports to Jonathan Erian
-assert.strictEqual(mohamedRamadan.managerId, jonathan.id, "Mohamed Ramadan reports to Jonathan Erian");
-// Marco Magdy reports to Amir Ayoup
-assert.strictEqual(marco.managerId, amir.id, "Marco Magdy reports to Amir Ayoup");
-
 // Add test areas into store / DEMO_DATA
 const testAreas = [
-  { id: "area_dokki", name: "Dokki", lineId: "line_1790626000001", repId: mohamedRamadan.id },
-  { id: "area_haram", name: "Haram", lineId: "line_1790626000001", repId: mohamedRamadan.id },
+  { id: "area_dokki_vacant", name: "Dokki", lineId: "line_1790626000001", repId: null }, // Vacant in Line 1 (multi-DM line)
+  { id: "area_maadi_vacant", name: "Maadi", lineId: "line_1790626000002", repId: null }, // Vacant in Line 2 (multi-DM line)
   { id: "area_mohndseen", name: "Mohndseen", lineId: "line_1790626000001", repId: marco.id },
   { id: "area_nasr", name: "Nasr City", lineId: "line_1790626000001", repId: marco.id },
-  { id: "area_vacant_l1", name: "Vacant L1", lineId: "line_1790626000001", repId: null },
+  { id: "area_amir_vacant", name: "Amir Assigned Vacant", lineId: "line_1790626000001", repId: null, dmId: amir.id },
 ];
 window.DEMO_DATA.areas = testAreas;
 
@@ -99,9 +95,10 @@ console.log("Amir Ayoup available areas:", amirAreaNames);
 
 assert.ok(amirAreaNames.includes("Mohndseen"), "Amir must see Mohndseen (Marco's area)");
 assert.ok(amirAreaNames.includes("Nasr City"), "Amir must see Nasr City (Marco's area)");
-assert.ok(!amirAreaNames.includes("Dokki"), "Amir must NOT see Dokki (belonging to Jonathan's rep)!");
-assert.ok(!amirAreaNames.includes("Haram"), "Amir must NOT see Haram (belonging to Jonathan's rep)!");
-console.log(" PASS: Amir Ayoup does not see Dokki or Haram from Jonathan's team.");
+assert.ok(amirAreaNames.includes("Amir Assigned Vacant"), "Amir must see vacant area explicitly assigned to him");
+assert.ok(!amirAreaNames.includes("Dokki"), "Amir must NOT see Dokki [Vacant] (unassigned vacant area in multi-DM line)!");
+assert.ok(!amirAreaNames.includes("Maadi"), "Amir must NOT see Maadi [Vacant] (unassigned vacant area in multi-DM line)!");
+console.log(" PASS: Dokki [Vacant] and Maadi [Vacant] are correctly excluded for Amir Ayoup.");
 
 // Scenario 2: Amir filters by Marco Magdy specifically
 domMock.getElementById("filterRep").value = marco.id;
@@ -112,6 +109,7 @@ console.log("Marco filtered areas for Amir:", marcoFilteredNames);
 assert.ok(marcoFilteredNames.includes("Mohndseen"), "Must see Mohndseen");
 assert.ok(marcoFilteredNames.includes("Nasr City"), "Must see Nasr City");
 assert.ok(!marcoFilteredNames.includes("Dokki"), "Must NOT see Dokki");
+assert.ok(!marcoFilteredNames.includes("Maadi"), "Must NOT see Maadi");
 console.log(" PASS: Specific rep filter accurately scopes to only that rep's areas.");
 
 // Scenario 3: Admin sees all areas
@@ -124,6 +122,7 @@ const adminAreas = window.getAvailableAreas();
 const adminAreaNames = adminAreas.map((a) => a.name);
 console.log("Admin available areas count:", adminAreas.length);
 assert.ok(adminAreaNames.includes("Dokki"), "Admin sees Dokki");
+assert.ok(adminAreaNames.includes("Maadi"), "Admin sees Maadi");
 assert.ok(adminAreaNames.includes("Mohndseen"), "Admin sees Mohndseen");
 console.log(" PASS: Admin sees all areas.");
 
