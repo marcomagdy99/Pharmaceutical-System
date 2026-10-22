@@ -1740,21 +1740,11 @@ function renderDMDashboard(userName, user) {
 
       <div class="dashboard-card dm-schedule-card">
         <div class="dm-schedule-header">
-          <div>
-            <div class="dm-schedule-header-title-wrap">
-              <span class="dm-followup-icon">🤝</span>
-              <h3 class="card-title dm-followup-title">
-                Field Accompaniment Schedule (Co-Visiting)
-              </h3>
-            </div>
-            <div class="dm-schedule-tabs-wrap">
-              <button type="button" class="dm-schedule-tab-btn ${activeTab === "all" ? "active" : ""}" onclick="window.switchDmScheduleTab('all')">
-                📋 All Scheduled Days (${scheduledDates.length})
-              </button>
-              <button type="button" class="dm-schedule-tab-btn ${activeTab === "daily" ? "active" : ""}" onclick="window.switchDmScheduleTab('daily')">
-                📅 Daily View
-              </button>
-            </div>
+          <div class="dm-schedule-header-title-wrap">
+            <span class="dm-followup-icon">🤝</span>
+            <h3 class="card-title dm-followup-title">
+              Field Accompaniment Schedule (Co-Visiting)
+            </h3>
           </div>
 
           <div class="dm-schedule-nav-btn">
@@ -1762,6 +1752,15 @@ function renderDMDashboard(userName, user) {
               📋 <span>Review Plans & Schedule Accompaniment</span>
             </a>
           </div>
+        </div>
+
+        <div class="dm-schedule-tabs-wrap">
+          <button type="button" class="dm-schedule-tab-btn ${activeTab === "all" ? "active" : ""}" onclick="window.switchDmScheduleTab('all')">
+            📋 All Scheduled Days (${scheduledDates.length})
+          </button>
+          <button type="button" class="dm-schedule-tab-btn ${activeTab === "daily" ? "active" : ""}" onclick="window.switchDmScheduleTab('daily')">
+            📅 Daily View
+          </button>
         </div>
 
         ${

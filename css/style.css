@@ -1112,7 +1112,8 @@ body[data-theme="dark"],
   --gray-600: #c2c7d0;
   --gray-700: #dee2e6;
   --gray-800: #f1f3f5;
-  --primary-light: #162a4a;
+  --primary-light: #93c5fd;
+  --primary-surface: #162a4a;
   --surface: #1e2229;
   --surface-card: #1e2229;
   --surface-body: #121418;

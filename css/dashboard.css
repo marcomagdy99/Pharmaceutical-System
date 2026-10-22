@@ -591,9 +591,9 @@
 /* --- START: Dark Mode Support --- */
 [data-theme="dark"] .stat-card,
 [data-theme="dark"] .dashboard-card {
-    background-color: var(--surface-card);
-    color: var(--text-primary);
-    border: 1px solid #2d3340;
+    background-color: var(--surface-card, #1e2229) !important;
+    color: #f8fafc !important;
+    border: 1px solid #2d3340 !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
@@ -601,22 +601,29 @@
     color: var(--text-primary);
 }
 
-[data-theme="dark"] .stat-label {
-    color: var(--text-muted);
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .stat-label-flex,
+[data-theme="dark"] .stat-label-flex span {
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
 }
 
-[data-theme="dark"] .stat-card-link {
-    color: var(--text-muted);
+[data-theme="dark"] .stat-card-link,
+[data-theme="dark"] .stat-card-link-text {
+    color: #60a5fa !important;
+    font-weight: 700 !important;
 }
+[data-theme="dark"] .stat-card-link-card:hover .stat-card-link-text,
 [data-theme="dark"] .stat-card:hover .stat-card-link {
-    color: var(--primary-light);
+    color: #93c5fd !important;
+    text-decoration: underline !important;
 }
 
-[data-theme="dark"] .stat-card .stat-value.primary { color: var(--primary-light); }
-[data-theme="dark"] .stat-card .stat-value.success { color: var(--success); }
-[data-theme="dark"] .stat-card .stat-value.warning { color: var(--warning); }
-[data-theme="dark"] .stat-card .stat-value.danger  { color: var(--danger); }
-[data-theme="dark"] .stat-card .stat-value.purple  { color: var(--purple-text); }
+[data-theme="dark"] .stat-card .stat-value.primary { color: #60a5fa !important; }
+[data-theme="dark"] .stat-card .stat-value.success { color: #4ade80 !important; }
+[data-theme="dark"] .stat-card .stat-value.warning { color: #fbbf24 !important; }
+[data-theme="dark"] .stat-card .stat-value.danger  { color: #f87171 !important; }
+[data-theme="dark"] .stat-card .stat-value.purple  { color: #c084fc !important; }
 
 [data-theme="dark"] .activity-item {
     background: var(--surface-subtle);
@@ -2612,7 +2619,7 @@
   color: var(--primary);
 }
 [data-theme="dark"] .stat-card-link-text {
-  color: var(--primary-light);
+  color: #60a5fa !important;
 }
 
 /* DM Accompaniment Schedule Header & Card */
@@ -2620,15 +2627,27 @@
   margin-bottom: 20px;
   border-inline-start: 4px solid var(--primary);
 }
+.dm-schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
 .dm-schedule-header-title-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+.dm-schedule-nav-btn {
+  display: inline-flex;
+  align-items: center;
+}
 .dm-schedule-tabs-wrap {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-bottom: 16px;
   align-items: center;
   flex-wrap: wrap;
 }
