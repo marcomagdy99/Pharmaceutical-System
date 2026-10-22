@@ -1083,49 +1083,92 @@ window.onVisitsRepFilterChange = function (selectedRepId) {
 };
 
 function getAvailableAreas() {
+  const activeUser =
+    (typeof checkAuth === "function" ? checkAuth() : null) ||
+    (window.checkAuth && window.checkAuth()) ||
+    currentUser ||
+    {};
+  const activeRole = window.normalizeRole
+    ? window.normalizeRole(activeUser.role)
+    : (activeUser.role || currentUserRole || "").toLowerCase();
+  const isMgr =
+    (window.isManagerRole
+      ? window.isManagerRole(activeUser)
+      : activeRole !== "medical_rep" && activeRole !== "rep") ||
+    activeRole === "hr";
+
   const allAreas =
     (window.store && window.store.areas
       ? window.store.areas.getAll()
       : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+  const allUsers =
+    (window.store && window.store.users
+      ? window.store.users.getAll()
+      : null) ||
+    (window.DEMO_DATA && window.DEMO_DATA.users) ||
+    [];
 
-  if (!isManager) {
-    // 1. Identify product lines assigned to this medical rep
-    const repLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
-
-    // 2. Fetch areas specifically assigned to this rep from the store
-    let repAreas =
+  function getRepAssignedAreas(repId) {
+    if (!repId) return [];
+    const repUser = allUsers.find((u) => u.id === repId);
+    let rAreas =
       window.store && window.store.areas
-        ? window.store.areas.getByRep(currentUser.id)
+        ? window.store.areas.getByRep(repId)
         : [];
-
-    // 3. Fallback to user object's area attributes if store has no explicit area assignments
-    if (!repAreas || repAreas.length === 0) {
+    if (!rAreas || rAreas.length === 0) {
+      rAreas = allAreas.filter((a) => a.repId === repId);
+    }
+    if (repUser) {
       if (
-        currentUser.areaIds &&
-        Array.isArray(currentUser.areaIds) &&
-        currentUser.areaIds.length > 0
+        repUser.areaIds &&
+        Array.isArray(repUser.areaIds) &&
+        repUser.areaIds.length > 0
       ) {
-        repAreas = allAreas.filter((a) => currentUser.areaIds.includes(a.id));
-      } else if (currentUser.areaId) {
-        repAreas = allAreas.filter((a) => a.id === currentUser.areaId);
-      } else if (currentUser.area) {
-        const names = currentUser.area.split(",").map((s) => s.trim().toLowerCase());
-        repAreas = allAreas.filter((a) => names.includes((a.name || "").toLowerCase().trim()));
+        const byIds = allAreas.filter((a) => repUser.areaIds.includes(a.id));
+        rAreas = [...rAreas, ...byIds];
+      }
+      if (repUser.areaId) {
+        const byId = allAreas.find((a) => a.id === repUser.areaId);
+        if (byId) rAreas.push(byId);
+      }
+      if (repUser.area) {
+        const names = repUser.area
+          .split(",")
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
+        const byName = allAreas.filter((a) =>
+          names.includes((a.name || "").trim().toLowerCase()),
+        );
+        rAreas = [...rAreas, ...byName];
       }
     }
-
-    // 4. Fallback to areas of doctors assigned to this rep
-    if (!repAreas || repAreas.length === 0) {
-      const myDocs = getMockDoctors().filter((d) => d.repId === currentUser.id);
-      const docAreaNames = [...new Set(myDocs.map((d) => d.area).filter(Boolean))];
+    if (!rAreas || rAreas.length === 0) {
+      const myDocs = (typeof getMockDoctors === "function" ? getMockDoctors() : []).filter(
+        (d) => d.repId === repId,
+      );
       const docAreaIds = [...new Set(myDocs.map((d) => d.areaId).filter(Boolean))];
-      repAreas = allAreas.filter(
-        (a) => docAreaIds.includes(a.id) || docAreaNames.includes(a.name),
+      const docAreaNames = [
+        ...new Set(myDocs.map((d) => (d.area || "").trim().toLowerCase()).filter(Boolean)),
+      ];
+      rAreas = allAreas.filter(
+        (a) =>
+          docAreaIds.includes(a.id) ||
+          docAreaNames.includes((a.name || "").trim().toLowerCase()),
       );
     }
+    const seen = new Set();
+    return rAreas.filter((a) => {
+      if (!a || !a.id || seen.has(a.id)) return false;
+      seen.add(a.id);
+      return true;
+    });
+  }
 
-    // STRICT ISOLATION: If the rep has NO assigned area or doctors, return empty array!
-    // Never leak other reps' areas or whole company areas to an unassigned rep.
+  if (!isMgr) {
+    const repLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
+    let repAreas = getRepAssignedAreas(activeUser.id);
+
+    // STRICT ISOLATION: If the rep has NO assigned area or doctors, return empty array
     if (!repAreas || repAreas.length === 0) {
       return [];
     }
@@ -1145,24 +1188,101 @@ function getAvailableAreas() {
 
   let finalAreas = allAreas;
   const filterRepVal = document.getElementById("filterRep")?.value || "all";
+
   if (filterRepVal.startsWith("vacant:")) {
     const vAreaId = filterRepVal.split(":")[1];
     finalAreas = allAreas.filter((a) => a.id === vAreaId);
   } else if (filterRepVal !== "all" && !filterRepVal.startsWith("all_")) {
-    const repAreas =
-      window.store && window.store.areas
-        ? window.store.areas.getByRep(filterRepVal)
-        : [];
-    if (repAreas.length > 0) {
-      finalAreas = repAreas;
+    if (filterRepVal === activeUser.id) {
+      let myDirectAreas = getRepAssignedAreas(activeUser.id);
+      if (myDirectAreas.length === 0) {
+        const teamSubs = allUsers.filter((u) => u.managerId === activeUser.id);
+        teamSubs.forEach((sub) => {
+          myDirectAreas.push(...getRepAssignedAreas(sub.id));
+        });
+      }
+      finalAreas = myDirectAreas;
     } else {
-      finalAreas = allAreas.filter((a) => a.repId === filterRepVal);
+      finalAreas = getRepAssignedAreas(filterRepVal);
     }
   } else {
-    // If a Line Manager or District Manager views all, scope strictly to their assigned product lines
-    const mgrLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
-    if (mgrLineIds.length > 0 && currentUserRole !== "admin" && currentUserRole !== "hr") {
-      finalAreas = allAreas.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
+    // All Team in Line view (or all_reps / all_dms / all_lms)
+    if (activeRole === "admin" || activeRole === "hr") {
+      finalAreas = allAreas;
+    } else if (activeRole === "district_manager" || activeRole === "dm") {
+      const myReps = allUsers.filter((u) => u.managerId === activeUser.id);
+      let dmAreas = [];
+      myReps.forEach((r) => {
+        dmAreas.push(...getRepAssignedAreas(r.id));
+      });
+      const directDmAreas = allAreas.filter(
+        (a) =>
+          a.repId === activeUser.id ||
+          a.dmId === activeUser.id ||
+          a.districtManagerId === activeUser.id ||
+          (activeUser.areaIds && activeUser.areaIds.includes(a.id)) ||
+          (activeUser.areaId && activeUser.areaId === a.id),
+      );
+      dmAreas.push(...directDmAreas);
+
+      const vacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+        if (mgrId === activeUser.id || a.dmId === activeUser.id || a.districtManagerId === activeUser.id) return true;
+        if (!mgrId && !a.dmId && !a.districtManagerId) {
+          const userLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
+          return a.lineId && userLineIds.includes(a.lineId);
+        }
+        return false;
+      });
+      dmAreas.push(...vacantAreas);
+      finalAreas = dmAreas;
+    } else if (activeRole === "line_manager" || activeRole === "lm") {
+      const myDMs = allUsers.filter((u) => u.managerId === activeUser.id && (u.role === "district_manager" || u.role === "dm"));
+      const myDmIds = myDMs.map((u) => u.id);
+      const myReps = allUsers.filter((u) => myDmIds.includes(u.managerId) || u.managerId === activeUser.id);
+      let lmAreas = [];
+      [...myDMs, ...myReps].forEach((u) => {
+        lmAreas.push(...getRepAssignedAreas(u.id));
+      });
+      const directLmAreas = allAreas.filter(
+        (a) =>
+          a.repId === activeUser.id ||
+          (activeUser.areaIds && activeUser.areaIds.includes(a.id)) ||
+          (activeUser.areaId && activeUser.areaId === a.id),
+      );
+      lmAreas.push(...directLmAreas);
+
+      const vacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
+        if (mgrId === activeUser.id || myDmIds.includes(mgrId)) return true;
+        if (!mgrId && !a.dmId && !a.districtManagerId) {
+          const userLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
+          return a.lineId && userLineIds.includes(a.lineId);
+        }
+        return false;
+      });
+      lmAreas.push(...vacantAreas);
+      finalAreas = lmAreas;
+    } else if (activeRole === "business_unit" || activeRole === "bu") {
+      const subordinates = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(activeUser.id) : [];
+      let buAreas = [];
+      subordinates.forEach((sub) => {
+        buAreas.push(...getRepAssignedAreas(sub.id));
+      });
+      const buLines = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
+      const lineAreas = allAreas.filter((a) => a.lineId && buLines.includes(a.lineId));
+      buAreas.push(...lineAreas);
+      finalAreas = buAreas;
+    } else if (activeRole === "product_manager" || activeRole === "pm") {
+      const pmLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
+      finalAreas = allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId));
+    } else {
+      const userLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
+      if (userLineIds.length > 0) {
+        finalAreas = allAreas.filter((a) => a.lineId && userLineIds.includes(a.lineId));
+      }
     }
   }
 
@@ -1172,11 +1292,16 @@ function getAvailableAreas() {
     finalAreas = finalAreas.filter((a) => !a.lineId || a.lineId === filterLineVal);
   }
 
-  return finalAreas;
+  // Deduplicate by area ID
+  const seenAreaIds = new Set();
+  return finalAreas.filter((a) => {
+    if (!a || !a.id || seenAreaIds.has(a.id)) return false;
+    seenAreaIds.add(a.id);
+    return true;
+  });
 }
 
 function populateAreaFilters() {
-
   const areas = getAvailableAreas();
 
   // Deduplicate by normalized area name to prevent duplicate labels (e.g. across lines)
@@ -1208,6 +1333,11 @@ function populateAreaFilters() {
       });
     }
     timelineFilter.innerHTML = html;
+    if (curVal && curVal !== "all" && !uniqueAreas.some((a) => a.id === curVal || a.name === curVal)) {
+      timelineFilter.value = "all";
+    } else if (curVal) {
+      timelineFilter.value = curVal;
+    }
   }
 
   const bulkFilter = document.getElementById("bulkAreaFilter");
@@ -1228,8 +1358,14 @@ function populateAreaFilters() {
       });
     }
     bulkFilter.innerHTML = html;
+    if (curVal && curVal !== "all" && !uniqueAreas.some((a) => a.id === curVal || a.name === curVal)) {
+      bulkFilter.value = "all";
+    } else if (curVal) {
+      bulkFilter.value = curVal;
+    }
   }
 }
+
 window.populateAreaFilters = populateAreaFilters;
 window.getAvailableAreas = getAvailableAreas;
 
