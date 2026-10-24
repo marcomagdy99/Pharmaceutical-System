@@ -299,7 +299,7 @@
     const userLines = Core.getUserAssignedLines(Core._state.currentUser);
     const lineSelect = document.getElementById("expenseFormLineSelect") || document.getElementById("expenseLineSelect");
     if (lineSelect) {
-      lineSelect.innerHTML = userLines.map((l) => `<option value="${l.id}">${l.name}</option>`).join("");
+      lineSelect.innerHTML = userLines.map((l) => `<option value="${Core.escapeHTML(l.id)}">${Core.escapeHTML(l.name)}</option>`).join("");
       if (userLines.length > 0) lineSelect.value = userLines[0].id;
     }
 

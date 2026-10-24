@@ -727,12 +727,17 @@ function setupAdminQuizTools(allReps) {
         const existingScore = scores.find((s) => s.quizId === selectedQuizId && s.userId === rep.id);
         const val = existingScore ? existingScore.score : '';
 
+        const esc = window.escapeHtml || ((s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
+        const safeRepName = esc(repName);
+        const safeRawName = esc(rep.name);
+        const safeRepId = esc(rep.id);
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="fw-medium ps-3">${repName}</td>
+          <td class="fw-medium ps-3">${safeRepName}</td>
           <td class="pe-3">
             <div class="input-group" style="max-width: 170px;">
-              <input type="number" class="form-control score-input" data-rep-id="${rep.id}" data-rep-name="${rep.name}" min="0" max="${totalMarks}" value="${val}" style="border-radius: 10px 0 0 10px;">
+              <input type="number" class="form-control score-input" data-rep-id="${safeRepId}" data-rep-name="${safeRawName}" min="0" max="${totalMarks}" value="${val}" style="border-radius: 10px 0 0 10px;">
               <span class="input-group-text quiz-input-addon" style="border-radius: 0 10px 10px 0;">/ ${totalMarks}</span>
             </div>
           </td>

@@ -176,18 +176,24 @@
           ? `<span class="badge bulk-target-already-badge">✓ Already Scheduled</span>`
           : "";
 
+        const esc = window.escapeHtml || ((s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
+        const safeTargetId = esc(target.id);
+        const safeTargetName = esc(target.name);
+        const safeMeta = isHospital ? esc(target.address || "Hospital") : `${esc(target.specialty || "General")} • Class ${esc(target.class || "A")}`;
+        const safeClass = esc(target.class || "A");
+
         const itemDiv = document.createElement("label");
         itemDiv.className = `bulk-target-item${isAlready ? " bulk-target-already-scheduled" : ""}`;
         itemDiv.innerHTML = `
-          <input type="checkbox" class="bulk-target-cb" value="${target.id}" data-name="${target.name}" ${isAlready ? "disabled" : 'onchange="visitsApp.updateBulkCounter()"'} title="${isAlready ? 'Already scheduled today' : ''}">
+          <input type="checkbox" class="bulk-target-cb" value="${safeTargetId}" data-name="${safeTargetName}" ${isAlready ? "disabled" : 'onchange="visitsApp.updateBulkCounter()"'} title="${isAlready ? 'Already scheduled today' : ''}">
           <div class="bulk-target-info">
-            <div class="bulk-target-name">${target.name}${areaBadge}${scheduledBadge}</div>
+            <div class="bulk-target-name">${safeTargetName}${areaBadge}${scheduledBadge}</div>
             <div class="bulk-target-meta">
-              ${isHospital ? target.address || "Hospital" : `${target.specialty || "General"} • Class ${target.class || "A"}`}
+              ${safeMeta}
             </div>
           </div>
           <span class="badge ${isHospital ? "bulk-target-badge-hosp" : "bulk-target-badge-class"}">
-            ${isHospital ? "Hospital" : `Class ${target.class || "A"}`}
+            ${isHospital ? "Hospital" : `Class ${safeClass}`}
           </span>
         `;
         container.appendChild(itemDiv);

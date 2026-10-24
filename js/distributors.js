@@ -2648,7 +2648,7 @@ function handleExcelUpload(e) {
       if (panel) {
         panel.style.display = "block";
         const replacedNote = replacingPreviousBatch ? " (replaced a previous upload for this month/distributor)" : "";
-        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
+        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${window.escapeHtml(dist.name)}" for ${window.escapeHtml(monthKey)}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
       }
 
       renderImportBatches();

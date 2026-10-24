@@ -1008,7 +1008,7 @@ function handleExcelUpload(e) {
       if (panel) {
         panel.style.display = 'block';
         const replacedNote = replacingPreviousBatch ? ' (replaced a previous upload for this month/distributor)' : '';
-        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${dist.name}" for ${monthKey}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
+        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${window.escapeHtml(dist.name)}" for ${window.escapeHtml(monthKey)}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
       }
 
       if (progress) {

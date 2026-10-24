@@ -309,9 +309,10 @@ window.openDmTeamModal = function (dmId) {
             }
             if (!areaName) areaName = "Unassigned";
 
-            const repCode = r.employeeCode || r.code || "REP";
-            const repName = r.name;
-            const initials = getInitials(r.name);
+            const repCode = escapeHtml(r.employeeCode || r.code || "REP");
+            const repName = escapeHtml(r.name);
+            const safeAreaName = escapeHtml(areaName);
+            const initials = escapeHtml(getInitials(r.name));
             const isActive = (r.status || "Active").toLowerCase() === "active";
 
             return `
@@ -326,9 +327,9 @@ window.openDmTeamModal = function (dmId) {
                   </div>
                   <div class="dm-team-rep-meta">
                     <span class="dm-team-rep-tag">🆔 ${repCode}</span>
-                    <span class="dm-team-rep-tag">📍 ${areaName}</span>
-                    ${r.phone ? `<span class="dm-team-rep-tag" title="${r.phone}">📞 <span dir="ltr">${r.phone}</span></span>` : ""}
-                    ${r.email ? `<span class="dm-team-rep-tag" title="${r.email}">✉️ ${r.email}</span>` : ""}
+                    <span class="dm-team-rep-tag">📍 ${safeAreaName}</span>
+                    ${r.phone ? `<span class="dm-team-rep-tag" title="${escapeHtml(r.phone)}">📞 <span dir="ltr">${escapeHtml(r.phone)}</span></span>` : ""}
+                    ${r.email ? `<span class="dm-team-rep-tag" title="${escapeHtml(r.email)}">✉️ ${escapeHtml(r.email)}</span>` : ""}
                   </div>
                 </div>
               </div>
@@ -348,14 +349,14 @@ window.openDmTeamModal = function (dmId) {
         <div class="dm-team-modal-header-info">
           <h3 class="dm-team-modal-title" id="dmTeamModalTitle">
             <span>👥</span>
-            <span>${dm.name}</span>
+            <span>${escapeHtml(dm.name)}</span>
           </h3>
           <div class="dm-team-modal-subtitle">
-            <span>🆔 ${dmCode}</span>
+            <span>🆔 ${escapeHtml(dmCode)}</span>
             <span>•</span>
-            <span>🏷️ ${dmLineText}</span>
+            <span>🏷️ ${escapeHtml(dmLineText)}</span>
             <span>•</span>
-            <span class="dm-team-count-highlight">${repsCountText}</span>
+            <span class="dm-team-count-highlight">${escapeHtml(repsCountText)}</span>
           </div>
         </div>
         <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="Close">✕</button>
@@ -2116,7 +2117,7 @@ function renderDMDashboard(userName, user) {
 
                   rowsHtml.push(`
                     <tr>
-                      <td class="dm-rep-name">${r.name}</td>
+                      <td class="dm-rep-name">${escapeHtml(r.name)}</td>
                       <td class="dm-ach-pct text-end">${achPct}%</td>
                     </tr>
                   `);
@@ -2323,8 +2324,8 @@ function renderLMDashboard(userName, user) {
                         return `
                           <tr>
                             <td class="fw-bold">
-                              ${dm.name}
-                              <div class="feed-cell-secondary">${dm.employeeCode || dm.code || "DM-001"}</div>
+                              ${escapeHtml(dm.name)}
+                              <div class="feed-cell-secondary">${escapeHtml(dm.employeeCode || dm.code || "DM-001")}</div>
                             </td>
                             <td>
                               <div class="d-flex align-items-center gap-2 flex-wrap">

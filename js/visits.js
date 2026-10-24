@@ -2251,7 +2251,9 @@ function populateVisitProducts(selectedProducts = [], targetRepId = null) {
       selectedList.includes(prod.id) ||
       selectedList.includes(displayName) ||
       selectedList.includes(prod.name);
-    label.innerHTML = `<input type="checkbox" value="${prod.id}" data-name="${displayName}" ${isChecked ? "checked" : ""}> ${displayName}`;
+    const safeProdId = window.escapeHtml ? window.escapeHtml(prod.id) : prod.id;
+    const safeDisplayName = window.escapeHtml ? window.escapeHtml(displayName) : displayName;
+    label.innerHTML = `<input type="checkbox" value="${safeProdId}" data-name="${safeDisplayName}" ${isChecked ? "checked" : ""}> ${safeDisplayName}`;
     container.appendChild(label);
   });
 }
@@ -2405,7 +2407,9 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
       selectedCompanions.some((c) => c.includes(m.name) || c.includes(m.id));
     const lbl = document.createElement("label");
     lbl.className = "checkbox-label companion-chip";
-    lbl.innerHTML = `<input type="checkbox" name="doubleCompanion" value="${val}" data-user-id="${m.id}" ${isChecked ? "checked" : ""}> ${val}`;
+    const safeVal = window.escapeHtml ? window.escapeHtml(val) : val;
+    const safeUserId = window.escapeHtml ? window.escapeHtml(m.id) : m.id;
+    lbl.innerHTML = `<input type="checkbox" name="doubleCompanion" value="${safeVal}" data-user-id="${safeUserId}" ${isChecked ? "checked" : ""}> ${safeVal}`;
     container.appendChild(lbl);
   });
 }
