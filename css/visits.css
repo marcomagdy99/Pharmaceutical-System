@@ -1560,10 +1560,91 @@
 }
 
 .btn-check-gps {
-    padding: 4px 12px;
-    font-size: 0.8rem;
+    padding: 6px 14px;
+    font-size: 0.82rem;
     font-weight: 600;
     border-radius: 6px;
+}
+
+.visit-gps-pin-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.btn-pin-clinic {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #10b981 !important;
+    color: #ffffff !important;
+    border: 1px solid #059669 !important;
+    padding: 7px 15px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-pin-clinic:hover {
+    background: #059669 !important;
+    border-color: #047857 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+}
+
+.btn-relocate-clinic {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f59e0b !important;
+    color: #ffffff !important;
+    border: 1px solid #d97706 !important;
+    padding: 7px 15px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-relocate-clinic:hover {
+    background: #d97706 !important;
+    border-color: #b45309 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="dark"] .visit-gps-pin-bar {
+    border-top-color: #334155;
+}
+
+[data-theme="dark"] .btn-pin-clinic {
+    background: #059669 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="dark"] .btn-pin-clinic:hover {
+    background: #10b981 !important;
+}
+
+[data-theme="dark"] .btn-relocate-clinic {
+    background: #d97706 !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="dark"] .btn-relocate-clinic:hover {
+    background: #f59e0b !important;
 }
 
 .visit-gps-distance {

@@ -1042,11 +1042,16 @@
         autoSave("accountLocationRequests", "create", item);
 
         if (typeof window.addWorkflowNotification === "function" && initialStatus !== "approved") {
+          const allUsers = (store.users ? store.users.getAll() : (window.DEMO_DATA.users || []));
+          const repUser = allUsers.find((u) => u.id === item.repId);
+          const recipientId = (repUser && repUser.managerId) ? repUser.managerId : "all";
+
           window.addWorkflowNotification({
+            userId: recipientId,
             type: "location_pin_request",
             title: item.requestType === "relocation" ? "Clinic Relocation Request" : "Clinic Location Pin Request",
             message: `Rep ${item.repName} requested GPS pin for ${item.targetName}`,
-            link: "visits.html",
+            link: "activities.html#locations",
             icon: "📍",
             badgeClass: "bg-warning",
             actorName: item.repName,
@@ -1144,6 +1149,19 @@
 
         if (item.status === "approved") {
           this._applyCoordinates(item);
+          if (typeof window.addWorkflowNotification === "function" && item.repId) {
+            window.addWorkflowNotification({
+              userId: item.repId,
+              type: "location_pin_approval",
+              title: "Clinic Location Pin Approved",
+              message: `Manager (${actorUser ? actorUser.name : "Manager"}) approved verified GPS location for ${item.targetName}.`,
+              link: "visits.html",
+              icon: "📍",
+              badgeClass: "bg-success",
+              actorName: actorUser ? actorUser.name : "Manager",
+              action: "approved"
+            });
+          }
         }
 
         autoSave("accountLocationRequests", "update", item);
@@ -1159,6 +1177,22 @@
         item.decisionAt = new Date().toISOString();
         item.decisionBy = actorUser ? actorUser.name : "Manager";
         item.decisionComment = comment;
+        if (typeof window.addWorkflowNotification === "function" && item.repId) {
+          window.addWorkflowNotification({
+            userId: item.repId,
+            type: "location_pin_rejection",
+            title: "Clinic Location Pin Rejected",
+            message: comment
+              ? `Manager (${actorUser ? actorUser.name : "Manager"}) rejected GPS pin for ${item.targetName}: ${comment}`
+              : `Manager (${actorUser ? actorUser.name : "Manager"}) rejected GPS pin request for ${item.targetName}.`,
+            note: comment || null,
+            link: "visits.html",
+            icon: "📍",
+            badgeClass: "bg-danger",
+            actorName: actorUser ? actorUser.name : "Manager",
+            action: "rejected"
+          });
+        }
         autoSave("accountLocationRequests", "update", item);
         return item;
       }

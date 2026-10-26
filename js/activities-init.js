@@ -259,9 +259,18 @@
       console.warn("setupModalBackdropsAndShortcuts warning:", e);
     }
 
+    const initialHash = (window.location.hash || "").replace("#", "");
+    if (initialHash === "locations" || initialHash === "tab-locations") {
+      Core._state.activeTab = "tab-locations";
+    }
+
     // Render active tab IMMEDIATELY so the view is painted without delay
     try {
-      if (Core._state.activeTab === Core.TABS.ACTIVITIES) {
+      if (Core._state.activeTab === "tab-locations") {
+        document.getElementById("tabBtnLocationRequests")?.classList.add("active");
+        document.getElementById("pane-locations")?.classList.add("active");
+        renderLocationRequestsTable();
+      } else if (Core._state.activeTab === Core.TABS.ACTIVITIES) {
         window.ActivitiesDaily?.renderActivitiesView?.();
       } else if (Core._state.activeTab === Core.TABS.EXPENSES) {
         window.ActivitiesExpenses?.renderExpensesTab?.();
@@ -297,6 +306,13 @@
   }
 
   // Reactive Wakeup: Listen for store changes across the app
+  window.addEventListener("hashchange", () => {
+    const h = (window.location.hash || "").replace("#", "");
+    if (h === "locations" || h === "tab-locations") {
+      switchTab("tab-locations");
+    }
+  });
+
   document.addEventListener("pharma:store:changed", (e) => {
     const entity = e.detail?.entity;
     if (entity === "activities" && Core._state.activeTab === Core.TABS.ACTIVITIES) {
