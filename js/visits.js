@@ -105,7 +105,6 @@ const visitTranslations = {
     fromPlanStat: "From Plan:",
     jointVisitsCount: "Joint Visits:",
     noTimelineEvents: "No visits or activities recorded on this date",
-    selectAnotherDate: "Select another date like 2026-09-02 or 2026-09-03",
     entryTimestamp: "Entry Timestamp:",
     loggedActivity: "Logged Activity",
     supervisoryVisit: "DM Single",
@@ -1927,7 +1926,6 @@ function renderVisitsTimeline(triggeredByShow = false) {
       <div class="timeline-empty-card timeline-empty-card-wrapper">
         <span class="timeline-empty-icon">📅</span>
         <h4 class="timeline-target-title timeline-empty-title">${trans.noTimelineEvents}</h4>
-        <p class="timeline-meta-row timeline-empty-sub">${trans.selectAnotherDate}</p>
       </div>
     `;
     return;
