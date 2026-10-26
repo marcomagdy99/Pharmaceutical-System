@@ -1679,7 +1679,11 @@ function canDeleteVisit(v) {
 window.canDeleteVisit = canDeleteVisit;
 
 function confirmDeleteVisit(visitId) {
-  visitsApp.confirmDeleteVisit(visitId);
+  if (typeof executeDeleteVisit === "function") {
+    executeDeleteVisit(visitId);
+  } else if (window.visitsApp && typeof window.visitsApp.confirmDeleteVisit === "function") {
+    window.visitsApp.confirmDeleteVisit(visitId);
+  }
 }
 
 // ============================================================================
@@ -4042,79 +4046,87 @@ function printVisitsReport() {
   window.print();
 }
 
-Object.assign(visitsApp, {
-  confirmDeleteVisit(visitId) {
-    const visit = demoVisits.find((v) => v.id === visitId);
-    if (!visit) return;
+function executeDeleteVisit(visitId) {
+  const visit = demoVisits.find((v) => v.id === visitId) ||
+    (window.DEMO_DATA && window.DEMO_DATA.visits && window.DEMO_DATA.visits.find((v) => v.id === visitId)) ||
+    (window.store && window.store.visits && window.store.visits.getById(visitId));
+  if (!visit) return;
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-
-    if (!canDeleteVisit(visit)) {
-      return;
+  if (!canDeleteVisit(visit)) {
+    if (typeof showToast === "function") {
+      showToast("You do not have permission to delete this visit.", "warning");
     }
+    return;
+  }
 
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const repUser = allUsers.find((u) => u.id === visit.repId);
-    const repName = repUser
-      ? `${repUser.name} (${repUser.role === "line_manager" ? "LM" : repUser.role === "district_manager" ? "DM" : "Rep"})`
-      : visit.repId || "";
+  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const repUser = allUsers.find((u) => u.id === visit.repId);
+  const repName = repUser
+    ? `${repUser.name} (${repUser.role === "line_manager" ? "LM" : repUser.role === "district_manager" ? "DM" : "Rep"})`
+    : visit.repId || "";
 
-    const confirmMsg = `Are you sure you want to permanently delete this visit record?\n\n• Target: ${visit.doctorName}\n• Logged by: ${repName}\n• Date: ${visit.date}`;
+  const confirmMsg = `Are you sure you want to permanently delete this visit record?\n\n• Target: ${visit.doctorName || "Visit"}\n• Logged by: ${repName}\n• Date: ${visit.date}`;
 
-    if (!confirm(confirmMsg)) return;
+  if (!confirm(confirmMsg)) return;
 
-    demoVisits = demoVisits.filter((v) => v.id !== visitId);
-    persistVisits();
+  demoVisits = demoVisits.filter((v) => v.id !== visitId);
+  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
+    window.DEMO_DATA.visits = window.DEMO_DATA.visits.filter((v) => v.id !== visitId);
+  }
+  if (window.store && window.store.visits && typeof window.store.visits.delete === "function") {
+    window.store.visits.delete(visitId);
+  }
+  persistVisits();
 
-    try {
-      const repDataStr = localStorage.getItem("pharma_reports_data");
-      if (repDataStr) {
-        const repData = JSON.parse(repDataStr);
-        if (Array.isArray(repData.visits)) {
-          repData.visits = repData.visits.filter((v) => v.id !== visitId);
-          localStorage.setItem("pharma_reports_data", JSON.stringify(repData));
-        }
+  try {
+    const repDataStr = localStorage.getItem("pharma_reports_data");
+    if (repDataStr) {
+      const repData = JSON.parse(repDataStr);
+      if (Array.isArray(repData.visits)) {
+        repData.visits = repData.visits.filter((v) => v.id !== visitId);
+        localStorage.setItem("pharma_reports_data", JSON.stringify(repData));
       }
-    } catch (e) {
-      console.error("Error updating pharma_reports_data on visit deletion:", e);
     }
+  } catch (e) {
+    console.error("Error updating pharma_reports_data on visit deletion:", e);
+  }
 
-    // Synchronize DM accompaniment calendar: if deleted visit was double accompaniment,
-    // verify if any remaining double visits exist for that DM and rep on that date.
-    // If none remain, release the DM's booked schedule date.
-    try {
-      const dmId = visit.doubleWithUserId;
-      const visitDate = visit.date;
-      const repId = visit.repId;
-      if (dmId && visitDate) {
-        const remainingDouble = demoVisits.filter(
-          (v) => v.date === visitDate && v.repId === repId && (v.doubleWithUserId === dmId || v.visitType === "double")
-        );
-        if (remainingDouble.length === 0) {
-          const storageKey = "pharma_dm_accompaniments";
-          const raw = localStorage.getItem(storageKey);
-          if (raw) {
-            const cached = JSON.parse(raw);
-            if (cached[dmId] && cached[dmId][visitDate] === repId) {
-              delete cached[dmId][visitDate];
-              if (Object.keys(cached[dmId]).length === 0) {
-                delete cached[dmId];
-              }
-              localStorage.setItem(storageKey, JSON.stringify(cached));
+  try {
+    const dmId = visit.doubleWithUserId;
+    const visitDate = visit.date;
+    const repId = visit.repId;
+    if (dmId && visitDate) {
+      const remainingDouble = demoVisits.filter(
+        (v) => v.date === visitDate && v.repId === repId && (v.doubleWithUserId === dmId || v.visitType === "double")
+      );
+      if (remainingDouble.length === 0) {
+        const storageKey = "pharma_dm_accompaniments";
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (cached[dmId] && cached[dmId][visitDate] === repId) {
+            delete cached[dmId][visitDate];
+            if (Object.keys(cached[dmId]).length === 0) {
+              delete cached[dmId];
             }
+            localStorage.setItem(storageKey, JSON.stringify(cached));
           }
         }
       }
-    } catch (e) {
-      console.error("Error updating pharma_dm_accompaniments on visit deletion:", e);
     }
+  } catch (e) {
+    console.error("Error updating pharma_dm_accompaniments on visit deletion:", e);
+  }
 
-    renderVisits();
-    showToast(
-      "Visit deleted successfully.",
-      "success",
-    );
-  },
+  renderVisits(true);
+  if (typeof showToast === "function") {
+    showToast("Visit deleted successfully.", "success");
+  }
+}
+
+var visitsApp = window.visitsApp || {};
+Object.assign(visitsApp, {
+  confirmDeleteVisit: executeDeleteVisit,
 
   openVisitModal,
   closeVisitModal,

@@ -409,7 +409,7 @@
 
   // Expose as visitsApp and global functions for backward compatibility
   window.VisitsBulkPlanner = VisitsBulkPlanner;
-  window.visitsApp = VisitsBulkPlanner;
+  window.visitsApp = Object.assign(window.visitsApp || {}, VisitsBulkPlanner);
   window.openBulkPlanModal = VisitsBulkPlanner.openBulkPlanModal.bind(VisitsBulkPlanner);
   window.closeBulkPlanModal = VisitsBulkPlanner.closeBulkPlanModal.bind(VisitsBulkPlanner);
   window.renderBulkTargetsList = VisitsBulkPlanner.renderBulkTargetsList.bind(VisitsBulkPlanner);
