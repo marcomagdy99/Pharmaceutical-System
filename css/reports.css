@@ -1308,18 +1308,10 @@
         grid-column: span 1;
         min-width: 0;
     }
-    /* Default: col-class is full width */
-    .sales-filter-field.col-class {
+    /* Full width on mobile for class and specialty fields */
+    .sales-filter-field.col-class,
+    .sales-filter-field.col-specialty {
         grid-column: 1 / 3;
-        min-width: 0;
-    }
-    /* When paired with specialty in Doctors Directory: specialty is left, class is right */
-    #tabPanel-doctors .sales-filter-field.col-specialty {
-        grid-column: 1 / 2;
-        min-width: 0;
-    }
-    #tabPanel-doctors .sales-filter-field.col-class {
-        grid-column: 2 / 3;
         min-width: 0;
     }
     /* Accounts Costing Mobile Grid Pairing */
