@@ -1089,6 +1089,47 @@
             store.pharmacies.save(pharm);
           }
         }
+
+        // Retroactively update past visits matching this approved target
+        if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
+          const calcDist = (lat1, lon1, lat2, lon2) => {
+            if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+            const R = 6371e3;
+            const rad = Math.PI / 180;
+            const p1 = lat1 * rad;
+            const p2 = lat2 * rad;
+            const dp = (lat2 - lat1) * rad;
+            const dl = (lon2 - lon1) * rad;
+            const a = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+            return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+          };
+          const maxDist = (store.companySettings && store.companySettings.get().gpsMaxDistanceMeters) || 200;
+          const targetNameNorm = (item.targetName || "").trim().toLowerCase();
+
+          window.DEMO_DATA.visits.forEach((v) => {
+            const vDocName = (v.doctorName || "").trim().toLowerCase();
+            const isMatch = (item.targetType === "doctor" && (v.doctorId === item.targetId || (targetNameNorm && vDocName === targetNameNorm))) ||
+                            (item.targetType === "hospital" && (v.hospitalId === item.targetId || (targetNameNorm && (vDocName === targetNameNorm || (v.hospitalName && v.hospitalName.trim().toLowerCase() === targetNameNorm))))) ||
+                            (item.targetType === "pharmacy" && (v.pharmacyId === item.targetId || (targetNameNorm && (vDocName === targetNameNorm || (v.pharmacyName && v.pharmacyName.trim().toLowerCase() === targetNameNorm)))));
+
+            if (isMatch) {
+              v.targetLat = item.newLat;
+              v.targetLng = item.newLng;
+              if (v.deviceLat != null && v.deviceLng != null) {
+                const dist = calcDist(v.deviceLat, v.deviceLng, item.newLat, item.newLng);
+                v.distanceMeters = dist;
+                v.gpsStatus = dist <= maxDist ? "in_range" : "out_of_range";
+              }
+              if (typeof autoSave === "function") {
+                autoSave("visits", "update", v);
+              }
+            }
+          });
+
+          if (typeof window.saveDataToStorage === "function") {
+            window.saveDataToStorage();
+          }
+        }
       },
       advanceApproval(id, actorUser, comment = "") {
         const item = this.getById(id);

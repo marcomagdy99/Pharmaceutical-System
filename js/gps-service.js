@@ -133,31 +133,62 @@
       if (v.gpsStatus === "permission_denied") {
         return `<span class="badge badge-gps-denied">⚠️ GPS Disabled by Rep</span>`;
       }
-      if (v.gpsStatus === "no_target_coords") {
-        return `<span class="badge badge-gps-no-coords">📍 No Target Coords</span>`;
-      }
 
-      const dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : null;
-      const distStr = dist != null ? ` (${dist}m)` : "";
-
-      let mapLinkHtml = "";
       const dLat = v.deviceLat;
       const dLng = v.deviceLng;
       let tLat = v.targetLat;
       let tLng = v.targetLng;
 
-      if ((tLat == null || tLng == null) && typeof window.getMockDoctors === "function") {
-        const allDocs = window.getMockDoctors();
-        const allHosps = typeof window.getMockHospitals === "function" ? window.getMockHospitals() : [];
-        const allPharms = typeof window.getMockPharmacies === "function" ? window.getMockPharmacies() : [];
-        const found = (allDocs && allDocs.find((d) => d.id === v.doctorId || d.name === v.doctorName)) ||
-                      (allHosps && allHosps.find((h) => h.id === v.doctorId || h.name === v.doctorName)) ||
-                      (allPharms && allPharms.find((p) => p.id === v.doctorId || p.name === v.doctorName));
+      if (tLat == null || tLng == null) {
+        let allDocs = [];
+        let allHosps = [];
+        let allPharms = [];
+
+        if (typeof window.getMockDoctors === "function") {
+          allDocs = window.getMockDoctors() || [];
+          allHosps = typeof window.getMockHospitals === "function" ? window.getMockHospitals() || [] : [];
+          allPharms = typeof window.getMockPharmacies === "function" ? window.getMockPharmacies() || [] : [];
+        } else if (window.store) {
+          allDocs = (window.store.doctors && window.store.doctors.getAll) ? window.store.doctors.getAll() : (window.DEMO_DATA?.doctors || []);
+          allHosps = (window.store.hospitals && window.store.hospitals.getAll) ? window.store.hospitals.getAll() : (window.DEMO_DATA?.hospitals || []);
+          allPharms = (window.store.pharmacies && window.store.pharmacies.getAll) ? window.store.pharmacies.getAll() : (window.DEMO_DATA?.pharmacies || []);
+        } else if (window.DEMO_DATA) {
+          allDocs = window.DEMO_DATA.doctors || [];
+          allHosps = window.DEMO_DATA.hospitals || [];
+          allPharms = window.DEMO_DATA.pharmacies || [];
+        }
+
+        const vDocName = (v.doctorName || "").trim().toLowerCase();
+        const found = allDocs.find((d) => (v.doctorId && d.id === v.doctorId) || (d.name && d.name.trim().toLowerCase() === vDocName)) ||
+                      allHosps.find((h) => (v.doctorId && h.id === v.doctorId) || (h.name && h.name.trim().toLowerCase() === vDocName)) ||
+                      allPharms.find((p) => (v.doctorId && p.id === v.doctorId) || (p.name && p.name.trim().toLowerCase() === vDocName));
+
         if (found && found.lat != null && found.lng != null) {
           tLat = found.lat;
           tLng = found.lng;
         }
       }
+
+      const maxDist = companySettings.gpsMaxDistanceMeters || 200;
+      let dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : null;
+
+      // Retroactive GPS resolution: if target now has coordinates and device coordinates were captured
+      if (tLat != null && tLng != null && dLat != null && dLng != null) {
+        if (dist == null || v.gpsStatus === "no_target_coords") {
+          dist = this.calculateDistanceMeters(dLat, dLng, tLat, tLng);
+          v.distanceMeters = dist;
+          v.targetLat = tLat;
+          v.targetLng = tLng;
+          v.gpsStatus = dist <= maxDist ? "in_range" : "out_of_range";
+        }
+      }
+
+      if (v.gpsStatus === "no_target_coords" || tLat == null || tLng == null) {
+        return `<span class="badge badge-gps-no-coords">📍 No Target Coords</span>`;
+      }
+
+      const distStr = dist != null ? ` (${dist}m)` : "";
+      let mapLinkHtml = "";
 
       if (dLat != null && dLng != null) {
         const mapUrl = (tLat != null && tLng != null)

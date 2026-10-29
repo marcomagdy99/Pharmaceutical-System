@@ -488,14 +488,25 @@
         }
       }
 
-      // Determine GPS Status if missing
-      if (!v.gpsStatus) {
+      // Determine GPS Status if missing or recalculate retroactively if target coords newly available
+      if (v.targetLat != null && v.deviceLat != null) {
+        if (v.distanceMeters == null) {
+          if (typeof window.calculateDistanceMeters === "function") {
+            v.distanceMeters = window.calculateDistanceMeters(v.deviceLat, v.deviceLng, v.targetLat, v.targetLng);
+          } else if (window.GpsService && typeof window.GpsService.calculateDistanceMeters === "function") {
+            v.distanceMeters = window.GpsService.calculateDistanceMeters(v.deviceLat, v.deviceLng, v.targetLat, v.targetLng);
+          }
+        }
+        if (v.gpsStatus === "no_target_coords" || !v.gpsStatus) {
+          if (v.distanceMeters != null) {
+            v.gpsStatus = v.distanceMeters <= maxRadius ? "in_range" : "out_of_range";
+          }
+        }
+      } else if (!v.gpsStatus) {
         if (v.deviceLat == null) {
           v.gpsStatus = "no_coords";
         } else if (v.targetLat == null) {
           v.gpsStatus = "no_target_coords";
-        } else if (v.distanceMeters != null) {
-          v.gpsStatus = v.distanceMeters <= maxRadius ? "in_range" : "out_of_range";
         } else {
           v.gpsStatus = "in_range";
         }
