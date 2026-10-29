@@ -131,8 +131,10 @@
       let actionsHtml = "";
       if (isPending && canApproveStage) {
         actionsHtml = `
-          <button type="button" class="btn btn-sm btn-success me-1" onclick="approveLocationReq('${req.id}')">Approve</button>
-          <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectLocationReq('${req.id}')">Reject</button>
+          <div class="location-actions-wrap">
+            <button type="button" class="btn btn-sm btn-location-approve" onclick="approveLocationReq('${req.id}')" title="Approve GPS Pin">✓ Approve</button>
+            <button type="button" class="btn btn-sm btn-location-reject" onclick="rejectLocationReq('${req.id}')" title="Reject GPS Pin">✕ Reject</button>
+          </div>
         `;
       } else if (isPending) {
         const stageLabel = st.replace("pending_", "").toUpperCase() || "Manager";
