@@ -534,8 +534,9 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    right: 0;
-    min-width: 190px;
+    min-width: 200px;
+    width: max-content;
+    max-width: min(280px, 92vw);
     background: var(--white);
     border: 1px solid var(--gray-300);
     border-radius: 10px;
@@ -551,40 +552,46 @@
 }
 
 .multi-select-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: #1f2937;
-    height: auto;
-    min-height: 28px;
-    max-height: none;
-    line-height: 1.4;
-    overflow: visible;
-    user-select: none;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+    height: auto !important;
+    min-height: 28px !important;
+    max-height: none !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    user-select: none !important;
+    white-space: nowrap !important;
 }
 
 .multi-select-item span {
-    color: #1f2937;
-    font-size: 0.88rem;
-    font-weight: 500;
-    display: inline-block;
-    line-height: 1.3;
+    color: #1f2937 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    display: inline-block !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    flex: 0 1 auto !important;
 }
 
 .multi-select-item input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    min-height: 16px;
-    max-height: 16px;
-    margin: 0;
-    cursor: pointer;
-    flex-shrink: 0;
+    width: 16px !important;
+    min-width: 16px !important;
+    max-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    flex: 0 0 16px !important;
 }
 
 .multi-select-item:hover {
@@ -1264,7 +1271,7 @@
         box-sizing: border-box !important;
     }
     .sales-filter-field select,
-    .sales-filter-field input {
+    .sales-filter-field input:not([type="checkbox"]) {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
@@ -1332,7 +1339,7 @@
         min-width: 0;
     }
     #tabPanel-accounts-costing .sales-filter-field select,
-    #tabPanel-accounts-costing .sales-filter-field input {
+    #tabPanel-accounts-costing .sales-filter-field input:not([type="checkbox"]) {
         width: 100%;
         max-width: 100%;
         min-width: 0;
@@ -1662,11 +1669,11 @@
 }
 
 [data-theme="dark"] .multi-select-item {
-    color: #f1f5f9;
+    color: #f1f5f9 !important;
 }
 
 [data-theme="dark"] .multi-select-item span {
-    color: #f1f5f9;
+    color: #f1f5f9 !important;
 }
 
 [data-theme="dark"] .multi-select-item:hover {
@@ -2949,7 +2956,7 @@
 }
 
 [data-theme="dark"] .sales-filter-field select,
-[data-theme="dark"] .sales-filter-field input,
+[data-theme="dark"] .sales-filter-field input:not([type="checkbox"]),
 [data-theme="dark"] .sales-filter-field .multi-select-btn,
 [data-theme="dark"] .multi-select-btn {
     background-color: var(--surface-dim, #16191f);
@@ -3503,7 +3510,7 @@ a.gps-action-map-btn {
     }
 
     #tabPanel-accounts-costing .sales-filter-field select,
-    #tabPanel-accounts-costing .sales-filter-field input {
+    #tabPanel-accounts-costing .sales-filter-field input:not([type="checkbox"]) {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
