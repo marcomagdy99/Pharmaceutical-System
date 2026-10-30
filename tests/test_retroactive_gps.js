@@ -2,7 +2,16 @@ const assert = require('assert');
 
 // Mock browser globals
 global.window = global;
-global.navigator = { geolocation: {} };
+const mockNavigator = { geolocation: {} };
+try {
+  Object.defineProperty(global, 'navigator', {
+    value: mockNavigator,
+    writable: true,
+    configurable: true
+  });
+} catch (e) {
+  global.navigator = mockNavigator;
+}
 global.document = { dispatchEvent: () => {} };
 global.CustomEvent = class CustomEvent {};
 

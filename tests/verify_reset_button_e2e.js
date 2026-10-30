@@ -3,6 +3,8 @@ const assert = require('assert');
 const crypto = require('crypto');
 
 global.window = global;
+global.sessionStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+global.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 global.CustomEvent = class CustomEvent {};
 global.document = {
   getElementById: (id) => ({
@@ -58,6 +60,8 @@ console.log('1. User before reset:', {
 });
 
 (async () => {
+global.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'System Admin' });
+
   // Simulate clicking the reset key button on user u1790626000001
   window.userMgmt.users = window.store.users.getAll();
   window.userMgmt.openResetPwdModal('u1790626000001');

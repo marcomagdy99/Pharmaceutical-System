@@ -1,8 +1,10 @@
 const { execSync } = require('child_process');
 
-const gitPath = 'C:\\Users\\DeLL\\AppData\\Local\\GitHubDesktop\\app-3.6.7\\resources\\app\\git\\cmd\\git.exe';
+const fs = require('fs');
+const localGit = 'C:\\Users\\DeLL\\AppData\\Local\\GitHubDesktop\\app-3.6.7\\resources\\app\\git\\cmd\\git.exe';
+const gitCmd = fs.existsSync(localGit) ? `"${localGit}"` : 'git';
 const gitArg = process.argv[2] || 'diff';
-const diff = execSync(`"${gitPath}" ${gitArg}`, { maxBuffer: 50 * 1024 * 1024 }).toString('utf8');
+const diff = execSync(`${gitCmd} ${gitArg}`, { maxBuffer: 50 * 1024 * 1024 }).toString('utf8');
 
 const arabicRegex = /[\u0600-\u06FF]/;
 const lines = diff.split(/\r?\n/);

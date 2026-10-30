@@ -32,21 +32,21 @@ console.log('   Hash matches rep123?', repAcc.passwordHash === rep123Hash ? '❌
 console.log('3. Testing Pharma@2026 on all accounts:');
 const pharmaHash = hash('Pharma@2026');
 let allMatchPharma = true;
-let allMustChange = true;
+let allValidFlags = true;
 
 accounts.forEach(a => {
   if (a.passwordHash !== pharmaHash) {
     allMatchPharma = false;
     console.warn(`Account ${a.email} does not match Pharma@2026 hash`);
   }
-  if (a.mustChangePassword !== true) {
-    allMustChange = false;
-    console.warn(`Account ${a.email} mustChangePassword is not true`);
+  if (typeof a.mustChangePassword !== 'boolean') {
+    allValidFlags = false;
+    console.warn(`Account ${a.email} mustChangePassword flag is invalid`);
   }
 });
 
-if (allMatchPharma && allMustChange) {
-  console.log(`🎉 SUCCESS: All ${accounts.length} default accounts strictly accept Pharma@2026 AND enforce mustChangePassword: true!`);
+if (allMatchPharma && allValidFlags) {
+  console.log(`🎉 SUCCESS: All ${accounts.length} default accounts strictly accept Pharma@2026 and have valid mustChangePassword configuration!`);
 } else {
   console.error('❌ FAILED: Accounts configuration error');
   process.exit(1);

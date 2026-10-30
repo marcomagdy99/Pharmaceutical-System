@@ -16,7 +16,7 @@ global.document = {
   addEventListener: () => {},
   dispatchEvent: () => {}
 };
-global.navigator = {
+const mockNavigator = {
   onLine: false, // Start offline!
   geolocation: {
     getCurrentPosition: (success, error, opts) => {
@@ -31,6 +31,15 @@ global.navigator = {
     }
   }
 };
+try {
+  Object.defineProperty(global, 'navigator', {
+    value: mockNavigator,
+    writable: true,
+    configurable: true
+  });
+} catch (e) {
+  global.navigator = mockNavigator;
+}
 global.localStorage = {
   _store: {},
   getItem(k) { return this._store[k] || null; },
