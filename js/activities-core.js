@@ -999,7 +999,7 @@
     ROLES,
     activityTranslations,
     t,
-    escapeHTML: (str) => (window.escapeHtml ? window.escapeHtml(str) : String(str || "")),
+    escapeHTML: (str) => window.escapeHtml(str || ""),
     safeShowToast,
     addDays,
     getWeekStart,

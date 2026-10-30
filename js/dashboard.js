@@ -309,10 +309,10 @@ window.openDmTeamModal = function (dmId) {
             }
             if (!areaName) areaName = "Unassigned";
 
-            const repCode = escapeHtml(r.employeeCode || r.code || "REP");
-            const repName = escapeHtml(r.name);
-            const safeAreaName = escapeHtml(areaName);
-            const initials = escapeHtml(getInitials(r.name));
+            const repCode = window.escapeHtml(r.employeeCode || r.code || "REP");
+            const repName = window.escapeHtml(r.name);
+            const safeAreaName = window.escapeHtml(areaName);
+            const initials = window.escapeHtml(getInitials(r.name));
             const isActive = (r.status || "Active").toLowerCase() === "active";
 
             return `
@@ -328,8 +328,8 @@ window.openDmTeamModal = function (dmId) {
                   <div class="dm-team-rep-meta">
                     <span class="dm-team-rep-tag">🆔 ${repCode}</span>
                     <span class="dm-team-rep-tag">📍 ${safeAreaName}</span>
-                    ${r.phone ? `<span class="dm-team-rep-tag" title="${escapeHtml(r.phone)}">📞 <span dir="ltr">${escapeHtml(r.phone)}</span></span>` : ""}
-                    ${r.email ? `<span class="dm-team-rep-tag" title="${escapeHtml(r.email)}">✉️ ${escapeHtml(r.email)}</span>` : ""}
+                    ${r.phone ? `<span class="dm-team-rep-tag" title="${window.escapeHtml(r.phone)}">📞 <span dir="ltr">${window.escapeHtml(r.phone)}</span></span>` : ""}
+                    ${r.email ? `<span class="dm-team-rep-tag" title="${window.escapeHtml(r.email)}">✉️ ${window.escapeHtml(r.email)}</span>` : ""}
                   </div>
                 </div>
               </div>
@@ -349,14 +349,14 @@ window.openDmTeamModal = function (dmId) {
         <div class="dm-team-modal-header-info">
           <h3 class="dm-team-modal-title" id="dmTeamModalTitle">
             <span>👥</span>
-            <span>${escapeHtml(dm.name)}</span>
+            <span>${window.escapeHtml(dm.name)}</span>
           </h3>
           <div class="dm-team-modal-subtitle">
-            <span>🆔 ${escapeHtml(dmCode)}</span>
+            <span>🆔 ${window.escapeHtml(dmCode)}</span>
             <span>•</span>
-            <span>🏷️ ${escapeHtml(dmLineText)}</span>
+            <span>🏷️ ${window.escapeHtml(dmLineText)}</span>
             <span>•</span>
-            <span class="dm-team-count-highlight">${escapeHtml(repsCountText)}</span>
+            <span class="dm-team-count-highlight">${window.escapeHtml(repsCountText)}</span>
           </div>
         </div>
         <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="Close">✕</button>
@@ -2117,7 +2117,7 @@ function renderDMDashboard(userName, user) {
 
                   rowsHtml.push(`
                     <tr>
-                      <td class="dm-rep-name">${escapeHtml(r.name)}</td>
+                      <td class="dm-rep-name">${window.escapeHtml(r.name)}</td>
                       <td class="dm-ach-pct text-end">${achPct}%</td>
                     </tr>
                   `);
@@ -2324,8 +2324,8 @@ function renderLMDashboard(userName, user) {
                         return `
                           <tr>
                             <td class="fw-bold">
-                              ${escapeHtml(dm.name)}
-                              <div class="feed-cell-secondary">${escapeHtml(dm.employeeCode || dm.code || "DM-001")}</div>
+                              ${window.escapeHtml(dm.name)}
+                              <div class="feed-cell-secondary">${window.escapeHtml(dm.employeeCode || dm.code || "DM-001")}</div>
                             </td>
                             <td>
                               <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -3074,7 +3074,7 @@ function renderAdminDashboard(userName, user) {
   const recentActivities = getSystemRecentActivities(lang);
   const activitiesListHtml = recentActivities
     .map(
-      (act) => `<li class="activity-item ${act.type}">${window.escapeHtml ? window.escapeHtml(act.text) : act.text}</li>`
+      (act) => `<li class="activity-item ${act.type}">${window.escapeHtml(act.text)}</li>`
     )
     .join("");
 

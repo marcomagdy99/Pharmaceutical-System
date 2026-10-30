@@ -574,10 +574,10 @@ function renderAnnouncementCard(ann) {
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
 
-  const title = escapeHtml(ann.title || ann.titleAr || "");
-  const body = escapeHtml(ann.body || ann.bodyAr || "");
-  const authorName = escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
-  const safeImage = ann.image ? escapeHtml(ann.image) : "";
+  const title = window.escapeHtml(ann.title || ann.titleAr || "");
+  const body = window.escapeHtml(ann.body || ann.bodyAr || "");
+  const authorName = window.escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
+  const safeImage = ann.image ? window.escapeHtml(ann.image) : "";
 
   const priorityClass = `priority-${ann.priority}`;
   const unreadClass = !isRead && !isHR ? "unread" : "";
@@ -607,7 +607,7 @@ function renderAnnouncementCard(ann) {
   if (ann.targetLineId) {
     const lineName = getProductLineName(ann.targetLineId);
     const scopeTpl = (announcementTranslations[lang] && announcementTranslations[lang].lineScopeBadge) || "Line: {0}";
-    lineBadgeHtml = `<span class="badge badge-line"><i class="fas fa-layer-group"></i> ${scopeTpl.replace("{0}", escapeHtml(lineName))}</span>`;
+    lineBadgeHtml = `<span class="badge badge-line"><i class="fas fa-layer-group"></i> ${scopeTpl.replace("{0}", window.escapeHtml(lineName))}</span>`;
   }
 
   return `
@@ -858,7 +858,7 @@ function openAnnouncementModal(id = null) {
   if (lineSelect) {
     const allLinesLabel = (announcementTranslations[lang] && announcementTranslations[lang].allLines) || "All Lines (Company-wide)";
     lineSelect.innerHTML = `<option value="">${allLinesLabel}</option>` +
-      allLines.map((l) => `<option value="${l.id}">${escapeHtml((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
+      allLines.map((l) => `<option value="${l.id}">${window.escapeHtml((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
   }
 
   // Enforce PM line scoping rules:

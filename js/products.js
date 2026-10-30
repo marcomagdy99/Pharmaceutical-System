@@ -1020,9 +1020,9 @@ function populateBrickWeightsTable(lineId, productId) {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${window.escapeHtml ? window.escapeHtml(area.name) : area.name}</td>
-      <td><code>${window.escapeHtml ? window.escapeHtml(area.code || "—") : (area.code || "—")}</code></td>
-      <td>${window.escapeHtml ? window.escapeHtml(repName) : repName}</td>
+      <td>${window.escapeHtml(area.name)}</td>
+      <td><code>${window.escapeHtml(area.code || "—")}</code></td>
+      <td>${window.escapeHtml(repName)}</td>
       <td>
         <input type="number" class="form-control form-control-sm bw-weight-input"
                data-area-id="${area.id}" data-line-id="${area.lineId || lineId}"

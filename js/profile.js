@@ -625,7 +625,7 @@ function renderDirectReports(activeUser, allUsers, allAreas, allLines, roleLabel
   const countBadge = document.getElementById("directReportsCountBadge");
   if (!card || !container) return;
 
-  const esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s || ""));
+
 
   // Identify direct reports whose managerId matches the active user
   const directReports = allUsers.filter((u) => {
@@ -663,34 +663,34 @@ function renderDirectReports(activeUser, allUsers, allAreas, allLines, roleLabel
     return `
       <div class="direct-report-card">
         <div class="direct-report-top">
-          <div class="direct-report-avatar">${esc(inits)}</div>
+          <div class="direct-report-avatar">${window.escapeHtml(inits)}</div>
           <div class="direct-report-info">
-            <div class="direct-report-name" title="${esc(repName)}">${esc(repName)}</div>
+            <div class="direct-report-name" title="${window.escapeHtml(repName)}">${window.escapeHtml(repName)}</div>
             <div class="direct-report-meta">
-              <span class="badge badge-role" style="font-size: 0.72rem; padding: 2px 7px;">${esc(roleName)}</span>
-              <span class="badge bg-light text-dark border" style="font-size: 0.72rem; padding: 2px 7px;">${esc(code)}</span>
+              <span class="badge badge-role" style="font-size: 0.72rem; padding: 2px 7px;">${window.escapeHtml(roleName)}</span>
+              <span class="badge bg-light text-dark border" style="font-size: 0.72rem; padding: 2px 7px;">${window.escapeHtml(code)}</span>
             </div>
           </div>
         </div>
         <div class="direct-report-details">
           <div class="direct-report-row">
             <span>Area:</span>
-            <span style="font-weight: 500; text-align: right;">${esc(areaName)}</span>
+            <span style="font-weight: 500; text-align: right;">${window.escapeHtml(areaName)}</span>
           </div>
           <div class="direct-report-row">
             <span>Line:</span>
-            <span style="font-weight: 500; text-align: right;">${esc(lineName)}</span>
+            <span style="font-weight: 500; text-align: right;">${window.escapeHtml(lineName)}</span>
           </div>
           ${phone ? `
             <div class="direct-report-row">
               <span>Phone:</span>
-              <a href="tel:${esc(phone)}" class="direct-report-link">${esc(phone)}</a>
+              <a href="tel:${window.escapeHtml(phone)}" class="direct-report-link">${window.escapeHtml(phone)}</a>
             </div>
           ` : ""}
           ${email ? `
             <div class="direct-report-row">
               <span>Email:</span>
-              <a href="mailto:${esc(email)}" class="direct-report-link" title="${esc(email)}">${esc(email)}</a>
+              <a href="mailto:${window.escapeHtml(email)}" class="direct-report-link" title="${window.escapeHtml(email)}">${window.escapeHtml(email)}</a>
             </div>
           ` : ""}
         </div>
@@ -1327,7 +1327,7 @@ window.exportDatabaseBackup = function () {
     }
 
     const fullSnapshot = {
-      pharmaCareVersion: "v246",
+      pharmaCareVersion: "v247",
       exportedAt: new Date().toISOString(),
       exportedBy: (window.currentUser && (window.currentUser.email || window.currentUser.name)) || "Admin",
       masterData: masterData,

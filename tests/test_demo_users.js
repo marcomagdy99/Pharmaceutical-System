@@ -2,7 +2,7 @@ const fs = require('fs');
 const appJs = fs.readFileSync('js/app.js', 'utf8');
 
 // Find users array in DEFAULT_DEMO_DATA
-const usersMatch = appJs.match(/users:\s*\[([\s\S]*?)\n\s*\],\s*\n\s*productLines:/);
+const usersMatch = appJs.match(/users:\s*\[([\s\S]*?)\n\s*\],\s*\n\s*\w+:/);
 if (usersMatch) {
   const users = eval('[' + usersMatch[1] + ']');
   console.log('Total users:', users.length);
