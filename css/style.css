@@ -2158,9 +2158,37 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   font-size: 0.78rem;
   font-weight: 600;
   color: #2563eb;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.notif-mark-read-btn:hover {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.08);
 }
 .notif-clear-btn {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.notif-clear-btn:hover {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.08);
 }
 .notif-item-icon.type-default {
   background: rgba(13, 110, 253, 0.12);
@@ -2297,6 +2325,28 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 [data-theme="dark"] .notif-mark-read-btn {
   color: #60a5fa;
 }
+[data-theme="dark"] .notif-mark-read-btn:hover {
+  color: #93c5fd;
+  background: rgba(96, 165, 250, 0.15);
+}
+[data-theme="dark"] .notif-clear-btn {
+  color: #f87171 !important;
+  background: transparent;
+}
+[data-theme="dark"] .notif-clear-btn:hover {
+  color: #fca5a5 !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+}
+[data-theme="dark"] .notif-btn-delete {
+  color: #94a3b8;
+}
+[data-theme="dark"] .notif-btn-delete:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.2);
+}
+[data-theme="dark"] .notif-dropdown-footer .text-muted {
+  color: #94a3b8 !important;
+}
 [data-theme="dark"] .notif-item-icon.type-default {
   background: rgba(13, 110, 253, 0.2);
   color: #60a5fa;
@@ -2424,4 +2474,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: #ffffff;
   border-color: rgba(199, 210, 254, 0.75);
   box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+/* Global Utilities */
+.text-danger {
+  color: #ef4444 !important;
+}
+[data-theme="dark"] .text-danger {
+  color: #f87171 !important;
+}
+.btn-link {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
 }
