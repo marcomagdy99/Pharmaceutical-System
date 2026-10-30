@@ -165,7 +165,7 @@
           if (fa) targetArea = fa.name;
         }
         const areaBadge = targetArea
-          ? `<span class="badge bulk-target-area-badge">📍 ${window.escapeHtml ? window.escapeHtml(targetArea) : targetArea}</span>`
+          ? `<span class="badge bulk-target-area-badge">📍 ${window.escapeHtml(targetArea)}</span>`
           : "";
 
         const isAlready = typeof window.isDoctorAlreadyVisitedToday === "function"
@@ -176,11 +176,10 @@
           ? `<span class="badge bulk-target-already-badge">✓ Already Scheduled</span>`
           : "";
 
-        const esc = window.escapeHtml || ((s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
-        const safeTargetId = esc(target.id);
-        const safeTargetName = esc(target.name);
-        const safeMeta = isHospital ? esc(target.address || "Hospital") : `${esc(target.specialty || "General")} • Class ${esc(target.class || "A")}`;
-        const safeClass = esc(target.class || "A");
+        const safeTargetId = window.escapeHtml(target.id);
+        const safeTargetName = window.escapeHtml(target.name);
+        const safeMeta = isHospital ? window.escapeHtml(target.address || "Hospital") : `${window.escapeHtml(target.specialty || "General")} • Class ${window.escapeHtml(target.class || "A")}`;
+        const safeClass = window.escapeHtml(target.class || "A");
 
         const itemDiv = document.createElement("label");
         itemDiv.className = `bulk-target-item${isAlready ? " bulk-target-already-scheduled" : ""}`;

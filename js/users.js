@@ -792,9 +792,8 @@ if (typeof renderSidebar === "function") {
     if (nameEl) nameEl.textContent = user.name;
     if (roleEl) {
       const roleStr = user.role || "User";
-      const esc = window.escapeHtml || ((s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
-      const safeRoleStr = esc(roleStr);
-      const safeCode = esc(user.employeeCode || user.code || "-");
+      const safeRoleStr = window.escapeHtml(roleStr);
+      const safeCode = window.escapeHtml(user.employeeCode || user.code || "-");
       roleEl.innerHTML = `<span class="badge rounded-pill ${this.getRoleBadgeClass(roleStr)} me-1">${safeRoleStr}</span> • Code: <strong>${safeCode}</strong>`;
     }
     if (countEl) countEl.textContent = `${enrichedAreas.length} Areas`;

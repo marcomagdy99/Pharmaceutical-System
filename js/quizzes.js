@@ -252,7 +252,7 @@ function initRepView(userId) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="fw-medium ps-3 col-quiz-name">${typeof window.escapeHtml === 'function' ? window.escapeHtml(score.quizTitle) : (score.quizTitle || '')}</td>
+      <td class="fw-medium ps-3 col-quiz-name">${window.escapeHtml(score.quizTitle || '')}</td>
       <td class="text-secondary text-center col-quiz-date">${score.date}</td>
       <td class="fw-bold text-center col-quiz-score">${score.score}</td>
       <td class="text-secondary text-center col-quiz-total">${score.totalMarks}</td>
@@ -645,7 +645,7 @@ function renderComparisonTable(repsToDisplay) {
     const tdTitle = document.createElement('td');
     tdTitle.className = 'fw-medium ps-4 text-nowrap';
     tdTitle.innerHTML = `
-      <div>${typeof window.escapeHtml === 'function' ? window.escapeHtml(quiz.title) : (quiz.title || '')}</div>
+      <div>${window.escapeHtml(quiz.title || '')}</div>
       <div class="quiz-meta-sub">${quiz.date} &bull; ${quiz.totalMarks} M</div>
     `;
     tr.appendChild(tdTitle);
@@ -727,10 +727,9 @@ function setupAdminQuizTools(allReps) {
         const existingScore = scores.find((s) => s.quizId === selectedQuizId && s.userId === rep.id);
         const val = existingScore ? existingScore.score : '';
 
-        const esc = window.escapeHtml || ((s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
-        const safeRepName = esc(repName);
-        const safeRawName = esc(rep.name);
-        const safeRepId = esc(rep.id);
+        const safeRepName = window.escapeHtml(repName);
+        const safeRawName = window.escapeHtml(rep.name);
+        const safeRepId = window.escapeHtml(rep.id);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
