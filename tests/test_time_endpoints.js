@@ -45,6 +45,7 @@ async function run() {
   console.log('Testing dual server time endpoints...');
   await testHeadRequest();
   await testCloudflare();
+  process.exit(0);
 }
 
 run();

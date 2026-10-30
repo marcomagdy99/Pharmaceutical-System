@@ -168,11 +168,36 @@
 
   window.rejectLocationReq = function(id) {
     if (!window.store || !window.store.accountLocationRequests) return;
-    const reason = window.prompt("Rejection reason (optional):") || "";
-    const user = Core.getAuthUser() || {};
-    window.store.accountLocationRequests.reject(id, user, reason);
-    if (typeof window.showToast === "function") window.showToast("Location request rejected.", "info");
-    renderLocationRequestsTable();
+    const modal = document.getElementById("decisionModal");
+    const commentInput = document.getElementById("decisionCommentInput");
+    if (modal && commentInput) {
+      const titleEl = document.getElementById("decisionModalTitle");
+      const msgEl = document.getElementById("decisionModalMsg");
+      const confirmBtn = document.getElementById("btnConfirmDecision");
+      if (titleEl) titleEl.textContent = "Reject Location Request";
+      if (msgEl) msgEl.textContent = "Are you sure you want to reject this GPS location request?";
+      commentInput.value = "";
+      if (confirmBtn) {
+        confirmBtn.className = "btn btn-danger";
+        confirmBtn.textContent = "Reject";
+        confirmBtn.onclick = function() {
+          const reason = commentInput.value.trim();
+          const user = Core.getAuthUser() || {};
+          window.store.accountLocationRequests.reject(id, user, reason);
+          if (typeof window.showToast === "function") window.showToast("Location request rejected.", "info");
+          modal.style.display = "none";
+          modal.classList.remove("active");
+          renderLocationRequestsTable();
+        };
+      }
+      modal.style.display = "flex";
+      modal.classList.add("active");
+    } else {
+      const user = Core.getAuthUser() || {};
+      window.store.accountLocationRequests.reject(id, user, "");
+      if (typeof window.showToast === "function") window.showToast("Location request rejected.", "info");
+      renderLocationRequestsTable();
+    }
   };
 
   function setupModalBackdropsAndShortcuts() {

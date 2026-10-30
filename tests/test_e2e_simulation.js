@@ -198,8 +198,8 @@ async function testLoginFlow() {
   assert.strictEqual(adminUser.role, "admin", "Admin role mismatch");
 
   // Check entered password hash against admin hash
-  const hash = await win.hashPassword("admin123");
-  const match = adminUser.passwordHash === hash || adminUser.password === "admin123";
+  const hash = await win.hashPassword("Pharma@2026");
+  const match = adminUser.passwordHash === hash || adminUser.password === "Pharma@2026";
   assert.ok(match, "Admin password hash must match authenticateUser entry");
   console.log("  PASS: Login flow verified for admin@pharmacare.com with password hash.");
 }

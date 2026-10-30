@@ -123,13 +123,16 @@ function appendSelectOptions(selectEl, items, getValue, getLabel) {
     selectEl.appendChild(opt);
   });
 }
+global.initPage = () => {};
+global.REPORT_TAB_CONFIGS = {};
+global.populateTabHierarchyFilters = () => {};
 global.appendSelectOptions = appendSelectOptions;
 global.getSharedReportUsers = () => allUsers;
 
 // Load populateUnifiedReportEmployeeFilters function from shared-report.js
 const populateFnStr = sharedJs.substring(
   sharedJs.indexOf('function populateUnifiedReportEmployeeFilters('),
-  sharedJs.indexOf('// Aliases for compatibility')
+  sharedJs.indexOf('window.populateUnifiedReportEmployeeFilters =')
 );
 
 eval(populateFnStr);
