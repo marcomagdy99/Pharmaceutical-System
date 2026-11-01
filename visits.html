@@ -24,19 +24,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v252">
-    <link rel="stylesheet" href="css/visits.css?v=v252">
+    <link rel="stylesheet" href="css/style.css?v=v253">
+    <link rel="stylesheet" href="css/visits.css?v=v253">
       <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v252"></script>
-  <script src="js/app.js?v=v252"></script>
-    <script src="js/store.js?v=v252"></script>
+    <script src="js/auth-service.js?v=v253"></script>
+  <script src="js/app.js?v=v253"></script>
+    <script src="js/store.js?v=v253"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v252"></script>
-    <script src="js/firebase-sync.js?v=v252"></script>
+    <script src="js/firebase-config.js?v=v253"></script>
+    <script src="js/firebase-sync.js?v=v253"></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v252"></script>
+    <script src="js/cache-bust.js?v=v253"></script>
   </head>
 <body>
     <div class="app">
@@ -64,13 +64,13 @@
                     </div>
                     <div class="header-actions-row">
                         <button class="btn btn-outline d-none" onclick="toggleCompanyGpsPolicy()" id="adminGpsPolicyBtn" title="Toggle Company GPS Enforcement Policy">
-                            🛰️ <span id="adminGpsPolicyLabel">GPS: Active</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 8-8 8"/><circle cx="12" cy="12" r="3"/></svg> <span id="adminGpsPolicyLabel">GPS: Active</span>
                         </button>
                         <button class="btn btn-outline" onclick="exportVisitsToCSV()" id="exportVisitsBtn" title="Export to CSV/Excel">
-                            📊 <span data-i18n="btnExportCSV">Export CSV</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span data-i18n="btnExportCSV">Export CSV</span>
                         </button>
                         <button class="btn btn-outline" onclick="printVisitsReport()" id="printVisitsBtn" title="Print Visits">
-                            🖨️ <span data-i18n="btnPrint">Print</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> <span data-i18n="btnPrint">Print</span>
                         </button>
                         <button class="btn btn-outline" onclick="openBulkPlanModal()" id="planVisitBtn">
                             📋 <span data-i18n="planVisit">Plan Visits (Bulk)</span>
@@ -323,7 +323,7 @@
                             📍 <span id="lblPinClinicBtn">Pin Clinic Location</span>
                         </button>
                         <button type="button" class="btn btn-sm btn-relocate-clinic" id="btnRelocateClinicLocation" style="display: none;" onclick="openRelocationModal()">
-                            🔄 <span id="lblRelocateClinicBtn">Request Clinic Re-pin</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> <span id="lblRelocateClinicBtn">Request Clinic Re-pin</span>
                         </button>
                     </div>
                 </div>
@@ -397,10 +397,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/workflow-engine.js?v=v252"></script>
-    <script src="js/reschedule.js?v=v252"></script>
-    <script src="js/gps-service.js?v=v252"></script>
-    <script src="js/visits.js?v=v252"></script>
-    <script src="js/visits-bulk-planner.js?v=v252"></script>
+    <script src="js/workflow-engine.js?v=v253"></script>
+    <script src="js/reschedule.js?v=v253"></script>
+    <script src="js/gps-service.js?v=v253"></script>
+    <script src="js/visits.js?v=v253"></script>
+    <script src="js/visits-bulk-planner.js?v=v253"></script>
 </body>
 </html>

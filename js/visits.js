@@ -243,7 +243,7 @@ function renderTimeTamperedBadge(v) {
   if (!v || !v.timeTampered) return "";
   const drift = v.clockDriftMinutes || 0;
   const sign = drift > 0 ? "+" : "";
-  const text = `⏰ Time Drift (${sign}${drift}m)`;
+  const text = `<svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Time Drift (${sign}${drift}m)`;
   const title = `Device clock differed from verified network time by ${sign}${drift} minutes. Stamped with official network time.`;
   return `<span class="badge bg-warning text-dark border border-warning ms-1" title="${title}" style="font-size:0.75rem; vertical-align:middle;">${text}</span>`;
 }
@@ -251,10 +251,10 @@ function renderTimeTamperedBadge(v) {
 function renderOfflineBadge(v) {
   if (!v || !v.isOffline) return "";
   if (!v.syncedToCloud) {
-    return '<span class="badge badge-offline-pending" title="Saved locally on device (offline) • Waiting for connection to sync">📱 Offline Pending</span>';
+    return '<span class="badge badge-offline-pending" title="Saved locally on device (offline) • Waiting for connection to sync"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Offline Pending</span>';
   }
   const syncTimeStr = v.syncedAt ? ` (Synced: ${new Date(v.syncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : "";
-  return `<span class="badge badge-offline-synced" title="Logged offline on device and synced to cloud${syncTimeStr}">📶 Offline Synced</span>`;
+  return `<span class="badge badge-offline-synced" title="Logged offline on device and synced to cloud${syncTimeStr}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="m18 8 4 4-4 4"/></svg> Offline Synced</span>`;
 }
 window.renderOfflineBadge = renderOfflineBadge;
 

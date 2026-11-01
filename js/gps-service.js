@@ -184,7 +184,7 @@
       }
 
       if (v.gpsStatus === "no_target_coords" || tLat == null || tLng == null) {
-        return `<span class="badge badge-gps-no-coords">📍 No Target Coords</span>`;
+        return `<span class="badge badge-gps-no-coords"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.25 7.5 12.5 7.5 12.5s7.5-7.25 7.5-12.5A7.5 7.5 0 0 0 12 2z"/><circle cx="12" cy="9.5" r="2.5"/></svg> No Target Coords</span>`;
       }
 
       const distStr = dist != null ? ` (${dist}m)` : "";
@@ -194,17 +194,17 @@
         const mapUrl = (tLat != null && tLng != null)
           ? `https://www.google.com/maps/dir/?api=1&origin=${tLat},${tLng}&destination=${dLat},${dLng}`
           : `https://www.google.com/maps/search/?api=1&query=${dLat},${dLng}`;
-        mapLinkHtml = ` <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="badge-gps-map-link" title="View Location on Google Maps" onclick="event.stopPropagation();">🗺️</a>`;
+        mapLinkHtml = ` <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="badge-gps-map-link" title="View Location on Google Maps" onclick="event.stopPropagation();"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></a>`;
       } else if (tLat != null && tLng != null) {
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${tLat},${tLng}`;
-        mapLinkHtml = ` <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="badge-gps-map-link" title="View Clinic Target on Google Maps" onclick="event.stopPropagation();">🗺️</a>`;
+        mapLinkHtml = ` <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="badge-gps-map-link" title="View Clinic Target on Google Maps" onclick="event.stopPropagation();"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></a>`;
       }
 
       if (v.gpsStatus === "in_range") {
-        return `<span class="badge badge-gps-in-range" title="In Range">✅ Verified${distStr}${mapLinkHtml}</span>`;
+        return `<span class="badge badge-gps-in-range" title="In Range"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.25 7.5 12.5 7.5 12.5s7.5-7.25 7.5-12.5A7.5 7.5 0 0 0 12 2z"/><path d="m9 9.5 2 2 4-4"/></svg> Verified${distStr}${mapLinkHtml}</span>`;
       }
       if (v.gpsStatus === "out_of_range") {
-        return `<span class="badge badge-gps-out-of-range" title="Out of Range">⚠️ Out of Range${distStr}${mapLinkHtml}</span>`;
+        return `<span class="badge badge-gps-out-of-range" title="Out of Range"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Out of Range${distStr}${mapLinkHtml}</span>`;
       }
       return "";
     }

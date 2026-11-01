@@ -27,21 +27,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v252">
-    <link rel="stylesheet" href="css/activities.css?v=v252">
+    <link rel="stylesheet" href="css/style.css?v=v253">
+    <link rel="stylesheet" href="css/activities.css?v=v253">
 
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v252"></script>
-  <script src="js/app.js?v=v252"></script>
-    <script src="js/store.js?v=v252"></script>
+    <script src="js/auth-service.js?v=v253"></script>
+  <script src="js/app.js?v=v253"></script>
+    <script src="js/store.js?v=v253"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v252"></script>
-    <script src="js/firebase-sync.js?v=v252"></script>
+    <script src="js/firebase-config.js?v=v253"></script>
+    <script src="js/firebase-sync.js?v=v253"></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v252"></script>
+    <script src="js/cache-bust.js?v=v253"></script>
   </head>
 <body>
     <div class="app">
@@ -105,7 +105,7 @@
                             </div>
                             <div class="card-footer period-footer-bar">
                                 <button type="button" class="btn btn-primary log-btn" data-period="AM" onclick="openActivityModal('AM')">
-                                    <span>📝</span> <span data-i18n="logActivity">Log Activity</span>
+                                    <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span data-i18n="logActivity">Log Activity</span>
                                 </button>
                             </div>
                         </div>
@@ -121,7 +121,7 @@
                             </div>
                             <div class="card-footer period-footer-bar">
                                 <button type="button" class="btn btn-primary log-btn" data-period="PM" onclick="openActivityModal('PM')">
-                                    <span>📝</span> <span data-i18n="logActivity">Log Activity</span>
+                                    <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span data-i18n="logActivity">Log Activity</span>
                                 </button>
                             </div>
                         </div>
@@ -147,7 +147,7 @@
                             </p>
                         </div>
                         <button type="button" class="btn btn-primary" onclick="openExpenseModal()">
-                            <span>➕</span> <span data-i18n="btnNewExpense">New Expense Claim</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> <span data-i18n="btnNewExpense">New Expense Claim</span>
                         </button>
                     </div>
 
@@ -226,7 +226,7 @@
                             </p>
                         </div>
                         <button type="button" class="btn btn-primary" id="btnNewServiceRequest" onclick="openServiceModal()">
-                            <span>➕</span> <span data-i18n="btnNewService">New Service Request</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> <span data-i18n="btnNewService">New Service Request</span>
                         </button>
                     </div>
 
@@ -818,13 +818,13 @@
 
     <!-- Scripts -->
     <!-- Modular Field Activities Architecture -->
-    <script src="js/workflow-engine.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-core.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-tab-daily.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-tab-expenses.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-tab-services.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-tab-budget.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-decisions.js?v=v252" charset="UTF-8"></script>
-    <script src="js/activities-init.js?v=v252" charset="UTF-8"></script>
+    <script src="js/workflow-engine.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-core.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-tab-daily.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-tab-expenses.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-tab-services.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-tab-budget.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-decisions.js?v=v253" charset="UTF-8"></script>
+    <script src="js/activities-init.js?v=v253" charset="UTF-8"></script>
 </body>
 </html>
