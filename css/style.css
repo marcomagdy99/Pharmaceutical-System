@@ -2488,3 +2488,224 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   cursor: pointer;
   text-decoration: none;
 }
+
+
+/* ==========================================================================
+   Modern SVG Outline Icons & Drawer Styling (Aligned with Enterprise SaaS)
+   ========================================================================== */
+.nav-svg-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+  transition: stroke 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-user-header-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-100, #f1f5f9);
+  background: var(--bg-card, #ffffff);
+}
+
+.sidebar-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.sidebar-user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-user-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900, #0f172a);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  font-size: 0.78rem;
+  color: var(--gray-500, #64748b);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  color: #475569;
+  font-weight: 500;
+  font-size: 0.92rem;
+  background: transparent;
+  border-radius: 10px;
+  margin: 3px 14px;
+  text-decoration: none;
+  transition: all 0.16s ease-in-out;
+}
+
+.sidebar-nav-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar-nav-link.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.sidebar-nav-link.active .sidebar-nav-icon,
+.sidebar-nav-link.active .nav-svg-icon {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.sidebar-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.sidebar-pending-badge {
+  font-size: 0.74rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+  box-shadow: none;
+  margin-left: auto;
+}
+
+.sidebar-nav-link.active .sidebar-pending-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.sidebar-footer-text {
+  text-align: center;
+  padding: 16px 20px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  border-top: 1px solid var(--gray-100, #f1f5f9);
+  margin-top: auto;
+}
+
+.company-logo-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+/* Dark Mode Adaptations */
+[data-theme="dark"] .sidebar-user-header-card,
+body.dark-theme .sidebar-user-header-card {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .sidebar-user-name,
+body.dark-theme .sidebar-user-name {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .sidebar-user-role,
+body.dark-theme .sidebar-user-role {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .sidebar-nav-link,
+body.dark-theme .sidebar-nav-link {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .sidebar-nav-link:hover,
+body.dark-theme .sidebar-nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .sidebar-nav-link.active,
+body.dark-theme .sidebar-nav-link.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .sidebar-nav-icon,
+body.dark-theme .sidebar-nav-icon {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .sidebar-pending-badge,
+body.dark-theme .sidebar-pending-badge {
+  background: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .sidebar-footer-text,
+body.dark-theme .sidebar-footer-text {
+  border-top-color: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+}
+
+/* Topbar direct links SVG adaptation */
+.pharma-nav-item .nav-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.pharma-nav-item .nav-item-icon .nav-svg-icon {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+}
+
+.pharma-nav-item.active .nav-item-icon .nav-svg-icon {
+  stroke: #ff9f1c;
+}
+

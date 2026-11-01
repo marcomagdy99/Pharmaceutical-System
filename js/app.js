@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v249";
+  const EXPECTED_SW = "v250";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2442,7 +2442,7 @@ window.getDmAccompanimentSchedule = getDmAccompanimentSchedule;
 // ============================================================================
 /**
  * Parses numeric sales value or quantity from Excel/CSV imports:
- * - Eastern Arabic digits (١٢٣)
+ * - Eastern Arabic / Indic numerals (e.g. U+0660 to U+0669)
  * - Accounting negative notation in parentheses e.g. (1,500.00) or (250)
  * - Trailing negative signs e.g. 1500-
  * - Standard negative signs e.g. -1500
@@ -2965,14 +2965,14 @@ const translations = {
     brandName: "PharmaCare",
     brandSub: "Excellence in Healthcare",
     navMain: "Main Menu",
-    navHome: "Home",
-    navVisits: "Visits",
+    navHome: "Dashboard",
+    navVisits: "Visits & Targets",
     navCalendar: "Calendar",
-    navRequests: "Requests",
-    navVacations: "Vacations",
+    navRequests: "Field Activities",
+    navVacations: "Leave Requests",
     navNotifications: "Notifications",
-    navSettings: "Settings",
-    navReports: "Reports",
+    navSettings: "My Profile",
+    navReports: "Reports Suite",
     navDoctors: "Doctors",
     navPharmacies: "Pharmacies",
     navPlan: "My Plan",
@@ -2980,11 +2980,11 @@ const translations = {
     navActivities: "Activities",
     navLeaves: "Leaves",
     navSales: "Sales",
-    navQuizzes: "Quizzes",
-    navProducts: "Products",
-    navAreas: "Areas",
-    navDistributors: "Distributors",
-    navUsers: "Users",
+    navQuizzes: "Medical Quizzes",
+    navProducts: "Products & Lines",
+    navAreas: "Areas & Bricks",
+    navDistributors: "Distributors & Sales",
+    navUsers: "Users & Hierarchy",
     navProfile: "Profile",
     navHelp: "Help",
     roleAdmin: "System Admin",
@@ -3153,26 +3153,51 @@ window.closeMobileSidebar = function () {
 };
 
 // ============================================================================
+// Section 6.0: Enterprise SVG Line Icons Registry (Zero Network Dependency)
+// ============================================================================
+const NAV_ICONS = {
+  home: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+  visits: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.25 7.5 12.5 7.5 12.5s7.5-7.25 7.5-12.5A7.5 7.5 0 0 0 12 2z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  calendar: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="14" r="0.75" fill="currentColor"/><circle cx="12" cy="14" r="0.75" fill="currentColor"/><circle cx="16" cy="14" r="0.75" fill="currentColor"/></svg>',
+  "plans-review": '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>',
+  activities: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 15 2 2 4-4"/></svg>',
+  areas: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
+  products: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="7" cy="16" r="3"/><circle cx="17" cy="16" r="3"/><circle cx="12" cy="7" r="3"/><line x1="9.6" y1="14.8" x2="14.4" y2="14.8"/><line x1="8.5" y1="13.5" x2="10.8" y2="9.5"/><line x1="15.5" y1="13.5" x2="13.2" y2="9.5"/></svg>',
+  users: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  distributors: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="14" height="13" rx="1"/><polygon points="15 8 19 8 22 11 22 16 15 16 15 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/></svg>',
+  reports: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>',
+  leaves: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="4" x2="21" y2="22"/></svg>',
+  announcements: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/><path d="M8 8V6a2 2 0 0 1 2-2h4"/></svg>',
+  quizzes: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+  profile: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>',
+  doctors: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>',
+  pharmacies: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>',
+  sales: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+  plan: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>',
+  coverage: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+};
+window.NAV_ICONS = NAV_ICONS;
+
 // Section 6: Unified Declarative Navigation Registry
 // ============================================================================
 const NAV_CONFIG = [
   // Primary Navigation
-  { id: "home", file: "index.html", icon: "🏠", i18n: "navHome", section: "primary" },
-  { id: "users", file: "users.html", icon: "👥", i18n: "navUsers", section: "management", hrPrimary: true, roles: ["admin"] },
-  { id: "visits", file: "visits.html", icon: "📍", i18n: "navVisits", section: "primary" },
-  { id: "calendar", file: "calendar.html", icon: "📅", i18n: "navCalendar", section: "primary" },
-  { id: "activities", file: "activities.html", icon: "🔄", i18n: "navRequests", section: "primary" },
-  { id: "leaves", file: "leaves.html", icon: "🏖️", i18n: "navVacations", section: "primary" },
-  { id: "announcements", file: "announcements.html", icon: "🔔", i18n: "navNotifications", section: "primary" },
-  { id: "reports", file: "reports.html", icon: "📊", i18n: "navReports", section: "primary", excludeRoles: ["hr"] },
-  { id: "profile", file: "profile.html", icon: "⚙️", i18n: "navSettings", section: "primary" },
+  { id: "home", file: "index.html", icon: NAV_ICONS.home, i18n: "navHome", section: "primary" },
+  { id: "users", file: "users.html", icon: NAV_ICONS.users, i18n: "navUsers", section: "management", hrPrimary: true, roles: ["admin"] },
+  { id: "visits", file: "visits.html", icon: NAV_ICONS.visits, i18n: "navVisits", section: "primary" },
+  { id: "calendar", file: "calendar.html", icon: NAV_ICONS.calendar, i18n: "navCalendar", section: "primary" },
+  { id: "activities", file: "activities.html", icon: NAV_ICONS.activities, i18n: "navRequests", section: "primary" },
+  { id: "leaves", file: "leaves.html", icon: NAV_ICONS.leaves, i18n: "navVacations", section: "primary" },
+  { id: "announcements", file: "announcements.html", icon: NAV_ICONS.announcements, i18n: "navNotifications", section: "primary" },
+  { id: "reports", file: "reports.html", icon: NAV_ICONS.reports, i18n: "navReports", section: "primary", excludeRoles: ["hr"] },
+  { id: "profile", file: "profile.html", icon: NAV_ICONS.profile, i18n: "navSettings", section: "primary" },
 
   // Management & Operations Navigation
-  { id: "plans-review", file: "plans-review.html", icon: "📋", i18n: "navPlansReview", section: "management", roles: ["district_manager", "line_manager", "business_unit"] },
-  { id: "distributors", file: "distributors.html", icon: "🚚", i18n: "navDistributors", section: "management", roles: ["admin"] },
-  { id: "areas", file: "areas.html", icon: "🗺️", i18n: "navAreas", section: "management", roles: ["admin", "hr"] },
-  { id: "products", file: "products.html", icon: "📦", i18n: "navProducts", section: "management", roles: ["admin"] },
-  { id: "quizzes", file: "quizzes.html", icon: "📋", i18n: "navQuizzes", section: "management", roles: ["all"], excludeRoles: ["hr"] },
+  { id: "plans-review", file: "plans-review.html", icon: NAV_ICONS["plans-review"], i18n: "navPlansReview", section: "management", roles: ["district_manager", "line_manager", "business_unit"] },
+  { id: "distributors", file: "distributors.html", icon: NAV_ICONS.distributors, i18n: "navDistributors", section: "management", roles: ["admin"] },
+  { id: "areas", file: "areas.html", icon: NAV_ICONS.areas, i18n: "navAreas", section: "management", roles: ["admin", "hr"] },
+  { id: "products", file: "products.html", icon: NAV_ICONS.products, i18n: "navProducts", section: "management", roles: ["admin"] },
+  { id: "quizzes", file: "quizzes.html", icon: NAV_ICONS.quizzes, i18n: "navQuizzes", section: "management", roles: ["all"], excludeRoles: ["hr"] },
 ];
 window.NAV_CONFIG = NAV_CONFIG;
 
@@ -3186,16 +3211,10 @@ function resolveActivePage() {
 // Section 7: Navigation Generators (Topbar & Mobile Sidebar)
 // ============================================================================
 function getIconSymbol(id) {
+  if (NAV_ICONS[id]) return NAV_ICONS[id];
   const found = NAV_CONFIG.find((item) => item.id === id);
-  if (found) return found.icon;
-  const legacyIcons = {
-    doctors: "👨‍⚕️",
-    pharmacies: "💊",
-    sales: "📈",
-    plan: "🗓️",
-    coverage: "🎯",
-  };
-  return legacyIcons[id] || "📌";
+  if (found && found.icon) return found.icon;
+  return NAV_ICONS.home;
 }
 
 function getRoleBadge(role, lang = "en") {
@@ -3383,45 +3402,50 @@ function renderSidebar(activePage) {
     ${renderSidebarNavList(managementNavItems, resolved, user, lang)}
   ` : "";
 
+  const userInitials = (user.name || "U")
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "U";
+
   const html = `
     <div class="sidebar-header">
       <div class="sidebar-brand-box">
-        <div class="company-logo-badge">
-          ⚕
-        </div>
+        <div class="company-logo-badge">P</div>
         <div class="sidebar-brand-titles">
           <h2 class="sidebar-brand-h2">PharmaCare</h2>
-          <span class="sidebar-brand-sub">CRM Healthcare</span>
         </div>
       </div>
       <button class="sidebar-close-btn" onclick="closeMobileSidebar()" aria-label="Close Sidebar">
         &times;
       </button>
     </div>
+
+    <div class="sidebar-user-header-card">
+      <div class="sidebar-user-avatar">
+        ${window.escapeHtml(userInitials)}
+      </div>
+      <div class="sidebar-user-details">
+        <div class="sidebar-user-name">
+          ${window.escapeHtml(lang === "ar" ? user.nameAr || user.name : user.name)}
+        </div>
+        <div class="sidebar-user-role">
+          ${window.escapeHtml(getRoleBadge(user.role, lang))}
+        </div>
+      </div>
+    </div>
     
     <div class="sidebar-nav">
-      <div class="sidebar-section-title">
-        Main Menu
-      </div>
       <ul class="sidebar-nav-list">
         ${primaryHtml}
         ${managementHtml}
       </ul>
     </div>
-    <div class="sidebar-footer">
-      <div class="sidebar-user-info">
-        <div class="sidebar-user-avatar">
-          ${user.name ? user.name.charAt(0) : "U"}
-        </div>
-        <div class="sidebar-user-details">
-          <div class="sidebar-user-name">
-            ${lang === "ar" ? user.nameAr || user.name : user.name}
-          </div>
-          <div class="sidebar-user-role">
-            ${getRoleBadge(user.role, lang)}
-          </div>
-        </div>
-      </div>
+
+    <div class="sidebar-footer-text">
+      PharmaCare CRM &copy; ${new Date().getFullYear()}
     </div>
   `;
 
