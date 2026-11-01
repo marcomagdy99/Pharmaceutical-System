@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v254";
+  const EXPECTED_SW = "v255";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -347,11 +347,8 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2021-06-01",
         "email": "bu@pharmacare.com",
         "phone": "+20100222333",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "status": "Active",
         "code": "BU-001",
         "productIds": [],
@@ -371,11 +368,8 @@ const DEFAULT_DEMO_DATA = {
         "role": "line_manager",
         "employeeCode": "LM-001",
         "managerId": "u1790626000011",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [],
         "area": null,
         "areaId": null,
@@ -401,10 +395,8 @@ const DEFAULT_DEMO_DATA = {
         "role": "line_manager",
         "employeeCode": "LM-002",
         "managerId": "u1790626000011",
-        "lineId": "line_1790626000002",
-        "lineIds": [
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [],
         "area": null,
         "areaId": null,
@@ -430,11 +422,8 @@ const DEFAULT_DEMO_DATA = {
         "role": "district_manager",
         "employeeCode": "DM-001",
         "managerId": "u1790626000012",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [],
         "area": null,
         "areaId": null,
@@ -460,11 +449,8 @@ const DEFAULT_DEMO_DATA = {
         "role": "district_manager",
         "employeeCode": "DM-002",
         "managerId": "u1790626000012",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [],
         "area": null,
         "areaId": null,
@@ -490,10 +476,8 @@ const DEFAULT_DEMO_DATA = {
         "role": "district_manager",
         "employeeCode": "DM-003",
         "managerId": "u1790626000013",
-        "lineId": "line_1790626000002",
-        "lineIds": [
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [],
         "area": null,
         "areaId": null,
@@ -520,10 +504,8 @@ const DEFAULT_DEMO_DATA = {
         "employeeCode": "REP-001",
         "managerId": "u1790626000014",
         "areaId": "area_1790626000001",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "email": "rep@pharmacare.com",
         "code": "REP-001",
         "phone": "+201001234567",
@@ -552,10 +534,8 @@ const DEFAULT_DEMO_DATA = {
         "employeeCode": "REP-002",
         "managerId": "u1790626000015",
         "areaId": "area_line1_1790674637363",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [
             "area_line1_1790674637363"
         ],
@@ -583,10 +563,8 @@ const DEFAULT_DEMO_DATA = {
         "employeeCode": "REP-003",
         "managerId": "u1790626000015",
         "areaId": "area_line1_1790674718201",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [
             "area_line1_1790674718201"
         ],
@@ -614,10 +592,8 @@ const DEFAULT_DEMO_DATA = {
         "employeeCode": "REP-004",
         "managerId": "u1790626000014",
         "areaId": "area_line2_1790674745627",
-        "lineId": "line_1790626000002",
-        "lineIds": [
-            "line_1790626000002"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "areaIds": [
             "area_line2_1790674745627",
             "area_line2_1790688168385"
@@ -669,15 +645,9 @@ const DEFAULT_DEMO_DATA = {
         "email": "pm@pharmacare.com",
         "phone": "+20100999111",
         "managerId": "u1790626000011",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "productIds": [
-            "prod_1790626000001",
-            "prod_1790626000002",
-            "prod_1790626000003",
-            "prod_1790626000004",
             "prod_1790625546491",
             "prod_1790625561525",
             "prod_1790625585077",
@@ -711,10 +681,8 @@ const DEFAULT_DEMO_DATA = {
         "email": "rep5@pharmacare.com",
         "phone": "+20100999222",
         "managerId": "u1790626000015",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
+        "lineId": "",
+        "lineIds": [],
         "productIds": [],
         "status": "Active",
         "hireDate": "2023-06-01",
@@ -747,14 +715,10 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-28",
         "managerId": "u1790626000011",
         "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
+        "lineIds": [],
+        "lineId": "",
         "productIds": [
-            "prod_1790626000005",
-            "prod_1790626000006"
-        ],
+            ],
         "leaveBalance": {
             "annual": 21,
             "casual": 6,
@@ -779,10 +743,8 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-28",
         "managerId": "u1790626000016",
         "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
+        "lineIds": [],
+        "lineId": "",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -810,10 +772,8 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-28",
         "managerId": "u1790626000015",
         "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
+        "lineIds": [],
+        "lineId": "",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -841,10 +801,8 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-29",
         "managerId": "u1790626000016",
         "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
+        "lineIds": [],
+        "lineId": "",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -872,10 +830,8 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-29",
         "managerId": "u1790626000014",
         "status": "Active",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "lineId": "line_1790626000001",
+        "lineIds": [],
+        "lineId": "",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -903,10 +859,8 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-29",
         "managerId": "u1790626000014",
         "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
+        "lineIds": [],
+        "lineId": "",
         "productIds": [],
         "leaveBalance": {
             "annual": 21,
@@ -937,41 +891,12 @@ const DEFAULT_DEMO_DATA = {
     { id: "spec_other", code: "OTHER", name: "Other", nameAr: "Other" },
   ],
   areas: [
-    { id: "area_1790626000001", name: "Nasr City", code: "CAI-N01", repId: "u1790626000001", lineId: "line_1790626000001" },
-    { id: "area_1790626000002", name: "Heliopolis", code: "CAI-H01", repId: "u1790626000002", lineId: "line_1790626000001" },
-    { id: "area_1790626000003", name: "Nasr City", code: "CAI-N01", repId: "u1790626000004", lineId: "line_1790626000002" },
-    { id: "area_1790626000004", name: "Maadi", code: "CAI-M01", repId: null, lineId: "line_1790626000002" },
+    { id: "area_1790626000001", name: "Nasr City", code: "CAI-N01", repId: "u1790626000001", lineId: "" },
+    { id: "area_1790626000002", name: "Heliopolis", code: "CAI-H01", repId: "u1790626000002", lineId: "" },
+    { id: "area_1790626000003", name: "Nasr City", code: "CAI-N01", repId: "u1790626000004", lineId: "" },
+    { id: "area_1790626000004", name: "Maadi", code: "CAI-M01", repId: null, lineId: "" },
   ],
-  productLines: [
-    {
-      id: "line_1790626000001",
-      name: "Cardio Line",
-      nameAr: "Cardio Line",
-      status: "Active",
-      lineManagerId: "u1790626000012",
-      lineManagerName: "Line Manager",
-      callFrequency: { classA: 4, classB: 3, classC: 1 },
-      products: [
-        { id: "prod_1790626000001", name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet" },
-        { id: "prod_1790626000002", name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops" },
-        { id: "prod_1790626000003", name: "Omeprazole 20mg", dosage: "20mg", form: "Capsule" },
-        { id: "prod_1790626000004", name: "Azithromycin 250mg", dosage: "250mg", form: "Tablet" },
-      ],
-    },
-    {
-      id: "line_1790626000002",
-      name: "Neuro Line",
-      nameAr: "Neuro Line",
-      status: "Active",
-      lineManagerId: "u1790626000013",
-      lineManagerName: "Line Manager",
-      callFrequency: { classA: 4, classB: 2, classC: 1 },
-      products: [
-        { id: "prod_1790626000005", name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule" },
-        { id: "prod_1790626000006", name: "Carbamazepine 200mg", dosage: "200mg", form: "Tablet" },
-      ],
-    },
-  ],
+  productLines: [],
   doctors: [],
   hospitals: [],
   pharmacies: [],
@@ -1156,10 +1081,10 @@ function loadDataFromStorage() {
               u.code = "PM-002";
               u.employeeCode = "PM-002";
               u.name = "Fady Adel";
-              u.lineId = "line_1790626000002";
-              u.lineIds = ["line_1790626000002"];
+              u.lineId = "";
+              u.lineIds = [];
               if (!Array.isArray(u.productIds) || u.productIds.length === 0) {
-                u.productIds = ["prod_1790626000005", "prod_1790626000006"];
+                u.productIds = [];
               }
             }
           });
@@ -1260,7 +1185,9 @@ function loadDataFromStorage() {
         } else {
           data.areas = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.areas));
         }
+        const demoLineIds = ["line_1790626000001", "line_1790626000002", "line1", "line2"];
         if (Array.isArray(data.productLines)) {
+          data.productLines = data.productLines.filter((pl) => pl && pl.id && !demoLineIds.includes(pl.id));
           data.productLines.forEach((pl) => {
             if (!pl.callFrequency) {
               pl.callFrequency = { classA: 4, classB: 3, classC: 1 };
@@ -1357,9 +1284,9 @@ function loadDataFromStorage() {
         dm1: "u1790626000014", dm2: "u1790626000015", dm3: "u1790626000016", hr1: "u1790626000017",
         pm1: "u1790626000018", pm2: "u1790626000019"
       };
-      const legacyLineMap = { line1: "line_1790626000001", line2: "line_1790626000002", line3: "line_1790626000003", line_1790626036368: "line_1790626000002" };
+      const legacyLineMap = { line1: "", line2: "", line3: "line_1790626000003", line_1790626036368: "" };
       const legacyAreaMap = { area1: "area_1790626000001", area2: "area_1790626000002", area3: "area_1790626000003", area4: "area_1790626000004" };
-      const legacyProdMap = { prod1: "prod_1790626000001", prod2: "prod_1790626000002", prod3: "prod_1790626000003", prod4: "prod_1790626000004", prod5: "prod_1790626000005", prod6: "prod_1790626000006" };
+      const legacyProdMap = {};
       const legacyPharmMap = { p1: "ph_1790626000001", p2: "ph_1790626000002", p3: "ph_1790626000003", p4: "ph_1790626000004", p5: "ph_1790626000005", p6: "ph_1790626000006", p7: "ph_1790626000007" };
       const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
       const legacyAnnMap = { ann1: "ann_1790626000001", ann2: "ann_1790626000002", ann3: "ann_1790626000003", ann4: "ann_1790626000004", ann5: "ann_1790626000005", ann6: "ann_1790626000006", ann7: "ann_1790626000007", ann8: "ann_1790626000008" };
@@ -4130,9 +4057,9 @@ function checkAuth() {
       parsed.role = "product_manager";
       parsed.employeeCode = "PM-002";
       parsed.code = "PM-002";
-      parsed.lineId = "line_1790626000002";
-      parsed.lineIds = ["line_1790626000002"];
-      parsed.productIds = ["prod_1790626000005", "prod_1790626000006"];
+      parsed.lineId = "";
+      parsed.lineIds = [];
+      parsed.productIds = [];
     }
 
     // Authority Binding: Lookup against genuine company database (DEMO_DATA or store.users)

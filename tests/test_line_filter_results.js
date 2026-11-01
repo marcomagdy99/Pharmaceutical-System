@@ -90,6 +90,12 @@ const achReportCode = fs.readFileSync('js/achievements-report.js', 'utf8');
 vm.runInNewContext(achReportCode, sandbox);
 
 // Check sales rows under all lines vs line 1 vs line 2
+if (!sandbox.window.DEMO_DATA.productLines || sandbox.window.DEMO_DATA.productLines.length < 2) {
+  sandbox.window.DEMO_DATA.productLines = [
+    { id: "test_line_1", name: "Line 1", products: [{ id: "prod_1790626000001", name: "Prod 1" }] },
+    { id: "test_line_2", name: "Line 2", products: [{ id: "prod_1790626000005", name: "Prod 2" }] }
+  ];
+}
 const line1 = sandbox.window.DEMO_DATA.productLines[0].id;
 const line2 = sandbox.window.DEMO_DATA.productLines[1].id;
 

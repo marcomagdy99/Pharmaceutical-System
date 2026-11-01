@@ -42,6 +42,15 @@ console.log('✓ userMgmt loaded successfully');
 
 // Initialize userMgmt data
 window.userMgmt.users = window.DEMO_DATA.users;
+if (!window.DEMO_DATA.productLines || window.DEMO_DATA.productLines.length < 2) {
+  window.DEMO_DATA.productLines = [
+    { id: 'line_1790626000001', name: 'Line 1' },
+    { id: 'line_1790626000002', name: 'Line 2' }
+  ];
+  (window.DEMO_DATA.areas || []).forEach((a, i) => {
+    a.lineId = i % 2 === 0 ? 'line_1790626000001' : 'line_1790626000002';
+  });
+}
 window.userMgmt.lines = window.DEMO_DATA.productLines;
 
 // 3. Test getUserAssignedAreas for DM with multi-line coverage
