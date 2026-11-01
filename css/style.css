@@ -2709,3 +2709,26 @@ body.dark-theme .sidebar-footer-text {
   stroke: #ff9f1c;
 }
 
+
+
+/* Tabs SVG Outline Support */
+.report-tab-btn .nav-svg-icon,
+.requests-tab-btn .nav-svg-icon,
+.rep-plan-tab-btn .nav-svg-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: -3px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s ease, transform 0.2s ease;
+}
+
+.report-tab-btn.active .nav-svg-icon,
+.requests-tab-btn.active .nav-svg-icon,
+.rep-plan-tab-btn.active .nav-svg-icon {
+  stroke: currentColor;
+}
+

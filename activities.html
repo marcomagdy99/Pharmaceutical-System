@@ -27,21 +27,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v251">
-    <link rel="stylesheet" href="css/activities.css?v=v251">
+    <link rel="stylesheet" href="css/style.css?v=v252">
+    <link rel="stylesheet" href="css/activities.css?v=v252">
 
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v251"></script>
-  <script src="js/app.js?v=v251"></script>
-    <script src="js/store.js?v=v251"></script>
+    <script src="js/auth-service.js?v=v252"></script>
+  <script src="js/app.js?v=v252"></script>
+    <script src="js/store.js?v=v252"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v251"></script>
-    <script src="js/firebase-sync.js?v=v251"></script>
+    <script src="js/firebase-config.js?v=v252"></script>
+    <script src="js/firebase-sync.js?v=v252"></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v251"></script>
+    <script src="js/cache-bust.js?v=v252"></script>
   </head>
 <body>
     <div class="app">
@@ -58,19 +58,24 @@
                 <!-- Requests Navigation Pill Tabs -->
                 <nav class="requests-nav-tabs" id="requestsNavTabs" aria-label="Requests Sections">
                     <button type="button" class="requests-tab-btn active" id="tabBtnActivities" onclick="switchRequestsTab('tab-activities')">
-                        <span>📋</span> <span data-i18n="tabDailyActivities">Daily Activities</span>
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 15 2 2 4-4"/></svg>
+                        <span data-i18n="tabDailyActivities">Daily Activities</span>
                     </button>
                     <button type="button" class="requests-tab-btn" id="tabBtnExpenses" onclick="switchRequestsTab('tab-expenses')">
-                        <span>💳</span> <span data-i18n="tabExpenses">Request Expenses</span>
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <span data-i18n="tabExpenses">Request Expenses</span>
                     </button>
                     <button type="button" class="requests-tab-btn" id="tabBtnServices" onclick="switchRequestsTab('tab-services')">
-                        <span>🤝</span> <span data-i18n="tabServices">Request Services</span>
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="m19 14 1.5-1.5a2.12 2.12 0 0 0 0-3l-2.12-2.12a2.12 2.12 0 0 0-3 0L12 10.75M9 14l-1.5-1.5a2.12 2.12 0 0 1 0-3L9.62 7.38a2.12 2.12 0 0 1 3 0L15 9.75"/><path d="M12 18v3"/><path d="M8 18h8"/></svg>
+                        <span data-i18n="tabServices">Request Services</span>
                     </button>
                     <button type="button" class="requests-tab-btn" id="tabBtnLocationRequests" onclick="switchRequestsTab('tab-locations')">
-                        <span>📍</span> <span data-i18n="tabLocationRequests">Location Requests</span>
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M12 2a7.5 7.5 0 0 0-7.5 7.5c0 5.25 7.5 12.5 7.5 12.5s7.5-7.25 7.5-12.5A7.5 7.5 0 0 0 12 2z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+                        <span data-i18n="tabLocationRequests">Location Requests</span>
                     </button>
                     <button type="button" class="requests-tab-btn" id="tabBtnBudget" style="display: none;" onclick="switchRequestsTab('tab-budget')">
-                        <span>💰</span> <span data-i18n="tabSalesBudget">Sales Budget</span>
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+                        <span data-i18n="tabSalesBudget">Sales Budget</span>
                     </button>
                 </nav>
 
@@ -813,13 +818,13 @@
 
     <!-- Scripts -->
     <!-- Modular Field Activities Architecture -->
-    <script src="js/workflow-engine.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-core.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-tab-daily.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-tab-expenses.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-tab-services.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-tab-budget.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-decisions.js?v=v251" charset="UTF-8"></script>
-    <script src="js/activities-init.js?v=v251" charset="UTF-8"></script>
+    <script src="js/workflow-engine.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-core.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-tab-daily.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-tab-expenses.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-tab-services.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-tab-budget.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-decisions.js?v=v252" charset="UTF-8"></script>
+    <script src="js/activities-init.js?v=v252" charset="UTF-8"></script>
 </body>
 </html>

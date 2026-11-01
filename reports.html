@@ -17,7 +17,7 @@
       })();
     </script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v251"></script>
+    <script src="js/cache-bust.js?v=v252"></script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,18 +26,18 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v251" />
-    <link rel="stylesheet" href="css/reports.css?v=v251" />
+    <link rel="stylesheet" href="css/style.css?v=v252" />
+    <link rel="stylesheet" href="css/reports.css?v=v252" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v251"></script>
-  <script src="js/app.js?v=v251"></script>
-    <script src="js/store.js?v=v251"></script>
+    <script src="js/auth-service.js?v=v252"></script>
+  <script src="js/app.js?v=v252"></script>
+    <script src="js/store.js?v=v252"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v251"></script>
-    <script src="js/firebase-sync.js?v=v251"></script>
+    <script src="js/firebase-config.js?v=v252"></script>
+    <script src="js/firebase-sync.js?v=v252"></script>
   </head>
   <body>
     <div class="app">
@@ -90,7 +90,7 @@
           <div class="report-global-line-bar" id="reportLineFilterBar">
             <div class="report-global-line-inner">
               <label for="reportLineFilter" class="fw-bold mb-0" style="font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
-                <span>📦</span> <span data-i18n="lineFilterLabel">Product Line:</span>
+                <svg class="nav-svg-icon me-1" viewBox="0 0 24 24"><circle cx="7" cy="16" r="3"/><circle cx="17" cy="16" r="3"/><circle cx="12" cy="7" r="3"/><line x1="9.6" y1="14.8" x2="14.4" y2="14.8"/><line x1="8.5" y1="13.5" x2="10.8" y2="9.5"/><line x1="15.5" y1="13.5" x2="13.2" y2="9.5"/></svg> <span data-i18n="lineFilterLabel">Product Line:</span>
               </label>
               <select id="reportLineFilter" class="form-control" onchange="onReportLineFilterChange(this.value)">
                 <option value="all" data-i18n="allLines">All Lines</option>
@@ -105,56 +105,64 @@
               data-tab="sales"
               onclick="switchReportTab('sales')"
             >
-              💊 <span data-i18n="tabSales">Pharmacies Sales</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+              <span data-i18n="tabSales">Pharmacies Sales</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="achievements"
               onclick="switchReportTab('achievements')"
             >
-              🏆 <span data-i18n="tabAchievements">Achievements</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8c-.55 0-1 .45-1 1v1h10v-1c0-.55-.45-1-1-1h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M6 4h12v5a6 6 0 0 1-12 0V4Z"/></svg>
+              <span data-i18n="tabAchievements">Achievements</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="timeline"
               onclick="switchReportTab('timeline')"
             >
-              ⏰ <span data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span data-i18n="tabDailyTimeline">Daily Visits Timeline</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="coverage"
               onclick="switchReportTab('coverage')"
             >
-              🎯 <span data-i18n="tabCoverageFreq">Coverage & Frequency</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+              <span data-i18n="tabCoverageFreq">Coverage & Frequency</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="doctors"
               onclick="switchReportTab('doctors')"
             >
-              👨‍⚕️ <span data-i18n="tabDoctorsList">Doctors List</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>
+              <span data-i18n="tabDoctorsList">Doctors List</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="hospitals"
               onclick="switchReportTab('hospitals')"
             >
-              🏥 <span data-i18n="tabHospitalsList">Hospitals List</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"/><path d="M10 9h4"/><path d="M12 7v4"/><path d="M10 16h4"/></svg>
+              <span data-i18n="tabHospitalsList">Hospitals List</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="pharmacies"
               onclick="switchReportTab('pharmacies')"
             >
-              💊 <span data-i18n="tabPharmaciesList">Pharmacies List</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span data-i18n="tabPharmaciesList">Pharmacies List</span>
             </button>
             <button
               class="report-tab-btn"
               data-tab="missing-days"
               onclick="switchReportTab('missing-days')"
             >
-              📅 <span data-i18n="tabMissingDays">Missing Days</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><line x1="10" x2="14" y1="14" y2="18"/><line x1="14" x2="10" y1="14" y2="18"/></svg>
+              <span data-i18n="tabMissingDays">Missing Days</span>
             </button>
             <button
               class="report-tab-btn"
@@ -163,7 +171,8 @@
               onclick="switchReportTab('gps-tracing')"
               style="display: none;"
             >
-              🛰️ <span data-i18n="tabGpsTracing">GPS Route & Tracing</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              <span data-i18n="tabGpsTracing">GPS Route & Tracing</span>
             </button>
             <button
               class="report-tab-btn"
@@ -171,7 +180,8 @@
               data-tab="accounts-costing"
               onclick="switchReportTab('accounts-costing')"
             >
-              💼 <span data-i18n="tabAccountsCosting">Accounts Costing</span>
+              <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <span data-i18n="tabAccountsCosting">Accounts Costing</span>
             </button>
           </div>
           <!-- TAB 1: Monthly Sales & Targets -->
@@ -3135,22 +3145,22 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v251"></script>
+    <script src="js/interactive-charts.js?v=v252"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v251"></script>
-    <script src="js/export-service.js?v=v251"></script>
-    <script src="js/shared-report.js?v=v251"></script>
-    <script src="js/sales-report.js?v=v251"></script>
-    <script src="js/achievements-report.js?v=v251"></script>
-    <script src="js/timeline-report.js?v=v251"></script>
-    <script src="js/coverage-report.js?v=v251"></script>
-    <script src="js/doctors-report.js?v=v251"></script>
-    <script src="js/hospitals-report.js?v=v251"></script>
-    <script src="js/pharmacies-report.js?v=v251"></script>
-    <script src="js/missing-days-report.js?v=v251"></script>
-    <script src="js/gps-service.js?v=v251"></script>
-    <script src="js/gps-tracing-report.js?v=v251"></script>
-    <script src="js/accounts-costing-report.js?v=v251"></script>
+    <script src="js/excel-templates-data.js?v=v252"></script>
+    <script src="js/export-service.js?v=v252"></script>
+    <script src="js/shared-report.js?v=v252"></script>
+    <script src="js/sales-report.js?v=v252"></script>
+    <script src="js/achievements-report.js?v=v252"></script>
+    <script src="js/timeline-report.js?v=v252"></script>
+    <script src="js/coverage-report.js?v=v252"></script>
+    <script src="js/doctors-report.js?v=v252"></script>
+    <script src="js/hospitals-report.js?v=v252"></script>
+    <script src="js/pharmacies-report.js?v=v252"></script>
+    <script src="js/missing-days-report.js?v=v252"></script>
+    <script src="js/gps-service.js?v=v252"></script>
+    <script src="js/gps-tracing-report.js?v=v252"></script>
+    <script src="js/accounts-costing-report.js?v=v252"></script>
   </body>
 </html>
 
