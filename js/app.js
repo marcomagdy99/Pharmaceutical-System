@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v250";
+  const EXPECTED_SW = "v251";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2965,14 +2965,14 @@ const translations = {
     brandName: "PharmaCare",
     brandSub: "Excellence in Healthcare",
     navMain: "Main Menu",
-    navHome: "Dashboard",
-    navVisits: "Visits & Targets",
+    navHome: "Home",
+    navVisits: "Visits",
     navCalendar: "Calendar",
-    navRequests: "Field Activities",
-    navVacations: "Leave Requests",
+    navRequests: "Requests",
+    navVacations: "Vacations",
     navNotifications: "Notifications",
-    navSettings: "My Profile",
-    navReports: "Reports Suite",
+    navSettings: "Settings",
+    navReports: "Reports",
     navDoctors: "Doctors",
     navPharmacies: "Pharmacies",
     navPlan: "My Plan",
@@ -2980,11 +2980,11 @@ const translations = {
     navActivities: "Activities",
     navLeaves: "Leaves",
     navSales: "Sales",
-    navQuizzes: "Medical Quizzes",
-    navProducts: "Products & Lines",
-    navAreas: "Areas & Bricks",
-    navDistributors: "Distributors & Sales",
-    navUsers: "Users & Hierarchy",
+    navQuizzes: "Quizzes",
+    navProducts: "Products",
+    navAreas: "Areas",
+    navDistributors: "Distributors",
+    navUsers: "Users",
     navProfile: "Profile",
     navHelp: "Help",
     roleAdmin: "System Admin",
