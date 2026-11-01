@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v253";
+  const EXPECTED_SW = "v254";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -974,92 +974,7 @@ const DEFAULT_DEMO_DATA = {
   ],
   doctors: [],
   hospitals: [],
-  pharmacies: [
-  {
-    "id": "ph_1790626000001",
-    "name": "Al-Ezaby Pharmacy",
-    "nameAr": "El-Ezaby Pharmacy",
-    "address": "15 Abbas Al-Akkad, Nasr City",
-    "phone": "01001112233",
-    "contactPerson": "Mohamed Ibrahim",
-    "areaId": "area_1790626000001",
-    "repId": "u1790626000001",
-    "lineId": "line_1790626000001",
-    "area": "Mohndseen"
-  },
-  {
-    "id": "ph_1790626000002",
-    "name": "Seif Pharmacy",
-    "nameAr": "Seif Pharmacy",
-    "address": "28 Mostafa El-Nahas, Nasr City",
-    "phone": "01009998877",
-    "contactPerson": "Youssef Ahmed",
-    "areaId": "area_1790626000001",
-    "repId": "u1790626000001",
-    "lineId": "line_1790626000001",
-    "area": "Mohndseen"
-  },
-  {
-    "id": "ph_1790626000003",
-    "name": "Roshdy Pharmacy",
-    "nameAr": "Roshdy Pharmacy",
-    "address": "5 Tayaran St, Nasr City",
-    "phone": "01155566677",
-    "contactPerson": "Ramy Adel",
-    "areaId": "area_1790626000001",
-    "repId": "u1790626000001",
-    "lineId": "line_1790626000001",
-    "area": "Mohndseen"
-  },
-  {
-    "id": "ph_1790626000004",
-    "name": "19011 Pharmacy",
-    "nameAr": "19011 Pharmacy",
-    "address": "42 Makram Ebeid, Nasr City",
-    "phone": "01234567890",
-    "contactPerson": "Sara Maher",
-    "areaId": "area_1790626000001",
-    "repId": "u1790626000001",
-    "lineId": "line_1790626000001",
-    "area": "Mohndseen"
-  },
-  {
-    "id": "ph_1790626000005",
-    "name": "Misr Pharmacy",
-    "nameAr": "Misr Pharmacy",
-    "address": "18 Al-Ahram St, Heliopolis",
-    "phone": "01099887766",
-    "contactPerson": "Hazem Tarek",
-    "areaId": "area_1790626000002",
-    "repId": null,
-    "lineId": "line_1790626000001",
-    "area": "Heliopolis"
-  },
-  {
-    "id": "ph_1790626000006",
-    "name": "El-Tarshouby Pharmacy",
-    "nameAr": "El-Tarshouby Pharmacy",
-    "address": "10 Abbas Al-Akkad, Nasr City",
-    "phone": "01223344556",
-    "contactPerson": "Mina Magdy",
-    "areaId": "area_1790626000001",
-    "repId": "u1790626000001",
-    "lineId": "line_1790626000001",
-    "area": "Mohndseen"
-  },
-  {
-    "id": "ph_1790626000007",
-    "name": "Dawaee Pharmacy",
-    "nameAr": "Dawaee Pharmacy",
-    "address": "25 Beirut St, Heliopolis",
-    "phone": "01122334455",
-    "contactPerson": "Hoda Sameh",
-    "areaId": "area_1790626000002",
-    "repId": null,
-    "lineId": "line_1790626000001",
-    "area": "Heliopolis"
-  }
-],
+  pharmacies: [],
   visits: [],
   leaves: [],
   sales: [],
@@ -1370,7 +1285,8 @@ function loadDataFromStorage() {
         data.doctors = data.doctors.filter((d) => d && d.id && !/^d\d{1,4}$/.test(d.id));
 
         if (!Array.isArray(data.pharmacies)) data.pharmacies = [];
-        data.pharmacies = data.pharmacies.filter((p) => p && p.id && !/^ph\d{1,4}$/.test(p.id));
+        const demoPharmacyIds = ["ph_1790626000001", "ph_1790626000002", "ph_1790626000003", "ph_1790626000004", "ph_1790626000005", "ph_1790626000006", "ph_1790626000007"];
+        data.pharmacies = data.pharmacies.filter((p) => p && p.id && !/^ph\d{1,4}$/.test(p.id) && !/^p\d{1,4}$/.test(p.id) && !demoPharmacyIds.includes(p.id));
 
         if (!Array.isArray(data.hospitals)) data.hospitals = [];
         data.hospitals = data.hospitals.filter((h) => h && h.id && !/^h\d{1,4}$/.test(h.id));

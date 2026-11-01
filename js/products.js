@@ -8,60 +8,31 @@ function initProductLinesData() {
   if (!window.store || !window.store.productLines) return;
   
   const lines = window.store.productLines.getAll();
-  
-  if (lines.length === 0) {
-    window.store.productLines.save({
-      id: "line_1790626000001",
-      name: "Cardio Line",
-      
-      lineManagerId: "u1790626000012",
-      lineManagerName: (window.store && window.store.users && window.store.users.getById("u1790626000012") ? window.store.users.getById("u1790626000012").name : "Line Manager"),
-      products: [
-        { id: "prod_1_1_" + Date.now(), name: "Amoxicillin 500mg", dosage: "500mg", form: "Tablet", description: "Broad-spectrum antibiotic" },
-        { id: "prod_1_2_" + Date.now(), name: "Vitamin D Drops 1000IU", dosage: "1000IU", form: "Drops", description: "Vitamin D supplement" }
-      ]
-    });
-    window.store.productLines.save({
-      id: "line_1790626000002",
-      name: "Neuro Line",
-      
-      lineManagerId: "u1790626000013",
-      lineManagerName: (window.store && window.store.users && window.store.users.getById("u1790626000013") ? window.store.users.getById("u1790626000013").name : "Line Manager"),
-      products: [
-        { id: "prod_2_1_" + Date.now(), name: "Pregabalin 75mg", dosage: "75mg", form: "Capsule", description: "Neuropathic pain" }
-      ]
-    });
-  } else {
-    lines.forEach(line => {
-      let updated = false;
-      if (!line.nameAr) {
-        
-        
+  lines.forEach(line => {
+    let updated = false;
+    if (!line.lineManagerId) {
+      if (line.id === "line_1790626000001" || line.id === "line1") { line.lineManagerId = "u1790626000012"; updated = true; }
+      else if (line.id === "line_1790626000002" || line.id === "line2") { line.lineManagerId = "u1790626000013"; updated = true; }
+      else {
+        const mgr = getLineManager(line);
+        if (mgr) { line.lineManagerId = mgr.id; updated = true; }
       }
-      if (!line.lineManagerId) {
-        if (line.id === "line_1790626000001" || line.id === "line1") { line.lineManagerId = "u1790626000012"; updated = true; }
-        else if (line.id === "line_1790626000002" || line.id === "line2") { line.lineManagerId = "u1790626000013"; updated = true; }
-        else {
-          const mgr = getLineManager(line);
-          if (mgr) { line.lineManagerId = mgr.id; updated = true; }
+    }
+    const mgr = getLineManager(line);
+    if (mgr && line.lineManagerName !== mgr.name) {
+      line.lineManagerName = mgr.name;
+      updated = true;
+    }
+    if (Array.isArray(line.products)) {
+      line.products.forEach((p, pIdx) => {
+        if (!p.id) {
+          p.id = `prod_${line.id}_${pIdx}_${Date.now()}`;
+          updated = true;
         }
-      }
-      const mgr = getLineManager(line);
-      if (mgr && line.lineManagerName !== mgr.name) {
-        line.lineManagerName = mgr.name;
-        updated = true;
-      }
-      if (Array.isArray(line.products)) {
-        line.products.forEach((p, pIdx) => {
-          if (!p.id) {
-            p.id = `prod_${line.id}_${pIdx}_${Date.now()}`;
-            updated = true;
-          }
-        });
-      }
-      if (updated) window.store.productLines.save(line);
-    });
-  }
+      });
+    }
+    if (updated) window.store.productLines.save(line);
+  });
 }
 
 function getActiveLineManagers() {

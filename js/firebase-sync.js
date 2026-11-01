@@ -104,7 +104,7 @@
           if (!it || !it.id) return false;
           const id = String(it.id).trim();
           if (collKey === "doctors" && /^d\d+$/i.test(id)) return true;
-          if (collKey === "pharmacies" && /^ph\d+$/i.test(id)) return true;
+          if (collKey === "pharmacies" && (/^ph\d+$/i.test(id) || /^p\d+$/i.test(id) || /^ph_179062600000[1-7]$/.test(id))) return true;
           if (collKey === "hospitals" && /^h\d+$/i.test(id)) return true;
           if (collKey === "visits" && (/^v\d+$/i.test(id) || /^today_v\d+$/i.test(id))) return true;
           if (collKey === "sales" && (/^s\d+$/i.test(id) || /^ds_s\d+$/i.test(id))) return true;
