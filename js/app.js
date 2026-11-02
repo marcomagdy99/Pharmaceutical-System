@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v255";
+  const EXPECTED_SW = "v256";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -321,182 +321,6 @@ const DEFAULT_DEMO_DATA = {
   },
   users: [
     {
-        "id": "u1790626000010",
-        "name": "System Admin",
-        "nameAr": "System Admin",
-        "role": "admin",
-        "employeeCode": "ADM-001",
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2021-01-01",
-        "email": "admin@pharmacare.com",
-        "phone": "+20100111222",
-        "status": "Active"
-    },
-    {
-        "id": "u1790626000011",
-        "name": "George Marzok",
-        "nameAr": "George Marzok",
-        "role": "business_unit",
-        "employeeCode": "BU-001",
-        "managerId": "u1790626000010",
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2021-06-01",
-        "email": "bu@pharmacare.com",
-        "phone": "+20100222333",
-        "lineId": "",
-        "lineIds": [],
-        "status": "Active",
-        "code": "BU-001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        }
-    },
-    {
-        "id": "u1790626000012",
-        "name": "John Mahfouz",
-        "nameAr": "John Mahfouz",
-        "role": "line_manager",
-        "employeeCode": "LM-001",
-        "managerId": "u1790626000011",
-        "lineId": "",
-        "lineIds": [],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2022-01-15",
-        "email": "lm@pharmacare.com",
-        "phone": "+20100333444",
-        "status": "Active",
-        "code": "LM-001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        }
-    },
-    {
-        "id": "u1790626000013",
-        "name": "Mario Magdy",
-        "nameAr": "Mario Magdy",
-        "role": "line_manager",
-        "employeeCode": "LM-002",
-        "managerId": "u1790626000011",
-        "lineId": "",
-        "lineIds": [],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "email": "lm2@pharmacare.com",
-        "code": "LM-002",
-        "phone": "+20100444555",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "hireDate": "2022-03-01",
-        "status": "Active",
-        "productIds": []
-    },
-    {
-        "id": "u1790626000014",
-        "name": "Amir Ayoup",
-        "nameAr": "Amir Ayoup",
-        "role": "district_manager",
-        "employeeCode": "DM-001",
-        "managerId": "u1790626000012",
-        "lineId": "",
-        "lineIds": [],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2023-01-10",
-        "email": "dm@pharmacare.com",
-        "phone": "+20100555666",
-        "status": "Active",
-        "code": "DM-001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        }
-    },
-    {
-        "id": "u1790626000015",
-        "name": "Jonathan Erian",
-        "nameAr": "Jonathan Erian",
-        "role": "district_manager",
-        "employeeCode": "DM-002",
-        "managerId": "u1790626000012",
-        "lineId": "",
-        "lineIds": [],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2023-02-15",
-        "email": "dm2@pharmacare.com",
-        "phone": "+20100666777",
-        "status": "Active",
-        "code": "DM-002",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        }
-    },
-    {
-        "id": "u1790626000016",
-        "name": "Marian Magdy",
-        "nameAr": "Marian Magdy",
-        "role": "district_manager",
-        "employeeCode": "DM-003",
-        "managerId": "u1790626000013",
-        "lineId": "",
-        "lineIds": [],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "email": "dm3@pharmacare.com",
-        "code": "DM-003",
-        "phone": "+20100777888",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "hireDate": "2023-05-01",
-        "status": "Active",
-        "productIds": []
-    },
-    {
         "id": "u1790626000001",
         "name": "Marco Magdy",
         "nameAr": "Marco Magdy",
@@ -504,8 +328,10 @@ const DEFAULT_DEMO_DATA = {
         "employeeCode": "REP-001",
         "managerId": "u1790626000014",
         "areaId": "area_1790626000001",
-        "lineId": "",
-        "lineIds": [],
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001"
+        ],
         "email": "rep@pharmacare.com",
         "code": "REP-001",
         "phone": "+201001234567",
@@ -524,7 +350,9 @@ const DEFAULT_DEMO_DATA = {
         ],
         "hireDate": "2024-01-15",
         "status": "Active",
-        "productIds": []
+        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
     },
     {
         "id": "u1790626000002",
@@ -533,13 +361,16 @@ const DEFAULT_DEMO_DATA = {
         "role": "medical_rep",
         "employeeCode": "REP-002",
         "managerId": "u1790626000015",
-        "areaId": "area_line1_1790674637363",
-        "lineId": "",
-        "lineIds": [],
+        "areaId": "area_1790626000002",
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001"
+        ],
         "areaIds": [
+            "area_1790626000002",
             "area_line1_1790674637363"
         ],
-        "area": "Giza",
+        "area": "Heliopolis, Giza",
         "hireDate": "2024-02-01",
         "email": "rep2@pharmacare.com",
         "phone": "+201001234568",
@@ -553,7 +384,9 @@ const DEFAULT_DEMO_DATA = {
             "maternity": 90
         },
         "code": "REP-002",
-        "productIds": []
+        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
     },
     {
         "id": "u1790626000003",
@@ -563,8 +396,10 @@ const DEFAULT_DEMO_DATA = {
         "employeeCode": "REP-003",
         "managerId": "u1790626000015",
         "areaId": "area_line1_1790674718201",
-        "lineId": "",
-        "lineIds": [],
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001"
+        ],
         "areaIds": [
             "area_line1_1790674718201"
         ],
@@ -582,7 +417,9 @@ const DEFAULT_DEMO_DATA = {
             "maternity": 90
         },
         "code": "REP-003",
-        "productIds": []
+        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
     },
     {
         "id": "u1790626000004",
@@ -591,14 +428,17 @@ const DEFAULT_DEMO_DATA = {
         "role": "medical_rep",
         "employeeCode": "REP-004",
         "managerId": "u1790626000014",
-        "areaId": "area_line2_1790674745627",
-        "lineId": "",
-        "lineIds": [],
+        "areaId": "area_1790626000003",
+        "lineId": "line_1790626000002",
+        "lineIds": [
+            "line_1790626000002"
+        ],
         "areaIds": [
+            "area_1790626000003",
             "area_line2_1790674745627",
             "area_line2_1790688168385"
         ],
-        "area": "Mohndseen, Bolak El Dakror",
+        "area": "Nasr City, Mohndseen, Bolak El Dakror",
         "hireDate": "2024-04-01",
         "email": "rep4@pharmacare.com",
         "phone": "+201001234570",
@@ -612,29 +452,399 @@ const DEFAULT_DEMO_DATA = {
             "maternity": 90
         },
         "code": "REP-004",
-        "productIds": []
+        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
     },
     {
-        "id": "u1790626000017",
-        "name": "Fatma El-Sherif",
-        "nameAr": "Fatma El-Sherif",
-        "role": "hr",
-        "employeeCode": "HR-001",
-        "email": "hr@pharmacare.com",
+        "id": "u1790626000005",
+        "name": "Mohamed Ramadan",
+        "nameAr": "Mohamed Ramadan",
+        "role": "medical_rep",
+        "employeeCode": "REP-005",
+        "email": "rep5@pharmacare.com",
+        "phone": "+20100999222",
+        "managerId": "u1790626000015",
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001"
+        ],
+        "productIds": [],
+        "status": "Active",
+        "hireDate": "2023-06-01",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "areaIds": [
+            "area_line1_1790674592471",
+            "area_line1_1790688137857"
+        ],
+        "area": "Dokki, Haram",
+        "areaId": "area_line1_1790674592471",
+        "code": "REP-005",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626669586",
+        "name": "Mark Michel",
+        "email": "rep7@pharmacare.com",
+        "code": "REP-007",
+        "employeeCode": "REP-007",
+        "role": "medical_rep",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "phone": "",
+        "hireDate": "2026-09-28",
+        "managerId": "u1790626000016",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626000003"
+        ],
+        "lineId": "line_1790626000003",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Shobra",
+        "areaId": "area_line_1790626036368_1790674874231",
+        "areaIds": [
+            "area_line_1790626036368_1790674874231"
+        ],
+        "nameAr": "Mark Michel",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626607816",
+        "name": "Ahmed Harb",
+        "email": "rep6@pharmacare.com",
+        "code": "REP-006",
+        "employeeCode": "REP-006",
+        "role": "medical_rep",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "phone": "01202379833",
+        "hireDate": "2026-09-28",
+        "managerId": "u1790626000015",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626000002"
+        ],
+        "lineId": "line_1790626000002",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Giza",
+        "areaId": "area_line2_1790674781879",
+        "areaIds": [
+            "area_line2_1790674781879"
+        ],
+        "nameAr": "Ahmed Harb",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790687949946",
+        "name": "Mina Samir",
+        "email": "rep9@pharmacare.com",
+        "code": "REP-009",
+        "employeeCode": "REP-009",
+        "role": "medical_rep",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "phone": "+201001234567",
+        "hireDate": "2026-09-29",
+        "managerId": "u1790626000016",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626000003"
+        ],
+        "lineId": "line_1790626000003",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Mohndseen",
+        "areaId": "area_line_1790626036368_1790687909664",
+        "areaIds": [
+            "area_line_1790626036368_1790687909664"
+        ],
+        "nameAr": "Mina Samir",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790688369929",
+        "name": "Marina Shobra",
+        "email": "rep11@pharmacare.com",
+        "code": "REP-011",
+        "employeeCode": "REP-011",
+        "role": "medical_rep",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "phone": "",
+        "hireDate": "2026-09-29",
+        "managerId": "u1790626000014",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626000001"
+        ],
+        "lineId": "line_1790626000001",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Shobra",
+        "areaId": "area_line1_1790688305597",
+        "areaIds": [
+            "area_line1_1790688305597"
+        ],
+        "nameAr": "Marina Shobra",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790688412219",
+        "name": "Monica Shobra",
+        "email": "rep12@pharmacare.com",
+        "code": "REP-012",
+        "employeeCode": "REP-012",
+        "role": "medical_rep",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "phone": "",
+        "hireDate": "2026-09-29",
+        "managerId": "u1790626000014",
+        "status": "Active",
+        "lineIds": [
+            "line_1790626000002"
+        ],
+        "lineId": "line_1790626000002",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "area": "Shobra",
+        "areaId": "area_line2_1790688317554",
+        "areaIds": [
+            "area_line2_1790688317554"
+        ],
+        "nameAr": "Monica Shobra",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626000011",
+        "name": "George Marzok",
+        "nameAr": "George Marzok",
+        "role": "business_unit",
+        "employeeCode": "BU-001",
         "managerId": "u1790626000010",
         "areaIds": [],
         "area": null,
         "areaId": null,
-        "hireDate": "2021-02-01",
-        "phone": "+20100888999",
+        "hireDate": "2021-06-01",
+        "email": "bu@pharmacare.com",
+        "phone": "+20100222333",
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001",
+            "line_1790626000002",
+            "line_1790626000003"
+        ],
         "status": "Active",
+        "code": "BU-001",
+        "productIds": [],
         "leaveBalance": {
             "annual": 21,
-            "sick": 7,
+            "casual": 6,
             "emergency": 6,
+            "sick": 7,
             "unpaid": 0,
             "maternity": 90
-        }
+        },
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626000012",
+        "name": "John Mahfouz",
+        "nameAr": "John Mahfouz",
+        "role": "line_manager",
+        "employeeCode": "LM-001",
+        "managerId": "u1790626000011",
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001",
+            "line_1790626000002"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2022-01-15",
+        "email": "lm@pharmacare.com",
+        "phone": "+20100333444",
+        "status": "Active",
+        "code": "LM-001",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626000013",
+        "name": "Mario Magdy",
+        "nameAr": "Mario Magdy",
+        "role": "line_manager",
+        "employeeCode": "LM-002",
+        "managerId": "u1790626000011",
+        "lineId": "line_1790626000003",
+        "lineIds": [
+            "line_1790626000003"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "email": "lm2@pharmacare.com",
+        "code": "LM-002",
+        "phone": "+20100444555",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "hireDate": "2022-03-01",
+        "status": "Active",
+        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626000014",
+        "name": "Amir Ayoup",
+        "nameAr": "Amir Ayoup",
+        "role": "district_manager",
+        "employeeCode": "DM-001",
+        "managerId": "u1790626000012",
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001",
+            "line_1790626000002"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2023-01-10",
+        "email": "dm@pharmacare.com",
+        "phone": "+20100555666",
+        "status": "Active",
+        "code": "DM-001",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626000015",
+        "name": "Jonathan Erian",
+        "nameAr": "Jonathan Erian",
+        "role": "district_manager",
+        "employeeCode": "DM-002",
+        "managerId": "u1790626000012",
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001",
+            "line_1790626000002"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2023-02-15",
+        "email": "dm2@pharmacare.com",
+        "phone": "+20100666777",
+        "status": "Active",
+        "code": "DM-002",
+        "productIds": [],
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
+    },
+    {
+        "id": "u1790626000016",
+        "name": "Marian Magdy",
+        "nameAr": "Marian Magdy",
+        "role": "district_manager",
+        "employeeCode": "DM-003",
+        "managerId": "u1790626000013",
+        "lineId": "line_1790626000003",
+        "lineIds": [
+            "line_1790626000003"
+        ],
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "email": "dm3@pharmacare.com",
+        "code": "DM-003",
+        "phone": "+20100777888",
+        "leaveBalance": {
+            "annual": 21,
+            "casual": 6,
+            "emergency": 6,
+            "sick": 7,
+            "unpaid": 0,
+            "maternity": 90
+        },
+        "hireDate": "2023-05-01",
+        "status": "Active",
+        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
     },
     {
         "id": "u1790626000018",
@@ -645,9 +855,15 @@ const DEFAULT_DEMO_DATA = {
         "email": "pm@pharmacare.com",
         "phone": "+20100999111",
         "managerId": "u1790626000011",
-        "lineId": "",
-        "lineIds": [],
+        "lineId": "line_1790626000001",
+        "lineIds": [
+            "line_1790626000001"
+        ],
         "productIds": [
+            "prod_1790626000001",
+            "prod_1790626000002",
+            "prod_1790626000003",
+            "prod_1790626000004",
             "prod_1790625546491",
             "prod_1790625561525",
             "prod_1790625585077",
@@ -670,37 +886,9 @@ const DEFAULT_DEMO_DATA = {
         "areaIds": [],
         "area": null,
         "areaId": null,
-        "code": "PM-001"
-    },
-    {
-        "id": "u1790626000005",
-        "name": "Mohamed Ramadan",
-        "nameAr": "Mohamed Ramadan",
-        "role": "medical_rep",
-        "employeeCode": "REP-005",
-        "email": "rep5@pharmacare.com",
-        "phone": "+20100999222",
-        "managerId": "u1790626000015",
-        "lineId": "",
-        "lineIds": [],
-        "productIds": [],
-        "status": "Active",
-        "hireDate": "2023-06-01",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "areaIds": [
-            "area_line1_1790674592471",
-            "area_line1_1790688137857"
-        ],
-        "area": "Dokki, Haram",
-        "areaId": "area_line1_1790674592471",
-        "code": "REP-005"
+        "code": "PM-001",
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false
     },
     {
         "id": "u1790626000019",
@@ -715,10 +903,14 @@ const DEFAULT_DEMO_DATA = {
         "hireDate": "2026-09-28",
         "managerId": "u1790626000011",
         "status": "Active",
-        "lineIds": [],
-        "lineId": "",
+        "lineIds": [
+            "line_1790626000002"
+        ],
+        "lineId": "line_1790626000002",
         "productIds": [
-            ],
+            "prod_1790626000005",
+            "prod_1790626000006"
+        ],
         "leaveBalance": {
             "annual": 21,
             "casual": 6,
@@ -729,23 +921,25 @@ const DEFAULT_DEMO_DATA = {
         },
         "area": null,
         "areaId": null,
-        "areaIds": []
+        "areaIds": [],
+        "mustChangePassword": false
     },
     {
-        "id": "u1790626669586",
-        "name": "Mark Michel",
-        "email": "rep7@pharmacare.com",
-        "code": "REP-007",
-        "employeeCode": "REP-007",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-28",
-        "managerId": "u1790626000016",
+        "id": "u1790626000010",
+        "name": "System Admin",
+        "nameAr": "System Admin",
+        "role": "admin",
+        "employeeCode": "ADM-001",
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2021-01-01",
+        "email": "admin@pharmacare.com",
+        "phone": "+20100111222",
         "status": "Active",
-        "lineIds": [],
-        "lineId": "",
-        "productIds": [],
+        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+        "mustChangePassword": false,
+        "code": "ADM-001",
         "leaveBalance": {
             "annual": 21,
             "casual": 6,
@@ -754,127 +948,32 @@ const DEFAULT_DEMO_DATA = {
             "unpaid": 0,
             "maternity": 90
         },
-        "area": "Shobra",
-        "areaId": "area_line_1790626036368_1790674874231",
-        "areaIds": [
-            "area_line_1790626036368_1790674874231"
-        ]
+        "managerId": null
     },
     {
-        "id": "u1790626607816",
-        "name": "Ahmed Harb",
-        "email": "rep6@pharmacare.com",
-        "code": "REP-006",
-        "employeeCode": "REP-006",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "01202379833",
-        "hireDate": "2026-09-28",
-        "managerId": "u1790626000015",
+        "id": "u1790626000017",
+        "name": "Fatma El-Sherif",
+        "nameAr": "Fatma El-Sherif",
+        "role": "hr",
+        "employeeCode": "HR-001",
+        "email": "hr@pharmacare.com",
+        "managerId": "u1790626000010",
+        "areaIds": [],
+        "area": null,
+        "areaId": null,
+        "hireDate": "2021-02-01",
+        "phone": "+20100888999",
         "status": "Active",
-        "lineIds": [],
-        "lineId": "",
-        "productIds": [],
         "leaveBalance": {
             "annual": 21,
-            "casual": 6,
-            "emergency": 6,
             "sick": 7,
+            "emergency": 6,
             "unpaid": 0,
             "maternity": 90
         },
-        "area": "Giza",
-        "areaId": "area_line2_1790674781879",
-        "areaIds": [
-            "area_line2_1790674781879"
-        ]
-    },
-    {
-        "id": "u1790687949946",
-        "name": "Mina Samir",
-        "email": "rep9@pharmacare.com",
-        "code": "REP-009",
-        "employeeCode": "REP-009",
-        "role": "medical_rep",
         "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "+201001234567",
-        "hireDate": "2026-09-29",
-        "managerId": "u1790626000016",
-        "status": "Active",
-        "lineIds": [],
-        "lineId": "",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Mohndseen",
-        "areaId": "area_line_1790626036368_1790687909664",
-        "areaIds": [
-            "area_line_1790626036368_1790687909664"
-        ]
-    },
-    {
-        "id": "u1790688369929",
-        "name": "Marina Shobra",
-        "email": "rep11@pharmacare.com",
-        "code": "REP-011",
-        "employeeCode": "REP-011",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-29",
-        "managerId": "u1790626000014",
-        "status": "Active",
-        "lineIds": [],
-        "lineId": "",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Shobra",
-        "areaId": "area_line1_1790688305597",
-        "areaIds": [
-            "area_line1_1790688305597"
-        ]
-    },
-    {
-        "id": "u1790688412219",
-        "name": "Monica Shobra",
-        "email": "rep12@pharmacare.com",
-        "code": "REP-012",
-        "employeeCode": "REP-012",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-29",
-        "managerId": "u1790626000014",
-        "status": "Active",
-        "lineIds": [],
-        "lineId": "",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Shobra",
-        "areaId": "area_line2_1790688317554",
-        "areaIds": [
-            "area_line2_1790688317554"
-        ]
+        "mustChangePassword": false,
+        "code": "HR-001"
     }
 ],
   specialties: [
@@ -891,12 +990,670 @@ const DEFAULT_DEMO_DATA = {
     { id: "spec_other", code: "OTHER", name: "Other", nameAr: "Other" },
   ],
   areas: [
-    { id: "area_1790626000001", name: "Nasr City", code: "CAI-N01", repId: "u1790626000001", lineId: "" },
-    { id: "area_1790626000002", name: "Heliopolis", code: "CAI-H01", repId: "u1790626000002", lineId: "" },
-    { id: "area_1790626000003", name: "Nasr City", code: "CAI-N01", repId: "u1790626000004", lineId: "" },
-    { id: "area_1790626000004", name: "Maadi", code: "CAI-M01", repId: null, lineId: "" },
-  ],
-  productLines: [],
+    {
+        "id": "area_1790626000001",
+        "name": "Mohndseen",
+        "code": "GIZ-N001",
+        "repId": "u1790626000001",
+        "lineId": "line_1790626000001",
+        "repName": "Marco Magdy",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "20502"
+            }
+        ],
+        "bricks": [
+            "ميدان سفنكس",
+            "ميدان لبنان - المهندسين",
+            "المهندسين",
+            "الزمالك",
+            "الصحفيين",
+            "ميت عقبه",
+            "مدينه المعلمين"
+        ]
+    },
+    {
+        "id": "area_1790626000002",
+        "name": "Heliopolis",
+        "code": "CAI-H01",
+        "repId": "u1790626000002",
+        "lineId": "line_1790626000001",
+        "repName": null
+    },
+    {
+        "id": "area_1790626000003",
+        "name": "Nasr City",
+        "code": "CAI-N01",
+        "repId": "u1790626000004",
+        "lineId": "line_1790626000002",
+        "repName": null
+    },
+    {
+        "id": "area_1790626000004",
+        "name": "Maadi",
+        "code": "CAI-M01",
+        "repId": null,
+        "lineId": "line_1790626000002",
+        "repName": "Ahmed Mostafa"
+    },
+    {
+        "id": "area_line1_1790674592471",
+        "name": "Dokki",
+        "code": "GIZ-N002",
+        "repId": "u1790626000005",
+        "repName": "Mohamed Ramadan",
+        "lineId": "line_1790626000001",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "20303"
+            }
+        ],
+        "bricks": [
+            "الدقي - بين السرايات",
+            "المساحه -الدقي",
+            "بين السرايات - الدقي",
+            "الدقي"
+        ]
+    },
+    {
+        "id": "area_line1_1790674637363",
+        "name": "Giza",
+        "code": "GIZ-N010",
+        "repId": "u1790626000002",
+        "repName": "Kerolos Boules",
+        "lineId": "line_1790626000001"
+    },
+    {
+        "id": "area_line1_1790674718201",
+        "name": "Fisal",
+        "code": "GIZ-N006",
+        "repId": "u1790626000003",
+        "repName": "Mina Mikhael",
+        "lineId": "line_1790626000001"
+    },
+    {
+        "id": "area_line2_1790674745627",
+        "name": "Mohndseen",
+        "code": "GIZ-N001",
+        "repId": "u1790626000004",
+        "repName": "David Emad",
+        "lineId": "line_1790626000002",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "20502"
+            }
+        ]
+    },
+    {
+        "id": "area_line2_1790674771516",
+        "name": "Dokki",
+        "code": "GIZ-N002",
+        "repId": null,
+        "repName": null,
+        "lineId": "line_1790626000002",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "20303"
+            }
+        ]
+    },
+    {
+        "id": "area_line2_1790674781879",
+        "name": "Giza",
+        "code": "GIZ-N010",
+        "repId": "u1790626607816",
+        "repName": "Ahmed Harb",
+        "lineId": "line_1790626000002"
+    },
+    {
+        "id": "area_line_1790626036368_1790674874231",
+        "name": "Shobra",
+        "code": "CAI-N008",
+        "repId": "u1790626669586",
+        "repName": "Mark Michel",
+        "lineId": "line_1790626000003",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "11009"
+            },
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "11102"
+            }
+        ]
+    },
+    {
+        "id": "area_line_1790626036368_1790687909664",
+        "name": "Mohndseen",
+        "code": "GIZ-N001",
+        "repId": "u1790687949946",
+        "repName": "Mina Samir",
+        "lineId": "line_1790626000003",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "20502"
+            }
+        ]
+    },
+    {
+        "id": "area_line1_1790688137857",
+        "name": "Haram",
+        "code": "GIZ-006",
+        "repId": "u1790626000005",
+        "repName": "Mohamed Ramadan",
+        "lineId": "line_1790626000001"
+    },
+    {
+        "id": "area_line1_1790688157353",
+        "name": "Bolak El Dakror",
+        "code": "GIZ-N009",
+        "repId": "u1790626000001",
+        "repName": "Marco Magdy",
+        "lineId": "line_1790626000001",
+        "bricks": [
+            "صفط اللبن",
+            "ناهيا - بولاق الدكرور",
+            "ناهيا",
+            "بولاق الدكرور",
+            "زنين"
+        ]
+    },
+    {
+        "id": "area_line2_1790688168385",
+        "name": "Bolak El Dakror",
+        "code": "GIZ-N009",
+        "repId": "u1790626000004",
+        "repName": "David Emad",
+        "lineId": "line_1790626000002"
+    },
+    {
+        "id": "area_line1_1790688305597",
+        "name": "Shobra",
+        "code": "CAI-N008",
+        "repId": "u1790688369929",
+        "repName": "Marina Shobra",
+        "lineId": "line_1790626000001",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "11009"
+            },
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "11102"
+            }
+        ],
+        "bricks": [
+            "اغاخان - شبرا",
+            "الخازنداره - شبرا",
+            "الخلفاوي - شبرا",
+            "الساحل - شبرا",
+            "المظلات - شبرا",
+            "الساحل شبرا",
+            "الخلفاوي - شبرا مصر",
+            "روض الفرج - شبرا مصر",
+            "شبرا - الخلفاوي",
+            "روض الفرج - شبرا",
+            "شبرا المظلات",
+            "شبرا مصر - روض الفرج",
+            "فيكت��ريا - شبرا",
+            "شبرا"
+        ]
+    },
+    {
+        "id": "area_line2_1790688317554",
+        "name": "Shobra",
+        "code": "CAI-N008",
+        "repId": "u1790688412219",
+        "repName": "Monica Shobra",
+        "lineId": "line_1790626000002",
+        "aliases": [
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "11009"
+            },
+            {
+                "distributorId": "dist_1790626000001",
+                "rawText": "11102"
+            }
+        ]
+    }
+],
+  productLines: [
+    {
+        "id": "line_1790626000001",
+        "name": "Pioneers Line",
+        "nameAr": "خط الكارديو (Cardio)",
+        "status": "Active",
+        "lineManagerId": "u1790626000012",
+        "lineManagerName": "John Mahfouz",
+        "callFrequency": {
+            "classA": 4,
+            "classB": 3,
+            "classC": 1
+        },
+        "products": [
+            {
+                "id": "prod_1790626000001",
+                "name": "Cholerose Plus 10/10",
+                "dosage": "10/10",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE PLUS 10/10 28 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790626000002",
+                "name": "Cholerose Plus 20/10",
+                "dosage": "20/10",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE PLUS 10/20 28 TAB"
+                    },
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE PLUS 10/20 28 TAB (HOSP)"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790626000003",
+                "name": "Cholerose Plus 40/10",
+                "dosage": "40/10",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE PLUS 10/40 MG 28 TAB"
+                    },
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE PLUS 10/40 MG 28 TAB (HOSP)"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790626000004",
+                "name": "Cholerose Plus 5/10",
+                "dosage": "5/10",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE PLUS 5/10 MG 28TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625546491",
+                "name": "Diglifloz 10",
+                "dosage": "10",
+                "form": "Tablet",
+                "description": "",
+                "price": null
+            },
+            {
+                "id": "prod_1790625561525",
+                "name": "Diglifloz 10/1000 XR",
+                "dosage": "10/1000",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "DIGLIFLOZ PLUS XR 10/1000 MG 30 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625585077",
+                "name": "Diglifloz 5/1000",
+                "dosage": "5/1000",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "DIGLIFLOZ 1000/5MG PLUS 30 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625595399",
+                "name": "Diglifloz 5",
+                "dosage": "5",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "DIGLIFLOZ 5MG 30TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625604666",
+                "name": "Cholerose 5",
+                "dosage": "5",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE 5MG TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625614666",
+                "name": "Cholerose 10",
+                "dosage": "10",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "DIGLIFLOZ 10 MG 30TAB"
+                    },
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE 10 MG 21 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625622736",
+                "name": "Cholerose 20",
+                "dosage": "20",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE 20 MG 21 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790625631058",
+                "name": "Cholerose 40",
+                "dosage": "40",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "CHOLEROSE 40MG  28 TAB"
+                    }
+                ]
+            }
+        ],
+        "cycleCampaignFocus": {
+            "active": false,
+            "targetProductId": "",
+            "focusMessage": "",
+            "updatedAt": "2026-10-04T18:22:45.370Z",
+            "updatedBy": "System Admin"
+        }
+    },
+    {
+        "id": "line_1790626000002",
+        "name": "Challengers Line",
+        "nameAr": "خط النيورو (Neuro)",
+        "status": "Active",
+        "lineManagerId": "u1790626000012",
+        "lineManagerName": "John Mahfouz",
+        "callFrequency": {
+            "classA": 4,
+            "classB": 2,
+            "classC": 1
+        },
+        "products": [
+            {
+                "id": "prod_1790626000005",
+                "name": "Nevilob 2.5",
+                "dosage": "2.5",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB 2.5 MG 14TAB (HOSP)"
+                    },
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB 2.5 MG 14TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790626000006",
+                "name": "Nevilob 5",
+                "dosage": "5",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB 5 MG 21 TAB"
+                    },
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB 5 MG 21 TAB (HOSP)"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687569553",
+                "name": "Levcet 20",
+                "dosage": "20",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "LEVCET 20 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687608199",
+                "name": "Nevilob Amlo 5/5",
+                "dosage": "5/5",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB AMLO 5/5MG 30 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687629951",
+                "name": "Nevilob Amlo 5/10",
+                "dosage": "5/10",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB AMLO 5/10MG 30 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687701396",
+                "name": "Nevilob Plus 5/12.5",
+                "dosage": "5/12.5",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB PLUS 5/12.5 MG 20 TAB (HOSP)"
+                    },
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB PLUS 5/12.5 MG 20 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687716340",
+                "name": "Nevilob Plus 5/25",
+                "dosage": "5/25",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "NEVILOB PLUS 5/25MG 20 TAB."
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687755931",
+                "name": "Angiguard 500",
+                "dosage": "500",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "ANGIGUARD 500 MG XR 60 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687769175",
+                "name": "Angiguard 1000",
+                "dosage": "1000",
+                "form": "Tablet",
+                "description": "",
+                "price": null
+            }
+        ]
+    },
+    {
+        "id": "line_1790626000003",
+        "name": "Line 3",
+        "lineManagerId": "u1790626000013",
+        "lineManagerName": "Mario Magdy",
+        "callFrequency": {
+            "classA": 4,
+            "classB": 3,
+            "classC": 1
+        },
+        "status": "Active",
+        "products": [
+            {
+                "id": "prod_1790626069868",
+                "name": "Ulsezole 30",
+                "dosage": "30",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "ULCEZOLE 30MG 20 CAPSULES"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687503681",
+                "name": "Ulsezole 60",
+                "dosage": "60",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "ULCEZOLE 60 MG 20 TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687822026",
+                "name": "Uricodrop 40",
+                "dosage": "40",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "URICODROP 40MG 20TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687832810",
+                "name": "Uricodrop 80",
+                "dosage": "80",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "URICODROP 80MG 30TAB"
+                    }
+                ]
+            },
+            {
+                "id": "prod_1790687842730",
+                "name": "Uricodrop 120",
+                "dosage": "120",
+                "form": "Tablet",
+                "description": "",
+                "price": null,
+                "aliases": [
+                    {
+                        "distributorId": "dist_1790626000001",
+                        "rawText": "URICODROP 120MG 10 TAB"
+                    }
+                ]
+            }
+        ]
+    }
+],
   doctors: [],
   hospitals: [],
   pharmacies: [],
@@ -1185,9 +1942,7 @@ function loadDataFromStorage() {
         } else {
           data.areas = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.areas));
         }
-        const demoLineIds = ["line_1790626000001", "line_1790626000002", "line1", "line2"];
         if (Array.isArray(data.productLines)) {
-          data.productLines = data.productLines.filter((pl) => pl && pl.id && !demoLineIds.includes(pl.id));
           data.productLines.forEach((pl) => {
             if (!pl.callFrequency) {
               pl.callFrequency = { classA: 4, classB: 3, classC: 1 };
