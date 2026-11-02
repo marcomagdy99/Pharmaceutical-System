@@ -422,7 +422,7 @@ if (typeof renderSidebar === "function") {
       const areasInLine = filteredAreas.filter((a) => a.lineId === lineId);
 
       if (areasInLine.length > 0) {
-        html += `<optgroup label="📦 ${window.escapeHtml(lineName)}">`;
+        html += `<optgroup label="${window.escapeHtml(lineName)}">`;
         areasInLine.forEach((a) => {
           const rep = a.repId ? (this.users || []).find((u) => u.id === a.repId) : null;
           const repNote = rep
@@ -436,7 +436,7 @@ if (typeof renderSidebar === "function") {
 
     const orphanAreas = filteredAreas.filter((a) => !a.lineId);
     if (orphanAreas.length > 0) {
-      html += `<optgroup label="📦 Other Areas">`;
+      html += `<optgroup label="Other Areas">`;
       orphanAreas.forEach((a) => {
         const rep = a.repId ? (this.users || []).find((u) => u.id === a.repId) : null;
         const repNote = rep
@@ -732,7 +732,7 @@ if (typeof renderSidebar === "function") {
 
     return `
       <span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${window.escapeHtml(firstOne.name)}</span>
-      <button type="button" class="badge badge-more-areas" title="Click to view and filter all ${areas.length} assigned territories" ${openModalAttr}>📍 ${moreText}</button>
+      <button type="button" class="badge badge-more-areas" title="Click to view and filter all ${areas.length} assigned territories" ${openModalAttr}><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${moreText}</button>
     `;
   },
 
@@ -848,7 +848,7 @@ if (typeof renderSidebar === "function") {
       const isActive = this.activeTerritoriesLineFilter === key;
       pillsHtml += `
         <button type="button" class="line-filter-pill ${isActive ? "active" : ""}" onclick="userMgmt.setTerritoriesLineFilter('${key}')">
-          💊 ${window.escapeHtml(info.lineName)} (${info.count})
+          <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> ${window.escapeHtml(info.lineName)} (${info.count})
         </button>
       `;
     });
@@ -1061,7 +1061,7 @@ if (typeof renderSidebar === "function") {
           <td>${this.getManagerNameWithVacant(u.managerId)}</td>
           <td>${this.renderLinesSummary(u)}</td>
           <td>${this.renderAreasSummary(u)}</td>
-          <td><span class="text-muted small text-nowrap">📅 ${u.hireDate || "-"}</span></td>
+          <td><span class="text-muted small text-nowrap"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${u.hireDate || "-"}</span></td>
           <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${dispStatus}</span></td>
           <td class="text-end pe-4 user-actions-cell">
             ${canImpersonate ? `<button class="btn btn-sm btn-user-impersonate me-1" title="${loginAsTooltip}" onclick="userMgmt.impersonateUser('${u.id}')"><i class="fas fa-sign-in-alt"></i></button>` : ""}
@@ -1101,7 +1101,7 @@ if (typeof renderSidebar === "function") {
             return `
             <div class="tree-node">
               <div class="node-content shadow-sm tree-node-vacant">
-                <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">⚠️</div>
+                <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle"><svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
                 <div class="flex-grow-1">
                   <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${u.role} Branch`} ${roleBadge}</div>
                   <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${u.name})</small>
@@ -1139,7 +1139,7 @@ if (typeof renderSidebar === "function") {
         html += `
           <div class="tree-node ms-0 ps-0 border-0">
             <div class="node-content shadow-sm tree-node-vacant">
-              <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">⚠️</div>
+              <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle"><svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
               <div class="flex-grow-1">
                 <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role} Position ${roleBadge}</div>
                 <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${u.name})</small>
@@ -1519,7 +1519,7 @@ if (typeof renderSidebar === "function") {
       );
 
     if (id && managerId && this.wouldCreateCycle(id, managerId)) {
-      return showToast("⚠️ Cannot save: selecting this manager creates a circular management loop.", "warning");
+      return showToast("Cannot save: selecting this manager creates a circular management loop.", "warning");
     }
 
     const selectedLineIds = Array.from(

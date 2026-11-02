@@ -2218,7 +2218,7 @@ function renderImportBatches() {
       <td class="px-3 py-2" style="white-space:nowrap;">${window.escapeHtml(uploadedLabel)}</td>
       <td class="px-3 py-2 text-end">
         <button class="btn btn-sm btn-light text-danger" onclick="deleteImportBatch('${window.escapeHtml(b.id)}')" title="Delete">
-          🗑️
+          <svg class="btn-svg-icon text-danger" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         </button>
       </td>
     `;
@@ -2648,7 +2648,7 @@ function handleExcelUpload(e) {
       if (panel) {
         panel.style.display = "block";
         const replacedNote = replacingPreviousBatch ? " (replaced a previous upload for this month/distributor)" : "";
-        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${window.escapeHtml(dist.name)}" for ${window.escapeHtml(monthKey)}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
+        panel.innerHTML = `<svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${window.escapeHtml(dist.name)}" for ${window.escapeHtml(monthKey)}${replacedNote} (including ${returnsCount} negative return rows). Net value: <strong>${totalValue.toLocaleString()}</strong>. Skipped ${skippedInvalid} incomplete rows.<br><span class="fw-bold">Note:</span> You can link unmatched areas and products in the sections below.`;
       }
 
       renderImportBatches();

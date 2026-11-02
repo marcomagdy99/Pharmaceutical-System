@@ -131,7 +131,7 @@ const productTranslations = {
     focusMessageLabel: "Key Campaign Message / Strategic Direction",
     focusMessageHint: "This message will appear as an optional strategic reminder on the dashboard for your sales team.",
     focusGeneralProduct: "-- General / All Line Products --",
-    cutPointLabel: "⚡ Monthly Cut Point (Ceiling)",
+    cutPointLabel: "Monthly Cut Point (Ceiling)",
     cutPointPlaceholder: "e.g., 200",
     cutPointHint: "Maximum allowed pharmacy pull per month. Surplus above this is distributed as Bulk to all bricks by weight. Set 0 or leave empty to disable.",
     brickWeightsBtn: "Brick Weights",
@@ -140,7 +140,7 @@ const productTranslations = {
     bwAreaCode: "Code",
     bwRep: "Representative",
     bwWeight: "Weight (%)",
-    bwTotal: "📊 Total",
+    bwTotal: "Total",
     brickWeightsSaved: "Brick weights saved successfully.",
     brickWeightsRecalc: "Bulk distribution recalculated.",
   }
@@ -298,11 +298,9 @@ function renderProductLines(activeLineId) {
                         <tr>
                             <td class="fw-bold product-name-cell">${window.escapeHtml(prod.name)}</td>
                             <td><span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span></td>
-                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}${prod.cutPoint ? ` <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7em;">⚡CP: ${prod.cutPoint}</span>` : ""}</td>
+                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}${prod.cutPoint ? ` <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7em;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> CP: ${prod.cutPoint}</span>` : ""}</td>
                             <td class="text-end product-actions-cell">
-                                <button class="btn btn-sm btn-outline-warning me-1" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights">
-                                    ⚖️
-                                </button>
+                                <button class="btn btn-sm btn-outline-warning me-1" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7l6-3 6 3"/><path d="m3 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="m15 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="M4 21h16"/></svg></button>
                                 <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
                                     <i class="bi bi-arrow-left-right"></i>
                                 </button>
@@ -328,13 +326,11 @@ function renderProductLines(activeLineId) {
                         <div class="d-flex align-items-center gap-1 flex-wrap">
                             <span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span>
                             ${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">${Number(prod.price).toLocaleString()} EGP</span>` : ""}
-                            ${prod.cutPoint ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">⚡CP: ${prod.cutPoint}</span>` : ""}
+                            ${prod.cutPoint ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> CP: ${prod.cutPoint}</span>` : ""}
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                        <button class="btn btn-sm btn-outline-warning rounded-circle" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                            ⚖️
-                        </button>
+                        <button class="btn btn-sm btn-outline-warning rounded-circle" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;"><svg class="btn-svg-icon" style="margin:0;" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7l6-3 6 3"/><path d="m3 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="m15 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="M4 21h16"/></svg></button>
                         <button class="btn btn-sm btn-outline-info rounded-circle" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
                             <i class="bi bi-arrow-left-right" style="font-size: 0.82rem;"></i>
                         </button>
@@ -370,8 +366,8 @@ function renderProductLines(activeLineId) {
       focusBannerHtml = `
         <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-radius: 10px; border-inline-start: 4px solid #2563eb; background: rgba(37, 99, 235, 0.08);">
           <div>
-            <strong style="color: #1d4ed8;">🎯 Current Cycle Campaign Focus:</strong>
-            ${targetProdName ? `<span class="badge bg-primary ms-1">📦 ${window.escapeHtml(targetProdName)}</span>` : ""}
+            <strong style="color: #1d4ed8;"><svg class="badge-svg-icon text-primary" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Current Cycle Campaign Focus:</strong>
+            ${targetProdName ? `<span class="badge bg-primary ms-1"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(targetProdName)}</span>` : ""}
             <span class="ms-2" style="font-weight: 500;">${window.escapeHtml(line.cycleCampaignFocus.focusMessage)}</span>
           </div>
           <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')">
@@ -393,7 +389,7 @@ function renderProductLines(activeLineId) {
                                         <span class="badge bg-primary rounded-pill">${line.products ? line.products.length : 0} <span data-i18n="products">Products</span></span>
                                     </div>
                                     <span class="badge line-freq-badge" title="Quarterly Target Call Frequency">
-                                        🎯 A: <strong>${freq.classA ?? 4}</strong> | B: <strong>${freq.classB ?? 3}</strong> | C: <strong>${freq.classC ?? 1}</strong>
+                                        <svg class="badge-svg-icon text-primary" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> A: <strong>${freq.classA ?? 4}</strong> | B: <strong>${freq.classB ?? 3}</strong> | C: <strong>${freq.classC ?? 1}</strong>
                                     </span>
                                 </div>
                                 <div class="line-manager-info small d-none d-sm-block">
