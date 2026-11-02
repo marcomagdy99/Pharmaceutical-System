@@ -47,7 +47,7 @@ const visitTranslations = {
     modalPeriod: "Target Type / Period",
     modalAM: "AM (Hospital)",
     modalPM: "PM (Doctor)",
-    modalPharmacy: "💊 Pharmacy",
+    modalPharmacy: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> Pharmacy',
     filterPharmacies: "Pharmacies",
     targetPharmacy: "Pharmacy",
     targetHospital: "Hospital",
@@ -64,15 +64,15 @@ const visitTranslations = {
     modalComment: "Comment",
     modalGpsTitle: "GPS Geofencing Verification",
     gpsBadgePending: "Pending Check",
-    gpsBadgeChecking: "Checking GPS... 🛰️",
-    gpsBadgeInRange: "✅ In Range",
-    gpsBadgeOutOfRange: "⚠️ Out of Range",
-    gpsBadgeDenied: "⚠️ GPS Denied",
+    gpsBadgeChecking: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> Checking GPS...',
+    gpsBadgeInRange: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> In Range',
+    gpsBadgeOutOfRange: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Out of Range',
+    gpsBadgeDenied: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> GPS Denied',
     gpsInfoDefault: "Verifying your presence within the clinic geofence radius (200m).",
     gpsInfoInRange: "You are verified within the clinic radius (less than 200m).",
     gpsInfoOutOfRange: "You are outside the clinic radius. Visit will be recorded with an audit flag.",
     gpsInfoDenied: "Location permission denied. Visit will be recorded with an audit flag for your manager.",
-    btnCheckGps: "📡 Check Location Now",
+    btnCheckGps: '<svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> Check Location Now',
     btnCancel: "Cancel",
     btnSaveVisit: "Save Visit",
     btnComplete: "Complete Visit",
@@ -278,7 +278,7 @@ function triggerManualGpsCheck() {
   }
 
   if (badge) {
-    badge.textContent = "Checking GPS... 🛰️";
+    badge.innerHTML = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> Checking GPS...';
     badge.style.background = "#e0f2fe";
     badge.style.color = "#0369a1";
   }
@@ -295,7 +295,7 @@ function triggerManualGpsCheck() {
 
     if (loc.status === "permission_denied") {
       if (badge) {
-        badge.textContent = "⚠️ GPS Denied";
+        badge.innerHTML = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> GPS Denied';
         badge.style.background = "#fef3c7";
         badge.style.color = "#92400e";
       }
@@ -323,7 +323,7 @@ function triggerManualGpsCheck() {
 
       if (!hasTargetCoords) {
         if (badge) {
-          badge.textContent = "📍 No Coordinates";
+          badge.innerHTML = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> No Coordinates';
           badge.style.background = "#f1f5f9";
           badge.style.color = "#475569";
         }
@@ -344,7 +344,7 @@ function triggerManualGpsCheck() {
 
       if (distance <= maxDist) {
         if (badge) {
-          badge.textContent = "✅ In Range";
+          badge.innerHTML = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> In Range';
           badge.style.background = "#dcfce7";
           badge.style.color = "#166534";
         }
@@ -360,7 +360,7 @@ function triggerManualGpsCheck() {
         if (pinBar) pinBar.style.display = "none";
       } else {
         if (badge) {
-          badge.textContent = `⚠️ Out of Range (${distance}m)`;
+          badge.innerHTML = `<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Out of Range (${distance}m)`;
           badge.style.background = "#fee2e2";
           badge.style.color = "#991b1b";
         }
@@ -1719,7 +1719,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
           ${trans.promptSelectDateSub || "Choose your desired date and filters above, then click the Show button to load the daily visits timeline."}
         </p>
         <button type="button" class="btn btn-primary timeline-show-btn" onclick="renderVisitsTimeline(true)">
-          🔍 <span data-i18n="btnShow">${trans.btnShow || "Show"}</span>
+          <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span data-i18n="btnShow">${trans.btnShow || "Show"}</span>
         </button>
       </div>
     `;
@@ -2008,7 +2008,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
         partnerName =
           v.repId === currentUser.id ? "Team Rep" : currentUser.name;
       }
-      accompanimentNote = ` • <span class="accompaniment-note-joint">🤝 Co-visiting with: ${window.escapeHtml(partnerName)}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-joint"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Co-visiting with: ${window.escapeHtml(partnerName)}</span>`;
     } else if (repUser && repUser.role === "district_manager") {
       accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
     } else if (repUser && repUser.role === "line_manager") {
@@ -2108,14 +2108,14 @@ function renderVisitsTimeline(triggeredByShow = false) {
             ? `
           <div class="timeline-card-actions">
             <button type="button" class="btn btn-primary btn-timeline-complete" onclick="openCompleteModal('${v.id}')">
-              ✓ ${trans.btnComplete}
+              <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${trans.btnComplete}
             </button>
             <button type="button" class="btn btn-timeline-reschedule" onclick="openRescheduleModal('${v.id}')">
-              🗓️ Reschedule
+              <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
             </button>
             ${
               canDeleteVisit(v)
-                ? `<button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')">🗑️ ${trans.btnDelete}</button>`
+                ? `<button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> ${trans.btnDelete}</button>`
                 : ""
             }
           </div>
@@ -2123,7 +2123,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
             : !isActivity && canDeleteVisit(v)
               ? `
           <div class="timeline-card-actions">
-            <button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')">🗑️ ${trans.btnDelete}</button>
+            <button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> ${trans.btnDelete}</button>
           </div>
         `
               : ""

@@ -725,7 +725,7 @@ function getActiveCycleCampaignBanner(user, lang) {
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="badge bg-primary fw-bold">${window.escapeHtml(lineDisplayName)}</span>
                 <strong class="cycle-campaign-title">Current Cycle Campaign Focus</strong>
-                ${prodName ? `<span class="badge bg-success">📦 ${window.escapeHtml(prodName)}</span>` : ""}
+                ${prodName ? `<span class="badge bg-success"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(prodName)}</span>` : ""}
               </div>
               <div class="cycle-campaign-msg">
                 ${window.escapeHtml(focus.focusMessage)}
@@ -1158,9 +1158,9 @@ function renderRepDashboard(userName, user) {
                       <div class="planned-target-info">
                         <strong class="planned-target-name">${window.escapeHtml(h.doctorName || h.targetName || "Hospital")}</strong>
                         <div class="planned-target-date">
-                          <span class="date-icon">📅</span> ${h.date} ${h.time ? `• ⏰ ${h.time}` : ""}
+                          <span class="date-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> ${h.date} ${h.time ? `• <svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${h.time}` : ""}
                           ${h.date === todayStr ? `<span class="badge badge-plan-today">Today</span>` : (h.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">Tomorrow</span>` : (h.date > todayStr ? `<span class="badge badge-plan-upcoming">Upcoming</span>` : `<span class="badge badge-plan-overdue">Overdue</span>`))}
-                          ${h.visitType === "double" ? `<span class="badge badge-plan-double">🤝 Double</span>` : ""}
+                          ${h.visitType === "double" ? `<span class="badge badge-plan-double"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Double</span>` : ""}
                         </div>
                       </div>
                       <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -1195,9 +1195,9 @@ function renderRepDashboard(userName, user) {
                       <div class="planned-target-info">
                         <strong class="planned-target-name">${window.escapeHtml(d.doctorName || d.targetName || "Doctor")}</strong>
                         <div class="planned-target-date">
-                          <span class="date-icon">📅</span> ${d.date} ${d.time ? `• ⏰ ${d.time}` : ""}
+                          <span class="date-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> ${d.date} ${d.time ? `• <svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${d.time}` : ""}
                           ${d.date === todayStr ? `<span class="badge badge-plan-today">Today</span>` : (d.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">Tomorrow</span>` : (d.date > todayStr ? `<span class="badge badge-plan-upcoming">Upcoming</span>` : `<span class="badge badge-plan-overdue">Overdue</span>`))}
-                          ${d.visitType === "double" ? `<span class="badge badge-plan-double">🤝 Double</span>` : ""}
+                          ${d.visitType === "double" ? `<span class="badge badge-plan-double"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Double</span>` : ""}
                         </div>
                       </div>
                       <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -1231,9 +1231,9 @@ function renderRepDashboard(userName, user) {
                     <div class="planned-target-info">
                       <strong class="planned-target-name">${window.escapeHtml(p.doctorName || p.targetName || "Pharmacy")}</strong>
                       <div class="planned-target-date">
-                        <span class="date-icon">📅</span> ${p.date} ${p.time ? `• ⏰ ${p.time}` : ""}
+                        <span class="date-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> ${p.date} ${p.time ? `• <svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${p.time}` : ""}
                         ${p.date === todayStr ? `<span class="badge badge-plan-today">Today</span>` : (p.date === tomorrowStr ? `<span class="badge badge-plan-tomorrow">Tomorrow</span>` : (p.date > todayStr ? `<span class="badge badge-plan-upcoming">Upcoming</span>` : `<span class="badge badge-plan-overdue">Overdue</span>`))}
-                        ${p.visitType === "double" ? `<span class="badge badge-plan-double">🤝 Double</span>` : ""}
+                        ${p.visitType === "double" ? `<span class="badge badge-plan-double"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Double</span>` : ""}
                       </div>
                     </div>
                     <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -1411,9 +1411,9 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                           (v.doctorName || "").toLowerCase().includes("hospital"));
 
                       const targetBadge = isPharm
-                        ? `<span class="badge badge-target-pharmacy">💊 Pharmacy</span>`
+                        ? `<span class="badge badge-target-pharmacy"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> Pharmacy</span>`
                         : isHospital
-                          ? `<span class="badge badge-target-hospital">🏥 Hospital</span>`
+                          ? `<span class="badge badge-target-hospital"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><path d="M9 10h6"/><path d="M12 7v6"/></svg> Hospital</span>`
                           : `<span class="badge badge-target-doctor">🩺 Doctor</span>`;
 
                       const targetClassBadge = v.doctorClass || v.class
@@ -1422,7 +1422,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
 
                       const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
                       const productsHtml = prods && prods.length
-                        ? prods.map((p) => `<span class="badge badge-product m-1">💊 ${window.escapeHtml(p)}</span>`).join("")
+                        ? prods.map((p) => `<span class="badge badge-product m-1"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(p)}</span>`).join("")
                         : `<span class="text-muted small">-</span>`;
 
                       const notesText = (v.comment || v.feedback || v.notes || "").trim();
@@ -1437,12 +1437,12 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
 
                       const rawSamples = Array.isArray(v.giveawaySamples) && v.giveawaySamples.length ? v.giveawaySamples : [];
                       const samplesHtml = rawSamples.length
-                        ? `<div class="feed-samples-box">🎁 <strong>Samples:</strong> ${window.escapeHtml(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
+                        ? `<div class="feed-samples-box"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> <strong>Samples:</strong> ${window.escapeHtml(rawSamples.map((s) => typeof s === "string" ? s : `${s.name || s.productName || "Sample"} (${s.quantity || s.qty || 1})`).join(", "))}</div>`
                         : "";
 
                       const isDouble = v.visitType === "double" || !!v.doubleWithUserId || !!v.doubleWithUserName;
                       const doubleBadge = isDouble
-                        ? `<span class="badge badge-feed-double">🤝 Double</span>`
+                        ? `<span class="badge badge-feed-double"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Double</span>`
                         : "";
 
                       const isToday = v.date === todayStr;
@@ -1454,7 +1454,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                               ${v.time || "11:00"}
                             </div>
                             <div class="feed-cell-secondary">
-                              ${isToday ? `<span class="feed-today-text">🟢 Today</span>` : (v.date || "-")}
+                              ${isToday ? `<span class="feed-today-text"><svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg> Today</span>` : (v.date || "-")}
                             </div>
                           </td>
                           <td class="feed-td-cell">
@@ -1870,12 +1870,12 @@ function renderDMDashboard(userName, user) {
                         <td class="dm-covisit-products-col">
                           ${(() => {
                             const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(sv) : (sv.products || []);
-                            return prods.length ? `<span class="badge badge-product">💊 ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
+                            return prods.length ? `<span class="badge badge-product"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
                           })()}
                         </td>
                         <td class="text-end covisit-action-cell">
                           <button class="btn-convert-action" onclick="openCompletePlanModal('${sv.id}', true)">
-                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m7 7 4.3 4.3a1 1 0 0 0 1.4 0l2-2a1 1 0 0 0 0-1.4L10.4 3.6a1 1 0 0 0-1.4 0L7 5.6a1 1 0 0 0 0 1.4z"/><path d="m2 14 5-5"/><path d="m22 10-5 5"/></svg> Log Double Visit
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Log Double Visit
                           </button>
                         </td>
                       </tr>
@@ -2022,12 +2022,12 @@ function renderDMDashboard(userName, user) {
                           <td class="dm-covisit-products-col">
                             ${(() => {
                               const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(pv) : (pv.products || []);
-                              return prods.length ? `<span class="badge badge-product">💊 ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
+                              return prods.length ? `<span class="badge badge-product"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
                             })()}
                           </td>
                           <td class="text-end covisit-action-cell">
                             <button class="btn-convert-action" onclick="openCompletePlanModal('${pv.id}', true)">
-                              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m7 7 4.3 4.3a1 1 0 0 0 1.4 0l2-2a1 1 0 0 0 0-1.4L10.4 3.6a1 1 0 0 0-1.4 0L7 5.6a1 1 0 0 0 0 1.4z"/><path d="m2 14 5-5"/><path d="m22 10-5 5"/></svg> Log Double Visit
+                              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Log Double Visit
                             </button>
                           </td>
                         </tr>
@@ -2575,7 +2575,7 @@ function renderPMDashboard(userName, user) {
                     <td class="pm-portfolio-td pm-price-text">${p.price ? Number(p.price).toLocaleString() + " EGP" : "—"}</td>
                     <td class="pm-portfolio-td">
                       ${isFocused 
-                        ? `<span class="pm-focus-badge">🎯 Priority Focus</span>` 
+                        ? `<span class="pm-focus-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Priority Focus</span>` 
                         : `<span class="pm-standard-text">Standard</span>`}
                     </td>
                   </tr>
@@ -3347,7 +3347,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
         ? rep.nameAr || rep.name
         : rep.name
       : "Medical Rep";
-    if (titleEl) titleEl.innerHTML = `<svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m7 7 4.3 4.3a1 1 0 0 0 1.4 0l2-2a1 1 0 0 0 0-1.4L10.4 3.6a1 1 0 0 0-1.4 0L7 5.6a1 1 0 0 0 0 1.4z"/><path d="m2 14 5-5"/><path d="m22 10-5 5"/></svg> ${t.join_double_visit} - ${repName}`;
+    if (titleEl) titleEl.innerHTML = `<svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.join_double_visit} - ${repName}`;
     if (typeContainer) typeContainer.style.display = "none";
     if (lockedBadge) lockedBadge.style.display = "flex";
     if (lockedText) {

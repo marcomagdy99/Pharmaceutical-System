@@ -24,19 +24,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v260">
-    <link rel="stylesheet" href="css/visits.css?v=v260">
+    <link rel="stylesheet" href="css/style.css?v=v261">
+    <link rel="stylesheet" href="css/visits.css?v=v261">
       <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v260"></script>
-  <script src="js/app.js?v=v260"></script>
-    <script src="js/store.js?v=v260"></script>
+    <script src="js/auth-service.js?v=v261"></script>
+  <script src="js/app.js?v=v261"></script>
+    <script src="js/store.js?v=v261"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v260"></script>
-    <script src="js/firebase-sync.js?v=v260"></script>
+    <script src="js/firebase-config.js?v=v261"></script>
+    <script src="js/firebase-sync.js?v=v261"></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v260"></script>
+    <script src="js/cache-bust.js?v=v261"></script>
   </head>
 <body>
     <div class="app">
@@ -73,10 +73,10 @@
                             <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> <span data-i18n="btnPrint">Print</span>
                         </button>
                         <button class="btn btn-outline" onclick="openBulkPlanModal()" id="planVisitBtn">
-                            📋 <span data-i18n="planVisit">Plan Visits (Bulk)</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="m9 14 2 2 4-4"/></svg> <span data-i18n="planVisit">Plan Visits (Bulk)</span>
                         </button>
                         <button class="btn btn-primary" onclick="openVisitModal(true)" id="addActualVisitBtn" data-i18n="logActualVisit">
-                            ➕ Log Actual Visit
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Actual Visit
                         </button>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
                             </div>
                             <div class="timeline-filter-field col-btn">
                                 <button type="button" class="btn btn-primary" id="btnShowVisits" onclick="renderVisitsTimeline(true)">
-                                    🔍 <span data-i18n="btnShow">Show</span>
+                                    <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span data-i18n="btnShow">Show</span>
                                  </button>
                             </div>
                         </div>
@@ -163,10 +163,10 @@
                     <!-- Distinct Sub-Tabs: Medical (Doctors & Hospitals) vs Commercial (Pharmacies) -->
                     <div class="visits-scope-tabs" >
                         <button type="button" class="btn btn-sm visits-scope-tab-btn active" id="btnScopeMedical" onclick="switchVisitsScope('medical')" >
-                            🩺 <span data-i18n="tabMedicalVisits">Doctor & Hospital Visits</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3"/><path d="M9 12.5v3.5a4 4 0 0 0 4 4h1a4 4 0 0 0 4-4V14"/><circle cx="18" cy="12" r="2"/></svg> <span data-i18n="tabMedicalVisits">Doctor & Hospital Visits</span>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline visits-scope-tab-btn" id="btnScopePharmacy" onclick="switchVisitsScope('pharmacy')" >
-                            💊 <span data-i18n="tabPharmacyVisits">Pharmacy Visits</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> <span data-i18n="tabPharmacyVisits">Pharmacy Visits</span>
                         </button>
                     </div>
 
@@ -283,7 +283,7 @@
                 <div class="radio-group" id="visitPeriodRadioGroup">
                     <label class="radio-label"><input type="radio" name="visitPeriod" value="am" onchange="updateTargetOptions()"> <span data-i18n="modalAM">AM (Hospital)</span></label>
                     <label class="radio-label"><input type="radio" name="visitPeriod" value="pm" checked onchange="updateTargetOptions()"> <span data-i18n="modalPM">PM (Doctor)</span></label>
-                    <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy">💊 Pharmacy</span></label>
+                    <label class="radio-label" id="radioPharmacyLabel"><input type="radio" name="visitPeriod" value="pharmacy" onchange="updateTargetOptions()"> <span data-i18n="modalPharmacy"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> Pharmacy</span></label>
                 </div>
             </div>
             <div class="form-group d-none" id="modalTargetFilterContainer">
@@ -312,7 +312,7 @@
                     </div>
                     <div class="visit-gps-actions">
                         <button type="button" class="btn btn-outline btn-check-gps" id="btnCheckMyGps" onclick="triggerManualGpsCheck()">
-                            <span data-i18n="btnCheckGps">📡 Check Location Now</span>
+                            <span data-i18n="btnCheckGps"><svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg> Check Location Now</span>
                         </button>
                         <span id="visitGpsDistanceText" class="visit-gps-distance"></span>
                     </div>
@@ -320,7 +320,7 @@
                     <!-- Account GPS Pinning & Relocation Action Bar -->
                     <div class="visit-gps-pin-bar mt-2 pt-2 border-top" id="visitGpsPinBar" style="display: none;">
                         <button type="button" class="btn btn-sm btn-pin-clinic" id="btnPinClinicLocation" onclick="handlePinClinicLocation()">
-                            📍 <span id="lblPinClinicBtn">Pin Clinic Location</span>
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span id="lblPinClinicBtn">Pin Clinic Location</span>
                         </button>
                         <button type="button" class="btn btn-sm btn-relocate-clinic" id="btnRelocateClinicLocation" style="display: none;" onclick="openRelocationModal()">
                             <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> <span id="lblRelocateClinicBtn">Request Clinic Re-pin</span>
@@ -397,10 +397,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/workflow-engine.js?v=v260"></script>
-    <script src="js/reschedule.js?v=v260"></script>
-    <script src="js/gps-service.js?v=v260"></script>
-    <script src="js/visits.js?v=v260"></script>
-    <script src="js/visits-bulk-planner.js?v=v260"></script>
+    <script src="js/workflow-engine.js?v=v261"></script>
+    <script src="js/reschedule.js?v=v261"></script>
+    <script src="js/gps-service.js?v=v261"></script>
+    <script src="js/visits.js?v=v261"></script>
+    <script src="js/visits-bulk-planner.js?v=v261"></script>
 </body>
 </html>

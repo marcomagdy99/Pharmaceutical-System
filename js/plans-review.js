@@ -466,7 +466,7 @@ function renderPlansReview(currentUser) {
           <h4 class="fw-bold rep-title mb-2">${t.noPendingPlans}</h4>
           <p class="text-muted small mb-3">All visit plans have been approved and are active in team schedules.</p>
           <div>
-            <a href="visits.html" class="btn btn-primary btn-sm">📍 ${t.btnGoToVisits}</a>
+            <a href="visits.html" class="btn btn-primary btn-sm"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${t.btnGoToVisits}</a>
           </div>
         </div>
       `;
@@ -560,7 +560,7 @@ function renderPlansReview(currentUser) {
           <div class="d-flex align-items-center gap-2 day-plan-actions">
             ${accompanyBadgeOrButton}
             <button type="button" class="btn btn-sm btn-outline-success" onclick="approveEntireDay('${repId}', '${dateStr}')">
-              ✅ ${t.btnApproveDay}
+              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${t.btnApproveDay}
             </button>
           </div>
         `
@@ -603,7 +603,7 @@ function renderPlansReview(currentUser) {
                         : `<span class="badge bg-primary-subtle text-primary fw-bold target-badge" style="font-size: 0.7rem;">${t.badgeDoctor}</span>`;
 
                     const periodBadge = isPharm
-                      ? `<span class="badge bg-success-subtle text-success fw-bold px-2 py-1" style="font-size: 0.75rem;">💊 PHARM</span>`
+                      ? `<span class="badge bg-success-subtle text-success fw-bold px-2 py-1" style="font-size: 0.75rem;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> PHARM</span>`
                       : (v.period || "").toLowerCase() === "am"
                         ? `<span class="badge bg-warning-subtle text-warning fw-bold px-2 py-1" style="font-size: 0.75rem;">AM</span>`
                         : `<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1" style="font-size: 0.75rem;">PM</span>`;
@@ -615,10 +615,10 @@ function renderPlansReview(currentUser) {
                             ❌
                           </button>
                           <button class="btn btn-sm btn-primary text-white px-2 btn-action-accompany" onclick="accompanySingleVisit('${v.id}')" title="${t.btnAccompany}">
-                            🤝 ${t.btnAccompany}
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.btnAccompany}
                           </button>
                           <button class="btn btn-sm btn-success text-white px-3 btn-action-approve" onclick="approveSingleVisit('${v.id}')">
-                            ✅ ${t.btnApprove}
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${t.btnApprove}
                           </button>
                         </div>
                       `
@@ -644,7 +644,7 @@ function renderPlansReview(currentUser) {
                             (() => {
                               const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
                               return prods.length
-                                ? `<span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;">💊 ${prods.join(", ")}</span>`
+                                ? `<span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.join(", ")}</span>`
                                 : `<span class="text-muted small">-</span>`;
                             })()
                           }
@@ -672,10 +672,10 @@ function renderPlansReview(currentUser) {
               : ""
           }
           <button class="btn btn-sm btn-outline-danger" onclick="openRejectAllForRep('${repId}')">
-            ❌ ${t.btnRejectAllForRep}
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ${t.btnRejectAllForRep}
           </button>
           <button class="btn btn-sm btn-success text-white" onclick="approveAllForRep('${repId}')">
-            ✅ ${t.btnApproveAllForRep} ${rep.name.split(" ")[0]}
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${t.btnApproveAllForRep} ${rep.name.split(" ")[0]}
           </button>
         </div>
       `
