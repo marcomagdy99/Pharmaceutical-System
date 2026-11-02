@@ -326,10 +326,10 @@ window.openDmTeamModal = function (dmId) {
                     </span>
                   </div>
                   <div class="dm-team-rep-meta">
-                    <span class="dm-team-rep-tag">🆔 ${repCode}</span>
-                    <span class="dm-team-rep-tag">📍 ${safeAreaName}</span>
-                    ${r.phone ? `<span class="dm-team-rep-tag" title="${window.escapeHtml(r.phone)}">📞 <span dir="ltr">${window.escapeHtml(r.phone)}</span></span>` : ""}
-                    ${r.email ? `<span class="dm-team-rep-tag" title="${window.escapeHtml(r.email)}">✉️ ${window.escapeHtml(r.email)}</span>` : ""}
+                    <span class="dm-team-rep-tag">ID: ${repCode}</span>
+                    <span class="dm-team-rep-tag"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${safeAreaName}</span>
+                    ${r.phone ? `<span class="dm-team-rep-tag" title="${window.escapeHtml(r.phone)}"><svg class="header-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <span dir="ltr">${window.escapeHtml(r.phone)}</span></span>` : ""}
+                    ${r.email ? `<span class="dm-team-rep-tag" title="${window.escapeHtml(r.email)}"><svg class="header-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${window.escapeHtml(r.email)}</span>` : ""}
                   </div>
                 </div>
               </div>
@@ -338,7 +338,7 @@ window.openDmTeamModal = function (dmId) {
           .join("")
       : `
         <div class="dm-team-empty">
-          <div class="dm-team-empty-icon">👥</div>
+          <div class="dm-team-empty-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div class="dm-team-empty-text">No representatives assigned under this manager yet</div>
         </div>
       `;
@@ -348,13 +348,13 @@ window.openDmTeamModal = function (dmId) {
       <div class="dm-team-modal-header">
         <div class="dm-team-modal-header-info">
           <h3 class="dm-team-modal-title" id="dmTeamModalTitle">
-            <span>👥</span>
+            <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
             <span>${window.escapeHtml(dm.name)}</span>
           </h3>
           <div class="dm-team-modal-subtitle">
-            <span>🆔 ${window.escapeHtml(dmCode)}</span>
+            <span>ID: ${window.escapeHtml(dmCode)}</span>
             <span>•</span>
-            <span>🏷️ ${window.escapeHtml(dmLineText)}</span>
+            <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> ${window.escapeHtml(dmLineText)}</span>
             <span>•</span>
             <span class="dm-team-count-highlight">${window.escapeHtml(repsCountText)}</span>
           </div>
@@ -406,7 +406,7 @@ function renderDashboardChartsMarkup() {
       <div class="dash-analytics-header">
         <div>
           <h3 class="card-title dash-analytics-title">
-            📊 Interactive Analytics & KPI Trends
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Interactive Analytics & KPI Trends
           </h3>
           <small class="dash-analytics-subtitle">
             Real-time trends for sales achievement, doctor coverage and category breakdown
@@ -416,7 +416,7 @@ function renderDashboardChartsMarkup() {
       <div class="dash-charts-grid">
         <div class="dash-chart-box">
           <h4 class="dash-chart-title">
-            📈 Monthly Sales vs Target Trend
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Monthly Sales vs Target Trend
           </h4>
           <div class="dash-chart-canvas-wrapper">
             <canvas id="dashSalesTrendChart"></canvas>
@@ -424,7 +424,7 @@ function renderDashboardChartsMarkup() {
         </div>
         <div class="dash-chart-box text-center">
           <h4 class="dash-chart-title">
-            🎯 Doctor Reach Gauge (This Month)
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Doctor Reach Gauge (This Month)
           </h4>
           <div class="dash-gauge-canvas-wrapper">
             <canvas id="dashCoverageGaugeChart"></canvas>
@@ -433,7 +433,7 @@ function renderDashboardChartsMarkup() {
         </div>
         <div class="dash-chart-box text-center">
           <h4 class="dash-chart-title">
-            🥧 Doctor Classes & Hospitals
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg> Doctor Classes & Hospitals
           </h4>
           <div class="dash-gauge-canvas-wrapper">
             <canvas id="dashDoctorClassesChart"></canvas>
@@ -720,7 +720,7 @@ function getActiveCycleCampaignBanner(user, lang) {
       return `
         <div class="cycle-campaign-banner mb-3 shadow-sm">
           <div class="d-flex align-items-start gap-3">
-            <div class="cycle-campaign-icon">🎯</div>
+            <div class="cycle-campaign-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
             <div>
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="badge bg-primary fw-bold">${window.escapeHtml(lineDisplayName)}</span>
@@ -730,7 +730,7 @@ function getActiveCycleCampaignBanner(user, lang) {
               <div class="cycle-campaign-msg">
                 ${window.escapeHtml(focus.focusMessage)}
               </div>
-              ${focus.updatedBy ? `<small class="text-muted cycle-campaign-meta">👤 Set by: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
+              ${focus.updatedBy ? `<small class="text-muted cycle-campaign-meta"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Set by: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
             </div>
           </div>
           <button type="button" class="btn-close opacity-75" onclick="this.closest('.cycle-campaign-banner').remove()" title="Dismiss"></button>
@@ -786,7 +786,7 @@ function renderDashboard() {
     console.error("Dashboard render failed:", renderErr);
     container.innerHTML = `
       <div class="card dash-fallback-card">
-        <div class="dash-fallback-icon">🔄</div>
+        <div class="dash-fallback-icon"><svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
         <h3 class="dash-fallback-title">New App Update Available</h3>
         <p class="dash-fallback-msg">
           A new update has been released. Please refresh your browser cache to apply changes.
@@ -1137,7 +1137,7 @@ function renderRepDashboard(userName, user) {
               </button>
             </div>
             <div class="rep-plan-date-picker-wrap">
-              <label class="rep-plan-date-label">📅 ${t.specific_date}:</label>
+              <label class="rep-plan-date-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${t.specific_date}:</label>
               <input type="date" class="form-control form-control-sm rep-plan-date-input" value="${window.currentRepPlanDate || ''}" onchange="switchRepPlanDate(this.value)">
             </div>
           </div>
@@ -1282,12 +1282,12 @@ function renderRepDashboard(userName, user) {
                     <td class="cell-doctor-name">${window.escapeHtml(v.doctorName || v.targetName)}</td>
                     <td class="cell-date-time">
                       <div class="dt-day-name">${dt.dayName}</div>
-                      <div class="dt-date-line">📅 ${v.date}</div>
+                      <div class="dt-date-line"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${v.date}</div>
                       <div class="dt-time-line">⏰ ${dt.time}</div>
                       ${(() => {
                         const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
                         const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00"));
-                        return `<div class="dt-ins-line" title="Insertion Date & Time">📥 Ins: ${insD} ${insT}</div>`;
+                        return `<div class="dt-ins-line" title="Insertion Date & Time"><svg class="header-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Ins: ${insD} ${insT}</div>`;
                       })()}
                     </td>
                     <td>
@@ -1353,7 +1353,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
       <div class="dm-followup-header">
         <div>
           <div class="dm-followup-title-wrap">
-            <span class="dm-followup-icon">📡</span>
+            <span class="dm-followup-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/><path d="M7.76 16.24a6 6 0 0 1 0-8.48"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.48"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
             <h3 class="card-title dm-followup-title">
               Team Live Follow-up Feed
             </h3>
@@ -1429,7 +1429,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                       const notesHtml = notesText
                         ? `
                           <div class="feed-notes-box">
-                            <span class="feed-notes-icon">💬</span>
+                            <span class="feed-notes-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                             ${window.escapeHtml(notesText)}
                           </div>
                         `
@@ -1459,10 +1459,10 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                           </td>
                           <td class="feed-td-cell">
                             <div class="feed-cell-primary">
-                              👤 ${window.escapeHtml(repName)}
+                              <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(repName)}
                             </div>
                             <div class="feed-cell-secondary">
-                              📍 ${window.escapeHtml(repTerritory)}
+                              <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${window.escapeHtml(repTerritory)}
                             </div>
                             ${doubleBadge}
                           </td>
@@ -1684,7 +1684,7 @@ function renderDMDashboard(userName, user) {
         dmLines.length > 1
           ? `
         <div class="dashboard-line-filter">
-          <span class="line-filter-label">🏷️ Filter by Line:</span>
+          <span class="line-filter-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> Filter by Line:</span>
           <button type="button" class="line-filter-btn ${activeDmLine === "all" ? "active" : ""}" onclick="window.switchDmLineFilter('all')">
             All Lines (${dmLines.length})
           </button>
@@ -1710,7 +1710,7 @@ function renderDMDashboard(userName, user) {
         <a href="visits.html" class="stat-card stat-card-link-card stat-card-border-success">
           <div class="stat-label stat-label-flex">
             <span>Team Visits (This Month)</span>
-            <span>📍</span>
+            <span><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
           </div>
           <div class="stat-value success counter" data-target="${monthlyTeamCompletedVisits}">${monthlyTeamCompletedVisits}</div>
           <div class="stat-card-link stat-card-link-text">
@@ -1720,7 +1720,7 @@ function renderDMDashboard(userName, user) {
         <a href="plans-review.html" class="stat-card stat-card-link-card stat-card-border-warning">
           <div class="stat-label stat-label-flex">
             <span>${t.plans_review || "Plans to Review"}</span>
-            <span>📋</span>
+            <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>
           </div>
           <div class="stat-value warning counter" data-target="${pendingPlansCount}">${pendingPlansCount}</div>
           <div class="stat-card-link stat-card-link-text">
@@ -1730,7 +1730,7 @@ function renderDMDashboard(userName, user) {
         <a href="leaves.html" class="stat-card stat-card-link-card stat-card-border-danger">
           <div class="stat-label stat-label-flex">
             <span>${t.leave_requests || "Leave Requests to Approve"}</span>
-            <span>🏖️</span>
+            <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
           </div>
           <div class="stat-value danger counter" data-target="${pendingLeavesCount}">${pendingLeavesCount}</div>
           <div class="stat-card-link stat-card-link-text">
@@ -1742,7 +1742,7 @@ function renderDMDashboard(userName, user) {
       <div class="dashboard-card dm-schedule-card">
         <div class="dm-schedule-header">
           <div class="dm-schedule-header-title-wrap">
-            <span class="dm-followup-icon">🤝</span>
+            <span class="dm-followup-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.3 1.3"/><path d="m14.7 6.3 3.6 3.6a2 2 0 0 1 0 2.8l-1.6 1.6"/><path d="m3 14 3.7-3.7a2 2 0 0 1 2.8 0l1.5 1.5"/><path d="m7 18 2 2a1 1 0 0 0 1.4 0l1.3-1.3"/></svg></span>
             <h3 class="card-title dm-followup-title">
               Field Accompaniment Schedule (Co-Visiting)
             </h3>
@@ -1771,7 +1771,7 @@ function renderDMDashboard(userName, user) {
             scheduledDates.length === 0
               ? `
             <div class="dm-prompt-banner">
-              <div class="prompt-icon">📋</div>
+              <div class="prompt-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
               <strong class="prompt-title">
                 No field accompaniment days scheduled yet
               </strong>
@@ -1796,12 +1796,12 @@ function renderDMDashboard(userName, user) {
                   const isOffice = repIdVal === "none";
                   return `
                   <div class="dm-schedule-pill">
-                    <span class="pill-date">📅 ${dt.dayName} ${dateStr}</span>
+                    <span class="pill-date"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dt.dayName} ${dateStr}</span>
                     <span class="pill-divider">|</span>
                     ${
                       isOffice
-                        ? `<span class="pill-office">🏢 Office</span>`
-                        : `<span class="pill-rep">👤 ${repObj ? repObj.name : "Rep"}</span>`
+                        ? `<span class="pill-office"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg> Office</span>`
+                        : `<span class="pill-rep"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${repObj ? repObj.name : "Rep"}</span>`
                     }
                   </div>
                 `;
@@ -1845,7 +1845,7 @@ function renderDMDashboard(userName, user) {
                                 ? "Hospital"
                                 : "Clinic Visit";
                             const periodBadge = isPharm
-                              ? `<span class="badge badge-period-pharm">💊 PHARM</span>`
+                              ? `<span class="badge badge-period-pharm"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="10.5" y1="4.5" x2="19.5" y2="13.5"/><path d="m8.5 8.5-4 4a6.36 6.36 0 0 0 9 9l4-4"/></svg> PHARM</span>`
                               : isHospital
                                 ? `<span class="badge badge-period-am">AM</span>`
                                 : `<span class="badge badge-period-pm">PM</span>`;
@@ -1853,11 +1853,11 @@ function renderDMDashboard(userName, user) {
                             return `
                       <tr>
                         <td class="dm-covisit-sticky-col">
-                          <div class="dt-day-name">📅 ${dt.dayName}</div>
+                          <div class="dt-day-name"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dt.dayName}</div>
                           <div class="dt-date-line">${sv.date}</div>
                         </td>
                         <td>
-                          <strong class="cell-doctor-name">👤 ${sv.repName}</strong>
+                          <strong class="cell-doctor-name"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${sv.repName}</strong>
                           <div class="feed-cell-secondary">${sv.repCode}</div>
                         </td>
                         <td>
@@ -1901,7 +1901,7 @@ function renderDMDashboard(userName, user) {
             scheduledDates.length === 0
               ? `
             <div class="dm-prompt-banner">
-              <div class="prompt-icon">📋</div>
+              <div class="prompt-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
               <strong class="prompt-title">
                 No field accompaniment days scheduled yet
               </strong>
@@ -1915,7 +1915,7 @@ function renderDMDashboard(userName, user) {
           `
               : `
             <div class="dm-schedule-pills-container dm-schedule-pills-wrap">
-              <span class="dm-schedule-pills-label">📅 Scheduled Days:</span>
+              <span class="dm-schedule-pills-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Scheduled Days:</span>
               ${scheduledDates
                 .map((dateStr) => {
                   const repIdVal = storedSchedule[dateStr];
@@ -1927,7 +1927,7 @@ function renderDMDashboard(userName, user) {
                   const isAct = dateStr === selectedDate;
                   return `
                   <button type="button" class="btn btn-sm ${isAct ? "btn-primary" : "btn-outline"} dm-schedule-date-btn" onclick="onDmChangeDate('${dateStr}')">
-                    📅 ${dt.dayName ? dt.dayName + " " : ""}${dateStr} (${repObj ? repObj.name.split(" ")[0] : "Rep"})
+                    <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dt.dayName ? dt.dayName + " " : ""}${dateStr} (${repObj ? repObj.name.split(" ")[0] : "Rep"})
                   </button>
                 `;
                 })
@@ -1938,7 +1938,7 @@ function renderDMDashboard(userName, user) {
               !isConfirmedForSelectedDate
                 ? `
               <div class="dm-prompt-banner">
-                <div class="prompt-icon">📅</div>
+                <div class="prompt-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                 <strong class="prompt-title">
                   Date ${selectedDate}: No field accompaniment scheduled for this day
                 </strong>
@@ -1950,7 +1950,7 @@ function renderDMDashboard(userName, user) {
                 : isOfficeDay
                   ? `
               <div class="dm-office-banner">
-                <div class="prompt-icon">🏢</div>
+                <div class="prompt-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg></div>
                 <strong class="dm-office-title">Date ${selectedDate}: Office Work / Administrative Day</strong>
               </div>
             `
@@ -1967,7 +1967,7 @@ function renderDMDashboard(userName, user) {
                       <span class="badge badge-primary dm-team-rep-badge">${accompaniedRep.employeeCode || "Rep"}</span>
                     </div>
                     <div class="dm-accompanied-sub">
-                      📅 ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? "• (Today)" : ""} • ${pendingAccompaniedVisits.length} planned joint visits
+                      <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? "• (Today)" : ""} • ${pendingAccompaniedVisits.length} planned joint visits
                     </div>
                   </div>
                 </div>
@@ -2005,7 +2005,7 @@ function renderDMDashboard(userName, user) {
                                   ? "Hospital"
                                   : "Clinic Visit";
                               const periodBadge = isPharm
-                                ? `<span class="badge badge-period-pharm">💊 PHARM</span>`
+                                ? `<span class="badge badge-period-pharm"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="10.5" y1="4.5" x2="19.5" y2="13.5"/><path d="m8.5 8.5-4 4a6.36 6.36 0 0 0 9 9l4-4"/></svg> PHARM</span>`
                                 : isHospital
                                   ? `<span class="badge badge-period-am">AM</span>`
                                   : `<span class="badge badge-period-pm">PM</span>`;
@@ -2253,7 +2253,7 @@ function renderLMDashboard(userName, user) {
         lmLines.length > 1
           ? `
         <div class="dashboard-line-filter">
-          <span class="line-filter-label">🏷️ Filter by Line:</span>
+          <span class="line-filter-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> Filter by Line:</span>
           <button type="button" class="line-filter-btn ${activeLmLine === "all" ? "active" : ""}" onclick="window.switchLmLineFilter('all')">
             All Lines (${lmLines.length})
           </button>
@@ -2283,7 +2283,7 @@ function renderLMDashboard(userName, user) {
         <a href="visits.html" class="stat-card stat-card-link-card stat-card-border-primary">
           <div class="stat-label stat-label-flex">
             <span>${t.line_visits || "Line Visits (This Month)"}</span>
-            <span>📍</span>
+            <span><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
           </div>
           <div class="stat-value primary counter" data-target="${monthlyLineCompletedVisits}">${monthlyLineCompletedVisits}</div>
           <div class="stat-card-link-text">
@@ -2293,7 +2293,7 @@ function renderLMDashboard(userName, user) {
         <a href="leaves.html" class="stat-card stat-card-link-card stat-card-border-danger">
           <div class="stat-label stat-label-flex">
             <span>${t.leave_requests || "Leave Requests to Approve"}</span>
-            <span>🏖️</span>
+            <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
           </div>
           <div class="stat-value danger counter" data-target="${lmPendingLeavesCount}">${lmPendingLeavesCount}</div>
           <div class="stat-card-link-text">
@@ -2330,13 +2330,13 @@ function renderLMDashboard(userName, user) {
                             <td>
                               <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <span class="badge bg-primary-subtle text-primary dm-schedule-day-badge">
-                                  👥 ${repsForThisDM.length} ${repsForThisDM.length === 1 ? "Rep" : "Reps"}
+                                  <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${repsForThisDM.length} ${repsForThisDM.length === 1 ? "Rep" : "Reps"}
                                 </span>
                                 ${
                                   repsForThisDM.length > 0
                                     ? `
                                   <button type="button" class="btn-view-team" onclick="window.openDmTeamModal('${dm.id}')" title="View Team Members">
-                                    <span>👁️</span>
+                                    <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                     <span>View Team</span>
                                   </button>
                                 `
@@ -2371,7 +2371,7 @@ function renderLMDashboard(userName, user) {
       <div class="dashboard-card line-trend-section">
         <div class="line-trend-section-header">
           <h3 class="card-title line-trend-section-title">
-            📈 Monthly Sales & Target Trend (Per Line)
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Monthly Sales & Target Trend (Per Line)
           </h3>
           <small class="line-trend-section-subtitle">
             Each product line has independent target, sales, and achievement %
@@ -2389,7 +2389,7 @@ function renderLMDashboard(userName, user) {
           <div class="line-trend-card">
             <div class="line-trend-card-header">
               <h4 class="line-trend-title">
-                📦 ${line.name}
+                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${line.name}
               </h4>
               <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                 Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
@@ -2452,7 +2452,7 @@ function renderPMDashboard(userName, user) {
     <div class="flex-col">
       <div class="welcome-banner pm">
         <h2 class="welcome-title">Welcome back, Product Manager ${userName}!</h2>
-        <div class="welcome-subtitle">🏷️ ${lineNames || "Product Line Management"} • Nationwide Line Scope</div>
+        <div class="welcome-subtitle"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> ${lineNames || "Product Line Management"} • Nationwide Line Scope</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, "en")}
@@ -2484,7 +2484,7 @@ function renderPMDashboard(userName, user) {
         <a href="visits.html" class="stat-card stat-card-link-card stat-card-border-primary">
           <div class="stat-label stat-label-flex">
             <span>Line Visits (This Month)</span>
-            <span>📍</span>
+            <span><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
           </div>
           <div class="stat-value primary counter" data-target="${lineVisitsThisMonth}">${lineVisitsThisMonth}</div>
           <div class="stat-card-link-text">
@@ -2494,7 +2494,7 @@ function renderPMDashboard(userName, user) {
         <a href="activities.html" class="stat-card stat-card-link-card stat-card-border-warning">
           <div class="stat-label stat-label-flex">
             <span>Pending Marketing Requests</span>
-            <span>⏳</span>
+            <span><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
           </div>
           <div class="stat-value warning counter" data-target="${pendingMarketingRequests}">${pendingMarketingRequests}</div>
           <div class="stat-card-link-text">
@@ -2506,36 +2506,28 @@ function renderPMDashboard(userName, user) {
       <!-- Quick Action Cards -->
       <div class="pm-quick-actions-grid">
         <a href="visits.html?action=new" class="pm-action-card">
-          <div class="pm-action-icon pm-icon-blue">
-            🤝
-          </div>
+          <div class="pm-action-icon pm-icon-blue">undefined</div>
           <div>
             <div class="pm-action-title">Field Double Visit</div>
             <div class="pm-action-desc">With line LMs & DMs</div>
           </div>
         </a>
         <a href="reports.html" class="pm-action-card">
-          <div class="pm-action-icon pm-icon-cyan">
-            📊
-          </div>
+          <div class="pm-action-icon pm-icon-cyan"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
           <div>
             <div class="pm-action-title">Line Sales & Target</div>
             <div class="pm-action-desc">Pharmacies & distributor sales</div>
           </div>
         </a>
         <a href="quizzes.html" class="pm-action-card">
-          <div class="pm-action-icon pm-icon-green">
-            📝
-          </div>
+          <div class="pm-action-icon pm-icon-green"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
           <div>
             <div class="pm-action-title">Scientific Quizzes</div>
             <div class="pm-action-desc">Create & evaluate quizzes</div>
           </div>
         </a>
         <a href="activities.html" class="pm-action-card">
-          <div class="pm-action-icon pm-icon-orange">
-            📋
-          </div>
+          <div class="pm-action-icon pm-icon-orange"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
           <div>
             <div class="pm-action-title">Requests & Budget</div>
             <div class="pm-action-desc">Approve marketing requests</div>
@@ -2547,7 +2539,7 @@ function renderPMDashboard(userName, user) {
       <!-- Line Products Showcase -->
       <div class="pm-portfolio-card">
         <div class="pm-portfolio-header">
-          <h5 class="pm-portfolio-title">📦 Line Products Portfolio</h5>
+          <h5 class="pm-portfolio-title"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> Line Products Portfolio</h5>
           <span class="pm-portfolio-badge">
             ${lineProducts.length} Registered Products
           </span>
@@ -2602,7 +2594,7 @@ function renderPMDashboard(userName, user) {
         return `
         <div class="line-trend-section">
           <h3 class="line-trend-section-title">
-            📊 Monthly Sales Trends for Line Products
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Monthly Sales Trends for Line Products
           </h3>
           <div class="line-trend-grid">
             ${pmLines.map((line) => {
@@ -2621,8 +2613,8 @@ function renderPMDashboard(userName, user) {
               <div class="line-trend-card">
                 <div class="line-trend-card-header">
                   <h4 class="line-trend-title">
-                    📦 ${line.name}
-                  </h4>
+                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${line.name}
+              </h4>
                   <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                     Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
                   </span>
@@ -2720,7 +2712,7 @@ function renderBUDashboard(userName, user) {
         lines.length > 1
           ? `
         <div class="dashboard-line-filter">
-          <span class="line-filter-label">🏷️ Filter by Line:</span>
+          <span class="line-filter-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> Filter by Line:</span>
           <button type="button" class="line-filter-btn ${activeBuLine === "all" ? "active" : ""}" onclick="window.switchBuLineFilter('all')">
             All Lines (${lines.length})
           </button>
@@ -2903,7 +2895,7 @@ function renderBUDashboard(userName, user) {
       <div class="dashboard-card line-trend-section">
         <div class="line-trend-section-header">
           <h3 class="card-title line-trend-section-title">
-            📈 Monthly Sales & Target Trend (Per Line)
+            <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Monthly Sales & Target Trend (Per Line)
           </h3>
           <small class="line-trend-section-subtitle">
             Actual vs Target comparison for each independent product line under your business unit
@@ -2921,7 +2913,7 @@ function renderBUDashboard(userName, user) {
           <div class="line-trend-card">
             <div class="line-trend-card-header">
               <h4 class="line-trend-title">
-                📦 ${line.name}
+                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${line.name}
               </h4>
               <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                 Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
@@ -3212,7 +3204,7 @@ function attachDashboardModal() {
           </div>
 
           <div id="dashLockedDoubleBadge" class="dash-locked-double-badge">
-            <span class="fs-5">🤝</span>
+            <span class="fs-5"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.3 1.3"/><path d="m14.7 6.3 3.6 3.6a2 2 0 0 1 0 2.8l-1.6 1.6"/><path d="m3 14 3.7-3.7a2 2 0 0 1 2.8 0l1.5 1.5"/><path d="m7 18 2 2a1 1 0 0 0 1.4 0l1.3-1.3"/></svg></span>
             <span id="dashLockedDoubleText">Accompanied Double Visit</span>
           </div>
 
@@ -3502,7 +3494,7 @@ function updateDashModalDayDisplay() {
     typeof window.formatVisitDateTime === "function"
       ? window.formatVisitDateTime(dateInput.value, null, lang)
       : { dayName: "" };
-  displayEl.textContent = dt.dayName ? `📅 ${dt.dayName}` : "";
+  displayEl.textContent = dt.dayName ? dt.dayName : "";
 }
 
 window.updateDashModalDayDisplay = updateDashModalDayDisplay;
@@ -3651,8 +3643,8 @@ window.handleDashCompleteSubmit = function (e) {
       const conflictingTarget = timeConflict.conflictingVisit.doctorName || timeConflict.conflictingVisit.doctorId || "";
       const conflictingTime = timeConflict.conflictingVisit.time || timeVal;
       const msg = timeConflict.exactMatch
-        ? `⚠️ Another visit is already recorded at the exact same time (${conflictingTime}) for (${conflictingTarget}).`
-        : `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
+        ? `Another visit is already recorded at the exact same time (${conflictingTime}) for (${conflictingTarget}).`
+        : `Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
       showToast(msg, "warning");
       return;
     }

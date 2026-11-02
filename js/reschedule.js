@@ -38,7 +38,7 @@ function attachRescheduleModal() {
       <div class="modal-box reschedule-modal-box">
         <div class="reschedule-header">
           <h4 class="reschedule-title">
-            <span>🗓️</span>
+            <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
             <span id="rescheduleModalHeading">Reschedule or Missed Call</span>
           </h4>
           <button type="button" onclick="closeRescheduleModal()" class="reschedule-close-btn">&times;</button>
@@ -66,11 +66,11 @@ function attachRescheduleModal() {
             <div class="reschedule-actions-row">
               <label class="reschedule-radio-label">
                 <input type="radio" name="rescheduleAction" value="reschedule" checked onchange="toggleRescheduleActionView()">
-                <span>🗓️ Reschedule to Later Date</span>
+                <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule to Later Date</span>
               </label>
               <label class="reschedule-radio-label reschedule-radio-label-danger">
                 <input type="radio" name="rescheduleAction" value="missed" onchange="toggleRescheduleActionView()">
-                <span>🚫 Missed Call (Unavailable)</span>
+                <span><svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Missed Call (Unavailable)</span>
               </label>
             </div>
           </div>
@@ -104,12 +104,12 @@ function attachRescheduleModal() {
             </label>
             <select id="rescheduleQuickReason" class="form-control mb-2" onchange="onRescheduleQuickReasonChange()">
               <option value="">-- Select common reason or write below --</option>
-              <option value="Doctor Traveling / Unavailable">✈️ Doctor Traveling / Unavailable</option>
-              <option value="Emergency Surgery / Medical Conference">🏥 Emergency Surgery / Medical Conference</option>
-              <option value="Clinic Closed / Secretary Apology">🔒 Clinic Closed / Secretary Apology</option>
+              <option value="Doctor Traveling / Unavailable">Doctor Traveling / Unavailable</option>
+              <option value="Emergency Surgery / Medical Conference">Emergency Surgery / Medical Conference</option>
+              <option value="Clinic Closed / Secretary Apology">Clinic Closed / Secretary Apology</option>
               <option value="Severe Overcrowding / Doctor Short Time">⏳ Severe Overcrowding / Doctor Short Time</option>
-              <option value="Weather / Route Emergency">🌧️ Weather / Route Emergency</option>
-              <option value="other">✍️ Other (Specify details)</option>
+              <option value="Weather / Route Emergency">Weather / Route Emergency</option>
+              <option value="other">Other (Specify details)</option>
             </select>
             <textarea id="rescheduleReasonText" class="form-control small" rows="3" required placeholder="Explain the reason for rescheduling or missing the visit..."></textarea>
           </div>
@@ -167,7 +167,7 @@ function openRescheduleModal(visitId) {
   // 1. Quota Check: Max 2 reschedules per day
   const usedToday = getDailyRescheduleCount(user.id, today);
   if (usedToday >= 2) {
-    const quotaMsg = "⚠️ Sorry, you have reached the maximum daily limit for rescheduling or marking visits as missed (max 2 visits per day). Please consult your direct manager.";
+    const quotaMsg = "Sorry, you have reached the maximum daily limit for rescheduling or marking visits as missed (max 2 visits per day). Please consult your direct manager.";
     showToast(quotaMsg, "warning");
     return;
   }
@@ -257,7 +257,7 @@ function notifyManagerOnRescheduleOrMissed(options) {
         window.addWorkflowNotification({
           userId: recipientDmId,
           type: "warning",
-          icon: "🚨",
+          icon: '<svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
           badgeClass: "bg-danger",
           title: "Joint Visit Alert: Rescheduled",
           message: `Rep ${repDisplayName} rescheduled joint visit with Dr. ${doctorDisplayName} from ${oldDate} to ${newDate}. Reason: ${reason}`,
@@ -270,7 +270,7 @@ function notifyManagerOnRescheduleOrMissed(options) {
         window.addWorkflowNotification({
           userId: recipientDmId,
           type: "visit",
-          icon: "🗓️",
+          icon: '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
           badgeClass: "bg-warning",
           title: "Visit Rescheduled",
           message: `Rep ${repDisplayName} rescheduled visit with Dr. ${doctorDisplayName} to ${newDate}. Reason: ${reason}`,
@@ -285,7 +285,7 @@ function notifyManagerOnRescheduleOrMissed(options) {
         window.addWorkflowNotification({
           userId: recipientDmId,
           type: "warning",
-          icon: "🚫",
+          icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
           badgeClass: "bg-danger",
           title: "Joint Visit Alert: Missed Call",
           message: `Rep ${repDisplayName} marked joint visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
@@ -298,7 +298,7 @@ function notifyManagerOnRescheduleOrMissed(options) {
         window.addWorkflowNotification({
           userId: recipientDmId,
           type: "visit",
-          icon: "🚫",
+          icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
           badgeClass: "bg-warning",
           title: "Missed Call Logged",
           message: `Rep ${repDisplayName} marked visit with Dr. ${doctorDisplayName} on ${visit.date} as missed. Reason: ${reason}`,
@@ -323,7 +323,7 @@ function handleRescheduleSubmit(e) {
   // Re-verify quota
   const usedToday = getDailyRescheduleCount(user.id, today);
   if (usedToday >= 2) {
-    const quotaMsg = "⚠️ Sorry, you have reached the maximum daily limit for rescheduling visits (max 2 per day).";
+    const quotaMsg = "Sorry, you have reached the maximum daily limit for rescheduling visits (max 2 per day).";
     if (typeof showToast === "function") showToast(quotaMsg, "warning");
     return;
   }
@@ -334,7 +334,7 @@ function handleRescheduleSubmit(e) {
 
   // Validate mandatory reason
   if (!reason || reason.length < 3) {
-    const reasonMsg = "⚠️ Please provide a valid reason (mandatory).";
+    const reasonMsg = "Please provide a valid reason (mandatory).";
     if (typeof showToast === "function") showToast(reasonMsg, "warning");
     document.getElementById("rescheduleReasonText").focus();
     return;
@@ -372,7 +372,7 @@ function handleRescheduleSubmit(e) {
     const docId = visit.doctorId || visit.targetId;
     const checkDupFn = window.isDoctorAlreadyVisitedToday || (typeof isDoctorAlreadyVisitedToday === "function" ? isDoctorAlreadyVisitedToday : null);
     if (docId && checkDupFn && checkDupFn(docId, newDate, targetRepId, visit.id)) {
-      const dupMsg = "⚠️ A visit is already scheduled for this doctor on the new date. Please choose another date.";
+      const dupMsg = "A visit is already scheduled for this doctor on the new date. Please choose another date.";
       if (typeof showToast === "function") showToast(dupMsg, "warning");
       return;
     }

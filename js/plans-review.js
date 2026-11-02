@@ -9,7 +9,7 @@
 const plansReviewTranslations = {
   en: {
     pageTitle: "Plans to Review - PharmaCare",
-    plansReviewTitle: "📋 Plans to Review & Approvals",
+    plansReviewTitle: "Plans to Review & Approvals",
     plansReviewSubtitle:
       "Review and approve planned visit schedules submitted by your Medical Representatives",
     btnGoToVisits: "Go to Visits",
@@ -58,7 +58,7 @@ const plansReviewTranslations = {
     badgePending: "Pending Approval",
     badgeHospital: "Hospital",
     badgeDoctor: "Doctor",
-    badgeActingDm: "⚡ Acting DM (DM Vacant/Inactive)",
+    badgeActingDm: "Acting DM (DM Vacant/Inactive)",
     badgeSupervisory: "Supervisory View (Awaiting DM)",
     actorTitleActingDm: "Line Manager (Acting DM)",
     actorTitleAdmin: "Administrator",
@@ -297,14 +297,14 @@ function populatePlansLineFilter(currentUser) {
   if (isFullAdmin || userLines.length > 1) {
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = "🌐 All Product Lines";
+    optAll.textContent = "All Product Lines";
     lineSelect.appendChild(optAll);
   }
 
   userLines.forEach((l) => {
     const opt = document.createElement("option");
     opt.value = l.id;
-    opt.textContent = `📦 ${l.name || l.nameAr}`;
+    opt.textContent = `${l.name || l.nameAr}`;
     lineSelect.appendChild(opt);
   });
 
@@ -454,7 +454,7 @@ function renderPlansReview(currentUser) {
     if (isFiltered) {
       container.innerHTML = `
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
-          <div style="font-size: 3rem; margin-bottom: 12px;">🔍</div>
+          <div style="margin-bottom: 12px; color: var(--text-muted);"><svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.85" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
           <h4 class="fw-bold rep-title mb-2">${t.noMatchingPlansTitle || 'No pending plans match your search'}</h4>
           <p class="text-muted small mb-0">${t.noMatchingPlansDesc || 'Try adjusting your search query, rep, or product line filter.'}</p>
         </div>
@@ -462,7 +462,7 @@ function renderPlansReview(currentUser) {
     } else {
       container.innerHTML = `
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
-          <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
+          <div style="margin-bottom: 12px; color: #10b981;"><svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M5.8 11.3 2 22l10.7-3.79d"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><circle cx="12" cy="12" r="3"/></svg></div>
           <h4 class="fw-bold rep-title mb-2">${t.noPendingPlans}</h4>
           <p class="text-muted small mb-3">All visit plans have been approved and are active in team schedules.</p>
           <div>
@@ -570,7 +570,7 @@ function renderPlansReview(currentUser) {
         <div class="day-plan-block mb-3 border rounded-3 overflow-hidden">
           <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-2 day-plan-header">
             <div class="d-flex align-items-center gap-2">
-              <span style="font-size: 1.1rem;">📅</span>
+              <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <strong style="font-size: 0.95rem;">${dt.dayName ? dt.dayName + " • " : ""}${dateStr}</strong>
               <span class="badge plans-count-badge ms-1" style="font-size: 0.78rem;">${dayVisits.length} visits</span>
             </div>
@@ -971,7 +971,7 @@ const plansReview = {
         title: "Planned Visit Approved",
         message: `${actorTitle} (${currentUser.name}) approved your visit to (${doc ? doc.name : docName}) on ${visit.date}.`,
         link: "calendar.html",
-        icon: "🗓️",
+        icon: '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
         badgeClass: "bg-success",
         actorName: currentUser.name,
         action: "approved",
@@ -1035,7 +1035,7 @@ const plansReview = {
         title: "Field Plan Approved",
         message: `${actorTitle} (${currentUser.name}) approved your field plan ${dateTextEn} (${count} visits total).`,
         link: "calendar.html",
-        icon: "🗓️",
+        icon: '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
         badgeClass: "bg-success",
         actorName: currentUser.name,
         action: "approved",
@@ -1103,7 +1103,7 @@ const plansReview = {
           title: "Field Plan Approved",
           message: `${actorTitle} (${currentUser.name}) approved your full field plan (${repCounts[rId]} visits).`,
           link: "calendar.html",
-          icon: "🗓️",
+          icon: '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
           badgeClass: "bg-success",
           actorName: currentUser.name,
           action: "approved",
@@ -1196,7 +1196,7 @@ const plansReview = {
             message: `Visit for ${doc ? doc.name : docName} rejected by ${actorTitle} with note: ${reason}`,
             note: reason,
             link: "visits.html",
-            icon: "❌",
+            icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
             badgeClass: "bg-danger",
             actorName: currentUser.name,
             action: "rejected",
@@ -1224,7 +1224,7 @@ const plansReview = {
           message: `${actorTitle} (${currentUser.name}) requested plan modifications: ${reason}`,
           note: reason,
           link: "calendar.html",
-          icon: "❌",
+          icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
           badgeClass: "bg-danger",
           actorName: currentUser.name,
           action: "rejected",

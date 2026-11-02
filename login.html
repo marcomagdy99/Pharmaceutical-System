@@ -19,14 +19,14 @@
     </script>
 
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v265"></script>
+    <script src="js/cache-bust.js?v=v266"></script>
 
     <!-- Immediate Fallback Functions so Cards Click Instantly & Theme Toggles -->
     <script>
       function updateLoginThemeUI(theme) {
         var icon = document.getElementById('themeToggleIcon');
         var text = document.getElementById('themeToggleText');
-        if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        if (icon) icon.innerHTML = theme === 'dark' ? '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>' : '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
         if (text) {
           text.textContent = theme === 'dark' ? 'Light' : 'Dark';
         }
@@ -104,9 +104,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v265">
+    <link rel="stylesheet" href="css/style.css?v=v266">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/login.css?v=v265">
+    <link rel="stylesheet" href="css/login.css?v=v266">
 </head>
 <body>
 
@@ -118,7 +118,7 @@
             <!-- START: Top Action Buttons (Theme Toggle & Language Toggle) -->
             <div class="login-top-actions">
                 <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleLoginTheme()" title="Toggle Dark/Light Mode">
-                    <span id="themeToggleIcon">🌙</span>
+                    <span id="themeToggleIcon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
                     <span id="themeToggleText">Dark</span>
                 </button>
             </div>
@@ -314,16 +314,16 @@
     <!-- END: Login Container -->
 
     <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v265"></script>
-  <script src="js/app.js?v=v265"></script>
-    <script src="js/store.js?v=v265"></script>
+    <script src="js/auth-service.js?v=v266"></script>
+  <script src="js/app.js?v=v266"></script>
+    <script src="js/store.js?v=v266"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v265"></script>
-    <script src="js/firebase-sync.js?v=v265"></script>
+    <script src="js/firebase-config.js?v=v266"></script>
+    <script src="js/firebase-sync.js?v=v266"></script>
 
     <!-- External JavaScript -->
-    <script src="js/login.js?v=v265"></script>
+    <script src="js/login.js?v=v266"></script>
 </body>
 </html>

@@ -165,7 +165,7 @@
           if (fa) targetArea = fa.name;
         }
         const areaBadge = targetArea
-          ? `<span class="badge bulk-target-area-badge">📍 ${window.escapeHtml(targetArea)}</span>`
+          ? `<span class="badge bulk-target-area-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${window.escapeHtml(targetArea)}</span>`
           : "";
 
         const isAlready = typeof window.isDoctorAlreadyVisitedToday === "function"

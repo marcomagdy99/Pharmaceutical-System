@@ -407,7 +407,7 @@ function setupEventListeners() {
       const oStart = overlappingLeave.startDate || overlappingLeave.endDate;
       const oEnd = overlappingLeave.endDate || overlappingLeave.startDate;
 
-      const msg = `⚠️ You already have a leave request (${oStatus}: ${oType}) from ${oStart} to ${oEnd}. Cannot submit overlapping requests.`;
+      const msg = `You already have a leave request (${oStatus}: ${oType}) from ${oStart} to ${oEnd}. Cannot submit overlapping requests.`;
 
       return showToast(msg, "warning");
     }
@@ -435,7 +435,7 @@ function setupEventListeners() {
     // Labor Law & Pharma Policy Check: Casual Leave cannot exceed 2 consecutive days per request
     if ((type === "casual" || type === "emergency") && calculatedDays > 2) {
       return showToast(
-        "⚠️ Casual leave cannot exceed 2 consecutive days per request. Please submit as Annual Leave for longer periods.",
+        "Casual leave cannot exceed 2 consecutive days per request. Please submit as Annual Leave for longer periods.",
         "warning",
       );
     }
@@ -504,12 +504,12 @@ function setupEventListeners() {
       const formatDays = (num) => (num === 1 ? "1 day" : `${num} days`);
 
       if (calculatedDays > remainingBalance) {
-        const msg = `⚠️ Sorry, your remaining balance for ${typeName} (${formatDays(remainingBalance)}) is not enough for (${formatDays(calculatedDays)}).`;
+        const msg = `Sorry, your remaining balance for ${typeName} (${formatDays(remainingBalance)}) is not enough for (${formatDays(calculatedDays)}).`;
         return showToast(msg, "warning");
       }
 
       if (calculatedDays > availableBalance) {
-        const msg = `⚠️ Sorry, your available balance for ${typeName} is (${formatDays(availableBalance)}) due to (${formatDays(pendingUsed)}) in pending requests. Cannot request (${formatDays(calculatedDays)}).`;
+        const msg = `Sorry, your available balance for ${typeName} is (${formatDays(availableBalance)}) due to (${formatDays(pendingUsed)}) in pending requests. Cannot request (${formatDays(calculatedDays)}).`;
         return showToast(msg, "warning");
       }
     }
@@ -1621,7 +1621,7 @@ function renderHrAllLeaves() {
         <td>
           ${
             l.attachmentName
-              ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag">📎 ${window.escapeHtml(l.attachmentName)}</span>`
+              ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${window.escapeHtml(l.attachmentName)}</span>`
               : '<span class="text-muted small">None</span>'
           }
         </td>

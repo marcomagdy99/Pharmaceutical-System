@@ -300,7 +300,7 @@ function triggerManualGpsCheck() {
         badge.style.color = "#92400e";
       }
       if (infoText) {
-        infoText.textContent = "⚠️ Location permission denied. Visit will be recorded with an audit flag for your manager.";
+        infoText.textContent = "Location permission denied. Visit will be recorded with an audit flag for your manager.";
       }
       if (distText) distText.textContent = "";
       return;
@@ -365,7 +365,7 @@ function triggerManualGpsCheck() {
           badge.style.color = "#991b1b";
         }
         if (infoText) {
-          infoText.textContent = `⚠️ You are ${distance}m away (max allowed ${maxDist}m). If clinic relocated, you can request re-pin.`;
+          infoText.textContent = `You are ${distance}m away (max allowed ${maxDist}m). If clinic relocated, you can request re-pin.`;
         }
         if (distText) {
           distText.textContent = `Current Distance: ${distance}m`;
@@ -839,7 +839,7 @@ function populateVisitsLineFilter() {
     allLines.forEach((l) => {
       const opt = document.createElement("option");
       opt.value = l.id;
-      opt.textContent = `📦 ${l.name}`;
+      opt.textContent = l.name;
       filterLine.appendChild(opt);
     });
     filterLine.disabled = false;
@@ -855,7 +855,7 @@ function populateVisitsLineFilter() {
       userLines.forEach((l) => {
         const opt = document.createElement("option");
         opt.value = l.id;
-        opt.textContent = `📦 ${l.name}`;
+        opt.textContent = l.name;
         filterLine.appendChild(opt);
       });
       filterLine.disabled = false;
@@ -863,14 +863,14 @@ function populateVisitsLineFilter() {
       const l = userLines[0];
       const opt = document.createElement("option");
       opt.value = l.id;
-      opt.textContent = `📦 ${l.name}`;
+      opt.textContent = l.name;
       filterLine.appendChild(opt);
       filterLine.value = l.id;
       filterLine.disabled = true;
     } else {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = "📦 No Line Assigned";
+      opt.textContent = "No Line Assigned";
       filterLine.appendChild(opt);
       filterLine.disabled = true;
     }
@@ -972,7 +972,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
         opt.value = `vacant:${area.id}`;
         opt.className = "filter-opt-vacant";
         const areaName = area.name;
-        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        opt.textContent = `[Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
         repGroup.appendChild(opt);
       });
       filterRep.appendChild(repGroup);
@@ -1025,7 +1025,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
             opt.value = `vacant:${area.id}`;
             opt.className = "filter-opt-vacant";
             const areaName = area.name;
-            opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+            opt.textContent = `[Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
             group.appendChild(opt);
           });
           filterRep.appendChild(group);
@@ -1050,7 +1050,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
           opt.value = `vacant:${area.id}`;
           opt.className = "filter-opt-vacant";
           const areaName = area.name;
-          opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+          opt.textContent = `[Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
           group.appendChild(opt);
         });
         filterRep.appendChild(group);
@@ -1070,7 +1070,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
         opt.value = `vacant:${area.id}`;
         opt.className = "filter-opt-vacant";
         const areaName = area.name;
-        opt.textContent = `📍 [Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
+        opt.textContent = `[Vacant] ${areaName}${area.code ? ' (' + area.code + ')' : ''}`;
         repGroup.appendChild(opt);
       });
       filterRep.appendChild(repGroup);
@@ -1347,7 +1347,7 @@ function populateAreaFilters() {
         const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
         const isVacant = !a.repId;
         const vacantTag = isVacant ? " [Vacant]" : "";
-        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}${vacantTag}</option>`;
+        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>${window.escapeHtml(a.name)}${vacantTag}</option>`;
       });
     }
     timelineFilter.innerHTML = html;
@@ -1372,7 +1372,7 @@ function populateAreaFilters() {
         const isSelected = (curVal === a.id || curVal === a.name) ? " selected" : "";
         const isVacant = !a.repId;
         const vacantTag = isVacant ? " [Vacant]" : "";
-        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>📍 ${window.escapeHtml(a.name)}${vacantTag}</option>`;
+        html += `<option value="${window.escapeHtml(a.id)}" data-name="${window.escapeHtml(a.name)}"${isSelected}>${window.escapeHtml(a.name)}${vacantTag}</option>`;
       });
     }
     bulkFilter.innerHTML = html;
@@ -2582,7 +2582,7 @@ function setupModalTargetFilter() {
     if (filterLabel) {
       filterLabel.textContent = "Filter Doctors by Medical Rep:";
     }
-    allOpt.textContent = "👥 All My Team Doctors";
+    allOpt.textContent = "All My Team Doctors";
     filterSelect.appendChild(allOpt);
 
     let myReps = allUsers.filter(
@@ -2622,7 +2622,7 @@ function setupModalTargetFilter() {
       const opt = document.createElement("option");
       opt.value = `vacant:${va.id}`;
       const vaName = va.name;
-      opt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+      opt.textContent = `[Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
       filterSelect.appendChild(opt);
     });
   } else if (role === "line_manager") {
@@ -2696,7 +2696,7 @@ function setupModalTargetFilter() {
         const vaName = va.name;
         const vaOpt = document.createElement("option");
         vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `　↳ 📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaOpt.textContent = `  ↳ [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
         filterSelect.appendChild(vaOpt);
       });
     });
@@ -2706,7 +2706,7 @@ function setupModalTargetFilter() {
       const opt = document.createElement("option");
       opt.value = `vacant:${va.id}`;
       const vaName = va.name;
-      opt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+      opt.textContent = `[Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
       filterSelect.appendChild(opt);
     });
   } else if (role === "business_unit" || role === "admin") {
@@ -2810,7 +2810,7 @@ function setupModalTargetFilter() {
           const vaName = va.name;
           const vaOpt = document.createElement("option");
           vaOpt.value = `vacant:${va.id}`;
-          vaOpt.textContent = `　↳ 📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+          vaOpt.textContent = `  ↳ [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
           dmGrp.appendChild(vaOpt);
         });
       });
@@ -3507,7 +3507,7 @@ function saveVisit() {
       isTimeTampered = true;
       clockDriftMinutes = timeCheck.driftMinutes;
       const driftText = Math.abs(timeCheck.driftMinutes) + " min";
-      const msg = `⚠️ Security Notice: Device clock out of sync (${driftText}). Visit stamped with official network time.`;
+      const msg = `Security Notice: Device clock out of sync (${driftText}). Visit stamped with official network time.`;
       if (typeof showToast === "function") {
         showToast(msg, "warning");
       }
@@ -3567,9 +3567,9 @@ function saveVisit() {
     const conflictingTime = timeConflict.conflictingVisit.time || visitTime;
     let conflictMsg;
     if (timeConflict.exactMatch) {
-      conflictMsg = `⚠️ A visit is already recorded at the exact same time (${visitTime}) for another target (${conflictingTarget}). Please adjust visit time.`;
+      conflictMsg = `A visit is already recorded at the exact same time (${visitTime}) for another target (${conflictingTarget}). Please adjust visit time.`;
     } else {
-      conflictMsg = `⚠️ Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
+      conflictMsg = `Minimum time between visits must be at least ${timeConflict.minRequired} minutes when location tracking is active. Another visit exists at (${conflictingTime}) for (${conflictingTarget}).`;
     }
     showToast(conflictMsg, "warning");
     return;
@@ -3606,7 +3606,7 @@ function saveVisit() {
       const compCheck = checkVisitDateAllowed(visitDate, doubleWithUserId, lang);
       if (!compCheck.allowed) {
         resetSaveBtn();
-        const cMsg = `⚠️ The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
+        const cMsg = `The companion selected for this double visit has a registered leave or holiday on this date (${visitDate}).`;
         showToast(cMsg, "warning");
         return;
       }

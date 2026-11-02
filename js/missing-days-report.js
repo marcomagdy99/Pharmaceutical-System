@@ -111,7 +111,7 @@
         if (userLines.length > 0) {
           const opt = document.createElement("option");
           opt.value = userLines[0].id;
-          opt.textContent = `📦 ${userLines[0].name || userLines[0].nameAr}`;
+          opt.textContent = userLines[0].name || userLines[0].nameAr;
           lineSelect.appendChild(opt);
           lineSelect.value = userLines[0].id;
         } else {
@@ -125,13 +125,13 @@
         if (userLines.length > 1) {
           const optAll = document.createElement("option");
           optAll.value = "all";
-          optAll.textContent = "🌐 All My Lines";
+          optAll.textContent = "All My Lines";
           lineSelect.appendChild(optAll);
         }
         userLines.forEach((l) => {
           const opt = document.createElement("option");
           opt.value = l.id;
-          opt.textContent = `📦 ${l.name || l.nameAr}`;
+          opt.textContent = l.name || l.nameAr;
           lineSelect.appendChild(opt);
         });
         lineSelect.disabled = userLines.length <= 1;
@@ -140,13 +140,13 @@
         // Admin / BU
         const optAll = document.createElement("option");
         optAll.value = "all";
-        optAll.textContent = "🌐 All Product Lines";
+        optAll.textContent = "All Product Lines";
         lineSelect.appendChild(optAll);
 
         allLines.forEach((l) => {
           const opt = document.createElement("option");
           opt.value = l.id;
-          opt.textContent = `📦 ${l.name || l.nameAr}`;
+          opt.textContent = l.name || l.nameAr;
           lineSelect.appendChild(opt);
         });
         lineSelect.disabled = false;
@@ -202,7 +202,7 @@
         // Admin or LM
         const optAll = document.createElement("option");
         optAll.value = "all";
-        optAll.textContent = "👥 All District Managers";
+        optAll.textContent = "All District Managers";
         dmSelect.appendChild(optAll);
 
         let dms = allUsers.filter((u) => {
@@ -266,7 +266,7 @@
 
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = "👤 All Medical Reps";
+    optAll.textContent = "All Medical Reps";
     repSelect.appendChild(optAll);
 
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
@@ -393,7 +393,7 @@
     // Period Pill Label
     const periodPill = document.getElementById("missingDaysPeriodPill");
     if (periodPill) {
-      periodPill.textContent = `📅 Period: ${fromDateStr} to ${toDateStr}`;
+      periodPill.textContent = `Period: ${fromDateStr} to ${toDateStr}`;
     }
 
     const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
@@ -639,11 +639,11 @@
       // Badge styling for Missing Days
       let missingBadge = "";
       if (r.missing > 0) {
-        missingBadge = `<span class="badge badge-missing-alert">⚠️ +${r.missing} Day${r.missing > 1 ? 's' : ''}</span>`;
+        missingBadge = `<span class="badge badge-missing-alert"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> +${r.missing} Day${r.missing > 1 ? 's' : ''}</span>`;
       } else if (r.missing === 0) {
-        missingBadge = `<span class="badge badge-missing-full">✅ 0 (Full)</span>`;
+        missingBadge = `<span class="badge badge-missing-full"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="20 6 9 17 4 12"/></svg> 0 (Full)</span>`;
       } else {
-        missingBadge = `<span class="badge badge-missing-over">🌟 ${r.missing} (Over)</span>`;
+        missingBadge = `<span class="badge badge-missing-over"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="20 6 9 17 4 12"/></svg> ${r.missing} (Over)</span>`;
       }
 
       tr.innerHTML = `
@@ -651,7 +651,7 @@
         <td class="text-muted">${window.escapeHtml(r.amName)}</td>
         <td style="font-weight:600; color:var(--gray-800);">${window.escapeHtml(r.dmName)}</td>
         <td style="font-weight:700; color:var(--primary); cursor:pointer;" onclick="openMissingDaysDetailsModal('${r.repId}')" title="Click to view full days breakdown">
-          👤 ${window.escapeHtml(r.repName)}
+          <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(r.repName)}
         </td>
         <td style="font-size:0.82rem; color:var(--gray-500);">${window.escapeHtml(r.hireDate)}</td>
         <td style="text-align:center; font-weight:600;">${r.monthLabel}</td>
@@ -717,26 +717,26 @@
 
         if (isFriday || (isSecondaryDay && secMode === "full_day")) {
           item.className = "missing-day-item missing-day-weekend";
-          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-secondary">Weekend</span>`;
+          item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-secondary">Weekend</span>`;
         } else if (isSecondaryDay && secMode === "pm_only" && !repData.fieldDates.includes(dStr) && !repData.nonFdDates.includes(dStr) && !repData.vacationDates.includes(dStr)) {
           item.className = "missing-day-item missing-day-pm-weekend";
-          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge badge-pm-weekend">🌙 PM Weekend (AM Work Available)</span>`;
+          item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge badge-pm-weekend">PM Weekend (AM Work Available)</span>`;
         } else if (repData.fieldDates.includes(dStr)) {
           item.className = "missing-day-item missing-day-field";
-          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-success">🚶‍♂️ Field Day (Visits Logged)</span>`;
+          item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-success">Field Day (Visits Logged)</span>`;
         } else if (repData.nonFdDates.includes(dStr)) {
           item.className = "missing-day-item missing-day-office";
-          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-info text-dark">🏢 Office / Activity</span>`;
+          item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-info text-dark">Office / Activity</span>`;
         } else if (repData.vacationDates.includes(dStr)) {
           item.className = "missing-day-item missing-day-vacation";
-          item.innerHTML = `<span>📅 ${dStr} (${dayName})</span> <span class="badge bg-warning text-dark">🏖️ Vacation</span>`;
+          item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-warning text-dark">Vacation</span>`;
         } else if (cur > todayDate) {
           item.className = "missing-day-item missing-day-upcoming";
-          item.innerHTML = `<span class="text-muted">📅 ${dStr} (${dayName})</span> <span class="badge badge-upcoming">⏳ Upcoming</span>`;
+          item.innerHTML = `<span class="text-muted"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge badge-upcoming">Upcoming</span>`;
         } else {
           // Missing Day!
           item.className = "missing-day-item missing-day-missing";
-          item.innerHTML = `<span class="missing-day-missing-text">📅 ${dStr} (${dayName})</span> <span class="badge bg-danger">⚠️ Missing / No Log</span>`;
+          item.innerHTML = `<span class="missing-day-missing-text"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-danger">Missing / No Log</span>`;
         }
 
         listEl.appendChild(item);

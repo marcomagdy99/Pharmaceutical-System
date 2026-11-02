@@ -199,11 +199,11 @@ const directoryTranslations = {
     tabHospitalsList: 'Hospitals List',
     tabPharmaciesList: 'Pharmacies List',
     tabMissingDays: 'Missing Days',
-    doctorsDirectoryTitle: '👨‍⚕️ Doctors Directory',
+    doctorsDirectoryTitle: 'Doctors Directory',
     doctorsDirectorySubtitle: 'Master physician registry with contact details, specialty, and assignment.',
-    hospitalsDirectoryTitle: '🏥 Hospitals Directory',
+    hospitalsDirectoryTitle: 'Hospitals Directory',
     hospitalsDirectorySubtitle: 'Master registry of hospitals, medical centers, contact numbers, and assigned territories.',
-    pharmaciesDirectoryTitle: '💊 Pharmacies Directory',
+    pharmaciesDirectoryTitle: 'Pharmacies Directory',
     pharmaciesDirectorySubtitle: 'Directory of authorized partner pharmacies, contact personnel, and assigned territories.',
     searchDoctors: 'Search Doctors:',
     searchDoctorsPlaceholder: 'Search by name, clinic, phone...',
@@ -337,7 +337,7 @@ const directoryTranslations = {
     kpiWorkingDays: 'Working Days (W.D)',
     kpiActualFieldDays: 'Actual Field Days',
     kpiMissingDaysTotal: 'Missing Days',
-    missingDaysTitle: '📅 Field Discipline & Attendance Audit',
+    missingDaysTitle: 'Field Discipline & Attendance Audit',
     missingDaysSubtitle: 'Comparing Working Days, Target Field Days, Completed Doctor Visits, Office Activities, and Official Leaves.',
     promptShowMissingTitle: 'Click Show to View Missing Days Report',
     promptShowMissingDesc: 'Select date range and team filters, then click Show to calculate working days, actual field days, and missed days.',
@@ -586,7 +586,7 @@ function populateReportLineFilter(user) {
       userLines.forEach((l) => {
         const opt = document.createElement('option');
         opt.value = l.id;
-        opt.textContent = `📦 ${l.name}`;
+        opt.textContent = l.name;
         lineSelect.appendChild(opt);
       });
       lineSelect.value = userLines[0].id;
@@ -595,7 +595,7 @@ function populateReportLineFilter(user) {
     } else {
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = '📦 No Line Assigned';
+      opt.textContent = 'No Line Assigned';
       lineSelect.appendChild(opt);
       window.selectedReportLineId = '';
       lineSelect.disabled = true;
@@ -617,14 +617,14 @@ function populateReportLineFilter(user) {
   if (isFullAdmin || linesToDisplay.length > 1 || linesToDisplay.length === 0) {
     const optAll = document.createElement('option');
     optAll.value = 'all';
-    optAll.textContent = '🌐 All Product Lines';
+    optAll.textContent = 'All Product Lines';
     lineSelect.appendChild(optAll);
   }
 
   linesToDisplay.forEach((l) => {
     const opt = document.createElement('option');
     opt.value = l.id;
-    opt.textContent = `📦 ${l.name}`;
+    opt.textContent = l.name;
     lineSelect.appendChild(opt);
   });
 
@@ -820,7 +820,7 @@ function populateTabLmOptions(tabKey, user, lineId) {
     const myLm = myDm ? allUsers.find(u => u.id === myDm.managerId) : null;
     const opt = document.createElement('option');
     opt.value = myLm ? myLm.id : (myDm ? myDm.id : effectiveUser.id);
-    opt.textContent = myLm ? `👔 ${myLm.name} (${myLm.employeeCode || 'LM'})` : '👔 Line Manager';
+    opt.textContent = myLm ? `${myLm.name} (${myLm.employeeCode || 'LM'})` : 'Line Manager';
     opt.selected = true;
     lmSelect.appendChild(opt);
     lmSelect.value = opt.value;
@@ -832,7 +832,7 @@ function populateTabLmOptions(tabKey, user, lineId) {
     const myLm = allUsers.find(u => u.id === effectiveUser.managerId);
     const opt = document.createElement('option');
     opt.value = myLm ? myLm.id : '';
-    opt.textContent = myLm ? `👔 ${myLm.name} (${myLm.employeeCode || 'LM'})` : '👔 Line Manager';
+    opt.textContent = myLm ? `${myLm.name} (${myLm.employeeCode || 'LM'})` : 'Line Manager';
     opt.selected = true;
     lmSelect.appendChild(opt);
     lmSelect.value = opt.value;
@@ -843,7 +843,7 @@ function populateTabLmOptions(tabKey, user, lineId) {
   if (isLM) {
     const opt = document.createElement('option');
     opt.value = effectiveUser.id;
-    opt.textContent = `👔 ${effectiveUser.name} (${effectiveUser.employeeCode || 'LM'})`;
+    opt.textContent = `${effectiveUser.name} (${effectiveUser.employeeCode || 'LM'})`;
     opt.selected = true;
     lmSelect.appendChild(opt);
     lmSelect.value = opt.value;
@@ -865,7 +865,7 @@ function populateTabLmOptions(tabKey, user, lineId) {
   if (lineId !== 'all' && availableLms.length === 1) {
     const opt = document.createElement('option');
     opt.value = availableLms[0].id;
-    opt.textContent = `👔 ${availableLms[0].name} (${availableLms[0].employeeCode || 'LM'})`;
+    opt.textContent = `${availableLms[0].name} (${availableLms[0].employeeCode || 'LM'})`;
     opt.selected = true;
     lmSelect.appendChild(opt);
     lmSelect.value = availableLms[0].id;
@@ -875,13 +875,13 @@ function populateTabLmOptions(tabKey, user, lineId) {
 
   const optAll = document.createElement('option');
   optAll.value = 'all';
-  optAll.textContent = '🌐 All Line Managers';
+  optAll.textContent = 'All Line Managers';
   lmSelect.appendChild(optAll);
 
   availableLms.forEach(lm => {
     const opt = document.createElement('option');
     opt.value = lm.id;
-    opt.textContent = `👔 ${lm.name} (${lm.employeeCode || 'LM'})`;
+    opt.textContent = `${lm.name} (${lm.employeeCode || 'LM'})`;
     lmSelect.appendChild(opt);
   });
 
@@ -920,7 +920,7 @@ function populateTabDmOptions(tabKey, user, lineId) {
     const myDm = allUsers.find(u => u.id === effectiveUser.managerId);
     const opt = document.createElement('option');
     opt.value = myDm ? myDm.id : (effectiveUser.managerId || '');
-    opt.textContent = myDm ? `💼 ${myDm.name} (${myDm.employeeCode || 'DM'})` : '💼 District Manager';
+    opt.textContent = myDm ? `${myDm.name} (${myDm.employeeCode || 'DM'})` : 'District Manager';
     opt.selected = true;
     dmSelect.appendChild(opt);
     dmSelect.value = opt.value;
@@ -931,7 +931,7 @@ function populateTabDmOptions(tabKey, user, lineId) {
   if (isDM) {
     const opt = document.createElement('option');
     opt.value = effectiveUser.id;
-    opt.textContent = `💼 ${effectiveUser.name} (${effectiveUser.employeeCode || 'DM'})`;
+    opt.textContent = `${effectiveUser.name} (${effectiveUser.employeeCode || 'DM'})`;
     opt.selected = true;
     dmSelect.appendChild(opt);
     dmSelect.value = opt.value;
@@ -954,13 +954,13 @@ function populateTabDmOptions(tabKey, user, lineId) {
 
   const optAll = document.createElement('option');
   optAll.value = 'all';
-  optAll.textContent = '🌐 All District Managers';
+  optAll.textContent = 'All District Managers';
   dmSelect.appendChild(optAll);
 
   availableDms.forEach(dm => {
     const opt = document.createElement('option');
     opt.value = dm.id;
-    opt.textContent = `💼 ${dm.name} (${dm.employeeCode || 'DM'})`;
+    opt.textContent = `${dm.name} (${dm.employeeCode || 'DM'})`;
     dmSelect.appendChild(opt);
   });
 
@@ -1030,7 +1030,7 @@ function populateTabRepOptions(tabKey, user, lineId) {
 
   const optAll = document.createElement('option');
   optAll.value = 'all';
-  optAll.textContent = '👥 All Medical Reps in Line';
+  optAll.textContent = 'All Medical Reps in Line';
   repSelect.appendChild(optAll);
 
   availableReps.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -1065,11 +1065,11 @@ function populateTabRepOptions(tabKey, user, lineId) {
 
       if (vacantAreas.length > 0) {
         const vacantGroup = document.createElement('optgroup');
-        vacantGroup.label = '📍 Vacant Territory Areas';
+        vacantGroup.label = 'Vacant Territory Areas';
         vacantAreas.forEach(a => {
           const opt = document.createElement('option');
           opt.value = `vacant:${a.id}`;
-          opt.textContent = `📍 [Vacant] ${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
+          opt.textContent = `[Vacant] ${a.name}${a.code ? ' (' + a.code + ')' : ''}`;
           vacantGroup.appendChild(opt);
         });
         repSelect.appendChild(vacantGroup);

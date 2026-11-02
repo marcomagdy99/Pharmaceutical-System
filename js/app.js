@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v265";
+  const EXPECTED_SW = "v266";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -2278,7 +2278,7 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
   const holiday = holidays.find((h) => h.date === dateStr);
   if (holiday) {
     const hTitle = holiday.title || "Public Holiday";
-    const msg = `⚠️ Recording or saving visits on holidays is not permitted: The selected date (${dateStr}) is an official holiday (${hTitle}).`;
+    const msg = `Recording or saving visits on holidays is not permitted: The selected date (${dateStr}) is an official holiday (${hTitle}).`;
     return { allowed: false, reason: "public_holiday", message: msg };
   }
 
@@ -2311,7 +2311,7 @@ function checkVisitDateAllowed(dateStr, repId, lang) {
 
     const lType = typeNamesEn[matchedLeave.type] || matchedLeave.type || "Leave";
     const lStatus = statusLabelsEn[matchedLeave.status] || matchedLeave.status || "Pending";
-    const msg = `⚠️ You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
+    const msg = `You have a registered leave (${lStatus}: ${lType}) on this date (${dateStr}). Recording or planning visits during leaves is not permitted.`;
 
     return { allowed: false, reason: "employee_leave", message: msg };
   }
@@ -3938,7 +3938,7 @@ function renderTopbar(force = false) {
       bannerEl.className = "pharma-impersonation-top-alert";
       bannerEl.innerHTML = `
         <div class="pharma-impersonation-content">
-          <span class="pharma-impersonation-icon">⚠️</span>
+          <span class="pharma-impersonation-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
           <span class="pharma-impersonation-text">
             <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>
           </span>
@@ -3975,7 +3975,7 @@ function renderTopbar(force = false) {
     const theme = document.documentElement.getAttribute("data-theme") || "light";
     const themeIconEl = topbarEl.querySelector("#themeIcon");
     const themeTextEl = topbarEl.querySelector("#themeText");
-    if (themeIconEl) themeIconEl.textContent = theme === "dark" ? "☀️" : "🌙";
+    if (themeIconEl) themeIconEl.innerHTML = theme === "dark" ? '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>' : '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
     if (themeTextEl) {
       themeTextEl.textContent = theme === "dark" 
         ? (translations[lang]?.lightMode || "Light") 
@@ -3991,7 +3991,7 @@ function renderTopbar(force = false) {
         notifWrapper.id = "pharmaNotifWrapper";
         notifWrapper.innerHTML = `
           <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="Notifications" aria-label="Notifications">
-            <span class="notif-bell-icon">🔔</span>
+            <span class="notif-bell-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
             <span class="notif-unread-count-badge ${unreadNotifCount > 0 ? '' : 'd-none'}" id="topbarNotifBadge">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
           </button>
           <div class="pharma-notif-dropdown" id="workflowNotifDropdown" onclick="event.stopPropagation()"></div>
@@ -4055,7 +4055,7 @@ function renderTopbar(force = false) {
   const impersonationBannerHtml = isImpersonating ? `
     <div id="pharmaImpersonationBanner" class="pharma-impersonation-top-alert">
       <div class="pharma-impersonation-content">
-        <span class="pharma-impersonation-icon">⚠️</span>
+        <span class="pharma-impersonation-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="pharma-impersonation-text">
           <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>
         </span>
@@ -4099,7 +4099,7 @@ function renderTopbar(force = false) {
         <!-- Live Workflow Notification Center Bell & Dropdown -->
         <div class="pharma-notif-wrapper" id="pharmaNotifWrapper">
           <button class="pharma-action-btn pharma-notif-bell-btn" id="notifBellBtn" onclick="window.toggleWorkflowNotifDropdown(event)" title="Notifications" aria-label="Notifications">
-            <span class="notif-bell-icon">🔔</span>
+            <span class="notif-bell-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
             <span class="notif-unread-count-badge ${unreadNotifCount > 0 ? '' : 'd-none'}" id="topbarNotifBadge">${unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
           </button>
           
@@ -4107,7 +4107,7 @@ function renderTopbar(force = false) {
         </div>
         
         <button class="pharma-action-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Theme">
-          <span id="themeIcon">${document.documentElement.getAttribute("data-theme") === "dark" ? "☀️" : "🌙"}</span>
+          <span id="themeIcon">${document.documentElement.getAttribute("data-theme") === "dark" ? '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>' : '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>'}</span>
           <span id="themeText">${document.documentElement.getAttribute("data-theme") === "dark" ? translations[lang]?.lightMode || "Light" : translations[lang]?.darkMode || "Dark"}</span>
         </button>
 
@@ -4149,7 +4149,7 @@ window.updateThemeUI = function (theme) {
   const darkText = translations[lang]?.darkMode || "Dark";
 
   document.querySelectorAll("#themeIcon").forEach((el) => {
-    el.textContent = isDark ? "☀️" : "🌙";
+    el.innerHTML = isDark ? '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>' : '<svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
   });
   document.querySelectorAll("#themeText").forEach((el) => {
     el.textContent = isDark ? lightText : darkText;
@@ -4275,7 +4275,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
   if (displayList.length === 0) {
     itemsHtml = `
       <div class="notif-empty-state">
-        <div class="notif-empty-icon">🔕</div>
+        <div class="notif-empty-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div>
         <div class="fw-bold fs-6 mb-1">No notifications</div>
         <div class="text-muted small notif-empty-desc">
           Workflow approvals, rejections, and directives will appear here live.
@@ -4290,24 +4290,24 @@ window.renderWorkflowNotifContent = function (filter = "all") {
         const msg = item.messageEn || item.message || "";
         const timeStr = window.formatWorkflowNotifTime(item.createdAt, lang);
 
-        let icon = item.icon || "🔔";
+        let icon = item.icon || '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
         let iconTypeClass = "type-default";
 
         if (item.type && item.type.includes("approval")) {
           iconTypeClass = "type-approval";
-          if (!item.icon) icon = "✅";
+          if (!item.icon) icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="20 6 9 17 4 12"/></svg>';
         } else if (
           item.type &&
           (item.type.includes("rejection") || item.type.includes("reject"))
         ) {
           iconTypeClass = "type-rejection";
-          if (!item.icon) icon = "❌";
+          if (!item.icon) icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
         } else if (item.type && item.type.includes("leave")) {
           iconTypeClass = "type-leave";
-          if (!item.icon) icon = "🏖️";
+          if (!item.icon) icon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
         } else if (item.type && item.type.includes("plan")) {
           iconTypeClass = "type-plan";
-          if (!item.icon) icon = "🗓️";
+          if (!item.icon) icon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
         }
 
         const safeTitle = window.escapeHtml ? window.escapeHtml(title) : title;
@@ -4315,7 +4315,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
         const noteHtml = item.note
           ? `
           <div class="notif-note-callout">
-            <strong>💬 Directive Note:</strong> "${window.escapeHtml ? window.escapeHtml(item.note) : item.note}"
+            <strong>Directive Note:</strong> "${window.escapeHtml ? window.escapeHtml(item.note) : item.note}"
           </div>
         `
           : "";
@@ -4348,7 +4348,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
                     : "<span></span>"
                 }
                 <button type="button" class="notif-btn-delete" title="Delete" onclick="window.deleteWorkflowNotif(event, '${item.id}')">
-                  🗑️
+                  <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
               </div>
             </div>
@@ -4361,7 +4361,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
   container.innerHTML = `
     <div class="notif-dropdown-header">
       <h5>
-        <span>🔔</span>
+        <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
         <span>Notifications</span>
         <span class="badge ${unreadCount > 0 ? "bg-danger" : "bg-secondary"} rounded-pill notif-header-badge">
           ${unreadCount} New
@@ -4372,7 +4372,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
           unreadCount > 0
             ? `
           <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 notif-mark-read-btn" onclick="window.markAllWorkflowNotifsRead(event)">
-            ✓ Mark all read
+            Mark all read
           </button>
         `
             : ""
@@ -4399,7 +4399,7 @@ window.renderWorkflowNotifContent = function (filter = "all") {
       <div class="notif-dropdown-footer">
         <span class="small text-muted">${totalCount} total</span>
         <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 notif-clear-btn" onclick="window.clearAllWorkflowNotifs(event)">
-          🗑️ Clear all
+          Clear all
         </button>
       </div>
     `
@@ -4503,7 +4503,7 @@ window.addWorkflowNotification = function (notif) {
       message: notif.message || notif.messageEn || "",
       note: notif.note || null,
       link: notif.link || "#",
-      icon: notif.icon || "🔔",
+      icon: notif.icon || '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
       badgeClass: notif.badgeClass || "bg-primary",
       actorName: notif.actorName || null,
       action: notif.action || null,
@@ -4522,7 +4522,7 @@ window.addWorkflowNotification = function (notif) {
   if (user && (notif.userId === user.id || notif.userId === "all")) {
     const toastMsg = notif.title || notif.titleEn || notif.message || notif.messageEn || "Notification";
     if (typeof window.showToast === "function") {
-      window.showToast(`🔔 ${toastMsg}`, "info");
+      window.showToast(toastMsg, "info");
     }
   }
 
@@ -4791,7 +4791,7 @@ function showToast(message, type = "info") {
   
   const icons = {
     success: "✓ ",
-    warning: "⚠️ ",
+    warning: "",
     danger: "✕ ",
     error: "✕ ",
     info: "ℹ "
@@ -4853,7 +4853,7 @@ function createExcelProgressModal() {
     modalEl.className = "modal-overlay excel-progress-overlay";
     modalEl.innerHTML = `
       <div class="excel-progress-card">
-        <div class="excel-progress-icon" id="excelProgressIcon">📊</div>
+        <div class="excel-progress-icon" id="excelProgressIcon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
         <h5 class="excel-progress-title" id="excelProgressTitle">Processing Sales Import</h5>
         <div class="excel-progress-file" id="excelProgressFileName">-</div>
         
@@ -4893,7 +4893,7 @@ function openExcelImportProgress(options = {}) {
   percentEl.textContent = "0%";
   countEl.textContent = "0 / " + (options.totalRows ? options.totalRows.toLocaleString() : "0");
   statusEl.textContent = options.status || "Parsing sheet data...";
-  iconEl.textContent = "📊";
+  iconEl.innerHTML = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>';
 
   return {
     update(current, total, customStatus) {
@@ -4911,7 +4911,7 @@ function openExcelImportProgress(options = {}) {
       barEl.style.width = "100%";
       percentEl.textContent = "100%";
       statusEl.textContent = successMsg || "Import completed successfully!";
-      iconEl.textContent = "✅";
+      iconEl.innerHTML = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="20 6 9 17 4 12"/></svg>';
       setTimeout(() => {
         modalEl.style.display = "none";
       }, 700);
@@ -4955,7 +4955,7 @@ function checkAndRenderImpersonationBanner() {
 
   banner.innerHTML = `
     <div class="pharma-impersonation-content">
-      <span class="pharma-impersonation-icon">⚠️</span>
+      <span class="pharma-impersonation-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
       <span class="pharma-impersonation-text">
         <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleLabel}) — logged in by Admin <strong>${adminName}</strong>
       </span>
