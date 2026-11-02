@@ -422,7 +422,7 @@ function getFilteredPharmSalesRows() {
 
   let rows = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : []).slice();
 
-  // 🔹 Strict Product Mapping Check: Unmapped products from distributor sheets are excluded from sales reports
+  // Strict Product Mapping Check: Unmapped products from distributor sheets are excluded from sales reports
   rows = rows.filter((r) => Boolean(r.productId));
 
   if (selectedMonths.length === 0) {
@@ -648,7 +648,7 @@ function getFilteredPharmSalesRows() {
     });
   }
 
-  // 🔹 Sales Type filter (All / Private / Bulk)
+  // Sales Type filter (All / Private / Bulk)
   const salesTypeSelect = document.getElementById('pharmSalesTypeSelect');
   const activeSalesType = salesTypeSelect ? salesTypeSelect.value : 'all';
   if (activeSalesType === "private") {
@@ -766,7 +766,7 @@ function renderSalesReport() {
       tr.innerHTML = `
         <td style="white-space: nowrap;">${window.escapeHtml(row.date || row.month)}</td>
         <td>${pharmacyDisplay}</td>
-        <td><span class="sales-product-badge">💊 ${window.escapeHtml(row.product || 'General Product')}</span></td>
+        <td><span class="sales-product-badge">${svgPill} ${window.escapeHtml(row.product || 'General Product')}</span></td>
         <td style="white-space: nowrap;">${window.escapeHtml(distName)}</td>
         <td style="white-space: nowrap;">${window.escapeHtml(areaLabel)}</td>
         <td style="white-space: nowrap;">${window.escapeHtml(repLabel)}</td>
@@ -1008,7 +1008,7 @@ function handleExcelUpload(e) {
       if (panel) {
         panel.style.display = 'block';
         const replacedNote = replacingPreviousBatch ? ' (replaced a previous upload for this month/distributor)' : '';
-        panel.innerHTML = `✅ Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${window.escapeHtml(dist.name)}" for ${window.escapeHtml(monthKey)}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
+        panel.innerHTML = `<svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Imported <strong>${imported.length.toLocaleString()}</strong> rows from "${window.escapeHtml(dist.name)}" for ${window.escapeHtml(monthKey)}${replacedNote} (including ${returnsCount} negative return rows, netted automatically). Net value: ${totalValue.toLocaleString()}. Skipped ${skippedInvalid} rows with unclear product/value.<br><span style="font-weight:600;">Note:</span> these rows show up in the Pharmacies Sales table right away, but any with an unmatched area or product won't count toward the Achievements tab or the Line filter until you link them on the Distributors page.`;
       }
 
       if (progress) {
@@ -1297,8 +1297,8 @@ function renderTargetsTable(filterLineId) {
       <td>${unitPrice.toLocaleString()}</td>
       <td style="font-weight:700;">${storedValue.toLocaleString()}</td>
       <td style="text-align:end; white-space:nowrap;">
-        <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${window.escapeHtml(t.id)}')" title="Edit">✏️</button>
-        <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${window.escapeHtml(t.id)}')" title="Delete">🗑️</button>
+        <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${window.escapeHtml(t.id)}')" title="Edit"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
+        <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${window.escapeHtml(t.id)}')" title="Delete"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
       </td>
     `;
     tbody.appendChild(tr);

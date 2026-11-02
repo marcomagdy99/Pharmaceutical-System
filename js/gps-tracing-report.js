@@ -14,7 +14,7 @@
   const gpsTranslations = {
     en: {
       tabGpsTracing: "GPS Route & Employee Tracing",
-      gpsTracingTitle: "🛰️ GPS Route & Employee Tracing",
+      gpsTracingTitle: "GPS Route & Employee Tracing",
       gpsTracingSubtitle: "Chronological daily field visit path, device geofence coordinates, location accuracy, and transit itinerary.",
       labelGpsDate: "Visit Date:",
       labelGpsShift: "Shift / Period:",
@@ -23,11 +23,11 @@
       shiftPM: "PM (Doctors & Evening)",
       labelGpsStatusFilter: "GPS Verification:",
       allGpsStatuses: "All Verification Statuses",
-      gpsStatusVerified: "✅ In Geofence (< Max Radius)",
-      gpsStatusOutRange: "⚠️ Out of Geofence (> Max Radius)",
-      gpsStatusNoTarget: "📍 No Target Coords",
-      gpsStatusDenied: "🚫 GPS Disabled / Denied",
-      btnOpenFullRouteMap: "🗺️ Open Daily Route in Google Maps",
+      gpsStatusVerified: "In Geofence (< Max Radius)",
+      gpsStatusOutRange: "Out of Geofence (> Max Radius)",
+      gpsStatusNoTarget: "No Target Coords",
+      gpsStatusDenied: "GPS Disabled / Denied",
+      btnOpenFullRouteMap: "Open Daily Route in Google Maps",
       btnShowGpsReport: "Show Tracing",
       promptGpsTitle: "Click Show to View GPS Route & Tracing",
       promptGpsDesc: "Select date, representative, and shift filter to inspect chronological GPS field trajectory and geofence audit.",
@@ -56,7 +56,7 @@
       badgeOutOfRange: "Out of Range",
       badgeNoCoords: "No Target Coords",
       badgeDenied: "Disabled by Rep",
-      gpsTrackingPeriodPill: "🛰️ Daily Field Route & Geofencing Audit"
+      gpsTrackingPeriodPill: "Daily Field Route & Geofencing Audit"
     }
   };
 
@@ -161,7 +161,7 @@
         if (userLines.length > 0) {
           const opt = document.createElement("option");
           opt.value = userLines[0].id;
-          opt.textContent = `📦 ${userLines[0].name || userLines[0].nameAr}`;
+          opt.textContent = userLines[0].name || userLines[0].nameAr;
           lineSelect.appendChild(opt);
           lineSelect.value = userLines[0].id;
         } else {
@@ -175,13 +175,13 @@
         if (userLines.length > 1) {
           const optAll = document.createElement("option");
           optAll.value = "all";
-          optAll.textContent = "🌐 All My Lines";
+          optAll.textContent = "All My Lines";
           lineSelect.appendChild(optAll);
         }
         userLines.forEach((l) => {
           const opt = document.createElement("option");
           opt.value = l.id;
-          opt.textContent = `📦 ${l.name || l.nameAr}`;
+          opt.textContent = l.name || l.nameAr;
           lineSelect.appendChild(opt);
         });
         lineSelect.disabled = userLines.length <= 1;
@@ -190,13 +190,13 @@
         // Admin / BU / HR
         const optAll = document.createElement("option");
         optAll.value = "all";
-        optAll.textContent = "🌐 All Product Lines";
+        optAll.textContent = "All Product Lines";
         lineSelect.appendChild(optAll);
 
         allLines.forEach((l) => {
           const opt = document.createElement("option");
           opt.value = l.id;
-          opt.textContent = `📦 ${l.name || l.nameAr}`;
+          opt.textContent = `${l.name || l.nameAr}`;
           lineSelect.appendChild(opt);
         });
         lineSelect.disabled = false;
@@ -232,13 +232,13 @@
         const myDm = allUsers.find((u) => u.id === user.managerId);
         const opt = document.createElement("option");
         opt.value = myDm ? myDm.id : "";
-        opt.textContent = myDm ? `💼 ${myDm.name}` : "District Manager";
+        opt.textContent = myDm ? myDm.name : "District Manager";
         dmSelect.appendChild(opt);
         dmSelect.disabled = true;
       } else if (isDM) {
         const opt = document.createElement("option");
         opt.value = user.id;
-        opt.textContent = `💼 ${user.name} (My Team)`;
+        opt.textContent = `${user.name} (My Team)`;
         dmSelect.appendChild(opt);
         dmSelect.disabled = true;
       } else {
@@ -271,7 +271,7 @@
         eligibleDMs.forEach((dm) => {
           const opt = document.createElement("option");
           opt.value = dm.id;
-          opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"})`;
+          opt.textContent = `${dm.name} (${dm.employeeCode || "DM"})`;
           dmSelect.appendChild(opt);
         });
         dmSelect.disabled = false;
@@ -303,7 +303,7 @@
       if (isRep) {
         const opt = document.createElement("option");
         opt.value = user.id;
-        opt.textContent = `🩺 ${user.name} (${user.employeeCode || "Rep"})`;
+        opt.textContent = `${user.name} (${user.employeeCode || "Rep"})`;
         repSelect.appendChild(opt);
         repSelect.disabled = true;
       } else {
@@ -342,7 +342,7 @@
         eligibleReps.forEach((r) => {
           const opt = document.createElement("option");
           opt.value = r.id;
-          opt.textContent = `🩺 ${r.name} (${r.employeeCode || "Rep"})`;
+          opt.textContent = `${r.name} (${r.employeeCode || "Rep"})`;
           repSelect.appendChild(opt);
         });
         repSelect.disabled = false;
@@ -556,7 +556,7 @@
       tbody.innerHTML = `
         <tr>
           <td colspan="10" style="text-align: center; padding: 48px 16px; color: var(--gray-500);">
-            <div style="font-size: 2.2rem; margin-bottom: 8px;">🛰️</div>
+            <div style="font-size: 2.2rem; margin-bottom: 8px;"><svg style="width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
             <div style="font-weight: 700; font-size: 1.05rem; color: var(--gray-700);">
               ${gpsTranslations.en.noGpsEventsFound}
             </div>
@@ -581,7 +581,7 @@
       // Coordinates strings
       let repCoordsStr = "";
       if (v.deviceLat != null && v.deviceLng != null) {
-        repCoordsStr = `<code class="gps-coord-code" title="${v.deviceLat}, ${v.deviceLng}">📍 ${Number(v.deviceLat).toFixed(4)}, ${Number(v.deviceLng).toFixed(4)}</code>`;
+        repCoordsStr = `<code class="gps-coord-code" title="${v.deviceLat}, ${v.deviceLng}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${Number(v.deviceLat).toFixed(4)}, ${Number(v.deviceLng).toFixed(4)}</code>`;
       } else if (v.gpsStatus === "permission_denied") {
         repCoordsStr = `<span class="badge badge-gps-denied">GPS Denied</span>`;
       } else {
@@ -590,7 +590,7 @@
 
       let targetCoordsStr = "";
       if (v.targetLat != null && v.targetLng != null) {
-        targetCoordsStr = `<code class="gps-coord-code" title="${v.targetLat}, ${v.targetLng}">🏢 ${Number(v.targetLat).toFixed(4)}, ${Number(v.targetLng).toFixed(4)}</code>`;
+        targetCoordsStr = `<code class="gps-coord-code" title="${v.targetLat}, ${v.targetLng}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg> ${Number(v.targetLat).toFixed(4)}, ${Number(v.targetLng).toFixed(4)}</code>`;
       } else {
         targetCoordsStr = `<span class="text-muted small">Not set</span>`;
       }
@@ -600,17 +600,17 @@
       let statusBadgeHtml = "";
 
       if (v.gpsStatus === "permission_denied") {
-        statusBadgeHtml = `<span class="badge badge-gps-denied">🚫 GPS Disabled</span>`;
+        statusBadgeHtml = `<span class="badge badge-gps-denied"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> GPS Disabled</span>`;
       } else if (v.gpsStatus === "no_target_coords") {
-        statusBadgeHtml = `<span class="badge badge-gps-no-coords">📍 No Baseline</span>`;
+        statusBadgeHtml = `<span class="badge badge-gps-no-coords">${svgLocation} No Baseline</span>`;
       } else if (v.gpsStatus === "in_range") {
         const dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : 0;
         deviationStr = `<span class="text-success fw-bold">${dist} m</span>`;
-        statusBadgeHtml = `<span class="badge badge-gps-in-range">✅ Verified (<200m)</span>`;
+        statusBadgeHtml = `<span class="badge badge-gps-in-range"><svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Verified (<200m)</span>`;
       } else if (v.gpsStatus === "out_of_range") {
         const dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : 0;
         deviationStr = `<span class="text-danger fw-bold">${dist} m</span>`;
-        statusBadgeHtml = `<span class="badge badge-gps-out-of-range">⚠️ Out of Bounds</span>`;
+        statusBadgeHtml = `<span class="badge badge-gps-out-of-range"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Out of Bounds</span>`;
       } else {
         statusBadgeHtml = `<span class="badge badge-secondary">--</span>`;
       }
@@ -626,14 +626,14 @@
         }
         actionBtnHtml = `
           <a href="${singleMapUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline gps-action-map-btn" title="View visit coordinates on Google Maps">
-            🗺️ Map
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg> Map
           </a>
         `;
       } else if (v.targetLat != null && v.targetLng != null) {
         const singleMapUrl = `https://www.google.com/maps/search/?api=1&query=${v.targetLat},${v.targetLng}`;
         actionBtnHtml = `
           <a href="${singleMapUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline gps-action-map-btn" title="View Target on Google Maps">
-            🏢 Clinic
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg> Clinic
           </a>
         `;
       } else {
@@ -643,10 +643,10 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td style="text-align: center; font-weight: 700; color: var(--gray-600);">${idx + 1}</td>
-        <td style="font-weight: 600; font-family: monospace;">⏰ ${timeStr}</td>
+        <td style="font-weight: 600; font-family: monospace;">${svgClock} ${timeStr}</td>
         <td>
           <div style="font-weight: 700; color: var(--gray-900);">${targetName}</div>
-          <div class="text-muted small">👤 ${repName}</div>
+          <div class="text-muted small">${svgUser} ${repName}</div>
         </td>
         <td style="text-align: center;"><span class="badge badge-soft-primary">${targetType}</span></td>
         <td>${area}</td>

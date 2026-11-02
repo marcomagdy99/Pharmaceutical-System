@@ -246,7 +246,7 @@ function renderDailyTimeline() {
   if (combinedTimeline.length === 0) {
     container.innerHTML = `
       <div class="timeline-empty-card">
-        <span class="timeline-empty-icon">📅</span>
+        <span class="timeline-empty-icon"><svg style="width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
         <h4 class="timeline-empty-title">No visits or activities recorded in this period</h4>
         <p class="timeline-empty-subtitle">Try a different date or date range</p>
       </div>
@@ -254,7 +254,7 @@ function renderDailyTimeline() {
     if (pharmContainer) {
       pharmContainer.innerHTML = `
         <div class="timeline-empty-card">
-          <span class="timeline-empty-icon">💊</span>
+          <span class="timeline-empty-icon"><svg style="width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span>
           <h4 class="timeline-empty-title">No pharmacy visits recorded in this period</h4>
         </div>
       `;
@@ -329,10 +329,10 @@ function renderDailyTimeline() {
           </div>
         `}
         <div class="timeline-entry-timestamp">
-          <span><strong>📅 Visit Day:</strong> ${v.date} ${period}</span>
-          <span><strong>⏰ Visit Time:</strong> ${v.time || '10:00'}</span>
+          <span><strong>${svgCalendar} Visit Day:</strong> ${v.date} ${period}</span>
+          <span><strong>${svgClock} Visit Time:</strong> ${v.time || '10:00'}</span>
           <span class="timeline-ts-insertion">
-            <strong>📥 Insertion Date:</strong> ${v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date)}
+            <strong>${svgInsertion} Insertion Date:</strong> ${v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date)}
             • <strong>Time:</strong> ${v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'))}
           </span>
         </div>
@@ -353,7 +353,7 @@ function renderDailyTimeline() {
   if (reportMedicalCount === 0) {
     container.innerHTML = `
       <div class="timeline-empty-card timeline-empty-card-sm">
-        <span class="timeline-empty-icon timeline-empty-icon-sm">🩺</span>
+        <span class="timeline-empty-icon timeline-empty-icon-sm"><svg class="badge-svg-icon" style="width:18px;height:18px;" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg></span>
         <h4 class="timeline-empty-title">No Doctor or Hospital visits in this period</h4>
       </div>
     `;
@@ -362,7 +362,7 @@ function renderDailyTimeline() {
   if (pharmBox && reportPharmacyCount === 0) {
     pharmBox.innerHTML = `
       <div class="timeline-empty-card timeline-empty-card-sm">
-        <span class="timeline-empty-icon timeline-empty-icon-sm">💊</span>
+        <span class="timeline-empty-icon timeline-empty-icon-sm"><svg style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span>
         <h4 class="timeline-empty-title">No Pharmacy visits in this period</h4>
       </div>
     `;

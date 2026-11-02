@@ -272,7 +272,7 @@ function renderPharmaciesReport() {
       return `
       <div class="directory-card card">
         <div class="directory-card-header">
-          <div class="directory-avatar pharmacy">💊</div>
+          <div class="directory-avatar pharmacy"><svg class="badge-svg-icon" style="width:18px;height:18px;" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div>
           <div class="directory-header-info">
             <h4 class="directory-name">${window.escapeHtml((lang === "ar" && p.nameAr) ? p.nameAr : (p.name || p.nameAr || ""))}</h4>
             <span class="directory-meta-tag pharmacy">Partner Pharmacy</span>
@@ -281,33 +281,33 @@ function renderPharmaciesReport() {
         </div>
         <div class="directory-card-body">
           <div class="directory-info-row">
-            <span class="info-icon">📍</span>
+            <span class="info-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
             <span class="info-text">${window.escapeHtml(p.address || "No address specified")}</span>
           </div>
           <div class="directory-info-row">
-            <span class="info-icon">🏢</span>
+            <span class="info-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
             <span class="info-text">Area: <strong>${window.escapeHtml(areaName)}</strong></span>
           </div>
           <div class="directory-info-row">
-            <span class="info-icon">👨‍🔬</span>
+            <span class="info-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4M10 13h4"/></svg></span>
             <span class="info-text">Contact: <strong>${window.escapeHtml(p.contactPerson || "N/A")}</strong></span>
           </div>
           <div class="directory-info-row">
-            <span class="info-icon">📞</span>
+            <span class="info-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
             <span class="info-text">${window.escapeHtml(p.phone || "No phone provided")}</span>
           </div>
           <div class="directory-info-row">
-            <span class="info-icon">👤</span>
+            <span class="info-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             <span class="info-text">Rep: <strong>${window.escapeHtml(repName)}</strong></span>
           </div>
         </div>
         ${isAdmin ? `
         <div class="directory-card-footer">
           <button class="btn btn-sm btn-outline-primary" onclick="openPharmacyModal('${p.id}')">
-            ✏️ Edit
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Edit
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="openDeletePharmacyModal('${p.id}')">
-            🗑️ Delete
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
           </button>
         </div>
         ` : ''}

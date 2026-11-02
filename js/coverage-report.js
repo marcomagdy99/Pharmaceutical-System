@@ -120,7 +120,7 @@ function renderCoverageReport() {
   const rulesEl = document.getElementById('coverageRulesBox');
   if (rulesEl) {
     const lineTag = lineObj && lineObj.name ? ` (${lineObj.name})` : '';
-    rulesEl.innerHTML = `💡 <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
+    rulesEl.innerHTML = `<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg> <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
   }
 
   // Filter raw doctors list by Doctor Class Filter
@@ -626,17 +626,17 @@ function renderCoverageReportView() {
             timestampsHtml += `
               <div class="visit-timestamp-card ${cardTypeClass}" title="${isAct ? 'Direct Actual Visit' : 'Planned Visit'}">
                 <div class="visit-date-row">
-                  <span>📅 ${v.date}</span>
+                  <span>${svgCalendar} ${v.date}</span>
                   ${isAct ? `<span style="font-size: 0.7rem; color: #d97706;" title="Actual">★</span>` : ''}
                 </div>
                 <div class="visit-time-row">
-                  <span>⏰ ${v.time || '10:00'}</span>
+                  <span>${svgClock} ${v.time || '10:00'}</span>
                   <span style="opacity: 0.7;">• ${typeLabel}</span>
                 </div>
                 ${(() => {
                   const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
                   const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'));
-                  return `<div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;">📥 Ins: ${insD} ${insT}</div>`;
+                  return `<div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Ins: ${insD} ${insT}</div>`;
                 })()}
               </div>
             `;

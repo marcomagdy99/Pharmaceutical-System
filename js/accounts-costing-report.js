@@ -1142,7 +1142,7 @@
       tbody.innerHTML = `
         <tr>
           <td colspan="${colSpan}" style="text-align: center; padding: 40px; color: var(--text-muted, #6c757d);">
-            <div style="font-size: 2rem; margin-bottom: 8px;">💼</div>
+            <div style="font-size: 2rem; margin-bottom: 8px;"><svg style="width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
             <div style="font-weight: 600; font-size: 1.05rem;">No Accounts Costing Data Found</div>
             <div style="font-size: 0.85rem; margin-top: 4px;">Try adjusting the date range or filters above.</div>
           </td>
@@ -1184,7 +1184,7 @@
           <td>${totalCell}</td>
           <td style="text-align: center;">
             <button type="button" class="btn btn-sm btn-outline" onclick="openAccountsCostingBreakdown('${row.id}')" style="padding: 3px 8px; font-size: 0.78rem;" title="View Transactions">
-              🔍 Details
+              <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Details
             </button>
           </td>
         </tr>
