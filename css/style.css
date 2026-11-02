@@ -2778,3 +2778,22 @@ body.dark-theme .sidebar-footer-text {
   stroke: currentColor;
 }
 
+
+.label-svg-icon {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+
+[dir="rtl"] .label-svg-icon {
+  margin-right: 0;
+  margin-left: 5px;
+}
