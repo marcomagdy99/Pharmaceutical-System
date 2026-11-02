@@ -792,7 +792,7 @@ function renderDashboard() {
           A new update has been released. Please refresh your browser cache to apply changes.
         </p>
         <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary dash-fallback-btn">
-          ⚡ Refresh & Clear Cache
+          <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh & Clear Cache
         </button>
       </div>
     `;
@@ -1165,10 +1165,10 @@ function renderRepDashboard(userName, user) {
                       </div>
                       <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button class="btn-convert-action" onclick="openCompletePlanModal('${h.id}', false)">
-                          ✓ ${t.convert_to_actual}
+                          <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${t.convert_to_actual}
                         </button>
                         <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${h.id}')" title="Reschedule or Missed Call">
-                          🗓️ Reschedule
+                          <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
                         </button>
                       </div>
                     </div>
@@ -1202,10 +1202,10 @@ function renderRepDashboard(userName, user) {
                       </div>
                       <div class="d-flex gap-2 align-items-center flex-wrap">
                         <button class="btn-convert-action" onclick="openCompletePlanModal('${d.id}', false)">
-                          ✓ ${t.convert_to_actual}
+                          <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${t.convert_to_actual}
                         </button>
                         <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${d.id}')" title="Reschedule or Missed Call">
-                          🗓️ Reschedule
+                          <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
                         </button>
                       </div>
                     </div>
@@ -1238,10 +1238,10 @@ function renderRepDashboard(userName, user) {
                     </div>
                     <div class="d-flex gap-2 align-items-center flex-wrap">
                       <button class="btn-convert-action" onclick="openCompletePlanModal('${p.id}', false)">
-                        ✓ ${t.convert_to_actual}
+                        <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${t.convert_to_actual}
                       </button>
                       <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${p.id}')" title="Reschedule or Missed Call">
-                          🗓️ Reschedule
+                          <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
                         </button>
                     </div>
                   </div>
@@ -1368,13 +1368,13 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
           <button type="button" class="btn btn-sm ${filterMode === "all" ? "btn-primary" : "btn-outline"} feed-filter-btn" onclick="window.switchDmFollowUpFilter('all')">
-            ⏱️ Latest 15 Visits (${teamCompleted.length})
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Latest 15 Visits (${teamCompleted.length})
           </button>
           <button type="button" class="btn btn-sm ${filterMode === "today" ? "btn-primary" : "btn-outline"} feed-filter-btn" onclick="window.switchDmFollowUpFilter('today')">
-            📅 Today's Visits (${todayCount})
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Today's Visits (${todayCount})
           </button>
           <a href="visits.html" class="btn btn-sm btn-outline feed-filter-btn">
-            🔍 All Visits
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> All Visits
           </a>
         </div>
       </div>
@@ -1750,17 +1750,17 @@ function renderDMDashboard(userName, user) {
 
           <div class="dm-schedule-nav-btn">
             <a href="plans-review.html" class="btn btn-sm btn-primary">
-              📋 <span>Review Plans & Schedule Accompaniment</span>
+              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> <span>Review Plans & Schedule Accompaniment</span>
             </a>
           </div>
         </div>
 
         <div class="dm-schedule-tabs-wrap">
           <button type="button" class="dm-schedule-tab-btn ${activeTab === "all" ? "active" : ""}" onclick="window.switchDmScheduleTab('all')">
-            📋 All Scheduled Days (${scheduledDates.length})
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> All Scheduled Days (${scheduledDates.length})
           </button>
           <button type="button" class="dm-schedule-tab-btn ${activeTab === "daily" ? "active" : ""}" onclick="window.switchDmScheduleTab('daily')">
-            📅 Daily View
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Daily View
           </button>
         </div>
 
@@ -1779,7 +1779,7 @@ function renderDMDashboard(userName, user) {
                 Go to "Plans to Review" to review your team's planned schedules and choose full days to accompany them.
               </p>
               <a href="plans-review.html" class="btn btn-primary btn-sm">
-                📋 Go to Plans to Review
+                <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Go to Plans to Review
               </a>
             </div>
           `
@@ -1875,7 +1875,7 @@ function renderDMDashboard(userName, user) {
                         </td>
                         <td class="text-end covisit-action-cell">
                           <button class="btn-convert-action" onclick="openCompletePlanModal('${sv.id}', true)">
-                            🤝 Log Double Visit
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m7 7 4.3 4.3a1 1 0 0 0 1.4 0l2-2a1 1 0 0 0 0-1.4L10.4 3.6a1 1 0 0 0-1.4 0L7 5.6a1 1 0 0 0 0 1.4z"/><path d="m2 14 5-5"/><path d="m22 10-5 5"/></svg> Log Double Visit
                           </button>
                         </td>
                       </tr>
@@ -1909,7 +1909,7 @@ function renderDMDashboard(userName, user) {
                 Go to "Plans to Review" to review your team's planned schedules and choose full days to accompany them.
               </p>
               <a href="plans-review.html" class="btn btn-primary btn-sm">
-                📋 Go to Plans to Review
+                <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Go to Plans to Review
               </a>
             </div>
           `
@@ -1973,7 +1973,7 @@ function renderDMDashboard(userName, user) {
                 </div>
                 <div>
                   <a href="visits.html" class="btn btn-sm btn-primary">
-                    📍 Open in Visits Page
+                    <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Open in Visits Page
                   </a>
                 </div>
               </div>
@@ -2027,7 +2027,7 @@ function renderDMDashboard(userName, user) {
                           </td>
                           <td class="text-end covisit-action-cell">
                             <button class="btn-convert-action" onclick="openCompletePlanModal('${pv.id}', true)">
-                              🤝 Log Double Visit
+                              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m7 7 4.3 4.3a1 1 0 0 0 1.4 0l2-2a1 1 0 0 0 0-1.4L10.4 3.6a1 1 0 0 0-1.4 0L7 5.6a1 1 0 0 0 0 1.4z"/><path d="m2 14 5-5"/><path d="m22 10-5 5"/></svg> Log Double Visit
                             </button>
                           </td>
                         </tr>
@@ -2882,10 +2882,10 @@ function renderBUDashboard(userName, user) {
         <div class="dashboard-card">
           <h3 class="card-title">${t.quick_actions}</h3>
           <div class="quick-actions-grid">
-            <a href="reports.html" class="quick-action-link primary">📊 BU Sales & Target</a>
-            <a href="visits.html" class="quick-action-link success">📍 Territory Visits</a>
-            <a href="leaves.html" class="quick-action-link warning">🏖️ Approvals Inbox</a>
-            <a href="calendar.html" class="quick-action-link neutral">📅 Team Calendar</a>
+            <a href="reports.html" class="quick-action-link primary"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> BU Sales & Target</a>
+            <a href="visits.html" class="quick-action-link success"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Territory Visits</a>
+            <a href="leaves.html" class="quick-action-link warning"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Approvals Inbox</a>
+            <a href="calendar.html" class="quick-action-link neutral"><svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Team Calendar</a>
           </div>
         </div>
       </div>
@@ -3108,10 +3108,10 @@ function renderAdminDashboard(userName, user) {
         <div class="dashboard-card">
           <h3 class="card-title">${t.quick_links}</h3>
           <div class="quick-actions-grid">
-            <a href="users.html" class="quick-action-link primary">👥 ${t.manage_users}</a>
-            <a href="reports.html" class="quick-action-link success">📈 ${t.upload_sales}</a>
-            <a href="products.html" class="quick-action-link warning">📦 ${t.manage_products}</a>
-            <a href="areas.html" class="quick-action-link danger">🗺️ ${t.manage_areas}</a>
+            <a href="users.html" class="quick-action-link primary"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.manage_users}</a>
+            <a href="reports.html" class="quick-action-link success"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> ${t.upload_sales}</a>
+            <a href="products.html" class="quick-action-link warning"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${t.manage_products}</a>
+            <a href="areas.html" class="quick-action-link danger"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> ${t.manage_areas}</a>
           </div>
         </div>
 
@@ -3347,7 +3347,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
         ? rep.nameAr || rep.name
         : rep.name
       : "Medical Rep";
-    if (titleEl) titleEl.innerText = `🤝 ${t.join_double_visit} - ${repName}`;
+    if (titleEl) titleEl.innerHTML = `<svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m7 7 4.3 4.3a1 1 0 0 0 1.4 0l2-2a1 1 0 0 0 0-1.4L10.4 3.6a1 1 0 0 0-1.4 0L7 5.6a1 1 0 0 0 0 1.4z"/><path d="m2 14 5-5"/><path d="m22 10-5 5"/></svg> ${t.join_double_visit} - ${repName}`;
     if (typeContainer) typeContainer.style.display = "none";
     if (lockedBadge) lockedBadge.style.display = "flex";
     if (lockedText) {

@@ -2745,9 +2745,14 @@ body.dark-theme .sidebar-footer-text {
   stroke-linejoin: round;
   display: inline-block;
   vertical-align: -2px;
-  margin-right: 5px;
+  margin-right: 6px;
   flex-shrink: 0;
   transition: stroke 0.18s ease, transform 0.18s ease;
+}
+
+[dir="rtl"] .btn-svg-icon {
+  margin-right: 0;
+  margin-left: 6px;
 }
 
 .badge-svg-icon {
@@ -2760,8 +2765,13 @@ body.dark-theme .sidebar-footer-text {
   stroke-linejoin: round;
   display: inline-block;
   vertical-align: -1.5px;
-  margin-right: 3px;
+  margin-right: 4px;
   flex-shrink: 0;
+}
+
+[dir="rtl"] .badge-svg-icon {
+  margin-right: 0;
+  margin-left: 4px;
 }
 
 .btn:hover .btn-svg-icon {
