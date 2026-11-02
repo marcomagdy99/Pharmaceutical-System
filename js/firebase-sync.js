@@ -109,6 +109,7 @@
           if (collKey === "visits" && (/^v\d+$/i.test(id) || /^today_v\d+$/i.test(id))) return true;
           if (collKey === "sales" && (/^s\d+$/i.test(id) || /^ds_s\d+$/i.test(id))) return true;
           if (collKey === "leaves" && /^l\d+$/i.test(id)) return true;
+          if (collKey === "quizzes" && (id === "quiz_101" || id === "quiz_102" || /^q\d+$/i.test(id))) return true;
           // Note: areas and productLines are NOT filtered as mock — line1/line2/area1/area2 are real data
           return false;
         };

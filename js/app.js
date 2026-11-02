@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v257";
+  const EXPECTED_SW = "v258";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -1232,131 +1232,8 @@ const DEFAULT_DEMO_DATA = {
   visits: [],
   leaves: [],
   sales: [],
-  announcements: [
-    {
-      id: "ann_1790626000001",
-      title: "Ramadan Working Hours",
-      titleAr: "Ramadan Working Hours",
-      body: "Please note that working hours during Ramadan will be from 9 AM to 3 PM starting next week.",
-      bodyAr:
-        "Please note that working hours during Ramadan will be from 9 AM to 3 PM starting next week.",
-      priority: "high",
-      createdBy: "u1790626000017",
-      createdAt: "2026-09-01",
-      read: false,
-    },
-    {
-      id: "ann_1790626000002",
-      title: "Annual Company Event",
-      titleAr: "Annual Company Event",
-      body: "We are excited to announce our annual company event on October 15th at the Four Seasons Hotel. All employees are invited!",
-      bodyAr:
-        "We are excited to announce our annual company event on October 15th at the Four Seasons Hotel. All employees are invited!",
-      priority: "normal",
-      createdBy: "u1790626000017",
-      createdAt: "2026-08-28",
-      read: true,
-    },
-    {
-      id: "ann_1790626000003",
-      title: "New Health Insurance Policy",
-      titleAr: "New Health Insurance Policy",
-      body: "A new health insurance policy has been activated. Please review the updated benefits in your HR portal.",
-      bodyAr:
-        "A new health insurance policy has been activated. Please review updated benefits in HR portal.",
-      priority: "high",
-      createdBy: "u1790626000017",
-      createdAt: "2026-08-25",
-      read: false,
-    },
-  ],
-  notifications: [
-    {
-      id: "notif_1790626000001",
-      userId: "u1790626000001",
-      type: "plan_approval",
-      title: "Field Plan Approved",
-      message: "District Manager approved your field plan for 2026-09-20.",
-      link: "calendar.html",
-      read: false,
-      createdAt: "2026-09-17T15:30:00Z",
-      icon: "🗓️",
-      badgeClass: "bg-success",
-      actorName: "District Manager",
-      action: "approved",
-    },
-    {
-      id: "notif_1790626000002",
-      userId: "u1790626000001",
-      type: "leave_approval",
-      title: "Leave Request Approved",
-      message: "HR Department approved your annual leave request.",
-      link: "leaves.html",
-      read: false,
-      createdAt: "2026-09-17T14:15:00Z",
-      icon: "🏖️",
-      badgeClass: "bg-success",
-      actorName: "HR Department",
-      action: "approved",
-    },
-    {
-      id: "notif_1790626000003",
-      userId: "u1790626000001",
-      type: "visit_rejection",
-      title: "Visit Directive / Rejection",
-      message: "Visit for Dr. Ahmed Mostafa rejected with note: Please reschedule to morning period.",
-      note: "Please reschedule to morning period",
-      link: "visits.html",
-      read: false,
-      createdAt: "2026-09-17T11:00:00Z",
-      icon: "❌",
-      badgeClass: "bg-danger",
-      actorName: "District Manager",
-      action: "rejected",
-    },
-    {
-      id: "notif_1790626000004",
-      userId: "u1790626000014",
-      type: "plan_submission",
-      title: "Field Plan for Review",
-      message: "Medical Rep submitted a new field plan for your review.",
-      link: "plans-review.html",
-      read: false,
-      createdAt: "2026-09-17T13:00:00Z",
-      icon: "📋",
-      badgeClass: "bg-primary",
-      actorName: "Medical Rep",
-      action: "submitted",
-    },
-    {
-      id: "notif_1790626000005",
-      userId: "u1790626000014",
-      type: "leave_submission",
-      title: "New Leave Request",
-      message: "Annual leave request submitted (2 days) awaiting your approval.",
-      link: "leaves.html",
-      read: false,
-      createdAt: "2026-09-17T10:00:00Z",
-      icon: "🏖️",
-      badgeClass: "bg-warning",
-      actorName: "Medical Rep",
-      action: "submitted",
-    },
-    {
-      id: "notif_1790626000006",
-      userId: "u1790626000017",
-      type: "leave_submission",
-      title: "Leave Request Final Approval",
-      message: "Line Manager approved leave, awaiting HR final confirmation.",
-      link: "leaves.html",
-      read: false,
-      createdAt: "2026-09-17T12:30:00Z",
-      icon: "🏖️",
-      badgeClass: "bg-info",
-      actorName: "Line Manager",
-      action: "approved",
-    },
-  ],
+  announcements: [],
+  notifications: [],
   distributors: [
     { id: "dist_1790626000001", name: "Ibn Sina Pharma", type: "commercial", columnMap: null },
     { id: "dist_1790626000002", name: "United Company of Pharmacists (UCP)", type: "commercial", columnMap: null },
@@ -1553,6 +1430,9 @@ function loadDataFromStorage() {
 
         if (!Array.isArray(data.leaves)) data.leaves = [];
         data.leaves = data.leaves.filter((l) => l && l.id && !/^l\d{1,4}$/.test(l.id));
+
+        if (!Array.isArray(data.quizzes)) data.quizzes = [];
+        data.quizzes = data.quizzes.filter((q) => q && q.id && !/^q\d{1,4}$/.test(q.id) && q.id !== "quiz_101" && q.id !== "quiz_102");
 
         if (!Array.isArray(data.pharmacyOverrides)) data.pharmacyOverrides = [];
         if (!Array.isArray(data.notifications)) data.notifications = [];

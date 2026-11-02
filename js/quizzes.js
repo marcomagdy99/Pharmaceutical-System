@@ -4,14 +4,8 @@
  * Supports Admin-only score uploading/quiz creation, and cascading hierarchy reporting for BU, LM, and DM.
  */
 
-// Default seed quizzes
-const demoQuizzes = [
-  { id: 'q1', title: 'Product Knowledge Q3', date: '2026-08-15', totalMarks: 50, createdBy: 'u1790626000010' },
-  { id: 'q2', title: 'Q2 Assessment', date: '2026-07-01', totalMarks: 50, createdBy: 'u1790626000010' },
-  { id: 'q3', title: 'New Launch Quiz', date: '2026-06-10', totalMarks: 30, createdBy: 'u1790626000010' },
-  { id: 'q4', title: 'Compliance Training', date: '2026-05-20', totalMarks: 40, createdBy: 'u1790626000010' },
-  { id: 'q5', title: 'Sales Techniques', date: '2026-04-15', totalMarks: 50, createdBy: 'u1790626000010' }
-];
+// Production mode: quizzes and scores are managed centrally in Firebase Firestore
+const demoQuizzes = [];
 
 function resolveQuizUserName(userId, fallback) {
   if (typeof window !== "undefined" && window.store && window.store.users && userId) {
@@ -25,36 +19,7 @@ function resolveQuizUserName(userId, fallback) {
   return fallback;
 }
 
-// Default seed scores across team members in different lines/districts
-const demoScores = [
-  // Rep 1 (DM: Amir Ayoup, LM: John Mahfouz, BU: George Marzok)
-  { quizId: 'q1', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 42, totalMarks: 50 },
-  { quizId: 'q2', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 35, totalMarks: 50 },
-  { quizId: 'q3', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 28, totalMarks: 30 },
-  { quizId: 'q4', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 32, totalMarks: 40 },
-  { quizId: 'q5', userId: 'u1790626000001', userName: resolveQuizUserName('u1790626000001', 'Marco Magdy'), score: 41, totalMarks: 50 },
-
-  // Rep 2 (DM: Amir Ayoup, LM: John Mahfouz, BU: George Marzok)
-  { quizId: 'q1', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 38, totalMarks: 50 },
-  { quizId: 'q2', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 30, totalMarks: 50 },
-  { quizId: 'q3', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 25, totalMarks: 30 },
-  { quizId: 'q4', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 36, totalMarks: 40 },
-  { quizId: 'q5', userId: 'u1790626000002', userName: resolveQuizUserName('u1790626000002', 'Kerolos Boules'), score: 44, totalMarks: 50 },
-
-  // Rep 3 (DM: Jonathan Erian, LM: John Mahfouz, BU: George Marzok)
-  { quizId: 'q1', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 45, totalMarks: 50 },
-  { quizId: 'q2', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 40, totalMarks: 50 },
-  { quizId: 'q3', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 29, totalMarks: 30 },
-  { quizId: 'q4', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 38, totalMarks: 40 },
-  { quizId: 'q5', userId: 'u1790626000003', userName: resolveQuizUserName('u1790626000003', 'Mina Mikhael'), score: 48, totalMarks: 50 },
-
-  // Rep 4 (DM: Marian Magdy, LM: Mario Magdy, BU: George Marzok)
-  { quizId: 'q1', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 40, totalMarks: 50 },
-  { quizId: 'q2', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 38, totalMarks: 50 },
-  { quizId: 'q3', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 27, totalMarks: 30 },
-  { quizId: 'q4', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 34, totalMarks: 40 },
-  { quizId: 'q5', userId: 'u1790626000004', userName: resolveQuizUserName('u1790626000004', 'David Emad'), score: 42, totalMarks: 50 }
-];
+const demoScores = [];
 
 // Multilingual dictionary for Quizzes module
 const quizTranslations = {
