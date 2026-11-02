@@ -175,7 +175,7 @@
               "viewAttachment"
             )}">
                <img src="${exp.receiptUrl}" alt="Receipt" class="receipt-thumbnail" />
-               <span class="receipt-zoom-badge">🔍</span>
+               <span class="receipt-zoom-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
              </button>`
           : `<span class="no-receipt-label">${Core.t("noReceipt")}</span>`;
 
@@ -266,17 +266,17 @@
     if (canApproveReject) {
       buttons += `
         <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('expense', '${exp.id}', 'approve')" title="Approve">
-          ✓
+          <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </button>
         <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('expense', '${exp.id}', 'reject')" title="Reject">
-          ✕
+          <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       `;
     }
     if (canDisburse) {
       buttons += `
         <button type="button" class="action-btn-disburse" onclick="ActivitiesModule.openDecisionModal('expense', '${exp.id}', 'disburse')" title="Disburse Payment">
-          💰
+          <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M15 9.5a2.5 2.5 0 0 0-5 0c0 3 5 2 5 5a2.5 2.5 0 0 1-5 0"/></svg>
         </button>
       `;
     }

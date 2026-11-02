@@ -2797,3 +2797,41 @@ body.dark-theme .sidebar-footer-text {
   margin-right: 0;
   margin-left: 5px;
 }
+
+.header-svg-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+[dir="rtl"] .header-svg-icon {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+.modal-svg-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: inline-block;
+  vertical-align: -4px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+[dir="rtl"] .modal-svg-icon {
+  margin-right: 0;
+  margin-left: 8px;
+}

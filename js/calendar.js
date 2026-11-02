@@ -10,11 +10,11 @@ const calendarTranslations = {
     browseOrgTree: "Browse Org Hierarchy",
     viewAllTeam: "View All Team",
     selectAllTeam: "Select Entire Team",
-    orgTreeTitle: "🏢 Select Team Member / Branch",
+    orgTreeTitle: "Select Team Member / Branch",
     orgTreeSubtitle: "Pick any level (BU, LM, DM, or Rep) or search directly",
     searchPlaceholder: "Search by name, role, or employee code...",
     selectBtn: "Select",
-    selectedBtn: "✓ Selected",
+    selectedBtn: "Selected",
     allTeamView: "All Subordinates (Team View)",
     teamBadge: "Team",
     noResults: "No team members found matching your search.",
@@ -178,42 +178,42 @@ function getRoleBadgeInfo(role) {
         label: "System Admin",
         short: "Admin",
         badgeClass: "role-admin",
-        icon: "👑",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
       };
     case "business_unit":
       return {
         label: "Business Unit (BU)",
         short: "BU",
         badgeClass: "role-business_unit",
-        icon: "🏢",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
       };
     case "line_manager":
       return {
         label: "Line Manager (LM)",
         short: "LM",
         badgeClass: "role-line_manager",
-        icon: "📁",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>',
       };
     case "district_manager":
       return {
         label: "District Manager (DM)",
         short: "DM",
         badgeClass: "role-district_manager",
-        icon: "🗂️",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
       };
     case "medical_rep":
       return {
         label: "Medical Rep",
         short: "Rep",
         badgeClass: "role-medical_rep",
-        icon: "👤",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       };
     case "hr":
       return {
         label: "HR Manager",
         short: "HR",
         badgeClass: "role-hr",
-        icon: "📋",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="14" height="18" x="5" y="4" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><path d="M9 4V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
       };
     default:
       return {
@@ -359,7 +359,7 @@ function renderCalendar() {
     if (matchedHoliday) {
       dayEvents.unshift({
         type: "holiday",
-        title: `🌴 ${window.escapeHtml(matchedHoliday.title)}`,
+        title: window.escapeHtml(matchedHoliday.title),
         status: "holiday",
       });
     }
@@ -453,7 +453,7 @@ function openDayDetail(dateObj, events) {
     if (pmEvents.length > 0)
       renderDetailSection(t.pmActivities, pmEvents, contentEl, t, lang);
     if (pharmacyEvents.length > 0)
-      renderDetailSection("💊 Pharmacy Visits", pharmacyEvents, contentEl, t, lang);
+      renderDetailSection("Pharmacy Visits", pharmacyEvents, contentEl, t, lang);
   }
 
   const panel = document.getElementById("dayDetailPanel");
@@ -481,7 +481,7 @@ function renderDetailSection(title, evts, container, t, lang) {
     let iconClass = "";
     let badgeClass = "";
     let statusText = "";
-    let iconChar = "📅";
+    let iconChar = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
 
     const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
@@ -489,7 +489,7 @@ function renderDetailSection(title, evts, container, t, lang) {
       iconClass = "icon-visit-completed";
       badgeClass = "badge-completed";
       statusText = "Official Holiday (No Deduction)";
-      iconChar = "🌴";
+      iconChar = '<svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>';
     } else if (evt.type === "visit") {
       if (evt.status === "completed") {
         iconClass = "icon-visit-completed";
@@ -512,10 +512,10 @@ function renderDetailSection(title, evts, container, t, lang) {
         evt.targetType === "pharmacy" ||
         evt.period === "pharmacy" ||
         (evt.doctorId && String(evt.doctorId).startsWith("pharm"))
-          ? "💊"
+          ? '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>'
           : evt.period === "am"
-            ? "🏥"
-            : "👨‍⚕️";
+            ? '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h6M12 6v6"/></svg>'
+            : '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6a2 2 0 0 1-2 2h-1"/></svg>';
     } else if (evt.type === "leave") {
       iconClass =
         evt.status === "approved"
@@ -525,18 +525,18 @@ function renderDetailSection(title, evts, container, t, lang) {
         evt.status === "approved" ? "badge-approved" : "badge-pending";
       statusText =
         evt.status === "approved" ? t.statusApproved : t.statusPending;
-      iconChar = "🏖️";
+      iconChar = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>';
     } else if (evt.type === "office_work") {
       iconClass = "icon-office";
       badgeClass = "badge-office";
       statusText = t.statusCompleted;
-      iconChar = "💻";
+      iconChar = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="18" height="12" x="3" y="4" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>';
     } else {
       iconClass = "icon-activity";
       badgeClass = "badge-activity";
       statusText =
         evt.status === "completed" ? t.statusCompleted : t.statusPlanned;
-      iconChar = "👥";
+      iconChar = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
     }
 
     let ownerText = "";
@@ -544,7 +544,7 @@ function renderDetailSection(title, evts, container, t, lang) {
       const u = allUsers.find((user) => user.id === evt.repId);
       if (u) {
         const uName = u.name || u.nameAr;
-        ownerText = ` • 👤 ${window.escapeHtml(uName)}`;
+        ownerText = ` • <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(uName)}`;
       }
     }
 
@@ -727,7 +727,7 @@ function renderOrgTreeNodes(searchTerm = "") {
     if (filteredUsers.length === 0) {
       container.innerHTML = `
         <div class="search-empty-state">
-          <div style="font-size: 2.5rem; margin-bottom: 8px;">🔍</div>
+          <div style="font-size: 2.5rem; margin-bottom: 8px;"><svg style="width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
           <h5>${t.noResults}</h5>
         </div>
       `;
@@ -818,7 +818,7 @@ function renderOrgTreeNodes(searchTerm = "") {
                     onclick="toggleTreeNode('${userNode.id}', event)">
               ${hasChildren ? "▼" : "•"}
             </button>
-            <span class="org-node-icon">${isInactive ? "⚠️" : roleInfo.icon}</span>
+            <span class="org-node-icon">${isInactive ? '<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : roleInfo.icon}</span>
             <div class="org-node-details">
               <div class="org-node-header-line">
                 <span class="role-badge ${roleInfo.badgeClass}">${roleInfo.short}</span>
@@ -907,7 +907,7 @@ function populateCalendarLineFilter(user = null) {
       userLines.forEach((l) => {
         const opt = document.createElement("option");
         opt.value = l.id;
-        opt.textContent = `📦 ${l.name || l.nameAr}`;
+        opt.textContent = l.name || l.nameAr;
         lineSelect.appendChild(opt);
       });
       lineSelect.value = userLines[0].id;
@@ -916,7 +916,7 @@ function populateCalendarLineFilter(user = null) {
     } else {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = "📦 No Line Assigned";
+      opt.textContent = "No Line Assigned";
       lineSelect.appendChild(opt);
       window.selectedCalendarLineId = "";
       lineSelect.disabled = true;
@@ -931,7 +931,7 @@ function populateCalendarLineFilter(user = null) {
   if (isFullAdmin || userLines.length > 1) {
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = "🌐 All Product Lines";
+    optAll.textContent = "All Product Lines";
     lineSelect.appendChild(optAll);
   }
 

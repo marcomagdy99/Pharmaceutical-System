@@ -144,7 +144,7 @@ const leaveTranslations = {
     rejectionReasonLabel: "Reason:",
     noPending: "No pending leave requests.",
     noHistory: "No leave history recorded.",
-    hrGovernanceTitle: "🏛️ HR Governance: Leave Balances & Public Holidays",
+    hrGovernanceTitle: "HR Governance: Leave Balances & Public Holidays",
     employeeBalanceControl: "Employee Leave Balance Allocation",
     employeeBalanceControlSub:
       "Customize annual, casual, and sick days per employee",
@@ -164,7 +164,7 @@ const leaveTranslations = {
     holidayDurationLabel: "Holiday Duration",
     fullDay: "Full Day",
     halfDay: "Half Day",
-    allEmployeesLeavesTitle: "📋 All Employees Leave Records",
+    allEmployeesLeavesTitle: "All Employees Leave Records",
     allEmployeesLeavesSub:
       "Audit and track leave requests across all company staff",
     companyLeaveArchive: "Company Leave Archive",
@@ -645,7 +645,7 @@ function calcDays() {
       const noticeParts = [];
       if (res.excludedFridays > 0) {
         noticeParts.push(
-          `🕌 ${res.excludedFridays} Friday(s) excluded (statutory paid rest day)`
+          `<svg class="badge-svg-icon text-primary" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg> ${res.excludedFridays} Friday(s) excluded (statutory paid rest day)`
         );
       }
       if (res.excludedThursdays > 0) {
@@ -653,7 +653,7 @@ function calcDays() {
         const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
         const secDayName = secDay === "saturday" ? "Saturday(s)" : (secDay === "thursday" ? "Thursday(s)" : "Weekly rest day(s)");
         noticeParts.push(
-          `📅 ${res.excludedThursdays} ${secDayName} excluded (company weekly rest day)`
+          `<svg class="badge-svg-icon text-info" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${res.excludedThursdays} ${secDayName} excluded (company weekly rest day)`
         );
       }
       if (res.excludedHolidays.length > 0) {
@@ -664,7 +664,7 @@ function calcDays() {
           })
           .join(", ");
         noticeParts.push(
-          `🌴 <strong>Official holidays:</strong> ${titles}`
+          `<svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg> <strong>Official holidays:</strong> ${titles}`
         );
       }
 
@@ -1155,7 +1155,7 @@ function renderHistory() {
       <td>
         ${
           l.attachmentName
-            ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag">📎 ${window.escapeHtml(l.attachmentName)}</span>`
+            ? `<span class="badge bg-primary-subtle text-primary border attachment-badge-tag"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${window.escapeHtml(l.attachmentName)}</span>`
             : '<span class="text-muted small">None</span>'
         }
       </td>
@@ -1414,9 +1414,9 @@ function renderDeclaredHolidaysList() {
 
       return `
       <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2 holiday-chip-badge">
-        <span>🌴 <strong>${h.date}</strong>: ${window.escapeHtml(h.title)}</span>
+        <span><svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg> <strong>${h.date}</strong>: ${window.escapeHtml(h.title)}</span>
         ${durationBadge}
-        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none holiday-remove-btn" onclick="removeDeclaredHoliday(${idx})" title="Remove Holiday">✕</button>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none holiday-remove-btn" onclick="removeDeclaredHoliday(${idx})" title="Remove Holiday"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </span>
     `;
     })

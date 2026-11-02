@@ -132,8 +132,8 @@
       if (isPending && canApproveStage) {
         actionsHtml = `
           <div class="location-actions-wrap">
-            <button type="button" class="btn btn-sm btn-location-approve" onclick="approveLocationReq('${req.id}')" title="Approve GPS Pin">✓ Approve</button>
-            <button type="button" class="btn btn-sm btn-location-reject" onclick="rejectLocationReq('${req.id}')" title="Reject GPS Pin">✕ Reject</button>
+            <button type="button" class="btn btn-sm btn-location-approve" onclick="approveLocationReq('${req.id}')" title="Approve GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Approve</button>
+            <button type="button" class="btn btn-sm btn-location-reject" onclick="rejectLocationReq('${req.id}')" title="Reject GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</button>
           </div>
         `;
       } else if (isPending) {
@@ -162,7 +162,7 @@
     if (!window.store || !window.store.accountLocationRequests) return;
     const user = Core.getAuthUser() || {};
     window.store.accountLocationRequests.approve(id, user);
-    if (typeof window.showToast === "function") window.showToast("Location coordinates approved and updated successfully! ✅", "success");
+    if (typeof window.showToast === "function") window.showToast("Location coordinates approved and updated successfully!", "success");
     renderLocationRequestsTable();
   };
 

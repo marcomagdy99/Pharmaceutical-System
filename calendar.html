@@ -24,20 +24,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v262">
-    <link rel="stylesheet" href="css/calendar.css?v=v262">
+    <link rel="stylesheet" href="css/style.css?v=v263">
+    <link rel="stylesheet" href="css/calendar.css?v=v263">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v262"></script>
-  <script src="js/app.js?v=v262"></script>
-    <script src="js/store.js?v=v262"></script>
+    <script src="js/auth-service.js?v=v263"></script>
+  <script src="js/app.js?v=v263"></script>
+    <script src="js/store.js?v=v263"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v262"></script>
-    <script src="js/firebase-sync.js?v=v262"></script>
+    <script src="js/firebase-config.js?v=v263"></script>
+    <script src="js/firebase-sync.js?v=v263"></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v262"></script>
+    <script src="js/cache-bust.js?v=v263"></script>
   </head>
 <body>
     <div class="app">
@@ -124,7 +124,7 @@
     <div class="org-tree-modal" id="orgTreeModal" style="display: none;">
         <div class="org-tree-modal-header">
             <div>
-                <h4 class="mb-1 fw-bold" data-i18n="orgTreeTitle">🌳 Select Team Member / Branch</h4>
+                <h4 class="mb-1 fw-bold"><svg class="header-svg-icon" viewBox="0 0 24 24"><rect width="6" height="6" x="9" y="3" rx="1"/><rect width="6" height="6" x="3" y="15" rx="1"/><rect width="6" height="6" x="15" y="15" rx="1"/><path d="M12 9v3m-6 3v-1.5a1.5 1.5 0 0 1 1.5-1.5h9a1.5 1.5 0 0 1 1.5 1.5V15"/></svg> <span data-i18n="orgTreeTitle">Select Team Member / Branch</span></h4>
                 <p class="text-muted small mb-0" data-i18n="orgTreeSubtitle">Pick any Level (BU, LM, DM, or Rep) or search directly</p>
             </div>
             <button class="btn-close-tree" onclick="closeOrgTreeModal()">&times;</button>
@@ -137,12 +137,12 @@
         </div>
         <div class="org-tree-modal-footer">
             <button class="btn btn-outline-secondary btn-sm" onclick="resetCalendarToAll()">
-                👥 <span data-i18n="selectAllTeam">Select Entire Team</span>
+                <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> <span data-i18n="selectAllTeam">Select Entire Team</span>
             </button>
             <button class="btn btn-secondary btn-sm" onclick="closeOrgTreeModal()" data-i18n="close">Close</button>
         </div>
     </div>
-    <script src="js/reschedule.js?v=v262"></script>
-    <script src="js/calendar.js?v=v262"></script>
+    <script src="js/reschedule.js?v=v263"></script>
+    <script src="js/calendar.js?v=v263"></script>
 </body>
 </html>

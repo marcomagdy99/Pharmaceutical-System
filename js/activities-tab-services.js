@@ -362,7 +362,7 @@
         if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
           const uniqueLines = Array.from(new Set(srv.shares.map(sh => sh.lineId)));
           const isIntraLine = uniqueLines.length === 1;
-          const badgeText = isIntraLine ? `🤝 Intra-Line` : `⚡ ${srv.shares.length} Lines Split`;
+          const badgeText = isIntraLine ? `<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.3 1.3"/><path d="m14.7 6.3 3.6 3.6a2 2 0 0 1 0 2.8l-1.6 1.6"/><path d="m3 14 3.7-3.7a2 2 0 0 1 2.8 0l1.5 1.5"/><path d="m7 18 2 2a1 1 0 0 0 1.4 0l1.3-1.3"/></svg> Intra-Line` : `<svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ${srv.shares.length} Lines Split`;
           const linesBreakdown = srv.shares.map(sh => `<span class="svc-mini-line-chip">${Core.escapeHTML(Core.getLineName(sh.lineId))}</span>`).join("<span class='svc-plus'>+</span>");
           lineCell = `
             <div class="svc-shared-line-cell">
@@ -372,10 +372,10 @@
           `;
         }
 
-        let areaCell = `<div class="svc-area-chip"><span class="svc-pin">📍</span><span>${Core.escapeHTML(Core.getAreaName(srv.areaId))}</span></div>`;
+        let areaCell = `<div class="svc-area-chip"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${Core.escapeHTML(Core.getAreaName(srv.areaId))}</span></div>`;
         if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
           const uniqueAreaIds = Array.from(new Set(srv.shares.map(sh => sh.areaId)));
-          const areasChips = uniqueAreaIds.map(aId => `<div class="svc-area-chip"><span class="svc-pin">📍</span><span>${Core.escapeHTML(Core.getAreaName(aId))}</span></div>`).join("");
+          const areasChips = uniqueAreaIds.map(aId => `<div class="svc-area-chip"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>${Core.escapeHTML(Core.getAreaName(aId))}</span></div>`).join("");
           areaCell = `<div class="svc-areas-stack">${areasChips}</div>`;
         }
 
@@ -397,7 +397,7 @@
         const targetCell = `
           <div class="svc-target-cell">
             <div class="svc-target-type">
-              <span class="svc-shift-badge ${isAM ? 'am' : 'pm'}">${isAM ? '🏥 AM' : '👨‍⚕️ PM'}</span>
+              <span class="svc-shift-badge ${isAM ? 'am' : 'pm'}">${isAM ? '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h6M12 6v6"/></svg> AM' : '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M20 8v6a2 2 0 0 1-2 2h-1"/></svg> PM'}</span>
               <span class="svc-type-text">${isAM ? 'Hospital' : 'Doctor'}</span>
             </div>
             <div class="svc-target-name">${Core.escapeHTML(targetName)}</div>
@@ -431,7 +431,7 @@
           attachmentHtml = `
             <div class="table-attachment-wrapper mt-1">
               <button type="button" class="btn btn-sm btn-outline" onclick="ActivitiesModule.openReceiptPreviewModal('${srv.attachmentBase64}')" title="${Core.t("viewAttachment")}">
-                📎 ${Core.t("attachmentLabel")}
+                <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${Core.t("attachmentLabel")}
               </button>
             </div>
           `;
@@ -446,7 +446,7 @@
             </td>
             <td>
               <div class="svc-user-chip">
-                <span class="svc-user-avatar">👤</span>
+                <span class="svc-user-avatar"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
                 <span class="svc-user-name">${Core.escapeHTML(reqName)}</span>
               </div>
             </td>
@@ -458,7 +458,7 @@
               <div class="svc-title-cell">
                 ${srv.category ? `<span class="svc-cat-badge" style="display:inline-block; font-size:0.75rem; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:10px; margin-bottom:4px; font-weight:700; border:1px solid #bae6fd;">${Core.escapeHTML(srv.category)}</span>` : ""}
                 <div class="svc-title-text">${Core.escapeHTML(srv.title)}</div>
-                ${srv.notes ? `<div class="svc-notes-sub">💬 ${Core.escapeHTML(srv.notes)}</div>` : ""}
+                ${srv.notes ? `<div class="svc-notes-sub"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${Core.escapeHTML(srv.notes)}</div>` : ""}
                 ${attachmentHtml}
               </div>
             </td>
@@ -474,10 +474,10 @@
   function renderServiceStatusBadge(srv) {
     if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
       if (srv.status === Core.REQUEST_STATUS.APPROVED) {
-        return `<div class="svc-status-pill approved"><span class="status-icon">✓</span> <span>${Core.t("approvedLabel")}</span></div>`;
+        return `<div class="svc-status-pill approved"><span class="status-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span> <span>${Core.t("approvedLabel")}</span></div>`;
       }
       if (srv.status === Core.REQUEST_STATUS.REJECTED) {
-        return `<div class="svc-status-pill rejected"><span class="status-icon">✕</span> <span>${Core.t("rejectedLabel")}</span></div>`;
+        return `<div class="svc-status-pill rejected"><span class="status-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span> <span>${Core.t("rejectedLabel")}</span></div>`;
       }
       const sharesBadges = srv.shares.map((sh) => {
         const lineName = Core.getLineName(sh.lineId);
@@ -514,7 +514,7 @@
     const s = srv.status || "pending";
     let label = Core.t("statusPending");
     let css = "pending";
-    let icon = "⏳";
+    let icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>';
 
     if (s === Core.REQUEST_STATUS.PENDING_DM) {
       label = `${Core.t("waitingDmPrefix")}${Core.getUserDisplayName(srv.nextApproverId)}`;
@@ -527,23 +527,23 @@
     } else if (s === Core.REQUEST_STATUS.PENDING_BU || s === "pending_bu") {
       label = `${Core.t("waitingBuPrefix") || "Pending BU: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
       css = "pending pending-bu";
-      icon = "👑";
+      icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>';
     } else if (s === Core.REQUEST_STATUS.PENDING_PM || s === "pending_pm") {
       label = `${Core.t("waitingPmPrefix") || "Pending PM: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
       css = "pending pending-pm";
-      icon = "📢";
+      icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
     } else if (s === Core.REQUEST_STATUS.PENDING_GM || s === "pending_gm") {
       label = `${Core.t("waitingGmPrefix") || "Pending GM: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
       css = "pending pending-gm";
-      icon = "🎖️";
+      icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>';
     } else if (s === Core.REQUEST_STATUS.APPROVED) {
       label = Core.t("approvedLabel");
       css = "approved";
-      icon = "✓";
+      icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
     } else if (s === Core.REQUEST_STATUS.REJECTED) {
       label = Core.t("rejectedLabel");
       css = "rejected";
-      icon = "✕";
+      icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     }
 
     return `<div class="svc-status-pill ${css}"><span class="status-icon">${icon}</span> <span>${label}</span></div>`;
@@ -554,12 +554,8 @@
     const canApprove = Core.isActionAuthorized("approve_service", srv, user);
     if (canApprove) {
       return `
-        <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'approve')" title="Approve">
-          ✓
-        </button>
-        <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'reject')" title="Reject">
-          ✕
-        </button>
+        <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'approve')" title="Approve"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
+        <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'reject')" title="Reject"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       `;
     }
     return "&mdash;";
@@ -751,7 +747,7 @@
     const areaName = areaSelect?.options[areaSelect.selectedIndex]?.text || Core.getAreaName(areaSelect?.value);
     const repName = Core.getUserDisplayName(Core._state.currentUser?.id);
 
-    primaryInfo.innerHTML = `<span>${Core.escapeHTML(lineName)}</span> &mdash; <span>${Core.escapeHTML(areaName)}</span> <span class="shared-rep-badge">👤 ${Core.escapeHTML(repName)}</span>`;
+    primaryInfo.innerHTML = `<span>${Core.escapeHTML(lineName)}</span> &mdash; <span>${Core.escapeHTML(areaName)}</span> <span class="shared-rep-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${Core.escapeHTML(repName)}</span>`;
     recalculateSharedBalances();
   }
 
@@ -812,15 +808,15 @@
       const repLabel = liveRep
         ? `${Core.getUserDisplayName(liveRep.id)} (${liveRep.employeeCode || liveRep.id})`
         : Core.t("sharedNoRepAssigned");
-      const repIcon = liveRep ? "👤" : "⚠️";
+      const repIcon = liveRep ? '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' : '<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 
       const linesOptions = allLines.map(l => `<option value="${l.id}" ${l.id === row.lineId ? "selected" : ""}>${l.name}</option>`).join("");
       const areasOptions = areasForLine.map(a => `<option value="${a.id}" ${a.id === row.areaId ? "selected" : ""}>${a.name} (${a.code || a.id})</option>`).join("");
 
       rowDiv.innerHTML = `
         <div class="shared-row-header">
-          <span class="shared-row-title">🔹 ${Core.t("sharedParticipatingTitle")} #${idx + 1}</span>
-          <button type="button" class="shared-remove-btn" onclick="ActivitiesModule.removeSharedLineRow(${idx})" title="Remove">✕</button>
+          <span class="shared-row-title"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg> ${Core.t("sharedParticipatingTitle")} #${idx + 1}</span>
+          <button type="button" class="shared-remove-btn" onclick="ActivitiesModule.removeSharedLineRow(${idx})" title="Remove"><svg class="badge-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <div class="shared-row-fields">
           <div class="shared-field-group">
@@ -946,12 +942,12 @@
 
     if (badgeContainer) {
       if (totalAllocatedPercent === 100) {
-        badgeContainer.innerHTML = `<span class="shared-status-pill success">✓ ${Core.t("sharedValidationComplete")}</span>`;
+        badgeContainer.innerHTML = `<span class="shared-status-pill success"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${Core.t("sharedValidationComplete")}</span>`;
         if (submitBtn) submitBtn.disabled = false;
       } else {
         const rem = 100 - totalAllocatedPercent;
         const msg = Core.t("sharedValidationIncomplete").replace("{pct}", totalAllocatedPercent).replace("{rem}", rem);
-        badgeContainer.innerHTML = `<span class="shared-status-pill warning">⚠️ ${msg}</span>`;
+        badgeContainer.innerHTML = `<span class="shared-status-pill warning"><svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ${msg}</span>`;
         if (submitBtn) submitBtn.disabled = true;
       }
     }

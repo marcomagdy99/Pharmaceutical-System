@@ -128,7 +128,7 @@
           Core.dispatchWorkflowNotification({
             userId: exp.requesterId,
             type: "expense_disbursed",
-            title: "Expense Claim Disbursed 💰",
+            title: "Expense Claim Disbursed",
             message: `Expense claim of ${(exp.amount || 0).toLocaleString()} EGP has been disbursed to you.`,
             link: "activities.html",
             icon: "💰",
@@ -169,7 +169,7 @@
             Core.dispatchWorkflowNotification({
               userId: exp.requesterId,
               type: "expense_approved",
-              title: "Expense Claim Approved ✅",
+              title: "Expense Claim Approved",
               message: `${actorName} approved your expense claim of ${(exp.amount || 0).toLocaleString()} EGP.`,
               link: "activities.html",
               icon: "✅",
@@ -362,7 +362,7 @@
               Core.dispatchWorkflowNotification({
                 userId: srv.requesterId,
                 type: "service_fully_approved",
-                title: "Shared Service Request Fully Approved! 🎉",
+                title: "Shared Service Request Fully Approved!",
                 message: `Shared service request (${srv.title}) has been fully approved by all managers for ${srv.cost.toLocaleString()} EGP.`,
                 link: "activities.html",
                 icon: "✅",
@@ -378,7 +378,7 @@
                   Core.dispatchWorkflowNotification({
                     userId: sh.repId,
                     type: "service_fully_approved",
-                    title: "Shared Service Request Approved 🎉",
+                    title: "Shared Service Request Approved",
                     message: `Shared service request (${srv.title}) was approved with your share (${sh.sharePercent}% - ${sh.shareAmount.toLocaleString()} EGP).`,
                     link: "activities.html",
                     icon: "✅",
@@ -471,7 +471,7 @@
               Core.dispatchWorkflowNotification({
                 userId: srv.requesterId,
                 type: "service_approved",
-                title: "Service Request Approved! 🎉",
+                title: "Service Request Approved!",
                 message: `Service request (${srv.title}) was approved for ${srv.cost.toLocaleString()} EGP.`,
                 link: "activities.html",
                 icon: "✅",

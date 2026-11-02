@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v262";
+  const EXPECTED_SW = "v263";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -3446,13 +3446,13 @@ const translations = {
     browseOrgTree: "Browse Org Hierarchy",
     viewAllTeam: "View All Team",
     selectAllTeam: "Select Entire Team",
-    orgTreeTitle: "🏢 Select Team Member / Branch",
+    orgTreeTitle: "Select Team Member / Branch",
     orgTreeSubtitle: "Pick any Level (BU, LM, DM, or Rep) or search directly",
     navPlansReview: "Plans Review",
     close: "Close",
     leaveAllocationTitle: "Leave Balance Allocation (Days)",
     leaveAllocationSub: "Set initial annual, casual, and sick days",
-    hrGovernanceTitle: "🏛️ HR Governance: Leave Balances & Public Holidays",
+    hrGovernanceTitle: "HR Governance: Leave Balances & Public Holidays",
     employeeBalanceControl: "Employee Leave Balance Allocation",
     employeeBalanceControlSub:
       "Customize annual, casual, and sick days per employee",
