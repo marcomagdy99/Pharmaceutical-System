@@ -82,6 +82,11 @@ require('../js/app.js');
 require('../js/store.js');
 require('../js/sales-report.js');
 
+const areaLineId = (global.DEMO_DATA.areas && global.DEMO_DATA.areas[0] && global.DEMO_DATA.areas[0].lineId) || 'line_1790626000001';
+if (!global.DEMO_DATA.productLines || global.DEMO_DATA.productLines.length === 0) {
+  global.DEMO_DATA.productLines = [{ id: areaLineId, name: 'Test Line', products: [{ id: 'prod_test_1', name: 'Test Product', price: 40 }] }];
+}
+
 console.log('Testing openTargetsModal()...');
 assert(typeof window.openTargetsModal === 'function', 'openTargetsModal should be defined on window');
 
@@ -101,9 +106,6 @@ assert(yearSelect.children.length >= 3, 'Year select should have years');
 console.log('Testing saveTarget()...');
 // Set form values
 elements['targetAreaSelect'].value = global.DEMO_DATA.areas[0].id;
-if (!global.DEMO_DATA.productLines || global.DEMO_DATA.productLines.length === 0) {
-  global.DEMO_DATA.productLines = [{ id: 'test_line', name: 'Test Line', products: [{ id: 'prod_test_1', name: 'Test Product', price: 40 }] }];
-}
 elements['targetProductSelect'].value = global.DEMO_DATA.productLines[0].products[0].id;
 elements['targetMonthSelect'].value = '10';
 elements['targetYearSelect'].value = '2026';
