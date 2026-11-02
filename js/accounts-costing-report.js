@@ -566,7 +566,7 @@
 
     // Fallback baseline specialties if none in storage
     if (specSet.size === 0) {
-      ["Internal Medicine", "Cardiology", "Orthopedics", "Pediatrics", "Dermatology", "ENT", "Ophthalmology", "Neurology", "Surgery", "Urology"].forEach((s) => specSet.add(s));
+      ["IM", "CARD", "DIAB", "GIT", "NEPH", "CHEST", "NEURO", "ORTH", "PED", "GYN", "URO", "ENT", "OPHTH", "DERMA", "RHEUM", "HEM", "ONC", "SURG", "VAS", "PLS", "PSYCH", "DENT", "GP", "ICU", "NUT", "PT", "OTHER"].forEach((s) => specSet.add(s));
     }
 
     const sorted = Array.from(specSet).sort();

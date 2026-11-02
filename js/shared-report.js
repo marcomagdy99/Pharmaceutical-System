@@ -1891,9 +1891,15 @@ function confirmImportDoctors() {
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
 
   pendingDoctorsImport.forEach((item, index) => {
-    const foundSpec = allSpecs.find((s) => s.name === item.specialty || s.id === item.specialty);
-    const specialtyId = foundSpec ? foundSpec.id : 'spec_internal';
-    const specialty = foundSpec ? foundSpec.name : item.specialty;
+    const rawSpec = String(item.specialty || "").trim().toLowerCase();
+    const foundSpec = allSpecs.find((s) => 
+      (s.name && s.name.toLowerCase() === rawSpec) || 
+      (s.id && s.id.toLowerCase() === rawSpec) || 
+      (s.code && s.code.toLowerCase() === rawSpec) || 
+      (Array.isArray(s.aliases) && s.aliases.some((a) => a.toLowerCase() === rawSpec))
+    );
+    const specialtyId = foundSpec ? foundSpec.id : 'spec_im';
+    const specialty = foundSpec ? foundSpec.name : (item.specialty || 'IM');
     const specialtyAr = foundSpec ? (foundSpec.nameAr || foundSpec.name) : specialty;
 
     const repAreas = item.repId ? allAreas.filter((a) => a.repId === item.repId) : [];

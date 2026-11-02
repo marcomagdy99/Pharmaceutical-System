@@ -266,7 +266,7 @@ function getScopedDoctors(respectActiveFilters = true) {
           (d.specialty &&
             d.specialty.toLowerCase() === selectedSpecObj.name.toLowerCase()) ||
           (selectedSpecObj.nameAr && d.specialty === selectedSpecObj.nameAr) ||
-          (selectedSpecObj.nameAr && d.specialtyAr === selectedSpecObj.nameAr)));
+          (selectedSpecObj.nameAr && d.specialtyAr === selectedSpecObj.nameAr) || (Array.isArray(selectedSpecObj.aliases) && selectedSpecObj.aliases.some((a) => a.toLowerCase() === (d.specialty || "").toLowerCase()))));
 
     const matchClass = docClass === "all" || d.class === docClass;
 

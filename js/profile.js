@@ -1327,7 +1327,7 @@ window.exportDatabaseBackup = function () {
     }
 
     const fullSnapshot = {
-      pharmaCareVersion: "v258",
+      pharmaCareVersion: "v259",
       exportedAt: new Date().toISOString(),
       exportedBy: (window.currentUser && (window.currentUser.email || window.currentUser.name)) || "Admin",
       masterData: masterData,

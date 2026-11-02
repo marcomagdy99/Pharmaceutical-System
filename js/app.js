@@ -15,7 +15,7 @@
 
 // Universal Service Worker cache invalidation across all pages
 (function () {
-  const EXPECTED_SW = "v258";
+  const EXPECTED_SW = "v259";
   const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {
@@ -977,18 +977,370 @@ const DEFAULT_DEMO_DATA = {
     }
 ],
   specialties: [
-    { id: "spec_internal", code: "IM", name: "Internal Medicine", nameAr: "Internal Medicine" },
-    { id: "spec_pediatrics", code: "PED", name: "Pediatrics", nameAr: "Pediatrics" },
-    { id: "spec_cardiology", code: "CARD", name: "Cardiology", nameAr: "Cardiology" },
-    { id: "spec_dermatology", code: "DERM", name: "Dermatology", nameAr: "Dermatology" },
-    { id: "spec_ophthalmology", code: "OPHTH", name: "Ophthalmology", nameAr: "Ophthalmology" },
-    { id: "spec_orthopedics", code: "ORTHO", name: "Orthopedics", nameAr: "Orthopedics" },
-    { id: "spec_ent", code: "ENT", name: "ENT", nameAr: "ENT" },
-    { id: "spec_neurology", code: "NEURO", name: "Neurology", nameAr: "Neurology" },
-    { id: "spec_urology", code: "URO", name: "Urology", nameAr: "Urology" },
-    { id: "spec_gynecology", code: "GYN", name: "Gynecology", nameAr: "Gynecology" },
-    { id: "spec_other", code: "OTHER", name: "Other", nameAr: "Other" },
-  ],
+  {
+    "id": "spec_im",
+    "code": "IM",
+    "name": "IM",
+    "description": "Internal Medicine",
+    "nameAr": "IM",
+    "aliases": [
+      "INTERNAL MEDICINE",
+      "Internal Medicine",
+      "باطنة",
+      "باطنة عامة"
+    ]
+  },
+  {
+    "id": "spec_card",
+    "code": "CARD",
+    "name": "CARD",
+    "description": "Cardiology",
+    "nameAr": "CARD",
+    "aliases": [
+      "CARD",
+      "CARDIO",
+      "INTERNAL - Card",
+      "Cardiology",
+      "قلب",
+      "أمراض قلب"
+    ]
+  },
+  {
+    "id": "spec_diab",
+    "code": "DIAB",
+    "name": "DIAB",
+    "description": "Diabetes & Endocrinology",
+    "nameAr": "DIAB",
+    "aliases": [
+      "Diabt",
+      "IM-Diabet",
+      "INTERNAL - DIABT",
+      "Diabetes",
+      "Endocrinology",
+      "سكر",
+      "غدد صماء"
+    ]
+  },
+  {
+    "id": "spec_git",
+    "code": "GIT",
+    "name": "GIT",
+    "description": "Gastroenterology & Hepatology",
+    "nameAr": "GIT",
+    "aliases": [
+      "Git",
+      "INTERNAL - GASTRO",
+      "Gastroenterology",
+      "جهاز هضمي",
+      "كبد"
+    ]
+  },
+  {
+    "id": "spec_neph",
+    "code": "NEPH",
+    "name": "NEPH",
+    "description": "Nephrology",
+    "nameAr": "NEPH",
+    "aliases": [
+      "NEPH",
+      "NEP",
+      "Nephro",
+      "INTERNAL - NEPH",
+      "Nephrology",
+      "كلى",
+      "أمراض كلى"
+    ]
+  },
+  {
+    "id": "spec_chest",
+    "code": "CHEST",
+    "name": "CHEST",
+    "description": "Pulmonology & Chest",
+    "nameAr": "CHEST",
+    "aliases": [
+      "Chest",
+      "CHT",
+      "Pulmonology",
+      "صدر",
+      "جهاز تنفسي"
+    ]
+  },
+  {
+    "id": "spec_neuro",
+    "code": "NEURO",
+    "name": "NEURO",
+    "description": "Neurology & Stroke",
+    "nameAr": "NEURO",
+    "aliases": [
+      "Neuro",
+      "Cns",
+      "Stroke",
+      "Neurology",
+      "مخ وأعصاب"
+    ]
+  },
+  {
+    "id": "spec_orth",
+    "code": "ORTH",
+    "name": "ORTH",
+    "description": "Orthopedics",
+    "nameAr": "ORTH",
+    "aliases": [
+      "ORTH",
+      "ortho",
+      "Orthopedics",
+      "عظام",
+      "جراحة عظام"
+    ]
+  },
+  {
+    "id": "spec_ped",
+    "code": "PED",
+    "name": "PED",
+    "description": "Pediatrics & Neonatology",
+    "nameAr": "PED",
+    "aliases": [
+      "PEDIATRIC",
+      "Pediatric",
+      "Pediatrics",
+      "أطفال",
+      "حديثي الولادة"
+    ]
+  },
+  {
+    "id": "spec_gyn",
+    "code": "GYN",
+    "name": "GYN",
+    "description": "Obstetrics & Gynecology (IVF)",
+    "nameAr": "GYN",
+    "aliases": [
+      "Gyna",
+      "OB/GYN Doctor",
+      "IVF",
+      "Gynecology",
+      "نساء",
+      "توليد"
+    ]
+  },
+  {
+    "id": "spec_uro",
+    "code": "URO",
+    "name": "URO",
+    "description": "Urology & Andrology",
+    "nameAr": "URO",
+    "aliases": [
+      "UROLOGY",
+      "Urology",
+      "Andrology",
+      "مسالك",
+      "ذكورة"
+    ]
+  },
+  {
+    "id": "spec_ent",
+    "code": "ENT",
+    "name": "ENT",
+    "description": "Ear, Nose & Throat",
+    "nameAr": "ENT",
+    "aliases": [
+      "ENT",
+      "أنف وأذن",
+      "أنف وأذن وحنجرة"
+    ]
+  },
+  {
+    "id": "spec_ophth",
+    "code": "OPHTH",
+    "name": "OPHTH",
+    "description": "Ophthalmology",
+    "nameAr": "OPHTH",
+    "aliases": [
+      "Opth",
+      "OPTHALMOLOGY",
+      "Ophthalmology",
+      "عيون",
+      "رمد"
+    ]
+  },
+  {
+    "id": "spec_derma",
+    "code": "DERMA",
+    "name": "DERMA",
+    "description": "Dermatology",
+    "nameAr": "DERMA",
+    "aliases": [
+      "DERMA",
+      "Dermatology",
+      "جلدية",
+      "تناسلية"
+    ]
+  },
+  {
+    "id": "spec_rheum",
+    "code": "RHEUM",
+    "name": "RHEUM",
+    "description": "Rheumatology & Immunology",
+    "nameAr": "RHEUM",
+    "aliases": [
+      "Rheum",
+      "Rheumatology",
+      "روماتيزم",
+      "مناعة"
+    ]
+  },
+  {
+    "id": "spec_hem",
+    "code": "HEM",
+    "name": "HEM",
+    "description": "Hematology",
+    "nameAr": "HEM",
+    "aliases": [
+      "Heamtology",
+      "HEAMATOLOGY",
+      "Hematology",
+      "أمراض دم"
+    ]
+  },
+  {
+    "id": "spec_onc",
+    "code": "ONC",
+    "name": "ONC",
+    "description": "Oncology",
+    "nameAr": "ONC",
+    "aliases": [
+      "Oncology",
+      "ONCOLOGY",
+      "أورام"
+    ]
+  },
+  {
+    "id": "spec_surg",
+    "code": "SURG",
+    "name": "SURG",
+    "description": "General Surgery",
+    "nameAr": "SURG",
+    "aliases": [
+      "Surgeon",
+      "Surgery",
+      "General Surgery",
+      "جراحة",
+      "جراحة عامة"
+    ]
+  },
+  {
+    "id": "spec_vas",
+    "code": "VAS",
+    "name": "VAS",
+    "description": "Vascular Surgery",
+    "nameAr": "VAS",
+    "aliases": [
+      "Vascular",
+      "Vascular Surgery",
+      "أوعية دموية"
+    ]
+  },
+  {
+    "id": "spec_pls",
+    "code": "PLS",
+    "name": "PLS",
+    "description": "Plastic Surgery & Burns",
+    "nameAr": "PLS",
+    "aliases": [
+      "Plastic Surgery",
+      "Burn unit",
+      "تجميل",
+      "حروق"
+    ]
+  },
+  {
+    "id": "spec_psych",
+    "code": "PSYCH",
+    "name": "PSYCH",
+    "description": "Psychiatry & Mental Health",
+    "nameAr": "PSYCH",
+    "aliases": [
+      "Psych",
+      "Psychiatry",
+      "نفسية",
+      "عصبية"
+    ]
+  },
+  {
+    "id": "spec_dent",
+    "code": "DENT",
+    "name": "DENT",
+    "description": "Dentistry",
+    "nameAr": "DENT",
+    "aliases": [
+      "Dent",
+      "DENT",
+      "Dentistry",
+      "أسنان"
+    ]
+  },
+  {
+    "id": "spec_gp",
+    "code": "GP",
+    "name": "GP",
+    "description": "General Practice / Family Medicine",
+    "nameAr": "GP",
+    "aliases": [
+      "GPS",
+      "Family Physician",
+      "GP",
+      "ممارس عام",
+      "طب أسرة"
+    ]
+  },
+  {
+    "id": "spec_icu",
+    "code": "ICU",
+    "name": "ICU",
+    "description": "Critical Care & ICU",
+    "nameAr": "ICU",
+    "aliases": [
+      "ICU",
+      "Emergency",
+      "طوارئ",
+      "عناية مركزة"
+    ]
+  },
+  {
+    "id": "spec_nut",
+    "code": "NUT",
+    "name": "NUT",
+    "description": "Clinical Nutrition",
+    "nameAr": "NUT",
+    "aliases": [
+      "NUTRITION",
+      "Nutrition",
+      "تغذية علاجية"
+    ]
+  },
+  {
+    "id": "spec_pt",
+    "code": "PT",
+    "name": "PT",
+    "description": "Physiotherapy & Rehabilitation",
+    "nameAr": "PT",
+    "aliases": [
+      "PHSOTHRAPY",
+      "Physiotherapy",
+      "علاج طبيعي"
+    ]
+  },
+  {
+    "id": "spec_other",
+    "code": "OTHER",
+    "name": "OTHER",
+    "description": "Other Specialty",
+    "nameAr": "OTHER",
+    "aliases": [
+      "Other",
+      "أخرى"
+    ]
+  }
+],
   areas: [
     {
         "id": "area_1790626000001",
@@ -1376,8 +1728,22 @@ function loadDataFromStorage() {
             }
           });
         }
-        if (!Array.isArray(data.specialties) || data.specialties.length === 0) {
+        if (!Array.isArray(data.specialties) || data.specialties.length < DEFAULT_DEMO_DATA.specialties.length || data.specialties.some((s) => s.id === "spec_internal" && s.name === "Internal Medicine")) {
           data.specialties = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA.specialties));
+        }
+        if (Array.isArray(data.doctors)) {
+          data.doctors.forEach((d) => {
+            if (!d) return;
+            if (d.specialty === "Internal Medicine") { d.specialty = "IM"; d.specialtyId = "spec_im"; }
+            else if (d.specialty === "Cardiology") { d.specialty = "CARD"; d.specialtyId = "spec_card"; }
+            else if (d.specialty === "Orthopedics") { d.specialty = "ORTH"; d.specialtyId = "spec_orth"; }
+            else if (d.specialty === "Pediatrics") { d.specialty = "PED"; d.specialtyId = "spec_ped"; }
+            else if (d.specialty === "Dermatology") { d.specialty = "DERMA"; d.specialtyId = "spec_derma"; }
+            else if (d.specialty === "Ophthalmology") { d.specialty = "OPHTH"; d.specialtyId = "spec_ophth"; }
+            else if (d.specialty === "Neurology") { d.specialty = "NEURO"; d.specialtyId = "spec_neuro"; }
+            else if (d.specialty === "Urology") { d.specialty = "URO"; d.specialtyId = "spec_uro"; }
+            else if (d.specialty === "Gynecology") { d.specialty = "GYN"; d.specialtyId = "spec_gyn"; }
+          });
         }
         if (Array.isArray(data.areas)) {
           data.areas.forEach((a) => {
