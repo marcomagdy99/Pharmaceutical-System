@@ -612,7 +612,7 @@ function renderPlansReview(currentUser) {
                       ? `
                         <div class="d-inline-flex gap-2">
                           <button class="btn btn-sm btn-outline-danger btn-action-reject" onclick="openRejectSingleModal('${v.id}')" title="${t.btnReject}">
-                            ❌
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
                           <button class="btn btn-sm btn-primary text-white px-2 btn-action-accompany" onclick="accompanySingleVisit('${v.id}')" title="${t.btnAccompany}">
                             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.btnAccompany}
