@@ -12,6 +12,8 @@
  */
 
 // parseSalesNumber and parseDateStrict are provided globally by app.js
+var svgPill = (typeof window !== 'undefined' && window.svgPill) || '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-inline-end:4px;"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>';
+
 
 
 /**
