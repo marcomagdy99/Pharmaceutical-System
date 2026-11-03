@@ -2825,7 +2825,7 @@ function setupModalTargetFilter() {
         const vaName = va.name;
         const vaOpt = document.createElement("option");
         vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaOpt.textContent = `[Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
         vaGrp.appendChild(vaOpt);
       });
       filterSelect.appendChild(vaGrp);
@@ -2911,7 +2911,7 @@ function setupModalTargetFilter() {
         const vaName = va.name;
         const vaOpt = document.createElement("option");
         vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `📍 [Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
+        vaOpt.textContent = `[Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
         vaGrp.appendChild(vaOpt);
       });
       filterSelect.appendChild(vaGrp);
