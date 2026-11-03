@@ -681,7 +681,7 @@ window.addEventListener("storage", (e) => {
       window.loadDataFromStorage();
     }
     getLiveVisits();
-    if (typeof renderVisitsTimeline === "function") renderVisitsTimeline(hasLoadedTimelineOnce);
+    if (typeof renderVisitsTimeline === "function" && hasLoadedTimelineOnce) renderVisitsTimeline(true);
   }
 });
 
@@ -711,6 +711,7 @@ const getSysLang = () => (window.getCurrentLang && window.getCurrentLang()) || "
 const isSysAr = () => false;
 
 let hasLoadedTimelineOnce = false;
+window.hasLoadedTimelineOnce = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -739,6 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {}
       }
       hasLoadedTimelineOnce = false;
+      window.hasLoadedTimelineOnce = false;
       renderVisitsTimeline(false);
     });
     timelineDatePicker.addEventListener("keydown", (e) => {
@@ -1690,6 +1692,10 @@ function confirmDeleteVisit(visitId) {
 // Section 8: Standard Rendering & Single Visit Execution
 // ============================================================================
 function renderVisits(triggeredByShow = false) {
+  if (!triggeredByShow && !hasLoadedTimelineOnce) {
+    renderVisitsTimeline(false);
+    return;
+  }
   renderVisitsTimeline(triggeredByShow);
 }
 
@@ -1709,7 +1715,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
 
   if (!triggeredByShow && !hasLoadedTimelineOnce) {
     if (summaryBar) summaryBar.innerHTML = "";
-    container.innerHTML = `
+    const promptHtml = `
       <div class="timeline-prompt-card">
         <div class="timeline-prompt-card-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
         <h4 class="timeline-prompt-title" data-i18n="promptSelectDateAndShow">
@@ -1723,10 +1729,18 @@ function renderVisitsTimeline(triggeredByShow = false) {
         </button>
       </div>
     `;
+    container.innerHTML = promptHtml;
+    const pContainer = document.getElementById("timelinePharmacyEventsContainer");
+    if (pContainer) {
+      pContainer.innerHTML = promptHtml;
+    }
+    hasLoadedTimelineOnce = false;
+    window.hasLoadedTimelineOnce = false;
     return;
   }
 
   hasLoadedTimelineOnce = true;
+  window.hasLoadedTimelineOnce = true;
   container.replaceChildren();
 
   const showBtn = document.getElementById("btnShowVisits");

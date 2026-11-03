@@ -381,16 +381,20 @@
       }
     }
 
-    // 2. Visits Manager view
+    // 2. Visits Manager view (Only refresh timeline if user has already explicitly loaded it via Show button)
     if (typeof window.renderVisits === "function") {
       try {
-        window.renderVisits(true);
+        if (window.hasLoadedTimelineOnce) {
+          window.renderVisits(true);
+        }
       } catch (e) {
         console.warn("[FirebaseSync] renderVisits error:", e);
       }
     } else if (window.visitsManager && typeof window.visitsManager.render === "function") {
       try {
-        window.visitsManager.render();
+        if (window.hasLoadedTimelineOnce) {
+          window.visitsManager.render();
+        }
       } catch (e) {
         console.warn("[FirebaseSync] visitsManager.render error:", e);
       }
