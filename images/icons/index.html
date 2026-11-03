@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>مكتبة أيقونات فارماكير الرسمية (PharmaCare SVG Icon Library)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0b1120;
+      color: #f8fafc;
+      padding: 30px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #1e293b;
+    }
+    h1 { font-size: 24px; color: #38bdf8; margin-bottom: 6px; }
+    p.sub { color: #94a3b8; font-size: 14px; }
+    .search-box {
+      max-width: 450px;
+      margin: 0 auto 24px auto;
+    }
+    .search-input {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: #1e293b;
+      border: 1.5px solid #334155;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-input:focus { border-color: #38bdf8; }
+    .category-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #94a3b8;
+      margin: 24px 0 12px 0;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .icon-card {
+      background: #1e293b;
+      border: 1.5px solid #334155;
+      border-radius: 10px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .icon-card:hover {
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+    }
+    .icon-wrapper {
+      width: 44px;
+      height: 44px;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
+    }
+    .icon-wrapper svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      stroke-width: 1.85;
+      fill: none;
+    }
+    .icon-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #f1f5f9;
+      text-align: center;
+      word-break: break-all;
+    }
+    .icon-file {
+      font-size: 11px;
+      color: #64748b;
+      font-family: Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>مكتبة أيقونات فارماكير الرسمية (PharmaCare SVG Library)</h1>
+    <p class="sub">تم تصدير 51 أيقونة فيكتور مستقلة بصيغة SVG القياسية داخل مجلد images/icons/</p>
+  </div>
+
+  <div class="search-box">
+    <input type="text" class="search-input" id="searchFilter" placeholder="ابحث باسم الأيقونة أو الملف..." oninput="filterIcons()">
+  </div>
+
+  <div id="catalogContent">
+    <div class="category-block">
+      <div class="category-title">Theme & Notifications</div>
+      <div class="grid">
+        <div class="icon-card" data-name="sun Light Mode Sun" title="انقر لفتح الملف sun.svg" onclick="window.open('sun.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          </div>
+          <div class="icon-name">Light Mode Sun</div>
+          <div class="icon-file">sun.svg</div>
+        </div>
+        <div class="icon-card" data-name="moon Dark Mode Moon" title="انقر لفتح الملف moon.svg" onclick="window.open('moon.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </div>
+          <div class="icon-name">Dark Mode Moon</div>
+          <div class="icon-file">moon.svg</div>
+        </div>
+        <div class="icon-card" data-name="bell Notification Bell" title="انقر لفتح الملف bell.svg" onclick="window.open('bell.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </div>
+          <div class="icon-name">Notification Bell</div>
+          <div class="icon-file">bell.svg</div>
+        </div>
+        <div class="icon-card" data-name="bell-off No Notifications" title="انقر لفتح الملف bell-off.svg" onclick="window.open('bell-off.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+          </div>
+          <div class="icon-name">No Notifications</div>
+          <div class="icon-file">bell-off.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">Governance & Production</div>
+      <div class="grid">
+        <div class="icon-card" data-name="rocket System Go-Live Rocket" title="انقر لفتح الملف rocket.svg" onclick="window.open('rocket.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+          </div>
+          <div class="icon-name">System Go-Live Rocket</div>
+          <div class="icon-file">rocket.svg</div>
+        </div>
+        <div class="icon-card" data-name="shield Live Production Shield" title="انقر لفتح الملف shield.svg" onclick="window.open('shield.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="icon-name">Live Production Shield</div>
+          <div class="icon-file">shield.svg</div>
+        </div>
+        <div class="icon-card" data-name="git-branch Approval Sequence Workflows" title="انقر لفتح الملف git-branch.svg" onclick="window.open('git-branch.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          </div>
+          <div class="icon-name">Approval Sequence Workflows</div>
+          <div class="icon-file">git-branch.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">Field Operations</div>
+      <div class="grid">
+        <div class="icon-card" data-name="double-visit Accompanied Double Visit" title="انقر لفتح الملف double-visit.svg" onclick="window.open('double-visit.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="icon-name">Accompanied Double Visit</div>
+          <div class="icon-file">double-visit.svg</div>
+        </div>
+        <div class="icon-card" data-name="pin Territory / Location Pin" title="انقر لفتح الملف pin.svg" onclick="window.open('pin.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="icon-name">Territory / Location Pin</div>
+          <div class="icon-file">pin.svg</div>
+        </div>
+        <div class="icon-card" data-name="satellite GPS Geofence Radar" title="انقر لفتح الملف satellite.svg" onclick="window.open('satellite.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/><path d="M7.76 16.24a6 6 0 0 1 0-8.48"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.48"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </div>
+          <div class="icon-name">GPS Geofence Radar</div>
+          <div class="icon-file">satellite.svg</div>
+        </div>
+        <div class="icon-card" data-name="map Territory Map" title="انقر لفتح الملف map.svg" onclick="window.open('map.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+          </div>
+          <div class="icon-name">Territory Map</div>
+          <div class="icon-file">map.svg</div>
+        </div>
+        <div class="icon-card" data-name="handshake Joint Supervisory Accompaniment" title="انقر لفتح الملف handshake.svg" onclick="window.open('handshake.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.3 1.3"/><path d="m14.7 6.3 3.6 3.6a2 2 0 0 1 0 2.8l-1.6 1.6"/><path d="m3 14 3.7-3.7a2 2 0 0 1 2.8 0l1.5 1.5"/><path d="m7 18 2 2a1 1 0 0 0 1.4 0l1.3-1.3"/></svg>
+          </div>
+          <div class="icon-name">Joint Supervisory Accompaniment</div>
+          <div class="icon-file">handshake.svg</div>
+        </div>
+        <div class="icon-card" data-name="walker Field Visit Walker" title="انقر لفتح الملف walker.svg" onclick="window.open('walker.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><path d="m9 20 3-6 3 6"/><path d="m6 12 6-3 6 3"/></svg>
+          </div>
+          <div class="icon-name">Field Visit Walker</div>
+          <div class="icon-file">walker.svg</div>
+        </div>
+        <div class="icon-card" data-name="manager Manager Supervisory Visit" title="انقر لفتح الملف manager.svg" onclick="window.open('manager.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4"/><path d="m10 13 2 2 2-2"/></svg>
+          </div>
+          <div class="icon-name">Manager Supervisory Visit</div>
+          <div class="icon-file">manager.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">Schedule & Planning</div>
+      <div class="grid">
+        <div class="icon-card" data-name="calendar Calendar / Fiscal Year" title="انقر لفتح الملف calendar.svg" onclick="window.open('calendar.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="icon-name">Calendar / Fiscal Year</div>
+          <div class="icon-file">calendar.svg</div>
+        </div>
+        <div class="icon-card" data-name="clock Working Hours / Visit Time" title="انقر لفتح الملف clock.svg" onclick="window.open('clock.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="icon-name">Working Hours / Visit Time</div>
+          <div class="icon-file">clock.svg</div>
+        </div>
+        <div class="icon-card" data-name="hourglass Pending Review Hourglass" title="انقر لفتح الملف hourglass.svg" onclick="window.open('hourglass.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="icon-name">Pending Review Hourglass</div>
+          <div class="icon-file">hourglass.svg</div>
+        </div>
+        <div class="icon-card" data-name="inbox Insertion Time Inbox" title="انقر لفتح الملف inbox.svg" onclick="window.open('inbox.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          </div>
+          <div class="icon-name">Insertion Time Inbox</div>
+          <div class="icon-file">inbox.svg</div>
+        </div>
+        <div class="icon-card" data-name="clipboard Visit Planner Clipboard" title="انقر لفتح الملف clipboard.svg" onclick="window.open('clipboard.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+          </div>
+          <div class="icon-name">Visit Planner Clipboard</div>
+          <div class="icon-file">clipboard.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">Medical & Directory</div>
+      <div class="grid">
+        <div class="icon-card" data-name="stethoscope Doctor Stethoscope" title="انقر لفتح الملف stethoscope.svg" onclick="window.open('stethoscope.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3"/><path d="M9 12.5v3a4.5 4.5 0 0 0 9 0v-1.5"/><circle cx="18" cy="14" r="2.5"/></svg>
+          </div>
+          <div class="icon-name">Doctor Stethoscope</div>
+          <div class="icon-file">stethoscope.svg</div>
+        </div>
+        <div class="icon-card" data-name="pill Pharmacy Pill" title="انقر لفتح الملف pill.svg" onclick="window.open('pill.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><line x1="10.5" y1="4.5" x2="19.5" y2="13.5"/><path d="m8.5 8.5-4 4a6.36 6.36 0 0 0 9 9l4-4"/></svg>
+          </div>
+          <div class="icon-name">Pharmacy Pill</div>
+          <div class="icon-file">pill.svg</div>
+        </div>
+        <div class="icon-card" data-name="building Hospital / Office Building" title="انقر لفتح الملف building.svg" onclick="window.open('building.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg>
+          </div>
+          <div class="icon-name">Hospital / Office Building</div>
+          <div class="icon-file">building.svg</div>
+        </div>
+        <div class="icon-card" data-name="book Training Book" title="انقر لفتح الملف book.svg" onclick="window.open('book.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div class="icon-name">Training Book</div>
+          <div class="icon-file">book.svg</div>
+        </div>
+        <div class="icon-card" data-name="mic Medical Conference Mic" title="انقر لفتح الملف mic.svg" onclick="window.open('mic.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          </div>
+          <div class="icon-name">Medical Conference Mic</div>
+          <div class="icon-file">mic.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">Commercial & Sales</div>
+      <div class="grid">
+        <div class="icon-card" data-name="package Product Package / Line Scope" title="انقر لفتح الملف package.svg" onclick="window.open('package.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          </div>
+          <div class="icon-name">Product Package / Line Scope</div>
+          <div class="icon-file">package.svg</div>
+        </div>
+        <div class="icon-card" data-name="tag Line Tag / Filter" title="انقر لفتح الملف tag.svg" onclick="window.open('tag.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg>
+          </div>
+          <div class="icon-name">Line Tag / Filter</div>
+          <div class="icon-file">tag.svg</div>
+        </div>
+        <div class="icon-card" data-name="target Doctor Reach Target" title="انقر لفتح الملف target.svg" onclick="window.open('target.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <div class="icon-name">Doctor Reach Target</div>
+          <div class="icon-file">target.svg</div>
+        </div>
+        <div class="icon-card" data-name="chart-line Monthly Sales Trend" title="انقر لفتح الملف chart-line.svg" onclick="window.open('chart-line.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <div class="icon-name">Monthly Sales Trend</div>
+          <div class="icon-file">chart-line.svg</div>
+        </div>
+        <div class="icon-card" data-name="chart-pie Doctor Classes Distribution" title="انقر لفتح الملف chart-pie.svg" onclick="window.open('chart-pie.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+          </div>
+          <div class="icon-name">Doctor Classes Distribution</div>
+          <div class="icon-file">chart-pie.svg</div>
+        </div>
+        <div class="icon-card" data-name="chart-bar Analytics Bar Chart" title="انقر لفتح الملف chart-bar.svg" onclick="window.open('chart-bar.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <div class="icon-name">Analytics Bar Chart</div>
+          <div class="icon-file">chart-bar.svg</div>
+        </div>
+        <div class="icon-card" data-name="scales Brick Weights Scales" title="انقر لفتح الملف scales.svg" onclick="window.open('scales.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>
+          </div>
+          <div class="icon-name">Brick Weights Scales</div>
+          <div class="icon-file">scales.svg</div>
+        </div>
+        <div class="icon-card" data-name="zap Cut-Point Energy Zap" title="انقر لفتح الملف zap.svg" onclick="window.open('zap.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="icon-name">Cut-Point Energy Zap</div>
+          <div class="icon-file">zap.svg</div>
+        </div>
+        <div class="icon-card" data-name="briefcase Commercial Services Briefcase" title="انقر لفتح الملف briefcase.svg" onclick="window.open('briefcase.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="icon-name">Commercial Services Briefcase</div>
+          <div class="icon-file">briefcase.svg</div>
+        </div>
+        <div class="icon-card" data-name="megaphone Marketing Services Megaphone" title="انقر لفتح الملف megaphone.svg" onclick="window.open('megaphone.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+          </div>
+          <div class="icon-name">Marketing Services Megaphone</div>
+          <div class="icon-file">megaphone.svg</div>
+        </div>
+        <div class="icon-card" data-name="coins Expense Claims Coins" title="انقر لفتح الملف coins.svg" onclick="window.open('coins.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+          </div>
+          <div class="icon-name">Expense Claims Coins</div>
+          <div class="icon-file">coins.svg</div>
+        </div>
+        <div class="icon-card" data-name="umbrella Leaves Umbrella" title="انقر لفتح الملف umbrella.svg" onclick="window.open('umbrella.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+          </div>
+          <div class="icon-name">Leaves Umbrella</div>
+          <div class="icon-file">umbrella.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">Actions & Controls</div>
+      <div class="grid">
+        <div class="icon-card" data-name="search Search Lens" title="انقر لفتح الملف search.svg" onclick="window.open('search.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div class="icon-name">Search Lens</div>
+          <div class="icon-file">search.svg</div>
+        </div>
+        <div class="icon-card" data-name="check Approve Checkmark" title="انقر لفتح الملف check.svg" onclick="window.open('check.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="icon-name">Approve Checkmark</div>
+          <div class="icon-file">check.svg</div>
+        </div>
+        <div class="icon-card" data-name="check-circle Verified Check Circle" title="انقر لفتح الملف check-circle.svg" onclick="window.open('check-circle.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="icon-name">Verified Check Circle</div>
+          <div class="icon-file">check-circle.svg</div>
+        </div>
+        <div class="icon-card" data-name="x Reject / Close X" title="انقر لفتح الملف x.svg" onclick="window.open('x.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <div class="icon-name">Reject / Close X</div>
+          <div class="icon-file">x.svg</div>
+        </div>
+        <div class="icon-card" data-name="alert-triangle Warning Alert Triangle" title="انقر لفتح الملف alert-triangle.svg" onclick="window.open('alert-triangle.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="icon-name">Warning Alert Triangle</div>
+          <div class="icon-file">alert-triangle.svg</div>
+        </div>
+        <div class="icon-card" data-name="trash Delete Trash Can" title="انقر لفتح الملف trash.svg" onclick="window.open('trash.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </div>
+          <div class="icon-name">Delete Trash Can</div>
+          <div class="icon-file">trash.svg</div>
+        </div>
+        <div class="icon-card" data-name="download Export / Download" title="انقر لفتح الملف download.svg" onclick="window.open('download.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="icon-name">Export / Download</div>
+          <div class="icon-file">download.svg</div>
+        </div>
+        <div class="icon-card" data-name="paperclip Attachment Paperclip" title="انقر لفتح الملف paperclip.svg" onclick="window.open('paperclip.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </div>
+          <div class="icon-name">Attachment Paperclip</div>
+          <div class="icon-file">paperclip.svg</div>
+        </div>
+        <div class="icon-card" data-name="phone Telephone Call" title="انقر لفتح الملف phone.svg" onclick="window.open('phone.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div class="icon-name">Telephone Call</div>
+          <div class="icon-file">phone.svg</div>
+        </div>
+        <div class="icon-card" data-name="mail Email Message" title="انقر لفتح الملف mail.svg" onclick="window.open('mail.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="icon-name">Email Message</div>
+          <div class="icon-file">mail.svg</div>
+        </div>
+        <div class="icon-card" data-name="eye View / Eye" title="انقر لفتح الملف eye.svg" onclick="window.open('eye.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="icon-name">View / Eye</div>
+          <div class="icon-file">eye.svg</div>
+        </div>
+        <div class="icon-card" data-name="plus Add Plus" title="انقر لفتح الملف plus.svg" onclick="window.open('plus.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="icon-name">Add Plus</div>
+          <div class="icon-file">plus.svg</div>
+        </div>
+        <div class="icon-card" data-name="broom Purge Broom" title="انقر لفتح الملف broom.svg" onclick="window.open('broom.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="m15 4-3 3m5-1 3 3m-9 3 5 5M3 21l6-6m0 0 3-3m-3 3-3-3m3 3 5-5"/></svg>
+          </div>
+          <div class="icon-name">Purge Broom</div>
+          <div class="icon-file">broom.svg</div>
+        </div>
+      </div>
+    </div>
+    <div class="category-block">
+      <div class="category-title">People & Roles</div>
+      <div class="grid">
+        <div class="icon-card" data-name="user Single User" title="انقر لفتح الملف user.svg" onclick="window.open('user.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="icon-name">Single User</div>
+          <div class="icon-file">user.svg</div>
+        </div>
+        <div class="icon-card" data-name="users Team Users" title="انقر لفتح الملف users.svg" onclick="window.open('users.svg', '_blank')">
+          <div class="icon-wrapper">
+            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="icon-name">Team Users</div>
+          <div class="icon-file">users.svg</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function filterIcons() {
+      const q = document.getElementById('searchFilter').value.toLowerCase();
+      document.querySelectorAll('.icon-card').forEach(card => {
+        const text = card.getAttribute('data-name').toLowerCase();
+        card.style.display = text.includes(q) ? 'flex' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
