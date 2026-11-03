@@ -1309,14 +1309,30 @@ function renderPendingApprovals() {
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
+  const countBadge = document.getElementById("pendingApprovalsBadge");
+  if (countBadge) {
+    countBadge.textContent = pending.length;
+    countBadge.className = pending.length > 0
+      ? "badge rounded-pill bg-primary text-white"
+      : "badge rounded-pill bg-secondary-subtle text-muted border";
+  }
+
   if (pending.length === 0) {
-    container.innerHTML = `<p class="text-muted">${leaveTranslations[lang].noPending}</p>`;
+    container.innerHTML = `
+      <div class="no-pending-box py-4 text-center text-muted w-100">
+        <svg class="mb-2 opacity-50" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+          <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+        </svg>
+        <div class="small fw-medium">${leaveTranslations[lang].noPending}</div>
+      </div>
+    `;
     return;
   }
 
   pending.forEach((l) => {
     const card = document.createElement("div");
-    card.className = "card border-0 mb-3 pending-approval-card shadow-sm";
+    card.className = "card border-0 pending-approval-card shadow-sm";
 
     const typeKey = (l.type || "annual") + "Leave";
     const typeLabel = leaveTranslations[lang]?.[typeKey] || (l.type ? l.type.toUpperCase() : "ANNUAL");
@@ -1324,7 +1340,7 @@ function renderPendingApprovals() {
     const roleLabel = formatLeaveUserRole(l.userRole, lang);
 
     card.innerHTML = `
-      <div class="card-body p-3">
+      <div class="card-body">
         <div class="approval-header-row mb-3">
           <div class="approval-user-info">
             <div class="approval-user-avatar">
@@ -1342,20 +1358,26 @@ function renderPendingApprovals() {
 
         <div class="approval-meta-grid mb-3">
           <div class="approval-meta-item">
-            <span class="approval-meta-label"><i class="bi bi-calendar-event me-1"></i>Dates</span>
+            <span class="approval-meta-label">
+              <svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>Dates</span>
+            </span>
             <div class="approval-meta-val">
               ${formatLeaveDateDisplay(l.startDate, l.endDate, lang)}
             </div>
           </div>
           <div class="approval-meta-item">
-            <span class="approval-meta-label"><i class="bi bi-clock me-1"></i>Duration</span>
+            <span class="approval-meta-label">
+              <svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>Duration</span>
+            </span>
             <span class="badge duration-badge">${durationLabel}</span>
           </div>
         </div>
 
         <div class="approval-reason-box mb-3">
           <div class="approval-reason-header">
-            <i class="bi bi-chat-left-quote me-1"></i>
+            <svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Reason</span>
           </div>
           <div class="approval-reason-content leave-reason-text"></div>
@@ -1365,18 +1387,21 @@ function renderPendingApprovals() {
           l.attachmentName
             ? `<div class="mb-3">
                  <span class="approval-attachment-pill">
-                   <i class="bi bi-paperclip me-1"></i>${window.escapeHtml(l.attachmentName)}
+                   <svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                   ${window.escapeHtml(l.attachmentName)}
                  </span>
                </div>`
             : ""
         }
 
         <div class="approval-actions-row">
-          <button type="button" class="btn btn-sm btn-success approval-btn" onclick="window.handleDecisionStep('${l.id}', 'approved')">
-            <i class="bi bi-check-circle me-1"></i>Approve
+          <button type="button" class="btn btn-sm btn-success approval-btn approval-btn-approve" onclick="window.handleDecisionStep('${l.id}', 'approved')">
+            <svg class="btn-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Approve</span>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger approval-btn" onclick="window.openRejectLeaveModal('${l.id}')">
-            <i class="bi bi-x-circle me-1"></i>Reject
+          <button type="button" class="btn btn-sm btn-outline-danger approval-btn approval-btn-reject" onclick="window.openRejectLeaveModal('${l.id}')">
+            <svg class="btn-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Reject</span>
           </button>
         </div>
       </div>
