@@ -220,7 +220,7 @@ function getRoleBadgeInfo(role) {
         label: role,
         short: role,
         badgeClass: "badge bg-secondary",
-        icon: "👤",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       };
   }
 }
@@ -938,7 +938,7 @@ function populateCalendarLineFilter(user = null) {
   userLines.forEach((l) => {
     const opt = document.createElement("option");
     opt.value = l.id;
-    opt.textContent = `📦 ${l.name || l.nameAr}`;
+    opt.textContent = `${l.name || l.nameAr}`;
     lineSelect.appendChild(opt);
   });
 

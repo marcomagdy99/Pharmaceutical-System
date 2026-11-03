@@ -184,7 +184,7 @@
               const nId = String(n.id || "");
               if ((n.userId === currentUid || n.userId === "all") && !n.read && !hasToastBeenShown(nId)) {
                 markToastShown(nId);
-                window.showToast(`🔔 ${n.title || n.message || "New Notification"}`, "info");
+                window.showToast(`${n.title || n.message || "New Notification"}`, "info");
               }
             });
           }
@@ -779,7 +779,7 @@
     pushLocalToCloud(true);
 
     if (typeof window.showToast === "function") {
-      const msg = `📶 Back Online: ${pending.length} offline visit(s) synced to cloud successfully!`;
+      const msg = `Back Online: ${pending.length} offline visit(s) synced to cloud successfully!`;
       window.showToast(msg, "success");
     }
 
@@ -809,7 +809,7 @@
     console.warn("[FirebaseSync] Network offline. Operating in local-first offline mode.");
     updateSyncStatusUI("offline");
     if (typeof window.showToast === "function") {
-      window.showToast("📶 Offline Mode: Visits will be saved locally and auto-synced once reconnected.", "info");
+      window.showToast("Offline Mode: Visits will be saved locally and auto-synced once reconnected.", "info");
     }
   });
 

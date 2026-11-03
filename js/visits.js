@@ -550,7 +550,7 @@ function updateAdminGpsButton() {
     : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
 
   if (current.requireGpsValidation) {
-    label.textContent = "GPS Policy: Active ✅";
+    label.textContent = "GPS Policy: Active";
     btn.style.borderColor = "#166534";
     btn.style.color = "#166534";
     btn.style.background = "#dcfce7";
@@ -833,7 +833,7 @@ function populateVisitsLineFilter() {
 
     const optAll = document.createElement("option");
     optAll.value = "all";
-    optAll.textContent = "🌐 All Product Lines";
+    optAll.textContent = "All Product Lines";
     filterLine.appendChild(optAll);
 
     allLines.forEach((l) => {
@@ -849,7 +849,7 @@ function populateVisitsLineFilter() {
     if (userLines.length > 1) {
       const optAll = document.createElement("option");
       optAll.value = "all";
-      optAll.textContent = "🌐 All My Lines";
+      optAll.textContent = "All My Lines";
       filterLine.appendChild(optAll);
 
       userLines.forEach((l) => {
@@ -911,14 +911,14 @@ function populateManagerRepDropdown(selectedLineId = "all") {
   // Option: All Team in this line
   const optAll = document.createElement("option");
   optAll.value = "all";
-  optAll.textContent = "🌐 All Team in Line";
+  optAll.textContent = "All Team in Line";
   filterRep.appendChild(optAll);
 
   // Self Option
   if (isManager && !isAdmin) {
     const optSelf = document.createElement("option");
     optSelf.value = currentUser.id;
-    optSelf.textContent = `👔 ${currentUser.name} (My Visits)`;
+    optSelf.textContent = `${currentUser.name} (My Visits)`;
     filterRep.appendChild(optSelf);
   }
 
@@ -993,7 +993,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
         const opt = document.createElement("option");
         opt.value = dm.id;
         opt.className = "filter-opt-dm";
-        opt.textContent = `💼 ${dm.name} (${dm.employeeCode || "DM"})`;
+        opt.textContent = `${dm.name} (${dm.employeeCode || "DM"})`;
         dmGroup.appendChild(opt);
       });
       filterRep.appendChild(dmGroup);
@@ -1616,7 +1616,7 @@ function updateVisitModalDayDisplay() {
   if (!dateInput || !displayEl) return;
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const dt = formatVisitDateTime(dateInput.value, null, lang);
-  displayEl.textContent = dt.dayName ? `📅 ${dt.dayName}` : "";
+  displayEl.textContent = dt.dayName ? dt.dayName : "";
 }
 
 window.updateVisitModalDayDisplay = updateVisitModalDayDisplay;
@@ -1711,7 +1711,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
     if (summaryBar) summaryBar.innerHTML = "";
     container.innerHTML = `
       <div class="timeline-prompt-card">
-        <div class="timeline-prompt-card-icon">🔍</div>
+        <div class="timeline-prompt-card-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
         <h4 class="timeline-prompt-title" data-i18n="promptSelectDateAndShow">
           ${trans.promptSelectDateAndShow || 'Select a date and click "Show" to view visits'}
         </h4>
@@ -1928,7 +1928,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
   if (combined.length === 0) {
     container.innerHTML = `
       <div class="timeline-empty-card timeline-empty-card-wrapper">
-        <span class="timeline-empty-icon">📅</span>
+        <span class="timeline-empty-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
         <h4 class="timeline-target-title timeline-empty-title">${trans.noTimelineEvents}</h4>
       </div>
     `;
@@ -2010,11 +2010,11 @@ function renderVisitsTimeline(triggeredByShow = false) {
       }
       accompanimentNote = ` • <span class="accompaniment-note-joint"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Co-visiting with: ${window.escapeHtml(partnerName)}</span>`;
     } else if (repUser && repUser.role === "district_manager") {
-      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4"/><path d="m10 13 2 2 2-2"/></svg> ${trans.supervisoryVisit}</span>`;
     } else if (repUser && repUser.role === "line_manager") {
-      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 Supervisory Visit (LM)</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4"/><path d="m10 13 2 2 2-2"/></svg> Supervisory Visit (LM)</span>`;
     } else if (v.repId === currentUser.id && isManager) {
-      accompanimentNote = ` • <span class="accompaniment-note-mgr">👔 ${trans.supervisoryVisit}</span>`;
+      accompanimentNote = ` • <span class="accompaniment-note-mgr"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4"/><path d="m10 13 2 2 2-2"/></svg> ${trans.supervisoryVisit}</span>`;
     }
 
     const isPharmVisit =
@@ -2092,10 +2092,10 @@ function renderVisitsTimeline(triggeredByShow = false) {
           const insTime = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00"));
           return `
             <div class="timeline-timestamp-chip" style="display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;">
-              <span><strong>📅 Visit Day:</strong> ${v.date} ${periodDisplay}</span>
+              <span><strong><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Visit Day:</strong> ${v.date} ${periodDisplay}</span>
               <span><strong>⏰ Visit Time:</strong> ${v.time || "10:00"}</span>
               <span style="opacity: 0.95; border-inline-start: 1px solid currentColor; padding-inline-start: 10px;">
-                <strong>📥 Insertion Date:</strong> ${insDate}
+                <strong><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Insertion Date:</strong> ${insDate}
                 • <strong>Time:</strong> ${insTime}
               </span>
             </div>
@@ -2154,7 +2154,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
   if (pharmContainer && pharmacyCount === 0) {
     pharmContainer.innerHTML = `
       <div class="timeline-empty-card timeline-empty-card-wrapper" style="text-align: center; padding: 32px 16px;">
-        <span class="timeline-empty-icon">💊</span>
+        <span class="timeline-empty-icon"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><line x1="10.5" y1="4.5" x2="19.5" y2="13.5"/><path d="m8.5 8.5-4 4a6.36 6.36 0 0 0 9 9l4-4"/></svg></span>
         <h4 class="timeline-target-title timeline-empty-title">No Pharmacy visits recorded on this day</h4>
       </div>
     `;
@@ -2601,7 +2601,7 @@ function setupModalTargetFilter() {
       const opt = document.createElement("option");
       opt.value = rep.id;
       const repName = rep.name;
-      opt.textContent = `👤 ${repName}`;
+      opt.textContent = repName;
       filterSelect.appendChild(opt);
     });
 
@@ -2629,7 +2629,7 @@ function setupModalTargetFilter() {
     if (filterLabel) {
       filterLabel.textContent = "Filter Doctors by District Manager (DM):";
     }
-    allOpt.textContent = "👥 All Line Doctors";
+    allOpt.textContent = "All Line Doctors";
     filterSelect.appendChild(allOpt);
 
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -2664,7 +2664,7 @@ function setupModalTargetFilter() {
       const dmName = dm.name;
       const opt = document.createElement("option");
       opt.value = `dm:${dm.id}`;
-      opt.textContent = `👔 ${dmName} (DM)`;
+      opt.textContent = `${dmName} (DM)`;
       filterSelect.appendChild(opt);
 
       let dmReps = allUsers.filter(
@@ -2683,7 +2683,7 @@ function setupModalTargetFilter() {
         const repName = rep.name;
         const repOpt = document.createElement("option");
         repOpt.value = `rep:${rep.id}`;
-        repOpt.textContent = `　↳ 👤 ${repName}`;
+        repOpt.textContent = `　↳ ${repName}`;
         filterSelect.appendChild(repOpt);
       });
 
@@ -2713,7 +2713,7 @@ function setupModalTargetFilter() {
     if (filterLabel) {
       filterLabel.textContent = "Filter Doctors by Manager (LM / DM):";
     }
-    allOpt.textContent = "👥 All Doctors";
+    allOpt.textContent = "All Doctors";
     filterSelect.appendChild(allOpt);
 
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -2758,7 +2758,7 @@ function setupModalTargetFilter() {
         const lmName = lm.name;
         const opt = document.createElement("option");
         opt.value = `lm:${lm.id}`;
-        opt.textContent = `👔 ${lmName} (LM)`;
+        opt.textContent = `${lmName} (LM)`;
         lmGrp.appendChild(opt);
       });
       filterSelect.appendChild(lmGrp);
@@ -2798,7 +2798,7 @@ function setupModalTargetFilter() {
         const parentName = parentLm ? parentLm.name : "";
         const opt = document.createElement("option");
         opt.value = `dm:${dm.id}`;
-        opt.textContent = `👔 ${dmName} (DM${parentName ? " - " + parentName : ""})`;
+        opt.textContent = `${dmName} (DM${parentName ? " - " + parentName : ""})`;
         dmGrp.appendChild(opt);
 
         const dmVacant = buVacant.filter((a) => {
@@ -2834,7 +2834,7 @@ function setupModalTargetFilter() {
     if (filterLabel) {
       filterLabel.textContent = "Filter Targets by Line Team Member:";
     }
-    allOpt.textContent = "👥 All Line Targets";
+    allOpt.textContent = "All Line Targets";
     filterSelect.appendChild(allOpt);
 
     const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
@@ -2854,7 +2854,7 @@ function setupModalTargetFilter() {
         const lmName = lm.name;
         const opt = document.createElement("option");
         opt.value = `lm:${lm.id}`;
-        opt.textContent = `👔 ${lmName} (LM)`;
+        opt.textContent = `${lmName} (LM)`;
         lmGrp.appendChild(opt);
       });
       filterSelect.appendChild(lmGrp);
@@ -2873,7 +2873,7 @@ function setupModalTargetFilter() {
         const dmName = dm.name;
         const opt = document.createElement("option");
         opt.value = `dm:${dm.id}`;
-        opt.textContent = `👔 ${dmName} (DM)`;
+        opt.textContent = `${dmName} (DM)`;
         dmGrp.appendChild(opt);
       });
       filterSelect.appendChild(dmGrp);
@@ -2892,7 +2892,7 @@ function setupModalTargetFilter() {
         const repName = rep.name;
         const opt = document.createElement("option");
         opt.value = `rep:${rep.id}`;
-        opt.textContent = `👤 ${repName}`;
+        opt.textContent = repName;
         repGrp.appendChild(opt);
       });
       filterSelect.appendChild(repGrp);

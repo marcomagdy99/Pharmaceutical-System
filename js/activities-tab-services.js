@@ -867,7 +867,7 @@
         const repLabel = liveRep
           ? `${Core.getUserDisplayName(liveRep.id)} (${liveRep.employeeCode || liveRep.id})`
           : Core.t("sharedNoRepAssigned");
-        const repIcon = liveRep ? "👤" : "⚠️";
+        const repIcon = liveRep ? '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' : '<svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
         badgeEl.innerHTML = `${repIcon} ${Core.escapeHTML(repLabel)}`;
       }
     } else {
@@ -886,7 +886,7 @@
       const repLabel = liveRep
         ? `${Core.getUserDisplayName(liveRep.id)} (${liveRep.employeeCode || liveRep.id})`
         : Core.t("sharedNoRepAssigned");
-      const repIcon = liveRep ? "👤" : "⚠️";
+      const repIcon = liveRep ? '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' : '<svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
       badgeEl.innerHTML = `${repIcon} ${Core.escapeHTML(repLabel)}`;
     } else {
       renderSharedLinesRows();
@@ -1186,7 +1186,7 @@
             title: `New Shared Service Request (${sh.sharePercent}%)`,
             message: `You have been included in a shared service request (${newService.title}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${creatorName}.`,
             link: "activities.html",
-            icon: "🤝",
+            icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
             badgeClass: "bg-info",
             actorName: creatorName,
             action: "shared_service",
