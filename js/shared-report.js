@@ -215,6 +215,8 @@ const directoryTranslations = {
     tabHospitalsList: 'Hospitals List',
     tabPharmaciesList: 'Pharmacies List',
     tabMissingDays: 'Missing Days',
+    tabSops: 'تحليل السجل الشهري (SOPs)',
+    tabSops: 'Monthly Record Analysis (SOPs)',
     doctorsDirectoryTitle: 'Doctors Directory',
     doctorsDirectorySubtitle: 'Master physician registry with contact details, specialty, and assignment.',
     hospitalsDirectoryTitle: 'Hospitals Directory',
@@ -368,6 +370,7 @@ const REPORT_TAB_CONFIGS = {
   achievements: { lmId: 'achLmSelect', dmId: 'achDmSelect', repId: 'achRepSelect', hasArea: true, areaId: 'achAreaSelect' },
   timeline: { lmId: 'timelineLmSelect', dmId: 'timelineDmSelect', repId: 'timelineRepSelect' },
   coverage: { lmId: 'coverageLmSelect', dmId: 'coverageDmSelect', repId: 'coverageRepSelect' },
+  sops: { lmId: 'sopsLmSelect', dmId: 'sopsDmSelect', repId: 'sopsRepSelect' },
   doctors: { lmId: 'doctorLmSelect', dmId: 'doctorDmSelect', repId: 'doctorRepSelect' },
   hospitals: { lmId: 'hospitalLmSelect', dmId: 'hospitalDmSelect', repId: 'hospitalRepSelect' },
   pharmacies: { lmId: 'pharmacyLmSelect', dmId: 'pharmacyDmSelect', repId: 'pharmacyRepSelect' },
@@ -413,7 +416,7 @@ function initializeReportsPage() {
   // Check URL query parameter for active tab
   const urlParams = new URLSearchParams(window.location.search);
   const requestedTab = urlParams.get('tab');
-  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'doctors', 'hospitals', 'pharmacies', 'missing-days', 'gps-tracing'].includes(requestedTab)) {
+  if (requestedTab && ['sales', 'achievements', 'timeline', 'coverage', 'sops', 'doctors', 'hospitals', 'pharmacies', 'missing-days', 'gps-tracing', 'accounts-costing'].includes(requestedTab)) {
     switchReportTab(requestedTab);
   }
 
@@ -527,6 +530,13 @@ function switchReportTab(tabKey) {
   }
   if (tabKey === 'doctors') {
     if (typeof populateDoctorSpecialtyFilter === 'function') populateDoctorSpecialtyFilter();
+  }
+  if (tabKey === 'sops') {
+    if (typeof window.initSopsReport === 'function') window.initSopsReport(currentUser);
+    const sopsLine = document.getElementById('sopsLineSelect');
+    if (sopsLine && window.selectedReportLineId) {
+      sopsLine.value = window.selectedReportLineId;
+    }
   }
   if (tabKey === 'missing-days') {
     if (typeof window.initMissingDaysTab === 'function') window.initMissingDaysTab();

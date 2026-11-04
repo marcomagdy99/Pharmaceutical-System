@@ -4070,3 +4070,242 @@ a.gps-action-map-btn {
 [data-theme="dark"] .timeline-visit-details {
   color: var(--text-muted);
 }
+
+
+/* ==========================================================================
+   SOPs & Field Productivity Report Styles (Monthly Record Analysis)
+   ========================================================================== */
+
+.sops-rep-banner {
+  background: rgba(13, 110, 253, 0.08);
+  border: 1px solid rgba(13, 110, 253, 0.25);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+
+.sops-meta-banner {
+  padding: 8px 14px;
+  background: var(--gray-50, #f8f9fa);
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, #e5e7eb);
+}
+
+.sops-info-pill {
+  background: rgba(13, 110, 253, 0.12);
+  color: var(--primary, #0d6efd);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.sops-policy-pill {
+  background: rgba(25, 135, 84, 0.12);
+  color: var(--success, #198754);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.sops-formula-hint {
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sops-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.sops-kpi-card {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e5e7eb);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sops-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+.sops-kpi-label {
+  font-size: 0.76rem;
+  color: var(--gray-500, #6c757d);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sops-kpi-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin: 4px 0;
+  line-height: 1.2;
+}
+
+.sops-kpi-sub {
+  font-size: 0.72rem;
+  color: var(--gray-400, #9ca3af);
+}
+
+.sops-table-wrap {
+  border-radius: 14px;
+  border: 1px solid var(--border-main, #e5e7eb);
+  background: var(--surface-card, #ffffff);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  margin-top: 16px;
+}
+
+.sops-table {
+  margin-bottom: 0;
+  font-size: 0.88rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.sops-super-header th {
+  background: var(--gray-100, #f1f5f9);
+  color: var(--gray-600, #475569);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-main, #e5e7eb);
+}
+
+.sops-columns-header th {
+  background: var(--gray-50, #f8fafc);
+  color: var(--gray-700, #334155);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 10px 12px;
+  vertical-align: middle;
+  border-bottom: 2px solid var(--border-main, #e2e8f0);
+}
+
+.sops-data-row td {
+  padding: 12px 10px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-subtle, #f0f2f5);
+}
+
+.sops-data-row:hover td {
+  background-color: rgba(13, 110, 253, 0.02);
+}
+
+.sops-total-row td {
+  background: var(--gray-100, #f8f9fa);
+  padding: 14px 10px;
+  border-top: 2px solid var(--border-main, #cbd5e1);
+  border-bottom: none;
+}
+
+.sops-actual-badge {
+  background: rgba(25, 135, 84, 0.12);
+  color: #198754;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(25, 135, 84, 0.25);
+}
+
+.sops-actual-badge:hover {
+  background: #198754;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.sops-pct-badge {
+  font-size: 0.84rem;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 8px;
+  display: inline-block;
+  min-width: 65px;
+}
+
+.sops-pct-success {
+  background: rgba(25, 135, 84, 0.12);
+  color: #198754;
+  border: 1px solid rgba(25, 135, 84, 0.3);
+}
+
+.sops-pct-warning {
+  background: rgba(255, 193, 7, 0.15);
+  color: #b78103;
+  border: 1px solid rgba(255, 193, 7, 0.35);
+}
+
+.sops-pct-danger {
+  background: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .sops-rep-banner {
+  background: rgba(56, 139, 253, 0.12);
+  border-color: rgba(56, 139, 253, 0.3);
+}
+
+[data-theme="dark"] .sops-meta-banner {
+  background: #0d1117;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .sops-kpi-card {
+  background: var(--surface-card, #161b22);
+  border-color: var(--border-main, #30363d);
+}
+
+[data-theme="dark"] .sops-table-wrap {
+  background: var(--surface-card, #161b22);
+  border-color: var(--border-main, #30363d);
+}
+
+[data-theme="dark"] .sops-super-header th {
+  background: #0d1117;
+  color: #8b949e;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .sops-columns-header th {
+  background: #161b22;
+  color: #c9d1d9;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .sops-data-row td {
+  border-color: #21262d;
+  color: #c9d1d9;
+}
+
+[data-theme="dark"] .sops-data-row:hover td {
+  background-color: rgba(56, 139, 253, 0.05);
+}
+
+[data-theme="dark"] .sops-total-row td {
+  background: #0d1117;
+  border-color: #30363d;
+  color: #f0f6fc;
+}
+
+@media (max-width: 768px) {
+  .sops-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
