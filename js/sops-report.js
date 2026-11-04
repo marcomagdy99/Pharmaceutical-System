@@ -390,8 +390,9 @@
         const mStartStr = `${mPrefix}-01`;
         const mEndStr = `${mPrefix}-${String(mCal.daysInMonth).padStart(2, '0')}`;
 
-        // Vacations in month
+        // 1. Vacations in month
         let monthVacations = 0;
+        const deductedVacationDates = new Set();
         const repLeaves = allLeaves.filter((l) => {
           if (!l || (l.userId !== rep.id && l.repId !== rep.id)) return false;
           const status = (l.status || '').toLowerCase();
@@ -400,47 +401,92 @@
         });
 
         repLeaves.forEach((leave) => {
-          const lStart = new Date(Math.max(new Date(leave.startDate + 'T00:00:00').getTime(), new Date(mStartStr + 'T00:00:00').getTime()));
-          const lEnd = new Date(Math.min(new Date(leave.endDate + 'T00:00:00').getTime(), new Date(mEndStr + 'T00:00:00').getTime()));
+          const lStart = new Date(Math.max(new Date(leave.startDate + 'T12:00:00').getTime(), new Date(mStartStr + 'T12:00:00').getTime()));
+          const lEnd = new Date(Math.min(new Date(leave.endDate + 'T12:00:00').getTime(), new Date(mEndStr + 'T12:00:00').getTime()));
           const curL = new Date(lStart);
           while (curL <= lEnd) {
             const dayStr = `${curL.getFullYear()}-${String(curL.getMonth() + 1).padStart(2, '0')}-${String(curL.getDate()).padStart(2, '0')}`;
-            if (mCal.workingDateStrings.has(dayStr)) {
+            if (mCal.workingDateStrings.has(dayStr) && !deductedVacationDates.has(dayStr)) {
+              deductedVacationDates.add(dayStr);
               monthVacations += (leave.durationType === 'half' ? 0.5 : 1);
             }
             curL.setDate(curL.getDate() + 1);
           }
         });
 
-        // Activities & Office work in month
+        // 2. Activities & Office work in month
         let monthActivities = 0;
         let monthOffice = 0;
+        const distinctActDates = new Set();
+        const distinctOfficeDates = new Set();
+
         try {
+          // A) Daily activities store (can be Object { "YYYY-MM-DD": { AM: {...}, PM: {...} } } or Array)
           const userActivities = (window.store && window.store.activities && typeof window.store.activities.getAllForUser === 'function')
             ? window.store.activities.getAllForUser(rep.id)
-            : ((window.DEMO_DATA && window.DEMO_DATA.activities && window.DEMO_DATA.activities[rep.id]) || []);
+            : ((window.DEMO_DATA && window.DEMO_DATA._activitiesByUser && window.DEMO_DATA._activitiesByUser[rep.id])
+               || (window.DEMO_DATA && window.DEMO_DATA.activities && window.DEMO_DATA.activities[rep.id])
+               || {});
 
           if (Array.isArray(userActivities)) {
-            const monthActs = userActivities.filter((act) => {
+            userActivities.forEach((act) => {
               const actDate = act.date || act.activityDate || '';
               const status = (act.status || 'approved').toLowerCase();
-              return actDate.startsWith(mPrefix) && status === 'approved';
-            });
-
-            const distinctActDates = new Set();
-            const distinctOfficeDates = new Set();
-            monthActs.forEach((act) => {
-              const date = act.date || act.activityDate;
+              if (!actDate.startsWith(mPrefix) || (status !== 'approved' && status !== 'completed' && status !== 'logged')) return;
+              if (deductedVacationDates.has(actDate)) return; // Already deducted as approved leave
               const type = (act.type || act.activityType || '').toLowerCase();
               if (type.includes('office') || type.includes('training') || type.includes('meeting')) {
-                distinctOfficeDates.add(date);
+                distinctOfficeDates.add(actDate);
               } else {
-                distinctActDates.add(date);
+                distinctActDates.add(actDate);
               }
             });
-            monthActivities = distinctActDates.size;
-            monthOffice = distinctOfficeDates.size;
+          } else if (userActivities && typeof userActivities === 'object') {
+            Object.entries(userActivities).forEach(([dateStr, periods]) => {
+              if (!dateStr.startsWith(mPrefix)) return;
+              if (deductedVacationDates.has(dateStr)) return; // Already deducted as approved leave
+              if (!periods || typeof periods !== 'object') return;
+              Object.values(periods).forEach((pAct) => {
+                if (!pAct || typeof pAct !== 'object') return;
+                const status = (pAct.status || 'approved').toLowerCase();
+                if (status !== 'approved' && status !== 'completed' && status !== 'logged') return;
+                const type = (pAct.type || pAct.activityType || '').toLowerCase();
+                if (type.includes('office') || type.includes('training') || type.includes('meeting')) {
+                  distinctOfficeDates.add(dateStr);
+                } else if (type.includes('conference') || type.includes('symposium') || type.includes('activity') || type.includes('event')) {
+                  distinctActDates.add(dateStr);
+                }
+              });
+            });
           }
+
+          // B) Approved Medical Services / Standalone Congresses
+          const allServices = (window.store && window.store.services && typeof window.store.services.getAll === 'function')
+            ? window.store.services.getAll()
+            : (Array.isArray(window.DEMO_DATA?.services) ? window.DEMO_DATA.services : []);
+
+          if (Array.isArray(allServices)) {
+            allServices.forEach((srv) => {
+              if (!srv) return;
+              const matchesRep = srv.userId === rep.id || srv.repId === rep.id;
+              if (!matchesRep) return;
+              const srvDate = srv.date || srv.eventDate || '';
+              if (!srvDate.startsWith(mPrefix)) return;
+              if (deductedVacationDates.has(srvDate) || distinctOfficeDates.has(srvDate)) return;
+              const status = (srv.status || '').toLowerCase();
+              const isApproved = status.includes('approved') || status === 'completed';
+              if (!isApproved) return;
+              distinctActDates.add(srvDate);
+            });
+          }
+
+          // Avoid double counting between office work and activity on same date
+          distinctOfficeDates.forEach((d) => {
+            if (distinctActDates.has(d)) distinctActDates.delete(d);
+          });
+
+          monthActivities = distinctActDates.size;
+          monthOffice = distinctOfficeDates.size;
         } catch (actErr) {
           console.warn('[SOPs Activities Warning]:', actErr);
         }
@@ -462,10 +508,19 @@
         if (!v) return false;
         const matchesRep = (v.repId === rep.id || v.userId === rep.id || v.repName === rep.name);
         if (!matchesRep) return false;
-        const vDate = v.date || v.visitDate || '';
-        const vStatus = (v.status || '').toLowerCase();
-        if (vStatus === 'cancelled') return false;
 
+        // Exclude activities if mixed into visits array
+        if (v.type === 'activity' || v.source === 'activity') return false;
+
+        // Exclude cancelled or rejected visits
+        const vStatus = (v.status || '').toLowerCase();
+        if (vStatus === 'cancelled' || vStatus === 'rejected') return false;
+
+        // Must be executed/completed visit
+        const isExecuted = vStatus === 'completed' || Boolean(v.isActual) || v.source === 'actual' || (!v.status && !v.source);
+        if (!isExecuted) return false;
+
+        const vDate = v.date || v.visitDate || '';
         return monthsArr.some((mStr) => vDate.startsWith(`${year}-${mStr}`));
       });
 
@@ -682,7 +737,7 @@
   }
 
   /**
-   * Drill-down: View visits list for clicked rep
+   * Drill-down: View visits list for clicked rep in Timeline tab
    */
   window.viewSopsRepVisits = function (repId) {
     if (typeof window.switchReportTab === 'function') {
@@ -690,9 +745,25 @@
       const timelineRepSelect = document.getElementById('timelineRepSelect');
       if (timelineRepSelect) {
         timelineRepSelect.value = repId;
-        if (typeof window.renderTimelineReport === 'function') {
-          window.renderTimelineReport();
-        }
+      }
+
+      // Pre-set timeline date range to match SOPs selected period
+      const yearSelect = document.getElementById('sopsYearSelect');
+      const year = parseInt(yearSelect?.value || new Date().getFullYear(), 10);
+      const selectedMonths = getSelectedSopsMonths();
+      if (selectedMonths.length > 0) {
+        const sortedMonths = selectedMonths.slice().sort();
+        const startM = sortedMonths[0];
+        const endM = sortedMonths[sortedMonths.length - 1];
+        const lastDay = new Date(year, parseInt(endM, 10), 0).getDate();
+        const fromInput = document.getElementById('timelineDateFrom');
+        const toInput = document.getElementById('timelineDateTo');
+        if (fromInput) fromInput.value = `${year}-${startM}-01`;
+        if (toInput) toInput.value = `${year}-${endM}-${String(lastDay).padStart(2, '0')}`;
+      }
+
+      if (typeof window.renderTimelineReport === 'function') {
+        window.renderTimelineReport();
       }
     }
   };
@@ -736,9 +807,9 @@
 
     currentSopsData.forEach((r) => {
       const row = [
-        `"${r.repName}"`,
-        `"${r.repCode}"`,
-        `"${r.lineName}"`,
+        `"${(r.repName || '').replace(/"/g, '""')}"`,
+        `"${(r.repCode || '').replace(/"/g, '""')}"`,
+        `"${(r.lineName || '').replace(/"/g, '""')}"`,
         r.workingDays,
         r.dailyVisitsTarget.toFixed(1),
         r.vacations,

@@ -215,7 +215,6 @@ const directoryTranslations = {
     tabHospitalsList: 'Hospitals List',
     tabPharmaciesList: 'Pharmacies List',
     tabMissingDays: 'Missing Days',
-    tabSops: 'تحليل السجل الشهري (SOPs)',
     tabSops: 'Monthly Record Analysis (SOPs)',
     doctorsDirectoryTitle: 'Doctors Directory',
     doctorsDirectorySubtitle: 'Master physician registry with contact details, specialty, and assignment.',
