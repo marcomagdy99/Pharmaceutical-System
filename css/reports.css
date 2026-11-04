@@ -4309,3 +4309,48 @@ a.gps-action-map-btn {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+.sops-quarter-pills-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--gray-50, #f8f9fa);
+  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
+  align-items: center;
+}
+
+.sops-q-btn {
+  padding: 3px 9px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid var(--border-main, #d1d5db);
+  background: var(--surface-card, #ffffff);
+  color: var(--gray-700, #374151);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sops-q-btn:hover {
+  background: var(--primary, #0d6efd);
+  color: #ffffff;
+  border-color: var(--primary, #0d6efd);
+}
+
+[data-theme="dark"] .sops-quarter-pills-bar {
+  background: #0d1117;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .sops-q-btn {
+  background: #161b22;
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+[data-theme="dark"] .sops-q-btn:hover {
+  background: var(--primary, #0d6efd);
+  color: #ffffff;
+  border-color: var(--primary, #0d6efd);
+}

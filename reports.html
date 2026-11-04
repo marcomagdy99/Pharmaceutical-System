@@ -17,7 +17,7 @@
       })();
     </script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v271"></script>
+    <script src="js/cache-bust.js?v=v272"></script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,18 +26,18 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v271" />
-    <link rel="stylesheet" href="css/reports.css?v=v271" />
+    <link rel="stylesheet" href="css/style.css?v=v272" />
+    <link rel="stylesheet" href="css/reports.css?v=v272" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v271"></script>
-  <script src="js/app.js?v=v271"></script>
-    <script src="js/store.js?v=v271"></script>
+    <script src="js/auth-service.js?v=v272"></script>
+  <script src="js/app.js?v=v272"></script>
+    <script src="js/store.js?v=v272"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v271"></script>
-    <script src="js/firebase-sync.js?v=v271"></script>
+    <script src="js/firebase-config.js?v=v272"></script>
+    <script src="js/firebase-sync.js?v=v272"></script>
   </head>
   <body>
     <div class="app">
@@ -876,22 +876,52 @@
                   <svg class="badge-svg-icon text-primary" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                   <div>
                     <strong>Personal Performance & SOP Compliance Record</strong> — <span id="sopsPersonalRepName"></span>
-                    <div class="small text-muted">Your fair monthly target adjusted for approved leaves & attended events.</div>
+                    <div class="small text-muted">Your fair target adjusted for approved leaves & attended events across selected period.</div>
                   </div>
                 </div>
               </div>
 
               <div class="sales-filter-form-grid">
-                <!-- Month Selector -->
-                <div class="sales-filter-field col-date">
-                  <label for="sopsMonthSelect" data-i18n="filterMonth">Month:</label>
-                  <select id="sopsMonthSelect" class="form-control" onchange="renderSopsReport()"></select>
+                <!-- Multi-select Month / Quarter Selector -->
+                <div class="sales-filter-field col-month">
+                  <label data-i18n="filterMonth">Month / Quarter:</label>
+                  <div class="multi-select-container" id="sopsMonthMultiSelectContainer">
+                    <button
+                      type="button"
+                      class="multi-select-btn"
+                      id="sopsMonthDropdownBtn"
+                      onclick="toggleSopsMonthDropdown(event)"
+                    >
+                      <span id="sopsMonthDropdownLabel">Current Month</span>
+                      <span class="dropdown-caret">▼</span>
+                    </button>
+                    <div class="multi-select-menu" id="sopsMonthDropdownMenu">
+                      <!-- Quick Quarter Selection Bar -->
+                      <div class="sops-quarter-pills-bar">
+                        <button type="button" class="sops-q-btn" onclick="selectSopsQuarter(1)">Q1</button>
+                        <button type="button" class="sops-q-btn" onclick="selectSopsQuarter(2)">Q2</button>
+                        <button type="button" class="sops-q-btn" onclick="selectSopsQuarter(3)">Q3</button>
+                        <button type="button" class="sops-q-btn" onclick="selectSopsQuarter(4)">Q4</button>
+                        <button type="button" class="sops-q-btn" onclick="selectSopsQuarter(0)">Current</button>
+                      </div>
+                      <label class="multi-select-item select-all-item">
+                        <input
+                          type="checkbox"
+                          id="sopsSelectAllMonths"
+                          onchange="toggleSelectAllSopsMonths(this.checked)"
+                        />
+                        <span data-i18n="selectAll">Select All (Full Year)</span>
+                      </label>
+                      <div class="multi-select-divider"></div>
+                      <div id="sopsMonthCheckboxList"></div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Year Selector -->
                 <div class="sales-filter-field col-date">
                   <label for="sopsYearSelect" data-i18n="filterYear">Year:</label>
-                  <select id="sopsYearSelect" class="form-control" onchange="renderSopsReport()"></select>
+                  <select id="sopsYearSelect" class="form-control"></select>
                 </div>
 
                 <!-- Hierarchy Filter: LM -> DM -> Rep (Visible to Managers / Admin) -->
@@ -909,7 +939,7 @@
                 </div>
                 <div class="sales-filter-field col-rep" id="sopsRepFilterContainer">
                   <label for="sopsRepSelect" data-i18n="filterRep">Medical Rep:</label>
-                  <select id="sopsRepSelect" class="form-control" onchange="renderSopsReport()">
+                  <select id="sopsRepSelect" class="form-control">
                     <option value="all">All Medical Reps in Line</option>
                   </select>
                 </div>
@@ -933,85 +963,99 @@
                   </button>
                 </div>
               </div>
+            </div>
 
+            <!-- Tab Prompt Placeholder (Visible until Show is clicked) -->
+            <div class="report-show-prompt" id="sopsPromptContainer">
+              <div class="report-show-prompt-icon">
+                <svg style="width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <h3 class="report-show-prompt-title">Click Show to View Monthly Record Analysis (SOPs)</h3>
+              <p class="report-show-prompt-desc">Select month(s) or quarter, apply team filters, then click Show to compute net working days, targets, and SOP compliance.</p>
+              <button type="button" class="btn btn-primary" onclick="renderSopsReport()">
+                <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span>Show</span>
+              </button>
+            </div>
+
+            <!-- Tab Results Container (Hidden until Show is clicked) -->
+            <div id="sopsResultsContainer" style="display: none;">
               <!-- Policy & Calendar Subtitle Info Badge -->
-              <div class="sops-meta-banner mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="sops-meta-banner mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="badge sops-info-pill" id="sopsHeaderMonthBadge">2026-10 SOPs & Coverage</span>
-                  <span class="badge sops-policy-pill" id="sopsWeekendPolicyBadge">21 Working Days</span>
+                  <span class="badge sops-info-pill" id="sopsHeaderMonthBadge">SOPs & Coverage</span>
+                  <span class="badge sops-policy-pill" id="sopsWeekendPolicyBadge">Working Days</span>
                 </div>
                 <div class="small text-muted sops-formula-hint">
                   <svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                   <span>Net Days = Working Days - (Vacations + Office Work + Activities) | Target = Net Days × Daily Target</span>
                 </div>
               </div>
-            </div>
 
-            <!-- KPI Summary Cards -->
-            <div class="sops-kpi-grid mb-4">
-              <div class="sops-kpi-card">
-                <div class="sops-kpi-label">Working Days</div>
-                <div class="sops-kpi-value text-secondary" id="kpiSopsWorkingDays">21</div>
-                <div class="sops-kpi-sub">Statutory in Month</div>
+              <!-- KPI Summary Cards -->
+              <div class="sops-kpi-grid mb-4">
+                <div class="sops-kpi-card">
+                  <div class="sops-kpi-label">Working Days</div>
+                  <div class="sops-kpi-value text-secondary" id="kpiSopsWorkingDays">21</div>
+                  <div class="sops-kpi-sub">Statutory in Period</div>
+                </div>
+                <div class="sops-kpi-card">
+                  <div class="sops-kpi-label">Net Working Days</div>
+                  <div class="sops-kpi-value text-dark" id="kpiSopsNetDays">20</div>
+                  <div class="sops-kpi-sub">Field Working Days</div>
+                </div>
+                <div class="sops-kpi-card">
+                  <div class="sops-kpi-label">Period Visits Target</div>
+                  <div class="sops-kpi-value text-primary" id="kpiSopsTotalTarget">160</div>
+                  <div class="sops-kpi-sub">Net Days × Daily Quota</div>
+                </div>
+                <div class="sops-kpi-card">
+                  <div class="sops-kpi-label">Actual Executed Visits</div>
+                  <div class="sops-kpi-value text-success" id="kpiSopsTotalActual">148</div>
+                  <div class="sops-kpi-sub">Field Logged Calls</div>
+                </div>
+                <div class="sops-kpi-card">
+                  <div class="sops-kpi-label">SOPs % Achievement</div>
+                  <div class="sops-kpi-value text-primary" id="kpiSopsOverallPct">92.5%</div>
+                  <div class="sops-kpi-sub">Actual / Period Target</div>
+                </div>
+                <div class="sops-kpi-card">
+                  <div class="sops-kpi-label">Avg. Visits / Day</div>
+                  <div class="sops-kpi-value text-info" id="kpiSopsAvgVelocity">8.71</div>
+                  <div class="sops-kpi-sub">Visits / Field Report Days</div>
+                </div>
               </div>
-              <div class="sops-kpi-card">
-                <div class="sops-kpi-label">Net Working Days</div>
-                <div class="sops-kpi-value text-dark" id="kpiSopsNetDays">20</div>
-                <div class="sops-kpi-sub">Field Working Days</div>
-              </div>
-              <div class="sops-kpi-card">
-                <div class="sops-kpi-label">Monthly Visits Target</div>
-                <div class="sops-kpi-value text-primary" id="kpiSopsTotalTarget">160</div>
-                <div class="sops-kpi-sub">Net Days × Daily Quota</div>
-              </div>
-              <div class="sops-kpi-card">
-                <div class="sops-kpi-label">Actual Executed Visits</div>
-                <div class="sops-kpi-value text-success" id="kpiSopsTotalActual">148</div>
-                <div class="sops-kpi-sub">Field Logged Calls</div>
-              </div>
-              <div class="sops-kpi-card">
-                <div class="sops-kpi-label">SOPs % Achievement</div>
-                <div class="sops-kpi-value text-primary" id="kpiSopsOverallPct">92.5%</div>
-                <div class="sops-kpi-sub">Actual / Monthly Target</div>
-              </div>
-              <div class="sops-kpi-card">
-                <div class="sops-kpi-label">Avg. Visits / Day</div>
-                <div class="sops-kpi-value text-info" id="kpiSopsAvgVelocity">8.71</div>
-                <div class="sops-kpi-sub">Visits / Field Report Days</div>
-              </div>
-            </div>
 
-            <!-- SOPs Performance Table -->
-            <div class="table-responsive sops-table-wrap">
-              <table class="table sops-table" id="sopsTable">
-                <thead>
-                  <tr class="sops-super-header">
-                    <th colspan="2" class="border-end">Territory & Employee</th>
-                    <th colspan="7" class="border-end text-center sops-header-group">
-                      <span>SOPs Field Parameters & Deductions</span>
-                    </th>
-                    <th colspan="4" class="text-center sops-header-group">
-                      <span>Performance & Daily Velocity</span>
-                    </th>
-                  </tr>
-                  <tr class="sops-columns-header">
-                    <th style="min-width: 140px;">Territory / Brick</th>
-                    <th style="min-width: 150px;">Employee</th>
-                    <th class="text-center" style="min-width: 95px;">Working Days</th>
-                    <th class="text-center" style="min-width: 85px;">Daily Target</th>
-                    <th class="text-center text-danger" style="min-width: 75px;">Vacations</th>
-                    <th class="text-center" style="min-width: 75px;">Office Work</th>
-                    <th class="text-center text-primary" style="min-width: 75px;">Activities</th>
-                    <th class="text-center fw-bold" style="min-width: 90px;">Net Days</th>
-                    <th class="text-center fw-bold" style="min-width: 105px;">Monthly Target</th>
-                    <th class="text-center text-success fw-bold" style="min-width: 95px;">Actual Visits</th>
-                    <th class="text-center fw-bold" style="min-width: 85px;">SOPs %</th>
-                    <th class="text-center" style="min-width: 95px;">Daily Reports</th>
-                    <th class="text-center text-primary fw-bold" style="min-width: 100px;">Avg. Visits/Day</th>
-                  </tr>
-                </thead>
-                <tbody id="sopsReportTableBody"></tbody>
-              </table>
+              <!-- SOPs Performance Table (Territory / Brick column removed) -->
+              <div class="table-responsive sops-table-wrap">
+                <table class="table sops-table" id="sopsTable">
+                  <thead>
+                    <tr class="sops-super-header">
+                      <th class="border-end text-start">Employee Details</th>
+                      <th colspan="6" class="border-end text-center sops-header-group">
+                        <span>SOPs Field Parameters & Deductions</span>
+                      </th>
+                      <th colspan="5" class="text-center sops-header-group">
+                        <span>Performance & Daily Velocity</span>
+                      </th>
+                    </tr>
+                    <tr class="sops-columns-header">
+                      <th style="min-width: 170px;">Employee & Division</th>
+                      <th class="text-center" style="min-width: 95px;">Working Days</th>
+                      <th class="text-center" style="min-width: 85px;">Daily Target</th>
+                      <th class="text-center text-danger" style="min-width: 75px;">Vacations</th>
+                      <th class="text-center" style="min-width: 75px;">Office Work</th>
+                      <th class="text-center text-primary" style="min-width: 75px;">Activities</th>
+                      <th class="text-center fw-bold" style="min-width: 90px;">Net Days</th>
+                      <th class="text-center fw-bold" style="min-width: 105px;">Period Target</th>
+                      <th class="text-center text-success fw-bold" style="min-width: 95px;">Actual Visits</th>
+                      <th class="text-center fw-bold" style="min-width: 85px;">SOPs %</th>
+                      <th class="text-center" style="min-width: 95px;">Daily Reports</th>
+                      <th class="text-center text-primary fw-bold" style="min-width: 100px;">Avg. Visits/Day</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sopsReportTableBody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -3293,23 +3337,23 @@
 
     <!-- Scripts -->
     <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v271"></script>
+    <script src="js/interactive-charts.js?v=v272"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v271"></script>
-    <script src="js/export-service.js?v=v271"></script>
-    <script src="js/shared-report.js?v=v271"></script>
-    <script src="js/sales-report.js?v=v271"></script>
-    <script src="js/achievements-report.js?v=v271"></script>
-    <script src="js/timeline-report.js?v=v271"></script>
-    <script src="js/coverage-report.js?v=v271"></script>
-    <script src="js/doctors-report.js?v=v271"></script>
-    <script src="js/hospitals-report.js?v=v271"></script>
-    <script src="js/pharmacies-report.js?v=v271"></script>
-    <script src="js/missing-days-report.js?v=v271"></script>
-    <script src="js/gps-service.js?v=v271"></script>
-    <script src="js/gps-tracing-report.js?v=v271"></script>
-    <script src="js/accounts-costing-report.js?v=v271"></script>
-    <script src="js/sops-report.js?v=v271"></script>
+    <script src="js/excel-templates-data.js?v=v272"></script>
+    <script src="js/export-service.js?v=v272"></script>
+    <script src="js/shared-report.js?v=v272"></script>
+    <script src="js/sales-report.js?v=v272"></script>
+    <script src="js/achievements-report.js?v=v272"></script>
+    <script src="js/timeline-report.js?v=v272"></script>
+    <script src="js/coverage-report.js?v=v272"></script>
+    <script src="js/doctors-report.js?v=v272"></script>
+    <script src="js/hospitals-report.js?v=v272"></script>
+    <script src="js/pharmacies-report.js?v=v272"></script>
+    <script src="js/missing-days-report.js?v=v272"></script>
+    <script src="js/gps-service.js?v=v272"></script>
+    <script src="js/gps-tracing-report.js?v=v272"></script>
+    <script src="js/accounts-costing-report.js?v=v272"></script>
+    <script src="js/sops-report.js?v=v272"></script>
   </body>
 </html>
 

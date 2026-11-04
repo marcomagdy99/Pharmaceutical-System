@@ -447,6 +447,10 @@ document.addEventListener('click', (e) => {
   if (achMonthContainer && !achMonthContainer.contains(e.target) && typeof closeAchMonthDropdown === 'function') {
     closeAchMonthDropdown();
   }
+  const sopsMonthContainer = document.getElementById('sopsMonthMultiSelectContainer');
+  if (sopsMonthContainer && !sopsMonthContainer.contains(e.target) && typeof closeSopsMonthDropdown === 'function') {
+    closeSopsMonthDropdown();
+  }
   const pharmSalesMonthContainer = document.getElementById('pharmSalesMonthMultiSelectContainer');
   if (pharmSalesMonthContainer && !pharmSalesMonthContainer.contains(e.target) && typeof closePharmSalesMonthDropdown === 'function') {
     closePharmSalesMonthDropdown();
