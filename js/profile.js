@@ -44,6 +44,8 @@ const profileTranslations = {
     toggleGpsLabel: "Enforce GPS Location Verification for Visits",
     toggleGpsHint: "When enabled, reps must record visits within the clinic geofence. If rep disables GPS, an audit flag is reported to the manager.",
     gpsRadiusLabel: "Geofencing Validation Radius (Meters)",
+    defaultDailyVisitsLabel: "Default Daily Visits Target (Total Visits/Day)",
+    defaultDailyVisitsHint: "Company-wide standard daily visits quota per rep used in Monthly Record Analysis (SOPs).",
     minPmVisitsLabel: "Minimum Evening Visits (PM Visits/Day)",
     minPmVisitsHint: "Daily minimum required clinic visits during the evening shift for medical representatives.",
     workSchedulePolicyTitle: "Work Schedule & Weekly Rest Days",
@@ -532,6 +534,8 @@ function loadUserProfile() {
 
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
       if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
+      const defaultDailyInput = document.getElementById("defaultDailyVisitsTargetInput");
+      if (defaultDailyInput) defaultDailyInput.value = currentSettings.defaultDailyVisitsTarget !== undefined ? currentSettings.defaultDailyVisitsTarget : 8;
       if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
 
       // Weekend Policy: backwards compatibility with isThursdayWeekend
@@ -943,6 +947,8 @@ function handleSaveCompanySettings(e) {
 
   const requireGpsValidation = toggleInput ? toggleInput.checked : true;
   const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
+  const defaultDailyInput = document.getElementById("defaultDailyVisitsTargetInput");
+  const defaultDailyVisitsTarget = defaultDailyInput ? (parseFloat(defaultDailyInput.value) || 8) : 8;
   const minPmVisitsPerDay = minPmInput ? (parseInt(minPmInput.value, 10) || 4) : 4;
   const allowLeaveRollover = rolloverToggle ? rolloverToggle.checked : true;
   const leaveRolloverGraceMonths = rolloverGrace ? (parseInt(rolloverGrace.value, 10) || 3) : 3;
@@ -964,6 +970,7 @@ function handleSaveCompanySettings(e) {
     window.store.companySettings.update({
       requireGpsValidation,
       gpsMaxDistanceMeters,
+      defaultDailyVisitsTarget,
       minPmVisitsPerDay,
       allowLeaveRollover,
       leaveRolloverGraceMonths,

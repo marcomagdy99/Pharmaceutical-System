@@ -371,8 +371,12 @@
       const repLine = allLines.find((l) => l.id === rep.lineId || (rep.lineIds && rep.lineIds.includes(l.id)));
       const lineName = repLine ? repLine.name : (rep.division || 'Clinics & Poly Clinics');
 
-      // Daily Visits Target (Defaults to 8.0 or rep individual override)
-      const dailyTarget = parseFloat(rep.dailyTarget || rep.targetPerDay || 8.0);
+      // Daily Visits Target (Defaults to company settings default or 8.0, with rep individual override)
+      const companySettings = (window.store && window.store.companySettings)
+        ? window.store.companySettings.get()
+        : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+      const companyDefaultDaily = parseFloat(companySettings.defaultDailyVisitsTarget || 8.0);
+      const dailyTarget = parseFloat(rep.dailyTarget || rep.targetPerDay || companyDefaultDaily);
 
       let totalPeriodVacations = 0;
       let totalPeriodActivities = 0;

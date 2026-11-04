@@ -79,6 +79,8 @@ const userTranslations = {
     annualDaysLabel: "Annual (Days)",
     casualDaysLabel: "Casual (Days)",
     sickDaysLabel: "Sick (Days)",
+    dailyTargetLabel: "Daily Visits Target",
+    dailyTargetHint: "Daily quota for Monthly Record Analysis (SOPs). Company default: 8.0",
     login_as: "Log in as (Preview)",
   },
 };
@@ -1276,6 +1278,10 @@ if (typeof renderSidebar === "function") {
     if (areaGroup) {
       areaGroup.style.display = (normRole === "Rep") ? "block" : "none";
     }
+    const dailyTargetGroup = document.getElementById("dailyTargetGroup");
+    if (dailyTargetGroup) {
+      dailyTargetGroup.style.display = (normRole === "Rep") ? "block" : "none";
+    }
     const productLineGroup = document.getElementById("productLineGroup");
     if (productLineGroup) {
       productLineGroup.style.display = ["BU", "LM", "DM", "Rep", "PM"].includes(normRole)
@@ -1373,6 +1379,11 @@ if (typeof renderSidebar === "function") {
       document.getElementById("uCasualLeave").value = 6;
     if (document.getElementById("uSickLeave"))
       document.getElementById("uSickLeave").value = 7;
+    const dtInput = document.getElementById("uDailyTarget");
+    if (dtInput) {
+      const compSettings = (window.store && window.store.companySettings) ? window.store.companySettings.get() : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+      dtInput.value = compSettings.defaultDailyVisitsTarget || 8;
+    }
     const hireDateInput = document.getElementById("uHireDate");
     if (hireDateInput) {
       hireDateInput.value = new Date().toISOString().slice(0, 10);
@@ -1471,6 +1482,12 @@ if (typeof renderSidebar === "function") {
       document.getElementById("uCasualLeave").value = lb.emergency ?? 6;
     if (document.getElementById("uSickLeave"))
       document.getElementById("uSickLeave").value = lb.sick ?? 7;
+    const dtInput = document.getElementById("uDailyTarget");
+    if (dtInput) {
+      const compSettings = (window.store && window.store.companySettings) ? window.store.companySettings.get() : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+      const fallbackTarget = compSettings.defaultDailyVisitsTarget || 8;
+      dtInput.value = user.dailyTarget != null ? user.dailyTarget : fallbackTarget;
+    }
 
     const titleEl = document.getElementById("userModalTitle");
     if (titleEl) titleEl.setAttribute("data-i18n", "edit_user");
@@ -1602,6 +1619,10 @@ if (typeof renderSidebar === "function") {
           return hist;
         }
         return [];
+      })(),
+      dailyTarget: (() => {
+        const val = parseFloat(document.getElementById("uDailyTarget")?.value);
+        return (!isNaN(val) && val > 0) ? val : 8.0;
       })(),
       lineIds: selectedLineIds,
       lineId: selectedLineIds[0] || null,

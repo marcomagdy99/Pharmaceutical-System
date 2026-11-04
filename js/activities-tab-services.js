@@ -459,6 +459,7 @@
                 ${srv.category ? `<span class="svc-cat-badge" style="display:inline-block; font-size:0.75rem; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:10px; margin-bottom:4px; font-weight:700; border:1px solid #bae6fd;">${Core.escapeHTML(srv.category)}</span>` : ""}
                 <div class="svc-title-text">${Core.escapeHTML(srv.title)}</div>
                 ${srv.notes ? `<div class="svc-notes-sub"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${Core.escapeHTML(srv.notes)}</div>` : ""}
+                ${srv.supplierName ? `<div class="svc-supplier-sub" style="font-size: 0.76rem; color: #475569; margin-top: 3px;"><i class="fas fa-truck-field" style="font-size: 0.72rem; color: #0284c7; margin-inline-end: 4px;"></i><strong>Supplier:</strong> ${Core.escapeHTML(srv.supplierName)}${srv.invoiceRefNo ? ` &bull; <strong>Ref:</strong> <code style="font-size: 0.72rem; background: #f1f5f9; padding: 1px 4px; border-radius: 4px;">${Core.escapeHTML(srv.invoiceRefNo)}</code>` : ""}</div>` : (srv.invoiceRefNo ? `<div class="svc-supplier-sub" style="font-size: 0.76rem; color: #475569; margin-top: 3px;"><i class="fas fa-file-invoice" style="font-size: 0.72rem; color: #0284c7; margin-inline-end: 4px;"></i><strong>Ref:</strong> <code style="font-size: 0.72rem; background: #f1f5f9; padding: 1px 4px; border-radius: 4px;">${Core.escapeHTML(srv.invoiceRefNo)}</code></div>` : "")}
                 ${attachmentHtml}
               </div>
             </td>
@@ -571,6 +572,10 @@
     Core._state.currentServiceFileBase64 = null;
     const catSelect = document.getElementById("serviceFormCategorySelect");
     if (catSelect) catSelect.selectedIndex = 0;
+    const supInp = document.getElementById("serviceFormSupplierInput");
+    if (supInp) supInp.value = "";
+    const invInp = document.getElementById("serviceFormInvoiceRefInput");
+    if (invInp) invInp.value = "";
     const fileInp = document.getElementById("serviceFormFileInput");
     if (fileInp) fileInp.value = "";
     const submitBtn = document.getElementById("btnSubmitService");
@@ -978,6 +983,8 @@
     const cost = parseFloat(costInput.value);
     const date = dateInput.value;
     const notes = notesInput.value.trim();
+    const supplierName = (document.getElementById("serviceFormSupplierInput")?.value || "").trim();
+    const invoiceRefNo = (document.getElementById("serviceFormInvoiceRefInput")?.value || "").trim();
 
     if (!category) {
       Core.safeShowToast("Please select a service category.", "warning");
@@ -1157,6 +1164,8 @@
       cost: cost,
       date: date,
       notes: notes,
+      supplierName: supplierName || null,
+      invoiceRefNo: invoiceRefNo || null,
       isShared: isShared,
       shares: isShared ? shares : [],
       attachmentBase64: Core._state.currentServiceFileBase64 || null,

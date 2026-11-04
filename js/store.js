@@ -2605,6 +2605,7 @@
           window.DEMO_DATA.companySettings = {
             requireGpsValidation: true,
             gpsMaxDistanceMeters: 200,
+            defaultDailyVisitsTarget: 8.0,
             minPmVisitsPerDay: 4,
             allowLeaveRollover: true,
             leaveRolloverGraceMonths: 3,

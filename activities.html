@@ -27,21 +27,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v270">
-    <link rel="stylesheet" href="css/activities.css?v=v270">
+    <link rel="stylesheet" href="css/style.css?v=v273">
+    <link rel="stylesheet" href="css/activities.css?v=v273">
 
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v270"></script>
-  <script src="js/app.js?v=v270"></script>
-    <script src="js/store.js?v=v270"></script>
+    <script src="js/auth-service.js?v=v273"></script>
+  <script src="js/app.js?v=v273"></script>
+    <script src="js/store.js?v=v273"></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v270"></script>
-    <script src="js/firebase-sync.js?v=v270"></script>
+    <script src="js/firebase-config.js?v=v273"></script>
+    <script src="js/firebase-sync.js?v=v273"></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v270"></script>
+    <script src="js/cache-bust.js?v=v273"></script>
   </head>
 <body>
     <div class="app">
@@ -743,6 +743,18 @@
                     </div>
 
                     <!-- Row 7: Comment / Justification -->
+                    <!-- Row 7.5: Supplier / Service Provider & Invoice / Quotation Ref No -->
+                    <div class="form-grid-2col">
+                        <div class="form-group">
+                            <label class="form-label"><span data-i18n="supplierNameLabel">Supplier / Service Provider</span></label>
+                            <input type="text" id="serviceFormSupplierInput" class="form-control" placeholder="e.g. Al-Ahram Printing, Radisson Blu, Event Pro...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><span data-i18n="invoiceRefLabel">Quotation / Invoice Ref No</span></label>
+                            <input type="text" id="serviceFormInvoiceRefInput" class="form-control" placeholder="e.g. INV-2026-0891, QUO-7721...">
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label" data-i18n="notes">Justification & Potential ROI</label>
                         <textarea id="serviceFormNotesInput" class="form-control" rows="2" placeholder="Specify event details, expected Rx potential, or department benefit..."></textarea>
@@ -818,13 +830,13 @@
 
     <!-- Scripts -->
     <!-- Modular Field Activities Architecture -->
-    <script src="js/workflow-engine.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-core.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-tab-daily.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-tab-expenses.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-tab-services.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-tab-budget.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-decisions.js?v=v270" charset="UTF-8"></script>
-    <script src="js/activities-init.js?v=v270" charset="UTF-8"></script>
+    <script src="js/workflow-engine.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-core.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-tab-daily.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-tab-expenses.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-tab-services.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-tab-budget.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-decisions.js?v=v273" charset="UTF-8"></script>
+    <script src="js/activities-init.js?v=v273" charset="UTF-8"></script>
 </body>
 </html>
