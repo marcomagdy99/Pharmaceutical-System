@@ -216,22 +216,15 @@
     const lmContainer = document.getElementById('sopsLmFilterContainer');
     const dmContainer = document.getElementById('sopsDmFilterContainer');
     const repContainer = document.getElementById('sopsRepFilterContainer');
-    const repNotice = document.getElementById('sopsRepPersonalNotice');
 
     // Strict Rule: Medical Rep only sees their own individual performance
     if (isRep) {
       if (lmContainer) lmContainer.style.display = 'none';
       if (dmContainer) dmContainer.style.display = 'none';
       if (repContainer) repContainer.style.display = 'none';
-      if (repNotice) {
-        repNotice.style.display = 'flex';
-        const nameEl = document.getElementById('sopsPersonalRepName');
-        if (nameEl) nameEl.textContent = currentUser.name;
-      }
       return;
     }
 
-    if (repNotice) repNotice.style.display = 'none';
     if (lmContainer) lmContainer.style.display = isLM ? 'none' : 'block';
     if (dmContainer) dmContainer.style.display = isDM ? 'none' : 'block';
     if (repContainer) repContainer.style.display = 'block';
