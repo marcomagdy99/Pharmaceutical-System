@@ -71,3 +71,7 @@ node_modules/
 # Scratch workspace & dev artifacts
 scratch/
 .vscode/
+
+# Private Migration & Internal Architecture Docs
+BACKEND_MIGRATION_ROADMAP.md
+
