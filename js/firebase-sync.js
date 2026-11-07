@@ -75,7 +75,6 @@
       "doctors",
       "hospitals",
       "pharmacies",
-      "visits",
       "leaves",
       "sales",
       "announcements",
@@ -304,7 +303,7 @@
 
 
 
-        const { distributorSales, ...cleanMasterData } = window.DEMO_DATA;
+        const { distributorSales, visits, ...cleanMasterData } = window.DEMO_DATA;
         const payloadString = JSON.stringify(cleanMasterData);
 
         await db.collection("app_state").doc("master_data").set({
@@ -576,6 +575,91 @@
     }
   }
 
+
+  // Atomic sync for individual visit record to Cloud Firestore (Eliminates Last-Write-Wins Race Condition)
+  async function syncVisitToCloud(action, visitObj) {
+    if (!visitObj || !visitObj.id) return;
+    if (!db) {
+      db = initFirestore();
+      if (!db) return;
+    }
+    try {
+      const docRef = db.collection("visits").doc(String(visitObj.id));
+      if (action === "delete") {
+        await docRef.delete();
+        console.log(`[FirebaseSync] Deleted visit ${visitObj.id} from Cloud.`);
+      } else {
+        await docRef.set(visitObj, { merge: true });
+        console.log(`[FirebaseSync] Synced visit ${visitObj.id} atomically to Cloud.`);
+      }
+    } catch (err) {
+      console.warn("[FirebaseSync] Error syncing visit record to Cloud:", err);
+    }
+  }
+
+  let isVisitsListening = false;
+  // Realtime granular listener for visits collection (Discrete atomic updates)
+  function startVisitsCloudListener() {
+    if (isVisitsListening || !db) return;
+    isVisitsListening = true;
+
+    try {
+      db.collection("visits").onSnapshot((snapshot) => {
+        let hasChanges = false;
+        if (!window.DEMO_DATA) window.DEMO_DATA = {};
+        if (!Array.isArray(window.DEMO_DATA.visits)) window.DEMO_DATA.visits = [];
+        const localVisits = window.DEMO_DATA.visits;
+
+        snapshot.docChanges().forEach((change) => {
+          const v = change.doc.data();
+          if (!v || !v.id) return;
+          const idx = localVisits.findIndex((it) => String(it.id) === String(v.id));
+
+          if (change.type === "added") {
+            if (idx >= 0) {
+              const localStr = JSON.stringify(localVisits[idx]);
+              const cloudStr = JSON.stringify(v);
+              if (localStr !== cloudStr) {
+                localVisits[idx] = Object.assign({}, localVisits[idx], v);
+                hasChanges = true;
+              }
+            } else {
+              localVisits.unshift(v);
+              hasChanges = true;
+            }
+          } else if (change.type === "modified") {
+            if (idx >= 0) {
+              localVisits[idx] = Object.assign({}, localVisits[idx], v);
+              hasChanges = true;
+            } else {
+              localVisits.unshift(v);
+              hasChanges = true;
+            }
+          } else if (change.type === "removed") {
+            if (idx >= 0) {
+              localVisits.splice(idx, 1);
+              hasChanges = true;
+            }
+          }
+        });
+
+        if (hasChanges) {
+          console.log("[FirebaseSync] Realtime visits updated from Cloud collection.");
+          try {
+            window._suppressCloudPush = true;
+            localStorage.setItem("pharma_master_data", JSON.stringify(window.DEMO_DATA));
+            window._suppressCloudPush = false;
+          } catch (e) {}
+          notifyActiveViews();
+        }
+      }, (err) => {
+        console.warn("[FirebaseSync] Visits listener warning:", err);
+      });
+    } catch (err) {
+      console.warn("[FirebaseSync] Visits listener setup error:", err);
+    }
+  }
+
   // Start Realtime Listener from Cloud Firestore
   function startCloudListener() {
     if (isListening || !db) return;
@@ -714,6 +798,52 @@
         }
       }
 
+
+      // Fetch discrete visits collection from Cloud (atomic collection)
+      try {
+        const visitsSnap = await db.collection("visits").get();
+        if (!visitsSnap.empty) {
+          const cloudVisits = [];
+          visitsSnap.forEach((doc) => {
+            const v = doc.data();
+            if (v && v.id) cloudVisits.push(v);
+          });
+          if (cloudVisits.length > 0) {
+            if (!window.DEMO_DATA) window.DEMO_DATA = {};
+            const localVisits = window.DEMO_DATA.visits || [];
+            cloudVisits.forEach((cv) => {
+              const idx = localVisits.findIndex((lv) => String(lv.id) === String(cv.id));
+              if (idx >= 0) {
+                localVisits[idx] = Object.assign({}, localVisits[idx], cv);
+              } else {
+                localVisits.unshift(cv);
+              }
+            });
+            window.DEMO_DATA.visits = localVisits;
+            try {
+              localStorage.setItem("pharma_master_data", JSON.stringify(window.DEMO_DATA));
+            } catch (e) {}
+            console.log(`[FirebaseSync] Loaded ${cloudVisits.length} discrete visits from Cloud collection.`);
+          }
+        } else {
+          // If cloud visits collection is empty, seed existing local visits to cloud
+          const currentVisits = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) ? window.DEMO_DATA.visits : [];
+          if (currentVisits.length > 0) {
+            console.info(`[FirebaseSync] Seeding ${currentVisits.length} visits to Cloud collection...`);
+            const batch = db.batch();
+            currentVisits.slice(0, 450).forEach((v) => {
+              if (v && v.id) {
+                const ref = db.collection("visits").doc(String(v.id));
+                batch.set(ref, v, { merge: true });
+              }
+            });
+            batch.commit().catch(e => console.warn("[FirebaseSync] Seed batch error:", e));
+          }
+        }
+      } catch (visErr) {
+        console.warn("[FirebaseSync] Error fetching visits collection:", visErr);
+      }
+
       // Also fetch distributor sales from Cloud
       try {
         const salesDoc = await db.collection("app_state").doc("distributor_sales").get();
@@ -795,6 +925,7 @@
   window.pushSalesToCloud = pushSalesToCloud;
   window.syncFromCloudNow = fetchCloudInitial;
   window.syncPendingOfflineVisits = syncPendingOfflineVisits;
+  window.syncVisitToCloud = syncVisitToCloud;
 
   // Network status listeners
   window.addEventListener("online", () => {
@@ -806,6 +937,7 @@
       fetchCloudInitial(false);
       if (!isListening) startCloudListener();
       if (!isSalesListening) startSalesCloudListener();
+      if (!isVisitsListening) startVisitsCloudListener();
     }
   });
 
@@ -829,6 +961,7 @@
       fetchCloudInitial(false);
       startCloudListener();
       startSalesCloudListener();
+      startVisitsCloudListener();
     }
   }
 

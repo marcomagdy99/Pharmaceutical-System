@@ -12,6 +12,11 @@ service cloud.firestore {
       allow delete: if false; // STRICT: Clients cannot delete the root data document!
     }
 
+    // Granular Visits Collection: discrete atomic documents preventing race condition & 1MB limit
+    match /visits/{visitId} {
+      allow read, write: if true;
+    }
+
     // Default deny for all other paths and arbitrary collections
     match /{document=**} {
       allow read, write: if false;

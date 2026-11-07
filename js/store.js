@@ -24,6 +24,13 @@
       } else if (typeof window.saveDataToStorage === "function") {
         window.saveDataToStorage();
       }
+    } else if (entity === "visits") {
+      if (typeof window.saveDataToStorage === "function") {
+        window.saveDataToStorage();
+      }
+      if (typeof window.syncVisitToCloud === "function") {
+        window.syncVisitToCloud(action, payload);
+      }
     } else {
       if (typeof window.saveDataToStorage === "function") {
         window.saveDataToStorage();
