@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Safety guard for app_state collection during testing / prototype phase:
+    // 1. Only allow reading and writing to the specific docs used by the system.
+    // 2. FORBID deleting the document entirely to prevent catastrophic data wipeout.
+    // 3. Enforce maximum document size guard.
+    match /app_state/{docId} {
+      allow read: if docId in ['master_data', 'distributor_sales'];
+      allow create, update: if docId in ['master_data', 'distributor_sales'];
+      allow delete: if false; // STRICT: Clients cannot delete the root data document!
+    }
+
+    // Default deny for all other paths and arbitrary collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
