@@ -1509,6 +1509,80 @@ a.btn-sm {
   z-index: 2501;
 }
 
+/* Reusable Modal & Form Helpers */
+.modal-content-sm-480 {
+  max-width: 480px;
+}
+.modal-title-flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form-label-bold {
+  font-weight: 600;
+}
+.input-readonly-muted {
+  background: var(--gray-100, #f1f5f9) !important;
+}
+[data-theme="dark"] .input-readonly-muted {
+  background: #252b36 !important;
+  color: #94a3b8 !important;
+}
+.visit-insertion-meta-box {
+  background: rgba(13, 110, 253, 0.06);
+  border: 1px solid rgba(13, 110, 253, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  color: var(--text-color, var(--gray-700));
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+[data-theme="dark"] .visit-insertion-meta-box {
+  background: rgba(13, 110, 253, 0.12) !important;
+  border-color: rgba(13, 110, 253, 0.35) !important;
+  color: #cbd5e1 !important;
+}
+.visit-insertion-meta-value {
+  font-weight: 600;
+  color: #0d6efd;
+}
+[data-theme="dark"] .visit-insertion-meta-value {
+  color: #60a5fa !important;
+}
+.costing-modal-body-scroll {
+  max-height: 520px;
+  overflow-y: auto;
+}
+.costing-modal-summary-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-hover, #f8f9fa);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+[data-theme="dark"] .costing-modal-summary-bar {
+  background: #1e2229 !important;
+  color: #f1f3f5 !important;
+}
+.costing-modal-total-text {
+  color: var(--primary, #0052cc);
+  font-size: 1rem;
+}
+[data-theme="dark"] .costing-modal-total-text {
+  color: #60a5fa !important;
+}
+.costing-report-table {
+  width: 100%;
+  font-size: 0.85rem;
+}
+
 /* ==========================================================================
    Global Toast Notifications System
    Floats on top of all modals (z-index: 2500) and sticky topbars with high contrast

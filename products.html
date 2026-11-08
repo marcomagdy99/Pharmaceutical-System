@@ -21,22 +21,22 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css?v=v276">
+    <link rel="stylesheet" href="css/style.css?v=v277">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/products.css?v=v276">
+    <link rel="stylesheet" href="css/products.css?v=v277">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v276"></script>
-  <script src="js/app.js?v=v276"></script>
-    <script src="js/store.js?v=v276"></script>
+    <script src="js/auth-service.js?v=v277" defer></script>
+  <script src="js/app.js?v=v277" defer></script>
+    <script src="js/store.js?v=v277" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v276"></script>
-    <script src="js/firebase-sync.js?v=v276"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
+    <script src="js/firebase-config.js?v=v277" defer></script>
+    <script src="js/firebase-sync.js?v=v277" defer></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v276"></script>
+    <script src="js/cache-bust.js?v=v277" defer></script>
   </head>
 <body>
     <div class="app">
@@ -48,7 +48,7 @@
             <!-- Top Navigation Bar & Brand Header -->
       <!-- Unified Topbar Strip -->
       <header class="topbar" id="topbar">
-        <script>renderTopbar();</script>
+        <script>if (typeof renderTopbar === "function") renderTopbar();</script>
       </header>
 
             <div class="content" id="pageContent" style="padding: 1.5rem;">
@@ -324,9 +324,9 @@
 </div>
 
 <!-- Bootstrap Bundle JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
 <!-- Firebase Config (mock) -->
 <!-- Main App JS (mock logic/auth/i18n) -->
-<script src="js/products.js?v=v276"></script>
+<script src="js/products.js?v=v277" defer></script>
 </body>
 </html>

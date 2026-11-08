@@ -24,19 +24,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v276">
-    <link rel="stylesheet" href="css/visits.css?v=v276">
+    <link rel="stylesheet" href="css/style.css?v=v277">
+    <link rel="stylesheet" href="css/visits.css?v=v277">
       <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v276"></script>
-  <script src="js/app.js?v=v276"></script>
-    <script src="js/store.js?v=v276"></script>
+    <script src="js/auth-service.js?v=v277" defer></script>
+  <script src="js/app.js?v=v277" defer></script>
+    <script src="js/store.js?v=v277" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v276"></script>
-    <script src="js/firebase-sync.js?v=v276"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
+    <script src="js/firebase-config.js?v=v277" defer></script>
+    <script src="js/firebase-sync.js?v=v277" defer></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v276"></script>
+    <script src="js/cache-bust.js?v=v277" defer></script>
   </head>
 <body>
     <div class="app">
@@ -46,7 +46,7 @@
         <main class="main-content">
                   <!-- Unified Topbar Strip -->
       <header class="topbar" id="topbar">
-        <script>renderTopbar();</script>
+        <script>if (typeof renderTopbar === "function") renderTopbar();</script>
       </header>
 
             <div class="content" id="pageContent">
@@ -267,14 +267,14 @@
                 </div>
             </div>
             <div class="form-group" id="visitInsertionMetaContainer" style="display: none; margin-bottom: 12px;">
-                <div style="background: rgba(13, 110, 253, 0.06); border: 1px solid rgba(13, 110, 253, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; color: var(--text-color, var(--gray-700)); display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                <div class="visit-insertion-meta-box">
                     <div>
                         <strong data-i18n="modalInsertionDate">Insertion Date:</strong>
-                        <span id="visitInsertionDateDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+                        <span id="visitInsertionDateDisplay" class="visit-insertion-meta-value">-</span>
                     </div>
                     <div>
                         <strong data-i18n="modalInsertionTime">Insertion Time:</strong>
-                        <span id="visitInsertionTimeDisplay" style="font-weight: 600; color: #0d6efd;">-</span>
+                        <span id="visitInsertionTimeDisplay" class="visit-insertion-meta-value">-</span>
                     </div>
                 </div>
             </div>
@@ -364,9 +364,9 @@
 
     <!-- Relocation Request Modal -->
     <div class="modal" id="relocationModal" style="display: none; z-index: 1060;">
-        <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-content modal-content-sm-480">
             <div class="modal-header">
-                <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                <div class="modal-title modal-title-flex">
                     <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
                     <span id="lblRelocationModalTitle">Clinic Relocation Request (Re-pin GPS)</span>
                 </div>
@@ -377,15 +377,15 @@
                     If the doctor has relocated their clinic to a new facility, your current coordinates will be captured and submitted to your District Manager for formal validation.
                 </p>
                 <div class="form-group mb-3">
-                    <label class="form-label" style="font-weight: 600;">Doctor / Account:</label>
-                    <input type="text" id="relocateTargetNameDisplay" class="form-control" readonly style="background: var(--gray-100, #f1f5f9);">
+                    <label class="form-label form-label-bold">Doctor / Account:</label>
+                    <input type="text" id="relocateTargetNameDisplay" class="form-control input-readonly-muted" readonly>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-label" style="font-weight: 600;">Actual New Address:</label>
+                    <label class="form-label form-label-bold">Actual New Address:</label>
                     <input type="text" id="relocateNewAddressInput" class="form-control" placeholder="e.g. New Doctors Tower, 3rd Floor, El-Tahrir St">
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-label" style="font-weight: 600;">Relocation Reason / Notes:</label>
+                    <label class="form-label form-label-bold">Relocation Reason / Notes:</label>
                     <textarea id="relocateReasonInput" class="form-control" rows="2" placeholder="e.g. Clinic moved officially on Oct 1st..."></textarea>
                 </div>
                 <div class="modal-actions-footer-simple mt-3">
@@ -397,10 +397,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/workflow-engine.js?v=v276"></script>
-    <script src="js/reschedule.js?v=v276"></script>
-    <script src="js/gps-service.js?v=v276"></script>
-    <script src="js/visits.js?v=v276"></script>
-    <script src="js/visits-bulk-planner.js?v=v276"></script>
+    <script src="js/workflow-engine.js?v=v277" defer></script>
+    <script src="js/reschedule.js?v=v277" defer></script>
+    <script src="js/gps-service.js?v=v277" defer></script>
+    <script src="js/visits.js?v=v277" defer></script>
+    <script src="js/visits-bulk-planner.js?v=v277" defer></script>
 </body>
 </html>

@@ -17,7 +17,7 @@
       })();
     </script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v276"></script>
+    <script src="js/cache-bust.js?v=v277" defer></script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,18 +26,18 @@
       rel="stylesheet"
     />
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v276" />
-    <link rel="stylesheet" href="css/reports.css?v=v276" />
+    <link rel="stylesheet" href="css/style.css?v=v277" />
+    <link rel="stylesheet" href="css/reports.css?v=v277" />
     <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
             <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v276"></script>
-  <script src="js/app.js?v=v276"></script>
-    <script src="js/store.js?v=v276"></script>
+    <script src="js/auth-service.js?v=v277" defer></script>
+  <script src="js/app.js?v=v277" defer></script>
+    <script src="js/store.js?v=v277" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v276"></script>
-    <script src="js/firebase-sync.js?v=v276"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
+    <script src="js/firebase-config.js?v=v277" defer></script>
+    <script src="js/firebase-sync.js?v=v277" defer></script>
   </head>
   <body>
     <div class="app">
@@ -47,9 +47,7 @@
       <main class="main-content">
         <!-- Unified Topbar Strip -->
         <header class="topbar" id="topbar">
-          <script>
-            renderTopbar();
-          </script>
+          <script>if (typeof renderTopbar === "function") renderTopbar();</script>
         </header>
         <!-- Page Container -->
         <div class="content" id="pageContent">
@@ -3289,13 +3287,13 @@
               &times;
             </button>
           </div>
-          <div class="custom-modal-body" style="max-height: 520px; overflow-y: auto;">
-            <div id="modalCostingSummaryBar" style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-hover, #f8f9fa); padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem; font-weight: 600;">
+          <div class="custom-modal-body costing-modal-body-scroll">
+            <div id="modalCostingSummaryBar" class="costing-modal-summary-bar">
               <span id="modalCostingCountText">Total Transactions: 0</span>
-              <span id="modalCostingTotalText" style="color: var(--primary, #0052cc); font-size: 1rem;">Total: 0 EGP</span>
+              <span id="modalCostingTotalText" class="costing-modal-total-text">Total: 0 EGP</span>
             </div>
             <div class="table-responsive">
-              <table class="report-table" style="width: 100%; font-size: 0.85rem;">
+              <table class="report-table costing-report-table">
                 <thead>
                   <tr>
                     <th style="width: 40px; text-align: center;">#</th>
@@ -3325,24 +3323,24 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/chart.umd.min.js"></script>
-    <script src="js/interactive-charts.js?v=v276"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/excel-templates-data.js?v=v276"></script>
-    <script src="js/export-service.js?v=v276"></script>
-    <script src="js/shared-report.js?v=v276"></script>
-    <script src="js/sales-report.js?v=v276"></script>
-    <script src="js/achievements-report.js?v=v276"></script>
-    <script src="js/timeline-report.js?v=v276"></script>
-    <script src="js/coverage-report.js?v=v276"></script>
-    <script src="js/doctors-report.js?v=v276"></script>
-    <script src="js/hospitals-report.js?v=v276"></script>
-    <script src="js/pharmacies-report.js?v=v276"></script>
-    <script src="js/missing-days-report.js?v=v276"></script>
-    <script src="js/gps-service.js?v=v276"></script>
-    <script src="js/gps-tracing-report.js?v=v276"></script>
-    <script src="js/accounts-costing-report.js?v=v276"></script>
-    <script src="js/sops-report.js?v=v276"></script>
+    <script src="js/chart.umd.min.js" defer></script>
+    <script src="js/interactive-charts.js?v=v277" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+    <script src="js/excel-templates-data.js?v=v277" defer></script>
+    <script src="js/export-service.js?v=v277" defer></script>
+    <script src="js/shared-report.js?v=v277" defer></script>
+    <script src="js/sales-report.js?v=v277" defer></script>
+    <script src="js/achievements-report.js?v=v277" defer></script>
+    <script src="js/timeline-report.js?v=v277" defer></script>
+    <script src="js/coverage-report.js?v=v277" defer></script>
+    <script src="js/doctors-report.js?v=v277" defer></script>
+    <script src="js/hospitals-report.js?v=v277" defer></script>
+    <script src="js/pharmacies-report.js?v=v277" defer></script>
+    <script src="js/missing-days-report.js?v=v277" defer></script>
+    <script src="js/gps-service.js?v=v277" defer></script>
+    <script src="js/gps-tracing-report.js?v=v277" defer></script>
+    <script src="js/accounts-costing-report.js?v=v277" defer></script>
+    <script src="js/sops-report.js?v=v277" defer></script>
   </body>
 </html>
 

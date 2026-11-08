@@ -24,20 +24,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=v276">
-    <link rel="stylesheet" href="css/calendar.css?v=v276">
+    <link rel="stylesheet" href="css/style.css?v=v277">
+    <link rel="stylesheet" href="css/calendar.css?v=v277">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v276"></script>
-  <script src="js/app.js?v=v276"></script>
-    <script src="js/store.js?v=v276"></script>
+    <script src="js/auth-service.js?v=v277" defer></script>
+  <script src="js/app.js?v=v277" defer></script>
+    <script src="js/store.js?v=v277" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js?v=v276"></script>
-    <script src="js/firebase-sync.js?v=v276"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
+    <script src="js/firebase-config.js?v=v277" defer></script>
+    <script src="js/firebase-sync.js?v=v277" defer></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v276"></script>
+    <script src="js/cache-bust.js?v=v277" defer></script>
   </head>
 <body>
     <div class="app">
@@ -47,7 +47,7 @@
         <main class="main-content">
                   <!-- Unified Topbar Strip -->
       <header class="topbar" id="topbar">
-        <script>renderTopbar();</script>
+        <script>if (typeof renderTopbar === "function") renderTopbar();</script>
       </header>
 
             <div class="content" id="pageContent">
@@ -142,7 +142,7 @@
             <button class="btn btn-secondary btn-sm" onclick="closeOrgTreeModal()" data-i18n="close">Close</button>
         </div>
     </div>
-    <script src="js/reschedule.js?v=v276"></script>
-    <script src="js/calendar.js?v=v276"></script>
+    <script src="js/reschedule.js?v=v277" defer></script>
+    <script src="js/calendar.js?v=v277" defer></script>
 </body>
 </html>
