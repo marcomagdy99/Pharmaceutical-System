@@ -469,15 +469,28 @@
     },
 
     saveService(srvObj) {
+      if (!srvObj) return null;
       if (window.store && window.store.services) {
+        if (srvObj.id && typeof window.store.services.getById === "function" && window.store.services.getById(srvObj.id)) {
+          return window.store.services.update(srvObj.id, srvObj);
+        }
         return window.store.services.add(srvObj);
       }
       const list = this.getServices();
-      list.unshift(srvObj);
+      const existingIdx = srvObj.id ? list.findIndex((s) => s.id === srvObj.id) : -1;
+      if (existingIdx !== -1) {
+        list[existingIdx] = Object.assign({}, list[existingIdx], srvObj);
+      } else {
+        list.unshift(srvObj);
+      }
       try {
         localStorage.setItem("pharma_services_data", JSON.stringify(list));
       } catch (e) {}
       return srvObj;
+    },
+
+    updateService(srvObj) {
+      return this.saveService(srvObj);
     },
 
     updateServiceStatus(id, newStatus, user, comment, nextApproverId) {

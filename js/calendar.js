@@ -267,7 +267,9 @@ function renderCalendar() {
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthDays = new Date(year, month, 0).getDate();
-  const todayStr = window.getSystemTodayStr ? window.getSystemTodayStr() : new Date().toISOString().split("T")[0];
+  const _now = new Date();
+  const _todayStrLocal = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
+  const todayStr = window.getSystemTodayStr ? window.getSystemTodayStr() : _todayStrLocal;
 
   const targetId = window.currentCalendarTargetId || "all";
   const currentUser = (window.checkAuth && window.checkAuth()) || {

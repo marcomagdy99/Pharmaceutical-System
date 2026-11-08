@@ -17,7 +17,9 @@
       "README.md",
       "BACKEND_MIGRATION_ROADMAP.md",
       "vercel.json",
-      "_redirects"
+      "_redirects",
+      "approval-test-suite.html",
+      "costing-test-suite.html"
     ],
     "headers": [
       {

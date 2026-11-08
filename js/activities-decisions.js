@@ -229,7 +229,7 @@
             role: Core._state.currentUser.role,
             comment: comment || "",
           });
-          Core.StoreAdapter.saveService(srv);
+          Core.StoreAdapter.updateService(srv);
 
           const notifiedRejectUsers = new Set();
           if (srv.requesterId && srv.requesterId !== Core._state.currentUser.id) {
@@ -353,7 +353,7 @@
             role: Core._state.currentUser.role,
             comment: comment || "",
           });
-          Core.StoreAdapter.saveService(srv);
+          Core.StoreAdapter.updateService(srv);
 
           if (allApproved) {
             const notifiedApproveUsers = new Set();

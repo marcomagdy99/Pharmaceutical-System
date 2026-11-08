@@ -97,7 +97,8 @@ function renderCoverageReport() {
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
 
   const diffDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-  const numMonths = Math.max(1, Math.round(diffDays / 30));
+  // Accurate duration in months (1 decimal place) to avoid jump distortions
+  const numMonths = Math.max(1, Math.round((diffDays / 30.4375) * 10) / 10);
 
   const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   let lineObj = null;

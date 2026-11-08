@@ -3,12 +3,10 @@
  * @description Company announcements module: feed rendering, targeting,
  * priority badges, HR management, read tracking, and Firestore persistence.
  */
-
 /* --- START DEMO DATA --- */
 // Production mode: announcements are managed centrally in Firebase Firestore
 const demoAnnouncements = [];
 /* --- END DEMO DATA --- */
-
 /* --- START TRANSLATIONS --- */
 const announcementTranslations = {
   en: {
@@ -72,7 +70,6 @@ const announcementTranslations = {
   },
 };
 /* --- END TRANSLATIONS --- */
-
 /* --- START STORAGE HELPERS --- */
 function loadAnnouncements() {
   try {
@@ -93,7 +90,6 @@ function loadAnnouncements() {
   }
   return fallback;
 }
-
 function saveAnnouncementsToStorage() {
   try {
     localStorage.setItem("pharmaAnnouncements", JSON.stringify(announcements));
@@ -108,7 +104,6 @@ function saveAnnouncementsToStorage() {
   }
 }
 /* --- END STORAGE HELPERS --- */
-
 /* --- START STATE --- */
 let announcements = loadAnnouncements();
 let currentFilter = "all"; // all, unread, high, normal, low
@@ -121,34 +116,30 @@ let expandedCards = new Set();
 let editAnnouncementId = null;
 let currentAnnouncementImage = null;
 /* --- END STATE --- */
-
 /* --- START LINE & ROLE HELPERS --- */
 function isPMUser(user) {
   if (!user) return false;
   const r = (user.role || "").toLowerCase();
   return r === "product_manager" || r === "pm";
 }
-
 function isAdminOrHrUser(user) {
   if (!user) return false;
   const r = (user.role || "").toLowerCase();
   return r === "admin" || r === "hr";
 }
-
 function canUserCreateAnnouncements(user) {
   return isAdminOrHrUser(user) || isPMUser(user);
 }
-
 function getAllProductLines() {
   if (window.store && window.store.productLines && typeof window.store.productLines.getAll === "function") {
     return window.store.productLines.getAll();
   }
-  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.lines)) {
-    return window.DEMO_DATA.lines;
+  const demoLines = window.DEMO_DATA && (window.DEMO_DATA.productLines || window.DEMO_DATA.lines);
+  if (Array.isArray(demoLines)) {
+    return demoLines;
   }
   return [];
 }
-
 function getProductLineName(lineId) {
   if (!lineId) return "";
   const lines = getAllProductLines();
@@ -158,7 +149,6 @@ function getProductLineName(lineId) {
   if (lang === "ar" && found.nameAr) return found.nameAr;
   return found.name || lineId;
 }
-
 function getUserLineIds(user) {
   if (!user) return [];
   const lines = new Set();
@@ -167,12 +157,10 @@ function getUserLineIds(user) {
   }
   if (user.lineId) lines.add(user.lineId);
   if (user.assignedLineId) lines.add(user.assignedLineId);
-
   // If rep or manager with assigned areas, check the lines linked to those areas
   const allAreas = (window.store && window.store.areas && typeof window.store.areas.getAll === "function")
     ? window.store.areas.getAll()
     : ((window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-
   const areaIds = Array.isArray(user.areaIds) ? user.areaIds : (user.areaId ? [user.areaId] : []);
   areaIds.forEach((aId) => {
     const areaObj = allAreas.find((a) => a.id === aId);
@@ -180,11 +168,9 @@ function getUserLineIds(user) {
       lines.add(areaObj.lineId);
     }
   });
-
   return Array.from(lines);
 }
 /* --- END LINE & ROLE HELPERS --- */
-
 /* --- START INITIALIZATION --- */
 /**
  * Initializes the Announcements page.
@@ -197,13 +183,11 @@ function initAnnouncementsPage() {
         ? window.requireAuth()
         : (typeof checkAuth === "function" ? checkAuth() : (window.checkAuth ? window.checkAuth() : null)));
   if (!authUser) return;
-
   currentAuthUser = authUser;
   currentUserRole = authUser.role || "medical_rep";
   currentUserId = authUser.id || "";
   currentUserName = authUser.name || "";
   currentUserLineIds = getUserLineIds(authUser);
-
   if (window.i18n) {
     window.i18n.translations = {
       ...window.i18n.translations,
@@ -213,7 +197,6 @@ function initAnnouncementsPage() {
   renderPage();
   if (window.i18n) window.i18n.updatePage();
 }
-
 /**
  * Calculates time ago string.
  * @param {string} dateString ISO date string
@@ -226,10 +209,8 @@ function timeAgo(dateString) {
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
-
   const lang = window.i18n ? window.i18n.currentLang : "en";
   const t = announcementTranslations[lang];
-
   if (diffMins < 1) return t.justNow;
   if (diffMins < 60) return t.timeAgo.replace("{0}", diffMins + " " + t.mins);
   if (diffHours < 24)
@@ -237,7 +218,6 @@ function timeAgo(dateString) {
   return t.timeAgo.replace("{0}", diffDays + " " + t.days);
 }
 /* --- END INITIALIZATION --- */
-
 /* --- START RENDER FUNCTIONS --- */
 /**
  * Renders the entire page content based on user role.
@@ -247,18 +227,15 @@ function renderPage() {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
   const canCreate = canUserCreateAnnouncements(currentAuthUser || { role: currentUserRole });
-
   let html = `
         <div class="announcements-header">
             <h1 data-i18n="announcements">Announcements</h1>
             ${canCreate ? `<button class="btn btn-primary btn-new-announcement" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> <span data-i18n="newAnnouncement">New Announcement</span></button>` : ""}
         </div>
     `;
-
   if (isHR || isPM) {
     html += renderUserStats(isPM);
   }
-
   html += `
         <div class="announcements-controls">
             <select class="filter-select" onchange="setFilter(this.value)">
@@ -273,16 +250,13 @@ function renderPage() {
             ${renderAnnouncementsList()}
         </div>
     `;
-
   content.innerHTML = html;
-
   const modalContainer = document.getElementById("modalContainer");
   if (!document.getElementById("announcementModal")) {
     let modalsHtml = renderLightboxModal();
     if (canCreate) {
       modalsHtml += renderModals();
     }
-
     if (modalContainer) {
       modalContainer.innerHTML = modalsHtml;
     } else {
@@ -290,7 +264,6 @@ function renderPage() {
     }
   }
 }
-
 /**
  * Renders Statistics cards for HR or PM.
  * @param {boolean} isPM
@@ -300,7 +273,6 @@ function renderUserStats(isPM = false) {
   const visible = getVisibleAnnouncements();
   const total = visible.length;
   const highPriority = visible.filter((a) => a.priority === "high").length;
-
   const now = new Date();
   const thisMonth = visible.filter((a) => {
     const d = new Date(a.createdAt);
@@ -308,7 +280,6 @@ function renderUserStats(isPM = false) {
       d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
     );
   }).length;
-
   return `
         <div class="stats-grid">
             <div class="stat-card">
@@ -326,14 +297,12 @@ function renderUserStats(isPM = false) {
         </div>
     `;
 }
-
 /**
  * Backwards compatibility for renderHRStats
  */
 function renderHRStats() {
   return renderUserStats(false);
 }
-
 /**
  * Evaluates whether a given user role is included in the announcement target scope.
  * @param {string} annTarget Target audience identifier
@@ -342,23 +311,18 @@ function renderHRStats() {
  */
 function isUserInTargetAudience(annTarget, userRole) {
   if (!annTarget || annTarget === "all" || annTarget === "line_team") return true;
-
   const r = (userRole || "").toLowerCase();
   const isHR = (r === "hr");
   const isAdmin = (r === "admin");
   const isPM = (r === "product_manager" || r === "pm");
-
   if (annTarget === "hr_admin" || annTarget === "hr") {
     return isHR || isAdmin;
   }
-
   if (r === "hr" || r === "admin") return true;
-
   const isRep = (r === "medical_rep" || r === "rep");
   const isDM = (r === "district_manager" || r === "dm");
   const isLM = (r === "line_manager" || r === "lm");
   const isBU = (r === "business_unit" || r === "bu");
-
   if (annTarget === "dm_lm_bu") {
     return isDM || isLM || isBU;
   }
@@ -371,10 +335,8 @@ function isUserInTargetAudience(annTarget, userRole) {
   if (annTarget === "rep" || annTarget === "sales") {
     return isRep;
   }
-
   return annTarget === r;
 }
-
 /**
  * Checks whether an announcement is visible to the given user,
  * taking into account publication status, line scoping, and role target.
@@ -384,17 +346,14 @@ function isUserInTargetAudience(annTarget, userRole) {
  */
 function isAnnouncementVisibleToUser(ann, user) {
   if (!ann || !user) return false;
-
   const role = (user.role || "").toLowerCase();
   const isAdmin = (role === "admin");
   const isHR = (role === "hr");
   const isAuthor = (ann.createdBy && ann.createdBy === user.id);
-
   // Draft check: only author or Admin/HR can see unpublished announcements
   if (!ann.published && !isAuthor && !isAdmin && !isHR) {
     return false;
   }
-
   // 1. Line Scoping Check:
   // If announcement is scoped to a specific product line (targetLineId):
   if (ann.targetLineId) {
@@ -407,17 +366,14 @@ function isAnnouncementVisibleToUser(ann, user) {
       }
     }
   }
-
   // 2. Target Audience Check (Reps, DMs, LMs, BU, HR, etc.)
   if (!isAdmin && !isHR && !isAuthor) {
     if (!isUserInTargetAudience(ann.target, role)) {
       return false;
     }
   }
-
   return true;
 }
-
 /**
  * Returns all announcements visible to currentAuthUser.
  * @returns {Array}
@@ -426,14 +382,12 @@ function getVisibleAnnouncements() {
   const user = currentAuthUser || { id: currentUserId, role: currentUserRole, name: currentUserName };
   return announcements.filter((a) => isAnnouncementVisibleToUser(a, user));
 }
-
 /**
  * Renders the list of announcements.
  * @returns {string} HTML string for announcement list
  */
 function renderAnnouncementsList() {
   const visible = getVisibleAnnouncements();
-
   let filtered = visible.filter((a) => {
     if (currentFilter === "unread") return !a.readBy.includes(currentUserId);
     if (
@@ -445,16 +399,12 @@ function renderAnnouncementsList() {
     }
     return true;
   });
-
   filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
   if (filtered.length === 0) {
     return `<div class="empty-state" data-i18n="noAnnouncements">No announcements found.</div>`;
   }
-
   return filtered.map((ann) => renderAnnouncementCard(ann)).join("");
 }
-
 /**
  * Renders a single announcement card.
  * @param {Object} ann Announcement object
@@ -469,22 +419,18 @@ function renderAnnouncementCard(ann) {
   const isRead = ann.readBy.includes(currentUserId);
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
-
   const title = window.escapeHtml(ann.title || ann.titleAr || "");
   const body = window.escapeHtml(ann.body || ann.bodyAr || "");
   const authorName = window.escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
   const safeImage = ann.image ? window.escapeHtml(ann.image) : "";
-
   const priorityClass = `priority-${safePriority}`;
   const unreadClass = !isRead && !isHR ? "unread" : "";
-
   const priorityIcon =
     ann.priority === "high"
       ? "exclamation-circle"
       : ann.priority === "normal"
         ? "info-circle"
         : "circle";
-
   const targetKeyMap = {
     all: "targetAll",
     line_team: "targetLineTeam",
@@ -498,14 +444,12 @@ function renderAnnouncementCard(ann) {
   };
   const targetKey = targetKeyMap[ann.target] || "targetAll";
   const targetLabel = (announcementTranslations[lang] && announcementTranslations[lang][targetKey]) || (announcementTranslations.en && announcementTranslations.en[targetKey]) || "All Company";
-
   let lineBadgeHtml = "";
   if (ann.targetLineId) {
     const lineName = getProductLineName(ann.targetLineId);
     const scopeTpl = (announcementTranslations[lang] && announcementTranslations[lang].lineScopeBadge) || "Line: {0}";
     lineBadgeHtml = `<span class="badge badge-line"><i class="fas fa-layer-group"></i> ${scopeTpl.replace("{0}", window.escapeHtml(lineName))}</span>`;
   }
-
   return `
         <div class="announcement-card ${priorityClass} ${unreadClass}" id="card-${safeId}">
             <div class="card-header">
@@ -559,7 +503,6 @@ function renderAnnouncementCard(ann) {
         </div>
     `;
 }
-
 /**
  * Renders modals (Create/Edit and Delete).
  * @returns {string} HTML string for modals
@@ -640,7 +583,6 @@ function renderModals() {
                 </div>
             </div>
         </div>
-
         <!-- Delete Modal -->
         <div class="modal-overlay" id="deleteModal" onclick="if(event.target === this) closeModal('deleteModal')">
             <div class="modal-content">
@@ -659,7 +601,6 @@ function renderModals() {
         </div>
     `;
 }
-
 /**
  * Renders the lightbox modal for full-size image viewing.
  * @returns {string} HTML string for lightbox modal
@@ -676,7 +617,6 @@ function renderLightboxModal() {
     `;
 }
 /* --- END RENDER FUNCTIONS --- */
-
 /* --- START ACTION FUNCTIONS --- */
 /**
  * Sets the current filter and re-renders.
@@ -687,7 +627,6 @@ function setFilter(val) {
   renderPage();
   if (window.i18n) window.i18n.updatePage();
 }
-
 /**
  * Toggles expanded state of a card.
  * @param {string} id Announcement ID
@@ -701,7 +640,6 @@ function toggleExpand(id) {
   renderPage();
   if (window.i18n) window.i18n.updatePage();
 }
-
 /**
  * Marks an announcement as read.
  * @param {string} id Announcement ID
@@ -715,7 +653,6 @@ function markAsRead(id) {
     if (window.i18n) window.i18n.updatePage();
   }
 }
-
 /**
  * Opens Create/Edit modal.
  * @param {string|null} id Announcement ID to edit, or null for new
@@ -723,12 +660,10 @@ function markAsRead(id) {
 function openAnnouncementModal(id = null) {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
-
   if (!isHR && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
-
   // If editing, check if user is allowed to edit this announcement
   let existingAnn = null;
   if (id) {
@@ -740,29 +675,24 @@ function openAnnouncementModal(id = null) {
       return;
     }
   }
-
   editAnnouncementId = id;
   const modal = document.getElementById("announcementModal");
   const titleEl = document.getElementById("modalTitle");
-
   // Populate line selection dropdown
   const lineSelect = document.getElementById("annTargetLine");
   const lineHint = document.getElementById("annLineHint");
   const allLines = getAllProductLines();
   const lang = window.i18n ? window.i18n.currentLang : "en";
-
   if (lineSelect) {
     const allLinesLabel = (announcementTranslations[lang] && announcementTranslations[lang].allLines) || "All Lines (Company-wide)";
     lineSelect.innerHTML = `<option value="">${allLinesLabel}</option>` +
       allLines.map((l) => `<option value="${l.id}">${window.escapeHtml((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
   }
-
   // Enforce PM line scoping rules:
   if (isPM && !isHR) {
     // PM can only publish to their line
     const pmLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || "";
     const pmLineName = getProductLineName(pmLineId);
-
     if (lineSelect) {
       lineSelect.value = pmLineId;
       lineSelect.disabled = true; // Locked to PM line
@@ -781,7 +711,6 @@ function openAnnouncementModal(id = null) {
       lineHint.textContent = "";
     }
   }
-
   if (existingAnn) {
     document.getElementById("annTitle").value = existingAnn.title || existingAnn.titleAr || "";
     document.getElementById("annBody").value = existingAnn.body || existingAnn.bodyAr || "";
@@ -808,12 +737,10 @@ function openAnnouncementModal(id = null) {
       titleEl.textContent = announcementTranslations[window.i18n.currentLang].createAnnouncement;
     }
   }
-
   const fileInput = document.getElementById("annImageInput");
   if (fileInput) fileInput.value = "";
   renderImagePreview();
   setupDragAndDrop();
-
   if (modal) {
     modal.classList.add("active");
     modal.style.display = "flex";
@@ -823,7 +750,6 @@ function openAnnouncementModal(id = null) {
   }
   document.body.style.overflow = "hidden";
 }
-
 /**
  * Handles image selection from file input.
  * @param {Event} event File input change event
@@ -831,11 +757,19 @@ function openAnnouncementModal(id = null) {
 function handleImageSelect(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
-
   if (!file.type.startsWith("image/")) {
     const msg = 'Please select a valid image file.';
     if (typeof showToast === 'function') showToast(msg, 'warning');
     else if (typeof window.showToast === 'function') window.showToast(msg, 'warning');
+    return;
+  }
+  // File size guard (max 2MB)
+  const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+  if (file.size > MAX_IMAGE_SIZE) {
+    const sizeMsg = 'Image file size exceeds 2MB limit. Please select a smaller image.';
+    if (typeof showToast === 'function') showToast(sizeMsg, 'warning');
+    else if (typeof window.showToast === 'function') window.showToast(sizeMsg, 'warning');
+    if (event.target) event.target.value = '';
     return;
   }
 
@@ -847,7 +781,6 @@ function handleImageSelect(event) {
       const maxDim = 700;
       let width = img.width;
       let height = img.height;
-
       if (width > maxDim || height > maxDim) {
         if (width > height) {
           height = Math.round((height * maxDim) / width);
@@ -857,7 +790,6 @@ function handleImageSelect(event) {
           height = maxDim;
         }
       }
-
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
@@ -870,7 +802,6 @@ function handleImageSelect(event) {
   };
   reader.readAsDataURL(file);
 }
-
 /**
  * Removes the selected image from the announcement form.
  */
@@ -880,7 +811,6 @@ function removeAnnouncementImage() {
   if (input) input.value = "";
   renderImagePreview();
 }
-
 /**
  * Updates the image preview UI in the form modal.
  */
@@ -888,7 +818,6 @@ function renderImagePreview() {
   const previewContainer = document.getElementById("annImagePreviewContainer");
   const dropzone = document.getElementById("annImageUploadDropzone");
   const previewImg = document.getElementById("annImagePreview");
-
   if (currentAnnouncementImage) {
     if (previewImg) previewImg.src = currentAnnouncementImage;
     if (previewContainer) previewContainer.style.display = "block";
@@ -899,14 +828,12 @@ function renderImagePreview() {
     if (dropzone) dropzone.style.display = "flex";
   }
 }
-
 /**
  * Sets up drag-and-drop support for the image upload area.
  */
 function setupDragAndDrop() {
   const dropzone = document.getElementById("annImageUploadDropzone");
   if (!dropzone) return;
-
   dropzone.addEventListener("dragover", (e) => {
     e.preventDefault();
     dropzone.classList.add("dragover");
@@ -922,7 +849,6 @@ function setupDragAndDrop() {
     }
   });
 }
-
 /**
  * Opens image lightbox for viewing full-size announcement image.
  * @param {string} idOrSrc Image source URL / DataURL or Announcement ID
@@ -942,7 +868,6 @@ function openImageLightbox(idOrSrc) {
     document.body.style.overflow = "hidden";
   }
 }
-
 /**
  * Closes image lightbox modal.
  */
@@ -955,7 +880,6 @@ function closeImageLightbox() {
   }
   document.body.style.overflow = "";
 }
-
 /**
  * Closes a modal.
  * @param {string} modalId ID of the modal
@@ -969,25 +893,21 @@ function closeModal(modalId) {
   }
   document.body.style.overflow = "";
 }
-
 /**
  * Saves announcement (create or update).
  */
 function saveAnnouncement() {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
-
   if (!isHR && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
-
   const title = (document.getElementById("annTitle").value || "").trim();
   const body = (document.getElementById("annBody").value || "").trim();
   const priority = document.getElementById("annPriority").value;
   const target = document.getElementById("annTarget").value;
   const published = document.getElementById("annPublish").checked;
-
   let targetLineId = null;
   if (isPM && !isHR) {
     // PM announcements are STRICTLY scoped to their product line
@@ -997,14 +917,12 @@ function saveAnnouncement() {
     const lineVal = document.getElementById("annTargetLine") ? document.getElementById("annTargetLine").value : "";
     targetLineId = lineVal || null;
   }
-
   if (!title || !body) {
     const msg = 'Please fill all required fields.';
     if (typeof showToast === 'function') showToast(msg, 'warning');
     else if (typeof window.showToast === 'function') window.showToast(msg, 'warning');
     return;
   }
-
   if (editAnnouncementId) {
     const index = announcements.findIndex((a) => a.id === editAnnouncementId);
     if (index > -1) {
@@ -1047,13 +965,11 @@ function saveAnnouncement() {
     };
     announcements.unshift(newAnn);
   }
-
   saveAnnouncementsToStorage();
   closeModal("announcementModal");
   renderPage();
   if (window.i18n) window.i18n.updatePage();
 }
-
 /**
  * Opens delete confirmation modal.
  * @param {string} id Announcement ID
@@ -1061,12 +977,10 @@ function saveAnnouncement() {
 function openDeleteModal(id) {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
-
   if (!isHR && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
-
   const ann = announcements.find((a) => a.id === id);
   if (!ann) return;
   const isAuthor = (ann.createdBy && ann.createdBy === currentUserId);
@@ -1074,7 +988,6 @@ function openDeleteModal(id) {
     if (typeof showToast === "function") showToast("Permission Denied: You can only delete your own announcements.", "error");
     return;
   }
-
   editAnnouncementId = id;
   const modal = document.getElementById("deleteModal");
   if (modal) {
@@ -1084,7 +997,6 @@ function openDeleteModal(id) {
   }
   document.body.style.overflow = "hidden";
 }
-
 /**
  * Confirms deletion of announcement.
  */
@@ -1092,12 +1004,10 @@ function confirmDelete() {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
   if (!isHR && !isPM) return;
-
   if (editAnnouncementId) {
     const ann = announcements.find((a) => a.id === editAnnouncementId);
     const isAuthor = ann && (ann.createdBy === currentUserId);
     if (!isHR && !isAuthor) return;
-
     announcements = announcements.filter((a) => a.id !== editAnnouncementId);
     saveAnnouncementsToStorage();
     closeModal("deleteModal");
@@ -1106,7 +1016,6 @@ function confirmDelete() {
   }
 }
 /* --- END ACTION FUNCTIONS --- */
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeModal("announcementModal");
@@ -1114,5 +1023,4 @@ document.addEventListener("keydown", (e) => {
     closeImageLightbox();
   }
 });
-
 document.addEventListener("DOMContentLoaded", initAnnouncementsPage);

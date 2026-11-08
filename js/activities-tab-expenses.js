@@ -320,6 +320,16 @@
     const file = input?.files && input.files[0];
     if (!file) return;
 
+    // File size guard (max 1.5MB to protect localStorage quota from QuotaExceededError)
+    const MAX_FILE_SIZE = 1.5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      const msg = "File size exceeds 1.5MB limit. Please upload a smaller receipt or image.";
+      if (typeof showToast === "function") showToast(msg, "error");
+      else alert(msg);
+      if (input) input.value = "";
+      return;
+    }
+
     const isPdf = file.type === "application/pdf" || (file.name && file.name.toLowerCase().endsWith(".pdf"));
     const reader = new FileReader();
     reader.onload = function (evt) {

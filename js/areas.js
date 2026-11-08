@@ -72,7 +72,7 @@ function getAreasList() {
     return {
       id: a.id,
       name: a.name,
-      code: a.code || "CAI-000",
+      code: a.code || ("AREA-" + String(a.id || "").slice(-4).toUpperCase()),
       repId: rId,
       repName: rName,
       lineId: a.lineId || null,
