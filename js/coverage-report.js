@@ -1,3 +1,10 @@
+/**
+ * @file coverage-report.js
+ * @description Reports page - "Coverage" tab: doctor/hospital visit
+ * frequency vs target, employee summary breakdown table, interactive drill-down,
+ * and Excel/CSV export.
+ * Depends on shared-report.js (must load after it).
+ */
 // Dynamic default date helpers for coverage report
 function _coverageStart() {
   const n = (window.getSystemDate && window.getSystemDate()) || new Date();
@@ -12,13 +19,6 @@ function _coverageEnd() {
   return `${l.getFullYear()}-${m}-${d}`;
 }
 
-/**
- * @file coverage-report.js
- * @description Reports page - "Coverage" tab: doctor/hospital visit
- * frequency vs target, employee summary breakdown table, interactive drill-down,
- * and Excel/CSV export.
- * Depends on shared-report.js (must load after it).
- */
 
 // Active drilldown filter state for Coverage tab
 var svgCalendar = (typeof window !== 'undefined' && window.svgCalendar) || '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-inline-end:3px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>';
@@ -63,10 +63,7 @@ function getEmployeeTerritory(user, repTargets) {
   return '—';
 }
 
-function escapeJsString(str) {
-  if (!str) return '';
-  return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-}
+
 
 // ============================================================================
 // Section 9: Tab 3 - Coverage & Frequency Report
@@ -122,7 +119,7 @@ function renderCoverageReport() {
 
   const rulesEl = document.getElementById('coverageRulesBox');
   if (rulesEl) {
-    const lineTag = lineObj && lineObj.name ? ` (${lineObj.name})` : '';
+    const lineTag = lineObj && lineObj.name ? ` (${window.escapeHtml(lineObj.name)})` : '';
     rulesEl.innerHTML = `<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg> <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
   }
 
@@ -455,7 +452,7 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-all ${isCurrentRep && coverageDrilldownState.type === 'all' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('all', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
+              onclick="setCoverageDrilldown('all', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
               title="Show all doctors for this rep"
             >
               ${row.doctorsCount}
@@ -465,7 +462,7 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-visited ${isCurrentRep && coverageDrilldownState.type === 'visited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('visited', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
+              onclick="setCoverageDrilldown('visited', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
               title="Show visited doctors only"
             >
               ${row.visitedCount}
@@ -475,7 +472,7 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-unvisited ${isCurrentRep && coverageDrilldownState.type === 'unvisited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('unvisited', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
+              onclick="setCoverageDrilldown('unvisited', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
               title="Show unvisited doctors only"
             >
               ${row.unvisitedCount}
@@ -485,7 +482,7 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-actual ${isCurrentRep && coverageDrilldownState.type === 'actual' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('actual', '${row.rep.id}', '${escapeJsString(row.rep.name)}')"
+              onclick="setCoverageDrilldown('actual', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
               title="Show actual visits doctors"
             >
               ${row.actualVisitsCount}

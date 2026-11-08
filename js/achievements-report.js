@@ -465,6 +465,12 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     if (a.name) areaNameToIdMap.set(a.name.toLowerCase().trim(), a.id);
   });
 
+  const monthlyTotals = {};
+  monthKeys.forEach((k) => {
+    monthlyTotals[k] = { target: 0, actual: 0 };
+  });
+
+
   const cellMap = {};
 
   targets.forEach((t) => {
@@ -487,10 +493,13 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     if (!cellMap[key]) {
       cellMap[key] = { areaId: tAreaId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     }
+    const tVal = t.target != null ? (parseFloat(t.target) || 0) : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0));
     cellMap[key].tUnit += parseFloat(t.targetUnits) || 0;
-    cellMap[key].tValue += t.target != null
-      ? parseFloat(t.target) || 0
-      : (parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0);
+    cellMap[key].tValue += tVal;
+    if (monthlyTotals[t.month]) {
+      monthlyTotals[t.month].target += tVal;
+    }
+
   });
 
   salesRows.forEach((s) => {
@@ -517,7 +526,11 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       cellMap[key] = { areaId: sAreaId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     }
     cellMap[key].sUnit += parseFloat(s.quantity) || 0;
-    cellMap[key].sValue += parseFloat(s.value) || 0;
+    const sVal = parseFloat(s.value) || 0;
+    cellMap[key].sValue += sVal;
+    if (monthlyTotals[s.month]) {
+      monthlyTotals[s.month].actual += sVal;
+    }
   });
 
   // 5. Build Territory/Area Groups
@@ -568,6 +581,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     if (a.isVacant !== b.isVacant) return a.isVacant ? 1 : -1;
     return (a.isVacant ? a.areaName : a.repName).localeCompare(b.isVacant ? b.areaName : b.repName);
   });
+  groups.monthlyTotals = monthlyTotals;
   return groups;
 }
 
@@ -728,46 +742,12 @@ function renderAchievementsReport() {
 
     const chartTargets = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
-      let mTargets = (window.store && window.store.targets ? window.store.targets.getAll() : [])
-        .filter((t) => t.month === mKey);
-      if (selectedArea !== 'all') {
-        mTargets = mTargets.filter((t) => t.areaId === selectedArea || (selectedAreaRepId && t.repId === selectedAreaRepId));
-      }
-      if (selectedLineId !== 'all') {
-        mTargets = mTargets.filter((t) => {
-          const p = productsMap.get(t.productId);
-          return p && p.lineId === selectedLineId;
-        });
-      } else if (curAllowedLineIds !== null) {
-        mTargets = mTargets.filter((t) => {
-          const p = productsMap.get(t.productId);
-          return p && curAllowedLineIds.includes(p.lineId);
-        });
-      }
-      return mTargets.reduce((sum, t) => {
-        return sum + (t.target != null ? (parseFloat(t.target) || 0) : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0)));
-      }, 0);
+      return (groups.monthlyTotals && groups.monthlyTotals[mKey]) ? groups.monthlyTotals[mKey].target : 0;
     });
 
     const chartActuals = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
-      let mSales = (window.store && window.store.distributorSales ? window.store.distributorSales.getAll() : [])
-        .filter((s) => s.month === mKey && s.productId && (!scopeRepIds || (s.repId && scopeRepIds.includes(s.repId))));
-      if (selectedArea !== 'all') {
-        mSales = mSales.filter((s) => s.areaId === selectedArea);
-      }
-      if (selectedLineId !== 'all') {
-        mSales = mSales.filter((s) => {
-          const p = productsMap.get(s.productId);
-          return p && p.lineId === selectedLineId;
-        });
-      } else if (curAllowedLineIds !== null) {
-        mSales = mSales.filter((s) => {
-          const p = productsMap.get(s.productId);
-          return p && curAllowedLineIds.includes(p.lineId);
-        });
-      }
-      return mSales.reduce((sum, s) => sum + (parseFloat(s.value) || 0), 0);
+      return (groups.monthlyTotals && groups.monthlyTotals[mKey]) ? groups.monthlyTotals[mKey].actual : 0;
     });
 
     window.renderSalesTargetTrendChart('achSalesTrendChart', {

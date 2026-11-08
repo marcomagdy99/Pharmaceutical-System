@@ -814,14 +814,14 @@ function openDeleteModal(id) {
       <ul class="mb-1 ps-3">
         <li><strong>${linkedDoctors.length}</strong> registered doctor(s).</li>
         <li><strong>${linkedVisits.length}</strong> logged visit(s).</li>
-        ${hasRep ? `<li>Assigned rep: <strong>${area.repName || area.repId}</strong>.</li>` : ""}
+        ${hasRep ? `<li>Assigned rep: <strong>${window.escapeHtml(area.repName || area.repId)}</strong>.</li>` : ""}
       </ul>
     `;
     confirmBtn.textContent = "Transfer & Delete";
 
     let optHtml = "";
     otherAreas.forEach((oa) => {
-      optHtml += `<option value="${oa.id}">${oa.name} (${oa.code})</option>`;
+      optHtml += `<option value="${window.escapeHtml(oa.id)}">${window.escapeHtml(oa.name)} (${window.escapeHtml(oa.code)})</option>`;
     });
 
     if (otherAreas.length === 0) {

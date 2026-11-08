@@ -1,3 +1,9 @@
+/**
+ * @file announcements.js
+ * @description Company announcements module: feed rendering, targeting,
+ * priority badges, HR management, read tracking, and Firestore persistence.
+ */
+
 /* --- START DEMO DATA --- */
 // Production mode: announcements are managed centrally in Firebase Firestore
 const demoAnnouncements = [];
@@ -458,6 +464,8 @@ function renderAnnouncementCard(ann) {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isAuthor = (ann.createdBy && ann.createdBy === currentUserId);
   const canManageCard = isHR || isAuthor;
+  const safeId = window.escapeHtml(ann.id || "");
+  const safePriority = window.escapeHtml(ann.priority || "normal");
   const isRead = ann.readBy.includes(currentUserId);
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
@@ -467,7 +475,7 @@ function renderAnnouncementCard(ann) {
   const authorName = window.escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
   const safeImage = ann.image ? window.escapeHtml(ann.image) : "";
 
-  const priorityClass = `priority-${ann.priority}`;
+  const priorityClass = `priority-${safePriority}`;
   const unreadClass = !isRead && !isHR ? "unread" : "";
 
   const priorityIcon =
@@ -499,11 +507,11 @@ function renderAnnouncementCard(ann) {
   }
 
   return `
-        <div class="announcement-card ${priorityClass} ${unreadClass}" id="card-${ann.id}">
+        <div class="announcement-card ${priorityClass} ${unreadClass}" id="card-${safeId}">
             <div class="card-header">
                 <div class="badges">
-                    <span class="badge badge-${ann.priority}">
-                        <i class="fas fa-${priorityIcon}"></i> <span data-i18n="priority${ann.priority.charAt(0).toUpperCase() + ann.priority.slice(1)}">${ann.priority}</span>
+                    <span class="badge badge-${safePriority}">
+                        <i class="fas fa-${priorityIcon}"></i> <span data-i18n="priority${ann.priority.charAt(0).toUpperCase() + ann.priority.slice(1)}">${safePriority}</span>
                     </span>
                     ${lineBadgeHtml}
                     <span class="badge badge-target">
@@ -516,8 +524,8 @@ function renderAnnouncementCard(ann) {
                   canManageCard
                     ? `
                 <div class="actions">
-                    <button class="btn-icon" onclick="openAnnouncementModal('${ann.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon text-danger" onclick="openDeleteModal('${ann.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    <button class="btn-icon" onclick="openAnnouncementModal('${safeId}')" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon text-danger" onclick="openDeleteModal('${safeId}')" title="Delete"><i class="fas fa-trash"></i></button>
                 </div>
                 `
                     : ""
@@ -532,7 +540,7 @@ function renderAnnouncementCard(ann) {
             ${
               safeImage
                 ? `
-            <div class="announcement-image-box" onclick="openImageLightbox('${ann.id}')" title="Click to view image">
+            <div class="announcement-image-box" onclick="openImageLightbox('${safeId}')" title="Click to view image">
                 <img src="${safeImage}" alt="${title}" class="announcement-image" loading="lazy" />
             </div>
             `
@@ -542,11 +550,11 @@ function renderAnnouncementCard(ann) {
                 ${body}
             </div>
             <div class="card-footer">
-                <button class="btn btn-text" onclick="toggleExpand('${ann.id}')">
+                <button class="btn btn-text" onclick="toggleExpand('${safeId}')">
                     <span data-i18n="${isExpanded ? "readLess" : "readMore"}">${isExpanded ? "Read Less" : "Read More"}</span>
                     <i class="fas fa-chevron-${isExpanded ? "up" : "down"}"></i>
                 </button>
-                ${!isRead && !isHR ? `<button class="btn btn-outline-primary btn-sm" onclick="markAsRead('${ann.id}')" data-i18n="markAsRead">Mark as Read</button>` : ""}
+                ${!isRead && !isHR ? `<button class="btn btn-outline-primary btn-sm" onclick="markAsRead('${safeId}')" data-i18n="markAsRead">Mark as Read</button>` : ""}
             </div>
         </div>
     `;

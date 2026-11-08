@@ -69,10 +69,16 @@
         ]
       }
     ],
-    "rewrites": [
+    "redirects": [
       {
-        "source": "**",
-        "destination": "/index.html"
+        "source": "/doctors.html",
+        "destination": "/reports.html?tab=doctors",
+        "type": 301
+      },
+      {
+        "source": "/pharmacies.html",
+        "destination": "/reports.html?tab=pharmacies",
+        "type": 301
       }
     ]
   }
