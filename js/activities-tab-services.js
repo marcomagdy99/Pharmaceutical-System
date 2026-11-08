@@ -108,8 +108,8 @@
           if (item.status && item.status.startsWith("pending")) pending += item.cost;
         });
       });
-      // For LM: Remaining is the unallocated budget not yet distributed to DMs
-      remaining = allocated - distributed;
+      // For LM: Remaining is the unallocated budget not yet distributed to DMs, taking actual utilized into account
+      remaining = Math.max(0, allocated - Math.max(distributed, utilized));
     } else if (role === Core.ROLES.DM) {
       allocated = (lineBudget.dmAllocations && Number(lineBudget.dmAllocations[user.id])) || 0;
       const allUsers = Core.getAllUsers();
@@ -131,8 +131,8 @@
           }
         });
       });
-      // For DM: Remaining is the district budget not yet distributed to Reps
-      remaining = allocated - distributed;
+      // For DM: Remaining is the district budget not yet distributed to Reps, taking actual utilized into account
+      remaining = Math.max(0, allocated - Math.max(distributed, utilized));
     } else if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
       // For Medical Rep: Allocated budget set by DM, defaults to 0 if not set!
       allocated = (lineBudget.repAllocations && Number(lineBudget.repAllocations[user.id])) || 0;
@@ -160,7 +160,7 @@
           if (item.status && item.status.startsWith("pending")) pending += item.cost;
         });
       });
-      remaining = allocated - distributed;
+      remaining = Math.max(0, allocated - Math.max(distributed, utilized));
     }
 
     return { allocated, distributed, utilized, pending, remaining };

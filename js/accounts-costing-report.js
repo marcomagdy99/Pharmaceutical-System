@@ -66,7 +66,7 @@
     if (r === "bu" || r === "business_unit" || r === "business unit") return "business_unit";
     if (r === "rep" || r === "medical_rep" || r === "medical rep") return "medical_rep";
     if (r === "admin" || r === "administrator") return "admin";
-    if (r === "hr") return "admin";
+    if (r === "hr") return "hr";
     return r;
   }
 
@@ -92,13 +92,34 @@
     const isAdmin = role === "admin" || role === "general_manager" || role === "commercial_director";
     const isLM = role === "line_manager" || role === "business_unit";
     const isDM = role === "district_manager";
-    const isRep = !isAdmin && !isLM && !isDM; // defaults to rep
+    const isHR = role === "hr";
+    const isRep = !isAdmin && !isLM && !isDM && !isHR; // defaults to rep
 
     // 1. Admin Scope: Unrestricted
     if (isAdmin) {
       return {
         role,
         isAdmin: true,
+        isLM: false,
+        isDM: false,
+        isRep: false,
+        allowedLines: allLines,
+        allowedLineIds: new Set(allLines.map((l) => l.id)),
+        allowedDMs: allUsers.filter((u) => getNormalizedRole(u) === "district_manager"),
+        allowedReps: allUsers.filter((u) => getNormalizedRole(u) === "medical_rep"),
+        allowedRepIds: new Set(allUsers.filter((u) => getNormalizedRole(u) === "medical_rep").map((u) => u.id)),
+        allowedAreas: allAreas,
+        allowedAreaIds: new Set(allAreas.map((a) => a.id)),
+        allowedDoctorIds: new Set(allDoctors.map((d) => d.id)),
+      };
+    }
+
+    // 1b. HR Scope: View-only organization reference, strictly non-admin
+    if (isHR) {
+      return {
+        role,
+        isAdmin: false,
+        isHR: true,
         isLM: false,
         isDM: false,
         isRep: false,

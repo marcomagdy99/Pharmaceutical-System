@@ -2304,3 +2304,30 @@ document.addEventListener("languageChanged", () => {
     console.error("Error refreshing leaves on languageChanged:", err);
   }
 });
+
+// ============================================================================
+// Section: Cloud & Store Sync Reactive Listener
+// ============================================================================
+function reloadLeavesData() {
+  if (window.store && window.store.leaves && typeof window.store.leaves.getAll === "function") {
+    demoLeaves = window.store.leaves.getAll();
+  } else if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.leaves)) {
+    demoLeaves = window.DEMO_DATA.leaves;
+  }
+  try {
+    if (typeof calculateBalances === "function") calculateBalances();
+    if (typeof renderHistory === "function") renderHistory();
+    if (typeof renderPendingApprovals === "function") renderPendingApprovals();
+    const role = window.normalizeRole
+      ? window.normalizeRole(currentUser.role)
+      : (currentUser.role || "medical_rep").toLowerCase();
+    if ((role === "hr" || role === "admin") && typeof renderHrAllLeaves === "function") {
+      renderHrAllLeaves();
+    }
+  } catch (err) {
+    console.error("Error refreshing leaves on cloud/store sync:", err);
+  }
+}
+
+document.addEventListener("pharma:storage:synced", reloadLeavesData);
+document.addEventListener("pharma:store:changed", reloadLeavesData);

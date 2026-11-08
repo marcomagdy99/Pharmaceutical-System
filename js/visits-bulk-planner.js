@@ -17,7 +17,7 @@
         window.populateAreaFilters();
       }
 
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = getLocalTodayStr();
       const timelinePicker = document.getElementById("timelineDatePicker");
       const activeTimelineDate =
         timelinePicker && timelinePicker.value && timelinePicker.value >= todayStr
@@ -58,7 +58,7 @@
       const container = document.getElementById("bulkTargetsContainer");
       if (!container) return;
 
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = getLocalTodayStr();
       const period = document.querySelector('input[name="bulkPeriod"]:checked')?.value || "pm";
       const searchTerm = (document.getElementById("bulkSearchInput")?.value || "").toLowerCase().trim();
       const classFilter = document.getElementById("bulkClassFilter")?.value || "all";
@@ -233,7 +233,7 @@
 
     saveBulkPlanVisits() {
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = getLocalTodayStr();
       const saveBtn = document.getElementById("btnSaveBulkPlan");
       const originalBtnText = saveBtn ? saveBtn.textContent : "";
       if (saveBtn) {

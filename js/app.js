@@ -13,34 +13,6 @@
   } catch (err) {}
 })();
 
-// Universal Service Worker cache invalidation across all pages
-(function () {
-  const EXPECTED_SW = "v270";
-  const FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
-  try {
-    if (localStorage.getItem(FLAG) !== "1") {
-      if ("caches" in window) {
-        caches.keys().then(function (names) {
-          return Promise.all(
-            names.map(function (n) {
-              if (n.indexOf("pharmacare-") === 0 && n !== "pharmacare-" + EXPECTED_SW) {
-                return caches.delete(n);
-              }
-            })
-          );
-        }).then(function () {
-          localStorage.setItem(FLAG, "1");
-          if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-            window.location.reload();
-          }
-        });
-      } else {
-        localStorage.setItem(FLAG, "1");
-      }
-    }
-  } catch (e) {}
-})();
-
 // ============================================================================
 // Section 0: HTML Escaping Utility
 // Use this whenever free-text a user typed (announcement body, visit comment,

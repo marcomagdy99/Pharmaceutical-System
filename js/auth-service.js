@@ -102,19 +102,7 @@
         return null;
       }
 
-      if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "u1790626000019") && parsed.role === "medical_rep") {
-        parsed.id = "u1790626000019";
-        parsed.name = "Fady Adel";
-        parsed.nameAr = "Fady Adel";
-        parsed.role = "product_manager";
-        parsed.employeeCode = "PM-002";
-        parsed.code = "PM-002";
-        parsed.lineId = "line_1790626000002";
-        parsed.lineIds = ["line_1790626000002"];
-        parsed.productIds = ["prod_1790626000005", "prod_1790626000006"];
-      }
-
-      // Authority Binding: Lookup against genuine company database (DEMO_DATA or store.users)
+            // Authority Binding: Lookup against genuine company database (DEMO_DATA or store.users)
       const registeredUsers = (typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users))
         ? DEMO_DATA.users
         : ((typeof window !== "undefined" && window.store && window.store.users && window.store.users.getAll) ? window.store.users.getAll() : []);
