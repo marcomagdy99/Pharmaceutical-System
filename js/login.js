@@ -40,8 +40,8 @@ try {
     dept_hr: "Human Resources",
     dept_hr_desc: "HR & Personnel",
     back: "Back to Selection",
-    email_label: "Email Address",
-    email_placeholder: "Enter your email",
+    email_label: "Email Address / Employee Code",
+    email_placeholder: "Enter your email or employee code",
     password_label: "Password",
     password_placeholder: "Enter your password",
     remember_me: "Remember me",
@@ -53,13 +53,50 @@ try {
     error_invalid: "Invalid email or password.",
     error_empty: "Please fill in all fields.",
     error_wrong_dept: "This account does not belong to the selected department.",
-    lang_toggle_text: "English",
+    lang_toggle_text: "العربية",
     demo_accounts_title: "Quick Demo Accounts:",
     selected_dept_admin: "Admin Portal",
     selected_dept_sales: "Sales & Marketing Portal",
     selected_dept_hr: "Human Resources Portal",
     dark_mode: "Dark",
-    light_mode: "Light"
+    light_mode: "Light",
+    forgot_title: "Password Assistance",
+    forgot_desc: "For enterprise security, please contact your System Administrator (Admin) or HR Department to verify your identity and reset your credentials.",
+    close_btn: "Close"
+  },
+  ar: {
+    login_subtitle: "نظام إدارة الأنشطة الصيدلانية",
+    select_department: "اختر القسم الخاص بك",
+    dept_admin: "لوحة الإدارة",
+    dept_admin_desc: "مسؤولو النظام",
+    dept_sales: "المبيعات والتسويق",
+    dept_sales_desc: "BU, LM, DM, Medical Rep",
+    dept_hr: "الموارد البشرية",
+    dept_hr_desc: "شؤون العاملين والإجازات",
+    back: "العودة لاختيار القسم",
+    email_label: "البريد الإلكتروني / كود الموظف",
+    email_placeholder: "أدخل بريدك الإلكتروني أو كود الموظف",
+    password_label: "كلمة المرور",
+    password_placeholder: "أدخل كلمة المرور",
+    remember_me: "تذكرني",
+    forgot_password: "نسيت كلمة المرور؟",
+    login_btn: "تسجيل الدخول",
+    footer_text: "© 2026 PharmaCare. جميع الحقوق محفوظة.",
+    brand_tagline: "تمكين المندوب الطبي وإدارة الأداء",
+    brand_desc: "نظام متكامل لتنظيم الزيارات الميدانية، متابعة الأطباء، والموافقات الإدارية باحترافية.",
+    error_invalid: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    error_empty: "يرجى ملء جميع الحقول المطلوبة.",
+    error_wrong_dept: "هذا الحساب لا ينتمي للقسم المختار.",
+    lang_toggle_text: "English",
+    demo_accounts_title: "حسابات تجريبية سريعة:",
+    selected_dept_admin: "بوابة مسؤولي النظام",
+    selected_dept_sales: "بوابة المبيعات والتسويق",
+    selected_dept_hr: "بوابة الموارد البشرية",
+    dark_mode: "داكن",
+    light_mode: "فاتح",
+    forgot_title: "المساعدة في استعادة الحساب",
+    forgot_desc: "لأسباب أمنية وتنظيمية، يرجى التواصل مع مسؤول النظام (System Admin) أو قسم الموارد البشرية (HR) لإعادة تعيين كلمة المرور الخاصة بك.",
+    close_btn: "إغلاق"
   }
 };
 
@@ -104,26 +141,37 @@ const selectedDeptTitle = document.getElementById('selectedDeptTitle');
   }
 
 function setLanguage(lang) {
-  currentLang = 'en';
-  document.documentElement.lang = 'en';
-  document.documentElement.dir = 'ltr';
+  currentLang = (lang === 'ar' || lang === 'en') ? lang : 'en';
+  try {
+    localStorage.setItem('pharmaLang', currentLang);
+    localStorage.setItem('lang', currentLang);
+  } catch (e) {}
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+
+  const t = translations[currentLang] || translations.en;
 
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
-    if (translations['en'] && translations['en'][key]) {
-      el.textContent = translations['en'][key];
+    if (t && t[key]) {
+      el.textContent = t[key];
     }
   });
 
   document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
     const key = el.getAttribute('data-i18n-placeholder');
-    if (translations['en'] && translations['en'][key]) {
-      el.placeholder = translations['en'][key];
+    if (t && t[key]) {
+      el.placeholder = t[key];
     }
   });
 
-  if (selectedDepartment && selectedDeptTitle) {
-    selectedDeptTitle.textContent = translations['en']['selected_dept_' + selectedDepartment];
+  if (selectedDepartment && selectedDeptTitle && t['selected_dept_' + selectedDepartment]) {
+    selectedDeptTitle.textContent = t['selected_dept_' + selectedDepartment];
+  }
+
+  const langTextEl = document.getElementById('langText');
+  if (langTextEl) {
+    langTextEl.textContent = currentLang === 'ar' ? 'English' : 'العربية';
   }
 
   if (typeof window.updateLoginThemeUI === 'function') {
@@ -133,6 +181,25 @@ function setLanguage(lang) {
 
   applyBrandSettings();
 }
+
+function toggleLoginLanguage() {
+  const nextLang = currentLang === 'ar' ? 'en' : 'ar';
+  setLanguage(nextLang);
+}
+window.toggleLoginLanguage = toggleLoginLanguage;
+
+function openForgotPasswordModal(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const m = document.getElementById('forgotPasswordModal');
+  if (m) m.style.display = 'flex';
+}
+window.openForgotPasswordModal = openForgotPasswordModal;
+
+function closeForgotPasswordModal() {
+  const m = document.getElementById('forgotPasswordModal');
+  if (m) m.style.display = 'none';
+}
+window.closeForgotPasswordModal = closeForgotPasswordModal;
 
 function applyBrandSettings() {
   let settings = null;
@@ -441,31 +508,10 @@ async function handleLogin() {
           );
         });
 
-        const defaultSeedHashUpper = '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f';
-        const defaultSeedHashLower = '78b4081c7f8a70669b76c0ebfd9519198d0092c68615ff5e0dc38df59f3d6cf9';
-        const defaultFallbackHashUpper = 'fallback_64ac7fc5';
-        const defaultFallbackHashLower = 'fallback_142d7e5';
-
-        const isMasterDefaultPassword = (
-          password === 'Pharma@2026' ||
-          password.toLowerCase() === 'pharma@2026' ||
-          rawPassword === 'Pharma@2026' ||
-          rawPassword.toLowerCase() === 'pharma@2026' ||
-          enteredHash === defaultSeedHashUpper ||
-          enteredHash === defaultSeedHashLower ||
-          enteredHash === defaultFallbackHashUpper ||
-          enteredHash === defaultFallbackHashLower ||
-          enteredHashRaw === defaultSeedHashUpper ||
-          enteredHashRaw === defaultSeedHashLower ||
-          enteredHashRaw === defaultFallbackHashUpper ||
-          enteredHashRaw === defaultFallbackHashLower
-        );
-
         const isPasswordValid = Boolean(
           matchedUser && (
             (matchedUser.passwordHash && (matchedUser.passwordHash === enteredHash || matchedUser.passwordHash === enteredHashRaw)) ||
-            (matchedUser.password && (matchedUser.password === password || matchedUser.password === rawPassword || matchedUser.password === enteredHash)) ||
-            isMasterDefaultPassword
+            (matchedUser.password && (matchedUser.password === password || matchedUser.password === rawPassword || matchedUser.password === enteredHash))
           )
         );
 

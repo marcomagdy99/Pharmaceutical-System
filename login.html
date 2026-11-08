@@ -19,7 +19,7 @@
     </script>
 
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v277" defer></script>
+    <script src="js/cache-bust.js?v=v278" defer></script>
 
     <!-- Immediate Fallback Functions so Cards Click Instantly & Theme Toggles -->
     <script>
@@ -104,9 +104,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=v277">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/login.css?v=v277">
+    <link rel="stylesheet" href="css/style.css?v=v278">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="css/login.css?v=v278">
 </head>
 <body>
 
@@ -117,6 +117,10 @@
         <div class="login-left">
             <!-- START: Top Action Buttons (Theme Toggle & Language Toggle) -->
             <div class="login-top-actions">
+                <button type="button" class="language-toggle" id="langToggle" onclick="toggleLoginLanguage()" title="Toggle Language (AR/EN)">
+                    <span id="langIcon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                    <span id="langText">العربية</span>
+                </button>
                 <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleLoginTheme()" title="Toggle Dark/Light Mode">
                     <span id="themeToggleIcon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
                     <span id="themeToggleText">Dark</span>
@@ -217,7 +221,7 @@
                         <input type="checkbox" id="remember" checked>
                         <span data-i18n="remember_me">Remember me</span>
                     </label>
-                    <a href="#" class="forgot-password" data-i18n="forgot_password">Forgot password?</a>
+                    <a href="#" class="forgot-password" onclick="openForgotPasswordModal(event)" data-i18n="forgot_password">Forgot password?</a>
                 </div>
 
                 <button type="button" class="btn-login" id="loginBtn" onclick="handleLogin()">
@@ -314,16 +318,33 @@
     <!-- END: Login Container -->
 
     <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v277" defer></script>
-  <script src="js/app.js?v=v277" defer></script>
-    <script src="js/store.js?v=v277" defer></script>
+    <script src="js/auth-service.js?v=v278" defer></script>
+  <script src="js/app.js?v=v278" defer></script>
+    <script src="js/store.js?v=v278" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
-    <script src="js/firebase-config.js?v=v277" defer></script>
-    <script src="js/firebase-sync.js?v=v277" defer></script>
+    <script src="js/firebase-config.js?v=v278" defer></script>
+    <script src="js/firebase-sync.js?v=v278" defer></script>
 
     <!-- External JavaScript -->
-    <script src="js/login.js?v=v277" defer></script>
+    <script src="js/login.js?v=v278" defer></script>
+
+    <!-- Forgot Password Assistance Modal -->
+    <div class="modal-overlay" id="forgotPasswordModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 2500; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+      <div class="modal-box" style="width: 90%; max-width: 440px; background: var(--surface-card, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 12px 36px rgba(0,0,0,0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-main, #e2e8f0); padding-bottom: 10px;">
+          <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-heading, #1e293b);" data-i18n="forgot_title">Password Assistance</h4>
+          <button type="button" onclick="closeForgotPasswordModal()" style="border: none; background: none; font-size: 1.4rem; cursor: pointer; color: var(--gray-500, #94a3b8); line-height: 1;">&times;</button>
+        </div>
+        <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-color, #475569); margin-bottom: 18px;" data-i18n="forgot_desc">
+          For enterprise security, please contact your System Administrator (Admin) or HR Department to verify your identity and reset your credentials.
+        </p>
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="button" class="btn btn-primary px-4" onclick="closeForgotPasswordModal()" data-i18n="close_btn">Close</button>
+        </div>
+      </div>
+    </div>
+
 </body>
 </html>
