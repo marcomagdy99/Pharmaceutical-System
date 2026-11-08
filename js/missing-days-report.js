@@ -1,3 +1,7 @@
+function getSafeSystemDate() {
+  return (typeof window !== "undefined" && window.getSystemDate && window.getSystemDate()) || new Date();
+}
+
 /**
  * @file missing-days-report.js
  * @description Missing Days Report Module (KPIs & Field Discipline Audit).
@@ -35,7 +39,7 @@
     if (!fromInput || !toInput) return;
 
     if (!fromInput.value || !toInput.value) {
-      const now = new Date();
+      const now = getSafeSystemDate();
       const y = now.getFullYear();
       const m = now.getMonth();
       const firstDay = new Date(y, m, 1);
@@ -56,7 +60,7 @@
     const toInput = document.getElementById("missingDateTo");
     if (!fromInput || !toInput) return;
 
-    const now = new Date();
+    const now = getSafeSystemDate();
     const y = now.getFullYear();
     const m = now.getMonth();
 

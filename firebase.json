@@ -19,7 +19,9 @@
       "vercel.json",
       "_redirects",
       "approval-test-suite.html",
-      "costing-test-suite.html"
+      "costing-test-suite.html",
+      "scripts/**",
+      "**/scripts/**"
     ],
     "headers": [
       {

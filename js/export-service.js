@@ -110,16 +110,40 @@
       const el = typeof tableOrId === "string" ? document.getElementById(tableOrId) : tableOrId;
       if (!el) return;
 
+      const ignoredColIndices = new Set();
       const headers = [];
       const rows = [];
 
-      el.querySelectorAll("thead th").forEach((th) => {
+      const thList = Array.from(el.querySelectorAll("thead th"));
+      thList.forEach((th, idx) => {
+        const txt = th.innerText.trim().toLowerCase();
+        if (
+          th.classList.contains("table-actions-cell") ||
+          th.classList.contains("actions-cell") ||
+          th.classList.contains("area-actions-cell") ||
+          txt === "actions" ||
+          txt === "action" ||
+          txt === "الإجراءات" ||
+          txt === "إجراءات"
+        ) {
+          ignoredColIndices.add(idx);
+          return;
+        }
         headers.push(th.innerText.trim());
       });
 
       el.querySelectorAll("tbody tr").forEach((tr) => {
         const rowData = [];
-        tr.querySelectorAll("td").forEach((td) => {
+        const tdList = Array.from(tr.querySelectorAll("td"));
+        tdList.forEach((td, idx) => {
+          if (
+            ignoredColIndices.has(idx) ||
+            td.classList.contains("table-actions-cell") ||
+            td.classList.contains("actions-cell") ||
+            td.classList.contains("area-actions-cell")
+          ) {
+            return;
+          }
           rowData.push(td.innerText.trim());
         });
         if (rowData.length > 0) rows.push(rowData);

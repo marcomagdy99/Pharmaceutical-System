@@ -1,3 +1,7 @@
+function getSafeSystemDate() {
+  return (typeof window !== "undefined" && window.getSystemDate && window.getSystemDate()) || new Date();
+}
+
 /**
  * @file sops-report.js
  * @description Monthly Record Analysis (SOPs & Field Productivity Report)
@@ -58,7 +62,7 @@
   function populateSopsFilters() {
     const container = document.getElementById('sopsMonthCheckboxList');
     const yearSelect = document.getElementById('sopsYearSelect');
-    const now = new Date();
+    const now = getSafeSystemDate();
     const curMonthVal = String(now.getMonth() + 1).padStart(2, '0');
     const curYear = now.getFullYear();
     const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
@@ -148,7 +152,7 @@
     let targetMonths = [];
     if (quarterNum === 0) {
       // Current month
-      const now = new Date();
+      const now = getSafeSystemDate();
       targetMonths = [String(now.getMonth() + 1).padStart(2, '0')];
     } else if (quarters[quarterNum]) {
       targetMonths = quarters[quarterNum];
@@ -195,7 +199,7 @@
   function getSelectedSopsMonths() {
     const checked = document.querySelectorAll('.sops-month-checkbox:checked');
     if (checked.length === 0) {
-      const now = new Date();
+      const now = getSafeSystemDate();
       return [String(now.getMonth() + 1).padStart(2, '0')];
     }
     return Array.from(checked).map((cb) => cb.value);
@@ -306,7 +310,7 @@
   function buildSopsData(year, selectedMonths) {
     const monthsArr = (Array.isArray(selectedMonths) && selectedMonths.length > 0)
       ? selectedMonths
-      : [String(new Date().getMonth() + 1).padStart(2, '0')];
+      : [String(getSafeSystemDate().getMonth() + 1).padStart(2, '0')];
 
     // Compute calendar stats per month
     const monthCalendars = monthsArr.map((mStr) => {
@@ -573,7 +577,7 @@
     if (resultsContainer) resultsContainer.style.display = 'block';
 
     const yearSelect = document.getElementById('sopsYearSelect');
-    const now = new Date();
+    const now = getSafeSystemDate();
     const year = parseInt(yearSelect?.value || now.getFullYear(), 10);
     const selectedMonths = getSelectedSopsMonths();
 
@@ -742,7 +746,7 @@
 
       // Pre-set timeline date range to match SOPs selected period
       const yearSelect = document.getElementById('sopsYearSelect');
-      const year = parseInt(yearSelect?.value || new Date().getFullYear(), 10);
+      const year = parseInt(yearSelect?.value || getSafeSystemDate().getFullYear(), 10);
       const selectedMonths = getSelectedSopsMonths();
       if (selectedMonths.length > 0) {
         const sortedMonths = selectedMonths.slice().sort();
@@ -771,7 +775,7 @@
     }
 
     const yearSelect = document.getElementById('sopsYearSelect');
-    const now = new Date();
+    const now = getSafeSystemDate();
     const year = yearSelect?.value || now.getFullYear();
     const months = getSelectedSopsMonths().join('-');
 

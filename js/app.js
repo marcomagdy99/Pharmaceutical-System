@@ -82,7 +82,7 @@ const NetworkTime = {
       if (origin && !origin.startsWith("file:")) {
         const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
         const timeoutId = controller ? setTimeout(() => controller.abort(), 3500) : null;
-        const res = await fetch(origin, {
+        const res = await fetch(`${origin}/?_t=${Date.now()}`, {
           method: "HEAD",
           cache: "no-store",
           signal: controller ? controller.signal : undefined
