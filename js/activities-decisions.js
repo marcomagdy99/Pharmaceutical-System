@@ -181,7 +181,12 @@
               action: "approved",
             });
           }
-        } else if (nextApproverId) {
+        } else if (nextStatus.startsWith("pending_")) {
+          if (!nextApproverId) {
+            Core.safeShowToast(Core.t("noNextApproverFound") || "Cannot advance request: No direct manager found for next approval stage. Please contact admin.", "warning");
+            closeDecisionModal();
+            return;
+          }
           let stepTitle = "Expense Claim Pending Review";
           if (nextStatus === Core.REQUEST_STATUS.PENDING_LM) stepTitle = "Expense Claim Pending Line Manager Approval";
           else if (nextStatus === Core.REQUEST_STATUS.PENDING_BU || nextStatus === "pending_bu") stepTitle = "Expense Claim Pending BU Manager Approval";
@@ -283,7 +288,6 @@
                 hasModifiedShare = true;
               }
             });
-            srv.status = Core.REQUEST_STATUS.APPROVED;
           } else if (userRole === Core.ROLES.DM) {
             srv.shares.forEach((sh) => {
               if (sh.dmId === userId && sh.status === Core.REQUEST_STATUS.PENDING_DM) {
@@ -483,6 +487,12 @@
             }
           }
 
+          if (nextStatus.startsWith("pending_") && !nextApproverId) {
+            Core.safeShowToast(Core.t("noNextApproverFound") || "Cannot advance request: No direct manager found for next approval stage. Please contact admin.", "warning");
+            closeDecisionModal();
+            return;
+          }
+
           Core.StoreAdapter.updateServiceStatus(requestId, nextStatus, Core._state.currentUser, comment, nextApproverId);
 
           if (nextStatus === Core.REQUEST_STATUS.APPROVED) {
@@ -571,7 +581,7 @@
   // Keyboard Accessibility: Close active modal on Escape key press
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" || e.keyCode === 27) {
-      const decModal = document.getElementById("activitiesDecisionModal");
+      const decModal = document.getElementById("decisionModal");
       if (decModal && (decModal.style.display === "flex" || decModal.classList.contains("active") || decModal.classList.contains("show"))) {
         closeDecisionModal();
       }

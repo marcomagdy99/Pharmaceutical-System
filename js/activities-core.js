@@ -255,17 +255,77 @@
       allLines: "All Product Lines",
       allEmployees: "All Employees",
       myRequestsOnly: "My Requests Only",
-      dayOff: "Day Off"
+      dayOff: "Day Off",
+      noPendingSharesForYou: "No pending shares matched your authorization scope.",
+      noNextApproverFound: "Cannot advance request: No manager found for next approval stage. Please contact admin.",
+      unauthorizedExpenseAction: "You are not authorized to perform this action on this expense claim.",
+      unauthorizedServiceAction: "You are not authorized to perform this action on this service request."
+    },
+    ar: {
+      activitiesTitle: "فارماكير - طلبات الأنشطة الميدانية",
+      dailyActivities: "الأنشطة اليومية",
+      tabDailyActivities: "الأنشطة اليومية",
+      tabExpenses: "طلبات المصاريف",
+      tabServices: "طلبات الخدمات",
+      tabSalesBudget: "ميزانية المبيعات",
+      today: "اليوم",
+      amPeriod: "الفترة الصباحية (AM)",
+      pmPeriod: "الفترة المسائية (PM)",
+      logActivity: "تسجيل نشاط",
+      logActivityTitle: "تسجيل نشاط ميداني",
+      weeklyOverview: "نظرة عامة أسبوعية",
+      period: "الفترة",
+      activityType: "نوع النشاط",
+      selectActivity: "اختر نوع النشاط...",
+      typeVisit: "زيارة",
+      typeOfficeWork: "عمل مكتبي",
+      typeTraining: "تدريب",
+      typeMeeting: "اجتماع",
+      typeConference: "مؤتمر",
+      notes: "ملاحظات",
+      cancel: "إلغاء",
+      save: "حفظ",
+      deleteActivity: "حذف النشاط",
+      confirmDeleteActivity: "هل أنت متأكد من رغبتك في حذف هذا النشاط؟",
+      activityDeleted: "تم حذف النشاط بنجاح.",
+      selectActivityTypeWarning: "يرجى تحديد نوع النشاط أولاً.",
+      statusLogged: "مسجل",
+      disbursedLabel: "تم الصرف",
+      statusPending: "قيد المراجعة",
+      confirmApprovalTitle: "تأكيد الموافقة",
+      confirmRejectionTitle: "تأكيد الرفض",
+      confirmDisbursementTitle: "تأكيد الصرف المالي",
+      reasonLabel: "السبب / الملاحظات:",
+      reasonPlaceholder: "أدخل السبب أو التعليق...",
+      btnApprove: "موافقة",
+      btnReject: "رفض",
+      btnDisburse: "صرف المستحقات",
+      rejectionReasonRequired: "يرجى إدخال سبب الرفض.",
+      successAction: "تمت العملية بنجاح!",
+      savedBudgetMessage: "تم تحديث الميزانية بنجاح!",
+      insufficientBudgetNotice: "تنبيه: التكلفة تتجاوز الرصيد المتبقي.",
+      noReceipt: "لا يوجد إيصال مرفق",
+      allLines: "كافة خطوط الإنتاج",
+      allEmployees: "كافة الموظفين",
+      myRequestsOnly: "طلباتي فقط",
+      dayOff: "يوم إجازة",
+      noPendingSharesForYou: "لا توجد حصص معلقة تطابق نطاق صلاحياتك الحالية.",
+      noNextApproverFound: "تعذر تصعيد الطلب: لم يتم العثور على مدير مباشر للمرحلة التالية. يرجى مراجعة إدارة النظام.",
+      unauthorizedExpenseAction: "ليس لديك صلاحية لتنفيذ هذا الإجراء على هذا المصروف.",
+      unauthorizedServiceAction: "ليس لديك صلاحية لتنفيذ هذا الإجراء على طلب الخدمة هذا."
     }
   };
 
   // ============================================================================
   // 3. Pure Helpers & Utilities
   // ============================================================================
-  function t(key) {
+  function t(key, fallback) {
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const dict = activityTranslations[lang] || activityTranslations.en;
-    return dict[key] !== undefined ? dict[key] : key;
+    if (dict && dict[key] !== undefined) {
+      return dict[key];
+    }
+    return fallback !== undefined ? fallback : key;
   }
 
   function safeShowToast(msg, type = "info") {
@@ -386,7 +446,7 @@
       all[dateStr][period] = activityData;
       try {
         localStorage.setItem(`pharma_activities_data_${userId}`, JSON.stringify(all));
-      } catch (e) {}
+      } catch (e) { console.warn("[ActivitiesCore] Storage save warning:", e); }
       return activityData;
     },
 
@@ -617,21 +677,15 @@
       u = window.checkAuth();
     }
     if (!u) {
-      u = (window.DEMO_DATA && window.DEMO_DATA.currentUser) || {
-        id: "u1790626000001",
-        role: ROLES.REP,
-        name: (window.store && window.store.users && window.store.users.getById("u1790626000001") ? window.store.users.getById("u1790626000001").name : "Medical Rep"),
-        nameAr: (window.store && window.store.users && window.store.users.getById("u1790626000001") ? (window.store.users.getById("u1790626000001").nameAr || window.store.users.getById("u1790626000001").name) : "Medical Rep"),
-        lineIds: ["line_1790626000001"],
-        areaId: "area_1790626000001",
-      };
+      return null;
     }
 
     // =========================================================================
     // SECURITY INTEGRITY CHECK: Prevent Client-side Role Tampering
     // =========================================================================
     const canonicalUsers = getAllUsers();
-    if (u && u.id && canonicalUsers.length > 0) {
+    if (canonicalUsers.length === 0) return null;
+    if (u && u.id) {
       const canonical = canonicalUsers.find((user) => user.id === u.id);
       if (!canonical) {
         console.warn(`[SECURITY VIOLATION] User ID '${u.id}' not found in canonical store. Rejecting unauthorized access.`);
@@ -751,7 +805,8 @@
       return role === ROLES.DM || role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
     }
 
-    return true;
+    // Fail-closed authorization: any unhandled action or role is strictly denied
+    return false;
   }
 
   function getUserDisplayName(id) {
@@ -804,7 +859,8 @@
   function getUserAssignedLines(user) {
     const allLines = getAllProductLines();
     if (!user) return allLines;
-    if (user.role === ROLES.ADMIN || user.role === ROLES.HR) {
+    const role = (user.role || "").toLowerCase();
+    if (role === ROLES.ADMIN || role === ROLES.HR || role === "admin" || role === "hr") {
       return allLines;
     }
     if (role === ROLES.BU || role === "business_unit" || role === "bu") {
@@ -885,9 +941,9 @@
     }
 
     return {
-      repId: repId || (fallbackUserId || "u1790626000001"),
-      dmId: dmId || "u1790626000014",
-      lmId: lmId || "u1790626000012"
+      repId: repId || fallbackUserId || null,
+      dmId: dmId || null,
+      lmId: lmId || null
     };
   }
 

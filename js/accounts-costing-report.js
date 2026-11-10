@@ -50,7 +50,7 @@
     if (fullUser) {
       return { ...authUser, ...fullUser };
     }
-    return authUser;
+    return null;
   }
 
   /**
@@ -94,7 +94,7 @@
     const isLM = role === "line_manager" || role === "business_unit";
     const isDM = role === "district_manager";
     const isHR = role === "hr";
-    const isRep = !isAdmin && !isLM && !isDM && !isHR; // defaults to rep
+    const isRep = role === "medical_rep" || role === "rep";
 
     // 1. Admin Scope: Unrestricted
     if (isAdmin) {
@@ -756,11 +756,16 @@
       }
 
       const categoryName = determineCategoryName(s.category || s.title || s.type || "Other Requests");
+      const matchedDoc = s.targetId ? allDoctors.find(d => String(d.id) === String(s.targetId)) : null;
+      const sLineId = s.lineId || (matchedDoc ? matchedDoc.lineId : null);
+      const sAreaId = s.areaId || (matchedDoc ? matchedDoc.areaId : null);
+      const sDate = s.date || s.serviceDate || (s.history && s.history[0]?.at ? s.history[0].at.substring(0, 10) : "");
+
       transactions.push({
         id: s.id,
         serviceId: s.id,
         source: "service",
-        date: s.date || "",
+        date: sDate,
         targetId: s.targetId || null,
         targetName: s.targetName || "",
         targetType: s.targetType || "doctor",
@@ -768,8 +773,8 @@
         title: s.title || s.notes || "Service",
         cost: cost,
         repId: s.requesterId || s.repId || null,
-        lineId: s.lineId || null,
-        areaId: s.areaId || null,
+        lineId: sLineId,
+        areaId: sAreaId,
         notes: s.notes || "",
         attachmentBase64: s.attachmentBase64 || null,
         status: s.status || "approved",
@@ -1353,13 +1358,7 @@
       return;
     }
 
-    // Sanitize values against CSV / Excel Formula Injection
-    const sanitizeFormula = (val) => {
-      if (typeof val === "string" && /^[=+\-@\t\r]/.test(val)) {
-        return "'" + val;
-      }
-      return val;
-    };
+    // SheetJS XLSX writes string cells as text type natively
 
     // Build headers
     const headers = [
@@ -1379,11 +1378,11 @@
     rows.forEach((r, idx) => {
       const rowArr = [
         idx + 1,
-        sanitizeFormula(r.clinicName),
-        sanitizeFormula(r.doctorName),
-        sanitizeFormula(r.classification),
-        sanitizeFormula(r.specialty),
-        sanitizeFormula(r.areaName),
+        r.clinicName,
+        r.doctorName,
+        r.classification,
+        r.specialty,
+        r.areaName,
       ];
       categories.forEach((cat) => {
         rowArr.push(r.categoryTotals[cat] || 0);

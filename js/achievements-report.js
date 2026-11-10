@@ -772,7 +772,7 @@ function renderAchievementsReport() {
     const vacantCount = groups.filter((g) => g.isVacant).length;
     kpiReps.innerHTML = vacantCount > 0
       ? `${activeCount} Reps <small style="font-size: 0.72rem; color: var(--gray-500);">(+${vacantCount} Vacant)</small>`
-      : `${activeCount}`;
+      : `${activeCount} Reps`;
   }
 
   if (typeof window.renderSalesTargetTrendChart === 'function') {
