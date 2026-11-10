@@ -926,7 +926,7 @@
       partPercentSum += p;
       row.shareAmount = Math.round((totalCost * p) / 100);
       const rowBadge = document.getElementById(`sharedRowAmountBadge_${idx}`);
-      if (rowBadge) rowBadge.textContent = `${row.shareAmount.toLocaleString()} EGP`;
+      if (rowBadge) rowBadge.textContent = `${Number(row.shareAmount || 0).toLocaleString("en-US")} EGP`;
     });
 
     const primaryAmount = Math.round((totalCost * primaryPercent) / 100);
@@ -1211,7 +1211,7 @@
             userId: sh.nextApproverId,
             type: "shared_service_approval",
             title: "Shared Service Request Pending Approval",
-            message: `A shared service request (${newService.title}) totaling ${newService.cost.toLocaleString()} EGP is awaiting your approval.`,
+            message: `A shared service request (${newService.title}) totaling ${Number(newService.cost || 0).toLocaleString("en-US")} EGP is awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
             badgeClass: "bg-warning",
@@ -1226,7 +1226,7 @@
           userId: newService.nextApproverId,
           type: "service_approval",
           title: "Service Request Pending Approval",
-          message: `${creatorName} submitted a service request (${newService.title}) for ${newService.cost.toLocaleString()} EGP awaiting your approval.`,
+          message: `${creatorName} submitted a service request (${newService.title}) for ${Number(newService.cost || 0).toLocaleString("en-US")} EGP awaiting your approval.`,
           link: "activities.html",
           icon: "📋",
           badgeClass: "bg-warning",

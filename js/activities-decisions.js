@@ -151,11 +151,11 @@
             const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
             const requester = allUsers.find((u) => u.id === exp.requesterId);
             const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : Core._state.currentUser;
-            nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || "u1790626000012";
+            nextApproverId = (dm && dm.managerId) || (requester && requester.managerId) || null;
           } else if (exp.status === Core.REQUEST_STATUS.PENDING_LM) {
             nextStatus = Core.REQUEST_STATUS.PENDING_HR;
             const hr = Core.getHrUser();
-            nextApproverId = hr ? hr.id : "u1790626000017";
+            nextApproverId = hr ? hr.id : null;
           } else if (exp.status === Core.REQUEST_STATUS.PENDING_HR) {
             nextStatus = Core.REQUEST_STATUS.APPROVED;
             nextApproverId = null;
@@ -363,7 +363,7 @@
                 userId: srv.requesterId,
                 type: "service_fully_approved",
                 title: "Shared Service Request Fully Approved!",
-                message: `Shared service request (${srv.title}) has been fully approved by all managers for ${srv.cost.toLocaleString()} EGP.`,
+                message: `Shared service request (${srv.title}) has been fully approved by all managers for ${Number(srv.cost || 0).toLocaleString("en-US")} EGP.`,
                 link: "activities.html",
                 icon: "✅",
                 badgeClass: "bg-success",
@@ -379,7 +379,7 @@
                     userId: sh.repId,
                     type: "service_fully_approved",
                     title: "Shared Service Request Approved",
-                    message: `Shared service request (${srv.title}) was approved with your share (${sh.sharePercent}% - ${sh.shareAmount.toLocaleString()} EGP).`,
+                    message: `Shared service request (${srv.title}) was approved with your share (${sh.sharePercent}% - ${Number(sh.shareAmount || 0).toLocaleString("en-US")} EGP).`,
                     link: "activities.html",
                     icon: "✅",
                     badgeClass: "bg-success",
@@ -455,7 +455,7 @@
           } else {
             if (srv.status === Core.REQUEST_STATUS.PENDING_DM) {
               const dm = Core.getUserById(srv.requesterId);
-              const lm = dm && dm.managerId ? dm.managerId : Core._state.currentUser.managerId || "u1790626000012";
+              const lm = dm && dm.managerId ? dm.managerId : (Core._state.currentUser ? Core._state.currentUser.managerId : null);
               nextStatus = Core.REQUEST_STATUS.PENDING_LM;
               nextApproverId = lm;
             } else {
@@ -472,7 +472,7 @@
                 userId: srv.requesterId,
                 type: "service_approved",
                 title: "Service Request Approved!",
-                message: `Service request (${srv.title}) was approved for ${srv.cost.toLocaleString()} EGP.`,
+                message: `Service request (${srv.title}) was approved for ${Number(srv.cost || 0).toLocaleString("en-US")} EGP.`,
                 link: "activities.html",
                 icon: "✅",
                 badgeClass: "bg-success",

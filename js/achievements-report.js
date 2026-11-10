@@ -315,14 +315,37 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const usersMap = new Map(allUsers.map((u) => [u.id, u]));
   const areasMap = new Map(allAreas.map((a) => [a.id, a]));
 
-  const repToAreaMap = new Map();
+  const repToAreasListMap = new Map();
   allAreas.forEach((a) => {
-    if (a.repId) repToAreaMap.set(a.repId, a.id);
+    if (a.repId) {
+      if (!repToAreasListMap.has(a.repId)) repToAreasListMap.set(a.repId, []);
+      repToAreasListMap.get(a.repId).push(a);
+    }
   });
 
-  // 1. Determine allowed areas based on viewer's role
+  function resolveRepArea(repId, lineId, areaNameHint) {
+    const list = repToAreasListMap.get(repId);
+    if (!list || list.length === 0) return null;
+    if (list.length === 1) return list[0].id;
+    if (areaNameHint) {
+      const hint = areaNameHint.toLowerCase().trim();
+      const match = list.find((a) => (a.name && a.name.toLowerCase().trim() === hint) || (a.code && a.code.toLowerCase().trim() === hint));
+      if (match) return match.id;
+    }
+    if (lineId) {
+      const match = list.find((a) => a.lineId === lineId);
+      if (match) return match.id;
+    }
+    return list[0].id;
+  }
+
+  // 1. Determine allowed areas based on viewer's role (Strict Fail-Closed)
   let allowedAreaIds = null;
-  if (isRep) {
+  const isAdminOrBU = userRole === 'admin' || userRole === 'administrator' || userRole === 'business_unit' || userRole === 'bu' || userRole === 'general_manager';
+
+  if (isAdminOrBU) {
+    allowedAreaIds = new Set(allAreas.map((a) => a.id));
+  } else if (isRep) {
     const repAreas = allAreas.filter((a) => a.repId === curUser.id || (curUser.areaIds && curUser.areaIds.includes(a.id)));
     allowedAreaIds = new Set(repAreas.map((a) => a.id));
   } else if (userRole === 'district_manager' || userRole === 'dm') {
@@ -346,6 +369,13 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       return false;
     });
     allowedAreaIds = new Set(lmAreas.map((a) => a.id));
+  } else if (userRole === 'product_manager' || userRole === 'pm') {
+    const pmLineIds = curUser.lineIds || (curUser.lineId ? [curUser.lineId] : []);
+    const pmAreas = allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId));
+    allowedAreaIds = new Set(pmAreas.map((a) => a.id));
+  } else {
+    // Strictly fail-closed for HR or unassigned roles
+    allowedAreaIds = new Set();
   }
 
   // 2. Apply UI filters (rep filter / vacant filter & area filter)
@@ -356,7 +386,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const achAreaSelect = document.getElementById('achAreaSelect');
   const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
 
-  let filteredAreaIds = allowedAreaIds ? new Set(allowedAreaIds) : new Set(allAreas.map((a) => a.id));
+  let filteredAreaIds = new Set(allowedAreaIds);
 
   if (selectedRepVal && selectedRepVal !== 'all') {
     if (selectedRepVal.startsWith('vacant:')) {
@@ -475,11 +505,11 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   targets.forEach((t) => {
     let tAreaId = t.areaId;
-    if (!tAreaId && t.repId) {
-      tAreaId = repToAreaMap.get(t.repId);
-    }
     if (!tAreaId && t.area) {
       tAreaId = areaNameToIdMap.get(t.area.toLowerCase().trim());
+    }
+    if (!tAreaId && t.repId) {
+      tAreaId = resolveRepArea(t.repId, t.lineId, t.area);
     }
     if (!tAreaId || !filteredAreaIds.has(tAreaId)) return;
 
@@ -504,14 +534,14 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   salesRows.forEach((s) => {
     let sAreaId = s.areaId;
-    if (!sAreaId && s.repId) {
-      sAreaId = repToAreaMap.get(s.repId);
-    }
     if (!sAreaId && s.area) {
       sAreaId = areaNameToIdMap.get(s.area.toLowerCase().trim());
     }
     if (!sAreaId && s.areaRaw) {
       sAreaId = areaNameToIdMap.get(s.areaRaw.toLowerCase().trim());
+    }
+    if (!sAreaId && s.repId) {
+      sAreaId = resolveRepArea(s.repId, s.lineId, s.area || s.areaRaw);
     }
     if (!sAreaId || !filteredAreaIds.has(sAreaId)) return;
 
@@ -604,7 +634,6 @@ function renderAchievementsReport() {
   const user = checkAuth();
   const scopeRepIds = getAchievementsScopeRepIds(user);
   const groups = buildAchievementsData(monthKeys, scopeRepIds);
-  const lang = getCurrentLang();
 
   tbody.replaceChildren();
   let grandTarget = 0;
@@ -716,29 +745,19 @@ function renderAchievementsReport() {
   if (kpiActual) kpiActual.textContent = grandActual.toLocaleString();
   if (kpiPct) kpiPct.textContent = grandTarget > 0 ? ((grandActual / grandTarget) * 100).toFixed(1) + '%' : '—';
   if (kpiReps) {
-    const activeCount = groups.filter((g) => !g.isVacant).length;
+    const uniqueReps = new Set(groups.filter((g) => !g.isVacant && g.repId).map((g) => g.repId));
+    const activeCount = uniqueReps.size;
     const vacantCount = groups.filter((g) => g.isVacant).length;
     kpiReps.innerHTML = vacantCount > 0
-      ? `${activeCount} <small style="font-size: 0.72rem; color: var(--gray-500);">(+${vacantCount} Vacant)</small>`
+      ? `${activeCount} Reps <small style="font-size: 0.72rem; color: var(--gray-500);">(+${vacantCount} Vacant)</small>`
       : `${activeCount}`;
   }
 
   if (typeof window.renderSalesTargetTrendChart === 'function') {
-        const chartLabels = selectedMonths.map((mVal) => {
+    const chartLabels = selectedMonths.map((mVal) => {
       const idx = parseInt(mVal, 10) - 1;
       return ACH_MONTHS[idx];
     });
-
-    const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-    const achAreaSelect = document.getElementById('achAreaSelect');
-    const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
-    const selectedAreaObj = (selectedArea !== 'all' && window.store && window.store.areas)
-      ? window.store.areas.getById(selectedArea)
-      : null;
-    const selectedAreaRepId = selectedAreaObj ? selectedAreaObj.repId : null;
-
-    const allProducts = typeof getAllProductsFlat === 'function' ? getAllProductsFlat() : [];
-    const productsMap = new Map(allProducts.map((p) => [p.id, p]));
 
     const chartTargets = selectedMonths.map((mVal) => {
       const mKey = `${year}-${mVal}`;
@@ -789,8 +808,11 @@ function exportAchievementsReport() {
   ];
 
   const escapeCsv = (val) => {
-    const s = String(val ?? '').replace(/"/g, '""');
-    return `"${s}"`;
+    let s = String(val ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) {
+      s = "'" + s;
+    }
+    return `"${s.replace(/"/g, '""')}"`;
   };
 
   const rows = [];

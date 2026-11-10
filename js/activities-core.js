@@ -426,7 +426,7 @@
       list.unshift(expObj);
       try {
         localStorage.setItem("pharma_expenses_data", JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { console.warn("[ActivitiesCore] Storage quota exceeded while saving expenses:", e); }
       return expObj;
     },
 
@@ -452,7 +452,7 @@
       });
       try {
         localStorage.setItem("pharma_expenses_data", JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { console.warn("[ActivitiesCore] Storage quota exceeded while saving expenses:", e); }
       return exp;
     },
 
@@ -485,7 +485,7 @@
       }
       try {
         localStorage.setItem("pharma_services_data", JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { console.warn("[ActivitiesCore] Storage quota exceeded while saving services:", e); }
       return srvObj;
     },
 
@@ -512,7 +512,7 @@
       });
       try {
         localStorage.setItem("pharma_services_data", JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { console.warn("[ActivitiesCore] Storage quota exceeded while saving services:", e); }
       return srv;
     },
 
@@ -827,7 +827,7 @@
     if (rep) {
       if (rep.role === ROLES.DM) {
         dmId = rep.id;
-        lmId = rep.managerId || "u1790626000012";
+        lmId = rep.managerId || null;
       } else if (rep.role === ROLES.LM) {
         dmId = null;
         lmId = rep.id;
@@ -846,7 +846,7 @@
         const dmsInLine = allUsers.filter(u => u.role === ROLES.DM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
         if (dmsInLine.length > 0) {
           dmId = dmsInLine[0].id;
-          lmId = dmsInLine[0].managerId || "u1790626000012";
+          lmId = dmsInLine[0].managerId || null;
         }
       }
     }

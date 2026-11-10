@@ -81,9 +81,13 @@
           window.showToast("Excel file exported successfully (.xlsx)", "success");
         }
       } else {
-        // Fallback to UTF-8 CSV with BOM
+        // Fallback to UTF-8 CSV with BOM and Formula Injection (CSV Injection) mitigation
         const escapeCsv = (val) => {
-          const s = val === null || val === undefined ? "" : String(val);
+          let s = val === null || val === undefined ? "" : String(val);
+          // Mitigate CSV Formula Injection by prepending single quote if value starts with formula triggers
+          if (/^[=+\-@\t\r]/.test(s)) {
+            s = "'" + s;
+          }
           if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
             return '"' + s.replace(/"/g, '""') + '"';
           }

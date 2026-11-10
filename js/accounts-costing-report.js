@@ -44,10 +44,11 @@
     }
 
     // Always merge with full database user record to guarantee managerId, areaId, lineId exist
+    // Database record (fullUser) takes precedence over client-side authUser (fail-closed authorization)
     const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
     const fullUser = allUsers.find((u) => u.id === authUser.id || (authUser.email && u.email === authUser.email));
     if (fullUser) {
-      return { ...fullUser, ...authUser };
+      return { ...authUser, ...fullUser };
     }
     return authUser;
   }
@@ -148,9 +149,7 @@
       if (myLines.length === 0 && user.lineId) {
         myLines = allLines.filter((l) => l.id === user.lineId);
       }
-      if (myLines.length === 0 && allLines.length > 0) {
-        myLines = [allLines[0]];
-      }
+      // If no lines assigned, fail-closed: do not grant arbitrary lines
       const myLineIds = new Set(myLines.map((l) => l.id));
 
       // Resolve Rep's assigned areas
@@ -178,19 +177,12 @@
         });
       }
 
-      if (myAreas.length === 0 && allAreas.length > 0) {
-        // Fallback: match by line
-        myAreas = allAreas.filter((a) => myLineIds.has(a.lineId));
-      }
       const myAreaIds = new Set(myAreas.map((a) => a.id));
 
-      // Resolve Rep's assigned Doctors
+      // Resolve Rep's assigned Doctors strictly (fail-closed)
       let myDoctors = allDoctors.filter((d) =>
-        d.repId === user.id || myAreaIds.has(d.areaId)
+        d.repId === user.id || (d.areaId && myAreaIds.has(d.areaId))
       );
-      if (myDoctors.length === 0 && myLineIds.size > 0) {
-        myDoctors = allDoctors.filter((d) => myLineIds.has(d.lineId));
-      }
       const myDoctorIds = new Set(myDoctors.map((d) => d.id));
 
       // Resolve Rep's District Manager (DM)
@@ -289,7 +281,8 @@
       let myLines = lmLines.length > 0 ? lmLines : allLines.filter((l) =>
         l.lineManagerId === user.id || (user.lineIds && user.lineIds.includes(l.id)) || user.lineId === l.id
       );
-      if (myLines.length === 0) myLines = allLines;
+      // Fail-closed: if Line Manager has no assigned lines, do not open all lines
+      if (myLines.length === 0) myLines = [];
       const myLineIds = new Set(myLines.map((l) => l.id));
 
       const subUsers = typeof window.getAllSubordinates === "function"
@@ -325,20 +318,21 @@
       };
     }
 
+    // 5. Default Fallback for Unrecognized / Unassigned Roles: strictly fail-closed
     return {
-      role: "medical_rep",
+      role: role || "unknown",
       isAdmin: false,
       isLM: false,
       isDM: false,
-      isRep: true,
-      allowedLines: allLines,
-      allowedLineIds: new Set(allLines.map((l) => l.id)),
+      isRep: false,
+      allowedLines: [],
+      allowedLineIds: new Set(),
       allowedDMs: [],
-      allowedReps: [user],
-      allowedRepIds: new Set([user.id]),
-      allowedAreas: allAreas.filter((a) => a.repId === user.id),
-      allowedAreaIds: new Set(allAreas.filter((a) => a.repId === user.id).map((a) => a.id)),
-      allowedDoctorIds: new Set(allDoctors.filter((d) => d.repId === user.id).map((d) => d.id)),
+      allowedReps: [],
+      allowedRepIds: new Set(),
+      allowedAreas: [],
+      allowedAreaIds: new Set(),
+      allowedDoctorIds: new Set(),
     };
   }
 
@@ -789,8 +783,9 @@
         const userActivities = window.store.activities.getAllForUser(u.id) || {};
         Object.keys(userActivities).forEach((dateStr) => {
           const dayData = userActivities[dateStr];
-          ["am", "pm"].forEach((shift) => {
-            const act = dayData[shift];
+          if (!dayData) return;
+          ["AM", "PM"].forEach((shift) => {
+            const act = dayData[shift] || dayData[shift.toLowerCase()];
             if (act && Number(act.cost) > 0 && Array.isArray(act.doctors) && act.doctors.length > 0) {
               const perDoctorCost = Number(act.cost) / act.doctors.length;
               const catName = determineCategoryName(act.activityType || act.type || "Event");
@@ -858,7 +853,7 @@
     if (str === "Patient Materials" || lower.includes("flyer") || lower.includes("booklet") || lower.includes("print") || lower.includes("brochure") || lower.includes("patient")) {
       return "Patient Materials";
     }
-    if (str === "Audio-visual (AV)" || lower.includes("av") || lower.includes("webinar") || lower.includes("audio-visual")) {
+    if (str === "Audio-visual (AV)" || /\b(av|audio[\s-]?visual|webinar)\b/i.test(lower)) {
       return "Audio-visual (AV)";
     }
     if (str === "Scientific Subscriptions" || lower.includes("subscription") || lower.includes("journal")) {
@@ -929,18 +924,19 @@
     // Fetch and filter raw transactions strictly within role scope
     const rawTransactions = fetchRawCostingTransactions(scope);
     const filteredTransactions = rawTransactions.filter((tx) => {
-      if (fromVal && tx.date && tx.date < fromVal) return false;
-      if (toVal && tx.date && tx.date > toVal) return false;
-      if (lineVal && lineVal !== "all" && tx.lineId && tx.lineId !== lineVal) return false;
-      if (repVal && repVal !== "all" && tx.repId && tx.repId !== repVal) return false;
-      if (allowedDmRepIds && tx.repId && !allowedDmRepIds.has(tx.repId)) return false;
-      if (allowedLmRepIds && tx.repId && !allowedLmRepIds.has(tx.repId)) return false;
-      if (areaVal && areaVal !== "all" && tx.areaId && tx.areaId !== areaVal) return false;
+      if (fromVal && (!tx.date || tx.date < fromVal)) return false;
+      if (toVal && (!tx.date || tx.date > toVal)) return false;
+      if (lineVal && lineVal !== "all" && (!tx.lineId || tx.lineId !== lineVal)) return false;
+      if (repVal && repVal !== "all" && (!tx.repId || tx.repId !== repVal)) return false;
+      if (allowedDmRepIds && (!tx.repId || !allowedDmRepIds.has(tx.repId))) return false;
+      if (allowedLmRepIds && (!tx.repId || !allowedLmRepIds.has(tx.repId))) return false;
+      if (areaVal && areaVal !== "all" && (!tx.areaId || tx.areaId !== areaVal)) return false;
       return true;
     });
 
     // Filter master doctors strictly by user's role scope first, plus any accounts with approved transactions in scope
-    let scopedDoctors = allDoctors;
+    // NOTE: Always clone with [...allDoctors] to avoid in-memory store array mutation when pushing synthesized accounts
+    let scopedDoctors = [...allDoctors];
     if (!scope.isAdmin) {
       const txDocIds = new Set(filteredTransactions.map((tx) => String(tx.targetId)).filter(Boolean));
       scopedDoctors = allDoctors.filter((doc) => scope.allowedDoctorIds.has(doc.id) || txDocIds.has(String(doc.id)));
@@ -989,12 +985,19 @@
     const dynamicCategoryList = Array.from(detectedCategories);
     CostingState.dynamicCategories = dynamicCategoryList;
 
-    // Group transactions by target (Doctor ID or Name)
-    const txByTarget = {};
+    // Group transactions strictly by Doctor ID, only indexing by Name when targetId is completely absent
+    const txByTargetId = {};
+    const txByTargetName = {};
     filteredTransactions.forEach((tx) => {
-      const key = String(tx.targetId || tx.targetName || "unknown").trim();
-      if (!txByTarget[key]) txByTarget[key] = [];
-      txByTarget[key].push(tx);
+      const tId = String(tx.targetId || "").trim();
+      if (tId) {
+        if (!txByTargetId[tId]) txByTargetId[tId] = [];
+        txByTargetId[tId].push(tx);
+      } else {
+        const tName = String(tx.targetName || "unknown").trim().toLowerCase();
+        if (!txByTargetName[tName]) txByTargetName[tName] = [];
+        txByTargetName[tName].push(tx);
+      }
     });
 
     // Build Account Rows from Scoped Doctors
@@ -1003,7 +1006,14 @@
       const docLineName = lineMap[doc.lineId] || "All Lines";
       const docRepName = userMap[doc.repId] || "-";
 
-      const matchedTx = txByTarget[String(doc.id)] || txByTarget[String(doc.name).trim()] || [];
+      // Match strictly by doctor ID first. Only fallback to name if transactions lack an ID
+      const matchedTx = [...(txByTargetId[String(doc.id)] || [])];
+      const docNameKey = String(doc.name || "").trim().toLowerCase();
+      if (txByTargetName[docNameKey]) {
+        matchedTx.push(...txByTargetName[docNameKey]);
+        // Delete to prevent another doctor with identical name from receiving the same transactions
+        delete txByTargetName[docNameKey];
+      }
 
       // Calculate totals per dynamic category
       const categoryTotals = {};
@@ -1120,6 +1130,7 @@
       );
     }
 
+    CostingState.filteredRows = rows;
     renderCostingTableHeader(CostingState.dynamicCategories);
     renderCostingTableBody(rows, CostingState.dynamicCategories);
     renderCostingTableFooter(rows, CostingState.dynamicCategories);
@@ -1187,6 +1198,7 @@
         ? `<strong class="costing-cell-total">${formatEGP(row.grandTotal)}</strong>`
         : `<span class="costing-cell-zero">0</span>`;
 
+      const safeRowId = String(row.id || "").replace(/'/g, "\\'");
       return `
         <tr style="transition: background 0.15s ease;">
           <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${idx + 1}</td>
@@ -1194,7 +1206,7 @@
             <div class="costing-clinic-name">${window.escapeHtml(row.clinicName)}</div>
           </td>
           <td>
-            <a href="javascript:void(0)" onclick="openAccountsCostingBreakdown('${row.id}')" class="costing-doctor-link" title="View breakdown ledger">
+            <a href="javascript:void(0)" onclick="openAccountsCostingBreakdown('${safeRowId}')" class="costing-doctor-link" title="View breakdown ledger">
               ${window.escapeHtml(row.doctorName)}
             </a>
           </td>
@@ -1204,7 +1216,7 @@
           ${dynamicCells}
           <td>${totalCell}</td>
           <td style="text-align: center;">
-            <button type="button" class="btn btn-sm btn-outline" onclick="openAccountsCostingBreakdown('${row.id}')" style="padding: 3px 8px; font-size: 0.78rem;" title="View Transactions">
+            <button type="button" class="btn btn-sm btn-outline" onclick="openAccountsCostingBreakdown('${safeRowId}')" style="padding: 3px 8px; font-size: 0.78rem;" title="View Transactions">
               <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Details
             </button>
           </td>
@@ -1332,7 +1344,7 @@
       return;
     }
 
-    const rows = CostingState.currentRows;
+    const rows = CostingState.filteredRows || CostingState.currentRows;
     const categories = CostingState.dynamicCategories;
 
     if (!rows || rows.length === 0) {
@@ -1341,6 +1353,14 @@
       }
       return;
     }
+
+    // Sanitize values against CSV / Excel Formula Injection
+    const sanitizeFormula = (val) => {
+      if (typeof val === "string" && /^[=+\-@\t\r]/.test(val)) {
+        return "'" + val;
+      }
+      return val;
+    };
 
     // Build headers
     const headers = [
@@ -1360,11 +1380,11 @@
     rows.forEach((r, idx) => {
       const rowArr = [
         idx + 1,
-        r.clinicName,
-        r.doctorName,
-        r.classification,
-        r.specialty,
-        r.areaName,
+        sanitizeFormula(r.clinicName),
+        sanitizeFormula(r.doctorName),
+        sanitizeFormula(r.classification),
+        sanitizeFormula(r.specialty),
+        sanitizeFormula(r.areaName),
       ];
       categories.forEach((cat) => {
         rowArr.push(r.categoryTotals[cat] || 0);
