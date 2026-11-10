@@ -109,7 +109,9 @@ function populateAchFilters() {
   if (yearSelect && !yearSelect.dataset.populated) {
     if (yearSelect.options.length === 0) {
       const currentYear = String(now.getFullYear());
-      const yearsList = typeof window.getDynamicYears === 'function' ? window.getDynamicYears() : ['2025', '2026', '2027'];
+      const curYearNum = new Date().getFullYear();
+  const defaultYears = [String(curYearNum - 1), String(curYearNum), String(curYearNum + 1)];
+  const yearsList = typeof window.getDynamicYears === 'function' ? window.getDynamicYears() : defaultYears;
       yearsList.forEach((y) => {
         const opt = document.createElement('option');
         opt.value = y;
@@ -461,8 +463,10 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const activeAchType = achSalesTypeSelect ? achSalesTypeSelect.value : 'all';
   if (activeAchType === "private") {
     salesRows = salesRows.filter((s) => s.salesType !== "bulk");
+    targets = targets.filter((t) => !t.salesType || t.salesType !== "bulk");
   } else if (activeAchType === "bulk") {
     salesRows = salesRows.filter((s) => s.salesType === "bulk");
+    targets = targets.filter((t) => !t.salesType || t.salesType === "bulk");
   }
 
   const curAllowedLineIds = (typeof getPharmSalesAllowedLineIds === 'function')
@@ -523,7 +527,8 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     if (!cellMap[key]) {
       cellMap[key] = { areaId: tAreaId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     }
-    const tVal = t.target != null ? (parseFloat(t.target) || 0) : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0));
+    const parsedTarget = t.target != null && t.target !== "" ? parseFloat(t.target) : NaN;
+    const tVal = !isNaN(parsedTarget) && parsedTarget > 0 ? parsedTarget : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0));
     cellMap[key].tUnit += parseFloat(t.targetUnits) || 0;
     cellMap[key].tValue += tVal;
     if (monthlyTotals[t.month]) {
@@ -568,12 +573,29 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   Object.values(cellMap).forEach((cell) => {
     if (!areaGroups[cell.areaId]) {
       const area = areasMap.get(cell.areaId);
-      const rep = area && area.repId ? usersMap.get(area.repId) : null;
+      let repId = area ? area.repId : null;
+      // Consult territory history for historical rep transfer assignment in selected month
+      if (window.store && window.store.territoryHistory && typeof window.store.territoryHistory.getAll === "function") {
+        const allHist = window.store.territoryHistory.getAll() || [];
+        const areaHist = allHist.filter((h) => h.areaId === cell.areaId);
+        if (areaHist.length > 0) {
+          const latestKey = keys[keys.length - 1];
+          const matchedH = areaHist.find((h) => {
+            const s = (h.startDate || "2000-01").substring(0, 7);
+            const e = (h.endDate || "2099-12").substring(0, 7);
+            return latestKey >= s && latestKey <= e;
+          });
+          if (matchedH && matchedH.repId) {
+            repId = matchedH.repId;
+          }
+        }
+      }
+      const rep = repId ? usersMap.get(repId) : null;
       areaGroups[cell.areaId] = {
         areaId: cell.areaId,
         areaName: area ? area.name : cell.areaId,
         areaCode: area ? area.code : '',
-        repId: area ? area.repId : null,
+        repId: repId,
         repName: rep ? rep.name : 'Vacant',
         isVacant: !rep,
         totalSUnit: 0,

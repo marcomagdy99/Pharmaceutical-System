@@ -635,6 +635,7 @@
 
   function onAccountsCostingSearchInput(val) {
     CostingState.searchTerm = (val || "").trim().toLowerCase();
+    filterAndDisplayCostingRows();
   }
 
   function resetAccountsCostingFilters() {
@@ -675,6 +676,8 @@
         s.shares.forEach((sh, shIdx) => {
           const shStatus = String(sh.status || s.status || "").toLowerCase();
           const parentStatus = String(s.status || "").toLowerCase();
+          // If the parent shared service was rejected, no shares should ever be counted in costing
+          if (parentStatus === "rejected") return;
           const isApproved = shStatus === "approved" || shStatus === "accepted" || (parentStatus === "approved" && shStatus !== "rejected");
           if (!isApproved) return;
 
@@ -961,13 +964,7 @@
       }
     });
 
-    // Detect dynamic categories found in transactions
-    const detectedCategories = new Set();
-    filteredTransactions.forEach((tx) => {
-      if (tx.category) detectedCategories.add(tx.category);
-    });
-
-    // Ensure standard baseline categories exist matching the Request Services dropdown
+    // Ensure standard baseline categories exist FIRST to keep column ordering stable
     const defaultBaseline = [
       "Medical Conference",
       "Round Table Discussion",
@@ -981,9 +978,11 @@
       "Other Requests",
     ];
 
-    defaultBaseline.forEach((cat) => detectedCategories.add(cat));
-    const dynamicCategoryList = Array.from(detectedCategories);
-    CostingState.dynamicCategories = dynamicCategoryList;
+    const stableCategorySet = new Set(defaultBaseline);
+    filteredTransactions.forEach((tx) => {
+      if (tx.category) stableCategorySet.add(tx.category);
+    });
+    CostingState.dynamicCategories = Array.from(stableCategorySet);
 
     // Group transactions strictly by Doctor ID, only indexing by Name when targetId is completely absent
     const txByTargetId = {};
@@ -1258,7 +1257,7 @@
 
     tfoot.innerHTML = `
       <tr class="costing-tfoot-row">
-        <th colspan="6" style="text-align: right; font-size: 0.95rem;">
+        <th colspan="6" style="text-align: end; font-size: 0.95rem;">
           Total Summary (${rows.length} Accounts):
         </th>
         ${dynamicFooterCells}
@@ -1316,7 +1315,7 @@
                 <div style="font-weight: 600;">${window.escapeHtml(tx.title)}</div>
                 ${tx.notes ? `<small class="text-muted">${window.escapeHtml(tx.notes)}</small>` : ""}
               </td>
-              <td style="text-align: right; font-weight: 700; color: #004085;">${formatEGP(tx.cost)}</td>
+              <td style="text-align: end; font-weight: 700; color: #004085;">${formatEGP(tx.cost)}</td>
               <td>${window.escapeHtml(repName)}</td>
               <td style="text-align: center;"><span class="badge" style="background: #d4edda; color: #155724;">Approved</span></td>
             </tr>
@@ -1426,6 +1425,7 @@
   window.onAccountsCostingDmChange = onAccountsCostingDmChange;
   window.onAccountsCostingRepChange = onAccountsCostingRepChange;
   window.onAccountsCostingSearchInput = onAccountsCostingSearchInput;
+  window.filterAndDisplayCostingRows = filterAndDisplayCostingRows;
   window.resetAccountsCostingFilters = resetAccountsCostingFilters;
   window.openAccountsCostingBreakdown = openAccountsCostingBreakdown;
   window.closeAccountsCostingBreakdownModal = closeAccountsCostingBreakdownModal;

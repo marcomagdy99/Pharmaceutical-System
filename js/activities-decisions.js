@@ -96,7 +96,10 @@
     if (type === "expense") {
       const expenses = Core.StoreAdapter.getExpenses();
       const exp = expenses.find((e) => e.id === requestId);
-      if (!exp) return;
+      if (!exp) {
+        closeDecisionModal();
+        return;
+      }
 
       const actionKey = `${decision}_expense`;
       if (!Core.isActionAuthorized(actionKey, exp, Core._state.currentUser)) {
@@ -204,7 +207,10 @@
     } else if (type === "service") {
       const services = Core.StoreAdapter.getServices();
       const srv = services.find((s) => s.id === requestId);
-      if (!srv) return;
+      if (!srv) {
+        closeDecisionModal();
+        return;
+      }
 
       const actionKey = `${decision}_service`;
       if (!Core.isActionAuthorized(actionKey, srv, Core._state.currentUser)) {
@@ -219,7 +225,7 @@
         if (decision === "reject") {
           srv.status = Core.REQUEST_STATUS.REJECTED;
           srv.shares.forEach((sh) => {
-            if (sh.status !== Core.REQUEST_STATUS.APPROVED) sh.status = Core.REQUEST_STATUS.REJECTED;
+            sh.status = Core.REQUEST_STATUS.REJECTED;
           });
           if (!srv.history) srv.history = [];
           srv.history.push({
@@ -267,11 +273,15 @@
         } else if (decision === "approve") {
           const userRole = Core._state.currentUser.role;
           const userId = Core._state.currentUser.id;
+          let hasModifiedShare = false;
 
           if (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.BU) {
             srv.shares.forEach((sh) => {
-              sh.status = Core.REQUEST_STATUS.APPROVED;
-              sh.nextApproverId = null;
+              if (sh.status !== Core.REQUEST_STATUS.APPROVED) {
+                sh.status = Core.REQUEST_STATUS.APPROVED;
+                sh.nextApproverId = null;
+                hasModifiedShare = true;
+              }
             });
             srv.status = Core.REQUEST_STATUS.APPROVED;
           } else if (userRole === Core.ROLES.DM) {
@@ -292,6 +302,7 @@
                 }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 sh.approvedBy.push(userId);
+                hasModifiedShare = true;
               }
             });
           } else if (userRole === Core.ROLES.LM) {
@@ -312,6 +323,7 @@
                 }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 sh.approvedBy.push(userId);
+                hasModifiedShare = true;
               }
             });
           } else if (userRole === Core.ROLES.PM) {
@@ -333,8 +345,15 @@
                 }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 sh.approvedBy.push(userId);
+                hasModifiedShare = true;
               }
             });
+          }
+
+          if (!hasModifiedShare) {
+            Core.safeShowToast(Core.t("noPendingSharesForYou") || "No pending shares matched your authorization scope.", "warning");
+            closeDecisionModal();
+            return;
           }
 
           const allApproved = srv.shares.every((sh) => sh.status === Core.REQUEST_STATUS.APPROVED);
@@ -547,6 +566,21 @@
       modal.classList.remove("active");
     }
   }
+
+  
+  // Keyboard Accessibility: Close active modal on Escape key press
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" || e.keyCode === 27) {
+      const decModal = document.getElementById("activitiesDecisionModal");
+      if (decModal && (decModal.style.display === "flex" || decModal.classList.contains("active") || decModal.classList.contains("show"))) {
+        closeDecisionModal();
+      }
+      const recModal = document.getElementById("receiptPreviewModal");
+      if (recModal && (recModal.style.display === "flex" || recModal.classList.contains("active") || recModal.classList.contains("show"))) {
+        closeReceiptPreviewModal();
+      }
+    }
+  });
 
   window.ActivitiesDecisions = {
     openDecisionModal,

@@ -633,21 +633,21 @@
     const canonicalUsers = getAllUsers();
     if (u && u.id && canonicalUsers.length > 0) {
       const canonical = canonicalUsers.find((user) => user.id === u.id);
-      if (canonical) {
-        if (canonical.role !== u.role) {
-          console.warn(`[SECURITY VIOLATION] Role tampering detected for user '${u.id}'. Attempted: '${u.role}', Authentic: '${canonical.role}'. Enforcing authoritative role.`);
-          u.role = canonical.role;
-        }
-        if (canonical.lineIds && (!u.lineIds || JSON.stringify(u.lineIds) !== JSON.stringify(canonical.lineIds))) {
-          u.lineIds = [...canonical.lineIds];
-        }
-        if (canonical.managerId !== u.managerId) {
-          u.managerId = canonical.managerId;
-        }
-        if (canonical.areaId !== u.areaId) {
-          u.areaId = canonical.areaId;
-        }
+      if (!canonical) {
+        console.warn(`[SECURITY VIOLATION] User ID '${u.id}' not found in canonical store. Rejecting unauthorized access.`);
+        return null;
       }
+
+      if (canonical.role !== u.role) {
+        console.warn(`[SECURITY VIOLATION] Role tampering detected for user '${u.id}'. Attempted: '${u.role}', Authentic: '${canonical.role}'. Enforcing authoritative role.`);
+        u.role = canonical.role;
+      }
+      u.lineIds = canonical.lineIds && canonical.lineIds.length > 0
+        ? [...canonical.lineIds]
+        : (canonical.lineId ? [canonical.lineId] : []);
+      u.managerId = canonical.managerId || null;
+      u.areaId = canonical.areaId || null;
+      u.areaIds = Array.isArray(canonical.areaIds) ? [...canonical.areaIds] : (canonical.areaId ? [canonical.areaId] : []);
     }
 
     return u;
@@ -656,7 +656,32 @@
   function isActionAuthorized(action, resource, user) {
     if (!user) return false;
     const role = (user.role || "").toLowerCase();
-    if (role === ROLES.ADMIN) return true;
+    const isAdmin = role === ROLES.ADMIN || role === "admin" || role === "administrator";
+
+    // Enforce strict State Machine status transitions even for Admin
+    if (resource) {
+      const status = String(resource.status || "").toLowerCase();
+      if (action === "approve_expense") {
+        if (!status.startsWith("pending")) return false;
+      } else if (action === "disburse_expense") {
+        if (status !== REQUEST_STATUS.APPROVED && status !== "approved") return false;
+      } else if (action === "reject_expense") {
+        if (status === REQUEST_STATUS.REJECTED || status === "rejected" || status === REQUEST_STATUS.DISBURSED || status === "disbursed") return false;
+      } else if (action === "approve_service") {
+        if (!status.startsWith("pending")) return false;
+      } else if (action === "reject_service") {
+        if (status === REQUEST_STATUS.REJECTED || status === "rejected") return false;
+      }
+    }
+
+    if (isAdmin) {
+      if (action === "approve_service" || action === "reject_service" ||
+          action === "approve_expense" || action === "reject_expense" || action === "disburse_expense" ||
+          action === "allocate_bu_budget" || action === "allocate_lm_budget" || action === "allocate_dm_budget") {
+        return true;
+      }
+      return false;
+    }
 
     if (action === "approve_service" || action === "reject_service") {
       if (window.WorkflowEngine && typeof window.WorkflowEngine.isServiceAuthorized === "function") {
@@ -782,7 +807,7 @@
     if (user.role === ROLES.ADMIN || user.role === ROLES.HR) {
       return allLines;
     }
-    if (user.role === ROLES.BU) {
+    if (role === ROLES.BU || role === "business_unit" || role === "bu") {
       if (typeof window.getUserLines === "function") {
         return window.getUserLines(user.id);
       }
@@ -918,9 +943,8 @@
         if (!uniqueMap.has(a.id)) uniqueMap.set(a.id, a);
       });
 
-      if (uniqueMap.size > 0) {
-        return Array.from(uniqueMap.values());
-      }
+      // Strict fail-closed: return only assigned areas. If none, return empty array without falling through
+      return Array.from(uniqueMap.values());
     }
 
     const isDM = role === ROLES.DM || role === "district_manager";
@@ -1012,7 +1036,7 @@
     ROLES,
     activityTranslations,
     t,
-    escapeHTML: (str) => window.escapeHtml(str || ""),
+    escapeHTML: (str) => (str !== null && str !== undefined ? (window.escapeHtml ? window.escapeHtml(String(str)) : String(str)) : ""),
     safeShowToast,
     addDays,
     getWeekStart,
