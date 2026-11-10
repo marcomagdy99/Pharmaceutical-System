@@ -338,7 +338,13 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       const match = list.find((a) => a.lineId === lineId);
       if (match) return match.id;
     }
-    return list[0].id;
+    if (repId) {
+      const repUser = usersMap.get(repId);
+      if (repUser && repUser.areaId && list.some((a) => a.id === repUser.areaId)) {
+        return repUser.areaId;
+      }
+    }
+    return null; // Fail-closed: Avoid arbitrary attribution to list[0] when ambiguous across multiple areas
   }
 
   // 1. Determine allowed areas based on viewer's role (Strict Fail-Closed)
@@ -448,6 +454,15 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
         if (repLines.includes(selectedLineId)) return true;
       }
       return false;
+    }));
+  }
+
+  // Actively filter by scopeRepIds if provided
+  if (Array.isArray(scopeRepIds)) {
+    const repSet = new Set(scopeRepIds);
+    filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
+      const a = areasMap.get(id);
+      return a && ((a.repId && repSet.has(a.repId)) || !a.repId);
     }));
   }
 
@@ -585,8 +600,8 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
             const e = (h.endDate || "2099-12").substring(0, 7);
             return latestKey >= s && latestKey <= e;
           });
-          if (matchedH && matchedH.repId) {
-            repId = matchedH.repId;
+          if (matchedH && (matchedH.repId || matchedH.userId)) {
+            repId = matchedH.repId || matchedH.userId;
           }
         }
       }

@@ -440,21 +440,30 @@
 
     if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
       initialStatus = Core.REQUEST_STATUS.PENDING_DM;
-      nextApprover = Core._state.currentUser.managerId || "u1790626000014";
+      nextApprover = Core._state.currentUser.managerId || null;
     } else if (Core._state.currentUser.role === Core.ROLES.DM) {
       initialStatus = Core.REQUEST_STATUS.PENDING_LM;
-      nextApprover = Core._state.currentUser.managerId || "u1790626000012";
+      nextApprover = Core._state.currentUser.managerId || null;
     } else if (Core._state.currentUser.role === Core.ROLES.LM) {
       initialStatus = Core.REQUEST_STATUS.PENDING_HR;
       const hr = Core.getHrUser();
-      nextApprover = hr ? hr.id : "u1790626000017";
+      nextApprover = hr ? hr.id : null;
     } else {
       initialStatus = Core.REQUEST_STATUS.APPROVED;
       nextApprover = null;
     }
 
+    if (String(initialStatus || "").startsWith("pending_") && !nextApprover) {
+      Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit expense claim: No direct manager or HR approver configured for your account. Please contact administrator.", "danger");
+      return;
+    }
+
     const assignedLines = Core.getUserAssignedLines(Core._state.currentUser);
-    const lineId = lineSelect?.value || (assignedLines.length > 0 ? assignedLines[0].id : "line_1790626000001");
+    const lineId = lineSelect?.value || (assignedLines.length > 0 ? assignedLines[0].id : null);
+    if (!lineId && Core._state.currentUser.role !== Core.ROLES.ADMIN) {
+      Core.safeShowToast("Please select a valid product line for this expense claim.", "warning");
+      return;
+    }
 
     const newExpense = {
       id: "exp_" + Date.now(),

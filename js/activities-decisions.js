@@ -35,14 +35,16 @@
     // If shared service, clarify the manager's line share if applicable
     if (type === "service" && item.isShared && Array.isArray(item.shares)) {
       const user = Core._state.currentUser || Core.getAuthUser();
-      const myShares = item.shares.filter(
-        (sh) => (user.role === Core.ROLES.DM && sh.dmId === user.id) || (user.role === Core.ROLES.LM && sh.lmId === user.id)
-      );
-      if (myShares.length > 0) {
-        const myTotal = myShares.reduce((sum, sh) => sum + (sh.shareAmount || 0), 0);
-        const myPct = myShares.reduce((sum, sh) => sum + (sh.sharePercent || 0), 0);
-        if (myTotal < (item.cost || 0)) {
-          amount += ` (${Core.t("yourShare") || "Your Share"}: ${myPct}% - ${myTotal.toLocaleString()} ${Core.t("currency") || "EGP"})`;
+      if (user) {
+        const myShares = item.shares.filter(
+          (sh) => (user.role === Core.ROLES.DM && sh.dmId === user.id) || (user.role === Core.ROLES.LM && sh.lmId === user.id)
+        );
+        if (myShares.length > 0) {
+          const myTotal = myShares.reduce((sum, sh) => sum + (sh.shareAmount || 0), 0);
+          const myPct = myShares.reduce((sum, sh) => sum + (sh.sharePercent || 0), 0);
+          if (myTotal < (item.cost || 0)) {
+            amount += ` (${Core.t("yourShare") || "Your Share"}: ${myPct}% - ${myTotal.toLocaleString()} ${Core.t("currency") || "EGP"})`;
+          }
         }
       }
     }
@@ -85,6 +87,10 @@
   function executeDecisionConfirm() {
     if (!Core._state.pendingDecision) return;
     Core._state.currentUser = Core.getAuthUser();
+    if (!Core._state.currentUser) {
+      closeDecisionModal();
+      return;
+    }
     const { type, requestId, decision } = Core._state.pendingDecision;
     const comment = document.getElementById("decisionCommentInput")?.value.trim() || "";
 
@@ -165,6 +171,14 @@
           }
         }
 
+        if (String(nextStatus || "").startsWith("pending_")) {
+          if (!nextApproverId) {
+            Core.safeShowToast(Core.t("noNextApproverFound") || "Cannot advance request: No manager found for next approval stage. Please contact admin.", "warning");
+            closeDecisionModal();
+            return;
+          }
+        }
+
         Core.StoreAdapter.updateExpenseStatus(requestId, nextStatus, Core._state.currentUser, comment, nextApproverId);
 
         if (nextStatus === Core.REQUEST_STATUS.APPROVED) {
@@ -181,12 +195,7 @@
               action: "approved",
             });
           }
-        } else if (nextStatus.startsWith("pending_")) {
-          if (!nextApproverId) {
-            Core.safeShowToast(Core.t("noNextApproverFound") || "Cannot advance request: No direct manager found for next approval stage. Please contact admin.", "warning");
-            closeDecisionModal();
-            return;
-          }
+        } else if (String(nextStatus || "").startsWith("pending_") && nextApproverId) {
           let stepTitle = "Expense Claim Pending Review";
           if (nextStatus === Core.REQUEST_STATUS.PENDING_LM) stepTitle = "Expense Claim Pending Line Manager Approval";
           else if (nextStatus === Core.REQUEST_STATUS.PENDING_BU || nextStatus === "pending_bu") stepTitle = "Expense Claim Pending BU Manager Approval";
@@ -487,7 +496,7 @@
             }
           }
 
-          if (nextStatus.startsWith("pending_") && !nextApproverId) {
+          if (String(nextStatus || "").startsWith("pending_") && !nextApproverId) {
             Core.safeShowToast(Core.t("noNextApproverFound") || "Cannot advance request: No direct manager found for next approval stage. Please contact admin.", "warning");
             closeDecisionModal();
             return;

@@ -70,250 +70,279 @@
   // ============================================================================
   const activityTranslations = {
     en: {
-      activitiesTitle: "PharmaCare - Field Requests",
-      dailyActivities: "Daily Activities",
-      tabDailyActivities: "Daily Activities",
-      tabExpenses: "Request Expenses",
-      tabServices: "Request Services",
-      tabSalesBudget: "Sales Budget",
-      today: "Today",
-      amPeriod: "AM Period",
-      pmPeriod: "PM Period",
-      logActivity: "Log Activity",
-      logActivityTitle: "Log Activity",
-      weeklyOverview: "Weekly Overview (Sat - Fri)",
-      period: "Period",
-      activityType: "Activity Type",
-      selectActivity: "Select Activity...",
-      typeVisit: "Visit",
-      typeOfficeWork: "Office Work",
-      typeTraining: "Training",
-      typeMeeting: "Meeting",
-      typeConference: "Conference",
-      notes: "Notes",
-      cancel: "Cancel",
-      save: "Save",
-      deleteActivity: "Delete Activity",
-      confirmDeleteActivity: "Are you sure you want to delete this activity?",
-      activityDeleted: "Activity cleared successfully.",
-      selectActivityTypeWarning: "Please select an activity type.",
-      statusLogged: "Logged",
-      statusNotLogged: "Not Logged",
-      goToVisits: "Go to Visits Page",
-      noActivityLogged: "No activity logged for this period.",
-      sat: "Sat",
-      sun: "Sun",
-      mon: "Mon",
-      tue: "Tue",
-      wed: "Wed",
-      thu: "Thu",
-      fri: "Fri",
-
-      // Expenses Tab
-      expensesTitle: "Travel & Field Expenses",
-      expensesSubtitle: "Manage field travel, fuel, tolls, and hospitality claims with hierarchical approval.",
-      btnNewExpense: "New Expense Claim",
-      pendingApproval: "Pending Approvals",
-      approvedExpenses: "Approved Claims",
-      disbursedExpenses: "Disbursed / Paid",
-      allStatuses: "All Statuses",
-      filterPending: "Pending Review",
-      filterApproved: "Approved",
-      filterRejected: "Rejected",
-      filterDisbursed: "Disbursed",
-      allCategories: "All Categories",
-      catTravel: "Travel & Transportation",
-      catFuelTolls: "Fuel & Road Tolls",
-      catHospitality: "Hospitality & Meetings",
-      catHotel: "Hotel Accommodation",
-      colDate: "Date",
-      colEmployee: "Employee",
-      colCategory: "Category",
-      colAmount: "Amount",
-      colReceipt: "Receipt",
-      colStatus: "Approval Status",
-      colActions: "Actions",
-      modalNewExpenseTitle: "Submit Travel & Field Expense",
-      receiptHelp: "Take photo or attach clear invoice image.",
-      btnSubmitClaim: "Submit Claim",
-      noExpensesFound: "No expense claims found matching your filter.",
-
-      // Services Tab
-      servicesTitle: "Doctor & Hospital Services",
-      servicesSubtitle: "Sponsor medical congresses, clinic awareness materials, and round table discussions.",
-      btnNewService: "New Service Request",
-      allocatedBudgetOverview: "Allocated Promo Budget",
-      lineFilterLabel: "Line:",
-      filterEmployee: "Employee:",
-      totalAllocatedBudget: "Total Budget",
-      districtBudget: "District Budget",
-      distributedToDms: "Distributed to DMs",
-      approvedSpent: "Approved & Utilized",
-      pendingServices: "Pending In Requests",
-      remainingBudget: "Remaining Balance",
-      distributeToDmsTitle: "Distribute Line Budget to District Managers (DMs)",
-      distributeToDmsSubtitle: "Allocate portions of your received line budget to each DM under your line.",
-      saveAllocations: "Save Allocations",
-      distributeToRepsTitle: "Distribute District Budget to Medical Reps",
-      distributeToRepsSubtitle: "Allocate portions of your received district budget to each Medical Rep under your district.",
-      saveRepsAllocations: "Save Reps Allocations",
-      colDm: "District Manager (DM)",
-      colRep: "Medical Rep",
-      colCode: "Code",
-      colAllocatedAmount: "Allocated Budget (EGP)",
-      colUtilized: "Utilized",
-      distributedToReps: "Distributed to Reps",
-      myAllocatedBudget: "My Allocated Budget",
-      savedRepBudgetMessage: "Medical Reps budget allocations updated successfully!",
-      unauthorizedRepBudgetAction: "You are not authorized to modify Medical Rep budget allocations.",
-      allDepts: "All Departments",
-      deptSales: "Sales Services",
-      deptMarketing: "Marketing Services",
-      colLine: "Line",
-      colDept: "Dept",
-      colArea: "Area",
-      colShiftTarget: "Shift & Target",
-      colService: "Service Title",
-      colCost: "Estimated Cost",
-      colShift: "Shift Period",
-      modalNewServiceTitle: "New Doctor / Hospital Service Request",
-      targetHospital: "Target Hospital / Center",
-      targetDoctor: "Target Doctor",
-      serviceCategoryLabel: "Service Category",
-      selectCategoryPrompt: "Select Service Category...",
-      serviceTitleLabel: "Event Title / Purpose",
-      serviceDateLabel: "Expected Execution Date",
-      btnSubmitService: "Submit Service Request",
-      noServicesFound: "No service requests found matching your filter.",
-
-      // Shared Services
-      sharedServiceToggleLabel: "Split Cost across Multiple Lines / Territories",
-      sharedSubtitle: "Distribute cost percentage across participating lines or territories",
-      btnAddSharedLine: "Add Participating Line / Area",
-      sharedPrimaryTitle: "Primary Line (Request Initiator)",
-      sharedParticipatingTitle: "Participating Line",
-      sharedLineLabel: "Product Line",
-      sharedAreaLabel: "Territory / Area",
-      sharedTotalCost: "Total Cost",
-      sharedAllocated: "Allocated",
-      sharedRemaining: "Remaining",
-      sharedSelectLinePrompt: "-- Select Product Line --",
-      sharedSelectAreaPrompt: "-- Select Area / Territory --",
-      sharedAssignedRep: "Assigned Rep",
-      sharedNoRepAssigned: "No Rep Assigned",
-      sharedShare: "Share",
-      sharedValidationComplete: "100% Fully Allocated",
-      sharedValidationIncomplete: "Current Sum {pct}% (Remaining {rem}%)",
-      sharedExceedsNotice: "Total share percentages cannot exceed 100%.",
-      sharedBadge: "Shared Service",
-      partnerBadge: "Partner Share",
-      currency: "EGP",
-      attachmentLabel: "Attachment",
-      viewAttachment: "View Attachment",
-      yourShare: "Your Share",
-      sharedIntraLineBadge: "Intra-Line Share",
-      serviceAttachmentLabel: "Quotation / Invoice Attachment (Optional)",
-      noBudgetAllocated: "No promotional budget allocated for this product line. Please consult your manager.",
-      budgetExceededNotice: "Requested service cost exceeds remaining promotional budget.",
-
-      // Sales Budget Tab
-      buBudgetTitle: "Sales Budget Allocation",
-      buBudgetSubtitle: "Assign and allocate sales promo budgets per product line to Line Managers (LMs).",
-      selectProductLine: "Product Line:",
-      totalLineBudget: "Total Line Budget",
-      allocatedToLms: "Allocated to LMs",
-      unallocatedRemaining: "Unallocated Remaining",
-      colLm: "Line Manager (LM)",
-      colDistributedToDms: "Distributed to DMs",
-
-      // Hierarchical Status Text
-      waitingDmPrefix: "Waiting for DM: ",
-      waitingLmPrefix: "Waiting for LM: ",
-      waitingHr: "Waiting for HR",
-      approvedLabel: "Approved",
-      rejectedLabel: "Rejected",
-      disbursedLabel: "Disbursed",
-      statusPending: "Pending",
-
-      // Decision Modal
-      confirmApprovalTitle: "Confirm Approval",
-      confirmRejectionTitle: "Confirm Rejection",
-      confirmDisbursementTitle: "Confirm Disbursement",
-      confirmApproveMsg: "Are you sure you want to approve this request of {amount} EGP submitted by {name}?",
-      confirmRejectMsg: "Are you sure you want to reject this request submitted by {name}?",
-      confirmDisburseMsg: "Confirm disbursement of {amount} EGP to {name}?",
-      reasonLabel: "Reason / Notes:",
-      reasonPlaceholder: "Enter reason or comments...",
-      btnApprove: "Approve",
-      btnReject: "Reject",
-      btnDisburse: "Disburse Payment",
-      rejectionReasonRequired: "Please provide a rejection reason.",
-      successAction: "Operation completed successfully!",
-      savedBudgetMessage: "Budget allocations updated successfully!",
-      insufficientBudgetNotice: "Notice: Requested cost exceeds the current remaining balance.",
-      noReceipt: "No receipt attached",
-      allLines: "All Product Lines",
-      allEmployees: "All Employees",
-      myRequestsOnly: "My Requests Only",
-      dayOff: "Day Off",
-      noPendingSharesForYou: "No pending shares matched your authorization scope.",
-      noNextApproverFound: "Cannot advance request: No manager found for next approval stage. Please contact admin.",
-      unauthorizedExpenseAction: "You are not authorized to perform this action on this expense claim.",
-      unauthorizedServiceAction: "You are not authorized to perform this action on this service request."
-    },
+      "activitiesTitle": "PharmaCare - Field Requests",
+      "dailyActivities": "Daily Activities",
+      "tabDailyActivities": "Daily Activities",
+      "tabExpenses": "Request Expenses",
+      "tabServices": "Request Services",
+      "tabSalesBudget": "Sales Budget",
+      "today": "Today",
+      "amPeriod": "AM Period",
+      "pmPeriod": "PM Period",
+      "logActivity": "Log Activity",
+      "logActivityTitle": "Log Activity",
+      "weeklyOverview": "Weekly Overview (Sat - Fri)",
+      "period": "Period",
+      "activityType": "Activity Type",
+      "selectActivity": "Select Activity...",
+      "typeVisit": "Visit",
+      "typeOfficeWork": "Office Work",
+      "typeTraining": "Training",
+      "typeMeeting": "Meeting",
+      "typeConference": "Conference",
+      "notes": "Notes",
+      "cancel": "Cancel",
+      "save": "Save",
+      "deleteActivity": "Delete Activity",
+      "confirmDeleteActivity": "Are you sure you want to delete this activity?",
+      "activityDeleted": "Activity cleared successfully.",
+      "selectActivityTypeWarning": "Please select an activity type.",
+      "statusLogged": "Logged",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "statusPendingDM": "Pending DM Approval",
+      "statusPendingLM": "Pending Line Manager Approval",
+      "statusPendingHR": "Pending HR Approval",
+      "statusDisbursed": "Disbursed",
+      "badgePendingShared": "Pending Shared Approvals",
+      "expenseClaims": "Expense Claims",
+      "newExpenseBtn": "New Expense Claim",
+      "filterStatusAll": "All Statuses",
+      "filterLineAll": "All Lines",
+      "colId": "ID",
+      "colDate": "Date",
+      "colRequester": "Requester",
+      "colLine": "Line",
+      "colCategory": "Category",
+      "colAmount": "Amount",
+      "colReceipt": "Receipt",
+      "colStatus": "Status",
+      "colActions": "Actions",
+      "btnViewReceipt": "View Receipt",
+      "btnApproveDM": "Approve (DM)",
+      "btnApproveLM": "Approve (LM)",
+      "btnApproveHR": "Approve (HR)",
+      "btnDisburseHR": "Disburse",
+      "btnRejectDM": "Reject",
+      "newExpenseModalTitle": "Submit Expense Claim",
+      "expenseCategoryTravel": "Travel & Transportation",
+      "expenseCategoryMeals": "Meals & Subsistence",
+      "expenseCategoryHospitality": "Client Hospitality",
+      "expenseCategorySupplies": "Office & Field Supplies",
+      "expenseCategoryOther": "Other Expenses",
+      "amountLabel": "Amount (EGP):",
+      "receiptUploadLabel": "Receipt Image / Invoice:",
+      "saveExpenseSuccess": "Expense claim submitted successfully!",
+      "serviceRequests": "Service Requests & Clinical Events",
+      "newServiceBtn": "New Service Request",
+      "colServiceTitle": "Service Title",
+      "colServiceTarget": "Target (Doctor/Clinic)",
+      "colCost": "Cost",
+      "colDepartment": "Department",
+      "colShares": "Split Details",
+      "btnApproveService": "Approve Service",
+      "newServiceModalTitle": "Request Doctor Service / Support",
+      "serviceTargetDoctor": "Doctor / Healthcare Professional",
+      "serviceTargetHospital": "Hospital / Healthcare Account",
+      "serviceCategoryEquipment": "Medical Equipment Support",
+      "serviceCategorySponsorship": "Scientific Conference Sponsorship",
+      "serviceCategoryCME": "Continuing Medical Education (CME)",
+      "serviceCategoryWorkshop": "Clinical Workshop",
+      "serviceCategoryOther": "Other Practice Support",
+      "sharedServiceToggle": "Split cost across multiple product lines (Shared Service)",
+      "sharedLinesTitle": "Line Cost Allocations",
+      "addLineShareBtn": "+ Add Line Allocation",
+      "saveServiceSuccess": "Service request submitted successfully!",
+      "salesBudgetTitle": "Promotional & Field Activity Budget",
+      "budgetRemaining": "Remaining Balance",
+      "budgetTotal": "Total Allocated",
+      "budgetSpent": "Spent to Date",
+      "budgetUtilization": "Utilization Rate",
+      "updateBudgetBtn": "Adjust Line Budget",
+      "budgetModalTitle": "Adjust Product Line Budget",
+      "totalBudgetLabel": "Total Annual Budget (EGP):",
+      "sat": "Saturday",
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "goToVisits": "Open Visits Planner",
+      "shiftAM": "Morning Shift (AM)",
+      "shiftPM": "Evening Shift (PM)",
+      "noActivityLogged": "No activity logged for this period.",
+      "currency": "EGP",
+      "disbursedLabel": "Disbursed",
+      "statusPending": "Pending Review",
+      "confirmApprovalTitle": "Confirm Approval",
+      "confirmRejectionTitle": "Confirm Rejection",
+      "confirmDisbursementTitle": "Confirm Disbursement",
+      "confirmApproveMsg": "Are you sure you want to approve this request of {amount} EGP submitted by {name}?",
+      "confirmRejectMsg": "Are you sure you want to reject this request submitted by {name}?",
+      "confirmDisburseMsg": "Confirm disbursement of {amount} EGP to {name}?",
+      "reasonLabel": "Reason / Notes:",
+      "reasonPlaceholder": "Enter reason or comments...",
+      "btnApprove": "Approve",
+      "btnReject": "Reject",
+      "btnDisburse": "Disburse Payment",
+      "rejectionReasonRequired": "Please provide a rejection reason.",
+      "successAction": "Operation completed successfully!",
+      "savedBudgetMessage": "Budget allocations updated successfully!",
+      "insufficientBudgetNotice": "Notice: Requested cost exceeds the current remaining balance.",
+      "noReceipt": "No receipt attached",
+      "allLines": "All Product Lines",
+      "allEmployees": "All Employees",
+      "myRequestsOnly": "My Requests Only",
+      "dayOff": "Day Off",
+      "noPendingSharesForYou": "No pending shares matched your authorization scope.",
+      "noNextApproverFound": "Cannot advance request: No manager found for next approval stage. Please contact admin.",
+      "unauthorizedExpenseAction": "You are not authorized to perform this action on this expense claim.",
+      "unauthorizedServiceAction": "You are not authorized to perform this action on this service request.",
+      "unauthorizedBudgetAction": "You are not authorized to edit business unit budget.",
+      "unauthorizedRepBudgetAction": "You are not authorized to edit representative allocations.",
+      "unauthorizedDmBudgetAction": "You are not authorized to edit district manager allocations.",
+      "savedRepBudgetMessage": "Rep allocations saved successfully.",
+      "noApproverConfigured": "Cannot submit request: No manager or approver is configured for your territory or line. Please contact your administrator.",
+      "yourShare": "Your Share"
+},
     ar: {
-      activitiesTitle: "فارماكير - طلبات الأنشطة الميدانية",
-      dailyActivities: "الأنشطة اليومية",
-      tabDailyActivities: "الأنشطة اليومية",
-      tabExpenses: "طلبات المصاريف",
-      tabServices: "طلبات الخدمات",
-      tabSalesBudget: "ميزانية المبيعات",
-      today: "اليوم",
-      amPeriod: "الفترة الصباحية (AM)",
-      pmPeriod: "الفترة المسائية (PM)",
-      logActivity: "تسجيل نشاط",
-      logActivityTitle: "تسجيل نشاط ميداني",
-      weeklyOverview: "نظرة عامة أسبوعية",
-      period: "الفترة",
-      activityType: "نوع النشاط",
-      selectActivity: "اختر نوع النشاط...",
-      typeVisit: "زيارة",
-      typeOfficeWork: "عمل مكتبي",
-      typeTraining: "تدريب",
-      typeMeeting: "اجتماع",
-      typeConference: "مؤتمر",
-      notes: "ملاحظات",
-      cancel: "إلغاء",
-      save: "حفظ",
-      deleteActivity: "حذف النشاط",
-      confirmDeleteActivity: "هل أنت متأكد من رغبتك في حذف هذا النشاط؟",
-      activityDeleted: "تم حذف النشاط بنجاح.",
-      selectActivityTypeWarning: "يرجى تحديد نوع النشاط أولاً.",
-      statusLogged: "مسجل",
-      disbursedLabel: "تم الصرف",
-      statusPending: "قيد المراجعة",
-      confirmApprovalTitle: "تأكيد الموافقة",
-      confirmRejectionTitle: "تأكيد الرفض",
-      confirmDisbursementTitle: "تأكيد الصرف المالي",
-      reasonLabel: "السبب / الملاحظات:",
-      reasonPlaceholder: "أدخل السبب أو التعليق...",
-      btnApprove: "موافقة",
-      btnReject: "رفض",
-      btnDisburse: "صرف المستحقات",
-      rejectionReasonRequired: "يرجى إدخال سبب الرفض.",
-      successAction: "تمت العملية بنجاح!",
-      savedBudgetMessage: "تم تحديث الميزانية بنجاح!",
-      insufficientBudgetNotice: "تنبيه: التكلفة تتجاوز الرصيد المتبقي.",
-      noReceipt: "لا يوجد إيصال مرفق",
-      allLines: "كافة خطوط الإنتاج",
-      allEmployees: "كافة الموظفين",
-      myRequestsOnly: "طلباتي فقط",
-      dayOff: "يوم إجازة",
-      noPendingSharesForYou: "لا توجد حصص معلقة تطابق نطاق صلاحياتك الحالية.",
-      noNextApproverFound: "تعذر تصعيد الطلب: لم يتم العثور على مدير مباشر للمرحلة التالية. يرجى مراجعة إدارة النظام.",
-      unauthorizedExpenseAction: "ليس لديك صلاحية لتنفيذ هذا الإجراء على هذا المصروف.",
-      unauthorizedServiceAction: "ليس لديك صلاحية لتنفيذ هذا الإجراء على طلب الخدمة هذا."
-    }
+      "activitiesTitle": "فارماكير - طلبات الأنشطة الميدانية",
+      "dailyActivities": "الأنشطة اليومية",
+      "tabDailyActivities": "الأنشطة اليومية",
+      "tabExpenses": "طلبات المصاريف",
+      "tabServices": "طلبات الخدمات",
+      "tabSalesBudget": "ميزانية المبيعات",
+      "today": "اليوم",
+      "amPeriod": "الفترة الصباحية (AM)",
+      "pmPeriod": "الفترة المسائية (PM)",
+      "logActivity": "تسجيل نشاط",
+      "logActivityTitle": "تسجيل نشاط ميداني",
+      "weeklyOverview": "نظرة عامة أسبوعية (السبت - الجمعة)",
+      "period": "الفترة",
+      "activityType": "نوع النشاط",
+      "selectActivity": "اختر نوع النشاط...",
+      "typeVisit": "زيارة",
+      "typeOfficeWork": "عمل مكتبي",
+      "typeTraining": "تدريب",
+      "typeMeeting": "اجتماع",
+      "typeConference": "مؤتمر",
+      "notes": "ملاحظات",
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "deleteActivity": "حذف النشاط",
+      "confirmDeleteActivity": "هل أنت متأكد من رغبتك في حذف هذا النشاط؟",
+      "activityDeleted": "تم حذف النشاط بنجاح.",
+      "selectActivityTypeWarning": "يرجى تحديد نوع النشاط أولاً.",
+      "statusLogged": "مسجل",
+      "statusApproved": "تمت الموافقة",
+      "statusRejected": "مرفوض",
+      "statusPendingDM": "في انتظار موافقة مدير المنطقة (DM)",
+      "statusPendingLM": "في انتظار موافقة مدير الخط (LM)",
+      "statusPendingHR": "في انتظار موافقة الموارد البشرية (HR)",
+      "statusDisbursed": "تم الصرف",
+      "badgePendingShared": "في انتظار موافقات الخطوط المشتركة",
+      "expenseClaims": "مطالبات المصاريف",
+      "newExpenseBtn": "طلب مصروف جديد",
+      "filterStatusAll": "كافة الحالات",
+      "filterLineAll": "كافة الخطوط",
+      "colId": "المعرف",
+      "colDate": "التاريخ",
+      "colRequester": "مقدم الطلب",
+      "colLine": "الخط",
+      "colCategory": "الفئة",
+      "colAmount": "المبلغ",
+      "colReceipt": "الإيصال",
+      "colStatus": "الحالة",
+      "colActions": "الإجراءات",
+      "btnViewReceipt": "عرض الإيصال",
+      "btnApproveDM": "موافقة (DM)",
+      "btnApproveLM": "موافقة (LM)",
+      "btnApproveHR": "موافقة (HR)",
+      "btnDisburseHR": "صرف المستحقات",
+      "btnRejectDM": "رفض",
+      "newExpenseModalTitle": "تقديم مطالبة مصروف",
+      "expenseCategoryTravel": "سفر وتنقلات",
+      "expenseCategoryMeals": "وجبات وإعاشة",
+      "expenseCategoryHospitality": "ضيافة عملاء",
+      "expenseCategorySupplies": "مستلزمات مكتبية وميدانية",
+      "expenseCategoryOther": "مصاريف أخرى",
+      "amountLabel": "المبلغ (جنيه مصري):",
+      "receiptUploadLabel": "صورة الإيصال / الفاتورة:",
+      "saveExpenseSuccess": "تم تقديم مطالبة المصروف بنجاح!",
+      "serviceRequests": "طلبات الخدمات والفعاليات الإكلينيكية",
+      "newServiceBtn": "طلب خدمة جديد",
+      "colServiceTitle": "عنوان الخدمة",
+      "colServiceTarget": "الجهة المستهدفة (طبيب/عيادة)",
+      "colCost": "التكلفة",
+      "colDepartment": "القسم",
+      "colShares": "تفاصيل التقسيم",
+      "btnApproveService": "موافقة على الخدمة",
+      "newServiceModalTitle": "طلب دعم / خدمة لطبيب",
+      "serviceTargetDoctor": "طبيب / ممارس صحي",
+      "serviceTargetHospital": "مستشفى / حساب طبي",
+      "serviceCategoryEquipment": "دعم أجهزة ومستلزمات طبية",
+      "serviceCategorySponsorship": "رعاية مؤتمر علمي",
+      "serviceCategoryCME": "تعليم طبي مستمر (CME)",
+      "serviceCategoryWorkshop": "ورشة عمل إكلينيكية",
+      "serviceCategoryOther": "دعم عيادة أخرى",
+      "sharedServiceToggle": "تقسيم التكلفة على أكثر من خط إنتاج (خدمة مشتركة)",
+      "sharedLinesTitle": "توزيع حصص الخطوط",
+      "addLineShareBtn": "+ إضافة حصة خط",
+      "saveServiceSuccess": "تم تقديم طلب الخدمة بنجاح!",
+      "salesBudgetTitle": "ميزانية الأنشطة الترويجية والميدانية",
+      "budgetRemaining": "الرصيد المتبقي",
+      "budgetTotal": "إجمالي الميزانية",
+      "budgetSpent": "المنصرف حتى الآن",
+      "budgetUtilization": "نسبة الاستهلاك",
+      "updateBudgetBtn": "تعديل ميزانية الخط",
+      "budgetModalTitle": "تعديل ميزانية خط الإنتاج",
+      "totalBudgetLabel": "إجمالي الميزانية السنوية (جنيه):",
+      "sat": "السبت",
+      "sun": "الأحد",
+      "mon": "الإثنين",
+      "tue": "الثلاثاء",
+      "wed": "الأربعاء",
+      "thu": "الخميس",
+      "fri": "الجمعة",
+      "goToVisits": "فتح مخطط الزيارات",
+      "shiftAM": "فترة صباحية (AM)",
+      "shiftPM": "فترة مسائية (PM)",
+      "noActivityLogged": "لا يوجد نشاط مسجل لهذه الفترة.",
+      "currency": "جنيه",
+      "disbursedLabel": "تم الصرف",
+      "statusPending": "قيد المراجعة",
+      "confirmApprovalTitle": "تأكيد الموافقة",
+      "confirmRejectionTitle": "تأكيد الرفض",
+      "confirmDisbursementTitle": "تأكيد الصرف المالي",
+      "confirmApproveMsg": "هل أنت متأكد من الموافقة على طلب بقيمة {amount} جنيه والمقدم من {name}؟",
+      "confirmRejectMsg": "هل أنت متأكد من رفض الطلب المقدم من {name}؟",
+      "confirmDisburseMsg": "تأكيد صرف مبلغ {amount} جنيه للموظف {name}؟",
+      "reasonLabel": "السبب / الملاحظات:",
+      "reasonPlaceholder": "أدخل السبب أو التعليق...",
+      "btnApprove": "موافقة",
+      "btnReject": "رفض",
+      "btnDisburse": "صرف المستحقات",
+      "rejectionReasonRequired": "يرجى إدخال سبب الرفض.",
+      "successAction": "تمت العملية بنجاح!",
+      "savedBudgetMessage": "تم تحديث الميزانية بنجاح!",
+      "insufficientBudgetNotice": "تنبيه: التكلفة تتجاوز الرصيد المتبقي.",
+      "noReceipt": "لا يوجد إيصال مرفق",
+      "allLines": "كافة خطوط الإنتاج",
+      "allEmployees": "كافة الموظفين",
+      "myRequestsOnly": "طلباتي فقط",
+      "dayOff": "يوم إجازة",
+      "noPendingSharesForYou": "لا توجد حصص معلقة تطابق نطاق صلاحياتك الحالية.",
+      "noNextApproverFound": "تعذر تصعيد الطلب: لم يتم العثور على مدير مباشر للمرحلة التالية. يرجى مراجعة إدارة النظام.",
+      "unauthorizedExpenseAction": "ليس لديك صلاحية لتنفيذ هذا الإجراء على هذا المصروف.",
+      "unauthorizedServiceAction": "ليس لديك صلاحية لتنفيذ هذا الإجراء على طلب الخدمة هذا.",
+      "unauthorizedBudgetAction": "ليس لديك صلاحية لتعديل ميزانية قطاع العمل.",
+      "unauthorizedRepBudgetAction": "ليس لديك صلاحية لتعديل مخصصات المندوبين.",
+      "unauthorizedDmBudgetAction": "ليس لديك صلاحية لتعديل مخصصات مديري المناطق.",
+      "savedRepBudgetMessage": "تم حفظ مخصصات المندوبين بنجاح.",
+      "noApproverConfigured": "لا يمكن تقديم الطلب: لم يتم تعيين مدير أو محكّم للمنطقة أو الخط الإنتاجي الخاص بك. يرجى مراجعة إدارة النظام.",
+      "yourShare": "حصتك"
+}
   };
 
   // ============================================================================
@@ -322,10 +351,8 @@
   function t(key, fallback) {
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const dict = activityTranslations[lang] || activityTranslations.en;
-    if (dict && dict[key] !== undefined) {
-      return dict[key];
-    }
-    return fallback !== undefined ? fallback : key;
+    const v = dict?.[key] ?? activityTranslations.en?.[key];
+    return v !== undefined ? v : (fallback !== undefined ? fallback : key);
   }
 
   function safeShowToast(msg, type = "info") {
@@ -460,7 +487,9 @@
         if (Object.keys(all[dateStr]).length === 0) delete all[dateStr];
         try {
           localStorage.setItem(`pharma_activities_data_${userId}`, JSON.stringify(all));
-        } catch (e) {}
+        } catch (e) {
+          console.error("[ActivitiesCore] Failed to save deleted activity to storage:", e);
+        }
         return true;
       }
       return false;
@@ -585,64 +614,13 @@
         try {
           const raw = localStorage.getItem("pharma_sales_budgets");
           if (raw) b = JSON.parse(raw);
-        } catch (e) {}
+        } catch (e) {
+          console.warn("[ActivitiesCore] Failed to parse pharma_sales_budgets from localStorage:", e);
+        }
       }
       if (!b) {
-        b = {
-          line_1790626000001: {
-            totalBudget: 150000,
-            lmAllocations: { u1790626000012: 90000, u1790626000013: 40000 },
-            dmAllocations: { u1790626000014: 50000, u1790626000015: 30000 },
-            repAllocations: { u1790626000001: 25000, u1790626000002: 20000 }
-          },
-          line_1790626000002: {
-            totalBudget: 100000,
-            lmAllocations: { u1790626000012: 60000, u1790626000013: 40000 },
-            dmAllocations: { u1790626000016: 40000 },
-            repAllocations: { u1790626000004: 30000 }
-          }
-        };
+        b = {};
       }
-
-      let changed = false;
-      const allUsers = getAllUsers();
-      Object.keys(b).forEach((lId) => {
-        if (!b[lId].repAllocations) b[lId].repAllocations = {};
-        if (b[lId].dmAllocations) {
-          Object.keys(b[lId].dmAllocations).forEach((dmId) => {
-            const dmUser = allUsers.find((u) => u.id === dmId);
-            if (dmUser) {
-              const inLine = dmUser.lineIds && Array.isArray(dmUser.lineIds)
-                ? dmUser.lineIds.includes(lId)
-                : dmUser.lineId === lId;
-              if (!inLine) {
-                delete b[lId].dmAllocations[dmId];
-                changed = true;
-              }
-            }
-          });
-        }
-        if (b[lId].repAllocations) {
-          Object.keys(b[lId].repAllocations).forEach((repId) => {
-            const repUser = allUsers.find((u) => u.id === repId);
-            if (repUser) {
-              const inLine = repUser.lineIds && Array.isArray(repUser.lineIds)
-                ? repUser.lineIds.includes(lId)
-                : repUser.lineId === lId;
-              if (!inLine) {
-                delete b[lId].repAllocations[repId];
-                changed = true;
-              }
-            }
-          });
-        }
-      });
-      if (changed) {
-        try {
-          localStorage.setItem("pharma_sales_budgets", JSON.stringify(b));
-        } catch (e) {}
-      }
-
       return b;
     },
 
@@ -652,7 +630,9 @@
       }
       try {
         localStorage.setItem("pharma_sales_budgets", JSON.stringify(budgetsObj));
-      } catch (e) {}
+      } catch (e) {
+        console.error("[ActivitiesCore] Failed to save pharma_sales_budgets to localStorage:", e);
+      }
       return budgetsObj;
     }
   };
@@ -731,7 +711,7 @@
     if (isAdmin) {
       if (action === "approve_service" || action === "reject_service" ||
           action === "approve_expense" || action === "reject_expense" || action === "disburse_expense" ||
-          action === "allocate_bu_budget" || action === "allocate_lm_budget" || action === "allocate_dm_budget") {
+          action === "allocate_bu_budget" || action === "allocate_lm_budget" || action === "allocate_dm_budget" || action === "allocate_rep_budget") {
         return true;
       }
       return false;
@@ -801,7 +781,7 @@
       return role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
     }
 
-    if (action === "allocate_dm_budget") {
+    if (action === "allocate_dm_budget" || action === "allocate_rep_budget") {
       return role === ROLES.DM || role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
     }
 

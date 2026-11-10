@@ -39,7 +39,8 @@
     }
 
     if (!authUser) {
-      const savedId = localStorage.getItem("userId") || "u1790626000001";
+      const savedId = localStorage.getItem("userId");
+      if (!savedId) return null;
       authUser = { id: savedId, role: localStorage.getItem("userRole") || "medical_rep" };
     }
 
@@ -57,7 +58,7 @@
    * Safe helper to normalize user role
    */
   function getNormalizedRole(user) {
-    if (!user) return "medical_rep";
+    if (!user) return "unknown";
     if (typeof window.normalizeRole === "function") {
       return window.normalizeRole(user.role);
     }
@@ -84,6 +85,23 @@
    * Resolves the strict organizational hierarchy permissions and scope for the logged-in user
    */
   function resolveUserCostingScope(user) {
+    if (!user) {
+      return {
+        role: "unknown",
+        isAdmin: false,
+        isLM: false,
+        isDM: false,
+        isRep: false,
+        allowedLines: [],
+        allowedLineIds: new Set(),
+        allowedDMs: [],
+        allowedReps: [],
+        allowedRepIds: new Set(),
+        allowedAreaIds: new Set(),
+        allowedDoctorIds: new Set(),
+        allowedAreas: [],
+      };
+    }
     const role = getNormalizedRole(user);
     const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
     const allLines = (window.store && window.store.productLines && window.store.productLines.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
@@ -471,8 +489,8 @@
     const repSelect = document.getElementById("accountsCostingRepSelect");
     if (!repSelect) return;
 
-    if (scope.isRep) {
-      repSelect.innerHTML = `<option value="${user.id}">${window.escapeHtml(user.name || user.username)}</option>`;
+    if (scope.isRep && user) {
+      repSelect.innerHTML = `<option value="${user.id}">${window.escapeHtml(user.name || user.username || user.id)}</option>`;
       repSelect.value = user.id;
       repSelect.disabled = true;
       return;
@@ -503,6 +521,14 @@
    */
   function populateCostingAreaOptions() {
     const user = getCurrentUser();
+    if (!user) {
+      if (promptEl) {
+        promptEl.style.display = "block";
+        promptEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);"><p>Please sign in with an authorized account to view costing data.</p></div>`;
+      }
+      if (resultsEl) resultsEl.style.display = "none";
+      return;
+    }
     const scope = resolveUserCostingScope(user);
     const areaSelect = document.getElementById("accountsCostingAreaSelect");
     if (!areaSelect) return;
@@ -664,12 +690,16 @@
    */
   function fetchRawCostingTransactions(scope) {
     const rawServices = (window.store && window.store.services && window.store.services.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.services) || [];
+    const allDoctors = (window.store && window.store.doctors && window.store.doctors.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+    const doctorMap = new Map(allDoctors.map((d) => [String(d.id), d]));
 
     const transactions = [];
 
     // Map approved services and unpack shared service allocations
     rawServices.forEach((s) => {
       const isShared = s.isShared === true && Array.isArray(s.shares) && s.shares.length > 0;
+      const matchedDoc = s.targetId ? doctorMap.get(String(s.targetId)) : null;
+      const sDate = s.date || s.serviceDate || (s.executionDate ? s.executionDate : "") || (s.createdAt ? s.createdAt.substring(0, 10) : "") || (s.history && s.history[0]?.at ? s.history[0].at.substring(0, 10) : "");
 
       if (isShared) {
         // Iterate through each share allocation
@@ -685,8 +715,8 @@
           if (shareCost <= 0) return;
 
           const shareRepId = sh.repId || s.requesterId || null;
-          const shareLineId = sh.lineId || s.lineId || null;
-          const shareAreaId = sh.areaId || s.areaId || null;
+          const shareLineId = sh.lineId || s.lineId || (matchedDoc ? matchedDoc.lineId : null);
+          const shareAreaId = sh.areaId || s.areaId || (matchedDoc ? matchedDoc.areaId : null);
 
           // Scope check per share
           if (!scope.isAdmin) {
@@ -717,7 +747,7 @@
             id: `${s.id}_sh_${shIdx}`,
             serviceId: s.id,
             source: "service",
-            date: s.date || "",
+            date: sDate,
             targetId: s.targetId || null,
             targetName: s.targetName || "",
             targetType: s.targetType || "doctor",
@@ -756,10 +786,8 @@
       }
 
       const categoryName = determineCategoryName(s.category || s.title || s.type || "Other Requests");
-      const matchedDoc = s.targetId ? allDoctors.find(d => String(d.id) === String(s.targetId)) : null;
       const sLineId = s.lineId || (matchedDoc ? matchedDoc.lineId : null);
       const sAreaId = s.areaId || (matchedDoc ? matchedDoc.areaId : null);
-      const sDate = s.date || s.serviceDate || (s.history && s.history[0]?.at ? s.history[0].at.substring(0, 10) : "");
 
       transactions.push({
         id: s.id,
@@ -1202,7 +1230,7 @@
         ? `<strong class="costing-cell-total">${formatEGP(row.grandTotal)}</strong>`
         : `<span class="costing-cell-zero">0</span>`;
 
-      const safeRowId = String(row.id || "").replace(/'/g, "\\'");
+      const safeRowId = encodeURIComponent(String(row.id || "")).replace(/'/g, '%27');
       return `
         <tr style="transition: background 0.15s ease;">
           <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${idx + 1}</td>
@@ -1277,7 +1305,11 @@
   /**
    * Opens Breakdown Modal for selected doctor
    */
-  function openAccountsCostingBreakdown(doctorId) {
+  function openAccountsCostingBreakdown(doctorIdOrEncoded) {
+    let doctorId = doctorIdOrEncoded;
+    try {
+      doctorId = decodeURIComponent(doctorIdOrEncoded);
+    } catch (e) {}
     const row = CostingState.currentRows.find((r) => String(r.id) === String(doctorId));
     if (!row) return;
 

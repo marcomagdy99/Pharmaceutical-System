@@ -1062,12 +1062,21 @@
     if (isShared) {
       const primaryHierarchy = Core.getLiveHierarchyForArea(areaId, Core._state.currentUser.id);
       const primaryRepId = primaryHierarchy.repId || Core._state.currentUser.id;
-      const primaryDmId = primaryHierarchy.dmId || Core._state.currentUser.managerId || "u1790626000014";
-      const primaryLmId = primaryHierarchy.lmId || "u1790626000012";
+      const primaryDmId = primaryHierarchy.dmId || Core._state.currentUser.managerId || null;
+      const primaryLmId = primaryHierarchy.lmId || null;
 
       let primaryShareStatus = Core.REQUEST_STATUS.PENDING_DM;
       if (Core._state.currentUser.role === Core.ROLES.DM) primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
       else if (Core._state.currentUser.role === Core.ROLES.LM || Core._state.currentUser.role === Core.ROLES.BU || Core._state.currentUser.role === Core.ROLES.ADMIN) primaryShareStatus = Core.REQUEST_STATUS.APPROVED;
+
+      if (primaryShareStatus === Core.REQUEST_STATUS.PENDING_DM && !primaryDmId) {
+        Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: Primary line has no DM configured to approve. Please contact administrator.", "danger");
+        return;
+      }
+      if (primaryShareStatus === Core.REQUEST_STATUS.PENDING_LM && !primaryLmId) {
+        Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: Primary line has no LM configured to approve. Please contact administrator.", "danger");
+        return;
+      }
 
       shares.push({
         lineId: lineId,
@@ -1099,6 +1108,15 @@
           rowShareStatus = Core.REQUEST_STATUS.APPROVED;
         } else if (Core._state.currentUser.role === Core.ROLES.BU || Core._state.currentUser.role === Core.ROLES.ADMIN) {
           rowShareStatus = Core.REQUEST_STATUS.APPROVED;
+        }
+
+        if (rowShareStatus === Core.REQUEST_STATUS.PENDING_DM && !rowDmId) {
+          Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: One of the shared lines has no DM assigned. Please contact administrator.", "danger");
+          return;
+        }
+        if (rowShareStatus === Core.REQUEST_STATUS.PENDING_LM && !rowLmId) {
+          Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: One of the shared lines has no LM assigned. Please contact administrator.", "danger");
+          return;
         }
 
         const shareAmt = Math.round((cost * row.sharePercent) / 100);
@@ -1137,14 +1155,19 @@
       } else {
         if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
           globalStatus = Core.REQUEST_STATUS.PENDING_DM;
-          nextApprover = Core._state.currentUser.managerId || "u1790626000014";
+          nextApprover = Core._state.currentUser.managerId || null;
         } else if (Core._state.currentUser.role === Core.ROLES.DM) {
           globalStatus = Core.REQUEST_STATUS.PENDING_LM;
-          nextApprover = Core._state.currentUser.managerId || "u1790626000012";
+          nextApprover = Core._state.currentUser.managerId || null;
         } else {
           globalStatus = Core.REQUEST_STATUS.APPROVED;
           nextApprover = null;
         }
+      }
+
+      if (String(globalStatus || "").startsWith("pending_") && !nextApprover) {
+        Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit service request: No direct manager assigned to approve this request. Please contact administrator.", "danger");
+        return;
       }
     }
 
