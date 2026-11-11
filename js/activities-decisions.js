@@ -88,6 +88,7 @@
     if (!Core._state.pendingDecision) return;
     Core._state.currentUser = Core.getAuthUser();
     if (!Core._state.currentUser) {
+      Core.safeShowToast(Core.t("unauthorizedExpenseAction") || "Unauthorized: No active user session found. Please sign in.", "danger");
       closeDecisionModal();
       return;
     }

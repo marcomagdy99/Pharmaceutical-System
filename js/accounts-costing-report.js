@@ -521,16 +521,14 @@
    */
   function populateCostingAreaOptions() {
     const user = getCurrentUser();
+    const areaSelect = document.getElementById("accountsCostingAreaSelect");
+    if (!areaSelect) return;
     if (!user) {
-      if (promptEl) {
-        promptEl.style.display = "block";
-        promptEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);"><p>Please sign in with an authorized account to view costing data.</p></div>`;
-      }
-      if (resultsEl) resultsEl.style.display = "none";
+      areaSelect.innerHTML = `<option value="all">No Access</option>`;
+      areaSelect.disabled = true;
       return;
     }
     const scope = resolveUserCostingScope(user);
-    const areaSelect = document.getElementById("accountsCostingAreaSelect");
     if (!areaSelect) return;
 
     if (scope.isRep) {
@@ -699,7 +697,12 @@
     rawServices.forEach((s) => {
       const isShared = s.isShared === true && Array.isArray(s.shares) && s.shares.length > 0;
       const matchedDoc = s.targetId ? doctorMap.get(String(s.targetId)) : null;
-      const sDate = s.date || s.serviceDate || (s.executionDate ? s.executionDate : "") || (s.createdAt ? s.createdAt.substring(0, 10) : "") || (s.history && s.history[0]?.at ? s.history[0].at.substring(0, 10) : "");
+      const safeDateSub = (val) => {
+        if (!val) return "";
+        if (val instanceof Date) return val.toISOString().substring(0, 10);
+        return String(val).substring(0, 10);
+      };
+      const sDate = s.date || s.serviceDate || (s.executionDate ? safeDateSub(s.executionDate) : "") || (s.createdAt ? safeDateSub(s.createdAt) : "") || (s.history && s.history[0]?.at ? safeDateSub(s.history[0].at) : "");
 
       if (isShared) {
         // Iterate through each share allocation
@@ -908,9 +911,17 @@
   function renderAccountsCostingReport() {
     const promptEl = document.getElementById("accountsCostingPromptContainer");
     const resultsEl = document.getElementById("accountsCostingResultsContainer");
+    const user = getCurrentUser();
+    if (!user) {
+      if (promptEl) {
+        promptEl.style.display = "block";
+        promptEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);"><p>Please sign in with an authorized account to view costing data.</p></div>`;
+      }
+      if (resultsEl) resultsEl.style.display = "none";
+      return;
+    }
     if (promptEl) promptEl.style.display = "none";
     if (resultsEl) resultsEl.style.display = "block";
-    const user = getCurrentUser();
     const scope = resolveUserCostingScope(user);
 
     const fromVal = document.getElementById("accountsCostingDateFrom")?.value;
