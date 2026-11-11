@@ -529,7 +529,6 @@
       return;
     }
     const scope = resolveUserCostingScope(user);
-    if (!areaSelect) return;
 
     if (scope.isRep) {
       // Rep strictly sees only their own areas

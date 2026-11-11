@@ -1,3 +1,19 @@
+// Safe localization helper for achievements report
+function getAchTranslation(key, fallback) {
+  if (window.ActivitiesCore && typeof window.ActivitiesCore.t === "function") {
+    return window.ActivitiesCore.t(key, fallback);
+  }
+  if (typeof window.t === "function") {
+    return window.t(key, fallback);
+  }
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || localStorage.getItem("pharma_lang") || "en";
+  if (lang === "ar") {
+    if (key === "unassignedTerritory") return "منطقة غير مسندة";
+    if (key === "unassigned") return "غير مسند";
+  }
+  return fallback || key;
+}
+
 /**
  * @file achievements-report.js
  * @description Reports page - "Achievements" tab: Territory/Rep sales
@@ -524,8 +540,12 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   let unassignedSalesValue = 0;
   let unassignedTargetsCount = 0;
 
+  const canSeeUnassigned = isAdminOrBU && selectedArea === 'all' && (!selectedRepVal || selectedRepVal === 'all');
+  const unassignedTerritoryText = getAchTranslation("unassignedTerritory", "Unassigned Territory");
+  const unassignedText = getAchTranslation("unassigned", "Unassigned");
+
   if (!areasMap.has("area_unassigned")) {
-    areasMap.set("area_unassigned", { id: "area_unassigned", name: "Unassigned Territory", code: "UNASSIGNED" });
+    areasMap.set("area_unassigned", { id: "area_unassigned", name: unassignedTerritoryText, code: "UNASSIGNED" });
   }
 
   const cellMap = {};
@@ -540,7 +560,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     }
     if (!tAreaId) {
       unassignedTargetsCount++;
-      if (selectedArea === 'all' && (!selectedRepVal || selectedRepVal === 'all')) {
+      if (canSeeUnassigned) {
         tAreaId = "area_unassigned";
         filteredAreaIds.add("area_unassigned");
       } else {
@@ -549,10 +569,14 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     }
     if (!filteredAreaIds.has(tAreaId)) return;
 
-    const area = areasMap.get(tAreaId);
-    if (area && area.lineId) {
-      const prod = productsMap.get(t.productId);
-      if (prod && prod.lineId && prod.lineId !== area.lineId) return;
+    const prod = productsMap.get(t.productId);
+    if (selectedLineId && selectedLineId !== 'all') {
+      if (!prod || prod.lineId !== selectedLineId) return;
+    } else {
+      const area = areasMap.get(tAreaId);
+      if (area && area.lineId) {
+        if (prod && prod.lineId && prod.lineId !== area.lineId) return;
+      }
     }
 
     const key = tAreaId + '||' + t.productId;
@@ -583,7 +607,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     if (!sAreaId) {
       unassignedSalesCount++;
       unassignedSalesValue += (parseFloat(s.value) || 0);
-      if (selectedArea === 'all' && (!selectedRepVal || selectedRepVal === 'all')) {
+      if (canSeeUnassigned) {
         sAreaId = "area_unassigned";
         filteredAreaIds.add("area_unassigned");
       } else {
@@ -592,10 +616,14 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     }
     if (!filteredAreaIds.has(sAreaId)) return;
 
-    const area = areasMap.get(sAreaId);
-    if (area && area.lineId) {
-      const prod = productsMap.get(s.productId);
-      if (prod && prod.lineId && prod.lineId !== area.lineId) return;
+    const prod = productsMap.get(s.productId);
+    if (selectedLineId && selectedLineId !== 'all') {
+      if (!prod || prod.lineId !== selectedLineId) return;
+    } else {
+      const area = areasMap.get(sAreaId);
+      if (area && area.lineId) {
+        if (prod && prod.lineId && prod.lineId !== area.lineId) return;
+      }
     }
 
     const key = sAreaId + '||' + s.productId;
@@ -636,10 +664,10 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       const isUnassignedArea = cell.areaId === "area_unassigned";
       areaGroups[cell.areaId] = {
         areaId: cell.areaId,
-        areaName: area ? area.name : (isUnassignedArea ? "Unassigned Territory" : cell.areaId),
+        areaName: area ? area.name : (isUnassignedArea ? unassignedTerritoryText : cell.areaId),
         areaCode: area ? area.code : (isUnassignedArea ? "UNASSIGNED" : ""),
         repId: repId,
-        repName: rep ? rep.name : (isUnassignedArea ? "Unassigned" : "Vacant"),
+        repName: rep ? rep.name : (isUnassignedArea ? unassignedText : "Vacant"),
         isVacant: !rep && !isUnassignedArea,
         totalSUnit: 0,
         totalSValue: 0,
@@ -665,8 +693,8 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     g.totalTValue += cell.tValue;
   });
 
-  if (unassignedSalesCount > 0) {
-    console.warn(`[Achievements] ${unassignedSalesCount} sales transaction(s) (${unassignedSalesValue.toLocaleString()} EGP) could not be resolved to a specific territory and were grouped under 'Unassigned Territory'.`);
+  if (isAdminOrBU && unassignedSalesCount > 0) {
+    console.warn(`[Achievements] ${unassignedSalesCount} sales transaction(s) (${unassignedSalesValue.toLocaleString()} EGP) could not be resolved to a specific territory and were grouped under '${unassignedTerritoryText}'.`);
   }
   const groups = Object.values(areaGroups);
   groups.forEach((g) => {

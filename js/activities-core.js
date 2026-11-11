@@ -70,6 +70,9 @@
   // ============================================================================
   const activityTranslations = {
     en: {
+      sessionExpired: "Session expired or user not authenticated. Please sign in again.",
+      unassignedTerritory: "Unassigned Territory",
+      unassigned: "Unassigned",
       "activitiesTitle": "PharmaCare - Field Requests",
       "dailyActivities": "Daily Activities",
       "tabDailyActivities": "Daily Activities",
@@ -310,6 +313,9 @@
       "noApproverConfigured": "Cannot submit request: No manager or approver is configured for your territory or line. Please contact your administrator."
 },
     ar: {
+      sessionExpired: "انتهت الجلسة أو تعذر التحقق من المستخدم. يرجى تسجيل الدخول مجدداً.",
+      unassignedTerritory: "منطقة غير مسندة",
+      unassigned: "غير مسند",
       "activitiesTitle": "فارماكير - طلبات الأنشطة الميدانية",
       "dailyActivities": "الأنشطة اليومية",
       "tabDailyActivities": "الأنشطة اليومية",
