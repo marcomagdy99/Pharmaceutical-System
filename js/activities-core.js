@@ -70,6 +70,9 @@
   // ============================================================================
   const activityTranslations = {
     en: {
+      signInCostingPrompt: "Please sign in with an authorized account to view costing data.",
+      excelExportLoading: "Excel export library is loading. Please try again in a moment.",
+      noDataToExport: "No data to export.",
       sessionExpired: "Session expired or user not authenticated. Please sign in again.",
       unassignedTerritory: "Unassigned Territory",
       unassigned: "Unassigned",
@@ -313,6 +316,9 @@
       "noApproverConfigured": "Cannot submit request: No manager or approver is configured for your territory or line. Please contact your administrator."
 },
     ar: {
+      signInCostingPrompt: "يرجى تسجيل الدخول بحساب معتمد لعرض بيانات التكاليف.",
+      excelExportLoading: "جاري تحميل مكتبة تصدير الإكسيل. يرجى المحاولة بعد لحظات.",
+      noDataToExport: "لا توجد بيانات متاحة للتصدير.",
       sessionExpired: "انتهت الجلسة أو تعذر التحقق من المستخدم. يرجى تسجيل الدخول مجدداً.",
       unassignedTerritory: "منطقة غير مسندة",
       unassigned: "غير مسند",
@@ -1009,21 +1015,53 @@
   }
 
   function getUserRoleLabel(role) {
-    const r = (role || "").toLowerCase();
+    const r = (role || "").toLowerCase().trim();
     switch (r) {
       case ROLES.REP:
       case ROLES.REP_ALT:
+      case "rep":
+      case "medical_rep":
+      case "medical rep":
         return "Medical Rep";
       case ROLES.DM:
+      case "dm":
+      case "district_manager":
+      case "district manager":
         return "District Manager (DM)";
       case ROLES.LM:
+      case "lm":
+      case "line_manager":
+      case "line manager":
         return "Line Manager (LM)";
       case ROLES.BU:
+      case "bu":
+      case "business_unit":
+      case "business unit":
         return "Business Unit Head (BU)";
       case ROLES.HR:
+      case "hr":
+      case "human_resources":
+      case "human resources":
         return "Human Resources (HR)";
       case ROLES.ADMIN:
+      case "admin":
+      case "administrator":
         return "Administrator";
+      case "pm":
+      case "product_manager":
+      case "product manager":
+        return "Product Manager (PM)";
+      case "gm":
+      case "general_manager":
+      case "general manager":
+        return "General Manager (GM)";
+      case "commercial_director":
+      case "commercial director":
+        return "Commercial Director";
+      case "finance":
+      case "finance_manager":
+      case "finance manager":
+        return "Finance Manager";
       default:
         return role || "Employee";
     }
@@ -1033,10 +1071,7 @@
     const storeLines = window.store && window.store.productLines && typeof window.store.productLines.getAll === "function"
       ? window.store.productLines.getAll()
       : null;
-    return storeLines || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [
-      { id: "line_1790626000001", name: "Cardio Line" },
-      { id: "line_1790626000002", name: "Neuro Line" }
-    ];
+    return storeLines || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   }
 
   function getProductLineById(lineId) {

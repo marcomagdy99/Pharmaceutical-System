@@ -30,7 +30,7 @@
     if (!item) return;
 
     const requesterName = Core.getUserDisplayName(item.requesterId);
-    let amount = Number(item.amount || item.cost || 0).toLocaleString();
+    let amount = Number(item.amount || item.cost || 0).toLocaleString("en-US");
 
     // If shared service, clarify the manager's line share if applicable
     if (type === "service" && item.isShared && Array.isArray(item.shares)) {
@@ -43,7 +43,7 @@
           const myTotal = myShares.reduce((sum, sh) => sum + (sh.shareAmount || 0), 0);
           const myPct = myShares.reduce((sum, sh) => sum + (sh.sharePercent || 0), 0);
           if (myTotal < (item.cost || 0)) {
-            amount += ` (${Core.t("yourShare") || "Your Share"}: ${myPct}% - ${myTotal.toLocaleString()} ${Core.t("currency") || "EGP"})`;
+            amount += ` (${Core.t("yourShare") || "Your Share"}: ${myPct}% - ${myTotal.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`;
           }
         }
       }
@@ -124,7 +124,7 @@
             userId: exp.requesterId,
             type: "expense_rejected",
             title: "Expense Claim Rejected",
-            message: `Expense claim of ${(exp.amount || 0).toLocaleString()} EGP was rejected by ${actorName}.${comment ? " Reason: " + comment : ""}`,
+            message: `Expense claim of ${(exp.amount || 0).toLocaleString("en-US")} EGP was rejected by ${actorName}.${comment ? " Reason: " + comment : ""}`,
             link: "activities.html",
             icon: "❌",
             badgeClass: "bg-danger",
@@ -139,7 +139,7 @@
             userId: exp.requesterId,
             type: "expense_disbursed",
             title: "Expense Claim Disbursed",
-            message: `Expense claim of ${(exp.amount || 0).toLocaleString()} EGP has been disbursed to you.`,
+            message: `Expense claim of ${(exp.amount || 0).toLocaleString("en-US")} EGP has been disbursed to you.`,
             link: "activities.html",
             icon: "💰",
             badgeClass: "bg-success",
@@ -188,7 +188,7 @@
               userId: exp.requesterId,
               type: "expense_approved",
               title: "Expense Claim Approved",
-              message: `${actorName} approved your expense claim of ${(exp.amount || 0).toLocaleString()} EGP.`,
+              message: `${actorName} approved your expense claim of ${(exp.amount || 0).toLocaleString("en-US")} EGP.`,
               link: "activities.html",
               icon: "✅",
               badgeClass: "bg-success",
@@ -206,7 +206,7 @@
             userId: nextApproverId,
             type: "expense_approval",
             title: stepTitle,
-            message: `${actorName} approved expense claim of ${(exp.amount || 0).toLocaleString()} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`,
+            message: `${actorName} approved expense claim of ${(exp.amount || 0).toLocaleString("en-US")} EGP submitted by ${Core.getUserDisplayName(exp.requesterId)}, awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
             badgeClass: "bg-warning",

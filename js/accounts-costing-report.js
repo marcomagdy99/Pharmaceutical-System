@@ -35,7 +35,9 @@
       try {
         const raw = sessionStorage.getItem("pharmaUser") || localStorage.getItem("pharmaUser");
         if (raw) authUser = JSON.parse(raw);
-      } catch (e) {}
+      } catch (e) {
+        console.warn("[AccountsCosting] Failed to parse pharmaUser session from storage:", e);
+      }
     }
 
     if (!authUser) {
@@ -914,7 +916,8 @@
     if (!user) {
       if (promptEl) {
         promptEl.style.display = "block";
-        promptEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);"><p>Please sign in with an authorized account to view costing data.</p></div>`;
+        const promptText = (window.ActivitiesCore?.t ? window.ActivitiesCore.t("signInCostingPrompt") : null) || "Please sign in with an authorized account to view costing data.";
+        promptEl.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);"><p>${window.escapeHtml ? window.escapeHtml(promptText) : promptText}</p></div>`;
       }
       if (resultsEl) resultsEl.style.display = "none";
       return;
@@ -1385,7 +1388,8 @@
   function exportAccountsCostingToExcel() {
     if (typeof window.XLSX === "undefined") {
       if (typeof window.showToast === "function") {
-        window.showToast("Excel export library is loading. Please try again in a moment.", "warning");
+        const msg = (window.ActivitiesCore?.t ? window.ActivitiesCore.t("excelExportLoading") : null) || "Excel export library is loading. Please try again in a moment.";
+        window.showToast(msg, "warning");
       }
       return;
     }
@@ -1395,7 +1399,8 @@
 
     if (!rows || rows.length === 0) {
       if (typeof window.showToast === "function") {
-        window.showToast("No data to export.", "info");
+        const msg = (window.ActivitiesCore?.t ? window.ActivitiesCore.t("noDataToExport") : null) || "No data to export.";
+        window.showToast(msg, "info");
       }
       return;
     }

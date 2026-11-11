@@ -694,7 +694,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   });
 
   if (isAdminOrBU && unassignedSalesCount > 0) {
-    console.warn(`[Achievements] ${unassignedSalesCount} sales transaction(s) (${unassignedSalesValue.toLocaleString()} EGP) could not be resolved to a specific territory and were grouped under '${unassignedTerritoryText}'.`);
+    console.warn(`[Achievements] ${unassignedSalesCount} sales transaction(s) (${unassignedSalesValue.toLocaleString("en-US")} EGP) could not be resolved to a specific territory and were grouped under '${unassignedTerritoryText}'.`);
   }
   const groups = Object.values(areaGroups);
   groups.forEach((g) => {
@@ -792,10 +792,10 @@ function renderAchievementsReport() {
       totalRow.innerHTML = `
         <td>${titleCellHtml}</td>
         <td>TOTAL</td>
-        <td>${g.totalTUnit.toLocaleString()}</td>
-        <td>${g.totalSUnit.toLocaleString()}</td>
-        <td>${g.totalTValue.toLocaleString()}</td>
-        <td style="color: var(--primary);">${g.totalSValue.toLocaleString()}</td>
+        <td>${g.totalTUnit.toLocaleString("en-US")}</td>
+        <td>${g.totalSUnit.toLocaleString("en-US")}</td>
+        <td>${g.totalTValue.toLocaleString("en-US")}</td>
+        <td style="color: var(--primary);">${g.totalSValue.toLocaleString("en-US")}</td>
         <td style="color: ${totalPctColor};">${totalPctLabel}</td>
       `;
       tbody.appendChild(totalRow);
@@ -807,10 +807,10 @@ function renderAchievementsReport() {
         row.innerHTML = `
           <td></td>
           <td style="padding-inline-start: 24px; color: var(--gray-600);">${window.escapeHtml(p.productName)}</td>
-          <td>${p.tUnit.toLocaleString()}</td>
-          <td>${p.sUnit.toLocaleString()}</td>
-          <td>${p.tValue.toLocaleString()}</td>
-          <td>${p.sValue.toLocaleString()}</td>
+          <td>${p.tUnit.toLocaleString("en-US")}</td>
+          <td>${p.sUnit.toLocaleString("en-US")}</td>
+          <td>${p.tValue.toLocaleString("en-US")}</td>
+          <td>${p.sValue.toLocaleString("en-US")}</td>
           <td style="color: ${pctColor};">${pctLabel}</td>
         `;
         tbody.appendChild(row);
@@ -828,17 +828,17 @@ function renderAchievementsReport() {
       grandRow.innerHTML = `
         <td style="color: var(--primary); font-size: 0.95rem;">OVERALL GRAND TOTAL</td>
         <td style="color: var(--gray-600);">ALL PRODUCTS</td>
-        <td>${grandTUnit.toLocaleString()}</td>
-        <td>${grandSUnit.toLocaleString()}</td>
-        <td>${grandTarget.toLocaleString()}</td>
-        <td style="color: var(--primary);">${grandActual.toLocaleString()}</td>
+        <td>${grandTUnit.toLocaleString("en-US")}</td>
+        <td>${grandSUnit.toLocaleString("en-US")}</td>
+        <td>${grandTarget.toLocaleString("en-US")}</td>
+        <td style="color: var(--primary);">${grandActual.toLocaleString("en-US")}</td>
         <td style="color: ${overallPctColor}; font-size: 1.05rem;">${overallPctLabel}</td>
       `;
       tbody.appendChild(grandRow);
     }
 
-  if (kpiTarget) kpiTarget.textContent = grandTarget.toLocaleString();
-  if (kpiActual) kpiActual.textContent = grandActual.toLocaleString();
+  if (kpiTarget) kpiTarget.textContent = grandTarget.toLocaleString("en-US");
+  if (kpiActual) kpiActual.textContent = grandActual.toLocaleString("en-US");
   if (kpiPct) kpiPct.textContent = grandTarget > 0 ? ((grandActual / grandTarget) * 100).toFixed(1) + '%' : '—';
   if (kpiReps) {
     const uniqueReps = new Set(groups.filter((g) => !g.isVacant && g.repId).map((g) => g.repId));
