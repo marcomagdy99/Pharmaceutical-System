@@ -313,7 +313,22 @@
       "shiftPM": "Evening Shift (PM)",
       "unauthorizedBudgetAction": "You are not authorized to edit business unit budget.",
       "unauthorizedDmBudgetAction": "You are not authorized to edit district manager allocations.",
-      "noApproverConfigured": "Cannot submit request: No manager or approver is configured for your territory or line. Please contact your administrator."
+      "noApproverConfigured": "Cannot submit request: No manager or approver is configured for your territory or line. Please contact your administrator.",
+      "noLmsForLine": "No Line Managers found for this product line.",
+      "inspectDms": "Inspect DMs",
+      "budgetOverAllocated": "Total allocated exceeds available budget!",
+      "dmsUnderLm": "District Managers under",
+      "noDmsUnderLm": "No District Managers found under this Line Manager for the selected line.",
+      "totalDmAllocation": "Total allocated to DMs",
+      "name": "Name",
+      "code": "Code",
+      "allocation": "Allocated",
+      "savedDmBudgetMessage": "District manager allocations saved successfully.",
+      "noRepsFound": "No medical reps found assigned under your district for this product line.",
+      "unauthorizedAction": "You are not authorized to perform this action.",
+      "budgetExceedsDistributed": "Cannot reduce budget below already distributed amount.",
+      "fridayHolidayNotice": "Activities cannot be logged on Friday (official company weekend).",
+      "fileTooLarge": "Receipt file is too large. Maximum size is 800KB."
 },
     ar: {
       signInCostingPrompt: "يرجى تسجيل الدخول بحساب معتمد لعرض بيانات التكاليف.",
@@ -559,7 +574,22 @@
       "waitingLmPrefix": "في انتظار مدير الخط: ",
       "waitingHr": "في انتظار الموارد البشرية (HR)",
       "approvedLabel": "معتمد",
-      "rejectedLabel": "مرفوض"
+      "rejectedLabel": "مرفوض",
+      "noLmsForLine": "لا يوجد مديرو خطوط مسندون لهذا الخط.",
+      "inspectDms": "فحص مديري المناطق",
+      "budgetOverAllocated": "إجمالي المخصص يتجاوز الميزانية المتاحة!",
+      "dmsUnderLm": "مديرو المناطق تحت إشراف",
+      "noDmsUnderLm": "لا يوجد مديرو مناطق تحت إشراف مدير الخط هذا للخط المحدد.",
+      "totalDmAllocation": "إجمالي المخصص لمديري المناطق",
+      "name": "الاسم",
+      "code": "الكود",
+      "allocation": "المخصص",
+      "savedDmBudgetMessage": "تم حفظ مخصصات مديري المناطق بنجاح.",
+      "noRepsFound": "لا يوجد مناديب دعاية مسندون لمنطقتك في هذا الخط.",
+      "unauthorizedAction": "غير مصرح لك بتنفيذ هذا الإجراء.",
+      "budgetExceedsDistributed": "لا يمكن تقليص الميزانية لأقل من المبالغ الموزعة بالفعل.",
+      "fridayHolidayNotice": "لا يمكن تسجيل أنشطة يوم الجمعة (عطلة رسمية للشركة).",
+      "fileTooLarge": "حجم ملف الإيصال كبير جداً. الحد الأقصى هو 800 كيلوبايت."
 }
   };
 
@@ -619,7 +649,7 @@
       case "fuel_tolls": return t("catFuelTolls");
       case "hospitality": return t("catHospitality");
       case "hotel": return t("catHotel");
-      default: return cat;
+      default: return escapeHTML(cat || "");
     }
   }
 
@@ -1001,6 +1031,19 @@
 
     if (action === "allocate_dm_budget" || action === "allocate_rep_budget") {
       return role === ROLES.DM || role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
+    }
+
+    if (action === "approve_location" || action === "reject_location") {
+      if (!resource) return false;
+      if (isAdmin || role === "general_manager") return true;
+      const targetRepId = resource.repId || resource.userId;
+      if (!targetRepId) return false;
+      if (typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId)) {
+        if (role === ROLES.DM) return resource.status === "pending" || resource.status === "pending_dm";
+        if (role === ROLES.LM) return resource.status === "pending" || resource.status === "pending_dm" || resource.status === "pending_lm";
+        if (role === ROLES.BU) return true;
+      }
+      return false;
     }
 
     // Fail-closed authorization: any unhandled action or role is strictly denied

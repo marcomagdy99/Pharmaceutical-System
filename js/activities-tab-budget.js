@@ -21,7 +21,7 @@
     const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "");
     if (!lineId) return;
     const budgets = Core.StoreAdapter.getBudgets();
-    const lineBudget = budgets[lineId] || { totalBudget: 100000, lmAllocations: {}, dmAllocations: {} };
+    const lineBudget = budgets[lineId] || { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
 
     const totalInput = document.getElementById("buTotalBudgetInput") || document.getElementById("buTotalLineBudgetInput");
     if (totalInput) totalInput.value = lineBudget.totalBudget || 0;
@@ -55,7 +55,7 @@
                 <td>
                   <input type="number" class="form-control bu-lm-input budget-alloc-input-bu" data-lmid="${lm.id}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" />
                 </td>
-                <td class="budget-sum-cell">${dmSum.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+                <td class="budget-sum-cell">${dmSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
                 <td>
                   <button type="button" class="btn btn-outline budget-inspect-btn" onclick="ActivitiesModule.openLmDetailModal('${lm.id}', '${lineId}')">
                     ${Core.t("inspectDms") || "Inspect DMs"}
@@ -87,10 +87,10 @@
     const unallocDisplay = document.getElementById("buMetricRemaining") || document.getElementById("buSummaryUnallocatedDisplay");
 
     const curr = Core.t("currency") || "EGP";
-    if (totalDisplay) totalDisplay.textContent = `${total.toLocaleString()} ${curr}`;
-    if (allocDisplay) allocDisplay.textContent = `${allocatedSum.toLocaleString()} ${curr}`;
+    if (totalDisplay) totalDisplay.textContent = `${total.toLocaleString("en-US")} ${curr}`;
+    if (allocDisplay) allocDisplay.textContent = `${allocatedSum.toLocaleString("en-US")} ${curr}`;
     if (unallocDisplay) {
-      unallocDisplay.textContent = `${unallocated.toLocaleString()} ${curr}`;
+      unallocDisplay.textContent = `${unallocated.toLocaleString("en-US")} ${curr}`;
       unallocDisplay.style.color = unallocated < 0 ? "var(--danger)" : "var(--primary)";
     }
   }
@@ -122,11 +122,31 @@
       }
     });
 
+    // Hard constraint 1: Cannot allocate more than total line budget
     if (total > 0 && totalLmAlloc > total) {
       Core.safeShowToast(
-        Core.t("budgetOverAllocated") || `Warning: Total line manager allocations (${totalLmAlloc.toLocaleString()}) exceed line total budget (${total.toLocaleString()}).`,
-        "warning"
+        (Core.t("budgetOverAllocated") || "Total allocated exceeds available budget!") +
+        ` (${totalLmAlloc.toLocaleString("en-US")} / ${total.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+        "danger"
       );
+      return;
+    }
+
+    // Hard constraint 2: Cannot reduce LM allocation below already distributed DM amount
+    for (const [lmId, val] of Object.entries(tempAllocations)) {
+      const dmsUnderLm = Core.getDmsUnderLmForLine(lmId, lineId);
+      const existingDmSum = dmsUnderLm.reduce(
+        (sum, dm) => sum + ((budgets[lineId].dmAllocations && budgets[lineId].dmAllocations[dm.id]) || 0),
+        0
+      );
+      if (val < existingDmSum) {
+        Core.safeShowToast(
+          (Core.t("budgetExceedsDistributed") || "Cannot reduce budget below already distributed amount.") +
+          ` (${Core.getUserDisplayName(lmId)}: distributed ${existingDmSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
+          "danger"
+        );
+        return;
+      }
     }
 
     budgets[lineId].totalBudget = total;
@@ -169,7 +189,7 @@
           <tr class="budget-detail-tr">
             <td class="budget-detail-td-name">${Core.escapeHTML(Core.getUserDisplayName(dm.id))}</td>
             <td class="budget-detail-td-code"><span class="badge budget-code-badge">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
-            <td class="budget-detail-td-val">${alloc.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+            <td class="budget-detail-td-val">${alloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
           </tr>
         `;
       });
@@ -177,7 +197,7 @@
       if (bodyEl) {
         bodyEl.innerHTML = `
           <div class="budget-modal-summary">
-            ${Core.t("totalDmAllocation") || "Total allocated to DMs"}: <strong class="budget-modal-total">${totalAlloc.toLocaleString()} ${Core.t("currency") || "EGP"}</strong>
+            ${Core.t("totalDmAllocation") || "Total allocated to DMs"}: <strong class="budget-modal-total">${totalAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</strong>
           </div>
           <div class="table-responsive">
             <table class="table budget-detail-table">
@@ -229,15 +249,26 @@
     if (!tbody) return;
 
     if (dmsUnderLm.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="budget-empty-cell">No District Managers assigned to you in this line.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="budget-empty-cell">${Core.t("noDmsUnderLm") || "No District Managers assigned to you in this line."}</td></tr>`;
       return;
     }
 
+    const allServices = Core.StoreAdapter.getServices();
     tbody.innerHTML = dmsUnderLm
       .map((dm) => {
         const curAlloc = (lineBudget.dmAllocations && lineBudget.dmAllocations[dm.id]) || 0;
-        const dmServices = Core.StoreAdapter.getServices().filter((s) => s.lineId === lineId && s.requesterId === dm.id && s.status === Core.REQUEST_STATUS.APPROVED);
-        const dmUtilized = dmServices.reduce((sum, s) => sum + (Number(s.cost) || 0), 0);
+        let dmUtilized = 0;
+        allServices.forEach((s) => {
+          if (s.isShared && Array.isArray(s.shares)) {
+            s.shares.forEach((sh) => {
+              if (sh.lineId === lineId && (sh.dmId === dm.id || sh.requesterId === dm.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+                dmUtilized += Number(sh.shareAmount || 0);
+              }
+            });
+          } else if (s.lineId === lineId && s.requesterId === dm.id && s.status === Core.REQUEST_STATUS.APPROVED) {
+            dmUtilized += Number(s.cost || 0);
+          }
+        });
 
         return `
           <tr>
@@ -249,7 +280,7 @@
             <td>
               <input type="number" class="form-control lm-dm-alloc-input budget-alloc-input" data-dmid="${dm.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateLmAllocationPreview()" />
             </td>
-            <td class="budget-sum-cell">${dmUtilized.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+            <td class="budget-sum-cell">${dmUtilized.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
           </tr>
         `;
       })
@@ -276,10 +307,10 @@
 
     const curr = Core.t("currency") || "EGP";
     if (spentTitle) spentTitle.textContent = Core.t("distributedToDms") || "Distributed to DMs";
-    if (spentEl) spentEl.textContent = `${distributed.toLocaleString()} ${curr}`;
+    if (spentEl) spentEl.textContent = `${distributed.toLocaleString("en-US")} ${curr}`;
     if (remTitle) remTitle.textContent = Core.t("unallocatedRemaining") || "Remaining Balance";
     if (remEl) {
-      remEl.textContent = `${remaining.toLocaleString()} ${curr}`;
+      remEl.textContent = `${remaining.toLocaleString("en-US")} ${curr}`;
       remEl.style.color = remaining < 0 ? "var(--danger)" : "var(--success)";
     }
   }
@@ -305,7 +336,7 @@
       tbody.innerHTML = `
         <tr>
           <td colspan="4" class="budget-empty-cell">
-            ${Core.t("noServicesFound") || "No medical reps found assigned under your district for this product line."}
+            ${Core.t("noRepsFound") || "No medical reps found assigned under your district for this product line."}
           </td>
         </tr>
       `;
@@ -339,7 +370,7 @@
             <td>
               <input type="number" class="form-control dm-rep-alloc-input budget-alloc-input" data-repid="${rep.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateDmAllocationPreview()" />
             </td>
-            <td class="budget-sum-cell">${repUtilized.toLocaleString()} ${Core.t("currency") || "EGP"}</td>
+            <td class="budget-sum-cell">${repUtilized.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
           </tr>
         `;
       })
@@ -366,10 +397,10 @@
 
     const curr = Core.t("currency") || "EGP";
     if (spentTitle) spentTitle.textContent = Core.t("distributedToReps") || "Distributed to Reps";
-    if (spentEl) spentEl.textContent = `${distributed.toLocaleString()} ${curr}`;
+    if (spentEl) spentEl.textContent = `${distributed.toLocaleString("en-US")} ${curr}`;
     if (remTitle) remTitle.textContent = Core.t("unallocatedRemaining") || "Remaining Balance";
     if (remEl) {
-      remEl.textContent = `${remaining.toLocaleString()} ${curr}`;
+      remEl.textContent = `${remaining.toLocaleString("en-US")} ${curr}`;
       remEl.style.color = remaining < 0 ? "var(--danger)" : "var(--success)";
     }
   }
@@ -386,21 +417,31 @@
     if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
     if (!budgets[lineId].repAllocations) budgets[lineId].repAllocations = {};
 
+    const allUsers = Core.getAllUsers();
+    const myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
+
     let totalAlloc = 0;
+    const tempAlloc = {};
     document.querySelectorAll(".dm-rep-alloc-input").forEach((inp) => {
       const repId = inp.dataset.repid;
-      if (repId) {
+      if (repId && (myRepIds.includes(repId) || Core._state.currentUser.role === Core.ROLES.ADMIN)) {
         const val = Number(inp.value || 0);
-        budgets[lineId].repAllocations[repId] = val;
+        tempAlloc[repId] = val;
         totalAlloc += val;
       }
     });
 
     const myDmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[Core._state.currentUser.id])) || 0;
     if (myDmAlloc > 0 && totalAlloc > myDmAlloc) {
-      Core.safeShowToast(Core.t("insufficientBudgetNotice") || "Warning: Total allocated to reps exceeds your available territory budget.", "warning");
+      Core.safeShowToast(
+        (Core.t("budgetOverAllocated") || "Total allocated to reps exceeds your available territory budget.") +
+        ` (${totalAlloc.toLocaleString("en-US")} / ${myDmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+        "danger"
+      );
+      return; // Hard constraint: do not save!
     }
 
+    Object.assign(budgets[lineId].repAllocations, tempAlloc);
     Core.StoreAdapter.saveBudgets(budgets);
     Core.safeShowToast(Core.t("savedRepBudgetMessage") || "Rep allocations saved successfully.", "success");
     if (window.ActivitiesServices && window.ActivitiesServices.renderServicesTab) {
@@ -420,21 +461,48 @@
     if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
     if (!budgets[lineId].dmAllocations) budgets[lineId].dmAllocations = {};
 
+    const allowedDms = Core.getDmsUnderLmForLine(Core._state.currentUser.id, lineId).map((d) => d.id);
+
     let totalAlloc = 0;
+    const tempAlloc = {};
     document.querySelectorAll(".lm-dm-alloc-input").forEach((inp) => {
       const dmId = inp.dataset.dmid;
-      if (dmId) {
+      if (dmId && (allowedDms.includes(dmId) || Core._state.currentUser.role === Core.ROLES.ADMIN)) {
         const val = Number(inp.value || 0);
-        budgets[lineId].dmAllocations[dmId] = val;
+        tempAlloc[dmId] = val;
         totalAlloc += val;
       }
     });
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
     if (myLmAlloc > 0 && totalAlloc > myLmAlloc) {
-      Core.safeShowToast(Core.t("insufficientBudgetNotice") || "Warning: Total allocated to district managers exceeds your available line budget.", "warning");
+      Core.safeShowToast(
+        (Core.t("budgetOverAllocated") || "Total allocated to district managers exceeds your available line budget.") +
+        ` (${totalAlloc.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+        "danger"
+      );
+      return; // Hard constraint: do not save!
     }
 
+    // Sub-budget protection: Cannot reduce DM budget below what they already allocated to Reps
+    const allUsers = Core.getAllUsers();
+    for (const [dmId, val] of Object.entries(tempAlloc)) {
+      const repsUnderDm = allUsers.filter((u) => u.managerId === dmId);
+      const existingRepSum = repsUnderDm.reduce(
+        (sum, r) => sum + ((budgets[lineId].repAllocations && budgets[lineId].repAllocations[r.id]) || 0),
+        0
+      );
+      if (val < existingRepSum) {
+        Core.safeShowToast(
+          (Core.t("budgetExceedsDistributed") || "Cannot reduce budget below already distributed amount.") +
+          ` (${Core.getUserDisplayName(dmId)}: distributed ${existingRepSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
+          "danger"
+        );
+        return;
+      }
+    }
+
+    Object.assign(budgets[lineId].dmAllocations, tempAlloc);
     Core.StoreAdapter.saveBudgets(budgets);
     Core.safeShowToast(Core.t("savedDmBudgetMessage") || "District manager allocations saved successfully.", "success");
     if (window.ActivitiesServices && window.ActivitiesServices.renderServicesTab) {

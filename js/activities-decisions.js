@@ -18,19 +18,61 @@
     const confirmBtn = document.getElementById("decisionConfirmBtn");
 
     if (!modal || !titleEl || !msgEl || !confirmBtn) return;
+    confirmBtn.onclick = executeDecisionConfirm;
     if (commentInp) commentInp.value = "";
 
     let item = null;
+    let requesterName = "";
+    let amount = "";
+
+    if (type === "location") {
+      if (!window.store || !window.store.accountLocationRequests) {
+        closeDecisionModal();
+        return;
+      }
+      const reqs = window.store.accountLocationRequests.getAll();
+      const req = reqs.find((r) => r.id === requestId);
+      if (!req) {
+        closeDecisionModal();
+        return;
+      }
+      const actionKey = `${decision}_location`;
+      if (!Core.isActionAuthorized(actionKey, req, Core._state.currentUser)) {
+        Core.safeShowToast(Core.t("unauthorizedAction") || "You are not authorized to perform this action.", "danger");
+        closeDecisionModal();
+        return;
+      }
+      if (decision === "reject") {
+        window.store.accountLocationRequests.reject(requestId, Core._state.currentUser, comment);
+        Core.safeShowToast("Location request rejected.", "info");
+      } else {
+        window.store.accountLocationRequests.approve(requestId, Core._state.currentUser);
+        Core.safeShowToast("Location coordinates approved and updated successfully!", "success");
+      }
+      closeDecisionModal();
+      if (typeof window.renderLocationRequestsTable === "function") window.renderLocationRequestsTable();
+      return;
+    }
+
     if (type === "expense") {
       item = Core.StoreAdapter.getExpenses().find((e) => e.id === requestId);
-    } else {
+      if (!item) return;
+      requesterName = Core.getUserDisplayName(item.requesterId);
+      amount = Number(item.amount || 0).toLocaleString("en-US");
+    } else if (type === "service") {
       item = Core.StoreAdapter.getServices().find((s) => s.id === requestId);
+      if (!item) return;
+      requesterName = Core.getUserDisplayName(item.requesterId);
+      amount = Number(item.cost || 0).toLocaleString("en-US");
+    } else if (type === "location") {
+      const reqs = (window.store && window.store.accountLocationRequests && typeof window.store.accountLocationRequests.getAll === "function")
+        ? window.store.accountLocationRequests.getAll() : [];
+      item = reqs.find((r) => r.id === requestId);
+      if (!item) return;
+      requesterName = item.repName || Core.getUserDisplayName(item.userId || item.repId);
     }
 
     if (!item) return;
-
-    const requesterName = Core.getUserDisplayName(item.requesterId);
-    let amount = Number(item.amount || item.cost || 0).toLocaleString("en-US");
 
     // If shared service, clarify the manager's line share if applicable
     if (type === "service" && item.isShared && Array.isArray(item.shares)) {
@@ -49,7 +91,19 @@
       }
     }
 
-    if (decision === "approve") {
+    if (type === "location") {
+      if (decision === "approve") {
+        titleEl.textContent = Core.t("confirmApprovalTitle") || "Confirm Approval";
+        msgEl.textContent = `Are you sure you want to approve the GPS coordinates request submitted by ${requesterName} for "${item.targetName || ""}"?`;
+        confirmBtn.className = "btn btn-primary";
+        confirmBtn.textContent = Core.t("btnApprove") || "Approve";
+      } else {
+        titleEl.textContent = Core.t("confirmRejectionTitle") || "Confirm Rejection";
+        msgEl.textContent = `Are you sure you want to reject the GPS coordinates request submitted by ${requesterName} for "${item.targetName || ""}"?`;
+        confirmBtn.className = "btn btn-danger";
+        confirmBtn.textContent = Core.t("btnReject") || "Reject";
+      }
+    } else if (decision === "approve") {
       titleEl.textContent = Core.t("confirmApprovalTitle") || "Confirm Approval";
       msgEl.textContent = (Core.t("confirmApproveMsg") || "Are you sure you want to approve this request for {amount} from {name}?")
         .replace("{amount}", amount)
@@ -81,6 +135,8 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    const confirmBtn = document.getElementById("decisionConfirmBtn");
+    if (confirmBtn) confirmBtn.onclick = executeDecisionConfirm;
     Core._state.pendingDecision = null;
   }
 
@@ -570,8 +626,29 @@
     }
     const modal = document.getElementById("receiptPreviewModal");
     const img = document.getElementById("receiptModalLargeImg");
-    if (!modal || !img) return;
-    img.src = url;
+    if (!modal) return;
+    const isPdf = typeof url === "string" && (url.startsWith("data:application/pdf") || url.toLowerCase().includes(".pdf"));
+    let iframe = document.getElementById("receiptModalPdfFrame");
+    if (isPdf) {
+      if (img) img.style.display = "none";
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "receiptModalPdfFrame";
+        iframe.style.width = "100%";
+        iframe.style.height = "75vh";
+        iframe.style.border = "none";
+        iframe.style.borderRadius = "8px";
+        if (img && img.parentNode) img.parentNode.appendChild(iframe);
+      }
+      iframe.src = url;
+      iframe.style.display = "block";
+    } else {
+      if (iframe) iframe.style.display = "none";
+      if (img) {
+        img.src = url;
+        img.style.display = "block";
+      }
+    }
     modal.style.display = "flex";
     modal.classList.add("active");
   }

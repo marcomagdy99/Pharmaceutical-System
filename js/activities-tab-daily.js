@@ -29,11 +29,19 @@
     }
     const curDate = Core._state.currentDate;
     const curDateStr = Core.formatDate(curDate);
-    const userId = Core._state.currentUser?.id || "u1790626000001";
+    const userId = Core._state.currentUser?.id;
 
     const dateDisp = document.getElementById("currentDateDisplay");
     if (dateDisp) {
       dateDisp.textContent = curDateStr;
+    }
+
+    if (!userId) {
+      const amContent = document.getElementById("amContent");
+      const pmContent = document.getElementById("pmContent");
+      if (amContent) amContent.innerHTML = `<div class="empty-period-state"><p class="empty-period-text">${Core.t("sessionExpired") || "Please sign in to view activities."}</p></div>`;
+      if (pmContent) pmContent.innerHTML = `<div class="empty-period-state"><p class="empty-period-text">${Core.t("sessionExpired") || "Please sign in to view activities."}</p></div>`;
+      return;
     }
 
     const dayActivities = Core.StoreAdapter.getActivities(userId, curDateStr) || {};
@@ -100,7 +108,8 @@
 
     const weekStart = Core.getWeekStart(Core._state.currentDate);
     const curDateStr = Core.formatDate(Core._state.currentDate);
-    const userId = Core._state.currentUser?.id || "u1790626000001";
+    const userId = Core._state.currentUser?.id;
+    if (!userId) return;
 
     const companySettings = (window.store && window.store.companySettings)
       ? window.store.companySettings.get()
@@ -163,6 +172,7 @@
     if (!modal) return;
     const p = period || Core.PERIODS.AM;
     const d = date || Core.formatDate(Core._state.currentDate);
+    Core._state.pendingActivityDate = d;
     const userId = Core._state.currentUser?.id;
     const existing = (Core.StoreAdapter.getActivities(userId, d) || {})[p] || {};
 
@@ -186,6 +196,7 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    Core._state.pendingActivityDate = null;
   }
 
   function handleActivitySubmit(e) {
@@ -199,8 +210,20 @@
       return;
     }
 
-    const curDateStr = Core.formatDate(Core._state.currentDate);
+    const curDateStr = Core._state.pendingActivityDate || Core.formatDate(Core._state.currentDate);
     const userId = Core._state.currentUser?.id;
+    if (!userId) {
+      Core.safeShowToast(Core.t("sessionExpired") || "Session expired. Please sign in.", "danger");
+      return;
+    }
+
+    // Friday official weekend check
+    const actDate = new Date(curDateStr);
+    if (actDate.getDay() === 5) {
+      Core.safeShowToast(Core.t("fridayHolidayNotice") || "Activities cannot be logged on Friday (official company weekend).", "warning");
+      return;
+    }
+
     Core.StoreAdapter.saveActivity(userId, curDateStr, period, {
       type,
       notes,
@@ -215,8 +238,12 @@
   function deleteCurrentActivity() {
     if (!confirm(Core.t("confirmDeleteActivity"))) return;
     const period = document.getElementById("activityPeriod")?.value || Core.PERIODS.AM;
-    const curDateStr = Core.formatDate(Core._state.currentDate);
+    const curDateStr = Core._state.pendingActivityDate || Core.formatDate(Core._state.currentDate);
     const userId = Core._state.currentUser?.id;
+    if (!userId) {
+      Core.safeShowToast(Core.t("sessionExpired") || "Session expired. Please sign in.", "danger");
+      return;
+    }
 
     Core.StoreAdapter.deleteActivity(userId, curDateStr, period);
     closeActivityModal();

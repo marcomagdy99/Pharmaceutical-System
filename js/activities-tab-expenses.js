@@ -139,7 +139,7 @@
 
     userVisible.forEach((e) => {
       const amt = Number(e.amount) || 0;
-      if (e.status && e.status.startsWith("pending")) {
+      if (String(e.status || "").startsWith("pending")) {
         pendingTotal += amt;
       }
       if (e.status === Core.REQUEST_STATUS.APPROVED) approvedTotal += amt;
@@ -150,15 +150,26 @@
     const aEl = document.getElementById("expMetricApproved") || document.getElementById("expensesApprovedSum");
     const dEl = document.getElementById("expMetricDisbursed") || document.getElementById("expensesDisbursedSum");
 
-    if (pEl) pEl.textContent = `${pendingTotal.toLocaleString()} EGP`;
-    if (aEl) aEl.textContent = `${approvedTotal.toLocaleString()} EGP`;
-    if (dEl) dEl.textContent = `${disbursedTotal.toLocaleString()} EGP`;
+    const curr = Core.t("currency") || "EGP";
+    if (pEl) pEl.textContent = `${pendingTotal.toLocaleString("en-US")} ${curr}`;
+    if (aEl) aEl.textContent = `${approvedTotal.toLocaleString("en-US")} ${curr}`;
+    if (dEl) dEl.textContent = `${disbursedTotal.toLocaleString("en-US")} ${curr}`;
   }
 
   function renderExpensesTable(list) {
     const tbody = document.getElementById("expensesTableBody");
     if (!tbody) return;
     tbody.innerHTML = "";
+
+    if (!tbody.dataset.zoomBound) {
+      tbody.dataset.zoomBound = "true";
+      tbody.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-receipt-zoom");
+        if (btn && btn.dataset.receiptUrl) {
+          ActivitiesModule.openReceiptPreviewModal(btn.dataset.receiptUrl);
+        }
+      });
+    }
 
     if (list.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="table-empty-row">${Core.t("noExpensesFound")}</td></tr>`;
@@ -170,27 +181,29 @@
         const requesterName = Core.escapeHTML(Core.getUserDisplayName(exp.requesterId));
         const requesterRole = Core.escapeHTML(Core.getUserRoleLabel(exp.requesterRole));
         const actionsHtml = getExpenseActionButtons(exp, Core._state.currentUser);
+        const isPdfReceipt = typeof exp.receiptUrl === "string" && (exp.receiptUrl.startsWith("data:application/pdf") || exp.receiptUrl.toLowerCase().includes(".pdf"));
+        const safeReceiptUrl = exp.receiptUrl ? Core.escapeHTML(exp.receiptUrl) : "";
         const receiptThumb = exp.receiptUrl
-          ? `<button type="button" class="receipt-preview-btn" onclick="ActivitiesModule.openReceiptPreviewModal('${exp.receiptUrl}')" title="${Core.t(
-              "viewAttachment"
-            )}">
-               <img src="${exp.receiptUrl}" alt="Receipt" class="receipt-thumbnail" />
+          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-receipt-url="${safeReceiptUrl}" title="${Core.escapeHTML(Core.t("viewAttachment"))}">
+               ${isPdfReceipt
+                 ? `<span class="receipt-pdf-badge" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:#fee2e2; color:#ef4444; border-radius:6px; font-weight:700; font-size:11px;"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF</span>`
+                 : `<img src="${safeReceiptUrl}" alt="Receipt" class="receipt-thumbnail" />`}
                <span class="receipt-zoom-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
              </button>`
           : `<span class="no-receipt-label">${Core.t("noReceipt")}</span>`;
 
         return `
           <tr>
-            <td class="table-date-cell">${exp.date}</td>
+            <td class="table-date-cell">${Core.escapeHTML(exp.date || "")}</td>
             <td>
               <div class="user-display-title">${requesterName}</div>
               <small class="badge badge-subtle-role">${requesterRole}</small>
             </td>
             <td>
-              <span class="category-name-badge">${Core.getCategoryLabel(exp.category)}</span>
+              <span class="category-name-badge">${Core.escapeHTML(Core.getCategoryLabel(exp.category))}</span>
               ${exp.notes ? `<br><small class="item-notes-text">${Core.escapeHTML(exp.notes)}</small>` : ""}
             </td>
-            <td class="table-amount-cell">${Number(exp.amount).toLocaleString()} EGP</td>
+            <td class="table-amount-cell">${Number(exp.amount).toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
             <td>${receiptThumb}</td>
             <td>${renderStatusBadge(exp.status, exp.nextApproverId)}</td>
             <td class="table-actions-cell">${actionsHtml}</td>
@@ -232,50 +245,30 @@
 
   function getExpenseActionButtons(exp, user) {
     if (!user) return "&mdash;";
-    const role = (user.role || "").toLowerCase();
-    const status = exp.status;
-
-    let canApproveReject = false;
-    let canDisburse = false;
-
-    if (role === Core.ROLES.ADMIN) {
-      if (status.startsWith("pending")) canApproveReject = true;
-      if (status === Core.REQUEST_STATUS.APPROVED) canDisburse = true;
-    } else if (role === Core.ROLES.DM) {
-      if (status === Core.REQUEST_STATUS.PENDING_DM && exp.nextApproverId === user.id) {
-        canApproveReject = true;
-      }
-    } else if (role === Core.ROLES.LM) {
-      if (status === Core.REQUEST_STATUS.PENDING_LM && exp.nextApproverId === user.id) {
-        canApproveReject = true;
-      }
-    } else if (role === Core.ROLES.HR) {
-      if (status === Core.REQUEST_STATUS.PENDING_HR) {
-        canApproveReject = true;
-      }
-      if (status === Core.REQUEST_STATUS.APPROVED) {
-        canDisburse = true;
-      }
-    } else if (role === Core.ROLES.BU) {
-      if (status.startsWith("pending") && (typeof window.canApproveFor !== "function" || window.canApproveFor(exp.requesterId))) {
-        canApproveReject = true;
-      }
-    }
+    const canApprove = Core.isActionAuthorized("approve_expense", exp, user);
+    const canReject = Core.isActionAuthorized("reject_expense", exp, user);
+    const canDisburse = Core.isActionAuthorized("disburse_expense", exp, user);
 
     let buttons = "";
-    if (canApproveReject) {
-      buttons += `
-        <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('expense', '${exp.id}', 'approve')" title="Approve">
-          <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-        <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('expense', '${exp.id}', 'reject')" title="Reject">
-          <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      `;
+    if (canApprove || canReject) {
+      if (canApprove) {
+        buttons += `
+          <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'approve')" title="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}">
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        `;
+      }
+      if (canReject) {
+        buttons += `
+          <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'reject')" title="${Core.escapeHTML(Core.t("btnReject") || "Reject")}">
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        `;
+      }
     }
     if (canDisburse) {
       buttons += `
-        <button type="button" class="action-btn-disburse" onclick="ActivitiesModule.openDecisionModal('expense', '${exp.id}', 'disburse')" title="Disburse Payment">
+        <button type="button" class="action-btn-disburse" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'disburse')" title="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}">
           <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M15 9.5a2.5 2.5 0 0 0-5 0c0 3 5 2 5 5a2.5 2.5 0 0 1-5 0"/></svg>
         </button>
       `;
@@ -320,18 +313,30 @@
     const file = input?.files && input.files[0];
     if (!file) return;
 
-    // File size guard (max 1.5MB to protect localStorage quota from QuotaExceededError)
-    const MAX_FILE_SIZE = 1.5 * 1024 * 1024;
+    // File size guard (max 800KB to protect localStorage quota from QuotaExceededError)
+    const MAX_FILE_SIZE = 800 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      const msg = "File size exceeds 1.5MB limit. Please upload a smaller receipt or image.";
-      if (typeof showToast === "function") showToast(msg, "error");
-      else alert(msg);
+      Core.safeShowToast(Core.t("fileTooLarge") || "Receipt file is too large. Maximum size is 800KB.", "warning");
+      Core._state.currentReceiptBase64 = null;
+      if (input) input.value = "";
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|pdf)$/i)) {
+      Core.safeShowToast("Unsupported file type. Please upload a JPG, PNG, WEBP, or PDF file.", "warning");
+      Core._state.currentReceiptBase64 = null;
       if (input) input.value = "";
       return;
     }
 
     const isPdf = file.type === "application/pdf" || (file.name && file.name.toLowerCase().endsWith(".pdf"));
     const reader = new FileReader();
+    reader.onerror = function () {
+      Core._state.currentReceiptBase64 = null;
+      Core.safeShowToast("Failed to read file.", "warning");
+    };
+
     reader.onload = function (evt) {
       if (isPdf) {
         Core._state.currentReceiptBase64 = evt.target.result;
@@ -347,6 +352,11 @@
       }
 
       const img = new Image();
+      img.onerror = function () {
+        Core._state.currentReceiptBase64 = null;
+        Core.safeShowToast("Failed to load image file.", "warning");
+      };
+
       img.onload = function () {
         const canvas = document.createElement("canvas");
         const MAX_WIDTH = 800;
@@ -419,6 +429,17 @@
   function handleExpenseSubmit(e) {
     e.preventDefault();
     Core._state.currentUser = Core.getAuthUser();
+    if (!Core._state.currentUser) {
+      Core.safeShowToast(Core.t("sessionExpired") || "Session expired. Please sign in again.", "danger");
+      return;
+    }
+
+    const submitBtn = document.getElementById("btnSubmitExpense") || e.target?.querySelector("button[type='submit']");
+    if (submitBtn) {
+      if (submitBtn.disabled) return;
+      submitBtn.disabled = true;
+    }
+
     const catSelect = document.getElementById("expenseCategoryInput") || document.getElementById("expenseCategorySelect");
     const amountInp = document.getElementById("expenseAmountInput");
     const dateInp = document.getElementById("expenseDateInput");
@@ -432,41 +453,59 @@
 
     if (!amount || amount <= 0) {
       Core.safeShowToast("Please enter a valid expense amount.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     let initialStatus = Core.REQUEST_STATUS.PENDING_DM;
     let nextApprover = null;
 
-    if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
+    const role = (Core._state.currentUser.role || "").toLowerCase();
+    if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
       initialStatus = Core.REQUEST_STATUS.PENDING_DM;
       nextApprover = Core._state.currentUser.managerId || null;
-    } else if (Core._state.currentUser.role === Core.ROLES.DM) {
+    } else if (role === Core.ROLES.DM) {
       initialStatus = Core.REQUEST_STATUS.PENDING_LM;
       nextApprover = Core._state.currentUser.managerId || null;
-    } else if (Core._state.currentUser.role === Core.ROLES.LM) {
+    } else if (role === Core.ROLES.LM) {
       initialStatus = Core.REQUEST_STATUS.PENDING_HR;
       const hr = Core.getHrUser();
       nextApprover = hr ? hr.id : null;
+    } else if (role === Core.ROLES.BU) {
+      initialStatus = Core.REQUEST_STATUS.PENDING_HR;
+      const hr = Core.getHrUser();
+      nextApprover = hr ? hr.id : (Core._state.currentUser.managerId || null);
+    } else if (role === Core.ROLES.HR) {
+      initialStatus = Core.REQUEST_STATUS.PENDING_GM;
+      const gm = Core.getGmUser ? Core.getGmUser() : null;
+      nextApprover = gm ? gm.id : (Core._state.currentUser.managerId || null);
+    } else if (role === Core.ROLES.ADMIN) {
+      initialStatus = Core.REQUEST_STATUS.PENDING_GM;
+      const gm = Core.getGmUser ? Core.getGmUser() : null;
+      nextApprover = gm ? gm.id : Core._state.currentUser.id;
     } else {
-      initialStatus = Core.REQUEST_STATUS.APPROVED;
-      nextApprover = null;
+      // PM, Finance Manager, Commercial Director, etc.
+      initialStatus = Core.REQUEST_STATUS.PENDING_HR;
+      const hr = Core.getHrUser();
+      nextApprover = hr ? hr.id : (Core._state.currentUser.managerId || null);
     }
 
     if (String(initialStatus || "").startsWith("pending_") && !nextApprover) {
       Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit expense claim: No direct manager or HR approver configured for your account. Please contact administrator.", "danger");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     const assignedLines = Core.getUserAssignedLines(Core._state.currentUser);
     const lineId = lineSelect?.value || (assignedLines.length > 0 ? assignedLines[0].id : null);
-    if (!lineId && Core._state.currentUser.role !== Core.ROLES.ADMIN) {
+    if (!lineId && role !== Core.ROLES.ADMIN) {
       Core.safeShowToast("Please select a valid product line for this expense claim.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     const newExpense = {
-      id: "exp_" + Date.now(),
+      id: "exp_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
       requesterId: Core._state.currentUser.id,
       requesterRole: Core._state.currentUser.role,
       lineId: lineId,
@@ -474,7 +513,7 @@
       amount: amount,
       date: date,
       notes: notes,
-      receiptUrl: Core._state.currentReceiptBase64 || "images/pharma-icon-192.png",
+      receiptUrl: Core._state.currentReceiptBase64 || null,
       status: initialStatus,
       nextApproverId: nextApprover,
       history: [
@@ -487,7 +526,14 @@
       ],
     };
 
-    Core.StoreAdapter.saveExpense(newExpense);
+    try {
+      Core.StoreAdapter.saveExpense(newExpense);
+    } catch (err) {
+      console.error("Failed to save expense:", err);
+      Core.safeShowToast("Storage quota exceeded or error saving expense claim. Please reduce receipt file size.", "danger");
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
 
     if (newExpense.nextApproverId) {
       const reqName = Core.getUserDisplayName(Core._state.currentUser.id);
@@ -495,7 +541,7 @@
         userId: newExpense.nextApproverId,
         type: "expense_approval",
         title: "Expense Claim Pending Approval",
-        message: `${reqName} submitted an expense claim of ${amount.toLocaleString()} EGP (${category}) awaiting your approval.`,
+        message: `${reqName} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${category}) awaiting your approval.`,
         link: "activities.html",
         icon: "💵",
         badgeClass: "bg-warning",
@@ -507,6 +553,7 @@
     closeExpenseModal();
     renderExpensesTab();
     Core.safeShowToast(Core.t("successAction"), "success");
+    if (submitBtn) submitBtn.disabled = false;
   }
 
   window.ActivitiesExpenses = {

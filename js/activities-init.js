@@ -50,6 +50,16 @@
   }
 
   function switchTab(tabId) {
+    const user = Core._state.currentUser || Core.getAuthUser();
+    const role = (user && user.role) ? user.role.toLowerCase() : "";
+    if (tabId === Core.TABS.BUDGET && role !== Core.ROLES.BU && role !== Core.ROLES.ADMIN) {
+      Core.safeShowToast(Core.t("unauthorizedBudgetAction") || "Unauthorized", "danger");
+      return;
+    }
+    if (tabId === Core.TABS.SERVICES && role === Core.ROLES.BU) {
+      Core.safeShowToast(Core.t("unauthorizedServiceAction") || "Unauthorized", "danger");
+      return;
+    }
     Core._state.activeTab = tabId;
     document.querySelectorAll(".requests-tab-btn").forEach((btn) => btn.classList.remove("active"));
     document.querySelectorAll(".requests-tab-pane").forEach((pane) => pane.classList.remove("active"));
@@ -86,12 +96,23 @@
     const currentUser = Core.getAuthUser() || {};
     const role = (currentUser.role || "").toLowerCase();
 
-    if (requests.length === 0) {
+    // Row filtering: Only show requests within user's scope
+    const visibleRequests = requests.filter((req) => {
+      const targetRepId = req.repId || req.userId;
+      if (role === "admin" || role === "general_manager" || role === "business_unit") return true;
+      if (role === "medical_rep" || role === "rep") return targetRepId === currentUser.id;
+      if (role === "district_manager" || role === "line_manager") {
+        return targetRepId === currentUser.id || (typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId));
+      }
+      return false;
+    });
+
+    if (visibleRequests.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No geographic location requests submitted yet.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = requests.map((req) => {
+    tbody.innerHTML = visibleRequests.map((req) => {
       const typeBadge = req.requestType === "relocation"
         ? `<span class="badge bg-warning text-dark">Relocation</span>`
         : `<span class="badge bg-info text-dark">Initial Pin</span>`;
@@ -103,7 +124,7 @@
 
       let canApproveStage = false;
       const targetRepId = req.repId || req.userId;
-      const belongsToMyHierarchy = !targetRepId || (typeof window.canApproveFor === "function" ? window.canApproveFor(targetRepId) : true);
+      const belongsToMyHierarchy = Boolean(targetRepId && typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId));
       if (isPending && (role === "admin" || role === "general_manager" || belongsToMyHierarchy)) {
         if (role === "admin" || role === "general_manager") {
           canApproveStage = true;
@@ -118,40 +139,46 @@
         }
       }
 
-      let locInfo = `<code>${req.newLat.toFixed(5)}, ${req.newLng.toFixed(5)}</code>`;
+      const latNum = Number(req.newLat);
+      const lngNum = Number(req.newLng);
+      const latStr = !isNaN(latNum) && req.newLat != null ? latNum.toFixed(5) : "-";
+      const lngStr = !isNaN(lngNum) && req.newLng != null ? lngNum.toFixed(5) : "-";
+      let locInfo = `<code>${latStr}, ${lngStr}</code>`;
       if (req.oldLat != null && req.oldLng != null) {
-        const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${req.oldLat},${req.oldLng}&destination=${req.newLat},${req.newLng}`;
-        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">Compare on Map</a>`;
-        if (req.distanceMeters) locInfo += ` <span class="badge bg-secondary">${req.distanceMeters}m</span>`;
-      } else {
-        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${req.newLat},${req.newLng}`;
-        locInfo += `<br><a href="${mapUrl}" target="_blank" class="small text-primary fw-bold">View on Map</a>`;
+        const oldLatNum = Number(req.oldLat);
+        const oldLngNum = Number(req.oldLng);
+        const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(oldLatNum + ',' + oldLngNum)}&destination=${encodeURIComponent(latNum + ',' + lngNum)}`;
+        locInfo += `<br><a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="small text-primary fw-bold">Compare on Map</a>`;
+        if (req.distanceMeters) locInfo += ` <span class="badge bg-secondary">${Number(req.distanceMeters)}m</span>`;
+      } else if (!isNaN(latNum) && !isNaN(lngNum)) {
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(latNum + ',' + lngNum)}`;
+        locInfo += `<br><a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="small text-primary fw-bold">View on Map</a>`;
       }
 
       let actionsHtml = "";
       if (isPending && canApproveStage) {
         actionsHtml = `
           <div class="location-actions-wrap">
-            <button type="button" class="btn btn-sm btn-location-approve" onclick="approveLocationReq('${req.id}')" title="Approve GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Approve</button>
-            <button type="button" class="btn btn-sm btn-location-reject" onclick="rejectLocationReq('${req.id}')" title="Reject GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</button>
+            <button type="button" class="btn btn-sm btn-location-approve" onclick="approveLocationReq('${Core.escapeHTML(req.id)}')" title="Approve GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Approve</button>
+            <button type="button" class="btn btn-sm btn-location-reject" onclick="rejectLocationReq('${Core.escapeHTML(req.id)}')" title="Reject GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</button>
           </div>
         `;
       } else if (isPending) {
         const stageLabel = st.replace("pending_", "").toUpperCase() || "Manager";
-        actionsHtml = `<small class="text-muted">Awaiting ${stageLabel}</small>`;
+        actionsHtml = `<small class="text-muted">Awaiting ${Core.escapeHTML(stageLabel)}</small>`;
       } else {
-        actionsHtml = `<small class="text-muted">${req.decisionBy || "Manager"} - ${req.decisionAt ? req.decisionAt.slice(0, 10) : ""}</small>`;
+        actionsHtml = `<small class="text-muted">${Core.escapeHTML(req.decisionBy || "Manager")} - ${req.decisionAt ? Core.escapeHTML(req.decisionAt.slice(0, 10)) : ""}</small>`;
       }
 
       return `
         <tr>
-          <td><strong>${window.escapeHtml(req.targetName || "")}</strong></td>
-          <td>${window.escapeHtml(req.repName || "")}</td>
+          <td><strong>${Core.escapeHTML(req.targetName || "")}</strong></td>
+          <td>${Core.escapeHTML(req.repName || "")}</td>
           <td>${typeBadge}</td>
           <td>${locInfo}</td>
-          <td>${window.escapeHtml(req.newAddress || req.reason || "-")}</td>
+          <td>${Core.escapeHTML(req.newAddress || req.reason || "-")}</td>
           <td>${statusBadge}</td>
-          <td><small>${req.submittedAt ? req.submittedAt.slice(0, 16).replace("T", " ") : "-"}</small></td>
+          <td><small>${req.submittedAt ? Core.escapeHTML(req.submittedAt.slice(0, 16).replace("T", " ")) : "-"}</small></td>
           <td>${actionsHtml}</td>
         </tr>
       `;
@@ -159,44 +186,14 @@
   }
 
   window.approveLocationReq = function(id) {
-    if (!window.store || !window.store.accountLocationRequests) return;
-    const user = Core.getAuthUser() || {};
-    window.store.accountLocationRequests.approve(id, user);
-    if (typeof window.showToast === "function") window.showToast("Location coordinates approved and updated successfully!", "success");
-    renderLocationRequestsTable();
+    if (window.ActivitiesDecisions && typeof window.ActivitiesDecisions.openDecisionModal === "function") {
+      window.ActivitiesDecisions.openDecisionModal("location", id, "approve");
+    }
   };
 
   window.rejectLocationReq = function(id) {
-    if (!window.store || !window.store.accountLocationRequests) return;
-    const modal = document.getElementById("decisionModal");
-    const commentInput = document.getElementById("decisionCommentInput");
-    if (modal && commentInput) {
-      const titleEl = document.getElementById("decisionModalTitle");
-      const msgEl = document.getElementById("decisionModalMsg");
-      const confirmBtn = document.getElementById("btnConfirmDecision");
-      if (titleEl) titleEl.textContent = "Reject Location Request";
-      if (msgEl) msgEl.textContent = "Are you sure you want to reject this GPS location request?";
-      commentInput.value = "";
-      if (confirmBtn) {
-        confirmBtn.className = "btn btn-danger";
-        confirmBtn.textContent = "Reject";
-        confirmBtn.onclick = function() {
-          const reason = commentInput.value.trim();
-          const user = Core.getAuthUser() || {};
-          window.store.accountLocationRequests.reject(id, user, reason);
-          if (typeof window.showToast === "function") window.showToast("Location request rejected.", "info");
-          modal.style.display = "none";
-          modal.classList.remove("active");
-          renderLocationRequestsTable();
-        };
-      }
-      modal.style.display = "flex";
-      modal.classList.add("active");
-    } else {
-      const user = Core.getAuthUser() || {};
-      window.store.accountLocationRequests.reject(id, user, "");
-      if (typeof window.showToast === "function") window.showToast("Location request rejected.", "info");
-      renderLocationRequestsTable();
+    if (window.ActivitiesDecisions && typeof window.ActivitiesDecisions.openDecisionModal === "function") {
+      window.ActivitiesDecisions.openDecisionModal("location", id, "reject");
     }
   };
 
@@ -324,12 +321,7 @@
       console.warn("populateServiceFilters warning:", e);
     }
 
-    // Trigger budget sanitizer on startup to clear any stale cross-line DM allocations
-    try {
-      Core.StoreAdapter.getBudgets();
-    } catch (e) {
-      console.warn("getBudgets sanitizer warning:", e);
-    }
+// Startup initialization complete
   }
 
   // Reactive Wakeup: Listen for store changes across the app
@@ -424,7 +416,7 @@
     openDecisionModal: (type, id, dec) => window.ActivitiesDecisions?.openDecisionModal?.(type, id, dec),
     closeDecisionModal: () => window.ActivitiesDecisions?.closeDecisionModal?.(),
     executeDecisionConfirm: () => window.ActivitiesDecisions?.executeDecisionConfirm?.(),
-    openReceiptPreviewModal: (src) => window.ActivitiesDecisions?.openReceiptPreviewModal?.(src),
+    openReceiptPreviewModal: (src) => window.ActivitiesExpenses?.openReceiptPreviewModal?.(src) || window.ActivitiesDecisions?.openReceiptPreviewModal?.(src),
     closeReceiptPreviewModal: () => window.ActivitiesDecisions?.closeReceiptPreviewModal?.(),
     // Core Helpers
     addDays: Core.addDays,
