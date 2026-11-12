@@ -111,7 +111,7 @@
     const userId = Core._state.currentUser?.id;
     if (!userId) return;
 
-    const companySettings = (window.store && window.store.companySettings)
+    const companySettings = (window.store && window.store.companySettings && typeof window.store.companySettings.get === "function")
       ? window.store.companySettings.get()
       : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
     const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? "thursday" : "none");
@@ -138,13 +138,25 @@
       if (isDayOff) cardClass += " day-off";
       card.className = cardClass;
 
+      const dayName = Core.t(dayKey);
+      const dateShort = Core.formatDateShort(dayDate);
+
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-label", `${dayName} ${dateShort}`);
+
       card.onclick = () => {
         Core._state.currentDate = dayDate;
         renderActivitiesView();
       };
 
-      const dayName = Core.t(dayKey);
-      const dateShort = Core.formatDateShort(dayDate);
+      card.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          Core._state.currentDate = dayDate;
+          renderActivitiesView();
+        }
+      };
 
       card.innerHTML = `
         <div class="week-card-inner">
@@ -157,7 +169,9 @@
               ? `<div class="week-card-off-notice">${Core.t("dayOff")}</div>`
               : `<div class="week-card-shift-badges">
                   <span class="shift-badge ${hasAm ? "logged" : "not-logged"}">${hasAm ? "✓ AM" : "○ AM"}</span>
-                  <span class="shift-badge ${hasPm ? "logged" : "not-logged"}">${hasPm ? "✓ PM" : "○ PM"}</span>
+                  ${isHalfDayOff
+                    ? `<span class="shift-badge day-off-half" title="${Core.t("dayOff")}">${Core.t("dayOff")} PM</span>`
+                    : `<span class="shift-badge ${hasPm ? "logged" : "not-logged"}">${hasPm ? "✓ PM" : "○ PM"}</span>`}
                  </div>`
           }
         </div>

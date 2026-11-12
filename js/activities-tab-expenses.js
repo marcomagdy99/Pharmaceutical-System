@@ -11,11 +11,13 @@
   function populateExpenseFilters() {
     Core._state.currentUser = Core.getAuthUser();
     const user = Core._state.currentUser;
+    const currentUserId = user ? user.id : "";
 
     const lineSelect = document.getElementById("expenseFilterLine");
-    if (lineSelect && lineSelect.dataset.populated !== "true") {
+    if (lineSelect && lineSelect.dataset.lastUser !== currentUserId) {
       const assignedLines = Core.getUserAssignedLines(user);
-      const canSeeAll = user && (user.role === Core.ROLES.ADMIN || user.role === Core.ROLES.HR);
+      const userRole = (user?.role || "").toLowerCase();
+      const canSeeAll = user && (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.HR);
       let html = "";
       if (canSeeAll || assignedLines.length > 1) {
         html += `<option value="all">${Core.t("allLines")}</option>`;
@@ -23,7 +25,7 @@
       html += assignedLines.map((l) => `<option value="${l.id}">${Core.escapeHTML(l.name)}</option>`).join("");
       lineSelect.innerHTML = html;
       lineSelect.value = canSeeAll || assignedLines.length > 1 ? "all" : (assignedLines[0]?.id || "all");
-      lineSelect.dataset.populated = "true";
+      lineSelect.dataset.lastUser = currentUserId;
     }
 
     updateEmployeeFilter();
@@ -184,10 +186,10 @@
         const isPdfReceipt = typeof exp.receiptUrl === "string" && (exp.receiptUrl.startsWith("data:application/pdf") || exp.receiptUrl.toLowerCase().includes(".pdf"));
         const safeReceiptUrl = exp.receiptUrl ? Core.escapeHTML(exp.receiptUrl) : "";
         const receiptThumb = exp.receiptUrl
-          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-receipt-url="${safeReceiptUrl}" title="${Core.escapeHTML(Core.t("viewAttachment"))}">
+          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-receipt-url="${safeReceiptUrl}" title="${Core.escapeHTML(Core.t("viewAttachment"))}" aria-label="${Core.escapeHTML(Core.t("viewAttachment") || "View receipt attachment")}">
                ${isPdfReceipt
                  ? `<span class="receipt-pdf-badge" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:#fee2e2; color:#ef4444; border-radius:6px; font-weight:700; font-size:11px;"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF</span>`
-                 : `<img src="${safeReceiptUrl}" alt="Receipt" class="receipt-thumbnail" />`}
+                 : `<img src="${safeReceiptUrl}" alt="${Core.escapeHTML(Core.t("receiptAttachment") || "Receipt attachment")}" class="receipt-thumbnail" />`}
                <span class="receipt-zoom-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
              </button>`
           : `<span class="no-receipt-label">${Core.t("noReceipt")}</span>`;
@@ -253,23 +255,23 @@
     if (canApprove || canReject) {
       if (canApprove) {
         buttons += `
-          <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'approve')" title="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}">
-            <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'approve')" title="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}" aria-label="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}">
+            <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
         `;
       }
       if (canReject) {
         buttons += `
-          <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'reject')" title="${Core.escapeHTML(Core.t("btnReject") || "Reject")}">
-            <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'reject')" title="${Core.escapeHTML(Core.t("btnReject") || "Reject")}" aria-label="${Core.escapeHTML(Core.t("btnReject") || "Reject")}">
+            <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         `;
       }
     }
     if (canDisburse) {
       buttons += `
-        <button type="button" class="action-btn-disburse" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'disburse')" title="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}">
-          <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M15 9.5a2.5 2.5 0 0 0-5 0c0 3 5 2 5 5a2.5 2.5 0 0 1-5 0"/></svg>
+        <button type="button" class="action-btn-disburse" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'disburse')" title="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}" aria-label="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}">
+          <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M15 9.5a2.5 2.5 0 0 0-5 0c0 3 5 2 5 5a2.5 2.5 0 0 1-5 0"/></svg>
         </button>
       `;
     }
@@ -451,8 +453,34 @@
     const date = dateInp?.value || Core.formatDate(Core._state.currentDate);
     const notes = notesInp ? notesInp.value.trim() : "";
 
-    if (!amount || amount <= 0) {
-      Core.safeShowToast("Please enter a valid expense amount.", "warning");
+    const ALLOWED_CATEGORIES = ["travel", "fuel_tolls", "hospitality", "hotel"];
+    if (!ALLOWED_CATEGORIES.includes(category)) {
+      Core.safeShowToast(Core.t("invalidExpenseCategory") || "Please select a valid expense category.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 500000) {
+      Core.safeShowToast(Core.t("invalidAmount") || "Please enter a valid expense amount between 1 and 500,000 EGP.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+
+    if (notes.length > 1000) {
+      Core.safeShowToast(Core.t("notesTooLong") || "Notes cannot exceed 1000 characters.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+
+    const expDate = new Date(date);
+    const now = new Date();
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(now.getDate() - 90);
+    const maxFutureDate = new Date();
+    maxFutureDate.setDate(now.getDate() + 1);
+
+    if (isNaN(expDate.getTime()) || expDate < ninetyDaysAgo || expDate > maxFutureDate) {
+      Core.safeShowToast(Core.t("invalidDateRange") || "Expense date must be within the last 90 days and not in the future.", "warning");
       if (submitBtn) submitBtn.disabled = false;
       return;
     }
@@ -541,7 +569,7 @@
         userId: newExpense.nextApproverId,
         type: "expense_approval",
         title: "Expense Claim Pending Approval",
-        message: `${reqName} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${category}) awaiting your approval.`,
+        message: `${reqName} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${Core.getCategoryLabel(category)}) awaiting your approval.`,
         link: "activities.html",
         icon: "💵",
         badgeClass: "bg-warning",

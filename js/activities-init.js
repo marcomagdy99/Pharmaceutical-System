@@ -314,11 +314,14 @@
       console.warn("populateExpenseFilters warning:", e);
     }
 
-    try {
-      window.ActivitiesServices?.populateServiceFilters?.();
-      window.ActivitiesServices?.renderServicesBudgetStrip?.();
-    } catch (e) {
-      console.warn("populateServiceFilters warning:", e);
+    const userRole = (Core._state.currentUser?.role || "").toLowerCase();
+    if (userRole !== Core.ROLES.BU) {
+      try {
+        window.ActivitiesServices?.populateServiceFilters?.();
+        window.ActivitiesServices?.renderServicesBudgetStrip?.();
+      } catch (e) {
+        console.warn("populateServiceFilters warning:", e);
+      }
     }
 
 // Startup initialization complete
@@ -326,9 +329,17 @@
 
   // Reactive Wakeup: Listen for store changes across the app
   window.addEventListener("hashchange", () => {
-    const h = (window.location.hash || "").replace("#", "");
+    const h = (window.location.hash || "").replace("#", "").toLowerCase();
     if (h === "locations" || h === "tab-locations") {
       switchTab("tab-locations");
+    } else if (h === "expenses" || h === "tab-expenses") {
+      switchTab(Core.TABS.EXPENSES);
+    } else if (h === "services" || h === "tab-services") {
+      switchTab(Core.TABS.SERVICES);
+    } else if (h === "budget" || h === "tab-budget") {
+      switchTab(Core.TABS.BUDGET);
+    } else if (h === "activities" || h === "tab-activities") {
+      switchTab(Core.TABS.ACTIVITIES);
     }
   });
 
@@ -343,6 +354,8 @@
     } else if (entity === "budgets") {
       if (Core._state.activeTab === Core.TABS.BUDGET) window.ActivitiesBudget?.renderBudgetTab?.();
       if (Core._state.activeTab === Core.TABS.SERVICES) window.ActivitiesServices?.renderServicesTab?.();
+    } else if (entity === "locations" || entity === "accountLocationRequests") {
+      if (Core._state.activeTab === "tab-locations") renderLocationRequestsTable();
     }
   });
 
@@ -425,55 +438,63 @@
     escapeHTML: Core.escapeHTML,
   };
 
-  // Export Facade and Global Aliases for full backward-compatibility with inline HTML
+  // Export Facade and Global Aliases with collision guards for backward compatibility
   window.ActivitiesModule = ActivitiesModule;
-  window.switchRequestsTab = ActivitiesModule.switchTab;
-  window.openActivityModal = ActivitiesModule.openActivityModal;
-  window.closeActivityModal = ActivitiesModule.closeActivityModal;
-  window.deleteCurrentActivity = ActivitiesModule.deleteCurrentActivity;
-  window.handleActivitySubmit = ActivitiesModule.handleActivitySubmit;
-  window.openExpenseModal = ActivitiesModule.openExpenseModal;
-  window.closeExpenseModal = ActivitiesModule.closeExpenseModal;
-  window.handleExpenseSubmit = ActivitiesModule.handleExpenseSubmit;
-  window.onReceiptFileSelected = ActivitiesModule.onReceiptFileSelected;
-  window.openServiceModal = ActivitiesModule.openServiceModal;
-  window.closeServiceModal = ActivitiesModule.closeServiceModal;
-  window.onServiceFormLineChange = ActivitiesModule.onServiceFormLineChange;
-  window.onServiceFormAreaChange = ActivitiesModule.onServiceFormAreaChange;
-  window.onServiceFormShiftChange = ActivitiesModule.onServiceFormShiftChange;
-  window.handleServiceSubmit = ActivitiesModule.handleServiceSubmit;
-  window.onServiceBudgetLineChange = ActivitiesModule.onServiceBudgetLineChange;
-  window.saveDmAllocations = ActivitiesModule.saveDmAllocations;
-  window.onBuLineChange = ActivitiesModule.onBuLineChange;
-  window.calculateBuBudgetSummary = ActivitiesModule.calculateBuBudgetSummary;
-  window.saveBuBudgetAllocations = ActivitiesModule.saveBuBudgetAllocations;
-  window.openLmDetailModal = ActivitiesModule.openLmDetailModal;
-  window.closeLmDetailModal = ActivitiesModule.closeLmDetailModal;
-  window.openDecisionModal = ActivitiesModule.openDecisionModal;
-  window.closeDecisionModal = ActivitiesModule.closeDecisionModal;
-  window.executeDecisionConfirm = ActivitiesModule.executeDecisionConfirm;
-  window.openReceiptPreviewModal = ActivitiesModule.openReceiptPreviewModal;
-  window.closeReceiptPreviewModal = ActivitiesModule.closeReceiptPreviewModal;
-  window.filterExpenses = ActivitiesModule.filterExpenses;
-  window.filterServices = ActivitiesModule.filterServices;
-  window.renderExpensesTab = ActivitiesModule.renderExpensesTab;
-  window.renderServicesTab = ActivitiesModule.renderServicesTab;
-  window.saveBuAllocation = ActivitiesModule.saveBuBudgetAllocations;
-  window.saveLmAllocation = ActivitiesModule.saveDmAllocations;
-  window.saveDmRepAllocation = ActivitiesModule.saveDmRepAllocations;
-  window.calculateDmAllocationPreview = ActivitiesModule.calculateDmAllocationPreview;
-  window.handleReceiptFilePreview = (input) => ActivitiesModule.onReceiptFileSelected(input);
-  window.onBuBudgetLineChange = ActivitiesModule.onBuLineChange;
-  window.onExpenseLineFilterChange = ActivitiesModule.onExpenseLineFilterChange;
-  window.calculateLmAllocationPreview = ActivitiesModule.calculateLmAllocationPreview;
-  window.onSharedServiceToggle = (checked) => ActivitiesModule.onSharedServiceToggle(checked);
-  window.addSharedLineRow = (defaultPercent) => ActivitiesModule.addSharedLineRow(defaultPercent);
-  window.removeSharedLineRow = (idx) => ActivitiesModule.removeSharedLineRow(idx);
-  window.onSharedLineChange = (idx, lineId) => ActivitiesModule.onSharedLineChange(idx, lineId);
-  window.onSharedAreaChange = (idx, areaId) => ActivitiesModule.onSharedAreaChange(idx, areaId);
-  window.onPrimarySharePercentInput = (val) => ActivitiesModule.onPrimarySharePercentInput(val);
-  window.onSharedLinePercentInput = (idx, val) => ActivitiesModule.onSharedLinePercentInput(idx, val);
-  window.handleServiceFileSelect = (e) => ActivitiesModule.handleServiceFileSelect(e);
-  window.recalculateSharedBalances = ActivitiesModule.recalculateSharedBalances;
+  const safeExport = (name, fn) => {
+    try {
+      if (typeof window[name] === "undefined" || window[name] === null) {
+        window[name] = fn;
+      }
+    } catch (e) {}
+  };
+
+  safeExport("switchRequestsTab", ActivitiesModule.switchTab);
+  safeExport("openActivityModal", ActivitiesModule.openActivityModal);
+  safeExport("closeActivityModal", ActivitiesModule.closeActivityModal);
+  safeExport("deleteCurrentActivity", ActivitiesModule.deleteCurrentActivity);
+  safeExport("handleActivitySubmit", ActivitiesModule.handleActivitySubmit);
+  safeExport("openExpenseModal", ActivitiesModule.openExpenseModal);
+  safeExport("closeExpenseModal", ActivitiesModule.closeExpenseModal);
+  safeExport("handleExpenseSubmit", ActivitiesModule.handleExpenseSubmit);
+  safeExport("onReceiptFileSelected", ActivitiesModule.onReceiptFileSelected);
+  safeExport("openServiceModal", ActivitiesModule.openServiceModal);
+  safeExport("closeServiceModal", ActivitiesModule.closeServiceModal);
+  safeExport("onServiceFormLineChange", ActivitiesModule.onServiceFormLineChange);
+  safeExport("onServiceFormAreaChange", ActivitiesModule.onServiceFormAreaChange);
+  safeExport("onServiceFormShiftChange", ActivitiesModule.onServiceFormShiftChange);
+  safeExport("handleServiceSubmit", ActivitiesModule.handleServiceSubmit);
+  safeExport("onServiceBudgetLineChange", ActivitiesModule.onServiceBudgetLineChange);
+  safeExport("saveDmAllocations", ActivitiesModule.saveDmAllocations);
+  safeExport("onBuLineChange", ActivitiesModule.onBuLineChange);
+  safeExport("calculateBuBudgetSummary", ActivitiesModule.calculateBuBudgetSummary);
+  safeExport("saveBuBudgetAllocations", ActivitiesModule.saveBuBudgetAllocations);
+  safeExport("openLmDetailModal", ActivitiesModule.openLmDetailModal);
+  safeExport("closeLmDetailModal", ActivitiesModule.closeLmDetailModal);
+  safeExport("openDecisionModal", ActivitiesModule.openDecisionModal);
+  safeExport("closeDecisionModal", ActivitiesModule.closeDecisionModal);
+  safeExport("executeDecisionConfirm", ActivitiesModule.executeDecisionConfirm);
+  safeExport("openReceiptPreviewModal", ActivitiesModule.openReceiptPreviewModal);
+  safeExport("closeReceiptPreviewModal", ActivitiesModule.closeReceiptPreviewModal);
+  safeExport("filterExpenses", ActivitiesModule.filterExpenses);
+  safeExport("filterServices", ActivitiesModule.filterServices);
+  safeExport("renderExpensesTab", ActivitiesModule.renderExpensesTab);
+  safeExport("renderServicesTab", ActivitiesModule.renderServicesTab);
+  safeExport("saveBuAllocation", ActivitiesModule.saveBuBudgetAllocations);
+  safeExport("saveLmAllocation", ActivitiesModule.saveDmAllocations);
+  safeExport("saveDmRepAllocation", ActivitiesModule.saveDmRepAllocations);
+  safeExport("calculateDmAllocationPreview", ActivitiesModule.calculateDmAllocationPreview);
+  safeExport("handleReceiptFilePreview", (input) => ActivitiesModule.onReceiptFileSelected(input));
+  safeExport("onBuBudgetLineChange", ActivitiesModule.onBuLineChange);
+  safeExport("onExpenseLineFilterChange", ActivitiesModule.onExpenseLineFilterChange);
+  safeExport("calculateLmAllocationPreview", ActivitiesModule.calculateLmAllocationPreview);
+  safeExport("onSharedServiceToggle", (checked) => ActivitiesModule.onSharedServiceToggle(checked));
+  safeExport("addSharedLineRow", (defaultPercent) => ActivitiesModule.addSharedLineRow(defaultPercent));
+  safeExport("removeSharedLineRow", (idx) => ActivitiesModule.removeSharedLineRow(idx));
+  safeExport("onSharedLineChange", (idx, lineId) => ActivitiesModule.onSharedLineChange(idx, lineId));
+  safeExport("onSharedAreaChange", (idx, areaId) => ActivitiesModule.onSharedAreaChange(idx, areaId));
+  safeExport("onPrimarySharePercentInput", (val) => ActivitiesModule.onPrimarySharePercentInput(val));
+  safeExport("onSharedLinePercentInput", (idx, val) => ActivitiesModule.onSharedLinePercentInput(idx, val));
+  safeExport("handleServiceFileSelect", (e) => ActivitiesModule.handleServiceFileSelect(e));
+  safeExport("recalculateSharedBalances", ActivitiesModule.recalculateSharedBalances);
 
 })(window);

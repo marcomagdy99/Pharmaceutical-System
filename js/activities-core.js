@@ -328,7 +328,13 @@
       "unauthorizedAction": "You are not authorized to perform this action.",
       "budgetExceedsDistributed": "Cannot reduce budget below already distributed amount.",
       "fridayHolidayNotice": "Activities cannot be logged on Friday (official company weekend).",
-      "fileTooLarge": "Receipt file is too large. Maximum size is 800KB."
+      "fileTooLarge": "Receipt file is too large. Maximum size is 800KB.",
+      "invalidExpenseCategory": "Please select a valid expense category.",
+      "invalidAmount": "Please enter a valid expense amount between 1 and 500,000 EGP.",
+      "invalidDateRange": "Expense date must be within the last 90 days and not in the future.",
+      "notesTooLong": "Notes cannot exceed 1000 characters.",
+      "invalidNumber": "Please enter valid positive numbers.",
+      "receiptAttachment": "Receipt attachment"
 },
     ar: {
       signInCostingPrompt: "يرجى تسجيل الدخول بحساب معتمد لعرض بيانات التكاليف.",
@@ -589,7 +595,13 @@
       "unauthorizedAction": "غير مصرح لك بتنفيذ هذا الإجراء.",
       "budgetExceedsDistributed": "لا يمكن تقليص الميزانية لأقل من المبالغ الموزعة بالفعل.",
       "fridayHolidayNotice": "لا يمكن تسجيل أنشطة يوم الجمعة (عطلة رسمية للشركة).",
-      "fileTooLarge": "حجم ملف الإيصال كبير جداً. الحد الأقصى هو 800 كيلوبايت."
+      "fileTooLarge": "حجم ملف الإيصال كبير جداً. الحد الأقصى هو 800 كيلوبايت.",
+      "invalidExpenseCategory": "يرجى اختيار فئة مصروف صحيحة.",
+      "invalidAmount": "يرجى إدخال مبلغ مصروف صحيح بين 1 و 500,000 ج.م.",
+      "invalidDateRange": "تاريخ المصروف يجب أن يكون خلال آخر 90 يوماً وليس في المستقبل.",
+      "notesTooLong": "الملاحظات لا يمكن أن تتجاوز 1000 حرف.",
+      "invalidNumber": "يرجى إدخال أرقام صحيحة وموجبة.",
+      "receiptAttachment": "مرفق الإيصال"
 }
   };
 
@@ -1026,11 +1038,15 @@
     }
 
     if (action === "allocate_lm_budget") {
+      return role === ROLES.BU || role === ROLES.ADMIN;
+    }
+
+    if (action === "allocate_dm_budget") {
       return role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
     }
 
-    if (action === "allocate_dm_budget" || action === "allocate_rep_budget") {
-      return role === ROLES.DM || role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
+    if (action === "allocate_rep_budget") {
+      return role === ROLES.DM || role === ROLES.ADMIN;
     }
 
     if (action === "approve_location" || action === "reject_location") {

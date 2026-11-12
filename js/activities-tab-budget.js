@@ -73,11 +73,13 @@
 
   function calculateBuBudgetSummary() {
     const totalInput = document.getElementById("buTotalBudgetInput") || document.getElementById("buTotalLineBudgetInput");
-    const total = parseFloat(totalInput?.value || 0);
+    const rawTotal = parseFloat(totalInput?.value);
+    const total = (Number.isFinite(rawTotal) && rawTotal >= 0) ? rawTotal : 0;
 
     let allocatedSum = 0;
     document.querySelectorAll(".bu-lm-input").forEach((inp) => {
-      allocatedSum += parseFloat(inp.value || 0);
+      const val = parseFloat(inp.value);
+      allocatedSum += (Number.isFinite(val) && val >= 0) ? val : 0;
     });
 
     const unallocated = total - allocatedSum;
@@ -106,21 +108,36 @@
     const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "");
     if (!lineId) return;
     const totalInput = document.getElementById("buTotalBudgetInput") || document.getElementById("buTotalLineBudgetInput");
-    const total = parseFloat(totalInput?.value || 0);
+    const rawTotal = parseFloat(totalInput?.value);
+    if (!Number.isFinite(rawTotal) || rawTotal < 0) {
+      Core.safeShowToast(Core.t("invalidNumber") || "Please enter a valid positive number for total budget.", "warning");
+      return;
+    }
+    const total = rawTotal;
 
     const budgets = Core.StoreAdapter.getBudgets();
     if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
 
     let totalLmAlloc = 0;
     const tempAllocations = {};
+    let hasInvalidNumber = false;
     document.querySelectorAll(".bu-lm-input").forEach((inp) => {
       const lmId = inp.dataset.lmid;
       if (lmId) {
-        const val = Number(inp.value || 0);
+        const val = Number(inp.value);
+        if (!Number.isFinite(val) || val < 0) {
+          hasInvalidNumber = true;
+          return;
+        }
         tempAllocations[lmId] = val;
         totalLmAlloc += val;
       }
     });
+
+    if (hasInvalidNumber) {
+      Core.safeShowToast(Core.t("invalidNumber") || "Please enter valid positive numbers for all allocations.", "warning");
+      return;
+    }
 
     // Hard constraint 1: Cannot allocate more than total line budget
     if (total > 0 && totalLmAlloc > total) {
@@ -407,7 +424,7 @@
 
   function saveDmRepAllocations() {
     Core._state.currentUser = Core.getAuthUser();
-    if (!Core.isActionAuthorized("allocate_dm_budget", null, Core._state.currentUser)) {
+    if (!Core.isActionAuthorized("allocate_rep_budget", null, Core._state.currentUser)) {
       Core.safeShowToast(Core.t("unauthorizedRepBudgetAction") || "You are not authorized to edit representative allocations.", "danger");
       return;
     }
@@ -422,14 +439,24 @@
 
     let totalAlloc = 0;
     const tempAlloc = {};
+    let hasInvalidRepNumber = false;
     document.querySelectorAll(".dm-rep-alloc-input").forEach((inp) => {
       const repId = inp.dataset.repid;
       if (repId && (myRepIds.includes(repId) || Core._state.currentUser.role === Core.ROLES.ADMIN)) {
-        const val = Number(inp.value || 0);
+        const val = Number(inp.value);
+        if (!Number.isFinite(val) || val < 0) {
+          hasInvalidRepNumber = true;
+          return;
+        }
         tempAlloc[repId] = val;
         totalAlloc += val;
       }
     });
+
+    if (hasInvalidRepNumber) {
+      Core.safeShowToast(Core.t("invalidNumber") || "Please enter valid positive numbers for all allocations.", "warning");
+      return;
+    }
 
     const myDmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[Core._state.currentUser.id])) || 0;
     if (myDmAlloc > 0 && totalAlloc > myDmAlloc) {
@@ -465,14 +492,24 @@
 
     let totalAlloc = 0;
     const tempAlloc = {};
+    let hasInvalidDmNumber = false;
     document.querySelectorAll(".lm-dm-alloc-input").forEach((inp) => {
       const dmId = inp.dataset.dmid;
       if (dmId && (allowedDms.includes(dmId) || Core._state.currentUser.role === Core.ROLES.ADMIN)) {
-        const val = Number(inp.value || 0);
+        const val = Number(inp.value);
+        if (!Number.isFinite(val) || val < 0) {
+          hasInvalidDmNumber = true;
+          return;
+        }
         tempAlloc[dmId] = val;
         totalAlloc += val;
       }
     });
+
+    if (hasInvalidDmNumber) {
+      Core.safeShowToast(Core.t("invalidNumber") || "Please enter valid positive numbers for all allocations.", "warning");
+      return;
+    }
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
     if (myLmAlloc > 0 && totalAlloc > myLmAlloc) {
