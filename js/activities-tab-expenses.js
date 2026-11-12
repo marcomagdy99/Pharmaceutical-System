@@ -103,15 +103,20 @@
       return matchLine && matchEmp && matchStatus && matchCat;
     });
 
-    renderExpensesMetrics(allExp);
+    renderExpensesMetrics(filtered);
     renderExpensesTable(filtered);
   }
 
   function canUserViewExpense(exp, user) {
     if (!user) return false;
     const role = (user.role || "").toLowerCase();
-    if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR) return true;
+    if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR || role === "admin" || role === "hr") return true;
+    if (role === "general_manager" || role === "gm" || role === "finance" || role === "finance_manager" || role === "commercial_director") return true;
     if (exp.requesterId === user.id) return true;
+    if (role === Core.ROLES.PM || role === "product_manager" || role === "pm") {
+      const userLines = Core.getUserAssignedLines(user).map((l) => l.id);
+      return userLines.length === 0 || (exp.lineId && userLines.includes(exp.lineId));
+    }
     if (role === Core.ROLES.BU) {
       if (typeof window.canApproveFor === "function" && window.canApproveFor(exp.requesterId)) return true;
       const subordinates = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
@@ -525,11 +530,25 @@
     }
 
     const assignedLines = Core.getUserAssignedLines(Core._state.currentUser);
-    const lineId = lineSelect?.value || (assignedLines.length > 0 ? assignedLines[0].id : null);
-    if (!lineId && role !== Core.ROLES.ADMIN) {
-      Core.safeShowToast("Please select a valid product line for this expense claim.", "warning");
-      if (submitBtn) submitBtn.disabled = false;
-      return;
+    const assignedLineIds = assignedLines.map((l) => l.id);
+    const rawLineId = lineSelect?.value;
+    const allLines = Core.getAllProductLines();
+    const validLine = allLines.find((l) => l.id === rawLineId);
+
+    let lineId = null;
+    if (role === Core.ROLES.ADMIN) {
+      lineId = validLine ? validLine.id : (allLines[0] ? allLines[0].id : null);
+    } else {
+      if (rawLineId && assignedLineIds.includes(rawLineId)) {
+        lineId = rawLineId;
+      } else if (assignedLines.length > 0) {
+        lineId = assignedLines[0].id;
+      }
+      if (!lineId || !assignedLineIds.includes(lineId)) {
+        Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
     }
 
     const newExpense = {

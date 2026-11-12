@@ -334,7 +334,10 @@
       "invalidDateRange": "Expense date must be within the last 90 days and not in the future.",
       "notesTooLong": "Notes cannot exceed 1000 characters.",
       "invalidNumber": "Please enter valid positive numbers.",
-      "receiptAttachment": "Receipt attachment"
+      "receiptAttachment": "Receipt attachment",
+      "selectValidLineWarning": "Please select a specific valid product line.",
+      "unauthorizedLineAction": "You are not authorized for this product line.",
+      "cannotReduceBelowUtilized": "Cannot reduce allocation below already spent/utilized amount."
 },
     ar: {
       signInCostingPrompt: "يرجى تسجيل الدخول بحساب معتمد لعرض بيانات التكاليف.",
@@ -601,7 +604,10 @@
       "invalidDateRange": "تاريخ المصروف يجب أن يكون خلال آخر 90 يوماً وليس في المستقبل.",
       "notesTooLong": "الملاحظات لا يمكن أن تتجاوز 1000 حرف.",
       "invalidNumber": "يرجى إدخال أرقام صحيحة وموجبة.",
-      "receiptAttachment": "مرفق الإيصال"
+      "receiptAttachment": "مرفق الإيصال",
+      "selectValidLineWarning": "يرجى اختيار خط إنتاج محدد وصحيح.",
+      "unauthorizedLineAction": "غير مصرح لك بالعمل على هذا الخط.",
+      "cannotReduceBelowUtilized": "لا يمكن تقليص المخصص لأقل من المبلغ المصروف أو المستهلك بالفعل."
 }
   };
 

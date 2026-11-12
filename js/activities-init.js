@@ -278,9 +278,14 @@
 
     try {
       setupModalBackdropsAndShortcuts();
-      setupDateNavigation();
     } catch (e) {
       console.warn("setupModalBackdropsAndShortcuts warning:", e);
+    }
+
+    try {
+      setupDateNavigation();
+    } catch (e) {
+      console.warn("setupDateNavigation warning:", e);
     }
 
     const initialHash = (window.location.hash || "").replace("#", "");

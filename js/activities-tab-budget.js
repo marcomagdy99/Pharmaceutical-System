@@ -104,9 +104,20 @@
       return;
     }
     const buSelect = document.getElementById("buBudgetLineSelect") || document.getElementById("buProductLineSelect");
+    const rawLineId = buSelect?.value;
     const allLines = Core.getAllProductLines();
-    const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "");
-    if (!lineId) return;
+    const validLine = allLines.find((l) => l.id === rawLineId);
+    if (!rawLineId || rawLineId === "all" || !validLine) {
+      Core.safeShowToast(Core.t("selectValidLineWarning") || "Please select a specific valid product line.", "warning");
+      return;
+    }
+    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
+    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && (!userLines.includes(rawLineId) && userLines.length > 0)) {
+      Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
+      return;
+    }
+    const lineId = rawLineId;
+
     const totalInput = document.getElementById("buTotalBudgetInput") || document.getElementById("buTotalLineBudgetInput");
     const rawTotal = parseFloat(totalInput?.value);
     if (!Number.isFinite(rawTotal) || rawTotal < 0) {
@@ -116,7 +127,8 @@
     const total = rawTotal;
 
     const budgets = Core.StoreAdapter.getBudgets();
-    if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
+    if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {}, auditLog: [] };
+    if (!Array.isArray(budgets[lineId].auditLog)) budgets[lineId].auditLog = [];
 
     let totalLmAlloc = 0;
     const tempAllocations = {};
@@ -139,8 +151,8 @@
       return;
     }
 
-    // Hard constraint 1: Cannot allocate more than total line budget
-    if (total > 0 && totalLmAlloc > total) {
+    // Hard constraint 1: Cannot allocate more than total line budget (even if total === 0)
+    if (totalLmAlloc > total) {
       Core.safeShowToast(
         (Core.t("budgetOverAllocated") || "Total allocated exceeds available budget!") +
         ` (${totalLmAlloc.toLocaleString("en-US")} / ${total.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
@@ -149,25 +161,79 @@
       return;
     }
 
-    // Hard constraint 2: Cannot reduce LM allocation below already distributed DM amount
+    // Hard constraint 2: Cannot reduce LM allocation below already distributed DM amount OR LM utilized amount
+    const allServices = Core.StoreAdapter.getServices();
     for (const [lmId, val] of Object.entries(tempAllocations)) {
       const dmsUnderLm = Core.getDmsUnderLmForLine(lmId, lineId);
       const existingDmSum = dmsUnderLm.reduce(
         (sum, dm) => sum + ((budgets[lineId].dmAllocations && budgets[lineId].dmAllocations[dm.id]) || 0),
         0
       );
-      if (val < existingDmSum) {
+      let lmUtilized = 0;
+      allServices.forEach((s) => {
+        if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+        if (s.isShared && Array.isArray(s.shares)) {
+          s.shares.forEach((sh) => {
+            if (sh.lineId === lineId && (sh.lmId === lmId || sh.requesterId === lmId) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+              lmUtilized += Number(sh.shareAmount || 0);
+            }
+          });
+        } else if (s.lineId === lineId && s.requesterId === lmId && s.status === Core.REQUEST_STATUS.APPROVED) {
+          lmUtilized += Number(s.cost || 0);
+        }
+      });
+
+      const lmFloor = Math.max(existingDmSum, lmUtilized);
+      if (val < lmFloor) {
         Core.safeShowToast(
-          (Core.t("budgetExceedsDistributed") || "Cannot reduce budget below already distributed amount.") +
-          ` (${Core.getUserDisplayName(lmId)}: distributed ${existingDmSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
+          (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +
+          ` (${Core.getUserDisplayName(lmId)}: required min ${lmFloor.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
           "danger"
         );
         return;
       }
     }
 
-    budgets[lineId].totalBudget = total;
+    const oldTotal = budgets[lineId].totalBudget || 0;
+    if (oldTotal !== total) {
+      budgets[lineId].auditLog.push({
+        timestamp: new Date().toISOString(),
+        actorId: Core._state.currentUser.id,
+        targetId: lineId,
+        targetType: "line_total",
+        oldValue: oldTotal,
+        newValue: total
+      });
+    }
+
     if (!budgets[lineId].lmAllocations) budgets[lineId].lmAllocations = {};
+    for (const [lmId, val] of Object.entries(tempAllocations)) {
+      const oldVal = Number(budgets[lineId].lmAllocations[lmId] || 0);
+      if (oldVal !== val) {
+        budgets[lineId].auditLog.push({
+          timestamp: new Date().toISOString(),
+          actorId: Core._state.currentUser.id,
+          targetId: lmId,
+          targetType: "lm",
+          oldValue: oldVal,
+          newValue: val,
+          lineId: lineId
+        });
+        Core.dispatchWorkflowNotification({
+          userId: lmId,
+          type: "budget_update",
+          title: "Line Manager Budget Updated",
+          message: `Your budget for line ${lineId} was updated from ${oldVal.toLocaleString("en-US")} to ${val.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}.`,
+          link: "activities.html#services",
+          icon: "💰",
+          badgeClass: "bg-info",
+          actorName: Core.getUserDisplayName(Core._state.currentUser.id),
+          action: "updated"
+        });
+      }
+    }
+
+    budgets[lineId].totalBudget = total;
     budgets[lineId].lmAllocations = tempAllocations;
 
     Core.StoreAdapter.saveBudgets(budgets);
@@ -316,7 +382,24 @@
       distributed += Number(inp.value || 0);
     });
 
-    const remaining = myLmAlloc - distributed;
+    // Calculate LM direct utilized for this line
+    let lmUtilized = 0;
+    const allServices = Core.StoreAdapter.getServices();
+    allServices.forEach((s) => {
+      if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+      if (s.isShared && Array.isArray(s.shares)) {
+        s.shares.forEach((sh) => {
+          if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+            lmUtilized += Number(sh.shareAmount || 0);
+          }
+        });
+      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
+        lmUtilized += Number(s.cost || 0);
+      }
+    });
+
+    const committed = Math.max(distributed, lmUtilized);
+    const remaining = myLmAlloc - committed;
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
     const remTitle = document.getElementById("srvMetricRemainingTitle");
@@ -406,7 +489,24 @@
       distributed += Number(inp.value || 0);
     });
 
-    const remaining = myDmAlloc - distributed;
+    // Calculate DM direct utilized for this line
+    let dmUtilized = 0;
+    const allServices = Core.StoreAdapter.getServices();
+    allServices.forEach((s) => {
+      if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+      if (s.isShared && Array.isArray(s.shares)) {
+        s.shares.forEach((sh) => {
+          if (sh.lineId === lineId && (sh.dmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+            dmUtilized += Number(sh.shareAmount || 0);
+          }
+        });
+      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
+        dmUtilized += Number(s.cost || 0);
+      }
+    });
+
+    const committed = Math.max(distributed, dmUtilized);
+    const remaining = myDmAlloc - committed;
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
     const remTitle = document.getElementById("srvMetricRemainingTitle");
@@ -429,10 +529,24 @@
       return;
     }
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
-    const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
+    const rawLineId = lineSelect?.value;
+    const allLines = Core.getAllProductLines();
+    const validLine = allLines.find((l) => l.id === rawLineId);
+    if (!rawLineId || rawLineId === "all" || !validLine) {
+      Core.safeShowToast(Core.t("selectValidLineWarning") || "Please select a specific valid product line.", "warning");
+      return;
+    }
+    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
+    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && (!userLines.includes(rawLineId) && userLines.length > 0)) {
+      Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
+      return;
+    }
+    const lineId = rawLineId;
+
     const budgets = Core.StoreAdapter.getBudgets();
-    if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
+    if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {}, auditLog: [] };
     if (!budgets[lineId].repAllocations) budgets[lineId].repAllocations = {};
+    if (!Array.isArray(budgets[lineId].auditLog)) budgets[lineId].auditLog = [];
 
     const allUsers = Core.getAllUsers();
     const myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
@@ -459,13 +573,68 @@
     }
 
     const myDmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[Core._state.currentUser.id])) || 0;
-    if (myDmAlloc > 0 && totalAlloc > myDmAlloc) {
-      Core.safeShowToast(
-        (Core.t("budgetOverAllocated") || "Total allocated to reps exceeds your available territory budget.") +
-        ` (${totalAlloc.toLocaleString("en-US")} / ${myDmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
-        "danger"
-      );
-      return; // Hard constraint: do not save!
+    if (Core._state.currentUser.role !== Core.ROLES.ADMIN) {
+      if (totalAlloc > myDmAlloc) {
+        Core.safeShowToast(
+          (Core.t("budgetOverAllocated") || "Total allocated to reps exceeds your available territory budget.") +
+          ` (${totalAlloc.toLocaleString("en-US")} / ${myDmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          "danger"
+        );
+        return; // Hard constraint: do not save!
+      }
+    }
+
+    // Sub-budget protection: Cannot reduce Rep budget below what they already utilized
+    const allServices = Core.StoreAdapter.getServices();
+    for (const [repId, val] of Object.entries(tempAlloc)) {
+      let repUtilized = 0;
+      allServices.forEach((s) => {
+        if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+        if (s.isShared && Array.isArray(s.shares)) {
+          s.shares.forEach((sh) => {
+            if (sh.lineId === lineId && sh.repId === repId && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+              repUtilized += Number(sh.shareAmount || 0);
+            }
+          });
+        } else if (s.lineId === lineId && s.requesterId === repId && s.status === Core.REQUEST_STATUS.APPROVED) {
+          repUtilized += Number(s.cost || 0);
+        }
+      });
+
+      if (val < repUtilized) {
+        Core.safeShowToast(
+          (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +
+          ` (${Core.getUserDisplayName(repId)}: required min ${repUtilized.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
+          "danger"
+        );
+        return;
+      }
+    }
+
+    for (const [repId, val] of Object.entries(tempAlloc)) {
+      const oldVal = Number(budgets[lineId].repAllocations[repId] || 0);
+      if (oldVal !== val) {
+        budgets[lineId].auditLog.push({
+          timestamp: new Date().toISOString(),
+          actorId: Core._state.currentUser.id,
+          targetId: repId,
+          targetType: "rep",
+          oldValue: oldVal,
+          newValue: val,
+          lineId: lineId
+        });
+        Core.dispatchWorkflowNotification({
+          userId: repId,
+          type: "budget_update",
+          title: "Medical Representative Budget Updated",
+          message: `Your budget for line ${lineId} was updated from ${oldVal.toLocaleString("en-US")} to ${val.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}.`,
+          link: "activities.html#services",
+          icon: "💰",
+          badgeClass: "bg-info",
+          actorName: Core.getUserDisplayName(Core._state.currentUser.id),
+          action: "updated"
+        });
+      }
     }
 
     Object.assign(budgets[lineId].repAllocations, tempAlloc);
@@ -478,15 +647,29 @@
 
   function saveDmAllocations() {
     Core._state.currentUser = Core.getAuthUser();
-    if (!Core.isActionAuthorized("allocate_lm_budget", null, Core._state.currentUser)) {
+    if (!Core.isActionAuthorized("allocate_dm_budget", null, Core._state.currentUser)) {
       Core.safeShowToast(Core.t("unauthorizedDmBudgetAction") || "You are not authorized to edit district manager allocations.", "danger");
       return;
     }
     const lineSelect = document.getElementById("serviceBudgetLineSelect") || document.getElementById("servicesLineFilter");
-    const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
+    const rawLineId = lineSelect?.value;
+    const allLines = Core.getAllProductLines();
+    const validLine = allLines.find((l) => l.id === rawLineId);
+    if (!rawLineId || rawLineId === "all" || !validLine) {
+      Core.safeShowToast(Core.t("selectValidLineWarning") || "Please select a specific valid product line.", "warning");
+      return;
+    }
+    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
+    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && (!userLines.includes(rawLineId) && userLines.length > 0)) {
+      Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
+      return;
+    }
+    const lineId = rawLineId;
+
     const budgets = Core.StoreAdapter.getBudgets();
-    if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
+    if (!budgets[lineId]) budgets[lineId] = { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {}, auditLog: [] };
     if (!budgets[lineId].dmAllocations) budgets[lineId].dmAllocations = {};
+    if (!Array.isArray(budgets[lineId].auditLog)) budgets[lineId].auditLog = [];
 
     const allowedDms = Core.getDmsUnderLmForLine(Core._state.currentUser.id, lineId).map((d) => d.id);
 
@@ -495,7 +678,7 @@
     let hasInvalidDmNumber = false;
     document.querySelectorAll(".lm-dm-alloc-input").forEach((inp) => {
       const dmId = inp.dataset.dmid;
-      if (dmId && (allowedDms.includes(dmId) || Core._state.currentUser.role === Core.ROLES.ADMIN)) {
+      if (dmId && (allowedDms.includes(dmId) || Core._state.currentUser.role === Core.ROLES.ADMIN || Core._state.currentUser.role === Core.ROLES.BU)) {
         const val = Number(inp.value);
         if (!Number.isFinite(val) || val < 0) {
           hasInvalidDmNumber = true;
@@ -512,30 +695,84 @@
     }
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
-    if (myLmAlloc > 0 && totalAlloc > myLmAlloc) {
-      Core.safeShowToast(
-        (Core.t("budgetOverAllocated") || "Total allocated to district managers exceeds your available line budget.") +
-        ` (${totalAlloc.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
-        "danger"
-      );
-      return; // Hard constraint: do not save!
+    if (Core._state.currentUser.role === Core.ROLES.LM) {
+      if (totalAlloc > myLmAlloc) {
+        Core.safeShowToast(
+          (Core.t("budgetOverAllocated") || "Total allocated to district managers exceeds your available line budget.") +
+          ` (${totalAlloc.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          "danger"
+        );
+        return; // Hard constraint: do not save!
+      }
+    } else if (Core._state.currentUser.role === Core.ROLES.BU) {
+      const lineTotal = budgets[lineId].totalBudget || 0;
+      if (totalAlloc > lineTotal) {
+        Core.safeShowToast(
+          (Core.t("budgetOverAllocated") || "Total allocated to district managers exceeds your available line budget.") +
+          ` (${totalAlloc.toLocaleString("en-US")} / ${lineTotal.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          "danger"
+        );
+        return;
+      }
     }
 
-    // Sub-budget protection: Cannot reduce DM budget below what they already allocated to Reps
+    // Sub-budget protection: Cannot reduce DM budget below what they already allocated to Reps OR what DM utilized
     const allUsers = Core.getAllUsers();
+    const allServices = Core.StoreAdapter.getServices();
     for (const [dmId, val] of Object.entries(tempAlloc)) {
       const repsUnderDm = allUsers.filter((u) => u.managerId === dmId);
       const existingRepSum = repsUnderDm.reduce(
         (sum, r) => sum + ((budgets[lineId].repAllocations && budgets[lineId].repAllocations[r.id]) || 0),
         0
       );
-      if (val < existingRepSum) {
+      let dmUtilized = 0;
+      allServices.forEach((s) => {
+        if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+        if (s.isShared && Array.isArray(s.shares)) {
+          s.shares.forEach((sh) => {
+            if (sh.lineId === lineId && (sh.dmId === dmId || sh.requesterId === dmId) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+              dmUtilized += Number(sh.shareAmount || 0);
+            }
+          });
+        } else if (s.lineId === lineId && s.requesterId === dmId && s.status === Core.REQUEST_STATUS.APPROVED) {
+          dmUtilized += Number(s.cost || 0);
+        }
+      });
+
+      const dmFloor = Math.max(existingRepSum, dmUtilized);
+      if (val < dmFloor) {
         Core.safeShowToast(
-          (Core.t("budgetExceedsDistributed") || "Cannot reduce budget below already distributed amount.") +
-          ` (${Core.getUserDisplayName(dmId)}: distributed ${existingRepSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
+          (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +
+          ` (${Core.getUserDisplayName(dmId)}: required min ${dmFloor.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
           "danger"
         );
         return;
+      }
+    }
+
+    for (const [dmId, val] of Object.entries(tempAlloc)) {
+      const oldVal = Number(budgets[lineId].dmAllocations[dmId] || 0);
+      if (oldVal !== val) {
+        budgets[lineId].auditLog.push({
+          timestamp: new Date().toISOString(),
+          actorId: Core._state.currentUser.id,
+          targetId: dmId,
+          targetType: "dm",
+          oldValue: oldVal,
+          newValue: val,
+          lineId: lineId
+        });
+        Core.dispatchWorkflowNotification({
+          userId: dmId,
+          type: "budget_update",
+          title: "District Manager Budget Updated",
+          message: `Your budget for line ${lineId} was updated from ${oldVal.toLocaleString("en-US")} to ${val.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}.`,
+          link: "activities.html#services",
+          icon: "💰",
+          badgeClass: "bg-info",
+          actorName: Core.getUserDisplayName(Core._state.currentUser.id),
+          action: "updated"
+        });
       }
     }
 
