@@ -53,7 +53,7 @@
 
     empSelect.innerHTML = `
       <option value="all">${Core.t("allEmployees")}</option>
-      <option value="${user.id}">${Core.t("myRequestsOnly")}</option>
+      <option value="${Core.escapeHTML(user.id)}">${Core.t("myRequestsOnly")}</option>
       ${subs
         .map(
           (s) =>

@@ -14,7 +14,7 @@
     const allLines = Core.getAllProductLines();
     const buSelect = document.getElementById("buBudgetLineSelect") || document.getElementById("buProductLineSelect");
     if (buSelect && buSelect.children.length === 0) {
-      buSelect.innerHTML = allLines.map((l) => `<option value="${l.id}">${Core.escapeHTML(l.name)}</option>`).join("");
+      buSelect.innerHTML = allLines.map((l) => `<option value="${Core.escapeHTML(l.id)}">${Core.escapeHTML(l.name)}</option>`).join("");
       if (allLines.length > 0) buSelect.value = allLines[0].id;
     }
 
@@ -53,11 +53,11 @@
                 </td>
                 <td><span class="badge budget-code-badge">${Core.escapeHTML(lm.employeeCode || lm.id)}</span></td>
                 <td>
-                  <input type="number" class="form-control bu-lm-input budget-alloc-input-bu" data-lmid="${lm.id}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" />
+                  <input type="number" class="form-control bu-lm-input budget-alloc-input-bu" data-lmid="${Core.escapeHTML(lm.id)}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" />
                 </td>
                 <td class="budget-sum-cell">${dmSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
                 <td>
-                  <button type="button" class="btn btn-outline budget-inspect-btn" onclick="ActivitiesModule.openLmDetailModal('${lm.id}', '${lineId}')">
+                  <button type="button" class="btn btn-outline budget-inspect-btn" onclick="ActivitiesModule.openLmDetailModal('${Core.escapeHTML(lm.id)}', '${Core.escapeHTML(lineId)}')">
                     ${Core.t("inspectDms") || "Inspect DMs"}
                   </button>
                 </td>
@@ -295,7 +295,7 @@
             </td>
             <td><span class="badge budget-code-badge">${Core.escapeHTML(dm.employeeCode || dm.id)}</span></td>
             <td>
-              <input type="number" class="form-control lm-dm-alloc-input budget-alloc-input" data-dmid="${dm.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateLmAllocationPreview()" />
+              <input type="number" class="form-control lm-dm-alloc-input budget-alloc-input" data-dmid="${Core.escapeHTML(dm.id)}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateLmAllocationPreview()" />
             </td>
             <td class="budget-sum-cell">${dmUtilized.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
           </tr>
@@ -385,7 +385,7 @@
             </td>
             <td><span class="badge budget-code-badge">${Core.escapeHTML(rep.employeeCode || rep.id)}</span></td>
             <td>
-              <input type="number" class="form-control dm-rep-alloc-input budget-alloc-input" data-repid="${rep.id}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateDmAllocationPreview()" />
+              <input type="number" class="form-control dm-rep-alloc-input budget-alloc-input" data-repid="${Core.escapeHTML(rep.id)}" value="${curAlloc}" min="0" step="500" oninput="ActivitiesModule.calculateDmAllocationPreview()" />
             </td>
             <td class="budget-sum-cell">${repUtilized.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
           </tr>

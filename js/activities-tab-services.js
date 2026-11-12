@@ -555,8 +555,8 @@
     const canApprove = Core.isActionAuthorized("approve_service", srv, user);
     if (canApprove) {
       return `
-        <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'approve')" title="Approve"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
-        <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('service', '${srv.id}', 'reject')" title="Reject"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('service', '${Core.escapeHTML(srv.id)}', 'approve')" title="Approve"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
+        <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('service', '${Core.escapeHTML(srv.id)}', 'reject')" title="Reject"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       `;
     }
     return "&mdash;";
@@ -815,8 +815,8 @@
         : Core.t("sharedNoRepAssigned");
       const repIcon = liveRep ? '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' : '<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 
-      const linesOptions = allLines.map(l => `<option value="${l.id}" ${l.id === row.lineId ? "selected" : ""}>${l.name}</option>`).join("");
-      const areasOptions = areasForLine.map(a => `<option value="${a.id}" ${a.id === row.areaId ? "selected" : ""}>${a.name} (${a.code || a.id})</option>`).join("");
+      const linesOptions = allLines.map(l => `<option value="${Core.escapeHTML(l.id)}" ${l.id === row.lineId ? "selected" : ""}>${Core.escapeHTML(l.name)}</option>`).join("");
+      const areasOptions = areasForLine.map(a => `<option value="${Core.escapeHTML(a.id)}" ${a.id === row.areaId ? "selected" : ""}>${Core.escapeHTML(a.name)} (${Core.escapeHTML(a.code || a.id)})</option>`).join("");
 
       rowDiv.innerHTML = `
         <div class="shared-row-header">

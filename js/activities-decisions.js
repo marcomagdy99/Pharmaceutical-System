@@ -25,35 +25,6 @@
     let requesterName = "";
     let amount = "";
 
-    if (type === "location") {
-      if (!window.store || !window.store.accountLocationRequests) {
-        closeDecisionModal();
-        return;
-      }
-      const reqs = window.store.accountLocationRequests.getAll();
-      const req = reqs.find((r) => r.id === requestId);
-      if (!req) {
-        closeDecisionModal();
-        return;
-      }
-      const actionKey = `${decision}_location`;
-      if (!Core.isActionAuthorized(actionKey, req, Core._state.currentUser)) {
-        Core.safeShowToast(Core.t("unauthorizedAction") || "You are not authorized to perform this action.", "danger");
-        closeDecisionModal();
-        return;
-      }
-      if (decision === "reject") {
-        window.store.accountLocationRequests.reject(requestId, Core._state.currentUser, comment);
-        Core.safeShowToast("Location request rejected.", "info");
-      } else {
-        window.store.accountLocationRequests.approve(requestId, Core._state.currentUser);
-        Core.safeShowToast("Location coordinates approved and updated successfully!", "success");
-      }
-      closeDecisionModal();
-      if (typeof window.renderLocationRequestsTable === "function") window.renderLocationRequestsTable();
-      return;
-    }
-
     if (type === "expense") {
       item = Core.StoreAdapter.getExpenses().find((e) => e.id === requestId);
       if (!item) return;
@@ -70,6 +41,14 @@
       item = reqs.find((r) => r.id === requestId);
       if (!item) return;
       requesterName = item.repName || Core.getUserDisplayName(item.userId || item.repId);
+    } else if (type === "activity") {
+      titleEl.textContent = Core.t("confirmDeleteTitle") || "Confirm Deletion";
+      msgEl.textContent = Core.t("confirmDeleteActivity") || "Are you sure you want to delete this activity?";
+      confirmBtn.className = "btn btn-danger";
+      confirmBtn.textContent = Core.t("btnDelete") || "Delete";
+      modal.style.display = "flex";
+      modal.classList.add("active");
+      return;
     }
 
     if (!item) return;
@@ -153,6 +132,56 @@
 
     if (decision === "reject" && !comment) {
       Core.safeShowToast(Core.t("rejectionReasonRequired") || "Please enter rejection reason.", "warning");
+      return;
+    }
+
+    if (type === "location") {
+      if (!window.store || !window.store.accountLocationRequests) {
+        closeDecisionModal();
+        return;
+      }
+      const reqs = window.store.accountLocationRequests.getAll();
+      const req = reqs.find((r) => r.id === requestId);
+      if (!req) {
+        closeDecisionModal();
+        return;
+      }
+      const actionKey = `${decision}_location`;
+      if (!Core.isActionAuthorized(actionKey, req, Core._state.currentUser)) {
+        Core.safeShowToast(Core.t("unauthorizedAction") || "You are not authorized to perform this action.", "danger");
+        closeDecisionModal();
+        return;
+      }
+      if (decision === "reject") {
+        window.store.accountLocationRequests.reject(requestId, Core._state.currentUser, comment);
+        Core.safeShowToast("Location request rejected.", "info");
+      } else {
+        window.store.accountLocationRequests.approve(requestId, Core._state.currentUser);
+        Core.safeShowToast("Location coordinates approved and updated successfully!", "success");
+      }
+      closeDecisionModal();
+      if (typeof window.renderLocationRequestsTable === "function") window.renderLocationRequestsTable();
+      return;
+    }
+
+    if (type === "activity") {
+      const curDateStr = Core._state.pendingActivityDate || Core.formatDate(Core._state.currentDate);
+      const period = document.getElementById("activityPeriod")?.value || Core.PERIODS.AM;
+      const userId = Core._state.currentUser?.id;
+      if (!userId) {
+        Core.safeShowToast(Core.t("sessionExpired") || "Session expired. Please sign in.", "danger");
+        closeDecisionModal();
+        return;
+      }
+      Core.StoreAdapter.deleteActivity(userId, curDateStr, period);
+      if (window.ActivitiesDaily && typeof window.ActivitiesDaily.closeActivityModal === "function") {
+        window.ActivitiesDaily.closeActivityModal();
+      }
+      if (window.ActivitiesDaily && typeof window.ActivitiesDaily.renderActivitiesView === "function") {
+        window.ActivitiesDaily.renderActivitiesView();
+      }
+      closeDecisionModal();
+      Core.safeShowToast(Core.t("activityDeleted") || "Activity deleted successfully.", "info");
       return;
     }
 

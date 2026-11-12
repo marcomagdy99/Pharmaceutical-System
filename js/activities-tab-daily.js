@@ -250,19 +250,18 @@
   }
 
   function deleteCurrentActivity() {
-    if (!confirm(Core.t("confirmDeleteActivity"))) return;
-    const period = document.getElementById("activityPeriod")?.value || Core.PERIODS.AM;
     const curDateStr = Core._state.pendingActivityDate || Core.formatDate(Core._state.currentDate);
-    const userId = Core._state.currentUser?.id;
-    if (!userId) {
-      Core.safeShowToast(Core.t("sessionExpired") || "Session expired. Please sign in.", "danger");
-      return;
+    if (window.ActivitiesDecisions && typeof window.ActivitiesDecisions.openDecisionModal === "function") {
+      window.ActivitiesDecisions.openDecisionModal("activity", curDateStr, "delete");
+    } else {
+      const period = document.getElementById("activityPeriod")?.value || Core.PERIODS.AM;
+      const userId = Core._state.currentUser?.id;
+      if (!userId) return;
+      Core.StoreAdapter.deleteActivity(userId, curDateStr, period);
+      closeActivityModal();
+      renderActivitiesView();
+      Core.safeShowToast(Core.t("activityDeleted"), "info");
     }
-
-    Core.StoreAdapter.deleteActivity(userId, curDateStr, period);
-    closeActivityModal();
-    renderActivitiesView();
-    Core.safeShowToast(Core.t("activityDeleted"), "info");
   }
 
   window.ActivitiesDaily = {
