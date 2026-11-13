@@ -1330,7 +1330,7 @@
           // BU, PM, HR, Admin route to General Manager
           globalStatus = Core.REQUEST_STATUS.PENDING_GM;
           const gm = Core.getGmUser ? Core.getGmUser() : null;
-          nextApprover = gm ? gm.id : (Core._state.currentUser.managerId || Core._state.currentUser.id);
+          nextApprover = gm ? gm.id : (Core._state.currentUser.managerId && Core._state.currentUser.managerId !== Core._state.currentUser.id ? Core._state.currentUser.managerId : null);
         }
       }
 
