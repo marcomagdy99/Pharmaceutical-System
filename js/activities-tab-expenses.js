@@ -329,9 +329,14 @@
       return;
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|pdf)$/i)) {
-      Core.safeShowToast("Unsupported file type. Please upload a JPG, PNG, WEBP, or PDF file.", "warning");
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    const allowedExts = /\.(jpg|jpeg|png|webp|pdf)$/i;
+    const isMimeValid = allowedMimes.includes(file.type);
+    const isExtValid = allowedExts.test(file.name || "");
+
+    // Must satisfy BOTH MIME type and extension check to prevent spoofing
+    if (!isMimeValid || !isExtValid) {
+      Core.safeShowToast("Unsupported file type. Please upload a valid JPG, PNG, WEBP, or PDF file.", "warning");
       Core._state.currentReceiptBase64 = null;
       if (input) input.value = "";
       return;

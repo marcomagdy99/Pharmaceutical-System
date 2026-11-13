@@ -358,7 +358,7 @@
         if (!reqName || reqName === "-" || reqName === "Unknown User") {
           if (srv.requesterName) reqName = srv.requesterName;
           else if (srv.shares && srv.shares[0] && srv.shares[0].repId) reqName = Core.getUserDisplayName(srv.shares[0].repId);
-          else reqName = srv.requesterId || "-"; // Do not falsely attribute unknown requester to current user
+          else reqName = Core.t("unknownUser") || "Unknown"; // Display clean translated label without leaking raw internal IDs
         }
 
         const actionsHtml = getServiceActionButtons(srv, Core._state.currentUser);
@@ -752,9 +752,14 @@
       return;
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|pdf)$/i)) {
-      Core.safeShowToast("Unsupported file type. Please upload a JPG, PNG, WEBP, or PDF file.", "warning");
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    const allowedExts = /\.(jpg|jpeg|png|webp|pdf)$/i;
+    const isMimeValid = allowedMimes.includes(file.type);
+    const isExtValid = allowedExts.test(file.name || "");
+
+    // Must satisfy BOTH MIME type and extension check to prevent spoofing
+    if (!isMimeValid || !isExtValid) {
+      Core.safeShowToast("Unsupported file type. Please upload a valid JPG, PNG, WEBP, or PDF file.", "warning");
       Core._state.currentServiceFileBase64 = null;
       if (input) input.value = "";
       return;

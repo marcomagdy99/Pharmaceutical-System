@@ -398,7 +398,8 @@
       "btnApprove": "Approve",
       "btnReject": "Reject",
       "btnDisburse": "Disburse",
-      "activityDeleted": "Activity deleted successfully."
+      "activityDeleted": "Activity deleted successfully.",
+      "unknownUser": "Unknown"
 },
     ar: {
       signInCostingPrompt: "يرجى تسجيل الدخول بحساب معتمد لعرض بيانات التكاليف.",
@@ -433,6 +434,7 @@
       "deleteActivity": "حذف النشاط",
       "confirmDeleteActivity": "هل أنت متأكد من رغبتك في حذف هذا النشاط؟",
       "activityDeleted": "تم حذف النشاط بنجاح.",
+      "unknownUser": "مستخدم غير معروف",
       "selectActivityTypeWarning": "يرجى تحديد نوع النشاط أولاً.",
       "statusLogged": "مسجل",
       "disbursedLabel": "تم الصرف",
@@ -1080,6 +1082,11 @@
     const role = (user.role || "").toLowerCase();
     const isAdmin = role === ROLES.ADMIN || role === "admin" || role === "administrator";
 
+    // Prevent self-approval strictly for all users, including Admin
+    if (resource && resource.requesterId && resource.requesterId === user.id) {
+      return false;
+    }
+
     // Enforce strict State Machine status transitions even for Admin
     if (resource) {
       const status = String(resource.status || "").toLowerCase();
@@ -1123,6 +1130,9 @@
           return resource.shares.some(sh => sh.lmId === user.id && sh.status === REQUEST_STATUS.PENDING_LM);
         }
         return resource.status === REQUEST_STATUS.PENDING_LM && resource.nextApproverId === user.id;
+      }
+      if (role === "general_manager" || role === "gm") {
+        return resource.status === REQUEST_STATUS.PENDING_GM || (resource.status && resource.status.startsWith("pending"));
       }
       if (role === ROLES.BU) {
         if (typeof window.canApproveFor === "function" && !window.canApproveFor(resource.requesterId)) return false;

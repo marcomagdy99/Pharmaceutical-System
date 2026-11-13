@@ -592,12 +592,24 @@
       return;
     }
 
-    const myDmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[Core._state.currentUser.id])) || 0;
-    if (Core._state.currentUser.role !== Core.ROLES.ADMIN) {
-      if (totalAlloc > myDmAlloc) {
+    // Hierarchical ceiling check: Group proposed rep allocations by their respective DM (managerId)
+    // Regardless of whether this screen was opened by DM, LM, BU, or Admin,
+    // the total allocated to reps under any specific DM cannot exceed that specific DM's budget allocation.
+    const allocByDm = {};
+    for (const [repId, val] of Object.entries(tempAlloc)) {
+      const repObj = allUsers.find((u) => u.id === repId);
+      const dmId = repObj ? repObj.managerId : null;
+      if (dmId) {
+        allocByDm[dmId] = (allocByDm[dmId] || 0) + val;
+      }
+    }
+
+    for (const [dmId, repSum] of Object.entries(allocByDm)) {
+      const dmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[dmId])) || 0;
+      if (repSum > dmAlloc) {
         Core.safeShowToast(
-          (Core.t("budgetOverAllocated") || "Total allocated to reps exceeds your available territory budget.") +
-          ` (${totalAlloc.toLocaleString("en-US")} / ${myDmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          (Core.t("budgetOverAllocated") || "Total allocated to reps exceeds territory budget.") +
+          ` (${Core.getUserDisplayName(dmId)}: allocated ${repSum.toLocaleString("en-US")} / ${dmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
           "danger"
         );
         return; // Hard constraint: do not save!
