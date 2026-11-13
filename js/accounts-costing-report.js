@@ -310,15 +310,34 @@
         : allUsers.filter((u) => u.managerId === user.id || (u.lineId && myLineIds.has(u.lineId)));
 
       const lmDMs = subUsers.filter((u) => getNormalizedRole(u) === "district_manager");
+      const lmDmIds = new Set(lmDMs.map((d) => d.id));
       const lmReps = subUsers.filter((u) => getNormalizedRole(u) === "medical_rep");
       const lmRepIds = new Set(lmReps.map((r) => r.id));
 
-      const lmAreas = allAreas.filter((a) => myLineIds.has(a.lineId) || lmRepIds.has(a.repId));
+      // Flexible Single-LM vs Multi-LM dynamic detection:
+      // If a line has multiple Line Managers, scope strictly to this LM's team to prevent data leakage.
+      // If a line has a single Line Manager, allow line-wide fallback.
+      const multiLmLines = new Set(myLines.filter((l) => {
+        const lineLms = allUsers.filter((u) => getNormalizedRole(u) === "line_manager" && ((u.lineIds && u.lineIds.includes(l.id)) || u.lineId === l.id));
+        return lineLms.length > 1;
+      }).map((l) => l.id));
+
+      const lmAreas = allAreas.filter((a) => {
+        const isMulti = multiLmLines.has(a.lineId);
+        if (isMulti) {
+          return lmRepIds.has(a.repId) || (a.dmId && lmDmIds.has(a.dmId));
+        }
+        return myLineIds.has(a.lineId) || lmRepIds.has(a.repId);
+      });
       const lmAreaIds = new Set(lmAreas.map((a) => a.id));
 
-      const lmDoctors = allDoctors.filter((d) =>
-        myLineIds.has(d.lineId) || lmAreaIds.has(d.areaId) || lmRepIds.has(d.repId)
-      );
+      const lmDoctors = allDoctors.filter((d) => {
+        const isMulti = multiLmLines.has(d.lineId);
+        if (isMulti) {
+          return lmAreaIds.has(d.areaId) || lmRepIds.has(d.repId);
+        }
+        return myLineIds.has(d.lineId) || lmAreaIds.has(d.areaId) || lmRepIds.has(d.repId);
+      });
       const lmDoctorIds = new Set(lmDoctors.map((d) => d.id));
 
       return {

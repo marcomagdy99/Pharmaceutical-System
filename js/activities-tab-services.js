@@ -99,17 +99,27 @@
     if (role === Core.ROLES.LM) {
       allocated = (lineBudget.lmAllocations && Number(lineBudget.lmAllocations[user.id])) || 0;
       const dms = Core.getDmsUnderLmForLine(user.id, lineId);
+      const dmIds = new Set(dms.map(d => d.id));
       distributed = dms.reduce((sum, dm) => sum + ((lineBudget.dmAllocations && Number(lineBudget.dmAllocations[dm.id])) || 0), 0);
+
+      // Flexible Single-LM vs Multi-LM team scoping:
+      // In single LM lines, myTeamUserIds covers the entire line team.
+      // In multi LM lines, myTeamUserIds isolates this LM's team from other LMs on the same line.
+      const allUsers = Core.getAllUsers();
+      const myReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === user.id || dmIds.has(u.managerId)));
+      const myTeamUserIds = new Set([user.id, ...dmIds, ...myReps.map(r => r.id)]);
 
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
-          if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
-          if (item.status && item.status.startsWith("pending")) pending += item.cost;
+          if (myTeamUserIds.has(item.repId) || myTeamUserIds.has(s.requesterId)) {
+            if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
+            if (item.status && item.status.startsWith("pending")) pending += item.cost;
+          }
         });
       });
-      // For LM: Remaining is the unallocated budget not yet distributed to DMs, taking actual utilized into account
-      remaining = Math.max(0, allocated - Math.max(distributed, utilized));
+      // For LM: Remaining takes into account both already distributed DM amount AND actual utilized + pending
+      remaining = Math.max(0, allocated - Math.max(distributed, utilized + pending));
     } else if (role === Core.ROLES.DM) {
       allocated = (lineBudget.dmAllocations && Number(lineBudget.dmAllocations[user.id])) || 0;
       const allUsers = Core.getAllUsers();
@@ -125,28 +135,26 @@
         const items = getLineSharesList(s);
         items.forEach((item) => {
           const rep = Core.getUserById(item.repId);
-          if (item.repId === user.id || (rep && rep.managerId === user.id)) {
+          if (item.repId === user.id || s.requesterId === user.id || (rep && rep.managerId === user.id)) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
             if (item.status && item.status.startsWith("pending")) pending += item.cost;
           }
         });
       });
-      // For DM: Remaining is the district budget not yet distributed to Reps, taking actual utilized into account
-      remaining = Math.max(0, allocated - Math.max(distributed, utilized));
+      remaining = Math.max(0, allocated - Math.max(distributed, utilized + pending));
     } else if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
-      // For Medical Rep: Allocated budget set by DM, defaults to 0 if not set!
       allocated = (lineBudget.repAllocations && Number(lineBudget.repAllocations[user.id])) || 0;
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
-          if (item.repId === user.id) {
+          if (item.repId === user.id || s.requesterId === user.id) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
             if (item.status && item.status.startsWith("pending")) pending += item.cost;
           }
         });
       });
-      // For Rep: Remaining is their personal allocated budget minus utilized
-      remaining = allocated - utilized;
+      // For Rep: Remaining deducts both approved utilized and pending requests to prevent over-commitment
+      remaining = allocated - (utilized + pending);
     } else {
       // BU / Admin
       allocated = Number(lineBudget.totalBudget) || 0;
@@ -160,7 +168,7 @@
           if (item.status && item.status.startsWith("pending")) pending += item.cost;
         });
       });
-      remaining = Math.max(0, allocated - Math.max(distributed, utilized));
+      remaining = Math.max(0, allocated - Math.max(distributed, utilized + pending));
     }
 
     return { allocated, distributed, utilized, pending, remaining };
@@ -350,7 +358,7 @@
         if (!reqName || reqName === "-" || reqName === "Unknown User") {
           if (srv.requesterName) reqName = srv.requesterName;
           else if (srv.shares && srv.shares[0] && srv.shares[0].repId) reqName = Core.getUserDisplayName(srv.shares[0].repId);
-          else reqName = Core.getUserDisplayName(Core._state.currentUser?.id);
+          else reqName = srv.requesterId || "-"; // Do not falsely attribute unknown requester to current user
         }
 
         const actionsHtml = getServiceActionButtons(srv, Core._state.currentUser);
@@ -362,11 +370,16 @@
         if (srv.isShared && Array.isArray(srv.shares) && srv.shares.length > 0) {
           const uniqueLines = Array.from(new Set(srv.shares.map(sh => sh.lineId)));
           const isIntraLine = uniqueLines.length === 1;
-          const badgeText = isIntraLine ? `<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.3 1.3"/><path d="m14.7 6.3 3.6 3.6a2 2 0 0 1 0 2.8l-1.6 1.6"/><path d="m3 14 3.7-3.7a2 2 0 0 1 2.8 0l1.5 1.5"/><path d="m7 18 2 2a1 1 0 0 0 1.4 0l1.3-1.3"/></svg> Intra-Line` : `<svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ${srv.shares.length} Lines Split`;
+          const badgeSvg = isIntraLine
+            ? `<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-3-3a1 1 0 0 0-1.4 0l-1.3 1.3"/><path d="m14.7 6.3 3.6 3.6a2 2 0 0 1 0 2.8l-1.6 1.6"/><path d="m3 14 3.7-3.7a2 2 0 0 1 2.8 0l1.5 1.5"/><path d="m7 18 2 2a1 1 0 0 0 1.4 0l1.3-1.3"/></svg>`
+            : `<svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
+          const badgeLabel = isIntraLine
+            ? (Core.t("intraLineSplit") || "Intra-Line")
+            : `${srv.shares.length} ${Core.t("multiLineSplit") || "Lines Split"}`;
           const linesBreakdown = srv.shares.map(sh => `<span class="svc-mini-line-chip">${Core.escapeHTML(Core.getLineName(sh.lineId))}</span>`).join("<span class='svc-plus'>+</span>");
           lineCell = `
             <div class="svc-shared-line-cell">
-              <span class="svc-split-tag ${isIntraLine ? 'intra' : 'multi'}">${Core.escapeHTML(badgeText)}</span>
+              <span class="svc-split-tag ${isIntraLine ? 'intra' : 'multi'}">${badgeSvg} ${Core.escapeHTML(badgeLabel)}</span>
               <div class="svc-lines-breakdown">${linesBreakdown}</div>
             </div>
           `;
@@ -430,8 +443,8 @@
         if (srv.attachmentBase64) {
           attachmentHtml = `
             <div class="table-attachment-wrapper mt-1">
-              <button type="button" class="btn btn-sm btn-outline" onclick="ActivitiesModule.openReceiptPreviewModal('${srv.attachmentBase64}')" title="${Core.t("viewAttachment")}">
-                <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${Core.t("attachmentLabel")}
+              <button type="button" class="btn btn-sm btn-outline preview-srv-attachment-btn" data-service-id="${Core.escapeHTML(srv.id)}" title="${Core.escapeHTML(Core.t("viewAttachment") || "View Attachment")}">
+                <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${Core.escapeHTML(Core.t("attachmentLabel") || "Attachment")}
               </button>
             </div>
           `;
@@ -441,7 +454,7 @@
           <tr>
             <td class="table-date-cell">
               <div class="svc-date-pill">
-                <span class="svc-date-val">${srv.date || '-'}</span>
+                <span class="svc-date-val">${Core.escapeHTML(srv.date || '-')}</span>
               </div>
             </td>
             <td>
@@ -470,6 +483,25 @@
         `;
       })
       .join("");
+    setupServicesDelegation();
+  }
+
+  function setupServicesDelegation() {
+    const tbody = document.getElementById("servicesTableBody");
+    if (!tbody || tbody._delegated) return;
+    tbody._delegated = true;
+    tbody.addEventListener("click", (e) => {
+      const btn = e.target.closest(".preview-srv-attachment-btn");
+      if (btn) {
+        const srvId = btn.dataset.serviceId;
+        if (!srvId) return;
+        const allSrv = Core.StoreAdapter.getServices();
+        const srv = allSrv.find((s) => s.id === srvId);
+        if (srv && srv.attachmentBase64) {
+          ActivitiesModule.openReceiptPreviewModal(srv.attachmentBase64);
+        }
+      }
+    });
   }
 
   function renderServiceStatusBadge(srv) {
@@ -518,23 +550,23 @@
     let icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>';
 
     if (s === Core.REQUEST_STATUS.PENDING_DM) {
-      label = `${Core.t("waitingDmPrefix")}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      label = `${Core.t("waitingDmPrefix")}${Core.escapeHTML(Core.getUserDisplayName(srv.nextApproverId))}`;
       css = "pending";
       icon = "⏳";
     } else if (s === Core.REQUEST_STATUS.PENDING_LM) {
-      label = `${Core.t("waitingLmPrefix")}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      label = `${Core.t("waitingLmPrefix")}${Core.escapeHTML(Core.getUserDisplayName(srv.nextApproverId))}`;
       css = "pending";
       icon = "⏳";
     } else if (s === Core.REQUEST_STATUS.PENDING_BU || s === "pending_bu") {
-      label = `${Core.t("waitingBuPrefix") || "Pending BU: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      label = `${Core.t("waitingBuPrefix") || "Pending BU: "}${Core.escapeHTML(Core.getUserDisplayName(srv.nextApproverId))}`;
       css = "pending pending-bu";
       icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>';
     } else if (s === Core.REQUEST_STATUS.PENDING_PM || s === "pending_pm") {
-      label = `${Core.t("waitingPmPrefix") || "Pending PM: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      label = `${Core.t("waitingPmPrefix") || "Pending PM: "}${Core.escapeHTML(Core.getUserDisplayName(srv.nextApproverId))}`;
       css = "pending pending-pm";
       icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
     } else if (s === Core.REQUEST_STATUS.PENDING_GM || s === "pending_gm") {
-      label = `${Core.t("waitingGmPrefix") || "Pending GM: "}${Core.getUserDisplayName(srv.nextApproverId)}`;
+      label = `${Core.t("waitingGmPrefix") || "Pending GM: "}${Core.escapeHTML(Core.getUserDisplayName(srv.nextApproverId))}`;
       css = "pending pending-gm";
       icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>';
     } else if (s === Core.REQUEST_STATUS.APPROVED) {
@@ -705,14 +737,62 @@
   }
 
   function handleServiceFileSelect(event) {
-    const file = event.target?.files?.[0];
+    const input = event.target;
+    const file = input?.files?.[0];
     if (!file) {
       Core._state.currentServiceFileBase64 = null;
       return;
     }
+
+    const MAX_FILE_SIZE = 800 * 1024; // 800KB quota protection
+    if (file.size > MAX_FILE_SIZE) {
+      Core.safeShowToast(Core.t("fileTooLarge") || "Receipt file is too large. Maximum size is 800KB.", "warning");
+      Core._state.currentServiceFileBase64 = null;
+      if (input) input.value = "";
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|pdf)$/i)) {
+      Core.safeShowToast("Unsupported file type. Please upload a JPG, PNG, WEBP, or PDF file.", "warning");
+      Core._state.currentServiceFileBase64 = null;
+      if (input) input.value = "";
+      return;
+    }
+
+    const isPdf = file.type === "application/pdf" || (file.name && file.name.toLowerCase().endsWith(".pdf"));
     const reader = new FileReader();
-    reader.onload = (e) => {
-      Core._state.currentServiceFileBase64 = e.target.result;
+    reader.onerror = function () {
+      Core._state.currentServiceFileBase64 = null;
+      Core.safeShowToast("Failed to read file.", "warning");
+    };
+
+    reader.onload = function (e) {
+      if (isPdf) {
+        Core._state.currentServiceFileBase64 = e.target.result;
+        return;
+      }
+      const img = new Image();
+      img.onerror = function () {
+        Core._state.currentServiceFileBase64 = null;
+        Core.safeShowToast("Failed to load image file.", "warning");
+      };
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        Core._state.currentServiceFileBase64 = canvas.toDataURL("image/jpeg", 0.6);
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
@@ -986,13 +1066,46 @@
     const supplierName = (document.getElementById("serviceFormSupplierInput")?.value || "").trim();
     const invoiceRefNo = (document.getElementById("serviceFormInvoiceRefInput")?.value || "").trim();
 
+    if (!title || title.length > 200) {
+      Core.safeShowToast(Core.t("serviceTitleRequired") || "Please enter a valid service title (up to 200 characters).", "warning");
+      return;
+    }
+
     if (!category) {
       Core.safeShowToast("Please select a service category.", "warning");
       return;
     }
 
-    if (!cost || cost <= 0) {
-      Core.safeShowToast("Please enter a valid cost.", "warning");
+    if (!Number.isFinite(cost) || cost <= 0 || cost > 1000000) {
+      Core.safeShowToast(Core.t("invalidServiceCost") || "Please enter a valid service cost between 1 and 1,000,000 EGP.", "warning");
+      return;
+    }
+
+    if (notes.length > 1000) {
+      Core.safeShowToast(Core.t("notesMaxLimit") || "Notes cannot exceed 1000 characters.", "warning");
+      return;
+    }
+
+    if (supplierName.length > 200 || invoiceRefNo.length > 100) {
+      Core.safeShowToast("Supplier name or invoice reference is too long.", "warning");
+      return;
+    }
+
+    const srvDate = new Date(date);
+    const now = new Date();
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(now.getDate() - 90);
+    const futureLimit = new Date();
+    futureLimit.setDate(now.getDate() + 30);
+
+    if (!date || isNaN(srvDate.getTime()) || srvDate < ninetyDaysAgo || srvDate > futureLimit) {
+      Core.safeShowToast(Core.t("invalidServiceDate") || "Service date must be within the last 90 days and not in the distant future.", "warning");
+      return;
+    }
+
+    const assignedLines = Core.getUserAssignedLines(Core._state.currentUser).map(l => l.id);
+    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && assignedLines.length > 0 && !assignedLines.includes(lineId)) {
+      Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
       return;
     }
 
@@ -1029,21 +1142,48 @@
 
       const primaryInput = document.getElementById("sharedPrimaryPercentInput");
       primaryPercent = parseFloat(primaryInput?.value) || 0;
+      if (!Number.isFinite(primaryPercent) || primaryPercent <= 0 || primaryPercent > 100) {
+        Core.safeShowToast("Primary share percentage must be between 1% and 100%.", "warning");
+        return;
+      }
+
+      let hasInvalidShare = false;
+      const seenKeys = new Set([lineId + "_" + areaId]);
+
+      for (const r of Core._state.sharedLines) {
+        const p = parseFloat(r.sharePercent);
+        if (!Number.isFinite(p) || p <= 0 || p > 100) {
+          hasInvalidShare = true;
+          break;
+        }
+        const key = r.lineId + "_" + r.areaId;
+        if (seenKeys.has(key)) {
+          Core.safeShowToast("Duplicate line and area combination detected in shared request.", "warning");
+          return;
+        }
+        seenKeys.add(key);
+      }
+
+      if (hasInvalidShare) {
+        Core.safeShowToast("All participating share percentages must be between 1% and 100%.", "warning");
+        return;
+      }
+
       const partSum = Core._state.sharedLines.reduce((s, r) => s + (parseFloat(r.sharePercent) || 0), 0);
       const totalPct = primaryPercent + partSum;
 
-      if (totalPct !== 100) {
+      // Handle floating point precision safely
+      if (Math.abs(totalPct - 100) > 0.01) {
         Core.safeShowToast(Core.t("sharedExceedsNotice") || "Total share percentages must equal exactly 100%.", "warning");
         return;
       }
     }
 
-    // Budget validation for requesting user
+    // Budget validation for requesting user (enforce across Rep, DM, LM unless Admin)
     const userRole = (Core._state.currentUser?.role || "").toLowerCase();
-    const isRep = userRole === Core.ROLES.REP || userRole === Core.ROLES.REP_ALT;
     const myShareCost = isShared ? Math.round((cost * primaryPercent) / 100) : cost;
 
-    if (isRep) {
+    if (userRole !== Core.ROLES.ADMIN) {
       const budgetMetrics = getBudgetMetricsForUser(lineId, Core._state.currentUser);
       if (budgetMetrics.allocated <= 0) {
         Core.safeShowToast(
@@ -1053,7 +1193,7 @@
         return;
       }
       if (myShareCost > budgetMetrics.remaining) {
-        const errMsg = `Requested cost (${myShareCost.toLocaleString()} EGP) exceeds your remaining promotional budget (${budgetMetrics.remaining.toLocaleString()} EGP).`;
+        const errMsg = `Requested cost (${myShareCost.toLocaleString("en-US")} EGP) exceeds your available promotional budget (${budgetMetrics.remaining.toLocaleString("en-US")} EGP).`;
         Core.safeShowToast(errMsg, "danger");
         return;
       }
@@ -1119,7 +1259,25 @@
           return;
         }
 
-        const shareAmt = Math.round((cost * row.sharePercent) / 100);
+        // Exact rounding: the last share absorbs rounding difference so sum equals exact cost
+        let shareAmt = Math.round((cost * row.sharePercent) / 100);
+        if (Core._state.sharedLines.indexOf(row) === Core._state.sharedLines.length - 1) {
+          const prevSum = shares.reduce((sum, s) => sum + s.shareAmount, 0);
+          shareAmt = cost - prevSum;
+        }
+
+        // Budget check for partner rep
+        if (rowRepId) {
+          const partnerUser = Core.getUserById(rowRepId);
+          if (partnerUser && (partnerUser.role === Core.ROLES.REP || partnerUser.role === Core.ROLES.REP_ALT)) {
+            const partnerMetrics = getBudgetMetricsForUser(row.lineId, partnerUser);
+            if (partnerMetrics.allocated > 0 && shareAmt > partnerMetrics.remaining) {
+              Core.safeShowToast(`Requested share exceeds available budget for representative ${Core.getUserDisplayName(rowRepId)} (${partnerMetrics.remaining.toLocaleString("en-US")} EGP remaining).`, "danger");
+              return;
+            }
+          }
+        }
+
         shares.push({
           lineId: row.lineId,
           areaId: row.areaId,
@@ -1159,9 +1317,15 @@
         } else if (Core._state.currentUser.role === Core.ROLES.DM) {
           globalStatus = Core.REQUEST_STATUS.PENDING_LM;
           nextApprover = Core._state.currentUser.managerId || null;
+        } else if (Core._state.currentUser.role === Core.ROLES.LM) {
+          globalStatus = Core.REQUEST_STATUS.PENDING_BU;
+          const buUser = Core.getAllUsers().find(u => u.role === Core.ROLES.BU && (u.lineIds && u.lineIds.includes(lineId) || u.lineId === lineId));
+          nextApprover = buUser ? buUser.id : (Core._state.currentUser.managerId || null);
         } else {
-          globalStatus = Core.REQUEST_STATUS.APPROVED;
-          nextApprover = null;
+          // BU, PM, HR, Admin route to General Manager
+          globalStatus = Core.REQUEST_STATUS.PENDING_GM;
+          const gm = Core.getGmUser ? Core.getGmUser() : null;
+          nextApprover = gm ? gm.id : (Core._state.currentUser.managerId || Core._state.currentUser.id);
         }
       }
 
@@ -1172,7 +1336,7 @@
     }
 
     const newService = {
-      id: "srv_" + Date.now(),
+      id: "srv_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
       requesterId: Core._state.currentUser.id,
       requesterRole: Core._state.currentUser.role,
       lineId: lineId,

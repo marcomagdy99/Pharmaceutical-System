@@ -170,15 +170,20 @@
         0
       );
       let lmUtilized = 0;
+      const allUsers = Core.getAllUsers();
+      const lmDmIds = new Set(dmsUnderLm.map(d => d.id));
+      const lmReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === lmId || lmDmIds.has(u.managerId)));
+      const lmTeamIds = new Set([lmId, ...lmDmIds, ...lmReps.map(r => r.id)]);
+
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (sh.lmId === lmId || sh.requesterId === lmId) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+            if (sh.lineId === lineId && (lmTeamIds.has(sh.lmId) || lmTeamIds.has(sh.dmId) || lmTeamIds.has(sh.repId) || lmTeamIds.has(sh.requesterId)) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
               lmUtilized += Number(sh.shareAmount || 0);
             }
           });
-        } else if (s.lineId === lineId && s.requesterId === lmId && s.status === Core.REQUEST_STATUS.APPROVED) {
+        } else if (s.lineId === lineId && lmTeamIds.has(s.requesterId) && s.status === Core.REQUEST_STATUS.APPROVED) {
           lmUtilized += Number(s.cost || 0);
         }
       });
@@ -382,18 +387,24 @@
       distributed += Number(inp.value || 0);
     });
 
-    // Calculate LM direct utilized for this line
+    // Calculate LM team utilized for this line (flexible for single LM or multi LM)
     let lmUtilized = 0;
+    const allUsers = Core.getAllUsers();
+    const dmsUnderLm = Core.getDmsUnderLmForLine(Core._state.currentUser.id, lineId);
+    const lmDmIds = new Set(dmsUnderLm.map(d => d.id));
+    const lmReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === Core._state.currentUser.id || lmDmIds.has(u.managerId)));
+    const lmTeamIds = new Set([Core._state.currentUser.id, ...lmDmIds, ...lmReps.map(r => r.id)]);
+
     const allServices = Core.StoreAdapter.getServices();
     allServices.forEach((s) => {
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+          if (sh.lineId === lineId && (lmTeamIds.has(sh.lmId) || lmTeamIds.has(sh.dmId) || lmTeamIds.has(sh.repId) || lmTeamIds.has(sh.requesterId)) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
             lmUtilized += Number(sh.shareAmount || 0);
           }
         });
-      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
+      } else if (s.lineId === lineId && lmTeamIds.has(s.requesterId) && s.status === Core.REQUEST_STATUS.APPROVED) {
         lmUtilized += Number(s.cost || 0);
       }
     });
@@ -549,7 +560,16 @@
     if (!Array.isArray(budgets[lineId].auditLog)) budgets[lineId].auditLog = [];
 
     const allUsers = Core.getAllUsers();
-    const myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
+    let myRepIds = [];
+    const curRole = Core._state.currentUser.role;
+    if (curRole === Core.ROLES.DM) {
+      myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
+    } else if (curRole === Core.ROLES.LM) {
+      const myDms = allUsers.filter((u) => u.role === Core.ROLES.DM && u.managerId === Core._state.currentUser.id).map(d => d.id);
+      myRepIds = allUsers.filter((u) => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && myDms.includes(u.managerId)).map(r => r.id);
+    } else if (curRole === Core.ROLES.BU || curRole === Core.ROLES.ADMIN) {
+      myRepIds = allUsers.filter((u) => u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT).map(r => r.id);
+    }
 
     let totalAlloc = 0;
     const tempAlloc = {};
@@ -647,6 +667,10 @@
 
   function saveDmAllocations() {
     Core._state.currentUser = Core.getAuthUser();
+    if (Core._state.currentUser.role === Core.ROLES.DM) {
+      Core.safeShowToast(Core.t("unauthorizedDmBudgetAction") || "You are not authorized to edit district manager allocations.", "danger");
+      return;
+    }
     if (!Core.isActionAuthorized("allocate_dm_budget", null, Core._state.currentUser)) {
       Core.safeShowToast(Core.t("unauthorizedDmBudgetAction") || "You are not authorized to edit district manager allocations.", "danger");
       return;

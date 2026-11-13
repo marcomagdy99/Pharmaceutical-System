@@ -434,7 +434,10 @@
     openDecisionModal: (type, id, dec) => window.ActivitiesDecisions?.openDecisionModal?.(type, id, dec),
     closeDecisionModal: () => window.ActivitiesDecisions?.closeDecisionModal?.(),
     executeDecisionConfirm: () => window.ActivitiesDecisions?.executeDecisionConfirm?.(),
-    openReceiptPreviewModal: (src) => window.ActivitiesExpenses?.openReceiptPreviewModal?.(src) || window.ActivitiesDecisions?.openReceiptPreviewModal?.(src),
+    openReceiptPreviewModal: (src) => {
+      const fn = window.ActivitiesExpenses?.openReceiptPreviewModal || window.ActivitiesDecisions?.openReceiptPreviewModal;
+      return fn ? fn(src) : undefined;
+    },
     closeReceiptPreviewModal: () => window.ActivitiesDecisions?.closeReceiptPreviewModal?.(),
     // Core Helpers
     addDays: Core.addDays,

@@ -19,7 +19,10 @@
 
     if (!modal || !titleEl || !msgEl || !confirmBtn) return;
     confirmBtn.onclick = executeDecisionConfirm;
+    const commentLbl = document.getElementById("decisionCommentLabel");
     if (commentInp) commentInp.value = "";
+    if (commentLbl) commentLbl.style.display = type === "activity" ? "none" : "block";
+    if (commentInp) commentInp.style.display = type === "activity" ? "none" : "block";
 
     let item = null;
     let requesterName = "";
@@ -114,6 +117,10 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    const commentInp = document.getElementById("decisionCommentInput");
+    const commentLbl = document.getElementById("decisionCommentLabel");
+    if (commentLbl) commentLbl.style.display = "block";
+    if (commentInp) commentInp.style.display = "block";
     const confirmBtn = document.getElementById("decisionConfirmBtn");
     if (confirmBtn) confirmBtn.onclick = executeDecisionConfirm;
     Core._state.pendingDecision = null;

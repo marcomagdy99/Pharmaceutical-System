@@ -21,7 +21,7 @@ window.forceClearCacheAndReload = async function () {
 };
 
 (function () {
-  var EXPECTED_SW = "v295";
+  var EXPECTED_SW = "v296";
   var FLAG = "pharmacare_sw_cleared_" + EXPECTED_SW;
   try {
     if (localStorage.getItem(FLAG) !== "1") {

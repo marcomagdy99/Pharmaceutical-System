@@ -337,7 +337,68 @@
       "receiptAttachment": "Receipt attachment",
       "selectValidLineWarning": "Please select a specific valid product line.",
       "unauthorizedLineAction": "You are not authorized for this product line.",
-      "cannotReduceBelowUtilized": "Cannot reduce allocation below already spent/utilized amount."
+      "cannotReduceBelowUtilized": "Cannot reduce allocation below already spent/utilized amount.",
+      "fileTooLarge": "Receipt file is too large. Maximum size is 800KB.",
+      "invalidExpenseCategory": "Please select a valid expense category.",
+      "invalidAmount": "Please enter a valid expense amount between 1 and 500,000 EGP.",
+      "notesTooLong": "Notes cannot exceed 1000 characters.",
+      "invalidDateRange": "Expense date must be within the last 90 days and not in the future.",
+      "unauthorizedRepBudgetAction": "You are not authorized to edit representative allocations.",
+      "unauthorizedDmBudgetAction": "You are not authorized to edit district manager allocations.",
+      "unauthorizedBudgetAction": "You are not authorized to edit business unit budget.",
+      "sharedExceedsNotice": "Total share percentages must equal exactly 100%.",
+      "noApproverConfigured": "No direct manager or approver configured for this request.",
+      "noBudgetAllocated": "Doctor services budget has not been allocated for this product line yet. Please consult your manager.",
+      "serviceSubmittedSuccess": "Service request submitted successfully.",
+      "serviceDeletedSuccess": "Service request deleted successfully.",
+      "invalidServiceCost": "Please enter a valid service cost between 1 and 1,000,000 EGP.",
+      "invalidServiceDate": "Service date must be within the last 90 days and not in the distant future.",
+      "notesMaxLimit": "Notes cannot exceed 1000 characters.",
+      "serviceTitleRequired": "Please enter a valid service title (up to 200 characters).",
+      "waitingBuPrefix": "Pending BU: ",
+      "waitingPmPrefix": "Pending PM: ",
+      "waitingGmPrefix": "Pending GM: ",
+      "waitingDmPrefix": "Pending DM: ",
+      "waitingLmPrefix": "Pending LM: ",
+      "intraLineSplit": "Intra-Line",
+      "multiLineSplit": "Lines Split",
+      "viewAttachment": "View Attachment",
+      "attachmentLabel": "Attachment",
+      "approvedLabel": "Approved",
+      "rejectedLabel": "Rejected",
+      "statusPending": "Pending",
+      "fridayHolidayNotice": "Friday is an official company holiday. No field visits can be scheduled.",
+      "noLmsForLine": "No Line Managers found for this line.",
+      "inspectDms": "Inspect DMs",
+      "invalidNumber": "Please enter valid positive numbers.",
+      "budgetOverAllocated": "Total allocated exceeds available budget!",
+      "budgetExceedsDistributed": "Cannot reduce budget below already distributed amount.",
+      "dmsUnderLm": "District Managers under",
+      "noDmsUnderLm": "No District Managers found under this Line Manager for the selected line.",
+      "totalDmAllocation": "Total allocated to DMs",
+      "name": "Name",
+      "code": "Code",
+      "allocation": "Allocation",
+      "noRepsFound": "No medical reps found assigned under your district for this product line.",
+      "savedDmBudgetMessage": "District manager allocations saved successfully.",
+      "savedRepBudgetMessage": "Rep allocations saved successfully.",
+      "savedBudgetMessage": "Budget allocations saved successfully.",
+      "distributedToDms": "Distributed to DMs",
+      "distributedToReps": "Distributed to Reps",
+      "unallocatedRemaining": "Remaining Balance",
+      "approvedSpent": "Approved & Utilized",
+      "allocatedToLms": "Allocated to LMs",
+      "pendingServices": "Pending In Requests",
+      "confirmDeleteTitle": "Confirm Deletion",
+      "confirmDeleteActivity": "Are you sure you want to delete this activity?",
+      "btnDelete": "Delete",
+      "confirmApprovalTitle": "Confirm Approval",
+      "confirmRejectionTitle": "Confirm Rejection",
+      "confirmDisbursementTitle": "Confirm Disbursement",
+      "btnApprove": "Approve",
+      "btnReject": "Reject",
+      "btnDisburse": "Disburse",
+      "activityDeleted": "Activity deleted successfully."
 },
     ar: {
       signInCostingPrompt: "يرجى تسجيل الدخول بحساب معتمد لعرض بيانات التكاليف.",
@@ -607,7 +668,68 @@
       "receiptAttachment": "مرفق الإيصال",
       "selectValidLineWarning": "يرجى اختيار خط إنتاج محدد وصحيح.",
       "unauthorizedLineAction": "غير مصرح لك بالعمل على هذا الخط.",
-      "cannotReduceBelowUtilized": "لا يمكن تقليص المخصص لأقل من المبلغ المصروف أو المستهلك بالفعل."
+      "cannotReduceBelowUtilized": "لا يمكن تقليص المخصص لأقل من المبلغ المصروف أو المستهلك بالفعل.",
+      "fileTooLarge": "حجم ملف الإيصال كبير جداً. الحد الأقصى هو 800 كيلوبايت.",
+      "invalidExpenseCategory": "يرجى اختيار فئة مصروف صحيحة.",
+      "invalidAmount": "يرجى إدخال مبلغ صحيح للمصروف بين 1 و500,000 ج.م.",
+      "notesTooLong": "الملاحظات لا يمكن أن تتجاوز 1000 حرف.",
+      "invalidDateRange": "تاريخ المصروف يجب أن يكون خلال آخر 90 يوماً وليس في المستقبل.",
+      "unauthorizedRepBudgetAction": "غير مصرح لك بتعديل ميزانيات المناديب.",
+      "unauthorizedDmBudgetAction": "غير مصرح لك بتعديل ميزانيات المشرفين.",
+      "unauthorizedBudgetAction": "غير مصرح لك بتعديل ميزانية وحدة العمل.",
+      "sharedExceedsNotice": "مجموع نسب المشاركة يجب أن يساوي 100% بالضبط.",
+      "noApproverConfigured": "لا يوجد مدير مباشر أو معتمد مهيأ لهذا الطلب.",
+      "noBudgetAllocated": "لم يتم تخصيص ميزانية خدمات طبية لهذا الخط بعد. يرجى مراجعة مديرك.",
+      "serviceSubmittedSuccess": "تم تقديم طلب الخدمة بنجاح.",
+      "serviceDeletedSuccess": "تم حذف طلب الخدمة بنجاح.",
+      "invalidServiceCost": "يرجى إدخال تكلفة صحيحة للخدمة بين 1 و1,000,000 ج.م.",
+      "invalidServiceDate": "تاريخ الخدمة يجب أن يكون خلال آخر 90 يوماً وليس في المستقبل البعيد.",
+      "notesMaxLimit": "الملاحظات لا يمكن أن تتجاوز 1000 حرف.",
+      "serviceTitleRequired": "يرجى إدخال عنوان صحيح للخدمة (حتى 200 حرف).",
+      "waitingBuPrefix": "بانتظار مدير الوحدة: ",
+      "waitingPmPrefix": "بانتظار مدير المنتج: ",
+      "waitingGmPrefix": "بانتظار المدير العام: ",
+      "waitingDmPrefix": "بانتظار المشرف: ",
+      "waitingLmPrefix": "بانتظار مدير الخط: ",
+      "intraLineSplit": "مشاركة داخلية",
+      "multiLineSplit": "مشاركة بين الخطوط",
+      "viewAttachment": "عرض المرفق",
+      "attachmentLabel": "المرفق",
+      "approvedLabel": "معتمد",
+      "rejectedLabel": "مرفوض",
+      "statusPending": "معلق",
+      "fridayHolidayNotice": "يوم الجمعة إجازة رسمية بالشركة. لا يمكن جدولة زيارات ميدانية.",
+      "noLmsForLine": "لا يوجد مديرو خطوط لهذا الخط.",
+      "inspectDms": "فحص المشرفين",
+      "invalidNumber": "يرجى إدخال أرقام صحيحة وموجبة.",
+      "budgetOverAllocated": "إجمالي الموزع يتجاوز الميزانية المتاحة!",
+      "budgetExceedsDistributed": "لا يمكن تقليص الميزانية لأقل من المبلغ الموزع بالفعل.",
+      "dmsUnderLm": "المشرفون التابعون لـ",
+      "noDmsUnderLm": "لا يوجد مشرفون تابعون لمدير الخط المختار.",
+      "totalDmAllocation": "إجمالي مخصص المشرفين",
+      "name": "الاسم",
+      "code": "الكود",
+      "allocation": "المخصص",
+      "noRepsFound": "لا يوجد مناديب مسندون ضمن منطقتك لهذا الخط.",
+      "savedDmBudgetMessage": "تم حفظ مخصصات المشرفين بنجاح.",
+      "savedRepBudgetMessage": "تم حفظ مخصصات المناديب بنجاح.",
+      "savedBudgetMessage": "تم حفظ مخصصات الميزانية بنجاح.",
+      "distributedToDms": "الموزع للمشرفين",
+      "distributedToReps": "الموزع للمناديب",
+      "unallocatedRemaining": "الرصيد المتبقي",
+      "approvedSpent": "المصروف والمستهلك",
+      "allocatedToLms": "الموزع لمديري الخطوط",
+      "pendingServices": "الطلبات المعلقة",
+      "confirmDeleteTitle": "تأكيد الحذف",
+      "confirmDeleteActivity": "هل أنت متأكد من رغبتك في حذف هذا النشاط؟",
+      "btnDelete": "حذف",
+      "confirmApprovalTitle": "تأكيد الاعتماد",
+      "confirmRejectionTitle": "تأكيد الرفض",
+      "confirmDisbursementTitle": "تأكيد الصرف",
+      "btnApprove": "اعتماد",
+      "btnReject": "رفض",
+      "btnDisburse": "صرف",
+      "activityDeleted": "تم حذف النشاط بنجاح."
 }
   };
 
@@ -1032,6 +1154,9 @@
       if (role === ROLES.DM) return resource.status === REQUEST_STATUS.PENDING_DM && resource.nextApproverId === user.id;
       if (role === ROLES.LM) return resource.status === REQUEST_STATUS.PENDING_LM && resource.nextApproverId === user.id;
       if (role === ROLES.HR) return resource.status === REQUEST_STATUS.PENDING_HR || (action === "disburse_expense" && resource.status === REQUEST_STATUS.APPROVED);
+      if (role === "general_manager" || role === "gm") {
+        return resource.status === REQUEST_STATUS.PENDING_GM || (resource.status && resource.status.startsWith("pending"));
+      }
       if (role === ROLES.BU) {
         if (typeof window.canApproveFor === "function" && !window.canApproveFor(resource.requesterId)) return false;
         return resource.status && resource.status.startsWith("pending");
@@ -1048,11 +1173,13 @@
     }
 
     if (action === "allocate_dm_budget") {
+      // LM, BU, and ADMIN can allocate budget to DMs. DM cannot allocate to DMs.
       return role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
     }
 
     if (action === "allocate_rep_budget") {
-      return role === ROLES.DM || role === ROLES.ADMIN;
+      // DM, LM, BU, and ADMIN can allocate budget to Reps.
+      return role === ROLES.DM || role === ROLES.LM || role === ROLES.BU || role === ROLES.ADMIN;
     }
 
     if (action === "approve_location" || action === "reject_location") {
@@ -1217,9 +1344,12 @@
       const area = getLiveAreaById(areaId);
       if (area && area.lineId) {
         const dmsInLine = allUsers.filter(u => u.role === ROLES.DM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
-        if (dmsInLine.length > 0) {
+        if (dmsInLine.length === 1) {
           dmId = dmsInLine[0].id;
           lmId = dmsInLine[0].managerId || null;
+        } else {
+          // Multiple DMs on this line: do not guess arbitrarily!
+          dmId = null;
         }
       }
     }
@@ -1228,7 +1358,12 @@
       const area = getLiveAreaById(areaId);
       if (area && area.lineId) {
         const lmsInLine = allUsers.filter(u => u.role === ROLES.LM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
-        if (lmsInLine.length > 0) lmId = lmsInLine[0].id;
+        if (lmsInLine.length === 1) {
+          lmId = lmsInLine[0].id;
+        } else {
+          // Multiple LMs on this line: do not guess arbitrarily!
+          lmId = null;
+        }
       }
     }
 
@@ -1330,6 +1465,14 @@
     return getAllUsers().find((u) => u.role === ROLES.HR) || null;
   }
 
+  function getGmUser() {
+    const allUsers = getAllUsers();
+    return allUsers.find((u) => {
+      const r = (u.role || "").toLowerCase();
+      return r === "general_manager" || r === "gm";
+    }) || null;
+  }
+
   function getSubordinatesForUser(user, lineId) {
     if (!user) return [];
     const allUsers = getAllUsers();
@@ -1411,6 +1554,7 @@
     getDmsUnderLmForLine,
     getSubordinatesForUser,
     getHrUser,
+    getGmUser,
     dispatchWorkflowNotification,
   };
 })(window);
