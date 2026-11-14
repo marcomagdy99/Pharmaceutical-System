@@ -464,12 +464,28 @@
 
         // CRM / IMS Bricks hierarchy matching
         if (typeof window !== "undefined" && Array.isArray(window.CRM_IMS_MASTER_BRICKS)) {
-          const crmB = window.CRM_IMS_MASTER_BRICKS.find((b) => {
-            const bName = norm(b.name);
-            const bCrm = norm(b.crmCode);
-            const bIms = norm(b.imsCode);
-            return bName === nb || bCrm === nb || bIms === nb || (bIms && nb.includes(bIms)) || (bCrm && nb.includes(bCrm));
-          });
+          const codeMatch = String(brickName).match(/\[(B\d+)\]/i);
+          let crmB = null;
+          if (codeMatch) {
+            const targetCode = codeMatch[1].toUpperCase();
+            crmB = window.CRM_IMS_MASTER_BRICKS.find(
+              (b) => (b.id && b.id.toUpperCase() === targetCode) || (b.imsCode && b.imsCode.toUpperCase() === targetCode)
+            );
+          }
+          if (!crmB) {
+            crmB = window.CRM_IMS_MASTER_BRICKS.find((b) => {
+              const bName = norm(b.name);
+              const bCrm = norm(b.crmCode);
+              const bIms = norm(b.imsCode);
+              if (bName === nb || bCrm === nb || bIms === nb) return true;
+              if (bIms) {
+                const imsRx = new RegExp("(?:^|[^a-z0-9])" + bIms + "(?:[^a-z0-9]|$)", "i");
+                if (imsRx.test(brickName)) return true;
+              }
+              if (bCrm && nb.includes(bCrm)) return true;
+              return false;
+            });
+          }
           if (crmB) {
             const bIms = norm(crmB.imsCode);
             const bCrm = norm(crmB.crmCode);

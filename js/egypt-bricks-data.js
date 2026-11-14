@@ -7626,73 +7626,1941 @@ window.EGYPT_MASTER_BRICKS = [
 // Official IMS / CRM Grouped Bricks Hierarchy (Greater Cairo & Qalyubia)
 // ============================================================================
 window.CRM_IMS_MASTER_BRICKS = [
-  // 1. قطاع القاهرة (Cairo) - 37 Bricks (B01 - B37)
-  { id: "B01", crmCode: "Heliopolis I - Brick 1", imsCode: "B01", imsName: "Heliopolis 1", name: "[B01] Heliopolis I - Brick 1 (Heliopolis 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "روكسي – منشية البكري – الخليفة المأمون – جسر السويس (بداية)", subAreas: ["روكسي", "منشية البكري", "الخليفة المأمون", "جسر السويس (بداية)", "جسر السويس"] },
-  { id: "B02", crmCode: "Heliopolis I - Brick 2", imsCode: "B02", imsName: "Heliopolis 2", name: "[B02] Heliopolis I - Brick 2 (Heliopolis 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "الكوربة – ألماظة – أرض الجولف – السبع عمارات", subAreas: ["الكوربة", "ألماظة", "أرض الجولف", "السبع عمارات"] },
-  { id: "B03", crmCode: "Heliopolis II - Brick 1", imsCode: "B03", imsName: "Heliopolis 3", name: "[B03] Heliopolis II - Brick 1 (Heliopolis 3)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "ميدان الجامع – هارون – الإسماعيلية – صلاح الدين – تريومف", subAreas: ["ميدان الجامع", "هارون", "الإسماعيلية", "صلاح الدين", "تريومف"] },
-  { id: "B04", crmCode: "Heliopolis III - Brick 1", imsCode: "B04", imsName: "Heliopolis 4", name: "[B04] Heliopolis III - Brick 1 (Heliopolis 4)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "سانت فاتيما – ميدان الحجاز – المحكمة – النزهة", subAreas: ["سانت فاتيما", "ميدان الحجاز", "المحكمة", "النزهة"] },
-  { id: "B05", crmCode: "Heliopolis III - Brick 2", imsCode: "B05", imsName: "Heliopolis 5", name: "[B05] Heliopolis III - Brick 2 (Heliopolis 5)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "شيراتون المطار – مساكن شيراتون – المطار – الهايكستب", subAreas: ["شيراتون المطار", "مساكن شيراتون", "المطار", "الهايكستب"] },
-  { id: "B06", crmCode: "El Nozha / Ain Shams", imsCode: "B06", imsName: "Ain Shams 1", name: "[B06] El Nozha / Ain Shams (Ain Shams 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "عين شمس الشرقية – ألف مسكن – جسر السويس (المنتصف)", subAreas: ["عين شمس الشرقية", "ألف مسكن", "جسر السويس (المنتصف)", "جسر السويس"] },
-  { id: "B07", crmCode: "El Nozha / Ain Shams", imsCode: "B07", imsName: "Ain Shams 2", name: "[B07] El Nozha / Ain Shams (Ain Shams 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "عين شمس الغربية – النعام – حلمية الزيتون (جزء)", subAreas: ["عين شمس الغربية", "النعام", "حلمية الزيتون"] },
-  { id: "B08", crmCode: "El Matareya", imsCode: "B08", imsName: "El Matareya", name: "[B08] El Matareya (El Matareya)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "المطرية – المسلة – عزبة النخل (جزء)", subAreas: ["المطرية", "المسلة", "عزبة النخل"] },
-  { id: "B09", crmCode: "El Marg", imsCode: "B09", imsName: "El Marg", name: "[B09] El Marg (El Marg)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "المرج القديمة والجديدة – عزبة النخل – مؤسسة الزكاة", subAreas: ["المرج القديمة والجديدة", "المرج", "عزبة النخل", "مؤسسة الزكاة"] },
-  { id: "B10", crmCode: "El Salam", imsCode: "B10", imsName: "El Salam", name: "[B10] El Salam (El Salam)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "مدينة السلام – النهضة – الحرفيين – جسر السويس (نهاية)", subAreas: ["مدينة السلام", "السلام", "النهضة", "الحرفيين", "جسر السويس"] },
-  { id: "B11", crmCode: "El Zeitoun / Hadayek", imsCode: "B11", imsName: "El Zeitoun", name: "[B11] El Zeitoun / Hadayek (El Zeitoun)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "الزيتون – سراي القبة – حمامات القبة", subAreas: ["الزيتون", "سراي القبة", "حمامات القبة"] },
-  { id: "B12", crmCode: "El Qouba - Brick 1", imsCode: "B12", imsName: "Hadayek El Qouba", name: "[B12] El Qouba - Brick 1 (Hadayek El Qouba)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "حدائق القبة – دير الملاك – مصر والسودان", subAreas: ["حدائق القبة", "دير الملاك", "مصر والسودان"] },
-  { id: "B13", crmCode: "Shobra - Brick 1", imsCode: "B13", imsName: "Shobra 1", name: "[B13] Shobra - Brick 1 (Shobra 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "روض الفرج – شبرا مصر – دوران شبرا – الترعة البولاقية", subAreas: ["روض الفرج", "شبرا مصر", "دوران شبرا", "الترعة البولاقية"] },
-  { id: "B14", crmCode: "Shobra - Brick 2", imsCode: "B14", imsName: "Shobra 2", name: "[B14] Shobra - Brick 2 (Shobra 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "الساحل – الخلفاوي – المظلات – أغاخان", subAreas: ["الساحل", "الخلفاوي", "المظلات", "أغاخان"] },
-  { id: "B15", crmCode: "El Sharabiya / Zawya", imsCode: "B15", imsName: "El Zawya", name: "[B15] El Sharabiya / Zawya (El Zawya)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "الشرابية – الزاوية الحمراء – غمرة", subAreas: ["الشرابية", "الزاوية الحمراء", "غمرة"] },
-  { id: "B16", crmCode: "Nasr City - Brick 1", imsCode: "B16", imsName: "Nasr City 1", name: "[B16] Nasr City - Brick 1 (Nasr City 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "رابعة العدوية – عباس العقاد – الطيران – الحديقة الدولية", subAreas: ["رابعة العدوية", "عباس العقاد", "الطيران", "الحديقة الدولية"] },
-  { id: "B17", crmCode: "Nasr City - Brick 2", imsCode: "B17", imsName: "Nasr City 2", name: "[B17] Nasr City - Brick 2 (Nasr City 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "مكرم عبيد – مصطفى النحاس – المنطقة السادسة والتاسعة", subAreas: ["مكرم عبيد", "مصطفى النحاس", "المنطقة السادسة", "المنطقة التاسعة"] },
-  { id: "B18", crmCode: "Nasr City - Brick 3", imsCode: "B18", imsName: "Nasr City 3", name: "[B18] Nasr City - Brick 3 (Nasr City 3)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "الحي العاشر – زهراء مدينة نصر – الحي السابع – الحي الثامن – الواحة", subAreas: ["الحي العاشر", "زهراء مدينة نصر", "الحي السابع", "الحي الثامن", "الواحة"] },
-  { id: "B19", crmCode: "New Cairo / Tagamoa", imsCode: "B19", imsName: "New Cairo 1", name: "[B19] New Cairo / Tagamoa (New Cairo 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "التجمع الخامس – شارع التسعين – الرحاب – مدينتي", subAreas: ["التجمع الخامس", "شارع التسعين", "التسعين", "الرحاب", "مدينتي"] },
-  { id: "B20", crmCode: "New Cairo / Tagamoa", imsCode: "B20", imsName: "New Cairo 2", name: "[B20] New Cairo / Tagamoa (New Cairo 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "التجمع الأول – التجمع الثالث – القطامية – الشروق – بدر", subAreas: ["التجمع الأول", "التجمع الثالث", "القطامية", "الشروق", "بدر"] },
-  { id: "B21", crmCode: "El Abbasia - Brick 1", imsCode: "B21", imsName: "El Abbasia 1", name: "[B21] El Abbasia - Brick 1 (El Abbasia 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "العباسية – ميدان الجيش – الظاهر – الفجالة", subAreas: ["العباسية", "ميدان الجيش", "الظاهر", "الفجالة"] },
-  { id: "B22", crmCode: "El Abbasia - Brick 2", imsCode: "B22", imsName: "El Abbasia 2", name: "[B22] El Abbasia - Brick 2 (El Abbasia 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "الوايلي – الدمرداش – امتداد رمسيس", subAreas: ["الوايلي", "الدمرداش", "امتداد رمسيس"] },
-  { id: "B23", crmCode: "Center Cairo - Brick 1", imsCode: "B23", imsName: "Down Town 1", name: "[B23] Center Cairo - Brick 1 (Down Town 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "وسط البلد – التحرير – طلعت حرب – رمسيس – الإسعاف", subAreas: ["وسط البلد", "التحرير", "طلعت حرب", "رمسيس", "الإسعاف"] },
-  { id: "B24", crmCode: "Center Cairo - Brick 2", imsCode: "B24", imsName: "Down Town 2", name: "[B24] Center Cairo - Brick 2 (Down Town 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "عابدين – باب اللوق – لاظوغلي – جاردن سيتي – المنيرة", subAreas: ["عابدين", "باب اللوق", "لاظوغلي", "جاردن سيتي", "المنيرة"] },
-  { id: "B25", crmCode: "West Cairo I - Brick 1", imsCode: "B25", imsName: "Bab El Shaariya", name: "[B25] West Cairo I - Brick 1 (Bab El Shaariya)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "باب الشعرية – الموسكي – العتبة – الأزهر – الحسين", subAreas: ["باب الشعرية", "الموسكي", "العتبة", "الأزهر", "الحسين"] },
-  { id: "B26", crmCode: "West Cairo I - Brick 2", imsCode: "B26", imsName: "Boulaq Abu El Ela", name: "[B26] West Cairo I - Brick 2 (Boulaq Abu El Ela)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "بولاق أبو العلا – السبتية – وكالة البلح – كورنيش ماسبيرو", subAreas: ["بولاق أبو العلا", "السبتية", "وكالة البلح", "كورنيش ماسبيرو"] },
-  { id: "B27", crmCode: "East Cairo I - Brick 1", imsCode: "B27", imsName: "El Sayeda Zeinab", name: "[B27] East Cairo I - Brick 1 (El Sayeda Zeinab)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "السيدة زينب – المبتديان – طولون – زينهم", subAreas: ["السيدة زينب", "المبتديان", "طولون", "زينهم"] },
-  { id: "B28", crmCode: "East Cairo I - Brick 2", imsCode: "B28", imsName: "El Khalifa", name: "[B28] East Cairo I - Brick 2 (El Khalifa)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "القلعة – الحلمية الجديدة – السيدة عائشة – الإمام الشافعي", subAreas: ["القلعة", "الحلمية الجديدة", "السيدة عائشة", "الإمام الشافعي"] },
-  { id: "B29", crmCode: "East Cairo I - Brick 3", imsCode: "B29", imsName: "El Mokattam", name: "[B29] East Cairo I - Brick 3 (El Mokattam)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "المقطم (الهضبة العليا والوسطى) – الأباجية", subAreas: ["المقطم", "الهضبة العليا", "الهضبة الوسطى", "الأباجية"] },
-  { id: "B30", crmCode: "South Cairo I - Brick 1", imsCode: "B30", imsName: "Misr El Qadima", name: "[B30] South Cairo I - Brick 1 (Misr El Qadima)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "مصر القديمة – المنيل – الروضة – فم الخليج", subAreas: ["مصر القديمة", "المنيل", "الروضة", "فم الخليج"] },
-  { id: "B31", crmCode: "South Cairo I - Brick 2", imsCode: "B31", imsName: "Dar El Salam", name: "[B31] South Cairo I - Brick 2 (Dar El Salam)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "دار السلام – الزهراء – البساتين – فايدة كامل", subAreas: ["دار السلام", "الزهراء", "البساتين", "فايدة كامل"] },
-  { id: "B32", crmCode: "Maadi - Brick 1", imsCode: "B32", imsName: "Maadi 1", name: "[B32] Maadi - Brick 1 (Maadi 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "المعادي القديمة – ثكنات المعادي – دجلة – سرايات المعادي", subAreas: ["المعادي القديمة", "ثكنات المعادي", "دجلة", "سرايات المعادي", "المعادي"] },
-  { id: "B33", crmCode: "Maadi - Brick 2", imsCode: "B33", imsName: "Maadi 2", name: "[B33] Maadi - Brick 2 (Maadi 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "المعادي الجديدة – شارع النصر – اللاسلكي – صقر قريش", subAreas: ["المعادي الجديدة", "شارع النصر", "اللاسلكي", "صقر قريش"] },
-  { id: "B34", crmCode: "Maadi - Brick 3", imsCode: "B34", imsName: "Maadi 3", name: "[B34] Maadi - Brick 3 (Maadi 3)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "حدائق المعادي – طرة البلد – طرة الأسمنت – كوتسيكا", subAreas: ["حدائق المعادي", "طرة البلد", "طرة الأسمنت", "كوتسيكا"] },
-  { id: "B35", crmCode: "Helwan - Brick 1", imsCode: "B35", imsName: "Helwan 1", name: "[B35] Helwan - Brick 1 (Helwan 1)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "حلوان (وسط البلد – المحطة – شارع رايل – منصور)", subAreas: ["حلوان", "وسط البلد", "المحطة", "شارع رايل", "شارع منصور"] },
-  { id: "B36", crmCode: "Helwan - Brick 2", imsCode: "B36", imsName: "Helwan 2", name: "[B36] Helwan - Brick 2 (Helwan 2)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "حدائق حلوان – المعصرة – وادي حوف", subAreas: ["حدائق حلوان", "المعصرة", "وادي حوف"] },
-  { id: "B37", crmCode: "Helwan - Brick 3", imsCode: "B37", imsName: "Helwan 3", name: "[B37] Helwan - Brick 3 (Helwan 3)", sector: "Cairo", sectorAr: "القاهرة", scopeText: "15 مايو – التبين – كفر العلو – عرب غنيم", subAreas: ["15 مايو", "التبين", "كفر العلو", "عرب غنيم"] },
-
-  // 2. قطاع الجيزة (Giza) - 19 Bricks (B38 - B56)
-  { id: "B38", crmCode: "Giza I - Brick 1", imsCode: "B38", imsName: "Giza 1", name: "[B38] Giza I - Brick 1 (Giza 1)", sector: "Giza", sectorAr: "الجيزة", scopeText: "ميدان الجيزة – البحر الأعظم – ساقية مكي – جزيرة الذهب", subAreas: ["ميدان الجيزة", "الجيزة", "البحر الأعظم", "ساقية مكي", "جزيرة الذهب"] },
-  { id: "B39", crmCode: "Giza I - Brick 2", imsCode: "B39", imsName: "Giza 2", name: "[B39] Giza I - Brick 2 (Giza 2)", sector: "Giza", sectorAr: "الجيزة", scopeText: "المنيب – القصبجي – الكونيسة – ترسا (بداية)", subAreas: ["المنيب", "القصبجي", "الكونيسة", "ترسا"] },
-  { id: "B40", crmCode: "Giza I - Brick 3", imsCode: "B40", imsName: "Giza 3", name: "[B40] Giza I - Brick 3 (Giza 3)", sector: "Giza", sectorAr: "الجيزة", scopeText: "العمرانية الشرقية والغربية – الطالبية – خاتم المرسلين", subAreas: ["العمرانية الشرقية", "العمرانية الغربية", "العمرانية", "الطالبية", "خاتم المرسلين"] },
-  { id: "B41", crmCode: "Giza II - Brick 1", imsCode: "B41", imsName: "Giza 4", name: "[B41] Giza II - Brick 1 (Giza 4)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الدقي – المساحة – التحرير (الدقي) – بين السرايات", subAreas: ["الدقي", "المساحة", "التحرير (الدقي)", "بين السرايات"] },
-  { id: "B42", crmCode: "Giza II - Brick 2", imsCode: "B42", imsName: "Giza 5", name: "[B42] Giza II - Brick 2 (Giza 5)", sector: "Giza", sectorAr: "الجيزة", scopeText: "العجوزة – البالون – نوال – سليمان جوهر", subAreas: ["العجوزة", "البالون", "نوال", "سليمان جوهر"] },
-  { id: "B43", crmCode: "Haram - Brick 1", imsCode: "B43", imsName: "El Haram 1", name: "[B43] Haram - Brick 1 (El Haram 1)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الهرم (من الجيزة حتى العريش) – نصر الدين – مدكور – المطبعة", subAreas: ["الهرم", "نصر الدين", "مدكور", "المطبعة"] },
-  { id: "B44", crmCode: "Haram - Brick 2", imsCode: "B44", imsName: "El Haram 2", name: "[B44] Haram - Brick 2 (El Haram 2)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الهرم (من العريش حتى الرماية) – المريوطية – المنصورية – مشعل", subAreas: ["الهرم", "العريش", "الرماية", "المريوطية", "المنصورية", "مشعل"] },
-  { id: "B45", crmCode: "Haram - Brick 3", imsCode: "B45", imsName: "El Haram 3", name: "[B45] Haram - Brick 3 (El Haram 3)", sector: "Giza", sectorAr: "الجيزة", scopeText: "حدائق الأهرام – نزلة السمان – كفر غطاطي", subAreas: ["حدائق الأهرام", "نزلة السمان", "كفر غطاطي"] },
-  { id: "B46", crmCode: "Faisal - Brick 1", imsCode: "B46", imsName: "Faisal 1", name: "[B46] Faisal - Brick 1 (Faisal 1)", sector: "Giza", sectorAr: "الجيزة", scopeText: "فيصل (من أول الكوبري حتى الطوابق) – العشرين – الملكة – المطبعة", subAreas: ["فيصل", "الطوابق", "العشرين", "الملكة", "المطبعة"] },
-  { id: "B47", crmCode: "Faisal - Brick 2", imsCode: "B47", imsName: "Faisal 2", name: "[B47] Faisal - Brick 2 (Faisal 2)", sector: "Giza", sectorAr: "الجيزة", scopeText: "فيصل (من الطوابق حتى الرماية) – كفر طهرمس – التلاتيني – اللبيني", subAreas: ["فيصل", "الرماية", "كفر طهرمس", "التلاتيني", "اللبيني"] },
-  { id: "B48", crmCode: "Giza IV - Brick 1", imsCode: "B48", imsName: "Giza 10", name: "[B48] Giza IV - Brick 1 (Giza 10)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الزمالك – ميت عقبة – الصحفيين – أحمد عرابي", subAreas: ["الزمالك", "ميت عقبة", "الصحفيين", "أحمد عرابي"] },
-  { id: "B49", crmCode: "Giza V - Brick 1", imsCode: "B49", imsName: "Giza 11", name: "[B49] Giza V - Brick 1 (Giza 11)", sector: "Giza", sectorAr: "الجيزة", scopeText: "المهندسين (جامعة الدول – شهاب – لبنان – البطل أحمد عبد العزيز)", subAreas: ["المهندسين", "جامعة الدول", "شهاب", "ميدان لبنان", "لبنان", "البطل أحمد عبد العزيز"] },
-  { id: "B50", crmCode: "Giza V - Brick 2", imsCode: "B50", imsName: "Giza 12", name: "[B50] Giza V - Brick 2 (Giza 12)", sector: "Giza", sectorAr: "الجيزة", scopeText: "بولاق الدكرور – صفط اللبن – المعتمدية – ناهيا", subAreas: ["بولاق الدكرور", "صفط اللبن", "المعتمدية", "ناهيا"] },
-  { id: "B51", crmCode: "Imbaba I - Brick 1", imsCode: "B51", imsName: "Imbaba 1", name: "[B51] Imbaba I - Brick 1 (Imbaba 1)", sector: "Giza", sectorAr: "الجيزة", scopeText: "إمبابة (الكيت كات – المنيرة – التاج الدول – المطار)", subAreas: ["إمبابة", "الكيت كات", "المنيرة", "التاج الدول", "المطار"] },
-  { id: "B52", crmCode: "Imbaba II - Brick 1", imsCode: "B52", imsName: "Imbaba 2", name: "[B52] Imbaba II - Brick 1 (Imbaba 2)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الوراق – جزيرة محمد – طناش – بشتيل – أوسيم", subAreas: ["الوراق", "جزيرة محمد", "طناش", "بشتيل", "أوسيم"] },
-  { id: "B53", crmCode: "6th of October - Brick 1", imsCode: "B53", imsName: "6 October 1", name: "[B53] 6th of October - Brick 1 (6 October 1)", sector: "Giza", sectorAr: "الجيزة", scopeText: "6 أكتوبر (المحور المركزي – الحصري – الأحياء 1 إلى 6)", subAreas: ["6 أكتوبر", "أكتوبر", "المحور المركزي", "الحصري", "الأحياء 1 إلى 6"] },
-  { id: "B54", crmCode: "6th of October - Brick 2", imsCode: "B54", imsName: "6 October 2", name: "[B54] 6th of October - Brick 2 (6 October 2)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الشيخ زايد – الأحياء 7 إلى 12 – المنطقة الصناعية – أبو رواش", subAreas: ["الشيخ زايد", "زايد", "المنطقة الصناعية", "أبو رواش"] },
-  { id: "B55", crmCode: "South Giza - Brick 1", imsCode: "B55", imsName: "Badrashin / Hawamdiya", name: "[B55] South Giza - Brick 1 (Badrashin / Hawamdiya)", sector: "Giza", sectorAr: "الجيزة", scopeText: "الحوامدية – البدرشين – أبو النمرس – منيل شيحة", subAreas: ["الحوامدية", "البدرشين", "أبو النمرس", "منيل شيحة"] },
-  { id: "B56", crmCode: "South Giza - Brick 2", imsCode: "B56", imsName: "El Ayat / Saff", name: "[B56] South Giza - Brick 2 (El Ayat / Saff)", sector: "Giza", sectorAr: "الجيزة", scopeText: "العياط – الصف – أطفيح", subAreas: ["العياط", "الصف", "أطفيح"] },
-
-  // 3. قطاع القليوبية (Qalyubia) - 6 Bricks (B57 - B62)
-  { id: "B57", crmCode: "Shobra El Khima - Brick 1", imsCode: "B57", imsName: "Shobra El Khima 1", name: "[B57] Shobra El Khima - Brick 1 (Shobra El Khima 1)", sector: "Qalyubia", sectorAr: "القليوبية", scopeText: "شبرا الخيمة أول – المؤسسة – أحمد عرابي – بيجام – منطي", subAreas: ["شبرا الخيمة أول", "شبرا الخيمة", "المؤسسة", "أحمد عرابي", "بيجام", "منطي"] },
-  { id: "B58", crmCode: "Shobra El Khima - Brick 2", imsCode: "B58", imsName: "Shobra El Khima 2", name: "[B58] Shobra El Khima - Brick 2 (Shobra El Khima 2)", sector: "Qalyubia", sectorAr: "القليوبية", scopeText: "شبرا الخيمة ثان – بهتيم – مسطرد – الشارع الجديد – الخصوص", subAreas: ["شبرا الخيمة ثان", "بهتيم", "مسطرد", "الشارع الجديد", "الخصوص"] },
-  { id: "B59", crmCode: "Kalubeia I - Brick 1", imsCode: "B59", imsName: "Qalyub", name: "[B59] Kalubeia I - Brick 1 (Qalyub)", sector: "Qalyubia", sectorAr: "القليوبية", scopeText: "قليوب المحطة والبلد – سنديون – القناطر الخيرية", subAreas: ["قليوب المحطة", "قليوب البلد", "قليوب", "سنديون", "القناطر الخيرية"] },
-  { id: "B60", crmCode: "Kalubeia I - Brick 2", imsCode: "B60", imsName: "Khanka / Shebin", name: "[B60] Kalubeia I - Brick 2 (Khanka / Shebin)", sector: "Qalyubia", sectorAr: "القليوبية", scopeText: "الخانكة – أبو زعبل – شبين القناطر", subAreas: ["الخانكة", "أبو زعبل", "شبين القناطر"] },
-  { id: "B61", crmCode: "Kalubeia II - Brick 1", imsCode: "B61", imsName: "Banha 1", name: "[B61] Kalubeia II - Brick 1 (Banha 1)", sector: "Qalyubia", sectorAr: "القليوبية", scopeText: "بنها (وسط البلد – المنشية – الفلل – الأهرام – كفر الجزار)", subAreas: ["بنها", "وسط البلد", "المنشية", "الفلل", "الأهرام", "كفر الجزار"] },
-  { id: "B62", crmCode: "Kalubeia II - Brick 2", imsCode: "B62", imsName: "Banha 2 / Toukh", name: "[B62] Kalubeia II - Brick 2 (Banha 2 / Toukh)", sector: "Qalyubia", sectorAr: "القليوبية", scopeText: "طوخ – قها – ميت برة – كفر شكر", subAreas: ["طوخ", "قها", "ميت برة", "كفر شكر"] }
+  {
+    "id": "B01",
+    "crmCode": "Heliopolis I - Brick 1",
+    "imsCode": "B01",
+    "imsName": "Heliopolis 1",
+    "name": "[B01] Heliopolis I - Brick 1 (Heliopolis 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "روكسي – منشية البكري – الخليفة المأمون – جسر السويس (بداية)",
+    "subAreas": [
+      "روكسي",
+      "منشية البكري",
+      "الخليفة المأمون",
+      "جسر السويس (بداية)",
+      "جسر السويس"
+    ]
+  },
+  {
+    "id": "B02",
+    "crmCode": "Heliopolis I - Brick 2",
+    "imsCode": "B02",
+    "imsName": "Heliopolis 2",
+    "name": "[B02] Heliopolis I - Brick 2 (Heliopolis 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "الكوربة – ألماظة – أرض الجولف – السبع عمارات",
+    "subAreas": [
+      "الكوربة",
+      "ألماظة",
+      "أرض الجولف",
+      "السبع عمارات"
+    ]
+  },
+  {
+    "id": "B03",
+    "crmCode": "Heliopolis II - Brick 1",
+    "imsCode": "B03",
+    "imsName": "Heliopolis 3",
+    "name": "[B03] Heliopolis II - Brick 1 (Heliopolis 3)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "ميدان الجامع – هارون – الإسماعيلية – صلاح الدين – تريومف",
+    "subAreas": [
+      "ميدان الجامع",
+      "هارون",
+      "الإسماعيلية",
+      "صلاح الدين",
+      "تريومف"
+    ]
+  },
+  {
+    "id": "B04",
+    "crmCode": "Heliopolis III - Brick 1",
+    "imsCode": "B04",
+    "imsName": "Heliopolis 4",
+    "name": "[B04] Heliopolis III - Brick 1 (Heliopolis 4)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "سانت فاتيما – ميدان الحجاز – المحكمة – النزهة",
+    "subAreas": [
+      "سانت فاتيما",
+      "ميدان الحجاز",
+      "المحكمة",
+      "النزهة"
+    ]
+  },
+  {
+    "id": "B05",
+    "crmCode": "Heliopolis III - Brick 2",
+    "imsCode": "B05",
+    "imsName": "Heliopolis 5",
+    "name": "[B05] Heliopolis III - Brick 2 (Heliopolis 5)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "شيراتون المطار – مساكن شيراتون – المطار – الهايكستب",
+    "subAreas": [
+      "شيراتون المطار",
+      "مساكن شيراتون",
+      "المطار",
+      "الهايكستب"
+    ]
+  },
+  {
+    "id": "B06",
+    "crmCode": "El Nozha / Ain Shams",
+    "imsCode": "B06",
+    "imsName": "Ain Shams 1",
+    "name": "[B06] El Nozha / Ain Shams (Ain Shams 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "عين شمس الشرقية – ألف مسكن – جسر السويس (المنتصف)",
+    "subAreas": [
+      "عين شمس الشرقية",
+      "ألف مسكن",
+      "جسر السويس (المنتصف)",
+      "جسر السويس"
+    ]
+  },
+  {
+    "id": "B07",
+    "crmCode": "El Nozha / Ain Shams",
+    "imsCode": "B07",
+    "imsName": "Ain Shams 2",
+    "name": "[B07] El Nozha / Ain Shams (Ain Shams 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "عين شمس الغربية – النعام – حلمية الزيتون (جزء)",
+    "subAreas": [
+      "عين شمس الغربية",
+      "النعام",
+      "حلمية الزيتون"
+    ]
+  },
+  {
+    "id": "B08",
+    "crmCode": "El Matareya",
+    "imsCode": "B08",
+    "imsName": "El Matareya",
+    "name": "[B08] El Matareya (El Matareya)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "المطرية – المسلة – عزبة النخل (جزء)",
+    "subAreas": [
+      "المطرية",
+      "المسلة",
+      "عزبة النخل"
+    ]
+  },
+  {
+    "id": "B09",
+    "crmCode": "El Marg",
+    "imsCode": "B09",
+    "imsName": "El Marg",
+    "name": "[B09] El Marg (El Marg)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "المرج القديمة والجديدة – عزبة النخل – مؤسسة الزكاة",
+    "subAreas": [
+      "المرج القديمة والجديدة",
+      "المرج",
+      "عزبة النخل",
+      "مؤسسة الزكاة"
+    ]
+  },
+  {
+    "id": "B10",
+    "crmCode": "El Salam",
+    "imsCode": "B10",
+    "imsName": "El Salam",
+    "name": "[B10] El Salam (El Salam)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "مدينة السلام – النهضة – الحرفيين – جسر السويس (نهاية)",
+    "subAreas": [
+      "مدينة السلام",
+      "السلام",
+      "النهضة",
+      "الحرفيين",
+      "جسر السويس"
+    ]
+  },
+  {
+    "id": "B11",
+    "crmCode": "El Zeitoun / Hadayek",
+    "imsCode": "B11",
+    "imsName": "El Zeitoun",
+    "name": "[B11] El Zeitoun / Hadayek (El Zeitoun)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "الزيتون – سراي القبة – حمامات القبة",
+    "subAreas": [
+      "الزيتون",
+      "سراي القبة",
+      "حمامات القبة"
+    ]
+  },
+  {
+    "id": "B12",
+    "crmCode": "El Qouba - Brick 1",
+    "imsCode": "B12",
+    "imsName": "Hadayek El Qouba",
+    "name": "[B12] El Qouba - Brick 1 (Hadayek El Qouba)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "حدائق القبة – دير الملاك – مصر والسودان",
+    "subAreas": [
+      "حدائق القبة",
+      "دير الملاك",
+      "مصر والسودان"
+    ]
+  },
+  {
+    "id": "B13",
+    "crmCode": "Shobra - Brick 1",
+    "imsCode": "B13",
+    "imsName": "Shobra 1",
+    "name": "[B13] Shobra - Brick 1 (Shobra 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "روض الفرج – شبرا مصر – دوران شبرا – الترعة البولاقية",
+    "subAreas": [
+      "روض الفرج",
+      "شبرا مصر",
+      "دوران شبرا",
+      "الترعة البولاقية"
+    ]
+  },
+  {
+    "id": "B14",
+    "crmCode": "Shobra - Brick 2",
+    "imsCode": "B14",
+    "imsName": "Shobra 2",
+    "name": "[B14] Shobra - Brick 2 (Shobra 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "الساحل – الخلفاوي – المظلات – أغاخان",
+    "subAreas": [
+      "الساحل",
+      "الخلفاوي",
+      "المظلات",
+      "أغاخان"
+    ]
+  },
+  {
+    "id": "B15",
+    "crmCode": "El Sharabiya / Zawya",
+    "imsCode": "B15",
+    "imsName": "El Zawya",
+    "name": "[B15] El Sharabiya / Zawya (El Zawya)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "الشرابية – الزاوية الحمراء – غمرة",
+    "subAreas": [
+      "الشرابية",
+      "الزاوية الحمراء",
+      "غمرة"
+    ]
+  },
+  {
+    "id": "B16",
+    "crmCode": "Nasr City - Brick 1",
+    "imsCode": "B16",
+    "imsName": "Nasr City 1",
+    "name": "[B16] Nasr City - Brick 1 (Nasr City 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "رابعة العدوية – عباس العقاد – الطيران – الحديقة الدولية",
+    "subAreas": [
+      "رابعة العدوية",
+      "عباس العقاد",
+      "الطيران",
+      "الحديقة الدولية"
+    ]
+  },
+  {
+    "id": "B17",
+    "crmCode": "Nasr City - Brick 2",
+    "imsCode": "B17",
+    "imsName": "Nasr City 2",
+    "name": "[B17] Nasr City - Brick 2 (Nasr City 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "مكرم عبيد – مصطفى النحاس – المنطقة السادسة والتاسعة",
+    "subAreas": [
+      "مكرم عبيد",
+      "مصطفى النحاس",
+      "المنطقة السادسة",
+      "المنطقة التاسعة"
+    ]
+  },
+  {
+    "id": "B18",
+    "crmCode": "Nasr City - Brick 3",
+    "imsCode": "B18",
+    "imsName": "Nasr City 3",
+    "name": "[B18] Nasr City - Brick 3 (Nasr City 3)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "الحي العاشر – زهراء مدينة نصر – الحي السابع – الحي الثامن – الواحة",
+    "subAreas": [
+      "الحي العاشر",
+      "زهراء مدينة نصر",
+      "الحي السابع",
+      "الحي الثامن",
+      "الواحة"
+    ]
+  },
+  {
+    "id": "B19",
+    "crmCode": "New Cairo / Tagamoa",
+    "imsCode": "B19",
+    "imsName": "New Cairo 1",
+    "name": "[B19] New Cairo / Tagamoa (New Cairo 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "التجمع الخامس – شارع التسعين – الرحاب – مدينتي",
+    "subAreas": [
+      "التجمع الخامس",
+      "شارع التسعين",
+      "التسعين",
+      "الرحاب",
+      "مدينتي"
+    ]
+  },
+  {
+    "id": "B20",
+    "crmCode": "New Cairo / Tagamoa",
+    "imsCode": "B20",
+    "imsName": "New Cairo 2",
+    "name": "[B20] New Cairo / Tagamoa (New Cairo 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "التجمع الأول – التجمع الثالث – القطامية – الشروق – بدر",
+    "subAreas": [
+      "التجمع الأول",
+      "التجمع الثالث",
+      "القطامية",
+      "الشروق",
+      "بدر"
+    ]
+  },
+  {
+    "id": "B21",
+    "crmCode": "El Abbasia - Brick 1",
+    "imsCode": "B21",
+    "imsName": "El Abbasia 1",
+    "name": "[B21] El Abbasia - Brick 1 (El Abbasia 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "العباسية – ميدان الجيش – الظاهر – الفجالة",
+    "subAreas": [
+      "العباسية",
+      "ميدان الجيش",
+      "الظاهر",
+      "الفجالة"
+    ]
+  },
+  {
+    "id": "B22",
+    "crmCode": "El Abbasia - Brick 2",
+    "imsCode": "B22",
+    "imsName": "El Abbasia 2",
+    "name": "[B22] El Abbasia - Brick 2 (El Abbasia 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "الوايلي – الدمرداش – امتداد رمسيس",
+    "subAreas": [
+      "الوايلي",
+      "الدمرداش",
+      "امتداد رمسيس"
+    ]
+  },
+  {
+    "id": "B23",
+    "crmCode": "Center Cairo - Brick 1",
+    "imsCode": "B23",
+    "imsName": "Down Town 1",
+    "name": "[B23] Center Cairo - Brick 1 (Down Town 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "وسط البلد – التحرير – طلعت حرب – رمسيس – الإسعاف",
+    "subAreas": [
+      "وسط البلد",
+      "التحرير",
+      "طلعت حرب",
+      "رمسيس",
+      "الإسعاف"
+    ]
+  },
+  {
+    "id": "B24",
+    "crmCode": "Center Cairo - Brick 2",
+    "imsCode": "B24",
+    "imsName": "Down Town 2",
+    "name": "[B24] Center Cairo - Brick 2 (Down Town 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "عابدين – باب اللوق – لاظوغلي – جاردن سيتي – المنيرة",
+    "subAreas": [
+      "عابدين",
+      "باب اللوق",
+      "لاظوغلي",
+      "جاردن سيتي",
+      "المنيرة"
+    ]
+  },
+  {
+    "id": "B25",
+    "crmCode": "West Cairo I - Brick 1",
+    "imsCode": "B25",
+    "imsName": "Bab El Shaariya",
+    "name": "[B25] West Cairo I - Brick 1 (Bab El Shaariya)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "باب الشعرية – الموسكي – العتبة – الأزهر – الحسين",
+    "subAreas": [
+      "باب الشعرية",
+      "الموسكي",
+      "العتبة",
+      "الأزهر",
+      "الحسين"
+    ]
+  },
+  {
+    "id": "B26",
+    "crmCode": "West Cairo I - Brick 2",
+    "imsCode": "B26",
+    "imsName": "Boulaq Abu El Ela",
+    "name": "[B26] West Cairo I - Brick 2 (Boulaq Abu El Ela)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "بولاق أبو العلا – السبتية – وكالة البلح – كورنيش ماسبيرو",
+    "subAreas": [
+      "بولاق أبو العلا",
+      "السبتية",
+      "وكالة البلح",
+      "كورنيش ماسبيرو"
+    ]
+  },
+  {
+    "id": "B27",
+    "crmCode": "East Cairo I - Brick 1",
+    "imsCode": "B27",
+    "imsName": "El Sayeda Zeinab",
+    "name": "[B27] East Cairo I - Brick 1 (El Sayeda Zeinab)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "السيدة زينب – المبتديان – طولون – زينهم",
+    "subAreas": [
+      "السيدة زينب",
+      "المبتديان",
+      "طولون",
+      "زينهم"
+    ]
+  },
+  {
+    "id": "B28",
+    "crmCode": "East Cairo I - Brick 2",
+    "imsCode": "B28",
+    "imsName": "El Khalifa",
+    "name": "[B28] East Cairo I - Brick 2 (El Khalifa)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "القلعة – الحلمية الجديدة – السيدة عائشة – الإمام الشافعي",
+    "subAreas": [
+      "القلعة",
+      "الحلمية الجديدة",
+      "السيدة عائشة",
+      "الإمام الشافعي"
+    ]
+  },
+  {
+    "id": "B29",
+    "crmCode": "East Cairo I - Brick 3",
+    "imsCode": "B29",
+    "imsName": "El Mokattam",
+    "name": "[B29] East Cairo I - Brick 3 (El Mokattam)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "المقطم (الهضبة العليا والوسطى) – الأباجية",
+    "subAreas": [
+      "المقطم",
+      "الهضبة العليا",
+      "الهضبة الوسطى",
+      "الأباجية"
+    ]
+  },
+  {
+    "id": "B30",
+    "crmCode": "South Cairo I - Brick 1",
+    "imsCode": "B30",
+    "imsName": "Misr El Qadima",
+    "name": "[B30] South Cairo I - Brick 1 (Misr El Qadima)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "مصر القديمة – المنيل – الروضة – فم الخليج",
+    "subAreas": [
+      "مصر القديمة",
+      "المنيل",
+      "الروضة",
+      "فم الخليج"
+    ]
+  },
+  {
+    "id": "B31",
+    "crmCode": "South Cairo I - Brick 2",
+    "imsCode": "B31",
+    "imsName": "Dar El Salam",
+    "name": "[B31] South Cairo I - Brick 2 (Dar El Salam)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "دار السلام – الزهراء – البساتين – فايدة كامل",
+    "subAreas": [
+      "دار السلام",
+      "الزهراء",
+      "البساتين",
+      "فايدة كامل"
+    ]
+  },
+  {
+    "id": "B32",
+    "crmCode": "Maadi - Brick 1",
+    "imsCode": "B32",
+    "imsName": "Maadi 1",
+    "name": "[B32] Maadi - Brick 1 (Maadi 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "المعادي القديمة – ثكنات المعادي – دجلة – سرايات المعادي",
+    "subAreas": [
+      "المعادي القديمة",
+      "ثكنات المعادي",
+      "دجلة",
+      "سرايات المعادي",
+      "المعادي"
+    ]
+  },
+  {
+    "id": "B33",
+    "crmCode": "Maadi - Brick 2",
+    "imsCode": "B33",
+    "imsName": "Maadi 2",
+    "name": "[B33] Maadi - Brick 2 (Maadi 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "المعادي الجديدة – شارع النصر – اللاسلكي – صقر قريش",
+    "subAreas": [
+      "المعادي الجديدة",
+      "شارع النصر",
+      "اللاسلكي",
+      "صقر قريش"
+    ]
+  },
+  {
+    "id": "B34",
+    "crmCode": "Maadi - Brick 3",
+    "imsCode": "B34",
+    "imsName": "Maadi 3",
+    "name": "[B34] Maadi - Brick 3 (Maadi 3)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "حدائق المعادي – طرة البلد – طرة الأسمنت – كوتسيكا",
+    "subAreas": [
+      "حدائق المعادي",
+      "طرة البلد",
+      "طرة الأسمنت",
+      "كوتسيكا"
+    ]
+  },
+  {
+    "id": "B35",
+    "crmCode": "Helwan - Brick 1",
+    "imsCode": "B35",
+    "imsName": "Helwan 1",
+    "name": "[B35] Helwan - Brick 1 (Helwan 1)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "حلوان (وسط البلد – المحطة – شارع رايل – منصور)",
+    "subAreas": [
+      "حلوان",
+      "وسط البلد",
+      "المحطة",
+      "شارع رايل",
+      "شارع منصور"
+    ]
+  },
+  {
+    "id": "B36",
+    "crmCode": "Helwan - Brick 2",
+    "imsCode": "B36",
+    "imsName": "Helwan 2",
+    "name": "[B36] Helwan - Brick 2 (Helwan 2)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "حدائق حلوان – المعصرة – وادي حوف",
+    "subAreas": [
+      "حدائق حلوان",
+      "المعصرة",
+      "وادي حوف"
+    ]
+  },
+  {
+    "id": "B37",
+    "crmCode": "Helwan - Brick 3",
+    "imsCode": "B37",
+    "imsName": "Helwan 3",
+    "name": "[B37] Helwan - Brick 3 (Helwan 3)",
+    "sector": "Cairo",
+    "sectorAr": "القاهرة",
+    "scopeText": "15 مايو – التبين – كفر العلو – عرب غنيم",
+    "subAreas": [
+      "15 مايو",
+      "التبين",
+      "كفر العلو",
+      "عرب غنيم"
+    ]
+  },
+  {
+    "id": "B38",
+    "crmCode": "Giza I - Brick 1",
+    "imsCode": "B38",
+    "imsName": "Giza 1",
+    "name": "[B38] Giza I - Brick 1 (Giza 1)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "ميدان الجيزة – البحر الأعظم – ساقية مكي – جزيرة الذهب",
+    "subAreas": [
+      "ميدان الجيزة",
+      "الجيزة",
+      "البحر الأعظم",
+      "ساقية مكي",
+      "جزيرة الذهب"
+    ]
+  },
+  {
+    "id": "B39",
+    "crmCode": "Giza I - Brick 2",
+    "imsCode": "B39",
+    "imsName": "Giza 2",
+    "name": "[B39] Giza I - Brick 2 (Giza 2)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "المنيب – القصبجي – الكونيسة – ترسا (بداية)",
+    "subAreas": [
+      "المنيب",
+      "القصبجي",
+      "الكونيسة",
+      "ترسا"
+    ]
+  },
+  {
+    "id": "B40",
+    "crmCode": "Giza I - Brick 3",
+    "imsCode": "B40",
+    "imsName": "Giza 3",
+    "name": "[B40] Giza I - Brick 3 (Giza 3)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "العمرانية الشرقية والغربية – الطالبية – خاتم المرسلين",
+    "subAreas": [
+      "العمرانية الشرقية",
+      "العمرانية الغربية",
+      "العمرانية",
+      "الطالبية",
+      "خاتم المرسلين"
+    ]
+  },
+  {
+    "id": "B41",
+    "crmCode": "Giza II - Brick 1",
+    "imsCode": "B41",
+    "imsName": "Giza 4",
+    "name": "[B41] Giza II - Brick 1 (Giza 4)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الدقي – المساحة – التحرير (الدقي) – بين السرايات",
+    "subAreas": [
+      "الدقي",
+      "المساحة",
+      "التحرير (الدقي)",
+      "بين السرايات"
+    ]
+  },
+  {
+    "id": "B42",
+    "crmCode": "Giza II - Brick 2",
+    "imsCode": "B42",
+    "imsName": "Giza 5",
+    "name": "[B42] Giza II - Brick 2 (Giza 5)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "العجوزة – البالون – نوال – سليمان جوهر",
+    "subAreas": [
+      "العجوزة",
+      "البالون",
+      "نوال",
+      "سليمان جوهر"
+    ]
+  },
+  {
+    "id": "B43",
+    "crmCode": "Haram - Brick 1",
+    "imsCode": "B43",
+    "imsName": "El Haram 1",
+    "name": "[B43] Haram - Brick 1 (El Haram 1)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الهرم (من الجيزة حتى العريش) – نصر الدين – مدكور – المطبعة",
+    "subAreas": [
+      "الهرم",
+      "نصر الدين",
+      "مدكور",
+      "المطبعة"
+    ]
+  },
+  {
+    "id": "B44",
+    "crmCode": "Haram - Brick 2",
+    "imsCode": "B44",
+    "imsName": "El Haram 2",
+    "name": "[B44] Haram - Brick 2 (El Haram 2)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الهرم (من العريش حتى الرماية) – المريوطية – المنصورية – مشعل",
+    "subAreas": [
+      "الهرم",
+      "العريش",
+      "الرماية",
+      "المريوطية",
+      "المنصورية",
+      "مشعل"
+    ]
+  },
+  {
+    "id": "B45",
+    "crmCode": "Haram - Brick 3",
+    "imsCode": "B45",
+    "imsName": "El Haram 3",
+    "name": "[B45] Haram - Brick 3 (El Haram 3)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "حدائق الأهرام – نزلة السمان – كفر غطاطي",
+    "subAreas": [
+      "حدائق الأهرام",
+      "نزلة السمان",
+      "كفر غطاطي"
+    ]
+  },
+  {
+    "id": "B46",
+    "crmCode": "Faisal - Brick 1",
+    "imsCode": "B46",
+    "imsName": "Faisal 1",
+    "name": "[B46] Faisal - Brick 1 (Faisal 1)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "فيصل (من أول الكوبري حتى الطوابق) – العشرين – الملكة – المطبعة",
+    "subAreas": [
+      "فيصل",
+      "الطوابق",
+      "العشرين",
+      "الملكة",
+      "المطبعة"
+    ]
+  },
+  {
+    "id": "B47",
+    "crmCode": "Faisal - Brick 2",
+    "imsCode": "B47",
+    "imsName": "Faisal 2",
+    "name": "[B47] Faisal - Brick 2 (Faisal 2)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "فيصل (من الطوابق حتى الرماية) – كفر طهرمس – التلاتيني – اللبيني",
+    "subAreas": [
+      "فيصل",
+      "الرماية",
+      "كفر طهرمس",
+      "التلاتيني",
+      "اللبيني"
+    ]
+  },
+  {
+    "id": "B48",
+    "crmCode": "Giza IV - Brick 1",
+    "imsCode": "B48",
+    "imsName": "Giza 10",
+    "name": "[B48] Giza IV - Brick 1 (Giza 10)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الزمالك – ميت عقبة – الصحفيين – أحمد عرابي",
+    "subAreas": [
+      "الزمالك",
+      "ميت عقبة",
+      "الصحفيين",
+      "أحمد عرابي"
+    ]
+  },
+  {
+    "id": "B49",
+    "crmCode": "Giza V - Brick 1",
+    "imsCode": "B49",
+    "imsName": "Giza 11",
+    "name": "[B49] Giza V - Brick 1 (Giza 11)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "المهندسين (جامعة الدول – شهاب – لبنان – البطل أحمد عبد العزيز)",
+    "subAreas": [
+      "المهندسين",
+      "جامعة الدول",
+      "شهاب",
+      "ميدان لبنان",
+      "لبنان",
+      "البطل أحمد عبد العزيز"
+    ]
+  },
+  {
+    "id": "B50",
+    "crmCode": "Giza V - Brick 2",
+    "imsCode": "B50",
+    "imsName": "Giza 12",
+    "name": "[B50] Giza V - Brick 2 (Giza 12)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "بولاق الدكرور – صفط اللبن – المعتمدية – ناهيا",
+    "subAreas": [
+      "بولاق الدكرور",
+      "صفط اللبن",
+      "المعتمدية",
+      "ناهيا"
+    ]
+  },
+  {
+    "id": "B51",
+    "crmCode": "Imbaba I - Brick 1",
+    "imsCode": "B51",
+    "imsName": "Imbaba 1",
+    "name": "[B51] Imbaba I - Brick 1 (Imbaba 1)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "إمبابة (الكيت كات – المنيرة – التاج الدول – المطار)",
+    "subAreas": [
+      "إمبابة",
+      "الكيت كات",
+      "المنيرة",
+      "التاج الدول",
+      "المطار"
+    ]
+  },
+  {
+    "id": "B52",
+    "crmCode": "Imbaba II - Brick 1",
+    "imsCode": "B52",
+    "imsName": "Imbaba 2",
+    "name": "[B52] Imbaba II - Brick 1 (Imbaba 2)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الوراق – جزيرة محمد – طناش – بشتيل – أوسيم",
+    "subAreas": [
+      "الوراق",
+      "جزيرة محمد",
+      "طناش",
+      "بشتيل",
+      "أوسيم"
+    ]
+  },
+  {
+    "id": "B53",
+    "crmCode": "6th of October - Brick 1",
+    "imsCode": "B53",
+    "imsName": "6 October 1",
+    "name": "[B53] 6th of October - Brick 1 (6 October 1)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "6 أكتوبر (المحور المركزي – الحصري – الأحياء 1 إلى 6)",
+    "subAreas": [
+      "6 أكتوبر",
+      "أكتوبر",
+      "المحور المركزي",
+      "الحصري",
+      "الأحياء 1 إلى 6"
+    ]
+  },
+  {
+    "id": "B54",
+    "crmCode": "6th of October - Brick 2",
+    "imsCode": "B54",
+    "imsName": "6 October 2",
+    "name": "[B54] 6th of October - Brick 2 (6 October 2)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الشيخ زايد – الأحياء 7 إلى 12 – المنطقة الصناعية – أبو رواش",
+    "subAreas": [
+      "الشيخ زايد",
+      "زايد",
+      "المنطقة الصناعية",
+      "أبو رواش"
+    ]
+  },
+  {
+    "id": "B55",
+    "crmCode": "South Giza - Brick 1",
+    "imsCode": "B55",
+    "imsName": "Badrashin / Hawamdiya",
+    "name": "[B55] South Giza - Brick 1 (Badrashin / Hawamdiya)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "الحوامدية – البدرشين – أبو النمرس – منيل شيحة",
+    "subAreas": [
+      "الحوامدية",
+      "البدرشين",
+      "أبو النمرس",
+      "منيل شيحة"
+    ]
+  },
+  {
+    "id": "B56",
+    "crmCode": "South Giza - Brick 2",
+    "imsCode": "B56",
+    "imsName": "El Ayat / Saff",
+    "name": "[B56] South Giza - Brick 2 (El Ayat / Saff)",
+    "sector": "Giza",
+    "sectorAr": "الجيزة",
+    "scopeText": "العياط – الصف – أطفيح",
+    "subAreas": [
+      "العياط",
+      "الصف",
+      "أطفيح"
+    ]
+  },
+  {
+    "id": "B57",
+    "crmCode": "Shobra El Khima - Brick 1",
+    "imsCode": "B57",
+    "imsName": "Shobra El Khima 1",
+    "name": "[B57] Shobra El Khima - Brick 1 (Shobra El Khima 1)",
+    "sector": "Qalyubia",
+    "sectorAr": "القليوبية",
+    "scopeText": "شبرا الخيمة أول – المؤسسة – أحمد عرابي – بيجام – منطي",
+    "subAreas": [
+      "شبرا الخيمة أول",
+      "شبرا الخيمة",
+      "المؤسسة",
+      "أحمد عرابي",
+      "بيجام",
+      "منطي"
+    ]
+  },
+  {
+    "id": "B58",
+    "crmCode": "Shobra El Khima - Brick 2",
+    "imsCode": "B58",
+    "imsName": "Shobra El Khima 2",
+    "name": "[B58] Shobra El Khima - Brick 2 (Shobra El Khima 2)",
+    "sector": "Qalyubia",
+    "sectorAr": "القليوبية",
+    "scopeText": "شبرا الخيمة ثان – بهتيم – مسطرد – الشارع الجديد – الخصوص",
+    "subAreas": [
+      "شبرا الخيمة ثان",
+      "بهتيم",
+      "مسطرد",
+      "الشارع الجديد",
+      "الخصوص"
+    ]
+  },
+  {
+    "id": "B59",
+    "crmCode": "Kalubeia I - Brick 1",
+    "imsCode": "B59",
+    "imsName": "Qalyub",
+    "name": "[B59] Kalubeia I - Brick 1 (Qalyub)",
+    "sector": "Qalyubia",
+    "sectorAr": "القليوبية",
+    "scopeText": "قليوب المحطة والبلد – سنديون – القناطر الخيرية",
+    "subAreas": [
+      "قليوب المحطة",
+      "قليوب البلد",
+      "قليوب",
+      "سنديون",
+      "القناطر الخيرية"
+    ]
+  },
+  {
+    "id": "B60",
+    "crmCode": "Kalubeia I - Brick 2",
+    "imsCode": "B60",
+    "imsName": "Khanka / Shebin",
+    "name": "[B60] Kalubeia I - Brick 2 (Khanka / Shebin)",
+    "sector": "Qalyubia",
+    "sectorAr": "القليوبية",
+    "scopeText": "الخانكة – أبو زعبل – شبين القناطر",
+    "subAreas": [
+      "الخانكة",
+      "أبو زعبل",
+      "شبين القناطر"
+    ]
+  },
+  {
+    "id": "B61",
+    "crmCode": "Kalubeia II - Brick 1",
+    "imsCode": "B61",
+    "imsName": "Banha 1",
+    "name": "[B61] Kalubeia II - Brick 1 (Banha 1)",
+    "sector": "Qalyubia",
+    "sectorAr": "القليوبية",
+    "scopeText": "بنها (وسط البلد – المنشية – الفلل – الأهرام – كفر الجزار)",
+    "subAreas": [
+      "بنها",
+      "وسط البلد",
+      "المنشية",
+      "الفلل",
+      "الأهرام",
+      "كفر الجزار"
+    ]
+  },
+  {
+    "id": "B62",
+    "crmCode": "Kalubeia II - Brick 2",
+    "imsCode": "B62",
+    "imsName": "Banha 2 / Toukh",
+    "name": "[B62] Kalubeia II - Brick 2 (Banha 2 / Toukh)",
+    "sector": "Qalyubia",
+    "sectorAr": "القليوبية",
+    "scopeText": "طوخ – قها – ميت برة – كفر شكر",
+    "subAreas": [
+      "طوخ",
+      "قها",
+      "ميت برة",
+      "كفر شكر"
+    ]
+  },
+  {
+    "id": "B63",
+    "crmCode": "East Alex III - Brick 1",
+    "imsCode": "B63",
+    "imsName": "Montazah 1",
+    "name": "[B63] East Alex III - Brick 1 (Montazah 1)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "أبو قير – طوسون – المعمورة – الإصلاح – المندرة بحري وقبلي",
+    "subAreas": [
+      "أبو قير",
+      "طوسون",
+      "المعمورة",
+      "الإصلاح",
+      "المندرة بحري",
+      "المندرة قبلي",
+      "المندرة"
+    ]
+  },
+  {
+    "id": "B64",
+    "crmCode": "East Alex III - Brick 2",
+    "imsCode": "B64",
+    "imsName": "Montazah 2",
+    "name": "[B64] East Alex III - Brick 2 (Montazah 2)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "العصافرة بحري وقبلي – شارع 45 – ملك حفني",
+    "subAreas": [
+      "العصافرة بحري",
+      "العصافرة قبلي",
+      "العصافرة",
+      "شارع 45",
+      "ملك حفني"
+    ]
+  },
+  {
+    "id": "B65",
+    "crmCode": "East Alex III - Brick 3",
+    "imsCode": "B65",
+    "imsName": "Miami / Sidi Bishr 1",
+    "name": "[B65] East Alex III - Brick 3 (Miami / Sidi Bishr 1)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "ميامي – سيدي بشر بحري – خالد بن الوليد – العيسوي",
+    "subAreas": [
+      "ميامي",
+      "سيدي بشر بحري",
+      "سيدي بشر",
+      "خالد بن الوليد",
+      "العيسوي"
+    ]
+  },
+  {
+    "id": "B66",
+    "crmCode": "East Alex III - Brick 4",
+    "imsCode": "B66",
+    "imsName": "Sidi Bishr 2",
+    "name": "[B66] East Alex III - Brick 4 (Sidi Bishr 2)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "سيدي بشر قبلي – الترام – الصاغ محمد عبد السلام – دربالة",
+    "subAreas": [
+      "سيدي بشر قبلي",
+      "سيدي بشر",
+      "الترام",
+      "الصاغ محمد عبد السلام",
+      "دربالة"
+    ]
+  },
+  {
+    "id": "B67",
+    "crmCode": "East Alex III - Brick 5",
+    "imsCode": "B67",
+    "imsName": "Victoria",
+    "name": "[B67] East Alex III - Brick 5 (Victoria)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "فيكتوريا – السيوف شماعة وقبلي – الساعة – الجلاء",
+    "subAreas": [
+      "فيكتوريا",
+      "السيوف شماعة",
+      "السيوف قبلي",
+      "السيوف",
+      "الساعة",
+      "الجلاء"
+    ]
+  },
+  {
+    "id": "B68",
+    "crmCode": "East Alex III - Brick 6",
+    "imsCode": "B68",
+    "imsName": "Louran / San Stefano",
+    "name": "[B68] East Alex III - Brick 6 (Louran / San Stefano)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "لوران – سان ستيفانو – ثروت – شعراوي – زيزينيا",
+    "subAreas": [
+      "لوران",
+      "سان ستيفانو",
+      "ثروت",
+      "شعراوي",
+      "زيزينيا"
+    ]
+  },
+  {
+    "id": "B69",
+    "crmCode": "East Alex II - Brick 1",
+    "imsCode": "B69",
+    "imsName": "Bacos / Schutz",
+    "name": "[B69] East Alex II - Brick 1 (Bacos / Schutz)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "جناكليس – شدس – باكوس – صفر – الفواكه",
+    "subAreas": [
+      "جناكليس",
+      "شدس",
+      "باكوس",
+      "صفر",
+      "الفواكه"
+    ]
+  },
+  {
+    "id": "B70",
+    "crmCode": "East Alex II - Brick 2",
+    "imsCode": "B70",
+    "imsName": "Fleming / Bolkly",
+    "name": "[B70] East Alex II - Brick 2 (Fleming / Bolkly)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "جليم – فلمنج – بولكلي – الظاهرية – مصطفى كامل",
+    "subAreas": [
+      "جليم",
+      "فلمنج",
+      "بولكلي",
+      "الظاهرية",
+      "مصطفى كامل"
+    ]
+  },
+  {
+    "id": "B71",
+    "crmCode": "East Alex II - Brick 3",
+    "imsCode": "B71",
+    "imsName": "Sidi Gaber /Rushdy",
+    "name": "[B71] East Alex II - Brick 3 (Sidi Gaber /Rushdy)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "رشدي – كفر عبده – سيدي جابر المحطة والشيخ – كليوباترا",
+    "subAreas": [
+      "رشدي",
+      "كفر عبده",
+      "سيدي جابر المحطة",
+      "سيدي جابر الشيخ",
+      "سيدي جابر",
+      "كليوباترا"
+    ]
+  },
+  {
+    "id": "B72",
+    "crmCode": "East Alex I - Brick 1",
+    "imsCode": "B72",
+    "imsName": "Smouha",
+    "name": "[B72] East Alex I - Brick 1 (Smouha)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "سموحة – تعاونيات سموحة – عزبة سعد – جرين بلازا",
+    "subAreas": [
+      "سموحة",
+      "تعاونيات سموحة",
+      "عزبة سعد",
+      "جرين بلازا"
+    ]
+  },
+  {
+    "id": "B73",
+    "crmCode": "East Alex I - Brick 2",
+    "imsCode": "B73",
+    "imsName": "Sporting / Ibrahemia",
+    "name": "[B73] East Alex I - Brick 2 (Sporting / Ibrahemia)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "سبورتنج – الإبراهيمية – لاجيتيه – كامب شيزار – الحضرة بحري",
+    "subAreas": [
+      "سبورتنج",
+      "الإبراهيمية",
+      "لاجيتيه",
+      "كامب شيزار",
+      "الحضرة بحري"
+    ]
+  },
+  {
+    "id": "B74",
+    "crmCode": "Alex Center II - Brick 1",
+    "imsCode": "B74",
+    "imsName": "Shatby / Azarita",
+    "name": "[B74] Alex Center II - Brick 1 (Shatby / Azarita)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "الشاطبي – الأزاريطة – المجمع الطبي – السلطان حسين",
+    "subAreas": [
+      "الشاطبي",
+      "الأزاريطة",
+      "المجمع الطبي",
+      "السلطان حسين"
+    ]
+  },
+  {
+    "id": "B75",
+    "crmCode": "Alex Center II - Brick 2",
+    "imsCode": "B75",
+    "imsName": "Raml Station",
+    "name": "[B75] Alex Center II - Brick 2 (Raml Station)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "محطة الرمل – صفية زغلول – سعد زغلول – النبي دانيال – العطارين",
+    "subAreas": [
+      "محطة الرمل",
+      "صفية زغلول",
+      "سعد زغلول",
+      "النبي دانيال",
+      "العطارين"
+    ]
+  },
+  {
+    "id": "B76",
+    "crmCode": "Alex Center II - Brick 3",
+    "imsCode": "B76",
+    "imsName": "Manshia / Bahary",
+    "name": "[B76] Alex Center II - Brick 3 (Manshia / Bahary)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "المنشية – بحري – الجمرك – الأنفوشي – رأس التين",
+    "subAreas": [
+      "المنشية",
+      "بحري",
+      "الجمرك",
+      "الأنفوشي",
+      "رأس التين"
+    ]
+  },
+  {
+    "id": "B77",
+    "crmCode": "Alex Center II - Brick 4",
+    "imsCode": "B77",
+    "imsName": "Moharram Bek 1",
+    "name": "[B77] Alex Center II - Brick 4 (Moharram Bek 1)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "محرم بك – الرصافة – بوالينو – قناة السويس",
+    "subAreas": [
+      "محرم بك",
+      "الرصافة",
+      "بوالينو",
+      "قناة السويس"
+    ]
+  },
+  {
+    "id": "B78",
+    "crmCode": "Alex Center II - Brick 5",
+    "imsCode": "B78",
+    "imsName": "Moharram Bek 2 / Hadra",
+    "name": "[B78] Alex Center II - Brick 5 (Moharram Bek 2 / Hadra)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "الحضرة القبلية – غيط العنب – أبيس – كرموز – راغب",
+    "subAreas": [
+      "الحضرة القبلية",
+      "غيط العنب",
+      "أبيس",
+      "كرموز",
+      "راغب"
+    ]
+  },
+  {
+    "id": "B79",
+    "crmCode": "Alex Center I - Brick 1",
+    "imsCode": "B79",
+    "imsName": "Minat El Basal / Kabbary",
+    "name": "[B79] Alex Center I - Brick 1 (Minat El Basal / Kabbary)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "مينا البصل – القباري – الورديان – المكس",
+    "subAreas": [
+      "مينا البصل",
+      "القباري",
+      "الورديان",
+      "المكس"
+    ]
+  },
+  {
+    "id": "B80",
+    "crmCode": "Alex West I - Brick 1",
+    "imsCode": "B80",
+    "imsName": "Agamy / Dekheila",
+    "name": "[B80] Alex West I - Brick 1 (Agamy / Dekheila)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "الدخيلة – البيطاش – الهانوفيل – الكيلو 21",
+    "subAreas": [
+      "الدخيلة",
+      "البيطاش",
+      "الهانوفيل",
+      "الكيلو 21"
+    ]
+  },
+  {
+    "id": "B81",
+    "crmCode": "Alex West I - Brick 2",
+    "imsCode": "B81",
+    "imsName": "Amreya / Borg El Arab",
+    "name": "[B81] Alex West I - Brick 2 (Amreya / Borg El Arab)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "العامرية – النهضة – برج العرب القديمة والجديدة – كينج مريوط",
+    "subAreas": [
+      "العامرية",
+      "النهضة",
+      "برج العرب القديمة",
+      "برج العرب الجديدة",
+      "برج العرب",
+      "كينج مريوط"
+    ]
+  },
+  {
+    "id": "B82",
+    "crmCode": "Alex West II / Marsa Matrouh",
+    "imsCode": "B82",
+    "imsName": "Marsa Matrouh",
+    "name": "[B82] Alex West II / Marsa Matrouh (Marsa Matrouh)",
+    "sector": "Alex",
+    "sectorAr": "الإسكندرية ومطروح",
+    "scopeText": "مرسى مطروح – الحمام – العلمين – الضبعة – الساحل الشمالي",
+    "subAreas": [
+      "مرسى مطروح",
+      "الحمام",
+      "العلمين",
+      "الضبعة",
+      "الساحل الشمالي"
+    ]
+  },
+  {
+    "id": "B83",
+    "crmCode": "Behera I - Brick 1",
+    "imsCode": "B83",
+    "imsName": "Damanhour 1",
+    "name": "[B83] Behera I - Brick 1 (Damanhour 1)",
+    "sector": "Beheira",
+    "sectorAr": "البحيرة",
+    "scopeText": "دمنهور (وسط البلد – شارع الجمهورية – عرابي – المحطة – شبرا)",
+    "subAreas": [
+      "دمنهور",
+      "وسط البلد",
+      "شارع الجمهورية",
+      "عرابي",
+      "المحطة",
+      "شبرا"
+    ]
+  },
+  {
+    "id": "B84",
+    "crmCode": "Behera II - Brick 1",
+    "imsCode": "B84",
+    "imsName": "Damanhour 2 / Abu Hommos",
+    "name": "[B84] Behera II - Brick 1 (Damanhour 2 / Abu Hommos)",
+    "sector": "Beheira",
+    "sectorAr": "البحيرة",
+    "scopeText": "دمنهور (أبو الريش – إفلاقة) – مركز أبو حمص – حوش عيسى",
+    "subAreas": [
+      "دمنهور",
+      "أبو الريش",
+      "إفلاقة",
+      "مركز أبو حمص",
+      "أبو حمص",
+      "حوش عيسى"
+    ]
+  },
+  {
+    "id": "B85",
+    "crmCode": "Behera II - Brick 2",
+    "imsCode": "B85",
+    "imsName": "Kafr El Dawar",
+    "name": "[B85] Behera II - Brick 2 (Kafr El Dawar)",
+    "sector": "Beheira",
+    "sectorAr": "البحيرة",
+    "scopeText": "كفر الدوار – إدكو – رشيد – المحمودية – الرحمانية",
+    "subAreas": [
+      "كفر الدوار",
+      "إدكو",
+      "رشيد",
+      "المحمودية",
+      "الرحمانية"
+    ]
+  },
+  {
+    "id": "B86",
+    "crmCode": "Behera III - Brick 1",
+    "imsCode": "B86",
+    "imsName": "Itay El Baroud / Delengat",
+    "name": "[B86] Behera III - Brick 1 (Itay El Baroud / Delengat)",
+    "sector": "Beheira",
+    "sectorAr": "البحيرة",
+    "scopeText": "إيتاي البارود – شبراخيت – الدلنجات",
+    "subAreas": [
+      "إيتاي البارود",
+      "شبراخيت",
+      "الدلنجات"
+    ]
+  },
+  {
+    "id": "B87",
+    "crmCode": "Behera III - Brick 2",
+    "imsCode": "B87",
+    "imsName": "Kom Hamada / Sadat",
+    "name": "[B87] Behera III - Brick 2 (Kom Hamada / Sadat)",
+    "sector": "Beheira",
+    "sectorAr": "البحيرة",
+    "scopeText": "كوم حمادة – بدر – وادي النطرون – النوبارية",
+    "subAreas": [
+      "كوم حمادة",
+      "بدر",
+      "وادي النطرون",
+      "النوبارية"
+    ]
+  },
+  {
+    "id": "B88",
+    "crmCode": "Kafr El Sheikh I - Brick 1",
+    "imsCode": "B88",
+    "imsName": "Kafr El Sheikh City",
+    "name": "[B88] Kafr El Sheikh I - Brick 1 (Kafr El Sheikh City)",
+    "sector": "KafrElSheikh",
+    "sectorAr": "كفر الشيخ",
+    "scopeText": "مدينة كفر الشيخ (النبوي المهندس – الخليفة المأمون – المحطة – تقسيم 2)",
+    "subAreas": [
+      "مدينة كفر الشيخ",
+      "كفر الشيخ",
+      "النبوي المهندس",
+      "الخليفة المأمون",
+      "المحطة",
+      "تقسيم 2"
+    ]
+  },
+  {
+    "id": "B89",
+    "crmCode": "Kafr El Sheikh I - Brick 2",
+    "imsCode": "B89",
+    "imsName": "Sidi Salem / Qallin",
+    "name": "[B89] Kafr El Sheikh I - Brick 2 (Sidi Salem / Qallin)",
+    "sector": "KafrElSheikh",
+    "sectorAr": "كفر الشيخ",
+    "scopeText": "قلين – سيدي سالم – الرياض",
+    "subAreas": [
+      "قلين",
+      "سيدي سالم",
+      "الرياض"
+    ]
+  },
+  {
+    "id": "B90",
+    "crmCode": "Kafr El Sheikh II - Brick 1",
+    "imsCode": "B90",
+    "imsName": "Desouk / Fouah",
+    "name": "[B90] Kafr El Sheikh II - Brick 1 (Desouk / Fouah)",
+    "sector": "KafrElSheikh",
+    "sectorAr": "كفر الشيخ",
+    "scopeText": "دسوق – فوه – مطوبس",
+    "subAreas": [
+      "دسوق",
+      "فوه",
+      "مطوبس"
+    ]
+  },
+  {
+    "id": "B91",
+    "crmCode": "Kafr El Sheikh II - Brick 2",
+    "imsCode": "B91",
+    "imsName": "Biyala / Hamoul",
+    "name": "[B91] Kafr El Sheikh II - Brick 2 (Biyala / Hamoul)",
+    "sector": "KafrElSheikh",
+    "sectorAr": "كفر الشيخ",
+    "scopeText": "بيلا – الحامول – بلطيم – البرلس",
+    "subAreas": [
+      "بيلا",
+      "الحامول",
+      "بلطيم",
+      "البرلس"
+    ]
+  },
+  {
+    "id": "B92",
+    "crmCode": "Gharbeia I - Brick 1",
+    "imsCode": "B92",
+    "imsName": "Tanta 1",
+    "name": "[B92] Gharbeia I - Brick 1 (Tanta 1)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "طنطا أول (شارع البحر – المديرية – السيد البدوي – المحطة – النحاس)",
+    "subAreas": [
+      "طنطا أول",
+      "طنطا",
+      "شارع البحر",
+      "المديرية",
+      "السيد البدوي",
+      "المحطة",
+      "النحاس"
+    ]
+  },
+  {
+    "id": "B93",
+    "crmCode": "Gharbeia I - Brick 2",
+    "imsCode": "B93",
+    "imsName": "Tanta 2",
+    "name": "[B93] Gharbeia I - Brick 2 (Tanta 2)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "طنطا ثان (الاستاد – سعيد – الحلو – سيجر – قحافة – الجلاء)",
+    "subAreas": [
+      "طنطا ثان",
+      "طنطا",
+      "الاستاد",
+      "شارع سعيد",
+      "سعيد",
+      "الحلو",
+      "سيجر",
+      "قحافة",
+      "الجلاء"
+    ]
+  },
+  {
+    "id": "B94",
+    "crmCode": "Gharbeia II - Brick 1",
+    "imsCode": "B94",
+    "imsName": "El Mahalla 1",
+    "name": "[B94] Gharbeia II - Brick 1 (El Mahalla 1)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "المحلة الكبرى أول (شارع البحر – العباسي – شكري القوتلي – محب)",
+    "subAreas": [
+      "المحلة الكبرى أول",
+      "المحلة الكبرى",
+      "المحلة",
+      "شارع البحر",
+      "العباسي",
+      "شكري القوتلي",
+      "محب"
+    ]
+  },
+  {
+    "id": "B95",
+    "crmCode": "Gharbeia II - Brick 2",
+    "imsCode": "B95",
+    "imsName": "El Mahalla 2",
+    "name": "[B95] Gharbeia II - Brick 2 (El Mahalla 2)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "المحلة الكبرى ثان (الجمهورية – الشعبية – السبع بنات – منشية البكري)",
+    "subAreas": [
+      "المحلة الكبرى ثان",
+      "المحلة الكبرى",
+      "المحلة",
+      "شارع الجمهورية",
+      "الشعبية",
+      "السبع بنات",
+      "منشية البكري"
+    ]
+  },
+  {
+    "id": "B96",
+    "crmCode": "Gharbeia III - Brick 1",
+    "imsCode": "B96",
+    "imsName": "Zefta / Santa",
+    "name": "[B96] Gharbeia III - Brick 1 (Zefta / Santa)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "زفتى – السنطة",
+    "subAreas": [
+      "زفتى",
+      "السنطة"
+    ]
+  },
+  {
+    "id": "B97",
+    "crmCode": "Gharbeia III - Brick 2",
+    "imsCode": "B97",
+    "imsName": "Kafr El Zayat / Basyoun",
+    "name": "[B97] Gharbeia III - Brick 2 (Kafr El Zayat / Basyoun)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "كفر الزيات – بسيون",
+    "subAreas": [
+      "كفر الزيات",
+      "بسيون"
+    ]
+  },
+  {
+    "id": "B98",
+    "crmCode": "Gharbeia III - Brick 3",
+    "imsCode": "B98",
+    "imsName": "Samanoud / Qotour",
+    "name": "[B98] Gharbeia III - Brick 3 (Samanoud / Qotour)",
+    "sector": "Gharbia",
+    "sectorAr": "الغربية",
+    "scopeText": "سمنود – قطور",
+    "subAreas": [
+      "سمنود",
+      "قطور"
+    ]
+  },
+  {
+    "id": "B99",
+    "crmCode": "Menofeya I - Brick 1",
+    "imsCode": "B99",
+    "imsName": "Shebin El Kom",
+    "name": "[B99] Menofeya I - Brick 1 (Shebin El Kom)",
+    "sector": "Menoufia",
+    "sectorAr": "المنوفية",
+    "scopeText": "شبين الكوم (البر الشرقي والغربي – الجلاء – باريس – الاستاد)",
+    "subAreas": [
+      "شبين الكوم",
+      "البر الشرقي",
+      "البر الغربي",
+      "الجلاء",
+      "باريس",
+      "الاستاد"
+    ]
+  },
+  {
+    "id": "B100",
+    "crmCode": "Menofeya II - Brick 1",
+    "imsCode": "B100",
+    "imsName": "Menouf / Sars",
+    "name": "[B100] Menofeya II - Brick 1 (Menouf / Sars)",
+    "sector": "Menoufia",
+    "sectorAr": "المنوفية",
+    "scopeText": "منوف – سرس الليان – السادات",
+    "subAreas": [
+      "منوف",
+      "سرس الليان",
+      "السادات"
+    ]
+  },
+  {
+    "id": "B101",
+    "crmCode": "Menofeya II - Brick 2",
+    "imsCode": "B101",
+    "imsName": "Ashmoun / Bagour",
+    "name": "[B101] Menofeya II - Brick 2 (Ashmoun / Bagour)",
+    "sector": "Menoufia",
+    "sectorAr": "المنوفية",
+    "scopeText": "أشمون – الباجور",
+    "subAreas": [
+      "أشمون",
+      "الباجور"
+    ]
+  },
+  {
+    "id": "B102",
+    "crmCode": "Menofeya III - Brick 1",
+    "imsCode": "B102",
+    "imsName": "Quesna / Berket El Sabaa",
+    "name": "[B102] Menofeya III - Brick 1 (Quesna / Berket El Sabaa)",
+    "sector": "Menoufia",
+    "sectorAr": "المنوفية",
+    "scopeText": "قويسنا – بركة السبع – تلا – الشهداء",
+    "subAreas": [
+      "قويسنا",
+      "بركة السبع",
+      "تلا",
+      "الشهداء"
+    ]
+  },
+  {
+    "id": "B103",
+    "crmCode": "Dakahleia I - Brick 1",
+    "imsCode": "B103",
+    "imsName": "Mansoura 1",
+    "name": "[B103] Dakahleia I - Brick 1 (Mansoura 1)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "المنصورة (المشاية – الجمهورية – الجامعة – جيهان – توريل)",
+    "subAreas": [
+      "المنصورة",
+      "المشاية",
+      "الجمهورية",
+      "الجامعة",
+      "جيهان",
+      "توريل"
+    ]
+  },
+  {
+    "id": "B104",
+    "crmCode": "Dakahleia I - Brick 2",
+    "imsCode": "B104",
+    "imsName": "Mansoura 2",
+    "name": "[B104] Dakahleia I - Brick 2 (Mansoura 2)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "المنصورة (العباسي – بورسعيد – السكة الجديدة – المحطة – المختلط)",
+    "subAreas": [
+      "المنصورة",
+      "العباسي",
+      "بورسعيد",
+      "السكة الجديدة",
+      "المحطة",
+      "المختلط"
+    ]
+  },
+  {
+    "id": "B105",
+    "crmCode": "Dakahleia I - Brick 3",
+    "imsCode": "B105",
+    "imsName": "Mansoura 3 / Talkha",
+    "name": "[B105] Dakahleia I - Brick 3 (Mansoura 3 / Talkha)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "المنصورة (جديلة – الدراسات – سندوب – المجزر) – طلخا",
+    "subAreas": [
+      "المنصورة",
+      "جديلة",
+      "الدراسات",
+      "سندوب",
+      "المجزر",
+      "طلخا"
+    ]
+  },
+  {
+    "id": "B106",
+    "crmCode": "Dakahleia II - Brick 1",
+    "imsCode": "B106",
+    "imsName": "Mit Ghamr",
+    "name": "[B106] Dakahleia II - Brick 1 (Mit Ghamr)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "ميت غمر – أجا",
+    "subAreas": [
+      "ميت غمر",
+      "أجا"
+    ]
+  },
+  {
+    "id": "B107",
+    "crmCode": "Dakahleia II - Brick 2",
+    "imsCode": "B107",
+    "imsName": "Senbellawein",
+    "name": "[B107] Dakahleia II - Brick 2 (Senbellawein)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "السنبلاوين – تمي الأمديد",
+    "subAreas": [
+      "السنبلاوين",
+      "تمي الأمديد"
+    ]
+  },
+  {
+    "id": "B108",
+    "crmCode": "Dakahleia III - Brick 1",
+    "imsCode": "B108",
+    "imsName": "Belqas / Sherbin",
+    "name": "[B108] Dakahleia III - Brick 1 (Belqas / Sherbin)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "بلقاس – شربين – نبروه – جمصة",
+    "subAreas": [
+      "بلقاس",
+      "شربين",
+      "نبروه",
+      "جمصة"
+    ]
+  },
+  {
+    "id": "B109",
+    "crmCode": "Dakahleia IV - Brick 1",
+    "imsCode": "B109",
+    "imsName": "Manzala / Dekernes",
+    "name": "[B109] Dakahleia IV - Brick 1 (Manzala / Dekernes)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "دكرنس – المنزلة – منية النصر – المطرية – الجمالية – ميت سلسيل",
+    "subAreas": [
+      "دكرنس",
+      "المنزلة",
+      "منية النصر",
+      "المطرية",
+      "الجمالية",
+      "ميت سلسيل"
+    ]
+  },
+  {
+    "id": "B110",
+    "crmCode": "Domiat - Brick 1",
+    "imsCode": "B110",
+    "imsName": "Damietta City",
+    "name": "[B110] Domiat - Brick 1 (Damietta City)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "مدينة دمياط – رأس البر – عزبة البرج",
+    "subAreas": [
+      "مدينة دمياط",
+      "دمياط",
+      "رأس البر",
+      "عزبة البرج"
+    ]
+  },
+  {
+    "id": "B111",
+    "crmCode": "Domiat - Brick 2",
+    "imsCode": "B111",
+    "imsName": "New Damietta / Faraskour",
+    "name": "[B111] Domiat - Brick 2 (New Damietta / Faraskour)",
+    "sector": "Dakahlia",
+    "sectorAr": "الدقهلية ودمياط",
+    "scopeText": "دمياط الجديدة – كفر سعد – فارسكور – الزرقا – كفر البطيخ",
+    "subAreas": [
+      "دمياط الجديدة",
+      "كفر سعد",
+      "فارسكور",
+      "الزرقا",
+      "كفر البطيخ"
+    ]
+  },
+  {
+    "id": "B112",
+    "crmCode": "Sharkia I - Brick 1",
+    "imsCode": "B112",
+    "imsName": "Zagazig 1",
+    "name": "[B112] Sharkia I - Brick 1 (Zagazig 1)",
+    "sector": "Sharkia",
+    "sectorAr": "الشرقية",
+    "scopeText": "الزقازيق أول (القومية – المحافظة – طلبة عويضة – فلل الجامعة – الغشام)",
+    "subAreas": [
+      "الزقازيق أول",
+      "الزقازيق",
+      "القومية",
+      "المحافظة",
+      "طلبة عويضة",
+      "فلل الجامعة",
+      "الغشام"
+    ]
+  },
+  {
+    "id": "B113",
+    "crmCode": "Sharkia I - Brick 2",
+    "imsCode": "B113",
+    "imsName": "Zagazig 2",
+    "name": "[B113] Sharkia I - Brick 2 (Zagazig 2)",
+    "sector": "Sharkia",
+    "sectorAr": "الشرقية",
+    "scopeText": "الزقازيق ثان (المحطة – البوستة – الجلاء – المنتزه – الحسينية – شيبة)",
+    "subAreas": [
+      "الزقازيق ثان",
+      "الزقازيق",
+      "المحطة",
+      "البوستة",
+      "الجلاء",
+      "المنتزه",
+      "الحسينية",
+      "شيبة"
+    ]
+  },
+  {
+    "id": "B114",
+    "crmCode": "Sharkia II - Brick 1",
+    "imsCode": "B114",
+    "imsName": "Belbeis / 10th of Ramadan",
+    "name": "[B114] Sharkia II - Brick 1 (Belbeis / 10th of Ramadan)",
+    "sector": "Sharkia",
+    "sectorAr": "الشرقية",
+    "scopeText": "بلبيس – العاشر من رمضان – مشتول السوق",
+    "subAreas": [
+      "بلبيس",
+      "العاشر من رمضان",
+      "العاشر",
+      "مشتول السوق"
+    ]
+  },
+  {
+    "id": "B115",
+    "crmCode": "Sharkia II - Brick 2",
+    "imsCode": "B115",
+    "imsName": "Minya El Qamh",
+    "name": "[B115] Sharkia II - Brick 2 (Minya El Qamh)",
+    "sector": "Sharkia",
+    "sectorAr": "الشرقية",
+    "scopeText": "منيا القمح – القنايات",
+    "subAreas": [
+      "منيا القمح",
+      "القنايات"
+    ]
+  },
+  {
+    "id": "B116",
+    "crmCode": "Sharkia III - Brick 1",
+    "imsCode": "B116",
+    "imsName": "Faqous / Huseiniya",
+    "name": "[B116] Sharkia III - Brick 1 (Faqous / Huseiniya)",
+    "sector": "Sharkia",
+    "sectorAr": "الشرقية",
+    "scopeText": "فاقوس – الحسينية – الصالحية الجديدة – أبو كبير",
+    "subAreas": [
+      "فاقوس",
+      "الحسينية",
+      "الصالحية الجديدة",
+      "الصالحية",
+      "أبو كبير"
+    ]
+  },
+  {
+    "id": "B117",
+    "crmCode": "Sharkia III - Brick 2",
+    "imsCode": "B117",
+    "imsName": "Kafr Saqr / Abu Hammad",
+    "name": "[B117] Sharkia III - Brick 2 (Kafr Saqr / Abu Hammad)",
+    "sector": "Sharkia",
+    "sectorAr": "الشرقية",
+    "scopeText": "أبو حماد – القرين – ههيا – الإبراهيمية – كفر صقر – أولاد صقر – ديرب نجم",
+    "subAreas": [
+      "أبو حماد",
+      "القرين",
+      "ههيا",
+      "الإبراهيمية",
+      "كفر صقر",
+      "أولاد صقر",
+      "ديرب نجم"
+    ]
+  }
 ];
 
 window.getCRMBricks = function() {
