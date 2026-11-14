@@ -488,3 +488,20 @@
     color: var(--text-white);
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
 }
+
+.btn-xs {
+    font-size: 0.75rem !important;
+    padding: 0.2rem 0.55rem !important;
+    line-height: 1.25 !important;
+}
+.brick-scope-description {
+    font-size: 0.8rem;
+    color: #475569;
+    line-height: 1.35;
+}
+[data-theme="dark"] .brick-scope-description {
+    color: #cbd5e1;
+}
+.brick-crm-code {
+    font-size: 0.88rem;
+}

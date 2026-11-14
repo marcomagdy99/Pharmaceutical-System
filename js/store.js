@@ -462,6 +462,33 @@
         if (ns.length >= 3 && nb.includes(ns)) return true;
         if (nb.length >= 3 && ns.includes(nb)) return true;
 
+        // CRM / IMS Bricks hierarchy matching
+        if (typeof window !== "undefined" && Array.isArray(window.CRM_IMS_MASTER_BRICKS)) {
+          const crmB = window.CRM_IMS_MASTER_BRICKS.find((b) => {
+            const bName = norm(b.name);
+            const bCrm = norm(b.crmCode);
+            const bIms = norm(b.imsCode);
+            return bName === nb || bCrm === nb || bIms === nb || (bIms && nb.includes(bIms)) || (bCrm && nb.includes(bCrm));
+          });
+          if (crmB) {
+            const bIms = norm(crmB.imsCode);
+            const bCrm = norm(crmB.crmCode);
+            const bImsName = norm(crmB.imsName);
+            if (bIms === ns || bCrm === ns || bImsName === ns) return true;
+            if (ns.length >= 3 && (bIms.includes(ns) || bCrm.includes(ns) || bImsName.includes(ns))) return true;
+            if (Array.isArray(crmB.subAreas) && crmB.subAreas.some((sa) => {
+              const nsa = norm(sa);
+              return nsa === ns || (ns.length >= 3 && nsa.includes(ns)) || (nsa.length >= 3 && ns.includes(nsa));
+            })) {
+              return true;
+            }
+            if (crmB.scopeText) {
+              const nScope = norm(crmB.scopeText);
+              if (ns.length >= 3 && nScope.includes(ns)) return true;
+            }
+          }
+        }
+
         const aliases = {
           nasr: "نصر",
           dokki: "دقي",

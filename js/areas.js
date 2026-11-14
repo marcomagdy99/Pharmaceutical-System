@@ -265,9 +265,44 @@ function normalizeArabicText(s) {
     .replace(/\s+/g, " ");
 }
 
-function searchMasterBricks(allMaster, rawQuery) {
+
+let currentBrickSector = "all";
+
+function filterBricksBySector(sector) {
+  currentBrickSector = sector || "all";
+  const pills = document.querySelectorAll("#brickSectorFilterPills .sector-pill");
+  pills.forEach((p) => {
+    if (p.dataset.sector === currentBrickSector) {
+      p.classList.remove("btn-outline-secondary");
+      p.classList.add("btn-primary", "active");
+    } else {
+      p.classList.remove("btn-primary", "active");
+      p.classList.add("btn-outline-secondary");
+    }
+  });
+  const q = document.getElementById("searchBricksInput")?.value || "";
+  renderModalBricksList(q);
+}
+window.filterBricksBySector = filterBricksBySector;
+
+function toggleBrickCard(event, brickName) {
+  if (event.target.tagName === "INPUT") return;
+  const card = event.currentTarget;
+  const cb = card.querySelector('input[type="checkbox"]');
+  if (cb) {
+    cb.checked = !cb.checked;
+    onBrickCheckboxChange(cb);
+  }
+}
+window.toggleBrickCard = toggleBrickCard;
+function searchMasterBricks(allMaster, rawQuery, sector) {
+  const activeSector = sector || currentBrickSector || "all";
+  let list = allMaster;
+  if (activeSector && activeSector !== "all") {
+    list = list.filter((b) => b.sector === activeSector);
+  }
   const nq = normalizeArabicText(rawQuery);
-  if (!nq) return allMaster;
+  if (!nq) return list;
 
   // Check if query matches any English alias
   let alias = null;
@@ -278,9 +313,19 @@ function searchMasterBricks(allMaster, rawQuery) {
     }
   }
 
-  return allMaster.filter((b) => {
+  return list.filter((b) => {
     const nb = normalizeArabicText(b.name);
-    return nb.includes(nq) || (alias && nb.includes(alias));
+    const nCrm = b.crmCode ? normalizeArabicText(b.crmCode) : "";
+    const nImsCode = b.imsCode ? normalizeArabicText(b.imsCode) : "";
+    const nImsName = b.imsName ? normalizeArabicText(b.imsName) : "";
+    const nScope = b.scopeText ? normalizeArabicText(b.scopeText) : "";
+
+    return nb.includes(nq) ||
+      (nCrm && nCrm.includes(nq)) ||
+      (nImsCode && nImsCode.includes(nq)) ||
+      (nImsName && nImsName.includes(nq)) ||
+      (nScope && nScope.includes(nq)) ||
+      (alias && (nb.includes(alias) || nScope.includes(alias)));
   });
 }
 
@@ -292,6 +337,18 @@ function populateBricksSelector(existingBricks = []) {
   );
 
   currentBricksLimit = 200;
+  currentBrickSector = "all";
+  const pills = document.querySelectorAll("#brickSectorFilterPills .sector-pill");
+  pills.forEach((p) => {
+    if (p.dataset.sector === "all") {
+      p.classList.remove("btn-outline-secondary");
+      p.classList.add("btn-primary", "active");
+    } else {
+      p.classList.remove("btn-primary", "active");
+      p.classList.add("btn-outline-secondary");
+    }
+  });
+
   const searchInput = document.getElementById("searchBricksInput");
   if (searchInput) {
     searchInput.value = "";
@@ -310,13 +367,21 @@ function renderModalBricksList(filterQuery = "") {
   const rawQ = (filterQuery || "").trim();
   const isFiltered = Boolean(rawQ);
 
+  let scopedMaster = allMaster;
+  if (currentBrickSector && currentBrickSector !== "all") {
+    scopedMaster = allMaster.filter((b) => b.sector === currentBrickSector);
+  }
+
   let displayBricks = [];
   if (!isFiltered) {
     // Show all currently selected bricks first (always visible at top), plus unselected bricks up to currentBricksLimit
     const selectedList = [];
     const unselectedList = [];
-    allMaster.forEach((b) => {
-      if (selectedBrickNames.has(b.name)) {
+    scopedMaster.forEach((b) => {
+      const isSel = selectedBrickNames.has(b.name) ||
+                    (b.crmCode && selectedBrickNames.has(b.crmCode)) ||
+                    (b.imsCode && selectedBrickNames.has(b.imsCode));
+      if (isSel) {
         selectedList.push(b);
       } else if (unselectedList.length < currentBricksLimit) {
         unselectedList.push(b);
@@ -324,14 +389,14 @@ function renderModalBricksList(filterQuery = "") {
     });
     displayBricks = [...selectedList, ...unselectedList];
   } else {
-    // Search with Arabic normalization and English aliases (up to 300 results)
-    displayBricks = searchMasterBricks(allMaster, rawQ).slice(0, 300);
+    // Search with Arabic normalization, CRM/IMS codes, and English aliases (up to 300 results)
+    displayBricks = searchMasterBricks(allMaster, rawQ, currentBrickSector).slice(0, 300);
   }
 
-  const totalMasterCount = allMaster.length;
+  const totalMasterCount = scopedMaster.length;
   let headerHtml = `
     <div class="d-flex justify-content-between align-items-center mb-2 px-1 text-muted small border-bottom pb-1">
-      <span><i class="fas fa-database text-primary me-1"></i> Total in Database: <strong>${totalMasterCount.toLocaleString()}</strong></span>
+      <span><i class="fas fa-database text-primary me-1"></i> Total in Sector: <strong>${totalMasterCount.toLocaleString()}</strong></span>
       <span>${isFiltered ? `Matches: ${displayBricks.length}` : `Showing: ${displayBricks.length}`}</span>
     </div>
   `;
@@ -348,16 +413,31 @@ function renderModalBricksList(filterQuery = "") {
 
   let html = headerHtml + `<div class="row g-2">`;
   displayBricks.forEach((b, idx) => {
-    const isChecked = selectedBrickNames.has(b.name);
-    const escapedName = window.escapeHtml(b.name);
+    const isChecked = selectedBrickNames.has(b.name) ||
+                      (b.crmCode && selectedBrickNames.has(b.crmCode)) ||
+                      (b.imsCode && selectedBrickNames.has(b.imsCode));
+    const escapedValue = window.escapeHtml(b.name);
     const inputId = `brick_chk_${idx}`;
     html += `
-      <div class="col-12 col-sm-6">
-        <div class="p-2 border rounded-2 brick-checkbox-card ${isChecked ? 'selected' : 'bg-white'} d-flex align-items-center gap-2">
-          <input class="form-check-input ms-0 me-2" type="checkbox" id="${inputId}" value="${escapedName}" ${isChecked ? 'checked' : ''} onchange="onBrickCheckboxChange(this)">
-          <label class="form-check-label text-truncate mb-0 flex-grow-1 cursor-pointer small fw-semibold" for="${inputId}" title="${escapedName}">
-            ${escapedName}
-          </label>
+      <div class="col-12">
+        <div class="p-2 px-3 border rounded-3 brick-checkbox-card ${isChecked ? 'selected' : 'bg-white'}" onclick="toggleBrickCard(event, '${escapedValue}')">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
+            <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+              <input class="form-check-input ms-0 me-1" type="checkbox" id="${inputId}" value="${escapedValue}" ${isChecked ? 'checked' : ''} onchange="onBrickCheckboxChange(this)" onclick="event.stopPropagation()">
+              <label class="form-check-label mb-0 cursor-pointer fw-bold text-dark text-truncate" for="${inputId}">
+                ${b.imsCode ? `<span class="badge bg-primary text-white me-1 font-monospace">${window.escapeHtml(b.imsCode)}</span>` : ''}
+                <span class="brick-crm-code text-primary-emphasis">${window.escapeHtml(b.crmCode || b.name)}</span>
+                ${b.imsName && b.imsName !== b.crmCode ? `<span class="text-muted fw-normal ms-1 small">(${window.escapeHtml(b.imsName)})</span>` : ''}
+              </label>
+            </div>
+            ${b.sectorAr ? `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle small">${window.escapeHtml(b.sectorAr)}</span>` : ''}
+          </div>
+          ${b.scopeText && b.scopeText !== b.name ? `
+            <div class="mt-1 ps-4 small brick-scope-description d-flex align-items-start gap-1">
+              <i class="fas fa-map-marker-alt text-danger mt-1 flex-shrink-0" style="font-size: 0.75rem;"></i>
+              <span class="flex-grow-1 text-wrap" style="line-height: 1.35;">${window.escapeHtml(b.scopeText)}</span>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
