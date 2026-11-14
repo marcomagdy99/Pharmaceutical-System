@@ -379,10 +379,11 @@
           }
         } else if (decision === "approve") {
           const userRole = Core._state.currentUser.role;
+          const normRole = (userRole || "").toLowerCase();
           const userId = Core._state.currentUser.id;
           let hasModifiedShare = false;
 
-          if (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.BU) {
+          if (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.BU || normRole === "general_manager" || normRole === "gm") {
             srv.shares.forEach((sh) => {
               if (sh.status !== Core.REQUEST_STATUS.APPROVED) {
                 sh.status = Core.REQUEST_STATUS.APPROVED;
@@ -657,6 +658,7 @@
   }
 
   function openReceiptPreviewModal(url) {
+    if (!url || /^\s*javascript:/i.test(String(url))) return;
     if (window.ActivitiesExpenses && typeof window.ActivitiesExpenses.openReceiptPreviewModal === "function") {
       return window.ActivitiesExpenses.openReceiptPreviewModal(url);
     }

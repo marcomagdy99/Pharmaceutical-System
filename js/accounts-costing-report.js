@@ -1081,11 +1081,11 @@
 
       // Calculate totals per dynamic category
       const categoryTotals = {};
-      dynamicCategoryList.forEach((cat) => { categoryTotals[cat] = 0; });
+      CostingState.dynamicCategories.forEach((cat) => { categoryTotals[cat] = 0; });
 
       let grandTotal = 0;
       matchedTx.forEach((tx) => {
-        const cat = determineCategoryName(tx.category || tx.title) || "Other Requests";
+        const cat = tx.category || "Other Requests";
         if (categoryTotals[cat] === undefined) categoryTotals[cat] = 0;
         categoryTotals[cat] += tx.cost;
         grandTotal += tx.cost;

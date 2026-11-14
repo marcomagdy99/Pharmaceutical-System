@@ -316,7 +316,7 @@ function getAchievementsScopeRepIds(user) {
  * Ensures vacant territories with sales or targets are fully tracked and roll up to DMs/LMs.
  */
 function buildAchievementsData(monthKeys, scopeRepIds) {
-  const keys = Array.isArray(monthKeys) ? monthKeys : [monthKeys];
+  const keys = (Array.isArray(monthKeys) ? [...monthKeys] : [monthKeys]).sort();
   if (!keys.length) return [];
 
   const curUser = (typeof checkAuth === 'function' ? checkAuth() : null) || {};

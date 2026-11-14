@@ -398,6 +398,7 @@
   }
 
   function openReceiptPreviewModal(url) {
+    if (!url || /^\s*javascript:/i.test(String(url))) return;
     const modal = document.getElementById("receiptPreviewModal");
     const img = document.getElementById("receiptModalLargeImg");
     if (!modal) return;
