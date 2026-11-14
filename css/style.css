@@ -2909,3 +2909,8 @@ body.dark-theme .sidebar-footer-text {
   margin-right: 0;
   margin-left: 8px;
 }
+
+/* Defensive guard: prevent uninitialized or unstyled modals from bleeding into page flow */
+.modal:not(.show) {
+  display: none !important;
+}

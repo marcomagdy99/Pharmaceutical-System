@@ -163,16 +163,16 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  lineModal = new bootstrap.Modal(document.getElementById("lineModal"));
-  productModal = new bootstrap.Modal(document.getElementById("productModal"));
-  deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
-  const transferEl = document.getElementById("transferProductModal");
-  if (transferEl) {
-    transferProductModal = new bootstrap.Modal(transferEl);
-  }
-  const focusEl = document.getElementById("campaignFocusModal");
-  if (focusEl) {
-    campaignFocusModal = new bootstrap.Modal(focusEl);
+  if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+    const getModal = (id) => {
+      const el = document.getElementById(id);
+      return el ? ((bootstrap.Modal.getInstance && bootstrap.Modal.getInstance(el)) || new bootstrap.Modal(el)) : null;
+    };
+    lineModal = getModal("lineModal");
+    productModal = getModal("productModal");
+    deleteModal = getModal("deleteModal");
+    transferProductModal = getModal("transferProductModal");
+    campaignFocusModal = getModal("campaignFocusModal");
   }
 
   initProductLinesData();

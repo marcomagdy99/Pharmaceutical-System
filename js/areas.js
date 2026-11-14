@@ -172,8 +172,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  areaModal = new bootstrap.Modal(document.getElementById("areaModal"));
-  deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+  if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+    const elArea = document.getElementById("areaModal");
+    if (elArea) areaModal = (bootstrap.Modal.getInstance && bootstrap.Modal.getInstance(elArea)) || new bootstrap.Modal(elArea);
+    const elDel = document.getElementById("deleteModal");
+    if (elDel) deleteModal = (bootstrap.Modal.getInstance && bootstrap.Modal.getInstance(elDel)) || new bootstrap.Modal(elDel);
+  }
   if (window.translations) {
     window.translations.en = {
       ...window.translations.en,
