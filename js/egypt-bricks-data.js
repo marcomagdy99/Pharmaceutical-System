@@ -9560,6 +9560,618 @@ window.CRM_IMS_MASTER_BRICKS = [
       "أولاد صقر",
       "ديرب نجم"
     ]
+  },
+  {
+    "id": "B118",
+    "crmCode": "Port Said / N. Sinai - Brick 1",
+    "imsCode": "B118",
+    "imsName": "Port Said 1",
+    "name": "[B118] Port Said / N. Sinai - Brick 1 (Port Said 1)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "بورسعيد (حي الشرق – حي العرب – حي المناخ – طرح البحر – الثلاثيني)",
+    "subAreas": [
+      "بورسعيد",
+      "حي الشرق",
+      "حي العرب",
+      "حي المناخ",
+      "طرح البحر",
+      "الثلاثيني"
+    ]
+  },
+  {
+    "id": "B119",
+    "crmCode": "Port Said / N. Sinai - Brick 2",
+    "imsCode": "B119",
+    "imsName": "Port Said 2",
+    "name": "[B119] Port Said / N. Sinai - Brick 2 (Port Said 2)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "بورسعيد (حي الزهور – حي الضواحي – حي الجنوب) – مدينة بورفؤاد",
+    "subAreas": [
+      "بورسعيد",
+      "حي الزهور",
+      "حي الضواحي",
+      "حي الجنوب",
+      "بورفؤاد",
+      "مدينة بورفؤاد"
+    ]
+  },
+  {
+    "id": "B120",
+    "crmCode": "Port Said / N. Sinai - Brick 3",
+    "imsCode": "B120",
+    "imsName": "North Sinai",
+    "name": "[B120] Port Said / N. Sinai - Brick 3 (North Sinai)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "العريش – بئر العبد – الشيخ زويد – القنطرة شرق",
+    "subAreas": [
+      "العريش",
+      "بئر العبد",
+      "الشيخ زويد",
+      "القنطرة شرق",
+      "شمال سيناء"
+    ]
+  },
+  {
+    "id": "B121",
+    "crmCode": "Ismailia - Brick 1",
+    "imsCode": "B121",
+    "imsName": "Ismailia 1",
+    "name": "[B121] Ismailia - Brick 1 (Ismailia 1)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "مدينة الإسماعيلية (حي أول، ثان، ثالث – السلطان حسين – الشيخ زايد – المحطة)",
+    "subAreas": [
+      "الإسماعيلية",
+      "مدينة الإسماعيلية",
+      "حي أول",
+      "حي ثان",
+      "حي ثالث",
+      "السلطان حسين",
+      "الشيخ زايد",
+      "المحطة"
+    ]
+  },
+  {
+    "id": "B122",
+    "crmCode": "Ismailia - Brick 2",
+    "imsCode": "B122",
+    "imsName": "Ismailia 2",
+    "name": "[B122] Ismailia - Brick 2 (Ismailia 2)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "التل الكبير – القصاصين – أبو صوير – فايد – القنطرة غرب",
+    "subAreas": [
+      "التل الكبير",
+      "القصاصين",
+      "أبو صوير",
+      "فايد",
+      "القنطرة غرب"
+    ]
+  },
+  {
+    "id": "B123",
+    "crmCode": "Suez / S. Sinai - Brick 1",
+    "imsCode": "B123",
+    "imsName": "Suez 1",
+    "name": "[B123] Suez / S. Sinai - Brick 1 (Suez 1)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "السويس (حي السويس – حي الأربعين – شارع الجيش – النمسا – المثلث)",
+    "subAreas": [
+      "السويس",
+      "حي السويس",
+      "حي الأربعين",
+      "شارع الجيش",
+      "النمسا",
+      "المثلث"
+    ]
+  },
+  {
+    "id": "B124",
+    "crmCode": "Suez / S. Sinai - Brick 2",
+    "imsCode": "B124",
+    "imsName": "Suez 2 / South Sinai",
+    "name": "[B124] Suez / S. Sinai - Brick 2 (Suez 2 / South Sinai)",
+    "sector": "Canal",
+    "sectorAr": "مدن القناة وسيناء",
+    "scopeText": "السويس (فيصل – الصباح – عتاقة – الجناين) + مدن جنوب سيناء (الطور – شرم الشيخ – دهب – رأس سدر)",
+    "subAreas": [
+      "السويس",
+      "فيصل",
+      "الصباح",
+      "عتاقة",
+      "الجناين",
+      "جنوب سيناء",
+      "الطور",
+      "شرم الشيخ",
+      "دهب",
+      "رأس سدر"
+    ]
+  },
+  {
+    "id": "B125",
+    "crmCode": "Fayoum - Brick 1",
+    "imsCode": "B125",
+    "imsName": "Fayoum City",
+    "name": "[B125] Fayoum - Brick 1 (Fayoum City)",
+    "sector": "BeniSuef",
+    "sectorAr": "بني سويف والفيوم",
+    "scopeText": "مدينة الفيوم (المسلة – الحواتم – البوستة – لطف الله – البارودية) – مركز الفيوم",
+    "subAreas": [
+      "الفيوم",
+      "مدينة الفيوم",
+      "المسلة",
+      "الحواتم",
+      "البوستة",
+      "لطف الله",
+      "البارودية",
+      "مركز الفيوم"
+    ]
+  },
+  {
+    "id": "B126",
+    "crmCode": "Fayoum - Brick 2",
+    "imsCode": "B126",
+    "imsName": "Fayoum Centers",
+    "name": "[B126] Fayoum - Brick 2 (Fayoum Centers)",
+    "sector": "BeniSuef",
+    "sectorAr": "بني سويف والفيوم",
+    "scopeText": "سنورس – طامية – إطسا – إبشواي – الشواشنة – يوسف الصديق",
+    "subAreas": [
+      "سنورس",
+      "طامية",
+      "إطسا",
+      "إبشواي",
+      "الشواشنة",
+      "يوسف الصديق"
+    ]
+  },
+  {
+    "id": "B127",
+    "crmCode": "Bani Suef - Brick 1",
+    "imsCode": "B127",
+    "imsName": "Beni Suef City",
+    "name": "[B127] Bani Suef - Brick 1 (Beni Suef City)",
+    "sector": "BeniSuef",
+    "sectorAr": "بني سويف والفيوم",
+    "scopeText": "مدينة بني سويف (الرياضي – أرض الحرية – مقبل – صلاح سالم – الكورنيش) – شرق النيل",
+    "subAreas": [
+      "بني سويف",
+      "مدينة بني سويف",
+      "الرياضي",
+      "أرض الحرية",
+      "مقبل",
+      "صلاح سالم",
+      "الكورنيش",
+      "شرق النيل"
+    ]
+  },
+  {
+    "id": "B128",
+    "crmCode": "Bani Suef - Brick 2",
+    "imsCode": "B128",
+    "imsName": "North Beni Suef",
+    "name": "[B128] Bani Suef - Brick 2 (North Beni Suef)",
+    "sector": "BeniSuef",
+    "sectorAr": "بني سويف والفيوم",
+    "scopeText": "الواسطى – ناصر (بوش) – إهناسيا",
+    "subAreas": [
+      "الواسطى",
+      "ناصر",
+      "بوش",
+      "إهناسيا"
+    ]
+  },
+  {
+    "id": "B129",
+    "crmCode": "Bani Suef - Brick 3",
+    "imsCode": "B129",
+    "imsName": "South Beni Suef",
+    "name": "[B129] Bani Suef - Brick 3 (South Beni Suef)",
+    "sector": "BeniSuef",
+    "sectorAr": "بني سويف والفيوم",
+    "scopeText": "ببا – الفشن – سمسطا",
+    "subAreas": [
+      "ببا",
+      "الفشن",
+      "سمسطا"
+    ]
+  },
+  {
+    "id": "B130",
+    "crmCode": "El Menya I - Brick 1",
+    "imsCode": "B130",
+    "imsName": "Minya City 1",
+    "name": "[B130] El Menya I - Brick 1 (Minya City 1)",
+    "sector": "Minya",
+    "sectorAr": "المنيا",
+    "scopeText": "مدينة المنيا (الحسيني – عدلي يكن – طه حسين – أرض سلطان – الكورنيش)",
+    "subAreas": [
+      "المنيا",
+      "مدينة المنيا",
+      "الحسيني",
+      "عدلي يكن",
+      "طه حسين",
+      "أرض سلطان",
+      "الكورنيش"
+    ]
+  },
+  {
+    "id": "B131",
+    "crmCode": "El Menya I - Brick 2",
+    "imsCode": "B131",
+    "imsName": "Minya City 2 / Minya Center",
+    "name": "[B131] El Menya I - Brick 2 (Minya City 2 / Minya Center)",
+    "sector": "Minya",
+    "sectorAr": "المنيا",
+    "scopeText": "المنيا (أبو هلال – شاهين – المنيا الجديدة) – مركز المنيا",
+    "subAreas": [
+      "المنيا",
+      "أبو هلال",
+      "شاهين",
+      "المنيا الجديدة",
+      "مركز المنيا"
+    ]
+  },
+  {
+    "id": "B132",
+    "crmCode": "El Menya I - Brick 3",
+    "imsCode": "B132",
+    "imsName": "Samalout / Mattay",
+    "name": "[B132] El Menya I - Brick 3 (Samalout / Mattay)",
+    "sector": "Minya",
+    "sectorAr": "المنيا",
+    "scopeText": "سمالوط – مطاي",
+    "subAreas": [
+      "سمالوط",
+      "مطاي"
+    ]
+  },
+  {
+    "id": "B133",
+    "crmCode": "El Menya II - Brick 1",
+    "imsCode": "B133",
+    "imsName": "Maghagha / Beni Mazar",
+    "name": "[B133] El Menya II - Brick 1 (Maghagha / Beni Mazar)",
+    "sector": "Minya",
+    "sectorAr": "المنيا",
+    "scopeText": "مغاغة – بني مزار – العدوة",
+    "subAreas": [
+      "مغاغة",
+      "بني مزار",
+      "العدوة"
+    ]
+  },
+  {
+    "id": "B134",
+    "crmCode": "El Menya II - Brick 2",
+    "imsCode": "B134",
+    "imsName": "Mallawi",
+    "name": "[B134] El Menya II - Brick 2 (Mallawi)",
+    "sector": "Minya",
+    "sectorAr": "المنيا",
+    "scopeText": "مدينة ومركز ملوي",
+    "subAreas": [
+      "ملوي",
+      "مدينة ملوي",
+      "مركز ملوي"
+    ]
+  },
+  {
+    "id": "B135",
+    "crmCode": "El Menya II - Brick 3",
+    "imsCode": "B135",
+    "imsName": "Abu Qirqas / Deir Mawas",
+    "name": "[B135] El Menya II - Brick 3 (Abu Qirqas / Deir Mawas)",
+    "sector": "Minya",
+    "sectorAr": "المنيا",
+    "scopeText": "أبو قرقاص (الفكرية) – دير مواس",
+    "subAreas": [
+      "أبو قرقاص",
+      "الفكرية",
+      "دير مواس"
+    ]
+  },
+  {
+    "id": "B136",
+    "crmCode": "Asuit I / New Valley - Brick 1",
+    "imsCode": "B136",
+    "imsName": "Assiut 1",
+    "name": "[B136] Asuit I / New Valley - Brick 1 (Assiut 1)",
+    "sector": "Assiut",
+    "sectorAr": "أسيوط والوادي الجديد",
+    "scopeText": "أسيوط شرق وغرب (الجمهورية – الهلالي – يسري راغب – المحطة – فريال)",
+    "subAreas": [
+      "أسيوط",
+      "أسيوط شرق",
+      "أسيوط غرب",
+      "الجمهورية",
+      "الهلالي",
+      "يسري راغب",
+      "المحطة",
+      "فريال"
+    ]
+  },
+  {
+    "id": "B137",
+    "crmCode": "Asuit I / New Valley - Brick 2",
+    "imsCode": "B137",
+    "imsName": "Assiut 2 / New Valley",
+    "name": "[B137] Asuit I / New Valley - Brick 2 (Assiut 2 / New Valley)",
+    "sector": "Assiut",
+    "sectorAr": "أسيوط والوادي الجديد",
+    "scopeText": "أسيوط (الوليدية – السادات – الأربعين) – مركز أسيوط + الوادي الجديد (الخارجة – الداخلة)",
+    "subAreas": [
+      "أسيوط",
+      "الوليدية",
+      "السادات",
+      "الأربعين",
+      "مركز أسيوط",
+      "الوادي الجديد",
+      "الخارجة",
+      "الداخلة"
+    ]
+  },
+  {
+    "id": "B138",
+    "crmCode": "Asuit II - Brick 1",
+    "imsCode": "B138",
+    "imsName": "Dairut / Qusiya",
+    "name": "[B138] Asuit II - Brick 1 (Dairut / Qusiya)",
+    "sector": "Assiut",
+    "sectorAr": "أسيوط والوادي الجديد",
+    "scopeText": "ديروط – القوصية – منفلوط",
+    "subAreas": [
+      "ديروط",
+      "القوصية",
+      "منفلوط"
+    ]
+  },
+  {
+    "id": "B139",
+    "crmCode": "Asuit II - Brick 2",
+    "imsCode": "B139",
+    "imsName": "Abnoub / Fateh",
+    "name": "[B139] Asuit II - Brick 2 (Abnoub / Fateh)",
+    "sector": "Assiut",
+    "sectorAr": "أسيوط والوادي الجديد",
+    "scopeText": "أبنوب – الفتح – البداري – ساحل سليم",
+    "subAreas": [
+      "أبنوب",
+      "الفتح",
+      "البداري",
+      "ساحل سليم"
+    ]
+  },
+  {
+    "id": "B140",
+    "crmCode": "Asuit II - Brick 3",
+    "imsCode": "B140",
+    "imsName": "Abu Tig / Sedfa",
+    "name": "[B140] Asuit II - Brick 3 (Abu Tig / Sedfa)",
+    "sector": "Assiut",
+    "sectorAr": "أسيوط والوادي الجديد",
+    "scopeText": "أبو تيج – صدفا – الغنايم",
+    "subAreas": [
+      "أبو تيج",
+      "صدفا",
+      "الغنايم"
+    ]
+  },
+  {
+    "id": "B141",
+    "crmCode": "Sohag I - Brick 1",
+    "imsCode": "B141",
+    "imsName": "Sohag City 1",
+    "name": "[B141] Sohag I - Brick 1 (Sohag City 1)",
+    "sector": "Sohag",
+    "sectorAr": "سوهاج",
+    "scopeText": "مدينة سوهاج (المحطة – العروبة – القيسارية – الشهيد – الجرجاوية – غرب سوهاج)",
+    "subAreas": [
+      "سوهاج",
+      "مدينة سوهاج",
+      "المحطة",
+      "العروبة",
+      "القيسارية",
+      "الشهيد",
+      "الجرجاوية",
+      "غرب سوهاج"
+    ]
+  },
+  {
+    "id": "B142",
+    "crmCode": "Sohag I - Brick 2",
+    "imsCode": "B142",
+    "imsName": "Sohag City 2 / Akhmim",
+    "name": "[B142] Sohag I - Brick 2 (Sohag City 2 / Akhmim)",
+    "sector": "Sohag",
+    "sectorAr": "سوهاج",
+    "scopeText": "مدينة سوهاج (مدينة ناصر – الزهراء – الكورنيش الشرقي) – أخميم – ساقلتة",
+    "subAreas": [
+      "سوهاج",
+      "مدينة سوهاج",
+      "مدينة ناصر",
+      "الزهراء",
+      "الكورنيش الشرقي",
+      "أخميم",
+      "ساقلتة"
+    ]
+  },
+  {
+    "id": "B143",
+    "crmCode": "Sohag I - Brick 3",
+    "imsCode": "B143",
+    "imsName": "Tahta / Tima",
+    "name": "[B143] Sohag I - Brick 3 (Tahta / Tima)",
+    "sector": "Sohag",
+    "sectorAr": "سوهاج",
+    "scopeText": "طهطا – طما – جهينة – المراغة",
+    "subAreas": [
+      "طهطا",
+      "طما",
+      "جهينة",
+      "المراغة"
+    ]
+  },
+  {
+    "id": "B144",
+    "crmCode": "Sohag II - Brick 1",
+    "imsCode": "B144",
+    "imsName": "Girga / Balyana",
+    "name": "[B144] Sohag II - Brick 1 (Girga / Balyana)",
+    "sector": "Sohag",
+    "sectorAr": "سوهاج",
+    "scopeText": "جرجا – البلينا – المنشاة – العسيرات – دار السلام",
+    "subAreas": [
+      "جرجا",
+      "البلينا",
+      "المنشاة",
+      "العسيرات",
+      "دار السلام"
+    ]
+  },
+  {
+    "id": "B145",
+    "crmCode": "Quena I / Red Sea - Brick 1",
+    "imsCode": "B145",
+    "imsName": "Qena City",
+    "name": "[B145] Quena I / Red Sea - Brick 1 (Qena City)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "مدينة قنا (المحطة – الجميل – الشنهورية – حوض 10 – المساكن) – قفط – نقادة",
+    "subAreas": [
+      "قنا",
+      "مدينة قنا",
+      "المحطة",
+      "الجميل",
+      "الشنهورية",
+      "حوض 10",
+      "المساكن",
+      "قفط",
+      "نقادة"
+    ]
+  },
+  {
+    "id": "B146",
+    "crmCode": "Quena I / Red Sea - Brick 2",
+    "imsCode": "B146",
+    "imsName": "Qous / Deshna",
+    "name": "[B146] Quena I / Red Sea - Brick 2 (Qous / Deshna)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "قوص – دشنا – الوقف",
+    "subAreas": [
+      "قوص",
+      "دشنا",
+      "الوقف"
+    ]
+  },
+  {
+    "id": "B147",
+    "crmCode": "Quena I / Red Sea - Brick 3",
+    "imsCode": "B147",
+    "imsName": "Nag Hammadi / Farshout",
+    "name": "[B147] Quena I / Red Sea - Brick 3 (Nag Hammadi / Farshout)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "نجع حمادي – فرشوط – أبوتشت",
+    "subAreas": [
+      "نجع حمادي",
+      "فرشوط",
+      "أبوتشت"
+    ]
+  },
+  {
+    "id": "B148",
+    "crmCode": "Quena I / Red Sea - Brick 4",
+    "imsCode": "B148",
+    "imsName": "Red Sea",
+    "name": "[B148] Quena I / Red Sea - Brick 4 (Red Sea)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "الغردقة – سفاجا – القصير – رأس غارب – مرسى علم",
+    "subAreas": [
+      "الغردقة",
+      "سفاجا",
+      "القصير",
+      "رأس غارب",
+      "مرسى علم",
+      "البحر الأحمر"
+    ]
+  },
+  {
+    "id": "B149",
+    "crmCode": "Quena II - Brick 1",
+    "imsCode": "B149",
+    "imsName": "Luxor City",
+    "name": "[B149] Quena II - Brick 1 (Luxor City)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "مدينة الأقصر (المحطة – التلفزيون – المنشية – الكرنك – العوامية) – البياضية – الطود – القرنة",
+    "subAreas": [
+      "الأقصر",
+      "مدينة الأقصر",
+      "المحطة",
+      "التلفزيون",
+      "المنشية",
+      "الكرنك",
+      "العوامية",
+      "البياضية",
+      "الطود",
+      "القرنة"
+    ]
+  },
+  {
+    "id": "B150",
+    "crmCode": "Quena II - Brick 2",
+    "imsCode": "B150",
+    "imsName": "Esna / Armant",
+    "name": "[B150] Quena II - Brick 2 (Esna / Armant)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "إسنا – أرمنت",
+    "subAreas": [
+      "إسنا",
+      "أرمنت"
+    ]
+  },
+  {
+    "id": "B151",
+    "crmCode": "Aswan - Brick 1",
+    "imsCode": "B151",
+    "imsName": "Aswan City",
+    "name": "[B151] Aswan - Brick 1 (Aswan City)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "مدينة أسوان (السوق السياحي – كسر الحجر – عباس فريد – العقاد – السيل) – دراو",
+    "subAreas": [
+      "أسوان",
+      "مدينة أسوان",
+      "السوق السياحي",
+      "كسر الحجر",
+      "عباس فريد",
+      "العقاد",
+      "السيل",
+      "دراو"
+    ]
+  },
+  {
+    "id": "B152",
+    "crmCode": "Aswan - Brick 2",
+    "imsCode": "B152",
+    "imsName": "Kom Ombo / Edfu",
+    "name": "[B152] Aswan - Brick 2 (Kom Ombo / Edfu)",
+    "sector": "UpperSouth",
+    "sectorAr": "قنا والأقصر وأسوان والبحر الأحمر",
+    "scopeText": "كوم أمبو – إدفو – نصر النوبة",
+    "subAreas": [
+      "كوم أمبو",
+      "إدفو",
+      "نصر النوبة"
+    ]
   }
 ];
 

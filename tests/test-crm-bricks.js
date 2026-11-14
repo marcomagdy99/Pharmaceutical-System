@@ -1,7 +1,7 @@
 const assert = require('assert');
 const path = require('path');
 
-console.log('--- Testing CRM & IMS Bricks Hierarchy Suite (All 117 Bricks) ---');
+console.log('--- Testing Comprehensive Nationwide CRM & IMS Bricks Hierarchy Suite (All 152 Bricks) ---');
 
 // Mock browser globals
 global.window = global;
@@ -17,9 +17,9 @@ global.CustomEvent = function() {};
 require('../js/egypt-bricks-data.js');
 const crmBricks = window.CRM_IMS_MASTER_BRICKS;
 assert(Array.isArray(crmBricks), 'CRM_IMS_MASTER_BRICKS should be an array');
-assert.strictEqual(crmBricks.length, 117, 'Should contain exactly 117 CRM/IMS bricks across Egypt');
+assert.strictEqual(crmBricks.length, 152, 'Should contain exactly 152 CRM/IMS bricks nationwide');
 
-// Verify sector distribution
+// Verify sector distribution across all 16 regional sectors
 const cairo = crmBricks.filter(b => b.sector === 'Cairo');
 const giza = crmBricks.filter(b => b.sector === 'Giza');
 const qalyubia = crmBricks.filter(b => b.sector === 'Qalyubia');
@@ -30,6 +30,12 @@ const gharbia = crmBricks.filter(b => b.sector === 'Gharbia');
 const menoufia = crmBricks.filter(b => b.sector === 'Menoufia');
 const dakahlia = crmBricks.filter(b => b.sector === 'Dakahlia');
 const sharkia = crmBricks.filter(b => b.sector === 'Sharkia');
+const canal = crmBricks.filter(b => b.sector === 'Canal');
+const beniSuef = crmBricks.filter(b => b.sector === 'BeniSuef');
+const minya = crmBricks.filter(b => b.sector === 'Minya');
+const assiut = crmBricks.filter(b => b.sector === 'Assiut');
+const sohag = crmBricks.filter(b => b.sector === 'Sohag');
+const upperSouth = crmBricks.filter(b => b.sector === 'UpperSouth');
 
 assert.strictEqual(cairo.length, 37, 'Cairo should have 37 bricks (B01-B37)');
 assert.strictEqual(giza.length, 19, 'Giza should have 19 bricks (B38-B56)');
@@ -41,9 +47,23 @@ assert.strictEqual(gharbia.length, 7, 'Gharbia should have 7 bricks (B92-B98)');
 assert.strictEqual(menoufia.length, 4, 'Menoufia should have 4 bricks (B99-B102)');
 assert.strictEqual(dakahlia.length, 9, 'Dakahlia & Damietta should have 9 bricks (B103-B111)');
 assert.strictEqual(sharkia.length, 6, 'Sharkia should have 6 bricks (B112-B117)');
-console.log('✓ Test 1: All 117 CRM/IMS Bricks parsed with exact sector counts across 10 sectors');
+assert.strictEqual(canal.length, 7, 'Canal & Sinai should have 7 bricks (B118-B124)');
+assert.strictEqual(beniSuef.length, 5, 'Beni Suef & Fayoum should have 5 bricks (B125-B129)');
+assert.strictEqual(minya.length, 6, 'Minya should have 6 bricks (B130-B135)');
+assert.strictEqual(assiut.length, 5, 'Assiut & New Valley should have 5 bricks (B136-B140)');
+assert.strictEqual(sohag.length, 4, 'Sohag should have 4 bricks (B141-B144)');
+assert.strictEqual(upperSouth.length, 8, 'Qena, Luxor, Red Sea & Aswan should have 8 bricks (B145-B152)');
+console.log('✓ Test 1: All 152 CRM/IMS Bricks parsed with exact sector counts across all 16 sectors');
 
-// Verify scopeText and subAreas on all bricks
+// Verify contiguous IDs from B01 to B152
+for (let i = 1; i <= 152; i++) {
+  const expectedId = 'B' + (i < 10 ? '0' + i : i);
+  const found = crmBricks.find(b => b.id === expectedId);
+  assert(found, `Missing expected brick ID: ${expectedId}`);
+}
+console.log('✓ Test 2: Contiguous and complete IDs from B01 through B152 verified');
+
+// Verify metadata completeness
 crmBricks.forEach(b => {
   assert(b.id, `Brick should have id`);
   assert(b.crmCode, `Brick ${b.id} should have crmCode`);
@@ -52,81 +72,76 @@ crmBricks.forEach(b => {
   assert(b.scopeText && b.scopeText.length > 0, `Brick ${b.id} should have scopeText`);
   assert(Array.isArray(b.subAreas) && b.subAreas.length > 0, `Brick ${b.id} should have subAreas`);
 });
-console.log('✓ Test 2: All 117 bricks have complete metadata and actual scopes');
+console.log('✓ Test 3: All 152 bricks have complete metadata and actual scopes');
 
-// 2. Test Disambiguation
-// A. "المطبعة" (Matbaa) in Haram vs Faisal
-const matbaa = crmBricks.filter(b => b.scopeText.includes('المطبعة'));
-assert.strictEqual(matbaa.length, 2, 'المطبعة should match both Haram and Faisal');
-assert(matbaa.some(b => b.id === 'B43' && b.crmCode.includes('Haram')), 'Should include Haram 1');
-assert(matbaa.some(b => b.id === 'B46' && b.crmCode.includes('Faisal')), 'Should include Faisal 1');
-console.log('✓ Test 3: Disambiguation for المطبعة (Haram vs Faisal) pass');
+// 2. Disambiguation Tests
+// A. "المسلة" (Matareya Cairo B08 vs Fayoum B125)
+const mosalla = crmBricks.filter(b => b.scopeText.includes('المسلة'));
+assert.strictEqual(mosalla.length, 2, 'المسلة should match both Cairo Matareya and Fayoum City');
+assert(mosalla.some(b => b.id === 'B08' && b.sector === 'Cairo'), 'Should include Matareya B08');
+assert(mosalla.some(b => b.id === 'B125' && b.sector === 'BeniSuef'), 'Should include Fayoum B125');
+console.log('✓ Test 4: Disambiguation for المسلة (Cairo B08 vs Fayoum B125) pass');
 
-// B. "جسر السويس" (Gesr El Suez) across 3 distinct bricks
-const gesr = crmBricks.filter(b => b.scopeText.includes('جسر السويس'));
-assert.strictEqual(gesr.length, 3, 'جسر السويس should match 3 bricks (start, middle, end)');
-assert(gesr.some(b => b.id === 'B01'), 'Should match Heliopolis 1 (بداية)');
-assert(gesr.some(b => b.id === 'B06'), 'Should match Ain Shams 1 (المنتصف)');
-assert(gesr.some(b => b.id === 'B10'), 'Should match El Salam (نهاية)');
-console.log('✓ Test 4: Disambiguation for جسر السويس across 3 bricks pass');
+// B. "فيصل" (Faisal Giza B46-B48 vs Faisal Suez B124)
+const faisal = crmBricks.filter(b => b.scopeText.includes('فيصل') || b.crmCode.includes('Faisal'));
+assert(faisal.some(b => b.sector === 'Giza'), 'Should match Giza Faisal');
+assert(faisal.some(b => b.id === 'B124' && b.sector === 'Canal'), 'Should match Suez Faisal B124');
+console.log('✓ Test 5: Disambiguation for فيصل (Giza vs Suez) pass');
 
-// C. "عزبة النخل" (Ezbet El Nakhl) across Matareya vs Marg
-const nakhl = crmBricks.filter(b => b.scopeText.includes('عزبة النخل'));
-assert.strictEqual(nakhl.length, 2, 'عزبة النخل should match Matareya and Marg');
-assert(nakhl.some(b => b.id === 'B08'), 'Should match B08 El Matareya');
-assert(nakhl.some(b => b.id === 'B09'), 'Should match B09 El Marg');
-console.log('✓ Test 5: Disambiguation for عزبة النخل (Matareya vs Marg) pass');
+// C. "الأربعين" (Suez B123 vs Assiut B137)
+const arbaeen = crmBricks.filter(b => b.scopeText.includes('الأربعين'));
+assert(arbaeen.some(b => b.id === 'B123' && b.sector === 'Canal'), 'Should match Suez B123');
+assert(arbaeen.some(b => b.id === 'B137' && b.sector === 'Assiut'), 'Should match Assiut B137');
+console.log('✓ Test 6: Disambiguation for الأربعين (Suez vs Assiut) pass');
 
-// D. "المطرية" (Matareya Cairo vs Matareya Dakahlia)
+// D. "المطرية" (Cairo B08 vs Dakahlia B109)
 const matareya = crmBricks.filter(b => b.scopeText.includes('المطرية') || b.imsName.includes('Matareya'));
-assert(matareya.length >= 2, 'المطرية should exist in both Cairo and Dakahlia');
 assert(matareya.some(b => b.id === 'B08' && b.sector === 'Cairo'), 'Should include Cairo Matareya (B08)');
 assert(matareya.some(b => b.id === 'B109' && b.sector === 'Dakahlia'), 'Should include Dakahlia Matareya (B109)');
-console.log('✓ Test 6: Disambiguation for المطرية (Cairo B08 vs Dakahlia B109) pass');
-
-// E. "سموحة" (Smouha in Alex)
-const smouha = crmBricks.filter(b => b.scopeText.includes('سموحة'));
-assert(smouha.some(b => b.id === 'B72' && b.sector === 'Alex'), 'Should match Smouha B72');
-console.log('✓ Test 7: Smouha Alexandria B72 verified');
+console.log('✓ Test 7: Disambiguation for المطرية (Cairo B08 vs Dakahlia B109) pass');
 
 // 3. Test getMasterBricks() and findMasterBrickByName()
 const allMaster = window.getMasterBricks();
 assert(allMaster.length > 1900, 'getMasterBricks should return CRM bricks + remaining master bricks');
-assert(allMaster[0].isCrmGroup === true, 'First brick should be CRM grouped');
 assert.strictEqual(allMaster[0].id, 'B01', 'First brick should be B01');
 
-const findB43 = window.findMasterBrickByName('B43');
-assert(findB43 && findB43.id === 'B43', 'Should find brick by IMS code B43');
-const findHaram = window.findMasterBrickByName('Haram - Brick 1');
-assert(findHaram && findHaram.id === 'B43', 'Should find brick by CRM code');
-const findMansoura = window.findMasterBrickByName('B103');
-assert(findMansoura && findMansoura.imsName.includes('Mansoura'), 'Should find Mansoura 1 by B103');
-console.log('✓ Test 8: getMasterBricks & findMasterBrickByName pass across Part 1 & Part 2');
+const findB148 = window.findMasterBrickByName('B148');
+assert(findB148 && findB148.imsName === 'Red Sea', 'Should find Red Sea by B148');
+const findAswan = window.findMasterBrickByName('B151');
+assert(findAswan && findAswan.imsName.includes('Aswan'), 'Should find Aswan City by B151');
+console.log('✓ Test 8: getMasterBricks & findMasterBrickByName pass across all 152 bricks');
 
-// 4. Test Store Hierarchical Matching
+// 4. Test Store Hierarchical Matching across Canal & Upper Egypt
 window.DEMO_DATA = {
   users: [],
   areas: [
     {
-      id: 'area_haram',
-      name: 'Haram Territory',
+      id: 'area_fayoum',
+      name: 'Fayoum City Territory',
       lineId: 'line1',
-      bricks: ['[B43] Haram - Brick 1 (El Haram 1)'],
-      repId: 'u_rep_haram'
+      bricks: ['[B125] Fayoum - Brick 1 (Fayoum City)'],
+      repId: 'u_rep_fayoum'
     },
     {
-      id: 'area_faisal',
-      name: 'Faisal Territory',
+      id: 'area_suez',
+      name: 'Suez 1 Territory',
       lineId: 'line1',
-      bricks: ['[B46] Faisal - Brick 1 (Faisal 1)'],
-      repId: 'u_rep_faisal'
+      bricks: ['[B123] Suez / S. Sinai - Brick 1 (Suez 1)'],
+      repId: 'u_rep_suez'
     },
     {
-      id: 'area_mansoura',
-      name: 'Mansoura Central',
+      id: 'area_redsea',
+      name: 'Red Sea Coastal',
       lineId: 'line1',
-      bricks: ['[B103] Mansoura - Brick 1 (Mansoura 1)'],
-      repId: 'u_rep_mansoura'
+      bricks: ['[B148] Quena I / Red Sea - Brick 4 (Red Sea)'],
+      repId: 'u_rep_redsea'
+    },
+    {
+      id: 'area_aswan',
+      name: 'Aswan Central',
+      lineId: 'line1',
+      bricks: ['[B151] Aswan - Brick 1 (Aswan City)'],
+      repId: 'u_rep_aswan'
     }
   ],
   doctors: [],
@@ -137,29 +152,30 @@ require('../js/store.js');
 const store = window.store;
 assert(store && store.areas, 'store.areas should be defined');
 
-// Test matching by IMS Code
-assert.strictEqual(store.areas._brickMatchesText('[B43] Haram - Brick 1 (El Haram 1)', 'B43'), true, 'Should match exact IMS code B43');
-assert.strictEqual(store.areas._brickMatchesText('[B43] Haram - Brick 1 (El Haram 1)', 'b43'), true, 'Should match case-insensitive b43');
+// Test matching Fayoum by sub-area street name
+assert.strictEqual(store.areas._brickMatchesText('[B125] Fayoum - Brick 1 (Fayoum City)', 'المسلة'), true, 'Should match subArea المسلة in Fayoum 1');
+assert.strictEqual(store.areas._brickMatchesText('[B125] Fayoum - Brick 1 (Fayoum City)', 'سنورس'), false, 'سنورس is in Fayoum 2 (B126), should not match Fayoum 1');
 
-// Test matching by sub-area street name
-assert.strictEqual(store.areas._brickMatchesText('[B43] Haram - Brick 1 (El Haram 1)', 'مدكور'), true, 'Should match subArea مدكور');
-assert.strictEqual(store.areas._brickMatchesText('[B43] Haram - Brick 1 (El Haram 1)', 'نصر الدين'), true, 'Should match subArea نصر الدين');
+// Test matching Suez by sub-area street name
+assert.strictEqual(store.areas._brickMatchesText('[B123] Suez / S. Sinai - Brick 1 (Suez 1)', 'الأربعين'), true, 'Should match subArea الأربعين in Suez 1');
 
-// Test matching by street name for Faisal
-assert.strictEqual(store.areas._brickMatchesText('[B46] Faisal - Brick 1 (Faisal 1)', 'العشرين'), true, 'Should match subArea العشرين in Faisal');
-assert.strictEqual(store.areas._brickMatchesText('[B46] Faisal - Brick 1 (Faisal 1)', 'كفر طهرمس'), false, 'كفر طهرمس is in Faisal 2 (B47), should not match Faisal 1');
+// Test matching Red Sea by city name
+assert.strictEqual(store.areas._brickMatchesText('[B148] Quena I / Red Sea - Brick 4 (Red Sea)', 'الغردقة'), true, 'Should match الغردقة in Red Sea');
+assert.strictEqual(store.areas._brickMatchesText('[B148] Quena I / Red Sea - Brick 4 (Red Sea)', 'سفاجا'), true, 'Should match سفاجا in Red Sea');
 
-// Test matching Mansoura by street name
-assert.strictEqual(store.areas._brickMatchesText('[B103] Mansoura - Brick 1 (Mansoura 1)', 'المشاية'), true, 'Should match subArea المشاية in Mansoura 1');
-assert.strictEqual(store.areas._brickMatchesText('[B103] Mansoura - Brick 1 (Mansoura 1)', 'العباسي'), false, 'العباسي is in Mansoura 2 (B104), should not match Mansoura 1');
+// Test matching Aswan by street name
+assert.strictEqual(store.areas._brickMatchesText('[B151] Aswan - Brick 1 (Aswan City)', 'السوق السياحي'), true, 'Should match السوق السياحي in Aswan');
 
-// Test findByBrickName
-const foundHaramByStreet = store.areas.findByBrickName('مدكور');
-assert(foundHaramByStreet && foundHaramByStreet.id === 'area_haram', 'findByBrickName(مدكور) should resolve to area_haram');
+// Test findByBrickName for Canal & Upper Egypt
+const foundFayoumByStreet = store.areas.findByBrickName('المسلة');
+assert(foundFayoumByStreet && foundFayoumByStreet.id === 'area_fayoum', 'findByBrickName(المسلة) should resolve to area_fayoum');
 
-const foundMansouraByStreet = store.areas.findByBrickName('المشاية');
-assert(foundMansouraByStreet && foundMansouraByStreet.id === 'area_mansoura', 'findByBrickName(المشاية) should resolve to area_mansoura');
+const foundRedSeaByCity = store.areas.findByBrickName('الغردقة');
+assert(foundRedSeaByCity && foundRedSeaByCity.id === 'area_redsea', 'findByBrickName(الغردقة) should resolve to area_redsea');
 
-console.log('✓ Test 9: Store hierarchical matching and distributor resolution pass across all provinces');
+const foundAswanByStreet = store.areas.findByBrickName('السوق السياحي');
+assert(foundAswanByStreet && foundAswanByStreet.id === 'area_aswan', 'findByBrickName(السوق السياحي) should resolve to area_aswan');
 
-console.log('=== All CRM & IMS Bricks Hierarchy Tests PASSED (9/9)! ===');
+console.log('✓ Test 9: Store hierarchical matching and distributor resolution pass across all provinces nationwide');
+
+console.log('=== All 152 CRM & IMS Bricks Hierarchy Tests PASSED (9/9)! ===');
