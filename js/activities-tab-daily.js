@@ -231,12 +231,32 @@
       return;
     }
 
-    // Friday official weekend check (local date parsing avoids UTC midnight offset shifts)
+    // 1. Friday official weekend check (local date parsing avoids UTC midnight offset shifts)
     const [y, m, d] = curDateStr.split("-").map(Number);
     const actDate = new Date(y, m - 1, d);
     if (actDate.getDay() === 5) {
       Core.safeShowToast(Core.t("fridayHolidayNotice") || "Activities cannot be logged on Friday (official company weekend).", "warning");
       return;
+    }
+
+    // 2. Company secondary weekend check
+    const companySettings = (window.store && window.store.companySettings && typeof window.store.companySettings.get === "function")
+      ? window.store.companySettings.get()
+      : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+    const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? "thursday" : "none");
+    const secMode = companySettings.secondaryWeekendMode || "full_day";
+    const dayOfWeek = actDate.getDay(); // 0: Sun, 1: Mon, ..., 4: Thu, 5: Fri, 6: Sat
+
+    const isSecondaryDay = (secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4);
+    if (isSecondaryDay) {
+      if (secMode === "full_day") {
+        Core.safeShowToast(Core.t("weekendHolidayNotice") || "Activities cannot be logged on company weekend / day off.", "warning");
+        return;
+      }
+      if (secMode === "pm_only" && period === Core.PERIODS.PM) {
+        Core.safeShowToast(Core.t("weekendPmNotice") || "Evening activities cannot be logged on company half-day off.", "warning");
+        return;
+      }
     }
 
     Core.StoreAdapter.saveActivity(userId, curDateStr, period, {

@@ -303,7 +303,7 @@
 
   function canUserViewService(srv, user) {
     if (!user) return false;
-    const role = (user.role || "").toLowerCase();
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : (user.role || "").toLowerCase();
     if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR) return true;
     if (srv.requesterId === user.id) return true;
 
@@ -518,6 +518,15 @@
         if (srv && srv.attachmentBase64) {
           ActivitiesModule.openReceiptPreviewModal(srv.attachmentBase64);
         }
+        return;
+      }
+      const actionBtn = e.target.closest("[data-service-action]");
+      if (actionBtn) {
+        const action = actionBtn.dataset.serviceAction;
+        const srvId = actionBtn.dataset.serviceId;
+        if (action && srvId) {
+          window.ActivitiesDecisions?.openDecisionModal?.("service", srvId, action);
+        }
       }
     });
   }
@@ -605,8 +614,8 @@
     const canApprove = Core.isActionAuthorized("approve_service", srv, user);
     if (canApprove) {
       return `
-        <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('service', '${Core.escapeHTML(srv.id)}', 'approve')" title="Approve"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
-        <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('service', '${Core.escapeHTML(srv.id)}', 'reject')" title="Reject"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button type="button" class="action-btn-success" data-service-action="approve" data-service-id="${Core.escapeHTML(srv.id)}" title="Approve"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
+        <button type="button" class="action-btn-danger" data-service-action="reject" data-service-id="${Core.escapeHTML(srv.id)}" title="Reject"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       `;
     }
     return "&mdash;";
@@ -652,7 +661,7 @@
     }
 
     const dateInp = document.getElementById("serviceFormDateInput");
-    if (dateInp) dateInp.value = Core.formatDate(Core._state.currentDate);
+    if (dateInp) dateInp.value = Core.formatDate((window.getSystemDate && window.getSystemDate()) || new Date());
 
     onServiceFormLineChange();
     onServiceFormShiftChange();

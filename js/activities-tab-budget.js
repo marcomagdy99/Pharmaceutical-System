@@ -170,25 +170,37 @@
         0
       );
       let lmUtilized = 0;
+      let lmPending = 0;
       const allUsers = Core.getAllUsers();
       const lmDmIds = new Set(dmsUnderLm.map(d => d.id));
-      const lmReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === lmId || lmDmIds.has(u.managerId)));
+      const lmReps = allUsers.filter(u => {
+        const uRole = Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role;
+        return (uRole === Core.ROLES.REP || uRole === Core.ROLES.REP_ALT) && (u.managerId === lmId || lmDmIds.has(u.managerId));
+      });
       const lmTeamIds = new Set([lmId, ...lmDmIds, ...lmReps.map(r => r.id)]);
 
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (lmTeamIds.has(sh.lmId) || lmTeamIds.has(sh.dmId) || lmTeamIds.has(sh.repId) || lmTeamIds.has(sh.requesterId)) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
-              lmUtilized += Number(sh.shareAmount || 0);
+            if (sh.lineId === lineId && (lmTeamIds.has(sh.lmId) || lmTeamIds.has(sh.dmId) || lmTeamIds.has(sh.repId) || lmTeamIds.has(sh.requesterId))) {
+              if (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED) {
+                lmUtilized += Number(sh.shareAmount || 0);
+              } else if (String(sh.status || s.status || "").startsWith("pending")) {
+                lmPending += Number(sh.shareAmount || 0);
+              }
             }
           });
-        } else if (s.lineId === lineId && lmTeamIds.has(s.requesterId) && s.status === Core.REQUEST_STATUS.APPROVED) {
-          lmUtilized += Number(s.cost || 0);
+        } else if (s.lineId === lineId && lmTeamIds.has(s.requesterId)) {
+          if (s.status === Core.REQUEST_STATUS.APPROVED) {
+            lmUtilized += Number(s.cost || 0);
+          } else if (String(s.status || "").startsWith("pending")) {
+            lmPending += Number(s.cost || 0);
+          }
         }
       });
 
-      const lmFloor = Math.max(existingDmSum, lmUtilized);
+      const lmFloor = Math.max(existingDmSum, lmUtilized + lmPending);
       if (val < lmFloor) {
         Core.safeShowToast(
           (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +
@@ -572,7 +584,7 @@
 
     const allUsers = Core.getAllUsers();
     let myRepIds = [];
-    const curRole = Core._state.currentUser.role;
+    const curRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : Core._state.currentUser.role;
     if (curRole === Core.ROLES.DM) {
       myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
     } else if (curRole === Core.ROLES.LM) {
@@ -631,23 +643,33 @@
     const allServices = Core.StoreAdapter.getServices();
     for (const [repId, val] of Object.entries(tempAlloc)) {
       let repUtilized = 0;
+      let repPending = 0;
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && sh.repId === repId && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
-              repUtilized += Number(sh.shareAmount || 0);
+            if (sh.lineId === lineId && sh.repId === repId) {
+              if (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED) {
+                repUtilized += Number(sh.shareAmount || 0);
+              } else if (String(sh.status || s.status || "").startsWith("pending")) {
+                repPending += Number(sh.shareAmount || 0);
+              }
             }
           });
-        } else if (s.lineId === lineId && s.requesterId === repId && s.status === Core.REQUEST_STATUS.APPROVED) {
-          repUtilized += Number(s.cost || 0);
+        } else if (s.lineId === lineId && s.requesterId === repId) {
+          if (s.status === Core.REQUEST_STATUS.APPROVED) {
+            repUtilized += Number(s.cost || 0);
+          } else if (String(s.status || "").startsWith("pending")) {
+            repPending += Number(s.cost || 0);
+          }
         }
       });
 
-      if (val < repUtilized) {
+      const repFloor = repUtilized + repPending;
+      if (val < repFloor) {
         Core.safeShowToast(
           (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +
-          ` (${Core.getUserDisplayName(repId)}: required min ${repUtilized.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
+          ` (${Core.getUserDisplayName(repId)}: required min ${repFloor.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}, proposed ${val.toLocaleString("en-US")})`,
           "danger"
         );
         return;
@@ -690,7 +712,7 @@
 
   function saveDmAllocations() {
     Core._state.currentUser = Core.getAuthUser();
-    if (Core._state.currentUser.role === Core.ROLES.DM) {
+    if ((Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : Core._state.currentUser.role) === Core.ROLES.DM) {
       Core.safeShowToast(Core.t("unauthorizedDmBudgetAction") || "You are not authorized to edit district manager allocations.", "danger");
       return;
     }
@@ -742,7 +764,7 @@
     }
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
-    if (Core._state.currentUser.role === Core.ROLES.LM) {
+    if ((Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : Core._state.currentUser.role) === Core.ROLES.LM) {
       if (totalAlloc > myLmAlloc) {
         Core.safeShowToast(
           (Core.t("budgetOverAllocated") || "Total allocated to district managers exceeds your available line budget.") +
@@ -774,28 +796,35 @@
         0
       );
       let dmUtilized = 0;
+      let dmPending = 0;
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
             if (
               sh.lineId === lineId &&
-              (sh.dmId === dmId || sh.requesterId === dmId || repsUnderDmIds.has(sh.repId)) &&
-              (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)
+              (sh.dmId === dmId || sh.requesterId === dmId || repsUnderDmIds.has(sh.repId))
             ) {
-              dmUtilized += Number(sh.shareAmount || 0);
+              if (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED) {
+                dmUtilized += Number(sh.shareAmount || 0);
+              } else if (String(sh.status || s.status || "").startsWith("pending")) {
+                dmPending += Number(sh.shareAmount || 0);
+              }
             }
           });
         } else if (
           s.lineId === lineId &&
-          (s.requesterId === dmId || repsUnderDmIds.has(s.requesterId)) &&
-          s.status === Core.REQUEST_STATUS.APPROVED
+          (s.requesterId === dmId || repsUnderDmIds.has(s.requesterId))
         ) {
-          dmUtilized += Number(s.cost || 0);
+          if (s.status === Core.REQUEST_STATUS.APPROVED) {
+            dmUtilized += Number(s.cost || 0);
+          } else if (String(s.status || "").startsWith("pending")) {
+            dmPending += Number(s.cost || 0);
+          }
         }
       });
 
-      const dmFloor = Math.max(existingRepSum, dmUtilized);
+      const dmFloor = Math.max(existingRepSum, dmUtilized + dmPending);
       if (val < dmFloor) {
         Core.safeShowToast(
           (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +

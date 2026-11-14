@@ -40,7 +40,7 @@
       return;
     }
 
-    const role = (user.role || "").toLowerCase();
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : (user.role || "").toLowerCase();
     if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
       empSelect.style.display = "none";
       return;
@@ -109,7 +109,7 @@
 
   function canUserViewExpense(exp, user) {
     if (!user) return false;
-    const role = (user.role || "").toLowerCase();
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : (user.role || "").toLowerCase();
     if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR || role === "admin" || role === "hr") return true;
     if (role === "general_manager" || role === "gm" || role === "finance" || role === "finance_manager" || role === "commercial_director") return true;
     if (exp.requesterId === user.id) return true;
@@ -174,6 +174,15 @@
         const btn = e.target.closest(".btn-receipt-zoom");
         if (btn && btn.dataset.receiptUrl) {
           ActivitiesModule.openReceiptPreviewModal(btn.dataset.receiptUrl);
+          return;
+        }
+        const actionBtn = e.target.closest("[data-expense-action]");
+        if (actionBtn) {
+          const action = actionBtn.dataset.expenseAction;
+          const expId = actionBtn.dataset.expenseId;
+          if (action && expId) {
+            window.ActivitiesDecisions?.openDecisionModal?.("expense", expId, action);
+          }
         }
       });
     }
@@ -260,14 +269,14 @@
     if (canApprove || canReject) {
       if (canApprove) {
         buttons += `
-          <button type="button" class="action-btn-success" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'approve')" title="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}" aria-label="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}">
+          <button type="button" class="action-btn-success" data-expense-action="approve" data-expense-id="${Core.escapeHTML(exp.id)}" title="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}" aria-label="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}">
             <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           </button>
         `;
       }
       if (canReject) {
         buttons += `
-          <button type="button" class="action-btn-danger" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'reject')" title="${Core.escapeHTML(Core.t("btnReject") || "Reject")}" aria-label="${Core.escapeHTML(Core.t("btnReject") || "Reject")}">
+          <button type="button" class="action-btn-danger" data-expense-action="reject" data-expense-id="${Core.escapeHTML(exp.id)}" title="${Core.escapeHTML(Core.t("btnReject") || "Reject")}" aria-label="${Core.escapeHTML(Core.t("btnReject") || "Reject")}">
             <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         `;
@@ -275,7 +284,7 @@
     }
     if (canDisburse) {
       buttons += `
-        <button type="button" class="action-btn-disburse" onclick="ActivitiesModule.openDecisionModal('expense', '${Core.escapeHTML(exp.id)}', 'disburse')" title="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}" aria-label="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}">
+        <button type="button" class="action-btn-disburse" data-expense-action="disburse" data-expense-id="${Core.escapeHTML(exp.id)}" title="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}" aria-label="${Core.escapeHTML(Core.t("btnDisburse") || "Disburse")}">
           <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M15 9.5a2.5 2.5 0 0 0-5 0c0 3 5 2 5 5a2.5 2.5 0 0 1-5 0"/></svg>
         </button>
       `;
@@ -294,7 +303,7 @@
     if (previewContainer) previewContainer.style.display = "none";
 
     const dateInp = document.getElementById("expenseDateInput");
-    if (dateInp) dateInp.value = Core.formatDate(Core._state.currentDate);
+    if (dateInp) dateInp.value = Core.formatDate((window.getSystemDate && window.getSystemDate()) || new Date());
 
     const userLines = Core.getUserAssignedLines(Core._state.currentUser);
     const lineSelect = document.getElementById("expenseFormLineSelect") || document.getElementById("expenseLineSelect");
@@ -522,7 +531,7 @@
     let initialStatus = Core.REQUEST_STATUS.PENDING_DM;
     let nextApprover = null;
 
-    const role = (Core._state.currentUser.role || "").toLowerCase();
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser.role || "").toLowerCase();
     if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
       initialStatus = Core.REQUEST_STATUS.PENDING_DM;
       nextApprover = Core._state.currentUser.managerId || null;

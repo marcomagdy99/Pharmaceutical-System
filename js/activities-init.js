@@ -46,7 +46,7 @@
 
   function switchTab(tabId) {
     const user = Core._state.currentUser || Core.getAuthUser();
-    const role = (user && user.role) ? user.role.toLowerCase() : "";
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : ((user && user.role) ? user.role.toLowerCase() : "");
     if (tabId === Core.TABS.BUDGET && role !== Core.ROLES.BU && role !== Core.ROLES.ADMIN) {
       Core.safeShowToast(Core.t("unauthorizedBudgetAction") || "Unauthorized", "danger");
       return;
@@ -85,15 +85,17 @@
       ? window.store.accountLocationRequests.getAll()
       : [];
     const currentUser = Core.getAuthUser() || {};
-    const role = (currentUser.role || "").toLowerCase();
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(currentUser) : (currentUser.role || "").toLowerCase();
 
-    // Row filtering: Only show requests within user's scope
+    // Row filtering: Only show requests within user's scope (strict hierarchy scoping for BU, LM, DM)
     const visibleRequests = requests.filter((req) => {
       const targetRepId = req.repId || req.userId;
-      if (role === "admin" || role === "general_manager" || role === "business_unit") return true;
-      if (role === "medical_rep" || role === "rep") return targetRepId === currentUser.id;
-      if (role === "district_manager" || role === "line_manager") {
-        return targetRepId === currentUser.id || (typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId));
+      if (role === "admin" || role === "general_manager" || role === Core.ROLES.ADMIN) return true;
+      if (role === "medical_rep" || role === "rep" || role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) return targetRepId === currentUser.id;
+      if (role === "district_manager" || role === "line_manager" || role === "business_unit" || role === Core.ROLES.DM || role === Core.ROLES.LM || role === Core.ROLES.BU) {
+        return targetRepId === currentUser.id ||
+               (typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId)) ||
+               (typeof Core.getSubordinatesForUser === "function" && Core.getSubordinatesForUser(currentUser).some(s => s.id === targetRepId));
       }
       return false;
     });

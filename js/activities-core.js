@@ -958,6 +958,29 @@
     return getAllUsers().find((u) => u.id === id);
   }
 
+  function normalizeRole(role) {
+    if (typeof window !== "undefined" && typeof window.normalizeRole === "function") {
+      return window.normalizeRole(role);
+    }
+    if (!role) return "";
+    const r = String(role).toLowerCase().trim();
+    if (r === "dm" || r === "district_manager" || r === "district manager") return ROLES.DM;
+    if (r === "lm" || r === "line_manager" || r === "line manager") return ROLES.LM;
+    if (r === "bu" || r === "business_unit" || r === "business unit") return ROLES.BU;
+    if (r === "rep" || r === "medical_rep" || r === "medical rep") return ROLES.REP;
+    if (r === "pm" || r === "product_manager" || r === "product manager") return ROLES.PM;
+    if (r === "admin" || r === "administrator") return ROLES.ADMIN;
+    if (r === "hr" || r === "human_resources" || r === "human resources") return ROLES.HR;
+    if (r === "gm" || r === "general_manager" || r === "general manager") return "general_manager";
+    return r;
+  }
+
+  function getNormalizedRole(userOrRole) {
+    if (!userOrRole) return "";
+    if (typeof userOrRole === "object") return normalizeRole(userOrRole.role);
+    return normalizeRole(userOrRole);
+  }
+
   function getAuthUser() {
     let u = null;
     if (typeof window.requireAuth === "function") {
@@ -992,7 +1015,7 @@
       const sanitizedUser = {
         ...u,
         ...canonical,
-        role: canonical.role,
+        role: normalizeRole(canonical.role),
         lineIds: canonical.lineIds && canonical.lineIds.length > 0
           ? [...canonical.lineIds]
           : (canonical.lineId ? [canonical.lineId] : []),
@@ -1010,7 +1033,7 @@
 
   function isActionAuthorized(action, resource, user) {
     if (!user) return false;
-    const role = (user.role || "").toLowerCase();
+    const role = getNormalizedRole(user);
     const isAdmin = role === ROLES.ADMIN || role === "admin" || role === "administrator";
 
     // Prevent self-approval strictly for all users, including Admin
@@ -1498,5 +1521,7 @@
     getHrUser,
     getGmUser,
     dispatchWorkflowNotification,
+    normalizeRole,
+    getNormalizedRole,
   };
 })(window);
