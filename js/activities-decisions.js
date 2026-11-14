@@ -60,8 +60,12 @@
     if (type === "service" && item.isShared && Array.isArray(item.shares)) {
       const user = Core._state.currentUser || Core.getAuthUser();
       if (user) {
+        const rawRole = (user.role || "").toLowerCase().trim();
+        const normRole = typeof window.normalizeRole === "function" ? window.normalizeRole(rawRole) : rawRole;
+        const isUserDM = normRole === Core.ROLES.DM || normRole === "dm" || normRole === "district_manager";
+        const isUserLM = normRole === Core.ROLES.LM || normRole === "lm" || normRole === "line_manager";
         const myShares = item.shares.filter(
-          (sh) => (user.role === Core.ROLES.DM && sh.dmId === user.id) || (user.role === Core.ROLES.LM && sh.lmId === user.id)
+          (sh) => (isUserDM && sh.dmId === user.id) || (isUserLM && sh.lmId === user.id)
         );
         if (myShares.length > 0) {
           const myTotal = myShares.reduce((sum, sh) => sum + (sh.shareAmount || 0), 0);
@@ -216,7 +220,7 @@
             userId: exp.requesterId,
             type: "expense_rejected",
             title: "Expense Claim Rejected",
-            message: `Expense claim of ${(exp.amount || 0).toLocaleString("en-US")} EGP was rejected by ${actorName}.${comment ? " Reason: " + comment : ""}`,
+            message: `Expense claim of ${(exp.amount || 0).toLocaleString("en-US")} EGP was rejected by ${actorName}.${comment ? " Reason: " + Core.escapeHTML(comment) : ""}`,
             link: "activities.html",
             icon: "❌",
             badgeClass: "bg-danger",
@@ -351,7 +355,7 @@
               userId: srv.requesterId,
               type: "service_rejected",
               title: "Shared Service Request Rejected",
-              message: `Shared service request (${srv.title}) was rejected by ${actorName}.${comment ? " Reason: " + comment : ""}`,
+              message: `Shared service request (${Core.escapeHTML(srv.title)}) was rejected by ${Core.escapeHTML(actorName)}.${comment ? " Reason: " + Core.escapeHTML(comment) : ""}`,
               link: "activities.html",
               icon: "❌",
               badgeClass: "bg-danger",
@@ -367,7 +371,7 @@
                   userId: sh.repId,
                   type: "service_rejected",
                   title: "Shared Service Request Rejected",
-                  message: `Shared service request (${srv.title}) was rejected by ${actorName}.${comment ? " Reason: " + comment : ""}`,
+                  message: `Shared service request (${Core.escapeHTML(srv.title)}) was rejected by ${actorName}.${comment ? " Reason: " + Core.escapeHTML(comment) : ""}`,
                   link: "activities.html",
                   icon: "❌",
                   badgeClass: "bg-danger",
@@ -378,12 +382,14 @@
             });
           }
         } else if (decision === "approve") {
-          const userRole = Core._state.currentUser.role;
-          const normRole = (userRole || "").toLowerCase();
+          const rawRole = (Core._state.currentUser.role || "").toLowerCase().trim();
+          const userRole = typeof window.normalizeRole === "function"
+            ? window.normalizeRole(rawRole)
+            : (rawRole === "dm" ? Core.ROLES.DM : rawRole === "lm" ? Core.ROLES.LM : rawRole === "bu" ? Core.ROLES.BU : rawRole === "admin" ? Core.ROLES.ADMIN : rawRole);
           const userId = Core._state.currentUser.id;
           let hasModifiedShare = false;
 
-          if (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.BU || normRole === "general_manager" || normRole === "gm") {
+          if (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.BU || userRole === "general_manager" || userRole === "gm" || rawRole === "admin" || rawRole === "bu") {
             srv.shares.forEach((sh) => {
               if (sh.status !== Core.REQUEST_STATUS.APPROVED) {
                 sh.status = Core.REQUEST_STATUS.APPROVED;
@@ -391,7 +397,7 @@
                 hasModifiedShare = true;
               }
             });
-          } else if (userRole === Core.ROLES.DM) {
+          } else if (userRole === Core.ROLES.DM || rawRole === "dm" || rawRole === "district_manager") {
             srv.shares.forEach((sh) => {
               if (sh.dmId === userId && sh.status === Core.REQUEST_STATUS.PENDING_DM) {
                 if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
@@ -412,7 +418,7 @@
                 hasModifiedShare = true;
               }
             });
-          } else if (userRole === Core.ROLES.LM) {
+          } else if (userRole === Core.ROLES.LM || rawRole === "lm" || rawRole === "line_manager") {
             srv.shares.forEach((sh) => {
               if (sh.lmId === userId && sh.status === Core.REQUEST_STATUS.PENDING_LM) {
                 if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
@@ -433,7 +439,7 @@
                 hasModifiedShare = true;
               }
             });
-          } else if (userRole === Core.ROLES.PM) {
+          } else if (userRole === Core.ROLES.PM || rawRole === "pm" || rawRole === "product_manager") {
             const userLines = Core._state.currentUser.lineIds || (Core._state.currentUser.lineId ? [Core._state.currentUser.lineId] : []);
             srv.shares.forEach((sh) => {
               if (userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending")) {
@@ -489,7 +495,7 @@
                 userId: srv.requesterId,
                 type: "service_fully_approved",
                 title: "Shared Service Request Fully Approved!",
-                message: `Shared service request (${srv.title}) has been fully approved by all managers for ${Number(srv.cost || 0).toLocaleString("en-US")} EGP.`,
+                message: `Shared service request (${Core.escapeHTML(srv.title)}) has been fully approved by all managers for ${Number(srv.cost || 0).toLocaleString("en-US")} EGP.`,
                 link: "activities.html",
                 icon: "✅",
                 badgeClass: "bg-success",
@@ -505,7 +511,7 @@
                     userId: sh.repId,
                     type: "service_fully_approved",
                     title: "Shared Service Request Approved",
-                    message: `Shared service request (${srv.title}) was approved with your share (${sh.sharePercent}% - ${Number(sh.shareAmount || 0).toLocaleString("en-US")} EGP).`,
+                    message: `Shared service request (${Core.escapeHTML(srv.title)}) was approved with your share (${sh.sharePercent}% - ${Number(sh.shareAmount || 0).toLocaleString("en-US")} EGP).`,
                     link: "activities.html",
                     icon: "✅",
                     badgeClass: "bg-success",
@@ -529,7 +535,7 @@
                   userId: sh.nextApproverId,
                   type: "shared_service_approval",
                   title: "Shared Service Request Pending Approval",
-                  message: `Shared service request (${srv.title}) approved by DM is now awaiting your final approval.`,
+                  message: `Shared service request (${Core.escapeHTML(srv.title)}) approved by DM is now awaiting your final approval.`,
                   link: "activities.html",
                   icon: "⏳",
                   badgeClass: "bg-warning",
@@ -562,7 +568,7 @@
               userId: srv.requesterId,
               type: "service_rejected",
               title: "Service Request Rejected",
-              message: `Service request (${srv.title}) was rejected by ${actorName}.${comment ? " Reason: " + comment : ""}`,
+              message: `Service request (${Core.escapeHTML(srv.title)}) was rejected by ${actorName}.${comment ? " Reason: " + Core.escapeHTML(comment) : ""}`,
               link: "activities.html",
               icon: "❌",
               badgeClass: "bg-danger",
@@ -580,10 +586,11 @@
             nextApproverId = adv.nextApproverId;
           } else {
             if (srv.status === Core.REQUEST_STATUS.PENDING_DM) {
-              const dm = Core.getUserById(srv.requesterId);
-              const lm = dm && dm.managerId ? dm.managerId : (Core._state.currentUser ? Core._state.currentUser.managerId : null);
+              const requester = Core.getUserById(srv.requesterId);
+              const dm = requester && requester.managerId ? Core.getUserById(requester.managerId) : Core._state.currentUser;
+              const lmId = (dm && dm.managerId) || (Core._state.currentUser && Core._state.currentUser.managerId) || null;
               nextStatus = Core.REQUEST_STATUS.PENDING_LM;
-              nextApproverId = lm;
+              nextApproverId = lmId;
             } else {
               nextStatus = Core.REQUEST_STATUS.APPROVED;
               nextApproverId = null;
@@ -604,7 +611,7 @@
                 userId: srv.requesterId,
                 type: "service_approved",
                 title: "Service Request Approved!",
-                message: `Service request (${srv.title}) was approved for ${Number(srv.cost || 0).toLocaleString("en-US")} EGP.`,
+                message: `Service request (${Core.escapeHTML(srv.title)}) was approved for ${Number(srv.cost || 0).toLocaleString("en-US")} EGP.`,
                 link: "activities.html",
                 icon: "✅",
                 badgeClass: "bg-success",
@@ -623,7 +630,7 @@
               userId: nextApproverId,
               type: "service_approval",
               title: stepTitle,
-              message: `${actorName} approved service request (${srv.title}), awaiting your review.`,
+              message: `${Core.escapeHTML(actorName)} approved service request (${Core.escapeHTML(srv.title)}), awaiting your review.`,
               link: "activities.html",
               icon: "⏳",
               badgeClass: "bg-warning",
@@ -636,7 +643,7 @@
                 userId: srv.requesterId,
                 type: "service_forwarded",
                 title: "Service Request Forwarded",
-                message: `${actorName} approved service request (${srv.title}) and forwarded to next stage.`,
+                message: `${Core.escapeHTML(actorName)} approved service request (${Core.escapeHTML(srv.title)}) and forwarded to next stage.`,
                 link: "activities.html",
                 icon: "⏳",
                 badgeClass: "bg-info",

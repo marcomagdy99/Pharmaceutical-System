@@ -1,3 +1,16 @@
+// Self-contained, robust HTML escaper to guarantee zero crashing and anti-XSS safety
+if (typeof window.escapeHtml !== "function") {
+  window.escapeHtml = function (str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
+}
+
 // Safe localization helper for achievements report
 function getAchTranslation(key, fallback) {
   if (window.ActivitiesCore && typeof window.ActivitiesCore.t === "function") {
@@ -48,6 +61,16 @@ window.closeAchMonthDropdown = function() {
   const menu = document.getElementById('achMonthDropdownMenu');
   if (menu) menu.classList.remove('show');
 };
+
+// Global click-outside listener to dismiss month dropdown
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('achMonthDropdownMenu');
+  if (!menu || !menu.classList.contains('show')) return;
+  const trigger = document.getElementById('achMonthDropdownTrigger') || document.querySelector('.ach-month-btn');
+  if (trigger && (trigger === e.target || trigger.contains(e.target))) return;
+  if (menu.contains(e.target)) return;
+  window.closeAchMonthDropdown();
+});
 
 window.toggleSelectAllAchMonths = function(isChecked) {
   document.querySelectorAll('.ach-month-checkbox').forEach((cb) => {
@@ -378,7 +401,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       if (a.repId && dmReps.includes(a.repId)) return true;
       const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
       if (mgrId === curUser.id) return true;
-      if (!mgrId && (!a.lineId || (curUser.lineIds && curUser.lineIds.includes(a.lineId)) || curUser.lineId === a.lineId)) return true;
+      if (!mgrId && (a.dmId === curUser.id || a.managerId === curUser.id)) return true;
       return false;
     });
     allowedAreaIds = new Set(dmAreas.map((a) => a.id));
@@ -456,7 +479,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   }
 
   if (selectedArea && selectedArea !== 'all') {
-    filteredAreaIds = new Set([selectedArea]);
+    filteredAreaIds = allowedAreaIds.has(selectedArea) ? new Set([selectedArea]) : new Set();
   }
 
   if (selectedLineId && selectedLineId !== 'all') {

@@ -9,6 +9,21 @@
 (function (window) {
   "use strict";
 
+  // Self-contained, robust HTML escaper to guarantee zero crashing and anti-XSS safety
+  function safeEscapeHTML(str) {
+    if (str === null || str === undefined) return "";
+    if (typeof window.escapeHtml === "function") return window.escapeHtml(String(str));
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  if (typeof window.escapeHtml !== "function") {
+    window.escapeHtml = safeEscapeHTML;
+  }
+
   // State container
   const CostingState = {
     initialized: false,
@@ -131,7 +146,7 @@
         allowedRepIds: new Set(allUsers.filter((u) => getNormalizedRole(u) === "medical_rep").map((u) => u.id)),
         allowedAreas: allAreas,
         allowedAreaIds: new Set(allAreas.map((a) => a.id)),
-        allowedDoctorIds: new Set(allDoctors.map((d) => d.id)),
+        allowedDoctorIds: new Set(allDoctors.map((d) => String(d.id))),
       };
     }
 
@@ -203,7 +218,7 @@
       let myDoctors = allDoctors.filter((d) =>
         d.repId === user.id || (d.areaId && myAreaIds.has(d.areaId))
       );
-      const myDoctorIds = new Set(myDoctors.map((d) => d.id));
+      const myDoctorIds = new Set(myDoctors.map((d) => String(d.id)));
 
       // Resolve Rep's District Manager (DM)
       let myDM = null;
@@ -276,7 +291,7 @@
       const districtDoctors = allDoctors.filter((d) =>
         districtRepIds.has(d.repId) || districtAreaIds.has(d.areaId)
       );
-      const districtDoctorIds = new Set(districtDoctors.map((d) => d.id));
+      const districtDoctorIds = new Set(districtDoctors.map((d) => String(d.id)));
 
       return {
         role,
@@ -284,8 +299,8 @@
         isLM: false,
         isDM: true,
         isRep: false,
-        allowedLines: allowedLines.length > 0 ? allowedLines : allLines,
-        allowedLineIds: districtLineIds.size > 0 ? districtLineIds : new Set(allLines.map((l) => l.id)),
+        allowedLines: allowedLines,
+        allowedLineIds: districtLineIds,
         allowedDMs: [user],
         allowedReps: districtReps,
         allowedRepIds: districtRepIds,
@@ -338,7 +353,7 @@
         }
         return myLineIds.has(d.lineId) || lmAreaIds.has(d.areaId) || lmRepIds.has(d.repId);
       });
-      const lmDoctorIds = new Set(lmDoctors.map((d) => d.id));
+      const lmDoctorIds = new Set(lmDoctors.map((d) => String(d.id)));
 
       return {
         role,
@@ -757,7 +772,7 @@
               const isLmRep = shareRepId && scope.allowedRepIds.has(shareRepId);
               if (!isLmLine && !isLmRep) return;
             } else {
-              const matchesDoc = s.targetId && scope.allowedDoctorIds.has(s.targetId);
+              const matchesDoc = s.targetId && scope.allowedDoctorIds.has(String(s.targetId));
               const matchesRep = shareRepId && scope.allowedRepIds.has(shareRepId);
               const matchesArea = shareAreaId && scope.allowedAreaIds.has(shareAreaId);
               if (!matchesDoc && !matchesRep && !matchesArea) return;
@@ -852,7 +867,7 @@
                 const docId = typeof docRef === "object" ? docRef.id : docRef;
                 const docName = typeof docRef === "object" ? docRef.name : "";
 
-                if (!scope.isAdmin && !scope.allowedDoctorIds.has(docId)) {
+                if (!scope.isAdmin && !scope.allowedDoctorIds.has(String(docId))) {
                   return;
                 }
 
@@ -1108,6 +1123,39 @@
         grandTotal: grandTotal,
         transactions: matchedTx,
       };
+    });
+
+    // Capture unlinked/general transactions in txByTargetName (e.g. clinics, hospitals, general activities without a doctor profile)
+    Object.keys(txByTargetName).forEach((nameKey) => {
+      const unlinkedTxs = txByTargetName[nameKey];
+      if (!unlinkedTxs || unlinkedTxs.length === 0) return;
+      const firstTx = unlinkedTxs[0];
+      const categoryTotals = {};
+      CostingState.dynamicCategories.forEach((cat) => { categoryTotals[cat] = 0; });
+      let grandTotal = 0;
+      unlinkedTxs.forEach((tx) => {
+        const cat = tx.category || "Other Requests";
+        if (categoryTotals[cat] === undefined) categoryTotals[cat] = 0;
+        categoryTotals[cat] += tx.cost;
+        grandTotal += tx.cost;
+      });
+      accountRows.push({
+        id: `unlinked_${nameKey}`,
+        targetType: firstTx.targetType || "general",
+        doctorName: firstTx.targetName || "General / Institutional Account",
+        clinicName: firstTx.targetName || "Institutional Account",
+        classification: "General",
+        specialty: "Institutional",
+        areaId: firstTx.areaId || "",
+        areaName: firstTx.areaId ? (areaMap[firstTx.areaId] || firstTx.areaId) : "General Territory",
+        lineId: firstTx.lineId || "",
+        lineName: firstTx.lineId ? (lineMap[firstTx.lineId] || firstTx.lineId) : "General Line",
+        repId: firstTx.repId || "",
+        repName: firstTx.repId ? (userMap[firstTx.repId] || firstTx.repId) : "-",
+        categoryTotals: categoryTotals,
+        grandTotal: grandTotal,
+        transactions: unlinkedTxs,
+      });
     });
 
     // Apply Filter Bar conditions on accounts

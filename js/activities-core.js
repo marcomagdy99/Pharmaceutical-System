@@ -638,9 +638,17 @@
   }
 
   function escapeHTML(str) {
-    return str !== null && str !== undefined
-      ? (window.escapeHtml ? window.escapeHtml(String(str)) : String(str))
-      : "";
+    if (str === null || str === undefined) return "";
+    if (typeof window.escapeHtml === "function") return window.escapeHtml(String(str));
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  if (typeof window.escapeHtml !== "function") {
+    window.escapeHtml = escapeHTML;
   }
 
   function safeShowToast(msg, type = "info") {
