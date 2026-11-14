@@ -231,8 +231,9 @@
       return;
     }
 
-    // Friday official weekend check
-    const actDate = new Date(curDateStr);
+    // Friday official weekend check (local date parsing avoids UTC midnight offset shifts)
+    const [y, m, d] = curDateStr.split("-").map(Number);
+    const actDate = new Date(y, m - 1, d);
     if (actDate.getDay() === 5) {
       Core.safeShowToast(Core.t("fridayHolidayNotice") || "Activities cannot be logged on Friday (official company weekend).", "warning");
       return;

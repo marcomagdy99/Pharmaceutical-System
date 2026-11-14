@@ -20,12 +20,7 @@
 
     if (role === Core.ROLES.BU || role === Core.ROLES.ADMIN) {
       if (tabBtnBudget) tabBtnBudget.style.display = "inline-flex";
-      if (role === Core.ROLES.BU && tabBtnServices) tabBtnServices.style.display = "none";
-      if (role === Core.ROLES.ADMIN && tabBtnServices) tabBtnServices.style.display = "inline-flex";
-      if (role === Core.ROLES.BU && Core._state.activeTab === Core.TABS.SERVICES) {
-        switchTab(Core.TABS.BUDGET);
-        return;
-      }
+      if (tabBtnServices) tabBtnServices.style.display = "inline-flex";
     } else {
       if (tabBtnBudget) tabBtnBudget.style.display = "none";
       if (tabBtnServices) tabBtnServices.style.display = "inline-flex";
@@ -54,10 +49,6 @@
     const role = (user && user.role) ? user.role.toLowerCase() : "";
     if (tabId === Core.TABS.BUDGET && role !== Core.ROLES.BU && role !== Core.ROLES.ADMIN) {
       Core.safeShowToast(Core.t("unauthorizedBudgetAction") || "Unauthorized", "danger");
-      return;
-    }
-    if (tabId === Core.TABS.SERVICES && role === Core.ROLES.BU) {
-      Core.safeShowToast(Core.t("unauthorizedServiceAction") || "Unauthorized", "danger");
       return;
     }
     Core._state.activeTab = tabId;
@@ -319,14 +310,11 @@
       console.warn("populateExpenseFilters warning:", e);
     }
 
-    const userRole = (Core._state.currentUser?.role || "").toLowerCase();
-    if (userRole !== Core.ROLES.BU) {
-      try {
-        window.ActivitiesServices?.populateServiceFilters?.();
-        window.ActivitiesServices?.renderServicesBudgetStrip?.();
-      } catch (e) {
-        console.warn("populateServiceFilters warning:", e);
-      }
+    try {
+      window.ActivitiesServices?.populateServiceFilters?.();
+      window.ActivitiesServices?.renderServicesBudgetStrip?.();
+    } catch (e) {
+      console.warn("populateServiceFilters warning:", e);
     }
 
 // Startup initialization complete

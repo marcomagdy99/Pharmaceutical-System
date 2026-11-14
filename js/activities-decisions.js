@@ -717,20 +717,6 @@
   }
 
   
-  // Keyboard Accessibility: Close active modal on Escape key press
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" || e.keyCode === 27) {
-      const decModal = document.getElementById("decisionModal");
-      if (decModal && (decModal.style.display === "flex" || decModal.classList.contains("active") || decModal.classList.contains("show"))) {
-        closeDecisionModal();
-      }
-      const recModal = document.getElementById("receiptPreviewModal");
-      if (recModal && (recModal.style.display === "flex" || recModal.classList.contains("active") || recModal.classList.contains("show"))) {
-        closeReceiptPreviewModal();
-      }
-    }
-  });
-
   window.ActivitiesDecisions = {
     openDecisionModal,
     closeDecisionModal,

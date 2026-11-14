@@ -13,13 +13,15 @@
     const user = Core._state.currentUser;
 
     // 1. Line select in budget strip
+    const currentUserId = user?.id || "";
     const lineSelect = document.getElementById("serviceBudgetLineSelect");
-    if (lineSelect && lineSelect.children.length === 0) {
+    if (lineSelect && (lineSelect.children.length === 0 || lineSelect.dataset.lastUser !== currentUserId)) {
       const assignedLines = Core.getUserAssignedLines(user);
       if (assignedLines.length > 0) {
         lineSelect.innerHTML = assignedLines.map((l) => `<option value="${l.id}">${Core.escapeHTML(l.name)}</option>`).join("");
         lineSelect.value = assignedLines[0].id;
       }
+      lineSelect.dataset.lastUser = currentUserId;
     }
 
     // 2. Employee filter in table controls
@@ -319,7 +321,6 @@
       const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
       if (userLines.includes(srv.lineId)) return true;
       if (srv.isShared && Array.isArray(srv.shares) && srv.shares.some((sh) => userLines.includes(sh.lineId))) return true;
-      if (srv.department === "marketing") return true;
     }
     return false;
   }
@@ -657,6 +658,8 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    const submitBtn = document.getElementById("btnSubmitService");
+    if (submitBtn) submitBtn.disabled = false;
   }
 
   function onServiceFormLineChange() {
@@ -1019,7 +1022,21 @@
     if (primaryBadge) primaryBadge.textContent = `${primaryAmount.toLocaleString()} EGP`;
 
     const totalAllocatedPercent = primaryPercent + partPercentSum;
-    const totalAllocatedAmount = primaryAmount + Core._state.sharedLines.reduce((s, r) => s + r.shareAmount, 0);
+
+    // Absorb rounding discrepancy if 100% allocated so preview matches exact totalCost
+    if (Math.abs(totalAllocatedPercent - 100) < 0.01 && Core._state.sharedLines.length > 0) {
+      let allocatedBeforeLast = primaryAmount;
+      for (let i = 0; i < Core._state.sharedLines.length - 1; i++) {
+        allocatedBeforeLast += Core._state.sharedLines[i].shareAmount || 0;
+      }
+      const lastIdx = Core._state.sharedLines.length - 1;
+      const absorbedShare = totalCost - allocatedBeforeLast;
+      Core._state.sharedLines[lastIdx].shareAmount = absorbedShare;
+      const lastBadge = document.getElementById(`sharedRowAmountBadge_${lastIdx}`);
+      if (lastBadge) lastBadge.textContent = `${Number(absorbedShare || 0).toLocaleString("en-US")} EGP`;
+    }
+
+    const totalAllocatedAmount = primaryAmount + Core._state.sharedLines.reduce((s, r) => s + (r.shareAmount || 0), 0);
 
     const costText = document.getElementById("sharedValidatorTotalCost");
     if (costText) costText.textContent = `${totalCost.toLocaleString()} EGP`;
@@ -1047,6 +1064,12 @@
     e.preventDefault();
     Core._state.currentUser = Core.getAuthUser();
 
+    const submitBtn = document.getElementById("btnSubmitService") || e.target?.querySelector("button[type='submit']");
+    if (submitBtn) {
+      if (submitBtn.disabled) return;
+      submitBtn.disabled = true;
+    }
+
     const lineSelect = document.getElementById("serviceFormLineSelect");
     const deptSelect = document.getElementById("serviceFormDeptSelect");
     const areaSelect = document.getElementById("serviceFormAreaSelect");
@@ -1073,44 +1096,50 @@
 
     if (!title || title.length > 200) {
       Core.safeShowToast(Core.t("serviceTitleRequired") || "Please enter a valid service title (up to 200 characters).", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     if (!category) {
       Core.safeShowToast("Please select a service category.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     if (!Number.isFinite(cost) || cost <= 0 || cost > 1000000) {
       Core.safeShowToast(Core.t("invalidServiceCost") || "Please enter a valid service cost between 1 and 1,000,000 EGP.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     if (notes.length > 1000) {
       Core.safeShowToast(Core.t("notesMaxLimit") || "Notes cannot exceed 1000 characters.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     if (supplierName.length > 200 || invoiceRefNo.length > 100) {
       Core.safeShowToast("Supplier name or invoice reference is too long.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
-    const srvDate = new Date(date);
+    const [sy, sm, sd] = (date || "").split("-").map(Number);
+    const srvDate = new Date(sy, sm - 1, sd);
     const now = new Date();
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(now.getDate() - 90);
-    const futureLimit = new Date();
-    futureLimit.setDate(now.getDate() + 30);
+    const ninetyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90, 0, 0, 0, 0);
+    const futureLimit = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30, 23, 59, 59, 999);
 
     if (!date || isNaN(srvDate.getTime()) || srvDate < ninetyDaysAgo || srvDate > futureLimit) {
       Core.safeShowToast(Core.t("invalidServiceDate") || "Service date must be within the last 90 days and not in the distant future.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
     const assignedLines = Core.getUserAssignedLines(Core._state.currentUser).map(l => l.id);
     if (Core._state.currentUser.role !== Core.ROLES.ADMIN && assignedLines.length > 0 && !assignedLines.includes(lineId)) {
       Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -1132,6 +1161,7 @@
 
     if (!targetId) {
       Core.safeShowToast("Please select a target doctor or hospital.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -1142,6 +1172,7 @@
     if (isShared) {
       if (Core._state.sharedLines.length === 0) {
         Core.safeShowToast("Please add at least one shared line or area.", "warning");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
 
@@ -1149,6 +1180,7 @@
       primaryPercent = parseFloat(primaryInput?.value) || 0;
       if (!Number.isFinite(primaryPercent) || primaryPercent <= 0 || primaryPercent > 100) {
         Core.safeShowToast("Primary share percentage must be between 1% and 100%.", "warning");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
 
@@ -1164,6 +1196,7 @@
         const key = r.lineId + "_" + r.areaId;
         if (seenKeys.has(key)) {
           Core.safeShowToast("Duplicate line and area combination detected in shared request.", "warning");
+          if (submitBtn) submitBtn.disabled = false;
           return;
         }
         seenKeys.add(key);
@@ -1171,6 +1204,7 @@
 
       if (hasInvalidShare) {
         Core.safeShowToast("All participating share percentages must be between 1% and 100%.", "warning");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
 
@@ -1180,6 +1214,7 @@
       // Handle floating point precision safely
       if (Math.abs(totalPct - 100) > 0.01) {
         Core.safeShowToast(Core.t("sharedExceedsNotice") || "Total share percentages must equal exactly 100%.", "warning");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
     }
@@ -1195,11 +1230,13 @@
           Core.t("noBudgetAllocated") || "Doctor services budget has not been allocated for this product line yet. Please consult your manager.",
           "warning"
         );
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
       if (myShareCost > budgetMetrics.remaining) {
         const errMsg = `Requested cost (${myShareCost.toLocaleString("en-US")} EGP) exceeds your available promotional budget (${budgetMetrics.remaining.toLocaleString("en-US")} EGP).`;
         Core.safeShowToast(errMsg, "danger");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
     }
@@ -1216,10 +1253,12 @@
 
       if (primaryShareStatus === Core.REQUEST_STATUS.PENDING_DM && !primaryDmId) {
         Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: Primary line has no DM configured to approve. Please contact administrator.", "danger");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
       if (primaryShareStatus === Core.REQUEST_STATUS.PENDING_LM && !primaryLmId) {
         Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: Primary line has no LM configured to approve. Please contact administrator.", "danger");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
 
@@ -1239,6 +1278,7 @@
       for (const row of Core._state.sharedLines) {
         if (!row.areaId) {
           Core.safeShowToast("Please select the area for each shared line.", "warning");
+          if (submitBtn) submitBtn.disabled = false;
           return;
         }
         const rowHierarchy = Core.getLiveHierarchyForArea(row.areaId);
@@ -1257,10 +1297,12 @@
 
         if (rowShareStatus === Core.REQUEST_STATUS.PENDING_DM && !rowDmId) {
           Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: One of the shared lines has no DM assigned. Please contact administrator.", "danger");
+          if (submitBtn) submitBtn.disabled = false;
           return;
         }
         if (rowShareStatus === Core.REQUEST_STATUS.PENDING_LM && !rowLmId) {
           Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: One of the shared lines has no LM assigned. Please contact administrator.", "danger");
+          if (submitBtn) submitBtn.disabled = false;
           return;
         }
 
@@ -1278,6 +1320,7 @@
             const partnerMetrics = getBudgetMetricsForUser(row.lineId, partnerUser);
             if (partnerMetrics.allocated > 0 && shareAmt > partnerMetrics.remaining) {
               Core.safeShowToast(`Requested share exceeds available budget for representative ${Core.getUserDisplayName(rowRepId)} (${partnerMetrics.remaining.toLocaleString("en-US")} EGP remaining).`, "danger");
+              if (submitBtn) submitBtn.disabled = false;
               return;
             }
           }
@@ -1336,6 +1379,7 @@
 
       if (String(globalStatus || "").startsWith("pending_") && !nextApprover) {
         Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit service request: No direct manager assigned to approve this request. Please contact administrator.", "danger");
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
     }
@@ -1385,7 +1429,7 @@
             userId: sh.repId,
             type: "shared_service_request",
             title: `New Shared Service Request (${sh.sharePercent}%)`,
-            message: `You have been included in a shared service request (${newService.title}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${creatorName}.`,
+            message: `You have been included in a shared service request (${Core.escapeHTML(newService.title)}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${Core.escapeHTML(creatorName)}.`,
             link: "activities.html",
             icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
             badgeClass: "bg-info",
@@ -1403,7 +1447,7 @@
             userId: sh.nextApproverId,
             type: "shared_service_approval",
             title: "Shared Service Request Pending Approval",
-            message: `A shared service request (${newService.title}) totaling ${Number(newService.cost || 0).toLocaleString("en-US")} EGP is awaiting your approval.`,
+            message: `A shared service request (${Core.escapeHTML(newService.title)}) totaling ${Number(newService.cost || 0).toLocaleString("en-US")} EGP is awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
             badgeClass: "bg-warning",
@@ -1418,7 +1462,7 @@
           userId: newService.nextApproverId,
           type: "service_approval",
           title: "Service Request Pending Approval",
-          message: `${creatorName} submitted a service request (${newService.title}) for ${Number(newService.cost || 0).toLocaleString("en-US")} EGP awaiting your approval.`,
+          message: `${Core.escapeHTML(creatorName)} submitted a service request (${Core.escapeHTML(newService.title)}) for ${Number(newService.cost || 0).toLocaleString("en-US")} EGP awaiting your approval.`,
           link: "activities.html",
           icon: "📋",
           badgeClass: "bg-warning",
@@ -1431,6 +1475,7 @@
     closeServiceModal();
     renderServicesTab();
     Core.safeShowToast(Core.t("successAction"), "success");
+    if (submitBtn) submitBtn.disabled = false;
   }
 
   window.ActivitiesServices = {

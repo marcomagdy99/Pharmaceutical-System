@@ -341,19 +341,34 @@
       return;
     }
 
+    const allUsers = Core.getAllUsers();
     const allServices = Core.StoreAdapter.getServices();
     tbody.innerHTML = dmsUnderLm
       .map((dm) => {
         const curAlloc = (lineBudget.dmAllocations && lineBudget.dmAllocations[dm.id]) || 0;
+        const repsUnderDmIds = new Set(
+          allUsers
+            .filter((u) => (u.managerId === dm.id || u.dmId === dm.id) && (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT))
+            .map((u) => u.id)
+        );
         let dmUtilized = 0;
         allServices.forEach((s) => {
+          if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
           if (s.isShared && Array.isArray(s.shares)) {
             s.shares.forEach((sh) => {
-              if (sh.lineId === lineId && (sh.dmId === dm.id || sh.requesterId === dm.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+              if (
+                sh.lineId === lineId &&
+                (sh.dmId === dm.id || sh.requesterId === dm.id || repsUnderDmIds.has(sh.repId)) &&
+                (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)
+              ) {
                 dmUtilized += Number(sh.shareAmount || 0);
               }
             });
-          } else if (s.lineId === lineId && s.requesterId === dm.id && s.status === Core.REQUEST_STATUS.APPROVED) {
+          } else if (
+            s.lineId === lineId &&
+            (s.requesterId === dm.id || repsUnderDmIds.has(s.requesterId)) &&
+            s.status === Core.REQUEST_STATUS.APPROVED
+          ) {
             dmUtilized += Number(s.cost || 0);
           }
         });
@@ -756,7 +771,8 @@
     const allUsers = Core.getAllUsers();
     const allServices = Core.StoreAdapter.getServices();
     for (const [dmId, val] of Object.entries(tempAlloc)) {
-      const repsUnderDm = allUsers.filter((u) => u.managerId === dmId);
+      const repsUnderDm = allUsers.filter((u) => (u.managerId === dmId || u.dmId === dmId) && (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT));
+      const repsUnderDmIds = new Set(repsUnderDm.map((u) => u.id));
       const existingRepSum = repsUnderDm.reduce(
         (sum, r) => sum + ((budgets[lineId].repAllocations && budgets[lineId].repAllocations[r.id]) || 0),
         0
@@ -766,11 +782,19 @@
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (sh.dmId === dmId || sh.requesterId === dmId) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+            if (
+              sh.lineId === lineId &&
+              (sh.dmId === dmId || sh.requesterId === dmId || repsUnderDmIds.has(sh.repId)) &&
+              (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)
+            ) {
               dmUtilized += Number(sh.shareAmount || 0);
             }
           });
-        } else if (s.lineId === lineId && s.requesterId === dmId && s.status === Core.REQUEST_STATUS.APPROVED) {
+        } else if (
+          s.lineId === lineId &&
+          (s.requesterId === dmId || repsUnderDmIds.has(s.requesterId)) &&
+          s.status === Core.REQUEST_STATUS.APPROVED
+        ) {
           dmUtilized += Number(s.cost || 0);
         }
       });

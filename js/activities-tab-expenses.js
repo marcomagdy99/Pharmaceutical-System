@@ -226,11 +226,11 @@
     let css = "pending";
 
     if (s === Core.REQUEST_STATUS.PENDING_DM) {
-      const dmName = Core.getUserDisplayName(nextApproverId);
+      const dmName = Core.escapeHTML(Core.getUserDisplayName(nextApproverId));
       label = `${Core.t("waitingDmPrefix")}${dmName}`;
       css = "pending";
     } else if (s === Core.REQUEST_STATUS.PENDING_LM) {
-      const lmName = Core.getUserDisplayName(nextApproverId);
+      const lmName = Core.escapeHTML(Core.getUserDisplayName(nextApproverId));
       label = `${Core.t("waitingLmPrefix")}${lmName}`;
       css = "pending";
     } else if (s === Core.REQUEST_STATUS.PENDING_HR) {
@@ -487,14 +487,13 @@
       return;
     }
 
-    const expDate = new Date(date);
+    const [ey, em, ed] = (date || "").split("-").map(Number);
+    const expDate = new Date(ey, em - 1, ed);
     const now = new Date();
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(now.getDate() - 90);
-    const maxFutureDate = new Date();
-    maxFutureDate.setDate(now.getDate() + 1);
+    const ninetyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90, 0, 0, 0, 0);
+    const maxFutureDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999);
 
-    if (isNaN(expDate.getTime()) || expDate < ninetyDaysAgo || expDate > maxFutureDate) {
+    if (!date || isNaN(expDate.getTime()) || expDate < ninetyDaysAgo || expDate > maxFutureDate) {
       Core.safeShowToast(Core.t("invalidDateRange") || "Expense date must be within the last 90 days and not in the future.", "warning");
       if (submitBtn) submitBtn.disabled = false;
       return;
@@ -598,7 +597,7 @@
         userId: newExpense.nextApproverId,
         type: "expense_approval",
         title: "Expense Claim Pending Approval",
-        message: `${reqName} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${Core.getCategoryLabel(category)}) awaiting your approval.`,
+        message: `${Core.escapeHTML(reqName)} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${Core.getCategoryLabel(category)}) awaiting your approval.`,
         link: "activities.html",
         icon: "💵",
         badgeClass: "bg-warning",
