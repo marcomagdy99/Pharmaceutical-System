@@ -111,17 +111,24 @@
       const myReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === user.id || dmIds.has(u.managerId)));
       const myTeamUserIds = new Set([user.id, ...dmIds, ...myReps.map(r => r.id)]);
 
+      let directUtilized = 0;
+      let directPending = 0;
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
+          const isDirect = item.repId === user.id || s.requesterId === user.id;
+          if (isDirect) {
+            if (item.status === Core.REQUEST_STATUS.APPROVED) directUtilized += item.cost;
+            if (item.status && item.status.startsWith("pending")) directPending += item.cost;
+          }
           if (myTeamUserIds.has(item.repId) || myTeamUserIds.has(s.requesterId)) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
             if (item.status && item.status.startsWith("pending")) pending += item.cost;
           }
         });
       });
-      // For LM: Remaining takes into account both already distributed DM amount AND actual utilized + pending
-      remaining = Math.max(0, allocated - Math.max(distributed, utilized + pending));
+      // For LM: Remaining is unallocated reserve minus LM direct requests
+      remaining = Math.max(0, (allocated - distributed) - (directUtilized + directPending));
     } else if (role === Core.ROLES.DM) {
       allocated = (lineBudget.dmAllocations && Number(lineBudget.dmAllocations[user.id])) || 0;
       const allUsers = Core.getAllUsers();
@@ -133,17 +140,25 @@
       });
       distributed = myReps.reduce((sum, rep) => sum + ((lineBudget.repAllocations && Number(lineBudget.repAllocations[rep.id])) || 0), 0);
 
+      let directUtilized = 0;
+      let directPending = 0;
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
+          const isDirect = item.repId === user.id || s.requesterId === user.id;
           const rep = Core.getUserById(item.repId);
-          if (item.repId === user.id || s.requesterId === user.id || (rep && rep.managerId === user.id)) {
+          if (isDirect) {
+            if (item.status === Core.REQUEST_STATUS.APPROVED) directUtilized += item.cost;
+            if (item.status && item.status.startsWith("pending")) directPending += item.cost;
+          }
+          if (isDirect || (rep && rep.managerId === user.id)) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
             if (item.status && item.status.startsWith("pending")) pending += item.cost;
           }
         });
       });
-      remaining = Math.max(0, allocated - Math.max(distributed, utilized + pending));
+      // For DM: Remaining is unallocated reserve minus DM direct requests
+      remaining = Math.max(0, (allocated - distributed) - (directUtilized + directPending));
     } else if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
       allocated = (lineBudget.repAllocations && Number(lineBudget.repAllocations[user.id])) || 0;
       allServices.forEach((s) => {
@@ -405,7 +420,9 @@
             if (hospObj) targetName = hospObj.name;
           }
         }
-        targetName = targetName || srv.targetId || "-";
+        if (!targetName || String(targetName).startsWith("doc_") || String(targetName).startsWith("hosp_")) {
+          targetName = Core.t("unassignedAccount") || "Account / Facility";
+        }
 
         const isAM = srv.shift === Core.PERIODS.AM;
         const targetCell = `
@@ -742,16 +759,23 @@
   function handleServiceFileSelect(event) {
     const input = event.target;
     const file = input?.files?.[0];
+    const submitBtn = document.getElementById("btnSubmitService");
+
     if (!file) {
       Core._state.currentServiceFileBase64 = null;
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
+
+    // Disable submit button while converting/compressing to prevent async race condition
+    if (submitBtn) submitBtn.disabled = true;
 
     const MAX_FILE_SIZE = 800 * 1024; // 800KB quota protection
     if (file.size > MAX_FILE_SIZE) {
       Core.safeShowToast(Core.t("fileTooLarge") || "Receipt file is too large. Maximum size is 800KB.", "warning");
       Core._state.currentServiceFileBase64 = null;
       if (input) input.value = "";
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -765,6 +789,7 @@
       Core.safeShowToast("Unsupported file type. Please upload a valid JPG, PNG, WEBP, or PDF file.", "warning");
       Core._state.currentServiceFileBase64 = null;
       if (input) input.value = "";
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -773,17 +798,20 @@
     reader.onerror = function () {
       Core._state.currentServiceFileBase64 = null;
       Core.safeShowToast("Failed to read file.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
     };
 
     reader.onload = function (e) {
       if (isPdf) {
         Core._state.currentServiceFileBase64 = e.target.result;
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
       const img = new Image();
       img.onerror = function () {
         Core._state.currentServiceFileBase64 = null;
         Core.safeShowToast("Failed to load image file.", "warning");
+        if (submitBtn) submitBtn.disabled = false;
       };
       img.onload = function () {
         const canvas = document.createElement("canvas");
@@ -799,6 +827,7 @@
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
         Core._state.currentServiceFileBase64 = canvas.toDataURL("image/jpeg", 0.6);
+        if (submitBtn) submitBtn.disabled = false;
       };
       img.src = e.target.result;
     };
@@ -1313,13 +1342,14 @@
           shareAmt = cost - prevSum;
         }
 
-        // Budget check for partner rep
+        // Budget check for partner (Rep, DM, LM)
         if (rowRepId) {
           const partnerUser = Core.getUserById(rowRepId);
-          if (partnerUser && (partnerUser.role === Core.ROLES.REP || partnerUser.role === Core.ROLES.REP_ALT)) {
+          if (partnerUser) {
             const partnerMetrics = getBudgetMetricsForUser(row.lineId, partnerUser);
             if (partnerMetrics.allocated > 0 && shareAmt > partnerMetrics.remaining) {
-              Core.safeShowToast(`Requested share exceeds available budget for representative ${Core.getUserDisplayName(rowRepId)} (${partnerMetrics.remaining.toLocaleString("en-US")} EGP remaining).`, "danger");
+              const roleName = Core.getUserRoleLabel ? Core.getUserRoleLabel(partnerUser.role) : "participant";
+              Core.safeShowToast(`Requested share exceeds available budget for ${roleName} ${Core.getUserDisplayName(rowRepId)} (${partnerMetrics.remaining.toLocaleString("en-US")} EGP remaining).`, "danger");
               if (submitBtn) submitBtn.disabled = false;
               return;
             }

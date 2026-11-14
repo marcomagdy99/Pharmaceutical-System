@@ -318,7 +318,18 @@
   function onReceiptFileSelected(eventOrInput) {
     const input = eventOrInput?.target ? eventOrInput.target : eventOrInput;
     const file = input?.files && input.files[0];
-    if (!file) return;
+    const submitBtn = document.getElementById("btnSubmitExpense");
+
+    if (!file) {
+      Core._state.currentReceiptBase64 = null;
+      const previewBox = document.getElementById("receiptPreviewBox");
+      if (previewBox) previewBox.style.display = "none";
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+
+    // Disable submit button while converting/compressing to prevent async race condition
+    if (submitBtn) submitBtn.disabled = true;
 
     // File size guard (max 800KB to protect localStorage quota from QuotaExceededError)
     const MAX_FILE_SIZE = 800 * 1024;
@@ -326,6 +337,7 @@
       Core.safeShowToast(Core.t("fileTooLarge") || "Receipt file is too large. Maximum size is 800KB.", "warning");
       Core._state.currentReceiptBase64 = null;
       if (input) input.value = "";
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -339,6 +351,7 @@
       Core.safeShowToast("Unsupported file type. Please upload a valid JPG, PNG, WEBP, or PDF file.", "warning");
       Core._state.currentReceiptBase64 = null;
       if (input) input.value = "";
+      if (submitBtn) submitBtn.disabled = false;
       return;
     }
 
@@ -347,6 +360,7 @@
     reader.onerror = function () {
       Core._state.currentReceiptBase64 = null;
       Core.safeShowToast("Failed to read file.", "warning");
+      if (submitBtn) submitBtn.disabled = false;
     };
 
     reader.onload = function (evt) {
@@ -360,6 +374,7 @@
           }
           previewContainer.style.display = "block";
         }
+        if (submitBtn) submitBtn.disabled = false;
         return;
       }
 
@@ -367,6 +382,7 @@
       img.onerror = function () {
         Core._state.currentReceiptBase64 = null;
         Core.safeShowToast("Failed to load image file.", "warning");
+        if (submitBtn) submitBtn.disabled = false;
       };
 
       img.onload = function () {
@@ -391,6 +407,7 @@
           previewImg.src = Core._state.currentReceiptBase64;
           previewContainer.style.display = "block";
         }
+        if (submitBtn) submitBtn.disabled = false;
       };
       img.src = evt.target.result;
     };
@@ -398,7 +415,10 @@
   }
 
   function openReceiptPreviewModal(url) {
-    if (!url || /^\s*javascript:/i.test(String(url))) return;
+    if (!url) return;
+    const trimmedUrl = String(url).trim();
+    const isSafeUrl = /^(data:image\/(jpeg|jpg|png|webp);base64,|data:application\/pdf;base64,|https?:\/\/|\/|\.\/)/i.test(trimmedUrl);
+    if (!isSafeUrl || /^\s*javascript:/i.test(trimmedUrl)) return;
     const modal = document.getElementById("receiptPreviewModal");
     const img = document.getElementById("receiptModalLargeImg");
     if (!modal) return;

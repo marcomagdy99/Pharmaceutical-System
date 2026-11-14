@@ -668,7 +668,10 @@
   }
 
   function openReceiptPreviewModal(url) {
-    if (!url || /^\s*javascript:/i.test(String(url))) return;
+    if (!url) return;
+    const trimmedUrl = String(url).trim();
+    const isSafeUrl = /^(data:image\/(jpeg|jpg|png|webp);base64,|data:application\/pdf;base64,|https?:\/\/|\/|\.\/)/i.test(trimmedUrl);
+    if (!isSafeUrl || /^\s*javascript:/i.test(trimmedUrl)) return;
     if (window.ActivitiesExpenses && typeof window.ActivitiesExpenses.openReceiptPreviewModal === "function") {
       return window.ActivitiesExpenses.openReceiptPreviewModal(url);
     }

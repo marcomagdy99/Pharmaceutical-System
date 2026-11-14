@@ -201,8 +201,13 @@
     modalClosers.forEach(({ id, close }) => {
       const modal = document.getElementById(id);
       if (modal) {
+        let isBackdropMousedown = false;
+        modal.addEventListener("mousedown", (e) => {
+          isBackdropMousedown = (e.target === modal);
+        });
         modal.addEventListener("click", (e) => {
-          if (e.target === modal) close();
+          if (e.target === modal && isBackdropMousedown) close();
+          isBackdropMousedown = false;
         });
       }
     });
@@ -354,10 +359,21 @@
 
   document.addEventListener("languageChanged", () => {
     setupRoleTabVisibility();
+    // Invalidate dropdown cached user attributes so localized labels like "All Lines" re-render in the new language
+    const expLineSelect = document.getElementById("expenseFilterLine");
+    if (expLineSelect) expLineSelect.dataset.lastUser = "";
+    const srvLineSelect = document.getElementById("serviceBudgetLineSelect");
+    if (srvLineSelect) srvLineSelect.dataset.lastUser = "";
+
     if (Core._state.activeTab === Core.TABS.ACTIVITIES) window.ActivitiesDaily?.renderActivitiesView?.();
     else if (Core._state.activeTab === Core.TABS.EXPENSES) window.ActivitiesExpenses?.renderExpensesTab?.();
     else if (Core._state.activeTab === Core.TABS.SERVICES) window.ActivitiesServices?.renderServicesTab?.();
     else if (Core._state.activeTab === Core.TABS.BUDGET) window.ActivitiesBudget?.renderBudgetTab?.();
+    else if (Core._state.activeTab === "tab-locations") {
+      try {
+        if (typeof renderLocationRequestsTable === "function") renderLocationRequestsTable();
+      } catch (e) {}
+    }
   });
 
   if (document.readyState === "loading") {

@@ -399,33 +399,28 @@
 
     let distributed = 0;
     document.querySelectorAll(".lm-dm-alloc-input").forEach((inp) => {
-      distributed += Number(inp.value || 0);
+      const val = parseFloat(inp.value);
+      if (Number.isFinite(val) && val >= 0) distributed += val;
     });
 
-    // Calculate LM team utilized for this line (flexible for single LM or multi LM)
-    let lmUtilized = 0;
-    const allUsers = Core.getAllUsers();
-    const dmsUnderLm = Core.getDmsUnderLmForLine(Core._state.currentUser.id, lineId);
-    const lmDmIds = new Set(dmsUnderLm.map(d => d.id));
-    const lmReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === Core._state.currentUser.id || lmDmIds.has(u.managerId)));
-    const lmTeamIds = new Set([Core._state.currentUser.id, ...lmDmIds, ...lmReps.map(r => r.id)]);
-
+    // Calculate LM direct utilized for this line
+    let directLmUtilized = 0;
     const allServices = Core.StoreAdapter.getServices();
     allServices.forEach((s) => {
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (lmTeamIds.has(sh.lmId) || lmTeamIds.has(sh.dmId) || lmTeamIds.has(sh.repId) || lmTeamIds.has(sh.requesterId)) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
-            lmUtilized += Number(sh.shareAmount || 0);
+          if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
+            directLmUtilized += Number(sh.shareAmount || 0);
           }
         });
-      } else if (s.lineId === lineId && lmTeamIds.has(s.requesterId) && s.status === Core.REQUEST_STATUS.APPROVED) {
-        lmUtilized += Number(s.cost || 0);
+      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
+        directLmUtilized += Number(s.cost || 0);
       }
     });
 
-    const committed = Math.max(distributed, lmUtilized);
-    const remaining = myLmAlloc - committed;
+    const committed = distributed + directLmUtilized;
+    const remaining = Math.max(0, myLmAlloc - committed);
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
     const remTitle = document.getElementById("srvMetricRemainingTitle");
@@ -512,27 +507,28 @@
 
     let distributed = 0;
     document.querySelectorAll(".dm-rep-alloc-input").forEach((inp) => {
-      distributed += Number(inp.value || 0);
+      const val = parseFloat(inp.value);
+      if (Number.isFinite(val) && val >= 0) distributed += val;
     });
 
     // Calculate DM direct utilized for this line
-    let dmUtilized = 0;
+    let directDmUtilized = 0;
     const allServices = Core.StoreAdapter.getServices();
     allServices.forEach((s) => {
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
           if (sh.lineId === lineId && (sh.dmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
-            dmUtilized += Number(sh.shareAmount || 0);
+            directDmUtilized += Number(sh.shareAmount || 0);
           }
         });
       } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
-        dmUtilized += Number(s.cost || 0);
+        directDmUtilized += Number(s.cost || 0);
       }
     });
 
-    const committed = Math.max(distributed, dmUtilized);
-    const remaining = myDmAlloc - committed;
+    const committed = distributed + directDmUtilized;
+    const remaining = Math.max(0, myDmAlloc - committed);
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
     const remTitle = document.getElementById("srvMetricRemainingTitle");
