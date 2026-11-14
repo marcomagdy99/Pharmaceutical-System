@@ -953,6 +953,7 @@
       u = window.checkAuth();
     }
     if (!u) {
+      _state.currentUser = null;
       return null;
     }
 
@@ -960,26 +961,37 @@
     // SECURITY INTEGRITY CHECK: Prevent Client-side Role Tampering
     // =========================================================================
     const canonicalUsers = getAllUsers();
-    if (canonicalUsers.length === 0) return null;
+    if (canonicalUsers.length === 0) {
+      _state.currentUser = u;
+      return u;
+    }
     if (u && u.id) {
       const canonical = canonicalUsers.find((user) => user.id === u.id);
       if (!canonical) {
         console.warn(`[SECURITY VIOLATION] User ID '${u.id}' not found in canonical store. Rejecting unauthorized access.`);
+        _state.currentUser = null;
         return null;
       }
 
       if (canonical.role !== u.role) {
         console.warn(`[SECURITY VIOLATION] Role tampering detected for user '${u.id}'. Attempted: '${u.role}', Authentic: '${canonical.role}'. Enforcing authoritative role.`);
-        u.role = canonical.role;
       }
-      u.lineIds = canonical.lineIds && canonical.lineIds.length > 0
-        ? [...canonical.lineIds]
-        : (canonical.lineId ? [canonical.lineId] : []);
-      u.managerId = canonical.managerId || null;
-      u.areaId = canonical.areaId || null;
-      u.areaIds = Array.isArray(canonical.areaIds) ? [...canonical.areaIds] : (canonical.areaId ? [canonical.areaId] : []);
+      const sanitizedUser = {
+        ...u,
+        ...canonical,
+        role: canonical.role,
+        lineIds: canonical.lineIds && canonical.lineIds.length > 0
+          ? [...canonical.lineIds]
+          : (canonical.lineId ? [canonical.lineId] : []),
+        managerId: canonical.managerId || null,
+        areaId: canonical.areaId || null,
+        areaIds: Array.isArray(canonical.areaIds) ? [...canonical.areaIds] : (canonical.areaId ? [canonical.areaId] : []),
+      };
+      _state.currentUser = sanitizedUser;
+      return sanitizedUser;
     }
 
+    _state.currentUser = u;
     return u;
   }
 

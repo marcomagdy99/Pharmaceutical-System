@@ -441,6 +441,32 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   const achAreaSelect = document.getElementById('achAreaSelect');
   const selectedArea = achAreaSelect ? achAreaSelect.value : 'all';
 
+  const allHist = (window.store && window.store.territoryHistory && typeof window.store.territoryHistory.getAll === "function")
+    ? (window.store.territoryHistory.getAll() || [])
+    : [];
+
+  function resolveHistoricalRepForMonth(areaId, monthKey, fallbackRepId) {
+    if (!areaId || areaId === "area_unassigned") return null;
+    if (allHist.length > 0) {
+      const areaHist = allHist.filter((h) => h.areaId === areaId);
+      if (areaHist.length > 0) {
+        const m = (monthKey || "").substring(0, 7);
+        const matched = areaHist.find((h) => {
+          const s = (h.startDate || "2000-01").substring(0, 7);
+          const e = (h.endDate || "2099-12").substring(0, 7);
+          return m >= s && m <= e;
+        });
+        if (matched && (matched.repId || matched.userId)) {
+          return matched.repId || matched.userId;
+        }
+      }
+    }
+    return fallbackRepId || null;
+  }
+
+  const selUser = (selectedRepVal && selectedRepVal !== 'all') ? usersMap.get(selectedRepVal) : null;
+  const selRole = selUser ? (window.normalizeRole ? window.normalizeRole(selUser.role) : (selUser.role || '').toLowerCase()) : '';
+
   let filteredAreaIds = new Set(allowedAreaIds);
 
   if (selectedRepVal && selectedRepVal !== 'all') {
@@ -455,8 +481,6 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     } else if (selectedRepVal === 'all_dms') {
       // Keep all
     } else {
-      const selUser = usersMap.get(selectedRepVal);
-      const selRole = selUser ? (window.normalizeRole ? window.normalizeRole(selUser.role) : (selUser.role || '').toLowerCase()) : '';
       if (selRole === 'district_manager' || selRole === 'dm') {
         const dmReps = allUsers.filter((u) => u.managerId === selectedRepVal).map((u) => u.id);
         const dmUserAreaIds = selUser ? (selUser.areaIds || (selUser.areaId ? [selUser.areaId] : [])) : [];
@@ -478,9 +502,20 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
         }));
       } else {
         const repUserAreaIds = selUser ? (selUser.areaIds || (selUser.areaId ? [selUser.areaId] : [])) : [];
+        const histRepAreaIds = new Set();
+        if (allHist.length > 0) {
+          allHist.forEach((h) => {
+            if (h.repId === selectedRepVal || h.userId === selectedRepVal) {
+              const hs = (h.startDate || "2000-01").substring(0, 7);
+              const he = (h.endDate || "2099-12").substring(0, 7);
+              const inPeriod = keys.some((k) => k >= hs && k <= he);
+              if (inPeriod) histRepAreaIds.add(h.areaId);
+            }
+          });
+        }
         filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
           const a = areasMap.get(id);
-          return a && (a.repId === selectedRepVal || repUserAreaIds.includes(a.id));
+          return a && (a.repId === selectedRepVal || repUserAreaIds.includes(a.id) || histRepAreaIds.has(a.id));
         }));
       }
     }
@@ -610,9 +645,13 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       }
     }
 
-    const key = tAreaId + '||' + t.productId;
+    const area = areasMap.get(tAreaId);
+    const defaultRep = area ? area.repId : null;
+    const tRepId = t.repId || resolveHistoricalRepForMonth(tAreaId, t.month, defaultRep);
+    const repPart = tRepId ? tRepId : (tAreaId === "area_unassigned" ? "unassigned" : "vacant");
+    const key = tAreaId + '||' + repPart + '||' + t.productId;
     if (!cellMap[key]) {
-      cellMap[key] = { areaId: tAreaId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+      cellMap[key] = { areaId: tAreaId, repId: tRepId, productId: t.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     }
     const parsedTarget = t.target != null && t.target !== "" ? parseFloat(t.target) : NaN;
     const tVal = !isNaN(parsedTarget) && parsedTarget > 0 ? parsedTarget : ((parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0));
@@ -657,9 +696,13 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
       }
     }
 
-    const key = sAreaId + '||' + s.productId;
+    const area = areasMap.get(sAreaId);
+    const defaultRep = area ? area.repId : null;
+    const sRepId = s.repId || resolveHistoricalRepForMonth(sAreaId, s.month, defaultRep);
+    const repPart = sRepId ? sRepId : (sAreaId === "area_unassigned" ? "unassigned" : "vacant");
+    const key = sAreaId + '||' + repPart + '||' + s.productId;
     if (!cellMap[key]) {
-      cellMap[key] = { areaId: sAreaId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
+      cellMap[key] = { areaId: sAreaId, repId: sRepId, productId: s.productId, sUnit: 0, sValue: 0, tUnit: 0, tValue: 0 };
     }
     cellMap[key].sUnit += parseFloat(s.quantity) || 0;
     const sVal = parseFloat(s.value) || 0;
@@ -669,31 +712,17 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     }
   });
 
-  // 5. Build Territory/Area Groups
+  // 5. Build Territory/Area Groups partitioned by area and historical rep
   const areaGroups = {};
   Object.values(cellMap).forEach((cell) => {
-    if (!areaGroups[cell.areaId]) {
+    const groupKey = cell.areaId + '||' + (cell.repId || 'vacant');
+    if (!areaGroups[groupKey]) {
       const area = areasMap.get(cell.areaId);
-      let repId = area ? area.repId : null;
-      // Consult territory history for historical rep transfer assignment in selected month
-      if (window.store && window.store.territoryHistory && typeof window.store.territoryHistory.getAll === "function") {
-        const allHist = window.store.territoryHistory.getAll() || [];
-        const areaHist = allHist.filter((h) => h.areaId === cell.areaId);
-        if (areaHist.length > 0) {
-          const latestKey = keys[keys.length - 1];
-          const matchedH = areaHist.find((h) => {
-            const s = (h.startDate || "2000-01").substring(0, 7);
-            const e = (h.endDate || "2099-12").substring(0, 7);
-            return latestKey >= s && latestKey <= e;
-          });
-          if (matchedH && (matchedH.repId || matchedH.userId)) {
-            repId = matchedH.repId || matchedH.userId;
-          }
-        }
-      }
+      const repId = cell.repId || (area ? area.repId : null);
       const rep = repId ? usersMap.get(repId) : null;
       const isUnassignedArea = cell.areaId === "area_unassigned";
-      areaGroups[cell.areaId] = {
+      areaGroups[groupKey] = {
+        groupKey: groupKey,
         areaId: cell.areaId,
         areaName: area ? area.name : (isUnassignedArea ? unassignedTerritoryText : cell.areaId),
         areaCode: area ? area.code : (isUnassignedArea ? "UNASSIGNED" : ""),
@@ -707,7 +736,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
         products: [],
       };
     }
-    const g = areaGroups[cell.areaId];
+    const g = areaGroups[groupKey];
     const prod = productsMap.get(cell.productId);
     g.products.push({
       productId: cell.productId,
@@ -727,7 +756,25 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   if (isAdminOrBU && unassignedSalesCount > 0) {
     console.warn(`[Achievements] ${unassignedSalesCount} sales transaction(s) (${unassignedSalesValue.toLocaleString("en-US")} EGP) could not be resolved to a specific territory and were grouped under '${unassignedTerritoryText}'.`);
   }
-  const groups = Object.values(areaGroups);
+  let groups = Object.values(areaGroups);
+
+  // If a specific individual representative is filtered, retain their assigned groups
+  if (selectedRepVal && selectedRepVal !== 'all' && (!selRole || (selRole !== 'district_manager' && selRole !== 'dm' && selRole !== 'line_manager' && selRole !== 'lm'))) {
+    groups = groups.filter((g) => g.repId === selectedRepVal);
+  }
+
+  // Detect handover occurrences (same territory handled by multiple reps across selected months)
+  const territoryCounts = {};
+  groups.forEach((g) => {
+    if (g.areaId && g.areaId !== "area_unassigned") {
+      territoryCounts[g.areaId] = (territoryCounts[g.areaId] || 0) + 1;
+    }
+  });
+  groups.forEach((g) => {
+    if (territoryCounts[g.areaId] > 1) {
+      g.isHandover = true;
+    }
+  });
   groups.forEach((g) => {
     g.totalPct = g.totalTValue > 0 ? (g.totalSValue / g.totalTValue) * 100 : null;
     g.products.sort((a, b) => a.productName.localeCompare(b.productName));
@@ -748,19 +795,26 @@ function renderAchievementsReport() {
   if (prompt) prompt.style.display = 'none';
   if (results) results.style.display = 'block';
 
-  populateAchFilters();
-  const yearSelect = document.getElementById('achYearSelect');
-  const tbody = document.getElementById('achievementsReportTbody');
-  if (!tbody) return;
+  const achBtn = document.querySelector('[onclick*="renderAchievementsReport"]');
+  if (achBtn) {
+    achBtn.classList.add("disabled");
+    achBtn.setAttribute("aria-busy", "true");
+  }
 
-  const now = new Date();
-  const year = yearSelect ? yearSelect.value : String(now.getFullYear());
-  const selectedMonths = getSelectedAchMonths();
-  const monthKeys = selectedMonths.map((m) => `${year}-${m}`);
+  try {
+    populateAchFilters();
+    const yearSelect = document.getElementById('achYearSelect');
+    const tbody = document.getElementById('achievementsReportTbody');
+    if (!tbody) return;
 
-  const user = checkAuth();
-  const scopeRepIds = getAchievementsScopeRepIds(user);
-  const groups = buildAchievementsData(monthKeys, scopeRepIds);
+    const now = new Date();
+    const year = yearSelect ? yearSelect.value : String(now.getFullYear());
+    const selectedMonths = getSelectedAchMonths();
+    const monthKeys = selectedMonths.map((m) => `${year}-${m}`);
+
+    const user = checkAuth();
+    const scopeRepIds = getAchievementsScopeRepIds(user);
+    const groups = buildAchievementsData(monthKeys, scopeRepIds);
 
   tbody.replaceChildren();
   let grandTarget = 0;
@@ -814,10 +868,14 @@ function renderAchievementsReport() {
       totalRow.className = 'ach-total-row';
       totalRow.style.fontWeight = '800';
 
+      const handoverBadge = g.isHandover
+        ? ` <span class="badge bg-info text-dark ms-1" style="font-size: 0.68rem; padding: 2px 6px; font-weight: 600;" title="Territory transferred during selected period">Handover</span>`
+        : '';
+
       const titleCellHtml = g.isVacant
-        ? `<div><strong>${window.escapeHtml(g.areaName)}</strong> <span class="badge bg-warning text-dark ms-1" style="font-size: 0.72rem; padding: 2px 6px;">Vacant</span></div>
+        ? `<div><strong>${window.escapeHtml(g.areaName)}</strong> <span class="badge bg-warning text-dark ms-1" style="font-size: 0.72rem; padding: 2px 6px;">Vacant</span>${handoverBadge}</div>
            <div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${g.areaCode ? window.escapeHtml(g.areaCode) + ' • ' : ''}Unassigned Territory</div>`
-        : `<div><strong>${window.escapeHtml(g.repName)}</strong></div>
+        : `<div><strong>${window.escapeHtml(g.repName)}</strong>${handoverBadge}</div>
            <div style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">${window.escapeHtml(g.areaName)}${g.areaCode ? ' (' + window.escapeHtml(g.areaCode) + ')' : ''}</div>`;
 
       totalRow.innerHTML = `
@@ -901,6 +959,12 @@ function renderAchievementsReport() {
       targets: chartTargets,
       actuals: chartActuals
     });
+  }
+  } finally {
+    if (achBtn) {
+      achBtn.classList.remove("disabled");
+      achBtn.removeAttribute("aria-busy");
+    }
   }
 }
 

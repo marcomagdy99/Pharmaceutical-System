@@ -68,7 +68,7 @@
     if (fullUser) {
       return { ...authUser, ...fullUser };
     }
-    return null;
+    return authUser;
   }
 
   /**
@@ -522,6 +522,19 @@
       return;
     }
     const scope = resolveUserCostingScope(user);
+    const dmSelect = document.getElementById("accountsCostingDmSelect");
+    if (dmSelect && scope.isRep) {
+      const myDm = scope.allowedDMs && scope.allowedDMs[0];
+      if (myDm) {
+        dmSelect.innerHTML = `<option value="${myDm.id}">${window.escapeHtml(myDm.name || myDm.username || myDm.id)}</option>`;
+        dmSelect.value = myDm.id;
+      } else {
+        dmSelect.innerHTML = `<option value="">N/A</option>`;
+        dmSelect.value = "";
+      }
+      dmSelect.disabled = true;
+    }
+
     const repSelect = document.getElementById("accountsCostingRepSelect");
     if (!repSelect) return;
 
@@ -750,9 +763,10 @@
           if (!isApproved) return;
 
           const totalServiceCost = Number(s.cost || s.amount || 0);
-          const shareCost = (sh.shareAmount !== undefined && sh.shareAmount !== null)
+          const rawShareCost = (sh.shareAmount !== undefined && sh.shareAmount !== null)
             ? Number(sh.shareAmount)
             : (sh.sharePercent ? (totalServiceCost * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0));
+          const shareCost = Math.round(rawShareCost * 100) / 100;
           if (shareCost <= 0) return;
 
           const shareRepId = sh.repId || s.requesterId || null;
@@ -813,7 +827,7 @@
       const st = String(s.status || "").toLowerCase();
       if (st !== "approved" && st !== "accepted") return;
 
-      const cost = Number(s.cost || s.amount || 0);
+      const cost = Math.round(Number(s.cost || s.amount || 0) * 100) / 100;
       if (cost <= 0) return;
 
       // Strict role enforcement
@@ -864,7 +878,7 @@
           ["AM", "PM"].forEach((shift) => {
             const act = dayData[shift] || dayData[shift.toLowerCase()];
             if (act && Number(act.cost) > 0 && Array.isArray(act.doctors) && act.doctors.length > 0) {
-              const perDoctorCost = Number(act.cost) / act.doctors.length;
+              const perDoctorCost = Math.round((Number(act.cost) / act.doctors.length) * 100) / 100;
               const catName = determineCategoryName(act.activityType || act.type || "Event");
               act.doctors.forEach((docRef) => {
                 const docId = typeof docRef === "object" ? docRef.id : docRef;
@@ -1099,22 +1113,42 @@
       // Match strictly by doctor ID first. Only fallback to name if transactions lack an ID
       const matchedTx = [...(txByTargetId[String(doc.id)] || [])];
       const docNameKey = String(doc.name || "").trim().toLowerCase();
-      if (txByTargetName[docNameKey]) {
-        matchedTx.push(...txByTargetName[docNameKey]);
-        // Delete to prevent another doctor with identical name from receiving the same transactions
-        delete txByTargetName[docNameKey];
+      if (txByTargetName[docNameKey] && txByTargetName[docNameKey].length > 0) {
+        const remainingSameNameDocs = scopedDoctors.filter((d) => String(d.name || "").trim().toLowerCase() === docNameKey && String(d.id) !== String(doc.id));
+        if (remainingSameNameDocs.length > 0) {
+          // Disambiguate identical doctor names by matching areaId, lineId, or repId
+          const matched = [];
+          const remaining = [];
+          txByTargetName[docNameKey].forEach((tx) => {
+            const matchArea = doc.areaId && tx.areaId && String(tx.areaId) === String(doc.areaId);
+            const matchLine = doc.lineId && tx.lineId && String(tx.lineId) === String(doc.lineId);
+            const matchRep = doc.repId && tx.repId && String(tx.repId) === String(doc.repId);
+            if (matchArea || matchLine || matchRep) {
+              matched.push(tx);
+            } else {
+              remaining.push(tx);
+            }
+          });
+          matchedTx.push(...matched);
+          txByTargetName[docNameKey] = remaining;
+        } else {
+          // Single or last doctor with this name: assign all remaining unlinked transactions
+          matchedTx.push(...txByTargetName[docNameKey]);
+          delete txByTargetName[docNameKey];
+        }
       }
 
-      // Calculate totals per dynamic category
+      // Calculate totals per dynamic category with financial cent rounding
       const categoryTotals = {};
       CostingState.dynamicCategories.forEach((cat) => { categoryTotals[cat] = 0; });
 
       let grandTotal = 0;
       matchedTx.forEach((tx) => {
         const cat = tx.category || "Other Requests";
+        const txCost = Math.round(Number(tx.cost || 0) * 100) / 100;
         if (categoryTotals[cat] === undefined) categoryTotals[cat] = 0;
-        categoryTotals[cat] += tx.cost;
-        grandTotal += tx.cost;
+        categoryTotals[cat] = Math.round((categoryTotals[cat] + txCost) * 100) / 100;
+        grandTotal = Math.round((grandTotal + txCost) * 100) / 100;
       });
 
       return {
@@ -1321,7 +1355,7 @@
         ? `<strong class="costing-cell-total">${formatEGP(row.grandTotal)}</strong>`
         : `<span class="costing-cell-zero">0</span>`;
 
-      const safeRowId = encodeURIComponent(String(row.id || "")).replace(/'/g, '%27');
+      const safeIdAttr = window.escapeHtml ? window.escapeHtml(String(row.id || "")) : String(row.id || "");
       return `
         <tr style="transition: background 0.15s ease;">
           <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${idx + 1}</td>
@@ -1329,7 +1363,7 @@
             <div class="costing-clinic-name">${window.escapeHtml(row.clinicName)}</div>
           </td>
           <td>
-            <a href="javascript:void(0)" onclick="openAccountsCostingBreakdown('${safeRowId}')" class="costing-doctor-link" title="View breakdown ledger">
+            <a href="javascript:void(0)" data-costing-row-id="${safeIdAttr}" class="costing-doctor-link" title="View breakdown ledger">
               ${window.escapeHtml(row.doctorName)}
             </a>
           </td>
@@ -1339,7 +1373,7 @@
           ${dynamicCells}
           <td>${totalCell}</td>
           <td style="text-align: center;">
-            <button type="button" class="btn btn-sm btn-outline" onclick="openAccountsCostingBreakdown('${safeRowId}')" style="padding: 3px 8px; font-size: 0.78rem;" title="View Transactions">
+            <button type="button" class="btn btn-sm btn-outline" data-costing-row-id="${safeIdAttr}" style="padding: 3px 8px; font-size: 0.78rem;" title="View Transactions">
               <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Details
             </button>
           </td>
@@ -1348,6 +1382,20 @@
     }).join("");
 
     tbody.innerHTML = html;
+
+    if (tbody && typeof tbody.addEventListener === "function" && !tbody._hasCostingDelegation) {
+      tbody.addEventListener("click", (e) => {
+        const trigger = e.target.closest ? e.target.closest("[data-costing-row-id]") : null;
+        if (trigger) {
+          e.preventDefault();
+          const rowId = trigger.getAttribute("data-costing-row-id");
+          if (rowId && typeof window.openAccountsCostingBreakdown === "function") {
+            window.openAccountsCostingBreakdown(rowId);
+          }
+        }
+      });
+      tbody._hasCostingDelegation = true;
+    }
   }
 
   /**
@@ -1369,9 +1417,9 @@
     let grandOverall = 0;
     rows.forEach((r) => {
       categories.forEach((cat) => {
-        categorySums[cat] += (r.categoryTotals[cat] || 0);
+        categorySums[cat] = Math.round((categorySums[cat] + (r.categoryTotals[cat] || 0)) * 100) / 100;
       });
-      grandOverall += (r.grandTotal || 0);
+      grandOverall = Math.round((grandOverall + (r.grandTotal || 0)) * 100) / 100;
     });
 
     const dynamicFooterCells = categories.map((cat) => {
@@ -1464,14 +1512,16 @@
   }
 
   // Accessibility & Dismissal: Close breakdown modal on Escape key or backdrop click
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" || e.keyCode === 27) {
-      closeAccountsCostingBreakdownModal();
-    }
-  });
+  if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" || e.keyCode === 27) {
+        closeAccountsCostingBreakdownModal();
+      }
+    });
+  }
 
-  const breakdownModalEl = document.getElementById("accountsCostingBreakdownModal");
-  if (breakdownModalEl) {
+  const breakdownModalEl = typeof document !== "undefined" && document.getElementById ? document.getElementById("accountsCostingBreakdownModal") : null;
+  if (breakdownModalEl && typeof breakdownModalEl.addEventListener === "function") {
     breakdownModalEl.addEventListener("click", function (e) {
       if (e.target === breakdownModalEl) {
         closeAccountsCostingBreakdownModal();
@@ -1502,7 +1552,14 @@
       return;
     }
 
-    // SheetJS XLSX writes string cells as text type natively
+    // Sanitize string cells to prevent CSV/Excel Formula Injection (DDE)
+    const sanitizeExcelField = (val) => {
+      let s = String(val ?? "");
+      if (/^[=+\-@\t\r]/.test(s)) {
+        s = "'" + s;
+      }
+      return s;
+    };
 
     // Build headers
     const headers = [
@@ -1522,11 +1579,11 @@
     rows.forEach((r, idx) => {
       const rowArr = [
         idx + 1,
-        r.clinicName,
-        r.doctorName,
-        r.classification,
-        r.specialty,
-        r.areaName,
+        sanitizeExcelField(r.clinicName),
+        sanitizeExcelField(r.doctorName),
+        sanitizeExcelField(r.classification),
+        sanitizeExcelField(r.specialty),
+        sanitizeExcelField(r.areaName),
       ];
       categories.forEach((cat) => {
         rowArr.push(r.categoryTotals[cat] || 0);

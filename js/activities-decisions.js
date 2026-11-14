@@ -395,6 +395,8 @@
               if (sh.status !== Core.REQUEST_STATUS.APPROVED) {
                 sh.status = Core.REQUEST_STATUS.APPROVED;
                 sh.nextApproverId = null;
+                if (!sh.approvedBy) sh.approvedBy = [];
+                if (!sh.approvedBy.includes(userId)) sh.approvedBy.push(userId);
                 hasModifiedShare = true;
               }
             });
