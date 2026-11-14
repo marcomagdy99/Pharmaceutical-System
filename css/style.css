@@ -2914,3 +2914,54 @@ body.dark-theme .sidebar-footer-text {
 .modal:not(.show) {
   display: none !important;
 }
+
+
+/* ==========================================================================
+   v310: Dark Mode Hardened Utility Overrides (Bootstrap 5.3 Compatibility)
+   ========================================================================== */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-light,
+[data-theme="dark"] .table thead.bg-light,
+[data-theme="dark"] .card.bg-light {
+  background-color: #1e2229 !important;
+  color: #f1f3f5 !important;
+  border-color: #2d3340 !important;
+}
+
+[data-theme="dark"] .text-dark {
+  color: #f1f3f5 !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .input-group-text.bg-light,
+[data-theme="dark"] .input-group-text.bg-white {
+  background-color: #232731 !important;
+  color: #9da5b1 !important;
+  border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .btn-light {
+  background-color: #232731 !important;
+  color: #e2e8f0 !important;
+  border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .btn-light:hover {
+  background-color: #2d3340 !important;
+  color: #ffffff !important;
+  border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+  color: #cbd5e1 !important;
+  border-color: #3d4554 !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: #2d3340 !important;
+  color: #ffffff !important;
+  border-color: #4b5563 !important;
+}

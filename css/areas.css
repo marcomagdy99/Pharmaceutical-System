@@ -373,45 +373,171 @@
     color: var(--text-white);
 }
 
-/* --- START: IMS Bricks Selector --- */
-#modalBricksContainer {
+/* --- START: IMS Bricks Selector & Area Modal --- */
+#modalBricksContainer,
+.modal-bricks-container {
     background-color: var(--bs-gray-100, #f8f9fa);
+    border-color: #dee2e6;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.modal-line-box {
+    background-color: #f8f9fa;
     border-color: #dee2e6;
 }
 .brick-checkbox-card,
 #modalBricksContainer .brick-checkbox-card {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
     transition: all 0.15s ease;
     cursor: pointer;
     user-select: none;
 }
 .brick-checkbox-card:hover,
 #modalBricksContainer .brick-checkbox-card:hover {
-    border-color: var(--primary);
+    border-color: var(--primary, #0d6efd);
+    background-color: #f8fafc;
 }
 .brick-checkbox-card.selected,
 #modalBricksContainer .brick-checkbox-card.selected {
-    background-color: rgba(13, 110, 253, 0.08);
-    border-color: rgba(13, 110, 253, 0.4);
+    background-color: rgba(13, 110, 253, 0.08) !important;
+    border-color: rgba(13, 110, 253, 0.45) !important;
 }
-[data-theme="dark"] #modalBricksContainer {
-    background-color: #1a1e24;
-    border-color: var(--border-main);
+.brick-crm-code {
+    font-size: 0.88rem;
+    color: var(--primary, #0d6efd);
+    font-weight: 600;
+}
+.brick-scope-description {
+    font-size: 0.8rem;
+    color: #475569;
+    line-height: 1.35;
+}
+
+/* Sector Filter Pills */
+#brickSectorFilterPills .sector-pill {
+    transition: all 0.15s ease;
+    font-weight: 500;
+}
+#brickSectorFilterPills .sector-pill.btn-outline-secondary {
+    border-color: var(--border-color, #d0d7de);
+    color: var(--text-secondary, #57606a);
+    background-color: transparent;
+}
+#brickSectorFilterPills .sector-pill.btn-outline-secondary:hover {
+    background-color: rgba(13, 110, 253, 0.08);
+    border-color: var(--primary, #0d6efd);
+    color: var(--primary, #0d6efd);
+}
+
+/* Dark Mode Overrides for IMS Bricks Selector & Area Modal */
+[data-theme="dark"] #areaModal .modal-content {
+    background-color: #161a22 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] #areaModal .modal-header,
+[data-theme="dark"] #areaModal .modal-footer {
+    background-color: #1a1e26 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] #modalLineContainer .modal-line-box,
+[data-theme="dark"] #modalLineContainer .bg-light,
+[data-theme="dark"] #modalLineContainer > div {
+    background-color: #1a1e26 !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] #modalLineContainer #modalLineName {
+    color: #58a6ff !important;
+}
+[data-theme="dark"] #modalBricksContainer,
+[data-theme="dark"] .modal-bricks-container,
+[data-theme="dark"] #modalBricksContainer.bg-light {
+    background-color: #11141a !important;
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] #modalBricksContainer .border-bottom {
+    border-color: #2d3340 !important;
+}
+[data-theme="dark"] #modalBricksContainer .text-muted {
+    color: #8b949e !important;
+}
+[data-theme="dark"] #modalBricksContainer strong {
+    color: #f0f6fc !important;
 }
 [data-theme="dark"] .brick-checkbox-card,
-[data-theme="dark"] #modalBricksContainer .brick-checkbox-card {
-    background-color: var(--surface-subtle);
-    border-color: var(--border-main);
-    color: #e2e8f0;
+[data-theme="dark"] #modalBricksContainer .brick-checkbox-card,
+[data-theme="dark"] .brick-checkbox-card.bg-white,
+[data-theme="dark"] #modalBricksContainer .brick-checkbox-card.bg-white {
+    background-color: #1a1e26 !important;
+    border-color: #2e3542 !important;
+    color: #f0f6fc !important;
 }
 [data-theme="dark"] .brick-checkbox-card:hover,
 [data-theme="dark"] #modalBricksContainer .brick-checkbox-card:hover {
-    background-color: #2a303d;
+    background-color: #222733 !important;
+    border-color: #58a6ff !important;
 }
 [data-theme="dark"] .brick-checkbox-card.selected,
 [data-theme="dark"] #modalBricksContainer .brick-checkbox-card.selected {
-    background-color: rgba(13, 110, 253, 0.25);
-    border-color: #3b82f6;
-    color: #93c5fd;
+    background-color: rgba(56, 139, 253, 0.18) !important;
+    border-color: #388bfd !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 1px rgba(56, 139, 253, 0.35);
+}
+[data-theme="dark"] .brick-checkbox-card .form-check-label,
+[data-theme="dark"] .brick-checkbox-card label,
+[data-theme="dark"] .brick-checkbox-card .text-dark {
+    color: #f0f6fc !important;
+}
+[data-theme="dark"] .brick-crm-code {
+    color: #58a6ff !important;
+    font-weight: 600;
+}
+[data-theme="dark"] .brick-scope-description {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .brick-checkbox-card.selected .brick-scope-description {
+    color: #bfdbfe !important;
+}
+[data-theme="dark"] .brick-checkbox-card .badge.bg-secondary-subtle {
+    background-color: rgba(148, 163, 184, 0.15) !important;
+    color: #94a3b8 !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+}
+[data-theme="dark"] #brickSectorFilterPills .sector-pill.btn-outline-secondary {
+    background-color: #1a1e26 !important;
+    color: #c9d1d9 !important;
+    border-color: #3d4554 !important;
+}
+[data-theme="dark"] #brickSectorFilterPills .sector-pill.btn-outline-secondary:hover {
+    background-color: #282d38 !important;
+    color: #ffffff !important;
+    border-color: #58a6ff !important;
+}
+[data-theme="dark"] #brickSectorFilterPills .sector-pill.btn-primary.active {
+    background-color: #1f6feb !important;
+    border-color: #388bfd !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(31, 111, 235, 0.4);
+}
+[data-theme="dark"] #areaModal .input-group-text,
+[data-theme="dark"] #areaModal .input-group-text.bg-light {
+    background-color: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #8b949e !important;
+}
+[data-theme="dark"] #areaModal .input-group .btn-outline-secondary {
+    background-color: #232731 !important;
+    border-color: #3d4554 !important;
+    color: #c9d1d9 !important;
+}
+[data-theme="dark"] #areaModal .input-group .btn-outline-secondary:hover {
+    background-color: #2d3340 !important;
+    color: #ffffff !important;
+    border-color: #58a6ff !important;
+}
+[data-theme="dark"] #deleteModal .modal-content {
+    background-color: #161a22 !important;
+    border-color: #2d3340 !important;
 }
 /* --- END: IMS Bricks Selector --- */
 /* --- Active Mapped Aliases Segmented Tabs --- */
@@ -494,14 +620,4 @@
     padding: 0.2rem 0.55rem !important;
     line-height: 1.25 !important;
 }
-.brick-scope-description {
-    font-size: 0.8rem;
-    color: #475569;
-    line-height: 1.35;
-}
-[data-theme="dark"] .brick-scope-description {
-    color: #cbd5e1;
-}
-.brick-crm-code {
-    font-size: 0.88rem;
-}
+

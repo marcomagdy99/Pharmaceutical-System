@@ -424,13 +424,13 @@ function renderModalBricksList(filterQuery = "") {
     const inputId = `brick_chk_${idx}`;
     html += `
       <div class="col-12">
-        <div class="p-2 px-3 border rounded-3 brick-checkbox-card ${isChecked ? 'selected' : 'bg-white'}" onclick="toggleBrickCard(event, '${escapedValue}')">
+        <div class="p-2 px-3 border rounded-3 brick-checkbox-card ${isChecked ? 'selected' : ''}" onclick="toggleBrickCard(event, '${escapedValue}')">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
             <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
               <input class="form-check-input ms-0 me-1" type="checkbox" id="${inputId}" value="${escapedValue}" ${isChecked ? 'checked' : ''} onchange="onBrickCheckboxChange(this)" onclick="event.stopPropagation()">
-              <label class="form-check-label mb-0 cursor-pointer fw-bold text-dark text-truncate" for="${inputId}">
+              <label class="form-check-label mb-0 cursor-pointer fw-bold text-truncate" for="${inputId}">
                 ${b.imsCode ? `<span class="badge bg-primary text-white me-1 font-monospace">${window.escapeHtml(b.imsCode)}</span>` : ''}
-                <span class="brick-crm-code text-primary-emphasis">${window.escapeHtml(b.crmCode || b.name)}</span>
+                <span class="brick-crm-code">${window.escapeHtml(b.crmCode || b.name)}</span>
                 ${b.imsName && b.imsName !== b.crmCode ? `<span class="text-muted fw-normal ms-1 small">(${window.escapeHtml(b.imsName)})</span>` : ''}
               </label>
             </div>

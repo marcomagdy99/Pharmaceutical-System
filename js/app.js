@@ -10,6 +10,7 @@
   try {
     const savedTheme = localStorage.getItem("pharmaTheme") || "light";
     document.documentElement.setAttribute("data-theme", savedTheme);
+  document.documentElement.setAttribute("data-bs-theme", savedTheme);
   } catch (err) {}
 })();
 
@@ -4137,6 +4138,7 @@ window.toggleTheme = function () {
   document.documentElement.classList.add("theme-transitioning");
 
   document.documentElement.setAttribute("data-theme", newTheme);
+  document.documentElement.setAttribute("data-bs-theme", newTheme);
   if (document.body) document.body.setAttribute("data-theme", newTheme);
   try {
     localStorage.setItem("pharmaTheme", newTheme);
