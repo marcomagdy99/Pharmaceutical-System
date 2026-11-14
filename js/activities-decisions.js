@@ -317,11 +317,12 @@
       }
     } else if (type === "service") {
       const services = Core.StoreAdapter.getServices();
-      const srv = services.find((s) => s.id === requestId);
-      if (!srv) {
+      const rawSrv = services.find((s) => s.id === requestId);
+      if (!rawSrv) {
         closeDecisionModal();
         return;
       }
+      const srv = JSON.parse(JSON.stringify(rawSrv));
 
       const actionKey = `${decision}_service`;
       if (!Core.isActionAuthorized(actionKey, srv, Core._state.currentUser)) {
@@ -403,7 +404,7 @@
                 if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
                   const adv = window.WorkflowEngine.advanceServiceApproval({
                     department: srv.department,
-                    cost: sh.shareAmount,
+                    cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
                     lineId: sh.lineId,
                     status: sh.status
                   }, Core._state.currentUser);
@@ -424,7 +425,7 @@
                 if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
                   const adv = window.WorkflowEngine.advanceServiceApproval({
                     department: srv.department,
-                    cost: sh.shareAmount,
+                    cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
                     lineId: sh.lineId,
                     status: sh.status
                   }, Core._state.currentUser);
@@ -446,7 +447,7 @@
                 if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
                   const adv = window.WorkflowEngine.advanceServiceApproval({
                     department: srv.department,
-                    cost: sh.shareAmount,
+                    cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
                     lineId: sh.lineId,
                     status: sh.status
                   }, Core._state.currentUser);
@@ -707,6 +708,10 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    const iframe = document.getElementById("receiptModalPdfFrame");
+    if (iframe) iframe.src = "about:blank";
+    const img = document.getElementById("receiptModalLargeImg");
+    if (img) img.src = "";
   }
 
   

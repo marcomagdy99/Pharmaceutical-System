@@ -93,21 +93,24 @@ function updateAchMonthDropdownLabel() {
   const labelEl = document.getElementById('achMonthDropdownLabel');
   if (!labelEl) return;
   const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+  const monthsList = lang === 'ar'
+    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+    : ACH_MONTHS;
   const allBoxes = document.querySelectorAll('.ach-month-checkbox');
   const checkedBoxes = Array.from(document.querySelectorAll('.ach-month-checkbox:checked'));
 
   if (checkedBoxes.length === 0) {
-    labelEl.textContent = 'No Months Selected';
+    labelEl.textContent = lang === 'ar' ? 'لم يتم تحديد شهور' : 'No Months Selected';
   } else if (checkedBoxes.length === allBoxes.length && allBoxes.length > 0) {
-    labelEl.textContent = 'All Months';
+    labelEl.textContent = lang === 'ar' ? 'كافة الشهور' : 'All Months';
   } else if (checkedBoxes.length <= 2) {
     const names = checkedBoxes.map((cb) => {
       const idx = parseInt(cb.value, 10) - 1;
-      return ACH_MONTHS[idx];
+      return monthsList[idx];
     });
     labelEl.textContent = names.join(', ');
   } else {
-    labelEl.textContent = `${checkedBoxes.length} Months Selected`;
+    labelEl.textContent = lang === 'ar' ? `تم تحديد ${checkedBoxes.length} شهور` : `${checkedBoxes.length} Months Selected`;
   }
 }
 
@@ -122,10 +125,14 @@ function populateAchFilters() {
   const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
   const now = new Date();
 
-  if (container && !container.dataset.populated) {
+  const monthsList = lang === 'ar'
+    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+    : ACH_MONTHS;
+
+  if (container && (!container.dataset.populated || container.dataset.lang !== lang)) {
     container.textContent = '';
     const currentMonthVal = String(now.getMonth() + 1).padStart(2, '0');
-    ACH_MONTHS.forEach((m, idx) => {
+    monthsList.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, '0');
       const label = document.createElement('label');
       label.className = 'multi-select-item';
@@ -142,6 +149,7 @@ function populateAchFilters() {
       container.appendChild(label);
     });
     container.dataset.populated = 'true';
+    container.dataset.lang = lang;
     updateAchMonthDropdownLabel();
   }
 
@@ -212,7 +220,7 @@ function populateAchAreas(filterUser) {
       });
     } else if (isLM) {
       const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
-      const lmReps = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+      const lmReps = allUsers.filter((u) => u.managerId === selectedRepVal || dms.includes(u.managerId)).map((u) => u.id);
       areasToDisplay = allAreas.filter((a) => {
         if (a.repId && lmReps.includes(a.repId)) return true;
         if (selUser.lineId && a.lineId === selUser.lineId) return true;
@@ -304,7 +312,7 @@ function getAchievementsScopeRepIds(user) {
     const isLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
     if (isLM) {
       const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-      const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+      const repsUnderLM = allUsers.filter((u) => u.managerId === selectedRep || dmsUnderLM.includes(u.managerId)).map((u) => u.id);
       return allowedRepIds ? repsUnderLM.filter((id) => allowedRepIds.includes(id)) : repsUnderLM;
     }
     const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
@@ -408,7 +416,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   } else if (userRole === 'line_manager' || userRole === 'lm') {
     const dms = allUsers.filter((u) => u.managerId === curUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
-    const lmReps = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    const lmReps = allUsers.filter((u) => u.managerId === curUser.id || dmIds.includes(u.managerId)).map((u) => u.id);
     const lmAreas = allAreas.filter((a) => {
       if (a.repId && lmReps.includes(a.repId)) return true;
       if (curUser.lineId && a.lineId === curUser.lineId) return true;
@@ -462,7 +470,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
         }));
       } else if (selRole === 'line_manager' || selRole === 'lm') {
         const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
-        const lmReps = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+        const lmReps = allUsers.filter((u) => u.managerId === selectedRepVal || dms.includes(u.managerId)).map((u) => u.id);
         const lmUserLineIds = selUser ? (selUser.lineIds || (selUser.lineId ? [selUser.lineId] : [])) : [];
         filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
           const a = areasMap.get(id);
@@ -925,6 +933,39 @@ function exportAchievementsReport() {
     'Actual Value (EGP)',
     'Achievement %',
   ];
+
+  if (typeof window.XLSX !== "undefined") {
+    const data = [headers];
+    groups.forEach((g) => {
+      data.push([
+        g.repName,
+        g.areaName || '',
+        'TOTAL',
+        g.totalTUnit,
+        g.totalSUnit,
+        g.totalTValue,
+        g.totalSValue,
+        g.totalPct !== null ? `${g.totalPct.toFixed(1)}%` : '—',
+      ]);
+      g.products.forEach((p) => {
+        data.push([
+          '',
+          '',
+          p.productName,
+          p.tUnit,
+          p.sUnit,
+          p.tValue,
+          p.sValue,
+          p.pct !== null ? `${p.pct.toFixed(1)}%` : '—',
+        ]);
+      });
+    });
+    const wb = window.XLSX.utils.book_new();
+    const ws = window.XLSX.utils.aoa_to_sheet(data);
+    window.XLSX.utils.book_append_sheet(wb, ws, "Achievements");
+    window.XLSX.writeFile(wb, `achievements_report_${year}_${selectedMonths.join('-') || 'all'}.xlsx`);
+    return;
+  }
 
   const escapeCsv = (val) => {
     let s = String(val ?? '');

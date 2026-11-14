@@ -734,7 +734,7 @@
       const matchedDoc = s.targetId ? doctorMap.get(String(s.targetId)) : null;
       const safeDateSub = (val) => {
         if (!val) return "";
-        if (val instanceof Date) return val.toISOString().substring(0, 10);
+        if (val instanceof Date) return formatDateForInput(val);
         return String(val).substring(0, 10);
       };
       const sDate = s.date || s.serviceDate || (s.executionDate ? safeDateSub(s.executionDate) : "") || (s.createdAt ? safeDateSub(s.createdAt) : "") || (s.history && s.history[0]?.at ? safeDateSub(s.history[0].at) : "");
@@ -749,7 +749,10 @@
           const isApproved = shStatus === "approved" || shStatus === "accepted" || (parentStatus === "approved" && shStatus !== "rejected");
           if (!isApproved) return;
 
-          const shareCost = Number(sh.shareAmount !== undefined ? sh.shareAmount : (sh.cost || 0));
+          const totalServiceCost = Number(s.cost || s.amount || 0);
+          const shareCost = (sh.shareAmount !== undefined && sh.shareAmount !== null)
+            ? Number(sh.shareAmount)
+            : (sh.sharePercent ? (totalServiceCost * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0));
           if (shareCost <= 0) return;
 
           const shareRepId = sh.repId || s.requesterId || null;
@@ -986,22 +989,30 @@
     const userMap = {};
     allUsers.forEach((u) => { userMap[u.id] = u.name || u.username; });
 
-    // Determine LM filtered subordinates if LM filter is applied
+    // Determine LM filtered subordinates and areas if LM filter is applied
     let allowedLmRepIds = null;
+    let allowedLmAreaIds = null;
     if (lmVal && lmVal !== "all" && !scope.isLM && !scope.isDM && !scope.isRep) {
       const lmSubUsers = typeof window.getAllSubordinates === "function"
         ? window.getAllSubordinates(lmVal)
         : allUsers.filter((u) => u.managerId === lmVal);
       allowedLmRepIds = new Set([lmVal, ...lmSubUsers.map((u) => u.id)]);
+      const lmUser = allUsers.find((u) => u.id === lmVal);
+      const lmUserLineIds = lmUser ? (lmUser.lineIds || (lmUser.lineId ? [lmUser.lineId] : [])) : [];
+      allowedLmAreaIds = new Set(allAreas.filter((a) => (a.repId && allowedLmRepIds.has(a.repId)) || (a.lineId && lmUserLineIds.includes(a.lineId))).map((a) => a.id));
     }
 
-    // Determine DM filtered subordinates if DM filter is applied
+    // Determine DM filtered subordinates and areas if DM filter is applied
     let allowedDmRepIds = null;
+    let allowedDmAreaIds = null;
     if (dmVal && dmVal !== "all" && !scope.isDM && !scope.isRep) {
       const dmSubUsers = typeof window.getAllSubordinates === "function"
         ? window.getAllSubordinates(dmVal)
         : allUsers.filter((u) => u.dmId === dmVal || u.managerId === dmVal || u.id === dmVal);
       allowedDmRepIds = new Set([dmVal, ...dmSubUsers.map((u) => u.id)]);
+      const dmUser = allUsers.find((u) => u.id === dmVal);
+      const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
+      allowedDmAreaIds = new Set(allAreas.filter((a) => (a.repId && allowedDmRepIds.has(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === dmVal).map((a) => a.id));
     }
 
     // Fetch and filter raw transactions strictly within role scope
@@ -1011,8 +1022,8 @@
       if (toVal && (!tx.date || tx.date > toVal)) return false;
       if (lineVal && lineVal !== "all" && (!tx.lineId || tx.lineId !== lineVal)) return false;
       if (repVal && repVal !== "all" && (!tx.repId || tx.repId !== repVal)) return false;
-      if (allowedDmRepIds && (!tx.repId || !allowedDmRepIds.has(tx.repId))) return false;
-      if (allowedLmRepIds && (!tx.repId || !allowedLmRepIds.has(tx.repId))) return false;
+      if (allowedDmRepIds && (!tx.repId || !allowedDmRepIds.has(tx.repId)) && (!tx.areaId || !allowedDmAreaIds || !allowedDmAreaIds.has(tx.areaId))) return false;
+      if (allowedLmRepIds && (!tx.repId || !allowedLmRepIds.has(tx.repId)) && (!tx.areaId || !allowedLmAreaIds || !allowedLmAreaIds.has(tx.areaId))) return false;
       if (areaVal && areaVal !== "all" && (!tx.areaId || tx.areaId !== areaVal)) return false;
       return true;
     });
@@ -1434,7 +1445,10 @@
               </td>
               <td style="text-align: end; font-weight: 700; color: #004085;">${formatEGP(tx.cost)}</td>
               <td>${window.escapeHtml(repName)}</td>
-              <td style="text-align: center;"><span class="badge" style="background: #d4edda; color: #155724;">Approved</span></td>
+              <td style="text-align: center;">
+                <span class="badge" style="background: #d4edda; color: #155724;">Approved</span>
+                ${tx.attachmentBase64 ? `<button type="button" class="btn btn-sm btn-outline-primary" style="padding: 1px 7px; font-size: 0.72rem; margin-inline-start: 6px; border-radius: 4px;" onclick="window.ActivitiesExpenses?.openReceiptPreviewModal?.('${tx.attachmentBase64}') || window.ActivitiesDecisions?.openReceiptPreviewModal?.('${tx.attachmentBase64}')" title="View Attachment">📄 Receipt</button>` : ""}
+              </td>
             </tr>
           `;
         }).join("");
@@ -1447,6 +1461,22 @@
   function closeAccountsCostingBreakdownModal() {
     const modal = document.getElementById("accountsCostingBreakdownModal");
     if (modal) modal.style.display = "none";
+  }
+
+  // Accessibility & Dismissal: Close breakdown modal on Escape key or backdrop click
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" || e.keyCode === 27) {
+      closeAccountsCostingBreakdownModal();
+    }
+  });
+
+  const breakdownModalEl = document.getElementById("accountsCostingBreakdownModal");
+  if (breakdownModalEl) {
+    breakdownModalEl.addEventListener("click", function (e) {
+      if (e.target === breakdownModalEl) {
+        closeAccountsCostingBreakdownModal();
+      }
+    });
   }
 
   /**

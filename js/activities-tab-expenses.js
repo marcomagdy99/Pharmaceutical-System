@@ -437,6 +437,10 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    const iframe = document.getElementById("receiptModalPdfFrame");
+    if (iframe) iframe.src = "about:blank";
+    const img = document.getElementById("receiptModalLargeImg");
+    if (img) img.src = "";
   }
 
   function handleExpenseSubmit(e) {
