@@ -345,7 +345,13 @@
       "multiLineSplit": "Lines Split",
       "confirmDeleteTitle": "Confirm Deletion",
       "btnDelete": "Delete",
-      "unknownUser": "Unknown"
+      "unknownUser": "Unknown",
+      "signInCostingPrompt": "Please sign in with an authorized account to view costing data.",
+      "excelExportLoading": "Excel export library is loading. Please try again in a moment.",
+      "noDataToExport": "No data to export.",
+      "sessionExpired": "Your session has expired. Please sign in again.",
+      "unassignedTerritory": "Unassigned Territory",
+      "unassigned": "Unassigned"
     },
     ar: {
       "activitiesTitle": "فارماكير - طلبات الأنشطة الميدانية",
@@ -623,7 +629,14 @@
       "intraLineSplit": "مشاركة داخلية",
       "multiLineSplit": "مشاركة بين الخطوط",
       "confirmDeleteTitle": "تأكيد الحذف",
-      "btnDelete": "حذف"
+      "btnDelete": "حذف",
+      "unknownUser": "مجهول",
+      "signInCostingPrompt": "يرجى تسجيل الدخول بحساب مصرح له لعرض بيانات التكاليف.",
+      "excelExportLoading": "مكتبة تصدير الإكسل قيد التحميل. يرجى المحاولة بعد لحظات.",
+      "noDataToExport": "لا توجد بيانات متاحة للتصدير.",
+      "sessionExpired": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+      "unassignedTerritory": "منطقة غير مسندة",
+      "unassigned": "غير مسند"
     }
   };
 

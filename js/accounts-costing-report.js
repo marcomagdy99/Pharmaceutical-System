@@ -832,7 +832,7 @@
 
       // Strict role enforcement
       if (!scope.isAdmin) {
-        const matchesDoc = s.targetId && scope.allowedDoctorIds.has(s.targetId);
+        const matchesDoc = s.targetId && scope.allowedDoctorIds.has(String(s.targetId));
         const matchesRep = s.requesterId && scope.allowedRepIds.has(s.requesterId);
         const matchesArea = s.areaId && scope.allowedAreaIds.has(s.areaId);
         if (!matchesDoc && !matchesRep && !matchesArea) {
@@ -1495,11 +1495,31 @@
               <td>${window.escapeHtml(repName)}</td>
               <td style="text-align: center;">
                 <span class="badge" style="background: #d4edda; color: #155724;">Approved</span>
-                ${tx.attachmentBase64 ? `<button type="button" class="btn btn-sm btn-outline-primary" style="padding: 1px 7px; font-size: 0.72rem; margin-inline-start: 6px; border-radius: 4px;" onclick="window.ActivitiesExpenses?.openReceiptPreviewModal?.('${tx.attachmentBase64}') || window.ActivitiesDecisions?.openReceiptPreviewModal?.('${tx.attachmentBase64}')" title="View Attachment">📄 Receipt</button>` : ""}
+                ${tx.attachmentBase64 ? `<button type="button" class="btn btn-sm btn-outline-primary" data-receipt-tx-idx="${idx}" style="padding: 1px 7px; font-size: 0.72rem; margin-inline-start: 6px; border-radius: 4px;" title="View Attachment">📄 Receipt</button>` : ""}
               </td>
             </tr>
           `;
         }).join("");
+
+        if (tbody && typeof tbody.addEventListener === "function" && !tbody._hasReceiptDelegation) {
+          tbody.addEventListener("click", function (e) {
+            const btn = e.target.closest ? e.target.closest("[data-receipt-tx-idx]") : null;
+            if (btn) {
+              e.preventDefault();
+              const idxStr = btn.getAttribute("data-receipt-tx-idx");
+              const txIdx = parseInt(idxStr, 10);
+              const curRow = CostingState.selectedDoctorForBreakdown;
+              const curTx = curRow && curRow.transactions ? curRow.transactions[txIdx] : null;
+              if (curTx && curTx.attachmentBase64) {
+                const previewFn = window.ActivitiesExpenses?.openReceiptPreviewModal || window.ActivitiesDecisions?.openReceiptPreviewModal;
+                if (typeof previewFn === "function") {
+                  previewFn(curTx.attachmentBase64, curTx.title || "Receipt Preview");
+                }
+              }
+            }
+          });
+          tbody._hasReceiptDelegation = true;
+        }
       }
     }
 
