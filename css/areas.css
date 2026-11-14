@@ -621,3 +621,97 @@
     line-height: 1.25 !important;
 }
 
+
+
+/* ==========================================================================
+   Universal Action Buttons (.area-actions-cell, .user-actions-cell)
+   Guarantees buttons NEVER collapse into empty pills even if webfonts fail
+   ========================================================================== */
+.area-actions-cell,
+.user-actions-cell {
+  white-space: nowrap !important;
+  min-width: 90px !important;
+}
+
+.area-actions-cell .btn,
+.user-actions-cell .btn,
+.btn-action-edit,
+.btn-action-delete,
+.btn-action-key,
+.btn-action-status,
+.btn-user-impersonate {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid #d0d7de !important;
+  background-color: #ffffff !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  vertical-align: middle !important;
+}
+
+.btn-action-edit:hover {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  border-color: #0d6efd !important;
+  color: #0d6efd !important;
+  transform: translateY(-1px);
+}
+
+.btn-action-delete:hover {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  transform: translateY(-1px);
+}
+
+.btn-action-key:hover {
+  background-color: rgba(217, 119, 6, 0.1) !important;
+  border-color: #d97706 !important;
+  color: #d97706 !important;
+  transform: translateY(-1px);
+}
+
+.btn-action-status:hover {
+  transform: translateY(-1px);
+}
+
+/* Dark Mode Overrides for Action Buttons */
+[data-theme="dark"] .area-actions-cell .btn,
+[data-theme="dark"] .user-actions-cell .btn,
+[data-theme="dark"] .btn-action-edit,
+[data-theme="dark"] .btn-action-delete,
+[data-theme="dark"] .btn-action-key,
+[data-theme="dark"] .btn-action-status,
+[data-theme="dark"] .btn-user-impersonate {
+  background-color: #1a1e26 !important;
+  border-color: #333d4d !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-action-edit:hover {
+  background-color: rgba(56, 139, 253, 0.22) !important;
+  border-color: #388bfd !important;
+  color: #58a6ff !important;
+  box-shadow: 0 0 8px rgba(56, 139, 253, 0.4) !important;
+}
+
+[data-theme="dark"] .btn-action-delete:hover {
+  background-color: rgba(248, 81, 73, 0.22) !important;
+  border-color: #f85149 !important;
+  color: #ff7b72 !important;
+  box-shadow: 0 0 8px rgba(248, 81, 73, 0.4) !important;
+}
+
+[data-theme="dark"] .btn-action-key:hover {
+  background-color: rgba(210, 153, 34, 0.22) !important;
+  border-color: #d29922 !important;
+  color: #e3b341 !important;
+  box-shadow: 0 0 8px rgba(210, 153, 34, 0.4) !important;
+}
