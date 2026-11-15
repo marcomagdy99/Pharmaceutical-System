@@ -215,10 +215,14 @@ function migrateLegacyAreaNames() {
     "faisal": { name: "Faisal - Brick 1", code: "GZA-B46", brick: "[B46] Faisal - Brick 1 (Faisal 1)" },
     "haram": { name: "Haram - Brick 1", code: "GZA-B43", brick: "[B43] Haram - Brick 1 (El Haram 1)" },
     "bolak el dakror": { name: "Giza V - Brick 2", code: "GZA-B50", brick: "[B50] Giza V - Brick 2 (Giza 12)" },
-    "shobra": { name: "Shoubra I - Brick 1", code: "CAI-B19", brick: "[B19] Shoubra I - Brick 1 (Shubra 1)" },
+    "shobra": { name: "Shobra - Brick 1", code: "CAI-B13", brick: "[B13] Shobra - Brick 1 (Shobra 1)" },
+    "shoubra": { name: "Shobra - Brick 1", code: "CAI-B13", brick: "[B13] Shobra - Brick 1 (Shobra 1)" },
+    "shoubra i - brick 1": { name: "Shobra - Brick 1", code: "CAI-B13", brick: "[B13] Shobra - Brick 1 (Shobra 1)" },
     "heliopolis": { name: "Heliopolis I - Brick 1", code: "CAI-B01", brick: "[B01] Heliopolis I - Brick 1 (Heliopolis 1)" },
-    "nasr city": { name: "Nasr City I - Brick 1", code: "CAI-B06", brick: "[B06] Nasr City I - Brick 1 (Nasr City 1)" },
-    "maadi": { name: "Maadi I - Brick 1", code: "CAI-B13", brick: "[B13] Maadi I - Brick 1 (Maadi 1)" }
+    "nasr city": { name: "Nasr City - Brick 1", code: "CAI-B16", brick: "[B16] Nasr City - Brick 1 (Nasr City 1)" },
+    "nasr city i - brick 1": { name: "Nasr City - Brick 1", code: "CAI-B16", brick: "[B16] Nasr City - Brick 1 (Nasr City 1)" },
+    "maadi": { name: "Maadi - Brick 1", code: "CAI-B32", brick: "[B32] Maadi - Brick 1 (Maadi 1)" },
+    "maadi i - brick 1": { name: "Maadi - Brick 1", code: "CAI-B32", brick: "[B32] Maadi - Brick 1 (Maadi 1)" }
   };
 
   allAreas.forEach((area) => {
@@ -230,10 +234,30 @@ function migrateLegacyAreaNames() {
       if (!area.code || area.code.startsWith("GIZ-") || area.code.startsWith("CAI-")) {
         area.code = target.code;
       }
-      if (!Array.isArray(area.bricks) || area.bricks.length === 0) {
-        area.bricks = [target.brick];
-      }
+      area.bricks = [target.brick];
       updated = true;
+    } else {
+      // Clean legacy raw subarea strings from area.bricks so only real CRM Bricks remain
+      if (Array.isArray(area.bricks)) {
+        const cleanBricks = [];
+        area.bricks.forEach((bn) => {
+          if (typeof bn === "string" && bn.startsWith("[B") && bn.includes("]")) {
+            cleanBricks.push(bn);
+          } else {
+            const m = typeof window.findCRMBrick === "function" ? window.findCRMBrick(bn) : null;
+            if (m && m.name) cleanBricks.push(m.name);
+          }
+        });
+        if (cleanBricks.length !== area.bricks.length || cleanBricks.length === 0) {
+          if (cleanBricks.length > 0) {
+            area.bricks = Array.from(new Set(cleanBricks));
+          } else {
+            const m = typeof window.findCRMBrick === "function" ? window.findCRMBrick(area.name) : null;
+            if (m && m.name) area.bricks = [m.name];
+          }
+          updated = true;
+        }
+      }
     }
   });
 

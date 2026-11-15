@@ -1356,24 +1356,24 @@ const DEFAULT_DEMO_DATA = {
       },
       {
           "id": "area_1790626000003",
-          "name": "Nasr City I - Brick 1",
-          "code": "CAI-B06",
+          "name": "Nasr City - Brick 1",
+          "code": "CAI-B16",
           "repId": "u1790626000004",
           "lineId": "line_1790626000002",
           "repName": null,
           "bricks": [
-              "[B06] Nasr City I - Brick 1 (Nasr City 1)"
+              "[B16] Nasr City - Brick 1 (Nasr City 1)"
           ]
       },
       {
           "id": "area_1790626000004",
-          "name": "Maadi I - Brick 1",
-          "code": "CAI-B13",
-          "repId": null,
-          "lineId": "line_1790626000002",
-          "repName": "Ahmed Mostafa",
+          "name": "Maadi - Brick 1",
+          "code": "CAI-B32",
+        "repId": null,
+        "lineId": "line_1790626000002",
+        "repName": "Ahmed Mostafa",
           "bricks": [
-              "[B13] Maadi I - Brick 1 (Maadi 1)"
+              "[B32] Maadi - Brick 1 (Maadi 1)"
           ]
       },
       {
@@ -1473,8 +1473,8 @@ const DEFAULT_DEMO_DATA = {
       },
       {
           "id": "area_line_1790626036368_1790674874231",
-          "name": "Shoubra I - Brick 1",
-          "code": "CAI-B19",
+          "name": "Shobra - Brick 1",
+          "code": "CAI-B13",
           "repId": "u1790626669586",
           "repName": "Mark Michel",
           "lineId": "line_1790626000003",
@@ -1489,7 +1489,7 @@ const DEFAULT_DEMO_DATA = {
               }
           ],
           "bricks": [
-              "[B19] Shoubra I - Brick 1 (Shubra 1)"
+              "[B13] Shobra - Brick 1 (Shobra 1)"
           ]
       },
       {
@@ -1544,8 +1544,8 @@ const DEFAULT_DEMO_DATA = {
       },
       {
           "id": "area_line1_1790688305597",
-          "name": "Shoubra I - Brick 1",
-          "code": "CAI-B19",
+          "name": "Shobra - Brick 1",
+          "code": "CAI-B13",
           "repId": "u1790688369929",
           "repName": "Marina Shobra",
           "lineId": "line_1790626000001",
@@ -1560,13 +1560,13 @@ const DEFAULT_DEMO_DATA = {
               }
           ],
           "bricks": [
-              "[B19] Shoubra I - Brick 1 (Shubra 1)"
+              "[B13] Shobra - Brick 1 (Shobra 1)"
           ]
       },
       {
           "id": "area_line2_1790688317554",
-          "name": "Shoubra I - Brick 1",
-          "code": "CAI-B19",
+          "name": "Shobra - Brick 1",
+          "code": "CAI-B13",
           "repId": "u1790688412219",
           "repName": "Monica Shobra",
           "lineId": "line_1790626000002",
@@ -1581,7 +1581,7 @@ const DEFAULT_DEMO_DATA = {
               }
           ],
           "bricks": [
-              "[B19] Shoubra I - Brick 1 (Shubra 1)"
+              "[B13] Shobra - Brick 1 (Shobra 1)"
           ]
       }
   ],

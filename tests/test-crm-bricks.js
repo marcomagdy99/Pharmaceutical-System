@@ -102,7 +102,7 @@ console.log('✓ Test 7: Disambiguation for المطرية (Cairo B08 vs Dakahli
 
 // 3. Test getMasterBricks() and findMasterBrickByName()
 const allMaster = window.getMasterBricks();
-assert(allMaster.length > 1900, 'getMasterBricks should return CRM bricks + remaining master bricks');
+assert.strictEqual(allMaster.length, 152, 'getMasterBricks should return exactly 152 pure CRM bricks');
 assert.strictEqual(allMaster[0].id, 'B01', 'First brick should be B01');
 
 const findB148 = window.findMasterBrickByName('B148');

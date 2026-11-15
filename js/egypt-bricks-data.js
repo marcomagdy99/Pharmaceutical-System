@@ -10193,24 +10193,9 @@ window.findCRMBrick = function(query) {
 };
 
 window.getMasterBricks = function() {
-  const crmList = (window.CRM_IMS_MASTER_BRICKS || []).map(function(b) {
+  return (window.CRM_IMS_MASTER_BRICKS || []).map(function(b) {
     return Object.assign({}, b, { isCrmGroup: true });
   });
-  const egyptList = (window.EGYPT_MASTER_BRICKS || []).map(function(b) {
-    return {
-      id: b.id,
-      crmCode: b.name,
-      imsCode: "",
-      imsName: b.name,
-      name: b.name,
-      sector: "Other",
-      sectorAr: "باقي المحافظات",
-      scopeText: b.name,
-      isCrmGroup: false,
-      subAreas: [b.name]
-    };
-  });
-  return crmList.concat(egyptList);
 };
 
 window.findMasterBrickByName = function(query) {
