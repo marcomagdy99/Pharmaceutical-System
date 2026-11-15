@@ -43,6 +43,8 @@ const areaTranslations = {
     selected_bricks: "bricks selected",
     no_bricks_assigned: "No bricks assigned",
     no_matching_bricks: "No matching bricks found",
+    view_area_details: "View Area Details",
+    hide_area_details: "Hide Area Details",
   },
 };
 
@@ -181,7 +183,7 @@ function toggleAreaStreetsDrawer(drawerId, btn) {
     btn.classList.add("active");
     btn.setAttribute("aria-expanded", "true");
     const label = btn.querySelector(".scope-btn-label");
-    if (label) label.textContent = "إخفاء الشوارع";
+    if (label) label.textContent = "Hide Area Details";
     const chevron = btn.querySelector(".scope-chevron");
     if (chevron) chevron.style.transform = "rotate(180deg)";
   } else {
@@ -189,7 +191,7 @@ function toggleAreaStreetsDrawer(drawerId, btn) {
     btn.classList.remove("active");
     btn.setAttribute("aria-expanded", "false");
     const label = btn.querySelector(".scope-btn-label");
-    if (label) label.textContent = "عرض الشوارع";
+    if (label) label.textContent = "View Area Details";
     const chevron = btn.querySelector(".scope-chevron");
     if (chevron) chevron.style.transform = "rotate(0deg)";
   }
@@ -788,12 +790,12 @@ function renderAreas(filterText = "") {
     }
 
     const toggleBtnHtml = hasScopes ? `
-      <button type="button" class="btn btn-xs area-scope-toggle-btn mt-1 d-inline-flex align-items-center gap-1" onclick="toggleAreaStreetsDrawer('${drawerId}', this)" aria-expanded="false" title="عرض الشوارع والنطاق الفعلي">
+      <button type="button" class="btn btn-xs area-scope-toggle-btn mt-1 d-inline-flex align-items-center gap-1" onclick="toggleAreaStreetsDrawer('${drawerId}', this)" aria-expanded="false" title="View Area Details">
         <svg class="scope-pin-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
           <circle cx="12" cy="10" r="3"/>
         </svg>
-        <span class="scope-btn-label">عرض الشوارع</span>
+        <span class="scope-btn-label">View Area Details</span>
         <svg class="scope-chevron" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s ease;">
           <polyline points="6 9 12 15 18 9"/>
         </svg>

@@ -32,7 +32,7 @@ function createMockElement(id, tagName = 'div') {
       if (selector === '.scope-chevron') return this._chevronEl;
       return null;
     },
-    _labelEl: { textContent: 'عرض الشوارع' },
+    _labelEl: { textContent: 'View Area Details' },
     _chevronEl: { style: {} },
     innerHTML: '',
     value: ''
@@ -112,14 +112,14 @@ drawerEl.style.display = 'none';
 
 const btnEl = createMockElement('btn_123');
 btnEl.classList.remove('active');
-btnEl._labelEl.textContent = 'عرض الشوارع';
+btnEl._labelEl.textContent = 'View Area Details';
 
 // First click: expand drawer
 sandbox.toggleAreaStreetsDrawer('drawer_123', btnEl);
 assert.strictEqual(drawerEl.style.display, 'block', 'Drawer must be displayed');
 assert.ok(btnEl.classList.contains('active'), 'Button must have active class');
 assert.strictEqual(btnEl.getAttribute('aria-expanded'), 'true');
-assert.strictEqual(btnEl._labelEl.textContent, 'إخفاء الشوارع');
+assert.strictEqual(btnEl._labelEl.textContent, 'Hide Area Details');
 assert.strictEqual(btnEl._chevronEl.style.transform, 'rotate(180deg)');
 
 // Second click: collapse drawer
@@ -127,7 +127,7 @@ sandbox.toggleAreaStreetsDrawer('drawer_123', btnEl);
 assert.strictEqual(drawerEl.style.display, 'none', 'Drawer must be hidden');
 assert.ok(!btnEl.classList.contains('active'), 'Button must not have active class');
 assert.strictEqual(btnEl.getAttribute('aria-expanded'), 'false');
-assert.strictEqual(btnEl._labelEl.textContent, 'عرض الشوارع');
+assert.strictEqual(btnEl._labelEl.textContent, 'View Area Details');
 assert.strictEqual(btnEl._chevronEl.style.transform, 'rotate(0deg)');
 console.log('✓ 5. toggleAreaStreetsDrawer smoothly toggles display, label, and chevron rotation');
 
