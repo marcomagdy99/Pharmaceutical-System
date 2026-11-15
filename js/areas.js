@@ -81,6 +81,187 @@ function getAreasList() {
   });
 }
 
+
+/**
+ * Resolves territorial scope info (Arabic street names, IMS code & name) for any area.
+ * Resolves from area.bricks first, then area.name/area.code, with legacy mapping fallback.
+ */
+function getAreaScopeInfo(area) {
+  if (!area) return [];
+  const crmBricks = window.CRM_IMS_MASTER_BRICKS || [];
+  const scopes = [];
+  const seenKeys = new Set();
+
+  function addBrickScope(b) {
+    if (!b) return;
+    const key = (b.id || b.crmCode || b.name || "").trim().toLowerCase();
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    scopes.push({
+      id: b.id || "",
+      crmCode: b.crmCode || b.name || "",
+      imsCode: b.imsCode || "",
+      imsName: b.imsName || "",
+      scopeText: b.scopeText || b.name || "",
+      sectorAr: b.sectorAr || ""
+    });
+  }
+
+  // 1. Check assigned bricks array
+  const areaBricks = Array.isArray(area.bricks) ? area.bricks : [];
+  if (areaBricks.length > 0) {
+    areaBricks.forEach((bn) => {
+      const match = (typeof window.findCRMBrick === "function" ? window.findCRMBrick(bn) : null)
+        || (typeof window.findMasterBrickByName === "function" ? window.findMasterBrickByName(bn) : null);
+      if (match) {
+        addBrickScope(match);
+      } else {
+        const textKey = String(bn).trim();
+        if (textKey && !seenKeys.has(textKey.toLowerCase())) {
+          seenKeys.add(textKey.toLowerCase());
+          scopes.push({
+            id: "",
+            crmCode: textKey,
+            imsCode: "",
+            imsName: "",
+            scopeText: textKey,
+            sectorAr: ""
+          });
+        }
+      }
+    });
+  }
+
+  // 2. If no scopes from bricks array, check area.name and area.code
+  if (scopes.length === 0) {
+    const match = (typeof window.findCRMBrick === "function" ? (window.findCRMBrick(area.name) || window.findCRMBrick(area.code)) : null)
+      || (typeof window.findMasterBrickByName === "function" ? (window.findMasterBrickByName(area.name) || window.findMasterBrickByName(area.code)) : null);
+    if (match) {
+      addBrickScope(match);
+    }
+  }
+
+  // 3. Fallback for legacy demo area names
+  if (scopes.length === 0 && area.name) {
+    const raw = area.name.trim().toLowerCase();
+    const legacyMap = {
+      "mohndseen": "B49",
+      "mohandessin": "B49",
+      "dokki": "B41",
+      "giza": "B38",
+      "fisal": "B46",
+      "faisal": "B46",
+      "haram": "B43",
+      "bolak el dakror": "B50",
+      "shobra": "B19",
+      "heliopolis": "B01",
+      "nasr city": "B06",
+      "maadi": "B13"
+    };
+    if (legacyMap[raw]) {
+      const b = crmBricks.find((cb) => cb.id === legacyMap[raw]);
+      if (b) addBrickScope(b);
+    }
+  }
+
+  return scopes;
+}
+window.getAreaScopeInfo = getAreaScopeInfo;
+
+/**
+ * Toggles the inline collapsible streets drawer under an area name.
+ * Default is collapsed (hidden). Clicking reveals Arabic streets and rotates chevron.
+ */
+function toggleAreaStreetsDrawer(drawerId, btn) {
+  const drawer = document.getElementById(drawerId);
+  if (!drawer) return;
+  const isHidden = drawer.style.display === "none" || !drawer.style.display;
+  if (isHidden) {
+    drawer.style.display = "block";
+    btn.classList.add("active");
+    btn.setAttribute("aria-expanded", "true");
+    const label = btn.querySelector(".scope-btn-label");
+    if (label) label.textContent = "إخفاء الشوارع";
+    const chevron = btn.querySelector(".scope-chevron");
+    if (chevron) chevron.style.transform = "rotate(180deg)";
+  } else {
+    drawer.style.display = "none";
+    btn.classList.remove("active");
+    btn.setAttribute("aria-expanded", "false");
+    const label = btn.querySelector(".scope-btn-label");
+    if (label) label.textContent = "عرض الشوارع";
+    const chevron = btn.querySelector(".scope-chevron");
+    if (chevron) chevron.style.transform = "rotate(0deg)";
+  }
+}
+window.toggleAreaStreetsDrawer = toggleAreaStreetsDrawer;
+
+/**
+ * Gracefully migrates any legacy area names in localStorage/DEMO_DATA to official CRM Brick names.
+ */
+function migrateLegacyAreaNames() {
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+  let updated = false;
+
+  const legacyToCrmMap = {
+    "mohndseen": { name: "Giza V - Brick 1", code: "GZA-B49", brick: "[B49] Giza V - Brick 1 (Giza 11)" },
+    "mohandessin": { name: "Giza V - Brick 1", code: "GZA-B49", brick: "[B49] Giza V - Brick 1 (Giza 11)" },
+    "dokki": { name: "Giza II - Brick 1", code: "GZA-B41", brick: "[B41] Giza II - Brick 1 (Giza 4)" },
+    "giza": { name: "Giza I - Brick 1", code: "GZA-B38", brick: "[B38] Giza I - Brick 1 (Giza 1)" },
+    "fisal": { name: "Faisal - Brick 1", code: "GZA-B46", brick: "[B46] Faisal - Brick 1 (Faisal 1)" },
+    "faisal": { name: "Faisal - Brick 1", code: "GZA-B46", brick: "[B46] Faisal - Brick 1 (Faisal 1)" },
+    "haram": { name: "Haram - Brick 1", code: "GZA-B43", brick: "[B43] Haram - Brick 1 (El Haram 1)" },
+    "bolak el dakror": { name: "Giza V - Brick 2", code: "GZA-B50", brick: "[B50] Giza V - Brick 2 (Giza 12)" },
+    "shobra": { name: "Shoubra I - Brick 1", code: "CAI-B19", brick: "[B19] Shoubra I - Brick 1 (Shubra 1)" },
+    "heliopolis": { name: "Heliopolis I - Brick 1", code: "CAI-B01", brick: "[B01] Heliopolis I - Brick 1 (Heliopolis 1)" },
+    "nasr city": { name: "Nasr City I - Brick 1", code: "CAI-B06", brick: "[B06] Nasr City I - Brick 1 (Nasr City 1)" },
+    "maadi": { name: "Maadi I - Brick 1", code: "CAI-B13", brick: "[B13] Maadi I - Brick 1 (Maadi 1)" }
+  };
+
+  allAreas.forEach((area) => {
+    if (!area.name) return;
+    const key = area.name.trim().toLowerCase();
+    const target = legacyToCrmMap[key];
+    if (target) {
+      area.name = target.name;
+      if (!area.code || area.code.startsWith("GIZ-") || area.code.startsWith("CAI-")) {
+        area.code = target.code;
+      }
+      if (!Array.isArray(area.bricks) || area.bricks.length === 0) {
+        area.bricks = [target.brick];
+      }
+      updated = true;
+    }
+  });
+
+  // Ensure Giza IV - Brick 1 exists for line 1 if not present
+  const line1Id = (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line_1790626000001");
+  if (line1Id) {
+    const hasGiza4InLine1 = allAreas.some(
+      (a) => (a.lineId === line1Id || !a.lineId) && a.name === "Giza IV - Brick 1"
+    );
+    if (!hasGiza4InLine1) {
+      allAreas.push({
+        id: "area_" + line1Id + "_giza4_brick1",
+        name: "Giza IV - Brick 1",
+        code: "GZA-B48",
+        repId: null,
+        repName: null,
+        lineId: line1Id,
+        bricks: ["[B48] Giza IV - Brick 1 (Giza 10)"]
+      });
+      updated = true;
+    }
+  }
+
+  if (updated && typeof window.saveDataToStorage === "function") {
+    window.saveDataToStorage();
+  }
+}
+window.migrateLegacyAreaNames = migrateLegacyAreaNames;
+
+
 function populateRepDropdown(selectedRepId = "", targetLineId = null) {
   const repSelect = document.getElementById("assignRep");
   if (!repSelect) return;
@@ -192,6 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (currentUser.lineIds && currentUser.lineIds.length > 0) {
     currentSelectedLineId = currentUser.lineIds[0];
   }
+  migrateLegacyAreaNames();
   populateLineSelector();
 
   renderAreas();
@@ -476,6 +658,23 @@ function onBrickCheckboxChange(el) {
       parentCard.classList.add("selected");
       parentCard.classList.remove("bg-white");
     }
+
+    // Auto-fill Area Name and Code if adding a new area and fields are empty
+    const areaIdInput = document.getElementById("areaId");
+    const isAddingNew = !areaIdInput || !areaIdInput.value;
+    const nameInput = document.getElementById("areaName");
+    const codeInput = document.getElementById("areaCode");
+    if (isAddingNew && nameInput && !nameInput.value.trim()) {
+      const match = (typeof window.findCRMBrick === "function" ? window.findCRMBrick(brickName) : null)
+        || (typeof window.findMasterBrickByName === "function" ? window.findMasterBrickByName(brickName) : null);
+      if (match) {
+        if (match.crmCode) nameInput.value = match.crmCode;
+        if (codeInput && !codeInput.value.trim()) {
+          const prefix = match.sector === "Cairo" ? "CAI" : (match.sector === "Alex" ? "ALX" : "GZA");
+          codeInput.value = match.imsCode ? `${prefix}-${match.imsCode}` : match.id;
+        }
+      }
+    }
   } else {
     selectedBrickNames.delete(brickName);
     if (parentCard) {
@@ -577,10 +776,52 @@ function renderAreas(filterText = "") {
          </span>`
       : `<span class="badge bg-light text-muted border px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}">0</span>`;
 
+    const scopes = getAreaScopeInfo(area);
+    const hasScopes = scopes && scopes.length > 0;
+    const safeId = String(area.id || Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_-]/g, "_");
+    const drawerId = `area_streets_${safeId}`;
+
+    // Optional IMS Name subtitle if distinct from area.name
+    let imsSubtitle = "";
+    if (scopes.length === 1 && scopes[0].imsName && scopes[0].imsName !== area.name && scopes[0].imsName !== scopes[0].crmCode) {
+      imsSubtitle = `<span class="text-muted small fw-normal">(${window.escapeHtml(scopes[0].imsName)})</span>`;
+    }
+
+    const toggleBtnHtml = hasScopes ? `
+      <button type="button" class="btn btn-xs area-scope-toggle-btn mt-1 d-inline-flex align-items-center gap-1" onclick="toggleAreaStreetsDrawer('${drawerId}', this)" aria-expanded="false" title="عرض الشوارع والنطاق الفعلي">
+        <svg class="scope-pin-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span class="scope-btn-label">عرض الشوارع</span>
+        <svg class="scope-chevron" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s ease;">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+    ` : "";
+
+    const drawerHtml = hasScopes ? `
+      <div id="${drawerId}" class="area-scope-drawer mt-2 p-2 rounded-3 text-start" style="display: none;">
+        ${scopes.map(s => `
+          <div class="area-scope-item d-flex align-items-start gap-2 py-1">
+            ${s.imsCode ? `<span class="badge bg-primary text-white font-monospace px-1.5 py-0.5 small flex-shrink-0">${window.escapeHtml(s.imsCode)}${s.imsName && s.imsName !== s.imsCode ? ` (${window.escapeHtml(s.imsName)})` : ""}</span>` : ""}
+            <span class="small area-scope-streets text-wrap flex-grow-1" style="line-height: 1.45; direction: rtl; text-align: right;">${window.escapeHtml(s.scopeText)}</span>
+          </div>
+        `).join("")}
+      </div>
+    ` : "";
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="px-4 py-3"><span class="area-code-badge">${window.escapeHtml(area.code)}</span></td>
-      <td class="px-4 py-3 fw-medium">${window.escapeHtml(area.name)}</td>
+      <td class="px-4 py-3 fw-medium">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="area-title-text fw-bold">${window.escapeHtml(area.name)}</span>
+          ${imsSubtitle}
+        </div>
+        ${toggleBtnHtml}
+        ${drawerHtml}
+      </td>
       <td class="px-4 py-3">${bricksBadge}</td>
       <td class="px-4 py-3">${repDisplay}</td>
       <td class="px-4 py-3">${statusBadge}</td>
@@ -604,13 +845,14 @@ function renderAreas(filterText = "") {
     `;
     tableBody.appendChild(tr);
 
+    // Cards view
     const cardClass = isAssigned ? "assigned" : "unassigned";
     const card = document.createElement("div");
     card.className = "col-md-6 col-lg-4";
     card.innerHTML = `
       <div class="card border-0 shadow-sm area-card h-100 ${cardClass}">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="area-code-badge fs-6">${window.escapeHtml(area.code)}</span>
             <div class="dropdown">
               <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
@@ -622,8 +864,12 @@ function renderAreas(filterText = "") {
               </ul>
             </div>
           </div>
-          <h5 class="card-title fw-bold mb-2">${window.escapeHtml(area.name)}</h5>
-          <div class="mb-3 d-flex align-items-center justify-content-between">
+          <div class="mb-2">
+            <h5 class="card-title fw-bold mb-0">${window.escapeHtml(area.name)} ${imsSubtitle}</h5>
+            ${toggleBtnHtml ? toggleBtnHtml.replace(drawerId, `${drawerId}_card`) : ""}
+            ${drawerHtml ? drawerHtml.replace(`id="${drawerId}"`, `id="${drawerId}_card"`) : ""}
+          </div>
+          <div class="mb-3 d-flex align-items-center justify-content-between mt-1">
             <small class="text-muted"><i class="fas fa-cubes me-1"></i>${areaTranslations.en.assigned_bricks}:</small>
             ${bricksBadge}
           </div>
@@ -676,37 +922,67 @@ function populateAreaNamesDatalist() {
   if (!datalist) return;
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+  const crmBricks = window.CRM_IMS_MASTER_BRICKS || [];
 
-  const uniqueNames = new Map();
+  const uniqueOptions = new Map();
+  // 1. First add all official CRM Bricks
+  crmBricks.forEach((b) => {
+    if (b.crmCode) {
+      const key = b.crmCode.toLowerCase();
+      if (!uniqueOptions.has(key)) {
+        uniqueOptions.set(key, {
+          name: b.crmCode,
+          code: b.imsCode ? `GZA-${b.imsCode}` : b.id,
+          sub: b.imsName || ""
+        });
+      }
+    }
+  });
+
+  // 2. Add existing custom area names
   allAreas.forEach((a) => {
     if (a.name) {
       const key = a.name.trim().toLowerCase();
-      if (!uniqueNames.has(key)) {
-        uniqueNames.set(key, { name: a.name.trim(), code: a.code || "" });
+      if (!uniqueOptions.has(key)) {
+        uniqueOptions.set(key, { name: a.name.trim(), code: a.code || "", sub: "" });
       }
     }
   });
 
   let html = "";
-  uniqueNames.forEach(({ name, code }) => {
-    html += `<option value="${window.escapeHtml(name)}">${code ? `(${window.escapeHtml(code)})` : ""}</option>`;
+  uniqueOptions.forEach(({ name, code, sub }) => {
+    html += `<option value="${window.escapeHtml(name)}">${code ? `[${window.escapeHtml(code)}] ` : ""}${sub ? `(${window.escapeHtml(sub)})` : ""}</option>`;
   });
   datalist.innerHTML = html;
 }
 
-/**
- * Triggered when the user enters or selects an area name in the modal.
- * Automatically looks up if this area name exists in any other line,
- * and if so, auto-fills the Area Code with the same standard code!
- */
 function onAreaNameInput() {
   const nameInput = document.getElementById("areaName");
   const codeInput = document.getElementById("areaCode");
-  if (!nameInput || !codeInput) return;
+  if (!nameInput) return;
 
   const entered = nameInput.value.trim().toLowerCase();
   if (!entered) return;
 
+  // 1. Check if matches any CRM brick
+  const crmMatch = (typeof window.findCRMBrick === "function" ? window.findCRMBrick(entered) : null)
+    || (typeof window.findMasterBrickByName === "function" ? window.findMasterBrickByName(entered) : null);
+
+  if (crmMatch) {
+    if (codeInput && !codeInput.value.trim()) {
+      const prefix = crmMatch.sector === "Cairo" ? "CAI" : (crmMatch.sector === "Alex" ? "ALX" : "GZA");
+      codeInput.value = crmMatch.imsCode ? `${prefix}-${crmMatch.imsCode}` : crmMatch.id;
+    }
+    // Pre-check this brick in selected bricks
+    if (crmMatch.name && !selectedBrickNames.has(crmMatch.name)) {
+      selectedBrickNames.add(crmMatch.name);
+      renderModalBricksList(document.getElementById("searchBricksInput")?.value || "");
+      updateSelectedBricksCount();
+    }
+    return;
+  }
+
+  // 2. Also check if this area name exists in another line to unify code
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
 
@@ -714,8 +990,7 @@ function onAreaNameInput() {
     (a) => a.name && a.name.trim().toLowerCase() === entered && a.code
   );
 
-  if (matched && matched.code) {
-    // Automatically fill with the same code across all lines!
+  if (matched && matched.code && codeInput) {
     codeInput.value = matched.code.toUpperCase();
   }
 }

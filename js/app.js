@@ -1315,241 +1315,276 @@ const DEFAULT_DEMO_DATA = {
   }
 ],
   areas: [
-    {
-        "id": "area_1790626000001",
-        "name": "Mohndseen",
-        "code": "GIZ-N001",
-        "repId": "u1790626000001",
-        "lineId": "line_1790626000001",
-        "repName": "Marco Magdy",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "20502"
-            }
-        ],
-        "bricks": [
-            "ميدان سفنكس",
-            "ميدان لبنان - المهندسين",
-            "المهندسين",
-            "الزمالك",
-            "الصحفيين",
-            "ميت عقبه",
-            "مدينه المعلمين"
-        ]
-    },
-    {
-        "id": "area_1790626000002",
-        "name": "Heliopolis",
-        "code": "CAI-H01",
-        "repId": "u1790626000002",
-        "lineId": "line_1790626000001",
-        "repName": null
-    },
-    {
-        "id": "area_1790626000003",
-        "name": "Nasr City",
-        "code": "CAI-N01",
-        "repId": "u1790626000004",
-        "lineId": "line_1790626000002",
-        "repName": null
-    },
-    {
-        "id": "area_1790626000004",
-        "name": "Maadi",
-        "code": "CAI-M01",
-        "repId": null,
-        "lineId": "line_1790626000002",
-        "repName": "Ahmed Mostafa"
-    },
-    {
-        "id": "area_line1_1790674592471",
-        "name": "Dokki",
-        "code": "GIZ-N002",
-        "repId": "u1790626000005",
-        "repName": "Mohamed Ramadan",
-        "lineId": "line_1790626000001",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "20303"
-            }
-        ],
-        "bricks": [
-            "الدقي - بين السرايات",
-            "المساحه -الدقي",
-            "بين السرايات - الدقي",
-            "الدقي"
-        ]
-    },
-    {
-        "id": "area_line1_1790674637363",
-        "name": "Giza",
-        "code": "GIZ-N010",
-        "repId": "u1790626000002",
-        "repName": "Kerolos Boules",
-        "lineId": "line_1790626000001"
-    },
-    {
-        "id": "area_line1_1790674718201",
-        "name": "Fisal",
-        "code": "GIZ-N006",
-        "repId": "u1790626000003",
-        "repName": "Mina Mikhael",
-        "lineId": "line_1790626000001"
-    },
-    {
-        "id": "area_line2_1790674745627",
-        "name": "Mohndseen",
-        "code": "GIZ-N001",
-        "repId": "u1790626000004",
-        "repName": "David Emad",
-        "lineId": "line_1790626000002",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "20502"
-            }
-        ]
-    },
-    {
-        "id": "area_line2_1790674771516",
-        "name": "Dokki",
-        "code": "GIZ-N002",
-        "repId": null,
-        "repName": null,
-        "lineId": "line_1790626000002",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "20303"
-            }
-        ]
-    },
-    {
-        "id": "area_line2_1790674781879",
-        "name": "Giza",
-        "code": "GIZ-N010",
-        "repId": "u1790626607816",
-        "repName": "Ahmed Harb",
-        "lineId": "line_1790626000002"
-    },
-    {
-        "id": "area_line_1790626036368_1790674874231",
-        "name": "Shobra",
-        "code": "CAI-N008",
-        "repId": "u1790626669586",
-        "repName": "Mark Michel",
-        "lineId": "line_1790626000003",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "11009"
-            },
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "11102"
-            }
-        ]
-    },
-    {
-        "id": "area_line_1790626036368_1790687909664",
-        "name": "Mohndseen",
-        "code": "GIZ-N001",
-        "repId": "u1790687949946",
-        "repName": "Mina Samir",
-        "lineId": "line_1790626000003",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "20502"
-            }
-        ]
-    },
-    {
-        "id": "area_line1_1790688137857",
-        "name": "Haram",
-        "code": "GIZ-006",
-        "repId": "u1790626000005",
-        "repName": "Mohamed Ramadan",
-        "lineId": "line_1790626000001"
-    },
-    {
-        "id": "area_line1_1790688157353",
-        "name": "Bolak El Dakror",
-        "code": "GIZ-N009",
-        "repId": "u1790626000001",
-        "repName": "Marco Magdy",
-        "lineId": "line_1790626000001",
-        "bricks": [
-            "صفط اللبن",
-            "ناهيا - بولاق الدكرور",
-            "ناهيا",
-            "بولاق الدكرور",
-            "زنين"
-        ]
-    },
-    {
-        "id": "area_line2_1790688168385",
-        "name": "Bolak El Dakror",
-        "code": "GIZ-N009",
-        "repId": "u1790626000004",
-        "repName": "David Emad",
-        "lineId": "line_1790626000002"
-    },
-    {
-        "id": "area_line1_1790688305597",
-        "name": "Shobra",
-        "code": "CAI-N008",
-        "repId": "u1790688369929",
-        "repName": "Marina Shobra",
-        "lineId": "line_1790626000001",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "11009"
-            },
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "11102"
-            }
-        ],
-        "bricks": [
-            "اغاخان - شبرا",
-            "الخازنداره - شبرا",
-            "الخلفاوي - شبرا",
-            "الساحل - شبرا",
-            "المظلات - شبرا",
-            "الساحل شبرا",
-            "الخلفاوي - شبرا مصر",
-            "روض الفرج - شبرا مصر",
-            "شبرا - الخلفاوي",
-            "روض الفرج - شبرا",
-            "شبرا المظلات",
-            "شبرا مصر - روض الفرج",
-            "فيكت��ريا - شبرا",
-            "شبرا"
-        ]
-    },
-    {
-        "id": "area_line2_1790688317554",
-        "name": "Shobra",
-        "code": "CAI-N008",
-        "repId": "u1790688412219",
-        "repName": "Monica Shobra",
-        "lineId": "line_1790626000002",
-        "aliases": [
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "11009"
-            },
-            {
-                "distributorId": "dist_1790626000001",
-                "rawText": "11102"
-            }
-        ]
-    }
-],
+      {
+          "id": "area_1790626000001",
+          "name": "Giza V - Brick 1",
+          "code": "GZA-B49",
+          "repId": "u1790626000001",
+          "lineId": "line_1790626000001",
+          "repName": "Marco Magdy",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "20502"
+              }
+          ],
+          "bricks": [
+              "[B49] Giza V - Brick 1 (Giza 11)"
+          ]
+      },
+      {
+          "id": "area_line1_giza4_brick1",
+          "name": "Giza IV - Brick 1",
+          "code": "GZA-B48",
+          "repId": null,
+          "lineId": "line_1790626000001",
+          "repName": null,
+          "bricks": [
+              "[B48] Giza IV - Brick 1 (Giza 10)"
+          ]
+      },
+      {
+          "id": "area_1790626000002",
+          "name": "Heliopolis I - Brick 1",
+          "code": "CAI-B01",
+          "repId": "u1790626000002",
+          "lineId": "line_1790626000001",
+          "repName": null,
+          "bricks": [
+              "[B01] Heliopolis I - Brick 1 (Heliopolis 1)"
+          ]
+      },
+      {
+          "id": "area_1790626000003",
+          "name": "Nasr City I - Brick 1",
+          "code": "CAI-B06",
+          "repId": "u1790626000004",
+          "lineId": "line_1790626000002",
+          "repName": null,
+          "bricks": [
+              "[B06] Nasr City I - Brick 1 (Nasr City 1)"
+          ]
+      },
+      {
+          "id": "area_1790626000004",
+          "name": "Maadi I - Brick 1",
+          "code": "CAI-B13",
+          "repId": null,
+          "lineId": "line_1790626000002",
+          "repName": "Ahmed Mostafa",
+          "bricks": [
+              "[B13] Maadi I - Brick 1 (Maadi 1)"
+          ]
+      },
+      {
+          "id": "area_line1_1790674592471",
+          "name": "Giza II - Brick 1",
+          "code": "GZA-B41",
+          "repId": "u1790626000005",
+          "repName": "Mohamed Ramadan",
+          "lineId": "line_1790626000001",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "20303"
+              }
+          ],
+          "bricks": [
+              "[B41] Giza II - Brick 1 (Giza 4)"
+          ]
+      },
+      {
+          "id": "area_line1_1790674637363",
+          "name": "Giza I - Brick 1",
+          "code": "GZA-B38",
+          "repId": "u1790626000002",
+          "repName": "Kerolos Boules",
+          "lineId": "line_1790626000001",
+          "bricks": [
+              "[B38] Giza I - Brick 1 (Giza 1)"
+          ]
+      },
+      {
+          "id": "area_line1_1790674718201",
+          "name": "Faisal - Brick 1",
+          "code": "GZA-B46",
+          "repId": "u1790626000003",
+          "repName": "Mina Mikhael",
+          "lineId": "line_1790626000001",
+          "bricks": [
+              "[B46] Faisal - Brick 1 (Faisal 1)"
+          ]
+      },
+      {
+          "id": "area_line2_1790674745627",
+          "name": "Giza V - Brick 1",
+          "code": "GZA-B49",
+          "repId": "u1790626000004",
+          "repName": "David Emad",
+          "lineId": "line_1790626000002",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "20502"
+              }
+          ],
+          "bricks": [
+              "[B49] Giza V - Brick 1 (Giza 11)"
+          ]
+      },
+      {
+          "id": "area_line2_giza4_brick1",
+          "name": "Giza IV - Brick 1",
+          "code": "GZA-B48",
+          "repId": null,
+          "lineId": "line_1790626000002",
+          "repName": null,
+          "bricks": [
+              "[B48] Giza IV - Brick 1 (Giza 10)"
+          ]
+      },
+      {
+          "id": "area_line2_1790674771516",
+          "name": "Giza II - Brick 1",
+          "code": "GZA-B41",
+          "repId": null,
+          "repName": null,
+          "lineId": "line_1790626000002",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "20303"
+              }
+          ],
+          "bricks": [
+              "[B41] Giza II - Brick 1 (Giza 4)"
+          ]
+      },
+      {
+          "id": "area_line2_1790674781879",
+          "name": "Giza I - Brick 1",
+          "code": "GZA-B38",
+          "repId": "u1790626607816",
+          "repName": "Ahmed Harb",
+          "lineId": "line_1790626000002",
+          "bricks": [
+              "[B38] Giza I - Brick 1 (Giza 1)"
+          ]
+      },
+      {
+          "id": "area_line_1790626036368_1790674874231",
+          "name": "Shoubra I - Brick 1",
+          "code": "CAI-B19",
+          "repId": "u1790626669586",
+          "repName": "Mark Michel",
+          "lineId": "line_1790626000003",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "11009"
+              },
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "11102"
+              }
+          ],
+          "bricks": [
+              "[B19] Shoubra I - Brick 1 (Shubra 1)"
+          ]
+      },
+      {
+          "id": "area_line_1790626036368_1790687909664",
+          "name": "Giza V - Brick 1",
+          "code": "GZA-B49",
+          "repId": "u1790687949946",
+          "repName": "Mina Samir",
+          "lineId": "line_1790626000003",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "20502"
+              }
+          ],
+          "bricks": [
+              "[B49] Giza V - Brick 1 (Giza 11)"
+          ]
+      },
+      {
+          "id": "area_line1_1790688137857",
+          "name": "Haram - Brick 1",
+          "code": "GZA-B43",
+          "repId": "u1790626000005",
+          "repName": "Mohamed Ramadan",
+          "lineId": "line_1790626000001",
+          "bricks": [
+              "[B43] Haram - Brick 1 (El Haram 1)"
+          ]
+      },
+      {
+          "id": "area_line1_1790688157353",
+          "name": "Giza V - Brick 2",
+          "code": "GZA-B50",
+          "repId": "u1790626000001",
+          "repName": "Marco Magdy",
+          "lineId": "line_1790626000001",
+          "bricks": [
+              "[B50] Giza V - Brick 2 (Giza 12)"
+          ]
+      },
+      {
+          "id": "area_line2_1790688168385",
+          "name": "Giza V - Brick 2",
+          "code": "GZA-B50",
+          "repId": "u1790626000004",
+          "repName": "David Emad",
+          "lineId": "line_1790626000002",
+          "bricks": [
+              "[B50] Giza V - Brick 2 (Giza 12)"
+          ]
+      },
+      {
+          "id": "area_line1_1790688305597",
+          "name": "Shoubra I - Brick 1",
+          "code": "CAI-B19",
+          "repId": "u1790688369929",
+          "repName": "Marina Shobra",
+          "lineId": "line_1790626000001",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "11009"
+              },
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "11102"
+              }
+          ],
+          "bricks": [
+              "[B19] Shoubra I - Brick 1 (Shubra 1)"
+          ]
+      },
+      {
+          "id": "area_line2_1790688317554",
+          "name": "Shoubra I - Brick 1",
+          "code": "CAI-B19",
+          "repId": "u1790688412219",
+          "repName": "Monica Shobra",
+          "lineId": "line_1790626000002",
+          "aliases": [
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "11009"
+              },
+              {
+                  "distributorId": "dist_1790626000001",
+                  "rawText": "11102"
+              }
+          ],
+          "bricks": [
+              "[B19] Shoubra I - Brick 1 (Shubra 1)"
+          ]
+      }
+  ],
   productLines: [],
   doctors: [],
   hospitals: [],

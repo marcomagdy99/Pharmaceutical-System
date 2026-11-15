@@ -715,3 +715,106 @@
   color: #e3b341 !important;
   box-shadow: 0 0 8px rgba(210, 153, 34, 0.4) !important;
 }
+
+/* ==========================================================================
+   Area Streets Collapsible Drawer & Toggle Button (Option 1 - Expandable)
+   ========================================================================== */
+.area-scope-toggle-btn {
+  font-size: 0.725rem !important;
+  font-weight: 500 !important;
+  padding: 2px 10px !important;
+  border-radius: 9999px !important;
+  border: 1px solid #cbd5e1 !important;
+  background-color: #f1f5f9 !important;
+  color: #0284c7 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+  text-decoration: none !important;
+  line-height: 1.35 !important;
+}
+
+.area-scope-toggle-btn:hover {
+  background-color: #e0f2fe !important;
+  border-color: #38bdf8 !important;
+  color: #0369a1 !important;
+}
+
+.area-scope-toggle-btn.active {
+  background-color: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.area-scope-toggle-btn .scope-pin-icon {
+  flex-shrink: 0;
+}
+
+.area-scope-drawer {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  max-width: 550px;
+  animation: fadeInDrawer 0.18s ease-out;
+}
+
+.area-scope-item + .area-scope-item {
+  border-top: 1px dashed #e2e8f0;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.area-scope-streets {
+  font-size: 0.775rem !important;
+  line-height: 1.45 !important;
+  color: #334155;
+  direction: rtl;
+  text-align: right;
+}
+
+@keyframes fadeInDrawer {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark Mode Overrides for Area Scope Drawer */
+[data-theme="dark"] .area-scope-toggle-btn {
+  background-color: #161e2e !important;
+  border-color: #2e3a4e !important;
+  color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .area-scope-toggle-btn:hover {
+  background-color: #1e293b !important;
+  border-color: #38bdf8 !important;
+  color: #7dd3fc !important;
+}
+
+[data-theme="dark"] .area-scope-toggle-btn.active {
+  background-color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .area-scope-drawer {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .area-scope-item + .area-scope-item {
+  border-top-color: #1e293b !important;
+}
+
+[data-theme="dark"] .area-scope-streets {
+  color: #cbd5e1 !important;
+}
+
