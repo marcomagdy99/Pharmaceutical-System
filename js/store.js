@@ -564,7 +564,7 @@
       findByBrickNameForLine(brickName, lineId) {
         if (!brickName) return null;
         const defaultLine = this._defaultLineId();
-        return (window.DEMO_DATA.areas || []).find((a) => {
+        const matches = (window.DEMO_DATA.areas || []).filter((a) => {
           if (lineId) {
             const areaLine = a.lineId || defaultLine;
             if (areaLine !== lineId) return false;
@@ -577,6 +577,45 @@
             })
           );
         });
+        if (!matches.length) return null;
+        return matches.find((a) => a.repId) || matches[0];
+      },
+      /**
+       * Finds an area by its name or code (with normalization and line scoping).
+       */
+      findByNameOrCode(nameOrCode, lineId = null) {
+        if (!nameOrCode) return null;
+        const norm = (s) =>
+          String(s || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[أإآ]/g, "ا")
+            .replace(/ة/g, "ه")
+            .replace(/ى/g, "ي")
+            .replace(/[ًٌٍَُِّْـ]/g, "")
+            .replace(/[-\/,]/g, " ")
+            .replace(/\s+/g, " ");
+
+        const target = norm(nameOrCode);
+        const rawTarget = String(nameOrCode).trim().toUpperCase();
+        const defaultLine = this._defaultLineId();
+
+        const matches = (window.DEMO_DATA.areas || []).filter((a) => {
+          if (lineId) {
+            const areaLine = a.lineId || defaultLine;
+            if (areaLine !== lineId) return false;
+          }
+          if (a.code && a.code.trim().toUpperCase() === rawTarget) return true;
+          if (a.name) {
+            const na = norm(a.name);
+            if (na === target) return true;
+            if (target.length >= 4 && (na.includes(target) || target.includes(na))) return true;
+          }
+          return false;
+        });
+
+        if (!matches.length) return null;
+        return matches.find((a) => a.repId) || matches[0];
       },
       save(areaObj) {
         if (!window.DEMO_DATA.areas) window.DEMO_DATA.areas = [];
@@ -1835,6 +1874,7 @@
         rows.forEach((row) => {
           if (store.areas.findByAliasText(row.distributorId, row.areaRaw)) return;
           if (typeof store.areas.findByBrickName === "function" && store.areas.findByBrickName(row.areaRaw)) return;
+          if (typeof store.areas.findByNameOrCode === "function" && store.areas.findByNameOrCode(row.areaRaw)) return;
           const key = row.distributorId + "||" + row.areaRaw.trim().toLowerCase();
           if (seen[key]) {
             seen[key].count++;
@@ -1908,6 +1948,11 @@
             } else {
               area = store.areas.findByBrickName(row.areaRaw);
             }
+          }
+
+          // 2c. Fallback to Area Name or Code matching (line-aware)
+          if (!area && row.areaRaw && typeof store.areas.findByNameOrCode === "function") {
+            area = store.areas.findByNameOrCode(row.areaRaw, rowLineId);
           }
 
           // 3. Fallback: If row already has areaId, verify line match
