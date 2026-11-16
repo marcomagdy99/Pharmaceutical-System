@@ -172,9 +172,16 @@
       tbody.dataset.zoomBound = "true";
       tbody.addEventListener("click", (e) => {
         const btn = e.target.closest(".btn-receipt-zoom");
-        if (btn && btn.dataset.receiptUrl) {
-          ActivitiesModule.openReceiptPreviewModal(btn.dataset.receiptUrl);
-          return;
+        if (btn) {
+          let url = btn.dataset.receiptUrl;
+          if (!url && btn.dataset.expenseId) {
+            const exp = Core.StoreAdapter.getExpenses().find((x) => x.id === btn.dataset.expenseId);
+            url = exp ? exp.receiptUrl : null;
+          }
+          if (url) {
+            ActivitiesModule.openReceiptPreviewModal(url);
+            return;
+          }
         }
         const actionBtn = e.target.closest("[data-expense-action]");
         if (actionBtn) {
@@ -200,7 +207,7 @@
         const isPdfReceipt = typeof exp.receiptUrl === "string" && (exp.receiptUrl.startsWith("data:application/pdf") || exp.receiptUrl.toLowerCase().includes(".pdf"));
         const safeReceiptUrl = exp.receiptUrl ? Core.escapeHTML(exp.receiptUrl) : "";
         const receiptThumb = exp.receiptUrl
-          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-receipt-url="${safeReceiptUrl}" title="${Core.escapeHTML(Core.t("viewAttachment"))}" aria-label="${Core.escapeHTML(Core.t("viewAttachment") || "View receipt attachment")}">
+          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-expense-id="${Core.escapeHTML(exp.id)}" title="${Core.escapeHTML(Core.t("viewAttachment"))}" aria-label="${Core.escapeHTML(Core.t("viewAttachment") || "View receipt attachment")}">
                ${isPdfReceipt
                  ? `<span class="receipt-pdf-badge" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:#fee2e2; color:#ef4444; border-radius:6px; font-weight:700; font-size:11px;"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF</span>`
                  : `<img src="${safeReceiptUrl}" alt="${Core.escapeHTML(Core.t("receiptAttachment") || "Receipt attachment")}" class="receipt-thumbnail" />`}
@@ -626,7 +633,7 @@
         userId: newExpense.nextApproverId,
         type: "expense_approval",
         title: "Expense Claim Pending Approval",
-        message: `${Core.escapeHTML(reqName)} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${Core.getCategoryLabel(category)}) awaiting your approval.`,
+        message: `${reqName} submitted an expense claim of ${amount.toLocaleString("en-US")} ${Core.t("currency") || "EGP"} (${Core.getCategoryLabel(category)}) awaiting your approval.`,
         link: "activities.html",
         icon: "💵",
         badgeClass: "bg-warning",

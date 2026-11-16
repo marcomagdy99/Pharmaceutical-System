@@ -68,7 +68,7 @@
     if (fullUser) {
       return { ...authUser, ...fullUser };
     }
-    return authUser;
+    return null;
   }
 
   /**
@@ -1116,14 +1116,18 @@
       if (txByTargetName[docNameKey] && txByTargetName[docNameKey].length > 0) {
         const remainingSameNameDocs = scopedDoctors.filter((d) => String(d.name || "").trim().toLowerCase() === docNameKey && String(d.id) !== String(doc.id));
         if (remainingSameNameDocs.length > 0) {
-          // Disambiguate identical doctor names by matching areaId, lineId, or repId
+          // Disambiguate identical doctor names by prioritizing areaId and repId over general lineId
+          const hasSpecificMatch = remainingSameNameDocs.some((d) =>
+            txByTargetName[docNameKey].some((tx) => (tx.areaId && String(tx.areaId) === String(d.areaId)) || (tx.repId && String(tx.repId) === String(d.repId)))
+          ) || txByTargetName[docNameKey].some((tx) => (doc.areaId && tx.areaId && String(tx.areaId) === String(doc.areaId)) || (doc.repId && tx.repId && String(tx.repId) === String(doc.repId)));
+
           const matched = [];
           const remaining = [];
           txByTargetName[docNameKey].forEach((tx) => {
             const matchArea = doc.areaId && tx.areaId && String(tx.areaId) === String(doc.areaId);
-            const matchLine = doc.lineId && tx.lineId && String(tx.lineId) === String(doc.lineId);
             const matchRep = doc.repId && tx.repId && String(tx.repId) === String(doc.repId);
-            if (matchArea || matchLine || matchRep) {
+            const matchLine = !hasSpecificMatch && doc.lineId && tx.lineId && String(tx.lineId) === String(doc.lineId);
+            if (matchArea || matchRep || matchLine) {
               matched.push(tx);
             } else {
               remaining.push(tx);
@@ -1444,11 +1448,8 @@
   /**
    * Opens Breakdown Modal for selected doctor
    */
-  function openAccountsCostingBreakdown(doctorIdOrEncoded) {
-    let doctorId = doctorIdOrEncoded;
-    try {
-      doctorId = decodeURIComponent(doctorIdOrEncoded);
-    } catch (e) {}
+  function openAccountsCostingBreakdown(doctorId) {
+    if (!doctorId) return;
     const row = CostingState.currentRows.find((r) => String(r.id) === String(doctorId));
     if (!row) return;
 

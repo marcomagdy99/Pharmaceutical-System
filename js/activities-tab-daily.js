@@ -232,10 +232,14 @@
     }
 
     // 1. Friday official weekend check (local date parsing avoids UTC midnight offset shifts)
-    const [y, m, d] = curDateStr.split("-").map(Number);
+    const [y, m, d] = (curDateStr || "").split("-").map(Number);
     const actDate = new Date(y, m - 1, d);
+    if (!y || !m || !d || isNaN(actDate.getTime())) {
+      Core.safeShowToast(Core.t("invalidDate", "Invalid activity date."), "warning");
+      return;
+    }
     if (actDate.getDay() === 5) {
-      Core.safeShowToast(Core.t("fridayHolidayNotice") || "Activities cannot be logged on Friday (official company weekend).", "warning");
+      Core.safeShowToast(Core.t("fridayHolidayNotice", "Activities cannot be logged on Friday (official company weekend)."), "warning");
       return;
     }
 
@@ -250,11 +254,11 @@
     const isSecondaryDay = (secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4);
     if (isSecondaryDay) {
       if (secMode === "full_day") {
-        Core.safeShowToast(Core.t("weekendHolidayNotice") || "Activities cannot be logged on company weekend / day off.", "warning");
+        Core.safeShowToast(Core.t("weekendHolidayNotice", "Activities cannot be logged on company weekend / day off."), "warning");
         return;
       }
       if (secMode === "pm_only" && period === Core.PERIODS.PM) {
-        Core.safeShowToast(Core.t("weekendPmNotice") || "Evening activities cannot be logged on company half-day off.", "warning");
+        Core.safeShowToast(Core.t("weekendPmNotice", "Evening activities cannot be logged on company half-day off."), "warning");
         return;
       }
     }

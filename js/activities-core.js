@@ -138,6 +138,9 @@
       "servicesTitle": "Doctor & Hospital Services",
       "servicesSubtitle": "Sponsor medical congresses, clinic awareness materials, and round table discussions.",
       "btnNewService": "New Service Request",
+      "unassignedAccount": "Account / Facility",
+      "weekendHolidayNotice": "Selected date is a weekend/holiday. Only emergency activities allowed.",
+      "weekendPmNotice": "Night activities on weekends require line manager approval.",
       "allocatedBudgetOverview": "Allocated Promo Budget",
       "lineFilterLabel": "Line:",
       "filterEmployee": "Employee:",
@@ -515,6 +518,9 @@
       "servicesTitle": "خدمات الأطباء والمستشفيات",
       "servicesSubtitle": "رعاية المؤتمرات الطبية، والمواد التوعوية للعيادات، وحلقات النقاش الإكلينيكية.",
       "btnNewService": "طلب خدمة جديد",
+      "unassignedAccount": "الجهة / المنشأة",
+      "weekendHolidayNotice": "التاريخ المحدد عطلة أسبوعية/رسمية. يسمح بالأنشطة الطارئة فقط.",
+      "weekendPmNotice": "الأنشطة المسائية في العطلات تتطلب موافقة المدير المباشر.",
       "allocatedBudgetOverview": "الميزانية الترويجية المخصصة",
       "lineFilterLabel": "الخط:",
       "filterEmployee": "الموظف:",
@@ -998,8 +1004,8 @@
     // =========================================================================
     const canonicalUsers = getAllUsers();
     if (canonicalUsers.length === 0) {
-      _state.currentUser = u;
-      return u;
+      _state.currentUser = null;
+      return null;
     }
     if (u && u.id) {
       const canonical = canonicalUsers.find((user) => user.id === u.id);
@@ -1027,8 +1033,8 @@
       return sanitizedUser;
     }
 
-    _state.currentUser = u;
-    return u;
+    _state.currentUser = null;
+    return null;
   }
 
   function isActionAuthorized(action, resource, user) {
@@ -1049,11 +1055,13 @@
       } else if (action === "disburse_expense") {
         if (status !== REQUEST_STATUS.APPROVED && status !== "approved") return false;
       } else if (action === "reject_expense") {
-        if (status === REQUEST_STATUS.REJECTED || status === "rejected" || status === REQUEST_STATUS.DISBURSED || status === "disbursed") return false;
+        if (!status.startsWith("pending")) return false;
       } else if (action === "approve_service") {
         if (!status.startsWith("pending")) return false;
       } else if (action === "reject_service") {
-        if (status === REQUEST_STATUS.REJECTED || status === "rejected") return false;
+        if (!status.startsWith("pending")) return false;
+      } else if (action === "approve_location" || action === "reject_location") {
+        if (status !== "pending" && !status.startsWith("pending_")) return false;
       }
     }
 
@@ -1149,7 +1157,9 @@
 
     if (action === "approve_location" || action === "reject_location") {
       if (!resource) return false;
-      if (isAdmin || role === "general_manager") return true;
+      const status = String(resource.status || "").toLowerCase();
+      if (status !== "pending" && !status.startsWith("pending_")) return false;
+      if (isAdmin || role === "general_manager" || role === "gm") return true;
       const targetRepId = resource.repId || resource.userId;
       if (!targetRepId) return false;
       if (typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId)) {
@@ -1273,7 +1283,7 @@
       if (rep) return rep;
     }
     const repByArea = allUsers.find(
-      (u) => (u.role === ROLES.REP || u.role === ROLES.REP_ALT) && u.areaId === areaId
+      (u) => (getNormalizedRole(u) === ROLES.REP || getNormalizedRole(u) === ROLES.REP_ALT) && u.areaId === areaId
     );
     if (repByArea) return repByArea;
     return null;
@@ -1290,10 +1300,11 @@
     let lmId = null;
 
     if (rep) {
-      if (rep.role === ROLES.DM) {
+      const repRole = getNormalizedRole(rep);
+      if (repRole === ROLES.DM) {
         dmId = rep.id;
         lmId = rep.managerId || null;
-      } else if (rep.role === ROLES.LM) {
+      } else if (repRole === ROLES.LM) {
         dmId = null;
         lmId = rep.id;
       } else {
@@ -1308,12 +1319,13 @@
     if (!dmId) {
       const area = getLiveAreaById(areaId);
       if (area && area.lineId) {
-        const dmsInLine = allUsers.filter(u => u.role === ROLES.DM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
-        if (dmsInLine.length === 1) {
+        const dmsInLine = allUsers.filter(u => getNormalizedRole(u) === ROLES.DM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
+        const lmsInLine = allUsers.filter(u => getNormalizedRole(u) === ROLES.LM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
+        if (dmsInLine.length === 1 && lmsInLine.length <= 1) {
           dmId = dmsInLine[0].id;
-          lmId = dmsInLine[0].managerId || null;
+          lmId = dmsInLine[0].managerId || (lmsInLine[0] ? lmsInLine[0].id : null);
         } else {
-          // Multiple DMs on this line: do not guess arbitrarily!
+          // Multiple DMs or multiple LMs on this line: do not guess arbitrarily!
           dmId = null;
         }
       }
@@ -1322,7 +1334,7 @@
     if (!lmId) {
       const area = getLiveAreaById(areaId);
       if (area && area.lineId) {
-        const lmsInLine = allUsers.filter(u => u.role === ROLES.LM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
+        const lmsInLine = allUsers.filter(u => getNormalizedRole(u) === ROLES.LM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));
         if (lmsInLine.length === 1) {
           lmId = lmsInLine[0].id;
         } else {
@@ -1419,7 +1431,7 @@
   function getDmsUnderLmForLine(lmId, lineId) {
     const allUsers = getAllUsers();
     return allUsers.filter((u) => {
-      if (u.role !== ROLES.DM) return false;
+      if (getNormalizedRole(u) !== ROLES.DM) return false;
       if (u.managerId !== lmId) return false;
       const lines = u.lineIds || (u.lineId ? [u.lineId] : []);
       return lines.includes(lineId);
@@ -1427,14 +1439,14 @@
   }
 
   function getHrUser() {
-    return getAllUsers().find((u) => u.role === ROLES.HR) || null;
+    return getAllUsers().find((u) => getNormalizedRole(u) === ROLES.HR) || null;
   }
 
   function getGmUser() {
     const allUsers = getAllUsers();
     return allUsers.find((u) => {
-      const r = (u.role || "").toLowerCase();
-      return r === "general_manager" || r === "gm";
+      const r = getNormalizedRole(u);
+      return r === ROLES.GM || (u.role || "").toLowerCase() === "general_manager" || (u.role || "").toLowerCase() === "gm";
     }) || null;
   }
 

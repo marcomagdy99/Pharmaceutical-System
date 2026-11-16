@@ -100,6 +100,22 @@
       return false;
     });
 
+    if (!tbody.dataset.listenerBound) {
+      tbody.dataset.listenerBound = "true";
+      tbody.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-loc-action]");
+        if (btn) {
+          const action = btn.dataset.locAction;
+          const reqId = btn.dataset.locId;
+          if (action === "approve" && reqId && typeof approveLocationReq === "function") {
+            approveLocationReq(reqId);
+          } else if (action === "reject" && reqId && typeof rejectLocationReq === "function") {
+            rejectLocationReq(reqId);
+          }
+        }
+      });
+    }
+
     if (visibleRequests.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No geographic location requests submitted yet.</td></tr>`;
       return;
@@ -152,8 +168,8 @@
       if (isPending && canApproveStage) {
         actionsHtml = `
           <div class="location-actions-wrap">
-            <button type="button" class="btn btn-sm btn-location-approve" onclick="approveLocationReq('${Core.escapeHTML(req.id)}')" title="Approve GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Approve</button>
-            <button type="button" class="btn btn-sm btn-location-reject" onclick="rejectLocationReq('${Core.escapeHTML(req.id)}')" title="Reject GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</button>
+            <button type="button" class="btn btn-sm btn-location-approve" data-loc-action="approve" data-loc-id="${Core.escapeHTML(req.id)}" title="Approve GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Approve</button>
+            <button type="button" class="btn btn-sm btn-location-reject" data-loc-action="reject" data-loc-id="${Core.escapeHTML(req.id)}" title="Reject GPS Pin"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject</button>
           </div>
         `;
       } else if (isPending) {

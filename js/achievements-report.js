@@ -221,10 +221,18 @@ function populateAchAreas(filterUser) {
     } else if (isLM) {
       const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
       const lmReps = allUsers.filter((u) => u.managerId === selectedRepVal || dms.includes(u.managerId)).map((u) => u.id);
+      const lineLmsCount = (lineId) => allUsers.filter((u) => {
+        const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+        return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+      }).length;
       areasToDisplay = allAreas.filter((a) => {
         if (a.repId && lmReps.includes(a.repId)) return true;
-        if (selUser.lineId && a.lineId === selUser.lineId) return true;
-        if (selUser.lineIds && selUser.lineIds.includes(a.lineId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+        if (mgrId && (mgrId === selectedRepVal || dms.includes(mgrId))) return true;
+        if (lineLmsCount(a.lineId) <= 1) {
+          if (selUser.lineId && a.lineId === selUser.lineId) return true;
+          if (selUser.lineIds && selUser.lineIds.includes(a.lineId)) return true;
+        }
         return false;
       });
     } else {
@@ -289,7 +297,7 @@ function getAchievementsScopeRepIds(user) {
   } else if (role === 'line_manager') {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
-    allowedRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    allowedRepIds = allUsers.filter((u) => u.managerId === user.id || dmIds.includes(u.managerId)).map((u) => u.id);
   } else if (role === 'business_unit') {
     const mySubordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
     allowedRepIds = mySubordinates
@@ -340,6 +348,7 @@ function getAchievementsScopeRepIds(user) {
 
   return allowedRepIds;
 }
+window.getAchievementsScopeRepIds = getAchievementsScopeRepIds;
 
 /**
  * Builds the Territory/Area -> Product breakdown for achievements.

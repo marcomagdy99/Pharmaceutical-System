@@ -421,7 +421,7 @@
           }
         }
         if (!targetName || String(targetName).startsWith("doc_") || String(targetName).startsWith("hosp_")) {
-          targetName = Core.t("unassignedAccount") || "Account / Facility";
+          targetName = Core.t("unassignedAccount", "Account / Facility");
         }
 
         const isAM = srv.shift === Core.PERIODS.AM;
@@ -923,6 +923,39 @@
   function renderSharedLinesRows() {
     const container = document.getElementById("sharedParticipatingLinesContainer");
     if (!container) return;
+
+    if (!container.dataset.listenerBound) {
+      container.dataset.listenerBound = "true";
+      container.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-shared-action='remove']");
+        if (btn) {
+          const idx = Number(btn.dataset.sharedIdx);
+          if (Number.isFinite(idx)) removeSharedLineRow(idx);
+        }
+      });
+      container.addEventListener("change", (e) => {
+        const lineSel = e.target.closest("[data-shared-field='line']");
+        if (lineSel) {
+          const idx = Number(lineSel.dataset.sharedIdx);
+          if (Number.isFinite(idx)) onSharedLineChange(idx, lineSel.value);
+          return;
+        }
+        const areaSel = e.target.closest("[data-shared-field='area']");
+        if (areaSel) {
+          const idx = Number(areaSel.dataset.sharedIdx);
+          if (Number.isFinite(idx)) onSharedAreaChange(idx, areaSel.value);
+          return;
+        }
+      });
+      container.addEventListener("input", (e) => {
+        const pctInp = e.target.closest("[data-shared-field='percent']");
+        if (pctInp) {
+          const idx = Number(pctInp.dataset.sharedIdx);
+          if (Number.isFinite(idx)) onSharedLinePercentInput(idx, pctInp.value);
+        }
+      });
+    }
+
     container.innerHTML = "";
 
     const allLines = Core.getAllProductLines();
@@ -947,18 +980,18 @@
       rowDiv.innerHTML = `
         <div class="shared-row-header">
           <span class="shared-row-title"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg> ${Core.t("sharedParticipatingTitle")} #${idx + 1}</span>
-          <button type="button" class="shared-remove-btn" onclick="ActivitiesModule.removeSharedLineRow(${idx})" title="Remove"><svg class="badge-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button type="button" class="shared-remove-btn" data-shared-action="remove" data-shared-idx="${idx}" title="Remove"><svg class="badge-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <div class="shared-row-fields">
           <div class="shared-field-group">
             <label>${Core.t("sharedLineLabel")}</label>
-            <select id="sharedLineSelect_${idx}" class="form-control" onchange="ActivitiesModule.onSharedLineChange(${idx}, this.value)">
+            <select id="sharedLineSelect_${idx}" class="form-control" data-shared-field="line" data-shared-idx="${idx}">
               ${linesOptions}
             </select>
           </div>
           <div class="shared-field-group">
             <label>${Core.t("sharedAreaLabel")}</label>
-            <select id="sharedAreaSelect_${idx}" class="form-control" onchange="ActivitiesModule.onSharedAreaChange(${idx}, this.value)">
+            <select id="sharedAreaSelect_${idx}" class="form-control" data-shared-field="area" data-shared-idx="${idx}">
               ${areasOptions}
             </select>
           </div>
@@ -968,7 +1001,7 @@
           <div class="shared-percent-control">
             <label>${Core.t("sharedShare")}:</label>
             <div class="shared-percent-input-wrapper">
-              <input type="number" class="shared-percent-input" min="1" max="100" value="${row.sharePercent || 0}" oninput="ActivitiesModule.onSharedLinePercentInput(${idx}, this.value)">
+              <input type="number" class="shared-percent-input" min="1" max="100" value="${row.sharePercent || 0}" data-shared-field="percent" data-shared-idx="${idx}">
               <span class="shared-percent-suffix">%</span>
             </div>
             <span id="sharedRowAmountBadge_${idx}" class="shared-amount-badge">${Number(row.shareAmount || 0).toLocaleString()} EGP</span>
@@ -1354,11 +1387,12 @@
         // Budget check for partner (Rep, DM, LM)
         if (rowRepId) {
           const partnerUser = Core.getUserById(rowRepId);
-          if (partnerUser) {
+          const partnerRole = Core.getNormalizedRole ? Core.getNormalizedRole(partnerUser) : (partnerUser?.role || "");
+          if (partnerUser && partnerRole !== Core.ROLES.ADMIN) {
             const partnerMetrics = getBudgetMetricsForUser(row.lineId, partnerUser);
-            if (partnerMetrics.allocated > 0 && shareAmt > partnerMetrics.remaining) {
+            if (partnerMetrics.allocated <= 0 || shareAmt > partnerMetrics.remaining) {
               const roleName = Core.getUserRoleLabel ? Core.getUserRoleLabel(partnerUser.role) : "participant";
-              Core.safeShowToast(`Requested share exceeds available budget for ${roleName} ${Core.getUserDisplayName(rowRepId)} (${partnerMetrics.remaining.toLocaleString("en-US")} EGP remaining).`, "danger");
+              Core.safeShowToast(`Requested share (${shareAmt.toLocaleString("en-US")} EGP) exceeds available budget for ${roleName} ${Core.getUserDisplayName(rowRepId)} (${Math.max(0, partnerMetrics.remaining).toLocaleString("en-US")} EGP remaining).`, "danger");
               if (submitBtn) submitBtn.disabled = false;
               return;
             }
@@ -1468,7 +1502,7 @@
             userId: sh.repId,
             type: "shared_service_request",
             title: `New Shared Service Request (${sh.sharePercent}%)`,
-            message: `You have been included in a shared service request (${Core.escapeHTML(newService.title)}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${Core.escapeHTML(creatorName)}.`,
+            message: `You have been included in a shared service request (${newService.title}) with a ${sh.sharePercent}% share (${sh.shareAmount.toLocaleString()} EGP) by ${creatorName}.`,
             link: "activities.html",
             icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
             badgeClass: "bg-info",
@@ -1486,7 +1520,7 @@
             userId: sh.nextApproverId,
             type: "shared_service_approval",
             title: "Shared Service Request Pending Approval",
-            message: `A shared service request (${Core.escapeHTML(newService.title)}) totaling ${Number(newService.cost || 0).toLocaleString("en-US")} EGP is awaiting your approval.`,
+            message: `A shared service request (${newService.title}) totaling ${Number(newService.cost || 0).toLocaleString("en-US")} EGP is awaiting your approval.`,
             link: "activities.html",
             icon: "⏳",
             badgeClass: "bg-warning",
@@ -1501,7 +1535,7 @@
           userId: newService.nextApproverId,
           type: "service_approval",
           title: "Service Request Pending Approval",
-          message: `${Core.escapeHTML(creatorName)} submitted a service request (${Core.escapeHTML(newService.title)}) for ${Number(newService.cost || 0).toLocaleString("en-US")} EGP awaiting your approval.`,
+          message: `${creatorName} submitted a service request (${newService.title}) for ${Number(newService.cost || 0).toLocaleString("en-US")} EGP awaiting your approval.`,
           link: "activities.html",
           icon: "📋",
           badgeClass: "bg-warning",

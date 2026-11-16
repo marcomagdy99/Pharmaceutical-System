@@ -36,6 +36,19 @@
       if (lmsForLine.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="budget-empty-cell">${Core.t("noLmsForLine") || "No Line Managers found for this line."}</td></tr>`;
       } else {
+        if (!tbody.dataset.listenerBound) {
+          tbody.dataset.listenerBound = "true";
+          tbody.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-inspect-lmid]");
+            if (btn) {
+              const lmid = btn.dataset.inspectLmid;
+              const lid = btn.dataset.inspectLineid;
+              if (lmid && typeof openLmDetailModal === "function") {
+                openLmDetailModal(lmid, lid);
+              }
+            }
+          });
+        }
         tbody.innerHTML = lmsForLine
           .map((lm) => {
             const alloc = (lineBudget.lmAllocations && lineBudget.lmAllocations[lm.id]) || 0;
@@ -57,7 +70,7 @@
                 </td>
                 <td class="budget-sum-cell">${dmSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
                 <td>
-                  <button type="button" class="btn btn-outline budget-inspect-btn" onclick="ActivitiesModule.openLmDetailModal('${Core.escapeHTML(lm.id)}', '${Core.escapeHTML(lineId)}')">
+                  <button type="button" class="btn btn-outline budget-inspect-btn" data-inspect-lmid="${Core.escapeHTML(lm.id)}" data-inspect-lineid="${Core.escapeHTML(lineId)}">
                     ${Core.t("inspectDms") || "Inspect DMs"}
                   </button>
                 </td>
@@ -415,23 +428,26 @@
       if (Number.isFinite(val) && val >= 0) distributed += val;
     });
 
-    // Calculate LM direct utilized for this line
-    let directLmUtilized = 0;
+    // Calculate LM direct committed (approved + pending) for this line
+    let directLmCommitted = 0;
     const allServices = Core.StoreAdapter.getServices();
     allServices.forEach((s) => {
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
-            directLmUtilized += Number(sh.shareAmount || 0);
+          if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id)) {
+            const isCommitted = sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"));
+            if (isCommitted) directLmCommitted += Number(sh.shareAmount || 0);
           }
         });
-      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
-        directLmUtilized += Number(s.cost || 0);
+      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id) {
+        if (s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
+          directLmCommitted += Number(s.cost || 0);
+        }
       }
     });
 
-    const committed = distributed + directLmUtilized;
+    const committed = distributed + directLmCommitted;
     const remaining = Math.max(0, myLmAlloc - committed);
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
@@ -523,23 +539,26 @@
       if (Number.isFinite(val) && val >= 0) distributed += val;
     });
 
-    // Calculate DM direct utilized for this line
-    let directDmUtilized = 0;
+    // Calculate DM direct committed (approved + pending) for this line
+    let directDmCommitted = 0;
     const allServices = Core.StoreAdapter.getServices();
     allServices.forEach((s) => {
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.dmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id) && (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)) {
-            directDmUtilized += Number(sh.shareAmount || 0);
+          if (sh.lineId === lineId && (sh.dmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id)) {
+            const isCommitted = sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"));
+            if (isCommitted) directDmCommitted += Number(sh.shareAmount || 0);
           }
         });
-      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id && s.status === Core.REQUEST_STATUS.APPROVED) {
-        directDmUtilized += Number(s.cost || 0);
+      } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id) {
+        if (s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
+          directDmCommitted += Number(s.cost || 0);
+        }
       }
     });
 
-    const committed = distributed + directDmUtilized;
+    const committed = distributed + directDmCommitted;
     const remaining = Math.max(0, myDmAlloc - committed);
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
@@ -629,10 +648,29 @@
 
     for (const [dmId, repSum] of Object.entries(allocByDm)) {
       const dmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[dmId])) || 0;
-      if (repSum > dmAlloc) {
+      let directDmCommitted = 0;
+      const allServices = Core.StoreAdapter.getServices();
+      allServices.forEach((s) => {
+        if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+        if (s.isShared && Array.isArray(s.shares)) {
+          s.shares.forEach((sh) => {
+            if (sh.lineId === lineId && (sh.dmId === dmId || sh.requesterId === dmId)) {
+              if (sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
+                directDmCommitted += Number(sh.shareAmount || 0);
+              }
+            }
+          });
+        } else if (s.lineId === lineId && s.requesterId === dmId) {
+          if (s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
+            directDmCommitted += Number(s.cost || 0);
+          }
+        }
+      });
+
+      if (repSum + directDmCommitted > dmAlloc) {
         Core.safeShowToast(
-          (Core.t("budgetOverAllocated") || "Total allocated to reps exceeds territory budget.") +
-          ` (${Core.getUserDisplayName(dmId)}: allocated ${repSum.toLocaleString("en-US")} / ${dmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          (Core.t("budgetOverAllocated") || "Total allocated to reps plus DM direct commitments exceeds territory budget.") +
+          ` (${Core.getUserDisplayName(dmId)}: reps ${repSum.toLocaleString("en-US")} + direct ${directDmCommitted.toLocaleString("en-US")} / ${dmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
           "danger"
         );
         return; // Hard constraint: do not save!
@@ -765,10 +803,29 @@
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
     if ((Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : Core._state.currentUser.role) === Core.ROLES.LM) {
-      if (totalAlloc > myLmAlloc) {
+      let directLmCommitted = 0;
+      const allServices = Core.StoreAdapter.getServices();
+      allServices.forEach((s) => {
+        if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
+        if (s.isShared && Array.isArray(s.shares)) {
+          s.shares.forEach((sh) => {
+            if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id)) {
+              if (sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
+                directLmCommitted += Number(sh.shareAmount || 0);
+              }
+            }
+          });
+        } else if (s.lineId === lineId && s.requesterId === Core._state.currentUser.id) {
+          if (s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
+            directLmCommitted += Number(s.cost || 0);
+          }
+        }
+      });
+
+      if (totalAlloc + directLmCommitted > myLmAlloc) {
         Core.safeShowToast(
-          (Core.t("budgetOverAllocated") || "Total allocated to district managers exceeds your available line budget.") +
-          ` (${totalAlloc.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          (Core.t("budgetOverAllocated") || "Total allocated to district managers plus your direct commitments exceeds your available line budget.") +
+          ` (DMs ${totalAlloc.toLocaleString("en-US")} + direct ${directLmCommitted.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
           "danger"
         );
         return; // Hard constraint: do not save!
