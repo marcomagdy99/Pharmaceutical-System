@@ -435,7 +435,7 @@
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id || s.requesterId === Core._state.currentUser.id)) {
+          if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || (!sh.repId && s.requesterId === Core._state.currentUser.id))) {
             const isCommitted = sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"));
             if (isCommitted) directLmCommitted += Number(sh.shareAmount || 0);
           }
@@ -531,7 +531,11 @@
     const lineId = lineSelect?.value || (Core.getAllProductLines()[0] ? Core.getAllProductLines()[0].id : "");
     const budgets = Core.StoreAdapter.getBudgets();
     const lineBudget = budgets[lineId] || { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
-    const myDmAlloc = (lineBudget.dmAllocations && Number(lineBudget.dmAllocations[Core._state.currentUser.id])) || 0;
+    const curRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser?.role || "").toLowerCase();
+    const isLm = curRole === Core.ROLES.LM || curRole === "lm" || curRole === "line_manager";
+    const myDmAlloc = isLm
+      ? ((lineBudget.lmAllocations && Number(lineBudget.lmAllocations[Core._state.currentUser.id])) || 0)
+      : ((lineBudget.dmAllocations && Number(lineBudget.dmAllocations[Core._state.currentUser.id])) || 0);
 
     let distributed = 0;
     document.querySelectorAll(".dm-rep-alloc-input").forEach((inp) => {
@@ -546,7 +550,7 @@
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id || s.requesterId === Core._state.currentUser.id)) {
+          if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || (!sh.repId && s.requesterId === Core._state.currentUser.id))) {
             const isCommitted = sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"));
             if (isCommitted) directDmCommitted += Number(sh.shareAmount || 0);
           }
@@ -607,10 +611,16 @@
     if (curRole === Core.ROLES.DM) {
       myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
     } else if (curRole === Core.ROLES.LM) {
-      const myDms = allUsers.filter((u) => u.role === Core.ROLES.DM && u.managerId === Core._state.currentUser.id).map(d => d.id);
-      myRepIds = allUsers.filter((u) => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && myDms.includes(u.managerId)).map(r => r.id);
+      const myDms = allUsers.filter((u) => (Core.getNormalizedRole ? Core.getNormalizedRole(u) === Core.ROLES.DM : (u.role === Core.ROLES.DM || u.role === "dm")) && u.managerId === Core._state.currentUser.id).map(d => d.id);
+      myRepIds = allUsers.filter((u) => {
+        const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role;
+        return (r === Core.ROLES.REP || r === Core.ROLES.REP_ALT) && (u.managerId === Core._state.currentUser.id || myDms.includes(u.managerId));
+      }).map(r => r.id);
     } else if (curRole === Core.ROLES.BU || curRole === Core.ROLES.ADMIN) {
-      myRepIds = allUsers.filter((u) => u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT).map(r => r.id);
+      myRepIds = allUsers.filter((u) => {
+        const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role;
+        return r === Core.ROLES.REP || r === Core.ROLES.REP_ALT;
+      }).map(r => r.id);
     }
 
     let totalAlloc = 0;
@@ -647,14 +657,37 @@
     }
 
     for (const [dmId, repSum] of Object.entries(allocByDm)) {
-      const dmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[dmId])) || 0;
+      const mgrObj = allUsers.find((u) => u.id === dmId);
+      const mgrRole = Core.getNormalizedRole ? Core.getNormalizedRole(mgrObj) : (mgrObj?.role || "").toLowerCase();
+      const isMgrLm = mgrRole === Core.ROLES.LM || mgrRole === "lm" || mgrRole === "line_manager";
+      const isMgrBu = mgrRole === Core.ROLES.BU || mgrRole === "bu" || mgrRole === "business_unit";
+      const isMgrAdmin = mgrRole === Core.ROLES.ADMIN || mgrRole === "admin" || mgrRole === "administrator";
+
+      let dmAlloc = 0;
+      let existingSubDmsAlloc = 0;
+      if (isMgrLm) {
+        dmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[dmId])) || 0;
+        const dmsUnderThisLm = allUsers.filter((u) => {
+          const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : (u.role || "").toLowerCase();
+          return (r === Core.ROLES.DM || r === "dm" || r === "district_manager") && u.managerId === dmId;
+        }).map((d) => d.id);
+        existingSubDmsAlloc = dmsUnderThisLm.reduce(
+          (sum, dId) => sum + ((budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[dId])) || 0),
+          0
+        );
+      } else if (isMgrBu || isMgrAdmin) {
+        dmAlloc = Number(budgets[lineId].totalBudget || 0);
+      } else {
+        dmAlloc = (budgets[lineId].dmAllocations && Number(budgets[lineId].dmAllocations[dmId])) || 0;
+      }
+
       let directDmCommitted = 0;
       const allServices = Core.StoreAdapter.getServices();
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (sh.repId === dmId || sh.requesterId === dmId || s.requesterId === dmId)) {
+            if (sh.lineId === lineId && (sh.repId === dmId || (!sh.repId && s.requesterId === dmId))) {
               if (sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
                 directDmCommitted += Number(sh.shareAmount || 0);
               }
@@ -667,10 +700,11 @@
         }
       });
 
-      if (repSum + directDmCommitted > dmAlloc) {
+      if (repSum + existingSubDmsAlloc + directDmCommitted > dmAlloc) {
+        const mgrLabel = isMgrLm ? "Line Manager" : "District Manager";
         Core.safeShowToast(
-          (Core.t("budgetOverAllocated") || "Total allocated to reps plus DM direct commitments exceeds territory budget.") +
-          ` (${Core.getUserDisplayName(dmId)}: reps ${repSum.toLocaleString("en-US")} + direct ${directDmCommitted.toLocaleString("en-US")} / ${dmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          (Core.t("budgetOverAllocated") || "Total allocated to reps plus manager commitments exceeds territory budget.") +
+          ` (${mgrLabel} ${Core.getUserDisplayName(dmId)}: reps ${repSum.toLocaleString("en-US")}${existingSubDmsAlloc ? " + DMs " + existingSubDmsAlloc.toLocaleString("en-US") : ""} + direct ${directDmCommitted.toLocaleString("en-US")} / ${dmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
           "danger"
         );
         return; // Hard constraint: do not save!
@@ -802,14 +836,15 @@
     }
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
-    if ((Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : Core._state.currentUser.role) === Core.ROLES.LM) {
+    const curUserRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser?.role || "").toLowerCase();
+    if (curUserRole === Core.ROLES.LM) {
       let directLmCommitted = 0;
       const allServices = Core.StoreAdapter.getServices();
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id || s.requesterId === Core._state.currentUser.id)) {
+            if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || (!sh.repId && s.requesterId === Core._state.currentUser.id))) {
               if (sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
                 directLmCommitted += Number(sh.shareAmount || 0);
               }
@@ -830,7 +865,7 @@
         );
         return; // Hard constraint: do not save!
       }
-    } else if (Core._state.currentUser.role === Core.ROLES.BU) {
+    } else if (curUserRole === Core.ROLES.BU || curUserRole === "bu" || curUserRole === "business_unit") {
       const lineTotal = budgets[lineId].totalBudget || 0;
       if (totalAlloc > lineTotal) {
         Core.safeShowToast(

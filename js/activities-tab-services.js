@@ -116,7 +116,7 @@
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
-          const isDirect = item.repId === user.id || s.requesterId === user.id;
+          const isDirect = item.repId === user.id;
           if (isDirect) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) directUtilized += item.cost;
             if (item.status && item.status.startsWith("pending")) directPending += item.cost;
@@ -145,7 +145,7 @@
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
-          const isDirect = item.repId === user.id || s.requesterId === user.id;
+          const isDirect = item.repId === user.id;
           const rep = Core.getUserById(item.repId);
           if (isDirect) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) directUtilized += item.cost;
@@ -516,7 +516,10 @@
         const allSrv = Core.StoreAdapter.getServices();
         const srv = allSrv.find((s) => s.id === srvId);
         if (srv && srv.attachmentBase64) {
-          ActivitiesModule.openReceiptPreviewModal(srv.attachmentBase64);
+          const previewFn = window.ActivitiesExpenses?.openReceiptPreviewModal || window.ActivitiesModule?.openReceiptPreviewModal;
+          if (typeof previewFn === "function") {
+            previewFn(srv.attachmentBase64);
+          }
         }
         return;
       }
@@ -1385,12 +1388,16 @@
         }
 
         // Budget check for partner (Rep, DM, LM)
-        if (rowRepId) {
+        if (rowRepId && shareAmt > 0) {
           const partnerUser = Core.getUserById(rowRepId);
           const partnerRole = Core.getNormalizedRole ? Core.getNormalizedRole(partnerUser) : (partnerUser?.role || "");
+          const isManager = partnerRole === Core.ROLES.LM || partnerRole === Core.ROLES.DM || partnerRole === Core.ROLES.BU || partnerRole === Core.ROLES.ADMIN;
           if (partnerUser && partnerRole !== Core.ROLES.ADMIN) {
             const partnerMetrics = getBudgetMetricsForUser(row.lineId, partnerUser);
-            if (partnerMetrics.allocated <= 0 || shareAmt > partnerMetrics.remaining) {
+            const isExceeded = partnerMetrics.allocated > 0
+              ? shareAmt > partnerMetrics.remaining
+              : !isManager;
+            if (isExceeded) {
               const roleName = Core.getUserRoleLabel ? Core.getUserRoleLabel(partnerUser.role) : "participant";
               Core.safeShowToast(`Requested share (${shareAmt.toLocaleString("en-US")} EGP) exceeds available budget for ${roleName} ${Core.getUserDisplayName(rowRepId)} (${Math.max(0, partnerMetrics.remaining).toLocaleString("en-US")} EGP remaining).`, "danger");
               if (submitBtn) submitBtn.disabled = false;

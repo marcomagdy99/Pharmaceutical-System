@@ -326,6 +326,7 @@
       "budgetExceedsDistributed": "Cannot reduce budget below already distributed amount.",
       "fridayHolidayNotice": "Friday is an official company holiday. No field visits can be scheduled.",
       "fileTooLarge": "Receipt file is too large. Maximum size is 800KB.",
+      "invalidDate": "Invalid activity date.",
       "invalidExpenseCategory": "Please select a valid expense category.",
       "invalidAmount": "Please enter a valid expense amount between 1 and 500,000 EGP.",
       "invalidDateRange": "Expense date must be within the last 90 days and not in the future.",
@@ -614,6 +615,7 @@
       "budgetExceedsDistributed": "لا يمكن تقليص الميزانية لأقل من المبلغ الموزع بالفعل.",
       "fridayHolidayNotice": "يوم الجمعة إجازة رسمية بالشركة. لا يمكن جدولة زيارات ميدانية.",
       "fileTooLarge": "حجم ملف الإيصال كبير جداً. الحد الأقصى هو 800 كيلوبايت.",
+      "invalidDate": "تاريخ النشاط غير صحيح.",
       "invalidExpenseCategory": "يرجى اختيار فئة مصروف صحيحة.",
       "invalidAmount": "يرجى إدخال مبلغ صحيح للمصروف بين 1 و500,000 ج.م.",
       "invalidDateRange": "تاريخ المصروف يجب أن يكون خلال آخر 90 يوماً وليس في المستقبل.",
@@ -1055,11 +1057,11 @@
       } else if (action === "disburse_expense") {
         if (status !== REQUEST_STATUS.APPROVED && status !== "approved") return false;
       } else if (action === "reject_expense") {
-        if (!status.startsWith("pending")) return false;
+        if (status === REQUEST_STATUS.REJECTED || status === "rejected" || status === REQUEST_STATUS.DISBURSED || status === "disbursed") return false;
       } else if (action === "approve_service") {
         if (!status.startsWith("pending")) return false;
       } else if (action === "reject_service") {
-        if (!status.startsWith("pending")) return false;
+        if (status === REQUEST_STATUS.REJECTED || status === "rejected" || status === "cancelled") return false;
       } else if (action === "approve_location" || action === "reject_location") {
         if (status !== "pending" && !status.startsWith("pending_")) return false;
       }

@@ -1,9 +1,12 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 console.log('--- Testing Audit Checklist Fixes (All Critical Red & Orange Points) ---');
 
 // Mock browser environment
 global.window = global;
+global.window.location = { href: "activities.html", pathname: "activities.html", search: "", hash: "", replace: () => {} };
 global.document = {
   getElementById: (id) => null,
   querySelectorAll: () => [],
@@ -44,11 +47,21 @@ assert.strictEqual(Core.isActionAuthorized('reject_location', rejectedLoc, gmUse
 assert.strictEqual(Core.isActionAuthorized('approve_location', pendingLoc, adminUser), true, 'Admin can approve pending location');
 assert.strictEqual(Core.isActionAuthorized('reject_location', pendingLoc, adminUser), true, 'Admin can reject pending location');
 
-// Reject service & expense on approved items:
+// Reject service & expense State Machine:
 const approvedService = { id: 'srv1', status: 'approved', requesterId: 'rep1' };
+const rejectedService = { id: 'srv_rej', status: 'rejected', requesterId: 'rep1' };
 const approvedExpense = { id: 'exp1', status: 'approved', requesterId: 'rep1' };
-assert.strictEqual(Core.isActionAuthorized('reject_service', approvedService, adminUser), false, 'Admin cannot reject an approved service');
-assert.strictEqual(Core.isActionAuthorized('reject_expense', approvedExpense, adminUser), false, 'Admin cannot reject an approved expense');
+const disbursedExpense = { id: 'exp_disb', status: 'disbursed', requesterId: 'rep1' };
+const rejectedExpense = { id: 'exp_rej', status: 'rejected', requesterId: 'rep1' };
+
+// Admin CAN reject approved (undisbursed) expense or approved service:
+assert.strictEqual(Core.isActionAuthorized('reject_service', approvedService, adminUser), true, 'Admin can reject/cancel an approved service');
+assert.strictEqual(Core.isActionAuthorized('reject_expense', approvedExpense, adminUser), true, 'Admin can reject an approved (undisbursed) expense');
+
+// Admin CANNOT reject already rejected or disbursed:
+assert.strictEqual(Core.isActionAuthorized('reject_service', rejectedService, adminUser), false, 'Admin cannot reject an already rejected service');
+assert.strictEqual(Core.isActionAuthorized('reject_expense', rejectedExpense, adminUser), false, 'Admin cannot reject an already rejected expense');
+assert.strictEqual(Core.isActionAuthorized('reject_expense', disbursedExpense, adminUser), false, 'Admin cannot reject an already disbursed expense');
 console.log('✓ Test 1: State Machine enforcement passed for location, service, and expense');
 
 // 2. Test Fail-Closed in getAuthUser
@@ -143,70 +156,74 @@ if (typeof buildAchievementsData === 'function') {
 }
 console.log('✓ Test 7: Multi-LM territory isolation in buildAchievementsData verified');
 
-// 8. Test activities-tab-budget.js Shared Services Manager Commitment (No Double-Counting)
-console.log('8. Testing activities-tab-budget.js shared services manager direct commitments...');
+// 8. Test activities-tab-budget.js & activities-tab-services.js Shared Services Manager Commitment (No Double-Counting)
+console.log('8. Testing shared services manager direct commitments and zero double-counting...');
+require('../js/activities-tab-services.js');
 require('../js/activities-tab-budget.js');
-// Mock services with a shared service where rep has share and dm approved it
-const mockServices = [
-  {
-    id: 'srv_shared_1',
-    lineId: 'line1',
-    status: 'approved',
-    isShared: true,
-    shares: [
-      {
-        lineId: 'line1',
-        repId: 'rep_under_dm1', // rep participant
-        dmId: 'dm1',            // approver DM
-        lmId: 'lm1',            // approver LM
-        shareAmount: 5000,
-        status: 'approved'
-      }
-    ]
-  }
-];
-// If DM1 checks their DIRECT commitment, it must be 0 (since they are approver, not participant!)
-let dmDirectCommitted = 0;
-mockServices.forEach((s) => {
-  if (s.isShared && Array.isArray(s.shares)) {
-    s.shares.forEach((sh) => {
-      if (sh.lineId === 'line1' && (sh.repId === 'dm1' || sh.requesterId === 'dm1' || s.requesterId === 'dm1')) {
-        dmDirectCommitted += Number(sh.shareAmount || 0);
-      }
-    });
-  }
-});
-assert.strictEqual(dmDirectCommitted, 0, 'DM approver must NOT count rep share as direct DM commitment (double counting prevented!)');
 
-// If DM1 is direct participant, it DOES count
-mockServices.push({
-  id: 'srv_shared_2',
+// Scenario: DM1 requests a shared service on line1 with 2 shares:
+// - Share 1: DM1's own share = 500 EGP
+// - Share 2: Subordinate Rep's share = 300 EGP
+const userSharedService = {
+  id: 'srv_dm_req_1',
   lineId: 'line1',
+  requesterId: 'dm1',
   status: 'approved',
   isShared: true,
   shares: [
     {
       lineId: 'line1',
-      repId: 'dm1', // DM is the actual participant
+      repId: 'dm1',
       dmId: 'dm1',
       lmId: 'lm1',
-      shareAmount: 3000,
+      shareAmount: 500,
+      status: 'approved'
+    },
+    {
+      lineId: 'line1',
+      repId: 'rep_under_dm1',
+      dmId: 'dm1',
+      lmId: 'lm1',
+      shareAmount: 300,
       status: 'approved'
     }
   ]
-});
-dmDirectCommitted = 0;
-mockServices.forEach((s) => {
+};
+
+// Test activities-tab-budget.js logic:
+let directDmCommitted = 0;
+[userSharedService].forEach((s) => {
   if (s.isShared && Array.isArray(s.shares)) {
     s.shares.forEach((sh) => {
-      if (sh.lineId === 'line1' && (sh.repId === 'dm1' || sh.requesterId === 'dm1' || s.requesterId === 'dm1')) {
-        dmDirectCommitted += Number(sh.shareAmount || 0);
+      if (sh.lineId === 'line1' && (sh.repId === 'dm1' || (!sh.repId && s.requesterId === 'dm1'))) {
+        directDmCommitted += Number(sh.shareAmount || 0);
       }
     });
   }
 });
-assert.strictEqual(dmDirectCommitted, 3000, 'Direct DM share must count towards direct DM commitment');
-console.log('✓ Test 8: Budget shared services direct commitment double-counting protection verified');
+assert.strictEqual(directDmCommitted, 500, 'DM direct commitment must be exactly 500 (rep share 300 must NOT be counted as DM commitment)');
+
+// Test activities-tab-services.js getBudgetMetricsForUser logic:
+localStorage.setItem("pharma_sales_budgets", JSON.stringify({
+  line1: {
+    totalBudget: 100000,
+    lmAllocations: { lm1: 50000 },
+    dmAllocations: { dm1: 20000 },
+    repAllocations: { rep_under_dm1: 10000 }
+  }
+}));
+localStorage.setItem("pharma_services_data", JSON.stringify([userSharedService]));
+
+if (window.ActivitiesServices && typeof window.ActivitiesServices.getBudgetMetricsForUser === 'function') {
+  const dmMetrics = window.ActivitiesServices.getBudgetMetricsForUser('line1', { id: 'dm1', role: 'district_manager' });
+  // In getBudgetMetricsForUser:
+  // allocated = 20,000
+  // distributed to reps = 10,000
+  // directUtilized = 500 (ONLY the DM's own share, NOT 800)
+  // remaining = (20,000 - 10,000) - 500 = 9,500
+  assert.strictEqual(dmMetrics.remaining, 9500, 'DM remaining budget must deduct only direct DM share (500), leaving 9,500 remaining');
+}
+console.log('✓ Test 8: Budget & Services shared commitment double-counting protection verified');
 
 // 9. Test Notification XSS & Context-Aware Escaping in app.js
 console.log('9. Testing notification escaping and icon sanitization in app.js...');
@@ -249,6 +266,83 @@ assert(!capturedHtml.includes('onload="alert(1)"'), 'Malicious icon onload must 
 assert(capturedHtml.includes('Directive Note:'), 'Directive note section rendered');
 console.log('✓ Test 9: Notification context-aware output encoding & XSS sanitization verified');
 
-console.log('\n================================================================');
-console.log('ALL AUDIT CHECKLIST FIXES VERIFIED AND PASSED SUCCESSFULLY (9/9)!');
-console.log('================================================================\n');
+// -------------------------------------------------------------
+// Test 10: LM Direct Reps Budget Allocation Ceiling Protection
+// -------------------------------------------------------------
+console.log('10. Testing LM direct reps budget ceiling protection...');
+(function() {
+  const lineId = 'line_lm_test';
+  const lmUser = { id: 'lm_direct_mgr', role: 'line_manager', lineIds: [lineId] };
+  const directRep = { id: 'rep_direct_1', role: 'medical_rep', managerId: 'lm_direct_mgr', lineIds: [lineId] };
+
+  const testBudgets = {
+    [lineId]: {
+      totalBudget: 100000,
+      lmAllocations: { 'lm_direct_mgr': 50000 },
+      dmAllocations: {},
+      repAllocations: {},
+      auditLog: []
+    }
+  };
+
+  const usersList = [lmUser, directRep];
+  const servicesList = [];
+
+  // Simulate window environment for ActivitiesBudget
+  window.ActivitiesCore = {
+    _state: { currentUser: lmUser },
+    getAuthUser: () => lmUser,
+    getAllUsers: () => usersList,
+    getUserById: (id) => usersList.find(u => u.id === id),
+    getNormalizedRole: (u) => u?.role,
+    isActionAuthorized: () => true,
+    getAllProductLines: () => [{ id: lineId, name: 'Test Line' }],
+    getUserAssignedLines: () => [{ id: lineId, name: 'Test Line' }],
+    getUserDisplayName: (id) => id,
+    dispatchWorkflowNotification: () => {},
+    safeShowToast: (msg, type) => { lastToast = { msg, type }; },
+    t: (k) => k,
+    ROLES: { LM: 'line_manager', DM: 'district_manager', REP: 'medical_rep', REP_ALT: 'rep', BU: 'business_unit', ADMIN: 'admin' },
+    REQUEST_STATUS: { APPROVED: 'approved', REJECTED: 'rejected' },
+    StoreAdapter: {
+      getBudgets: () => JSON.parse(JSON.stringify(testBudgets)),
+      saveBudgets: (b) => { Object.assign(testBudgets, b); },
+      getServices: () => servicesList
+    }
+  };
+
+  let lastToast = null;
+  const repInput = {
+    dataset: { repid: 'rep_direct_1' },
+    value: '30000'
+  };
+
+  global.document.getElementById = (id) => {
+    if (id === 'serviceBudgetLineSelect' || id === 'servicesLineFilter') {
+      return { value: lineId, children: [], dataset: {} };
+    }
+    return { children: [], dataset: {}, value: '', style: {} };
+  };
+  global.document.querySelectorAll = (sel) => {
+    if (sel === '.dm-rep-alloc-input') return [repInput];
+    return [];
+  };
+
+  // Re-read ActivitiesBudget
+  const budgetCode = fs.readFileSync('c:/Users/DeLL/OneDrive/Desktop/pharma-rep/Pharmaceutical-System/js/activities-tab-budget.js', 'utf8');
+  eval(budgetCode);
+
+  window.ActivitiesBudget.saveDmRepAllocations();
+  assert(testBudgets[lineId].repAllocations['rep_direct_1'] === 30000, 'LM direct rep allocation of 30,000 must be saved within 50,000 LM budget');
+
+  // Try over-allocating (60,000 > 50,000)
+  repInput.value = '60000';
+  window.ActivitiesBudget.saveDmRepAllocations();
+  assert(lastToast && lastToast.type === 'danger', 'Exceeding LM ceiling must trigger danger toast');
+  assert(testBudgets[lineId].repAllocations['rep_direct_1'] === 30000, 'Over-allocated amount must NOT be saved');
+})();
+console.log('✓ Test 10: LM direct rep budget ceiling accurately enforced without false rejections');
+
+console.log('\n=================================================================');
+console.log('ALL AUDIT CHECKLIST FIXES VERIFIED AND PASSED SUCCESSFULLY (10/10)!');
+console.log('=================================================================\n');

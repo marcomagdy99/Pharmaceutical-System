@@ -251,9 +251,11 @@ function populateAchAreas(filterUser) {
         if (!mgrId && (a.dmId === curUser.id || a.managerId === curUser.id)) return true;
         return false;
       });
+      areasToDisplay = areasToDisplay.filter((a) => selectedLineId === 'all' || a.lineId === selectedLineId);
     } else if (curUser && (curRole === 'line_manager' || curRole === 'lm')) {
-      const dms = allUsers.filter((u) => u.managerId === curUser.id).map((d) => d.id);
-      const lmReps = allUsers.filter((u) => u.managerId === curUser.id || dms.includes(u.managerId)).map((u) => u.id);
+      const dms = allUsers.filter((u) => u.managerId === curUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
+      const dmIds = dms.map((d) => d.id);
+      const lmReps = allUsers.filter((u) => u.managerId === curUser.id || dmIds.includes(u.managerId)).map((u) => u.id);
       const lineLmsCount = (lineId) => allUsers.filter((u) => {
         const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
         return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
@@ -269,6 +271,7 @@ function populateAchAreas(filterUser) {
         }
         return false;
       });
+      areasToDisplay = areasToDisplay.filter((a) => selectedLineId === 'all' || a.lineId === selectedLineId);
     } else if (selectedLineId !== 'all') {
       areasToDisplay = allAreas.filter((a) => a.lineId === selectedLineId);
     } else {
@@ -543,9 +546,18 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
         const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
         const lmReps = allUsers.filter((u) => u.managerId === selectedRepVal || dms.includes(u.managerId)).map((u) => u.id);
         const lmUserLineIds = selUser ? (selUser.lineIds || (selUser.lineId ? [selUser.lineId] : [])) : [];
+        const lineLmsCount = (lineId) => allUsers.filter((u) => {
+          const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+          return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+        }).length;
         filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
           const a = areasMap.get(id);
-          return a && ((a.repId && (lmReps.includes(a.repId) || dms.includes(a.repId))) || (a.lineId && lmUserLineIds.includes(a.lineId)));
+          if (!a) return false;
+          if (a.repId && (lmReps.includes(a.repId) || dms.includes(a.repId))) return true;
+          const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+          if (mgrId && (mgrId === selectedRepVal || dms.includes(mgrId))) return true;
+          if (lineLmsCount(a.lineId) <= 1 && a.lineId && lmUserLineIds.includes(a.lineId)) return true;
+          return false;
         }));
       } else {
         const repUserAreaIds = selUser ? (selUser.areaIds || (selUser.areaId ? [selUser.areaId] : [])) : [];

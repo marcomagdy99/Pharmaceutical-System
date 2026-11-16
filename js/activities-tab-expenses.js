@@ -179,7 +179,7 @@
             url = exp ? exp.receiptUrl : null;
           }
           if (url) {
-            ActivitiesModule.openReceiptPreviewModal(url);
+            openReceiptPreviewModal(url);
             return;
           }
         }
@@ -205,12 +205,11 @@
         const requesterRole = Core.escapeHTML(Core.getUserRoleLabel(exp.requesterRole));
         const actionsHtml = getExpenseActionButtons(exp, Core._state.currentUser);
         const isPdfReceipt = typeof exp.receiptUrl === "string" && (exp.receiptUrl.startsWith("data:application/pdf") || exp.receiptUrl.toLowerCase().includes(".pdf"));
-        const safeReceiptUrl = exp.receiptUrl ? Core.escapeHTML(exp.receiptUrl) : "";
         const receiptThumb = exp.receiptUrl
-          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-expense-id="${Core.escapeHTML(exp.id)}" title="${Core.escapeHTML(Core.t("viewAttachment"))}" aria-label="${Core.escapeHTML(Core.t("viewAttachment") || "View receipt attachment")}">
+          ? `<button type="button" class="receipt-preview-btn btn-receipt-zoom" data-expense-id="${Core.escapeHTML(exp.id)}" title="${Core.escapeHTML(Core.t("viewAttachment") || "View receipt attachment")}" aria-label="${Core.escapeHTML(Core.t("viewAttachment") || "View receipt attachment")}">
                ${isPdfReceipt
                  ? `<span class="receipt-pdf-badge" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:#fee2e2; color:#ef4444; border-radius:6px; font-weight:700; font-size:11px;"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF</span>`
-                 : `<img src="${safeReceiptUrl}" alt="${Core.escapeHTML(Core.t("receiptAttachment") || "Receipt attachment")}" class="receipt-thumbnail" />`}
+                 : `<span class="receipt-img-badge" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:var(--bg-subtle, #f1f5f9); color:var(--primary, #2563eb); border-radius:6px;"><svg class="badge-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>`}
                <span class="receipt-zoom-badge"><svg class="badge-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
              </button>`
           : `<span class="no-receipt-label">${Core.t("noReceipt")}</span>`;
@@ -329,6 +328,10 @@
       modal.style.display = "none";
       modal.classList.remove("active");
     }
+    Core._state.currentReceiptBase64 = null;
+    document.getElementById("expenseForm")?.reset();
+    const previewContainer = document.getElementById("receiptPreviewBox");
+    if (previewContainer) previewContainer.style.display = "none";
   }
 
   function onReceiptFileSelected(eventOrInput) {

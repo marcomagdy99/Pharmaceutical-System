@@ -340,7 +340,8 @@
       const lmAreas = allAreas.filter((a) => {
         const isMulti = multiLmLines.has(a.lineId);
         if (isMulti) {
-          return lmRepIds.has(a.repId) || (a.dmId && lmDmIds.has(a.dmId));
+          const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a, allUsers) : (a.dmId || a.managerId);
+          return lmRepIds.has(a.repId) || (mgrId && (lmDmIds.has(mgrId) || mgrId === user.id));
         }
         return myLineIds.has(a.lineId) || lmRepIds.has(a.repId);
       });
