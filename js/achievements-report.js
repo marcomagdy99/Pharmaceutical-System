@@ -240,7 +240,36 @@ function populateAchAreas(filterUser) {
     }
     if (areasToDisplay.length === 0) areasToDisplay = allAreas;
   } else {
-    if (selectedLineId !== 'all') {
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const curRole = curUser ? (window.normalizeRole ? window.normalizeRole(curUser.role) : (curUser.role || '').toLowerCase()) : '';
+    if (curUser && (curRole === 'district_manager' || curRole === 'dm')) {
+      const repsUnderDM = allUsers.filter((u) => u.managerId === curUser.id).map((u) => u.id);
+      areasToDisplay = allAreas.filter((a) => {
+        if (a.repId && repsUnderDM.includes(a.repId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+        if (mgrId === curUser.id) return true;
+        if (!mgrId && (a.dmId === curUser.id || a.managerId === curUser.id)) return true;
+        return false;
+      });
+    } else if (curUser && (curRole === 'line_manager' || curRole === 'lm')) {
+      const dms = allUsers.filter((u) => u.managerId === curUser.id).map((d) => d.id);
+      const lmReps = allUsers.filter((u) => u.managerId === curUser.id || dms.includes(u.managerId)).map((u) => u.id);
+      const lineLmsCount = (lineId) => allUsers.filter((u) => {
+        const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+        return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+      }).length;
+      areasToDisplay = allAreas.filter((a) => {
+        if (a.repId && lmReps.includes(a.repId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+        if (mgrId && (mgrId === curUser.id || dms.includes(mgrId))) return true;
+        if (!mgrId && (a.dmId && dms.includes(a.dmId))) return true;
+        if (lineLmsCount(a.lineId) <= 1) {
+          if (curUser.lineId && a.lineId === curUser.lineId) return true;
+          if (curUser.lineIds && curUser.lineIds.includes(a.lineId)) return true;
+        }
+        return false;
+      });
+    } else if (selectedLineId !== 'all') {
       areasToDisplay = allAreas.filter((a) => a.lineId === selectedLineId);
     } else {
       areasToDisplay = allAreas;
@@ -426,10 +455,19 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
     const dms = allUsers.filter((u) => u.managerId === curUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
     const lmReps = allUsers.filter((u) => u.managerId === curUser.id || dmIds.includes(u.managerId)).map((u) => u.id);
+    const lineLmsCount = (lineId) => allUsers.filter((u) => {
+      const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+      return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+    }).length;
     const lmAreas = allAreas.filter((a) => {
       if (a.repId && lmReps.includes(a.repId)) return true;
-      if (curUser.lineId && a.lineId === curUser.lineId) return true;
-      if (curUser.lineIds && curUser.lineIds.includes(a.lineId)) return true;
+      const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+      if (mgrId && (mgrId === curUser.id || dmIds.includes(mgrId))) return true;
+      if (!mgrId && (a.dmId && dmIds.includes(a.dmId))) return true;
+      if (lineLmsCount(a.lineId) <= 1) {
+        if (curUser.lineId && a.lineId === curUser.lineId) return true;
+        if (curUser.lineIds && curUser.lineIds.includes(a.lineId)) return true;
+      }
       return false;
     });
     allowedAreaIds = new Set(lmAreas.map((a) => a.id));

@@ -435,7 +435,7 @@
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id)) {
+          if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id || s.requesterId === Core._state.currentUser.id)) {
             const isCommitted = sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"));
             if (isCommitted) directLmCommitted += Number(sh.shareAmount || 0);
           }
@@ -546,7 +546,7 @@
       if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
       if (s.isShared && Array.isArray(s.shares)) {
         s.shares.forEach((sh) => {
-          if (sh.lineId === lineId && (sh.dmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id)) {
+          if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id || s.requesterId === Core._state.currentUser.id)) {
             const isCommitted = sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"));
             if (isCommitted) directDmCommitted += Number(sh.shareAmount || 0);
           }
@@ -654,7 +654,7 @@
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (sh.dmId === dmId || sh.requesterId === dmId)) {
+            if (sh.lineId === lineId && (sh.repId === dmId || sh.requesterId === dmId || s.requesterId === dmId)) {
               if (sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
                 directDmCommitted += Number(sh.shareAmount || 0);
               }
@@ -809,7 +809,7 @@
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
           s.shares.forEach((sh) => {
-            if (sh.lineId === lineId && (sh.lmId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id)) {
+            if (sh.lineId === lineId && (sh.repId === Core._state.currentUser.id || sh.requesterId === Core._state.currentUser.id || s.requesterId === Core._state.currentUser.id)) {
               if (sh.status === Core.REQUEST_STATUS.APPROVED || (sh.status && sh.status.startsWith("pending")) || s.status === Core.REQUEST_STATUS.APPROVED || (s.status && s.status.startsWith("pending"))) {
                 directLmCommitted += Number(sh.shareAmount || 0);
               }

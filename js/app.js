@@ -4319,22 +4319,28 @@ window.renderWorkflowNotifContent = function (filter = "all") {
           if (!item.icon) icon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
         }
 
-        const safeTitle = window.escapeHtml ? window.escapeHtml(title) : title;
-        const safeMsg = window.escapeHtml ? window.escapeHtml(msg) : msg;
+        // Robust context-aware escaping for all dynamic text
+        const _esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"));
+        const safeTitle = _esc(title);
+        const safeMsg = _esc(msg);
         const noteHtml = item.note
           ? `
           <div class="notif-note-callout">
-            <strong>Directive Note:</strong> "${window.escapeHtml ? window.escapeHtml(item.note) : item.note}"
+            <strong>Directive Note:</strong> "${_esc(item.note)}"
           </div>
         `
           : "";
+        let safeIcon = icon;
+        if (typeof safeIcon === "string" && (safeIcon.toLowerCase().includes("<script") || safeIcon.toLowerCase().includes("javascript:") || safeIcon.toLowerCase().includes("onerror=") || safeIcon.toLowerCase().includes("onload="))) {
+          safeIcon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+        }
 
         const linkTarget = item.link || "#";
 
         return `
           <div class="notif-item ${isUnread ? "unread" : "read"}" onclick="window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
             <div class="notif-item-icon ${iconTypeClass}">
-              ${icon}
+              ${safeIcon}
             </div>
             <div class="notif-item-body">
               <div class="notif-item-top">
