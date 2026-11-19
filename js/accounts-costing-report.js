@@ -320,9 +320,11 @@
       if (myLines.length === 0) myLines = [];
       const myLineIds = new Set(myLines.map((l) => l.id));
 
+      const lmDirectDMs = allUsers.filter((u) => getNormalizedRole(u) === "district_manager" && u.managerId === user.id);
+      const lmDirectDmIds = new Set(lmDirectDMs.map((d) => d.id));
       const subUsers = typeof window.getAllSubordinates === "function"
         ? window.getAllSubordinates(user.id)
-        : allUsers.filter((u) => u.managerId === user.id || (u.lineId && myLineIds.has(u.lineId)));
+        : allUsers.filter((u) => u.managerId === user.id || lmDirectDmIds.has(u.managerId));
 
       const lmDMs = subUsers.filter((u) => getNormalizedRole(u) === "district_manager");
       const lmDmIds = new Set(lmDMs.map((d) => d.id));

@@ -62,7 +62,9 @@
     renderServicesBudgetStrip();
   }
 
-  function getBudgetMetricsForUser(lineId, user) {
+  function getBudgetMetricsForUser(arg1, arg2) {
+    const lineId = typeof arg1 === "string" ? arg1 : (typeof arg2 === "string" ? arg2 : "");
+    const user = (arg1 && typeof arg1 === "object") ? arg1 : (arg2 && typeof arg2 === "object" ? arg2 : Core._state.currentUser);
     const budgets = Core.StoreAdapter.getBudgets();
     const lineBudget = budgets[lineId] || { totalBudget: 0, lmAllocations: {}, dmAllocations: {}, repAllocations: {} };
     const allServices = Core.StoreAdapter.getServices();
@@ -104,10 +106,17 @@
       const dmIds = new Set(dms.map(d => d.id));
       distributed = dms.reduce((sum, dm) => sum + ((lineBudget.dmAllocations && Number(lineBudget.dmAllocations[dm.id])) || 0), 0);
 
+      const allUsers = Core.getAllUsers();
+      const directRepsUnderLm = allUsers.filter(u => {
+        const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : (u.role || "").toLowerCase();
+        return (r === Core.ROLES.REP || r === Core.ROLES.REP_ALT) && u.managerId === user.id;
+      });
+      const directRepsAlloc = directRepsUnderLm.reduce((sum, rep) => sum + ((lineBudget.repAllocations && Number(lineBudget.repAllocations[rep.id])) || 0), 0);
+      distributed += directRepsAlloc;
+
       // Flexible Single-LM vs Multi-LM team scoping:
       // In single LM lines, myTeamUserIds covers the entire line team.
       // In multi LM lines, myTeamUserIds isolates this LM's team from other LMs on the same line.
-      const allUsers = Core.getAllUsers();
       const myReps = allUsers.filter(u => (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT) && (u.managerId === user.id || dmIds.has(u.managerId)));
       const myTeamUserIds = new Set([user.id, ...dmIds, ...myReps.map(r => r.id)]);
 
@@ -164,7 +173,7 @@
       allServices.forEach((s) => {
         const items = getLineSharesList(s);
         items.forEach((item) => {
-          if (item.repId === user.id || s.requesterId === user.id) {
+          if (item.repId === user.id) {
             if (item.status === Core.REQUEST_STATUS.APPROVED) utilized += item.cost;
             if (item.status && item.status.startsWith("pending")) pending += item.cost;
           }
@@ -615,13 +624,24 @@
   function getServiceActionButtons(srv, user) {
     if (!user) return "&mdash;";
     const canApprove = Core.isActionAuthorized("approve_service", srv, user);
+    const canReject = Core.isActionAuthorized("reject_service", srv, user);
+
+    let buttons = "";
     if (canApprove) {
-      return `
-        <button type="button" class="action-btn-success" data-service-action="approve" data-service-id="${Core.escapeHTML(srv.id)}" title="Approve"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>
-        <button type="button" class="action-btn-danger" data-service-action="reject" data-service-id="${Core.escapeHTML(srv.id)}" title="Reject"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      buttons += `
+        <button type="button" class="action-btn-success" data-service-action="approve" data-service-id="${Core.escapeHTML(srv.id)}" title="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}" aria-label="${Core.escapeHTML(Core.t("btnApprove") || "Approve")}">
+          <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
       `;
     }
-    return "&mdash;";
+    if (canReject) {
+      buttons += `
+        <button type="button" class="action-btn-danger" data-service-action="reject" data-service-id="${Core.escapeHTML(srv.id)}" title="${Core.escapeHTML(Core.t("btnReject") || "Reject")}" aria-label="${Core.escapeHTML(Core.t("btnReject") || "Reject")}">
+          <svg class="btn-svg-icon" aria-hidden="true" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      `;
+    }
+    return buttons || "&mdash;";
   }
 
   function openServiceModal() {
@@ -1318,10 +1338,16 @@
     if (isShared) {
       const primaryHierarchy = Core.getLiveHierarchyForArea(areaId, Core._state.currentUser.id);
       const primaryRepId = primaryHierarchy.repId || Core._state.currentUser.id;
-      const primaryDmId = primaryHierarchy.dmId || Core._state.currentUser.managerId || null;
+      const primaryDmId = primaryHierarchy.dmId || null;
       const primaryLmId = primaryHierarchy.lmId || null;
 
       let primaryShareStatus = Core.REQUEST_STATUS.PENDING_DM;
+      if (primaryDmId) {
+        primaryShareStatus = Core.REQUEST_STATUS.PENDING_DM;
+      } else if (primaryLmId) {
+        // Direct rep to LM (no DM on this line)
+        primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
+      }
       if (Core._state.currentUser.role === Core.ROLES.DM) primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
       else if (Core._state.currentUser.role === Core.ROLES.LM || Core._state.currentUser.role === Core.ROLES.BU || Core._state.currentUser.role === Core.ROLES.ADMIN) primaryShareStatus = Core.REQUEST_STATUS.APPROVED;
 
@@ -1361,6 +1387,12 @@
         const rowLmId = rowHierarchy.lmId;
 
         let rowShareStatus = Core.REQUEST_STATUS.PENDING_DM;
+        if (rowDmId) {
+          rowShareStatus = Core.REQUEST_STATUS.PENDING_DM;
+        } else if (rowLmId) {
+          // Direct rep to LM (no DM on this line)
+          rowShareStatus = Core.REQUEST_STATUS.PENDING_LM;
+        }
         if (Core._state.currentUser.role === Core.ROLES.DM && rowDmId === Core._state.currentUser.id) {
           rowShareStatus = Core.REQUEST_STATUS.PENDING_LM;
         } else if (Core._state.currentUser.role === Core.ROLES.LM && rowLmId === Core._state.currentUser.id) {
@@ -1387,19 +1419,27 @@
           shareAmt = cost - prevSum;
         }
 
-        // Budget check for partner (Rep, DM, LM)
+        // Budget check for partner (Rep, DM, LM, BU)
         if (rowRepId && shareAmt > 0) {
           const partnerUser = Core.getUserById(rowRepId);
           const partnerRole = Core.getNormalizedRole ? Core.getNormalizedRole(partnerUser) : (partnerUser?.role || "");
-          const isManager = partnerRole === Core.ROLES.LM || partnerRole === Core.ROLES.DM || partnerRole === Core.ROLES.BU || partnerRole === Core.ROLES.ADMIN;
           if (partnerUser && partnerRole !== Core.ROLES.ADMIN) {
             const partnerMetrics = getBudgetMetricsForUser(row.lineId, partnerUser);
-            const isExceeded = partnerMetrics.allocated > 0
-              ? shareAmt > partnerMetrics.remaining
-              : !isManager;
-            if (isExceeded) {
-              const roleName = Core.getUserRoleLabel ? Core.getUserRoleLabel(partnerUser.role) : "participant";
-              Core.safeShowToast(`Requested share (${shareAmt.toLocaleString("en-US")} EGP) exceeds available budget for ${roleName} ${Core.getUserDisplayName(rowRepId)} (${Math.max(0, partnerMetrics.remaining).toLocaleString("en-US")} EGP remaining).`, "danger");
+            const roleName = Core.getUserRoleLabel ? Core.getUserRoleLabel(partnerUser.role) : "Participant";
+            if (partnerMetrics.allocated <= 0) {
+              const lineName = Core.getLineName(row.lineId);
+              Core.safeShowToast(
+                `Cannot add share: Doctor services budget has not been allocated for line "${lineName}" for ${roleName} ${Core.getUserDisplayName(rowRepId)}.`,
+                "danger"
+              );
+              if (submitBtn) submitBtn.disabled = false;
+              return;
+            }
+            if (shareAmt > partnerMetrics.remaining) {
+              Core.safeShowToast(
+                `Requested share (${shareAmt.toLocaleString("en-US")} EGP) exceeds available budget for ${roleName} ${Core.getUserDisplayName(rowRepId)} (${Math.max(0, partnerMetrics.remaining).toLocaleString("en-US")} EGP remaining).`,
+                "danger"
+              );
               if (submitBtn) submitBtn.disabled = false;
               return;
             }
@@ -1440,7 +1480,13 @@
         nextApprover = initRes.nextApproverId;
       } else {
         if (Core._state.currentUser.role === Core.ROLES.REP || Core._state.currentUser.role === Core.ROLES.REP_ALT) {
-          globalStatus = Core.REQUEST_STATUS.PENDING_DM;
+          const directMgr = Core.getUserById(Core._state.currentUser.managerId);
+          const directMgrRole = directMgr ? (Core.getNormalizedRole ? Core.getNormalizedRole(directMgr) : (directMgr.role || "").toLowerCase()) : "";
+          if (directMgrRole === Core.ROLES.LM || directMgrRole === "lm" || directMgrRole === "line_manager") {
+            globalStatus = Core.REQUEST_STATUS.PENDING_LM;
+          } else {
+            globalStatus = Core.REQUEST_STATUS.PENDING_DM;
+          }
           nextApprover = Core._state.currentUser.managerId || null;
         } else if (Core._state.currentUser.role === Core.ROLES.DM) {
           globalStatus = Core.REQUEST_STATUS.PENDING_LM;

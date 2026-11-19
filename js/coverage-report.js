@@ -19,6 +19,154 @@ function _coverageEnd() {
   return `${l.getFullYear()}-${m}-${d}`;
 }
 
+function _covEsc(val) {
+  if (typeof window !== 'undefined' && typeof window.escapeHtml === 'function') {
+    return window.escapeHtml(val);
+  }
+  return String(val == null ? '' : val).replace(/[&<>"'`]/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '`': '&#96;',
+  }[ch]));
+}
+
+function _covCsvCell(val) {
+  let s = String(val == null ? '' : val);
+  if (/^[=+\-@\t\r]/.test(s)) {
+    s = "'" + s;
+  }
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+function _covNormRole(role) {
+  if (typeof window !== 'undefined' && typeof window.normalizeRole === 'function') {
+    return window.normalizeRole(role);
+  }
+  if (!role) return '';
+  const r = String(role).toLowerCase().trim();
+  if (r === 'dm' || r === 'district_manager' || r === 'district manager') return 'district_manager';
+  if (r === 'lm' || r === 'line_manager' || r === 'line manager') return 'line_manager';
+  if (r === 'bu' || r === 'business_unit' || r === 'business unit') return 'business_unit';
+  if (r === 'rep' || r === 'medical_rep' || r === 'medical rep') return 'medical_rep';
+  if (r === 'pm' || r === 'product_manager' || r === 'product manager') return 'product_manager';
+  if (r === 'admin' || r === 'administrator') return 'admin';
+  if (r === 'hr' || r === 'human_resources' || r === 'human resources') return 'hr';
+  if (r === 'gm' || r === 'general_manager' || r === 'general manager') return 'general_manager';
+  return r;
+}
+
+function _covIsRep(user) {
+  if (!user) return false;
+  if (typeof window !== 'undefined' && typeof window.isRepRole === 'function') {
+    return window.isRepRole(user);
+  }
+  return _covNormRole(user.role) === 'medical_rep';
+}
+
+function _covHasFullOrgAccess(role) {
+  return role === 'admin' || role === 'hr' || role === 'general_manager';
+}
+
+function _covGetAuthUser() {
+  if (typeof window !== 'undefined' && typeof window.checkAuth === 'function') {
+    const u = window.checkAuth();
+    if (u && u.id) return u;
+  }
+  return null;
+}
+
+function _covNormalizeDateStr(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  const dt = new Date(s);
+  if (isNaN(dt.getTime())) return null;
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
+function _covDiffDays(startStr, endStr) {
+  const sp = String(startStr || '').split('-').map(Number);
+  const ep = String(endStr || '').split('-').map(Number);
+  if (sp.length !== 3 || ep.length !== 3) return 1;
+  const startUtc = Date.UTC(sp[0], sp[1] - 1, sp[2]);
+  const endUtc = Date.UTC(ep[0], ep[1] - 1, ep[2]);
+  if (isNaN(startUtc) || isNaN(endUtc)) return 1;
+  return Math.max(1, Math.round((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1);
+}
+
+function _covGetUserLineIds(userId) {
+  if (!userId || typeof window === 'undefined' || typeof window.getUserLines !== 'function') return [];
+  return (window.getUserLines(userId) || []).filter(Boolean).map((l) => l.id);
+}
+
+function _covGetLmSubordinates(lmId, allUsers) {
+  const dms = allUsers.filter((u) => u && u.managerId === lmId && _covNormRole(u.role) === 'district_manager');
+  const dmIds = dms.map((d) => d.id);
+  const directReps = allUsers.filter((u) => u && u.managerId === lmId && _covIsRep(u));
+  const dmReps = allUsers.filter((u) => u && dmIds.includes(u.managerId));
+  const repMap = new Map();
+  [...directReps, ...dmReps].forEach((r) => {
+    if (r && r.id) repMap.set(r.id, r);
+  });
+  const reps = Array.from(repMap.values());
+  return { dms, dmIds, reps, repIds: reps.map((r) => r.id) };
+}
+
+function _covGetBuSubordinates(buId, allUsers) {
+  const myLMs = allUsers.filter((u) => u && u.managerId === buId && _covNormRole(u.role) === 'line_manager');
+  const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(buId) : [];
+  const combinedMap = new Map();
+  [...myLMs, ...myDownstream].forEach((u) => {
+    if (u && u.id) combinedMap.set(u.id, u);
+  });
+  return Array.from(combinedMap.values());
+}
+
+function _covMatchesRepTarget(doc, repId, allUsers, allAreas) {
+  if (!doc || !repId) return false;
+  if (doc.repId) return doc.repId === repId;
+  // Unassigned doctor fallback: only match strictly via areaId or same-line area name
+  const repUser = allUsers.find((u) => u && u.id === repId);
+  const repUserAreaIds = repUser ? (Array.isArray(repUser.areaIds) && repUser.areaIds.length ? repUser.areaIds : (repUser.areaId ? [repUser.areaId] : [])) : [];
+  const repAreas = allAreas.filter((a) => a && (a.repId === repId || repUserAreaIds.includes(a.id)));
+  const repAreaIds = repAreas.map((a) => a.id);
+  if (doc.areaId) {
+    return repAreaIds.includes(doc.areaId);
+  }
+  if (!doc.area) return false;
+  const docAreaLower = String(doc.area).toLowerCase().trim();
+  const repLineIds = _covGetUserLineIds(repId);
+  if (doc.lineId && repLineIds.length > 0 && !repLineIds.includes(doc.lineId)) {
+    return false;
+  }
+  const repAreaNames = repAreas.map((a) => String(a.name || '').toLowerCase().trim()).filter(Boolean);
+  if (repUser && repUser.area) {
+    String(repUser.area).split(',').forEach((s) => {
+      const t = s.trim().toLowerCase();
+      if (t) repAreaNames.push(t);
+    });
+  }
+  return repAreaNames.includes(docAreaLower);
+}
+
+function _covDocMatchesLine(doc, lineId, allAreas, fullOrgAccess) {
+  if (!doc) return false;
+  if (doc.areaId) {
+    const a = allAreas.find((x) => x && x.id === doc.areaId);
+    if (a && a.lineId) return a.lineId === lineId;
+  }
+  if (doc.lineId) return doc.lineId === lineId;
+  if (Array.isArray(doc.lineIds) && doc.lineIds.length > 0) return doc.lineIds.includes(lineId);
+  if (doc.repId) {
+    const repLines = _covGetUserLineIds(doc.repId);
+    if (repLines.includes(lineId)) return true;
+  }
+  return !doc.repId && fullOrgAccess;
+}
 
 // Active drilldown filter state for Coverage tab
 var svgCalendar = (typeof window !== 'undefined' && window.svgCalendar) || '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-inline-end:3px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>';
@@ -33,7 +181,7 @@ let coverageDrilldownState = {
 // Cached context to allow re-filtering details table without re-querying
 let coverageReportContext = null;
 
-window.setCoverageDrilldown = function(type, repId, repName) {
+window.setCoverageDrilldown = function (type, repId, repName) {
   coverageDrilldownState = {
     type: type || 'all',
     repId: repId || null,
@@ -42,7 +190,7 @@ window.setCoverageDrilldown = function(type, repId, repName) {
   renderCoverageReportView();
 };
 
-window.resetCoverageDrilldown = function() {
+window.resetCoverageDrilldown = function () {
   coverageDrilldownState = {
     type: 'all',
     repId: null,
@@ -56,14 +204,416 @@ function getEmployeeTerritory(user, repTargets) {
   if (user && user.divisionName) return user.divisionName;
   if (user && user.areaName) return user.areaName;
   if (user && user.area) return user.area;
-  const distinctAreas = Array.from(new Set(repTargets.map((d) => d.area).filter(Boolean)));
+  const distinctAreas = Array.from(new Set((repTargets || []).map((d) => d && d.area).filter(Boolean)));
   if (distinctAreas.length > 0) {
     return distinctAreas.slice(0, 2).join(', ') + (distinctAreas.length > 2 ? ` (+${distinctAreas.length - 2})` : '');
   }
   return '—';
 }
 
+function bindCoverageSummaryDelegation(summaryTbody) {
+  if (!summaryTbody || !summaryTbody.dataset || summaryTbody.dataset.coverageBound === '1') return;
+  summaryTbody.dataset.coverageBound = '1';
+  summaryTbody.addEventListener('click', (e) => {
+    const btn = e.target && typeof e.target.closest === 'function'
+      ? e.target.closest('button[data-drilldown-type]')
+      : null;
+    if (!btn) return;
+    e.preventDefault();
+    const type = btn.dataset.drilldownType || 'all';
+    const repId = btn.dataset.repId || null;
+    const repName = btn.dataset.repName || '';
+    window.setCoverageDrilldown(type, repId, repName);
+  });
+}
 
+/**
+ * Shared computation engine used by both renderCoverageReport() and exportCoverageReport()
+ * so on-screen KPIs/tables and exported CSV are always 100% consistent.
+ */
+function buildCoverageDataset() {
+  if (typeof syncReportsData === 'function') {
+    syncReportsData();
+  }
+
+  const user = _covGetAuthUser();
+  if (!user) return null;
+
+  const rawStartDate = document.getElementById('coverageStartDate')?.value || _coverageStart();
+  const rawEndDate = document.getElementById('coverageEndDate')?.value || _coverageEnd();
+  const startDate = _covNormalizeDateStr(rawStartDate) || _coverageStart();
+  const endDate = _covNormalizeDateStr(rawEndDate) || _coverageEnd();
+
+  if (endDate < startDate) {
+    if (typeof window.showToast === 'function') {
+      window.showToast('End date cannot be earlier than start date.', 'warning');
+    }
+    return null;
+  }
+
+  const classFilter = document.getElementById('coverageClassFilter')?.value || 'all';
+  const lmSelect = document.getElementById('coverageLmSelect');
+  const dmSelect = document.getElementById('coverageDmSelect');
+  const repSelect = document.getElementById('coverageRepSelect');
+  const selectedRep = (repSelect && repSelect.value !== 'all')
+    ? repSelect.value
+    : ((dmSelect && dmSelect.value !== 'all')
+      ? dmSelect.value
+      : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
+  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
+
+  const role = _covNormRole(user.role);
+  const isRep = _covIsRep(user);
+  const fullOrgAccess = _covHasFullOrgAccess(role);
+  const allUsers = typeof getSharedReportUsers === 'function'
+    ? getSharedReportUsers()
+    : ((window.store && window.store.users && typeof window.store.users.getAll === 'function'
+      ? window.store.users.getAll()
+      : (window.DEMO_DATA && window.DEMO_DATA.users)) || []);
+  const allAreas = (window.store && window.store.areas && typeof window.store.areas.getAll === 'function'
+    ? window.store.areas.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+  const allLines = (window.store && window.store.productLines && typeof window.store.productLines.getAll === 'function'
+    ? window.store.productLines.getAll()
+    : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
+
+  const diffDays = _covDiffDays(startDate, endDate);
+  const numMonths = Math.max(1, Math.round((diffDays / 30.4375) * 10) / 10);
+  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+
+  let lineObj = null;
+  if (selectedLineId && selectedLineId !== 'all') {
+    lineObj = allLines.find((l) => l && l.id === selectedLineId) || null;
+  }
+  if (!lineObj && selectedRep && selectedRep !== 'all' && !selectedRep.startsWith('vacant:')) {
+    const repUser = allUsers.find((u) => u && u.id === selectedRep);
+    const lId = repUser ? ((repUser.lineIds && repUser.lineIds[0]) || repUser.lineId) : null;
+    lineObj = allLines.find((l) => l && l.id === lId) || null;
+  }
+  if (!lineObj && user) {
+    const lId = (user.lineIds && user.lineIds[0]) || user.lineId;
+    lineObj = allLines.find((l) => l && l.id === lId) || null;
+  }
+  if (!lineObj && allLines.length > 0) {
+    lineObj = allLines[0];
+  }
+
+  const freqA = lineObj && lineObj.callFrequency && lineObj.callFrequency.classA !== undefined ? Number(lineObj.callFrequency.classA) : 4;
+  const freqB = lineObj && lineObj.callFrequency && lineObj.callFrequency.classB !== undefined ? Number(lineObj.callFrequency.classB) : 3;
+
+  const reportsData = (typeof REPORTS_DATA !== 'undefined' && REPORTS_DATA) ? REPORTS_DATA : (window.DEMO_DATA || {});
+
+  // 1. Filter raw doctors list by Doctor Class Filter
+  let targetList = (Array.isArray(reportsData.doctors) ? reportsData.doctors : []).filter(Boolean).slice();
+  if (classFilter === 'all_doctors') {
+    targetList = targetList.filter((d) => {
+      const c = String(d.class || '').toUpperCase();
+      return c === 'A' || c === 'B';
+    });
+  } else if (classFilter === 'A') {
+    targetList = targetList.filter((d) => String(d.class || '').toUpperCase() === 'A');
+  } else if (classFilter === 'B') {
+    targetList = targetList.filter((d) => String(d.class || '').toUpperCase() === 'B');
+  } else if (classFilter === 'hospital') {
+    targetList = targetList.filter((d) => String(d.class || '').toLowerCase() === 'hospital');
+  }
+
+  // 2. Helper for vacant area filtering WITH strict line/role authorization check
+  const userLineIds = _covGetUserLineIds(user.id);
+  const canAccessVacantArea = (vacantArea) => {
+    if (!vacantArea) return false;
+    if (fullOrgAccess) return true;
+    if (isRep) return false;
+    if (userLineIds.length === 0) return false;
+    const areaLine = vacantArea.lineId || null;
+    return !areaLine || userLineIds.includes(areaLine);
+  };
+  let authorizedVacantArea = null;
+  const filterVacantAreaTargets = (vacantSelection, list) => {
+    const vacantAreaId = String(vacantSelection || '').slice('vacant:'.length);
+    const vacantArea = allAreas.find((a) => a && a.id === vacantAreaId);
+    if (!canAccessVacantArea(vacantArea)) return [];
+    authorizedVacantArea = vacantArea;
+    const areaNameLower = vacantArea.name ? String(vacantArea.name).toLowerCase().trim() : null;
+    return list.filter((d) => {
+      if (d.areaId) return d.areaId === vacantAreaId;
+      if (areaNameLower && d.area && String(d.area).toLowerCase().trim() === areaNameLower) {
+        if (vacantArea.lineId && d.lineId) return d.lineId === vacantArea.lineId;
+        return !d.lineId || !vacantArea.lineId;
+      }
+      return false;
+    });
+  };
+
+  // 3. Scope doctors strictly by authenticated role FIRST (never let `vacant:` bypass RBAC!)
+  const isVacantFilter = Boolean(selectedRep && selectedRep.startsWith('vacant:'));
+  let scopedReps = [];
+
+  if (isRep) {
+    targetList = targetList.filter((d) => d.repId === user.id);
+    scopedReps = [user];
+  } else if (role === 'product_manager') {
+    // PM is strictly scoped to their assigned product lines (fail-closed if none)
+    if (userLineIds.length === 0) {
+      targetList = [];
+      scopedReps = [];
+    } else {
+      targetList = targetList.filter((d) => userLineIds.some((lid) => _covDocMatchesLine(d, lid, allAreas, false)));
+      if (isVacantFilter) {
+        targetList = filterVacantAreaTargets(selectedRep, targetList);
+      } else if (selectedRep && selectedRep !== 'all') {
+        if (selectedRep === 'all_reps') {
+          const repIds = allUsers.filter((u) => _covIsRep(u)).map((u) => u.id);
+          targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
+        } else if (selectedRep === 'all_dms') {
+          const dmIds = allUsers.filter((u) => _covNormRole(u.role) === 'district_manager').map((u) => u.id);
+          const dmTeamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+          targetList = targetList.filter((d) => d.repId && (dmIds.includes(d.repId) || dmTeamRepIds.includes(d.repId)));
+        } else {
+          const selRole = _covNormRole((allUsers.find((u) => u && u.id === selectedRep) || {}).role);
+          if (selRole === 'line_manager') {
+            const lmSub = _covGetLmSubordinates(selectedRep, allUsers);
+            const lmTeamIds = [selectedRep, ...lmSub.dmIds, ...lmSub.repIds];
+            targetList = targetList.filter((d) => d.repId && lmTeamIds.includes(d.repId));
+            scopedReps = lmSub.reps.length ? lmSub.reps : lmSub.dms;
+          } else if (selRole === 'district_manager') {
+            const dmReps = allUsers.filter((u) => u && u.managerId === selectedRep);
+            const dmTeamIds = [selectedRep, ...dmReps.map((r) => r.id)];
+            targetList = targetList.filter((d) => d.repId && dmTeamIds.includes(d.repId));
+            scopedReps = dmReps.length ? dmReps : [allUsers.find((u) => u && u.id === selectedRep)].filter(Boolean);
+          } else {
+            const selLines = _covGetUserLineIds(selectedRep);
+            const inPmScope = selLines.some((lid) => userLineIds.includes(lid));
+            if (inPmScope) {
+              targetList = targetList.filter((d) => _covMatchesRepTarget(d, selectedRep, allUsers, allAreas));
+              const singleUser = allUsers.find((u) => u && u.id === selectedRep);
+              if (singleUser) scopedReps = [singleUser];
+            } else {
+              targetList = [];
+              scopedReps = [];
+            }
+          }
+        }
+      }
+    }
+  } else if (role === 'district_manager') {
+    const teamReps = allUsers.filter((u) => u && u.managerId === user.id);
+    const teamRepIds = teamReps.map((u) => u.id);
+    const allowedIds = new Set([user.id, ...teamRepIds]);
+
+    if (isVacantFilter) {
+      targetList = filterVacantAreaTargets(selectedRep, targetList);
+    } else if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => d.repId && allowedIds.has(d.repId));
+      const selfHasTargets = targetList.some((t) => t.repId === user.id);
+      scopedReps = selfHasTargets ? [user, ...teamReps] : teamReps;
+    } else if (allowedIds.has(selectedRep)) {
+      targetList = targetList.filter((d) => _covMatchesRepTarget(d, selectedRep, allUsers, allAreas) && (!d.repId || allowedIds.has(d.repId)));
+      const singleUser = allUsers.find((u) => u && u.id === selectedRep) || (selectedRep === user.id ? user : null);
+      scopedReps = singleUser ? [singleUser] : [];
+    } else {
+      // Out-of-scope target requested by DM: fail-closed
+      targetList = [];
+      scopedReps = [];
+    }
+  } else if (role === 'line_manager') {
+    const { dms, dmIds, reps, repIds } = _covGetLmSubordinates(user.id, allUsers);
+    const allowedIds = new Set([user.id, ...dmIds, ...repIds]);
+
+    if (isVacantFilter) {
+      targetList = filterVacantAreaTargets(selectedRep, targetList);
+    } else if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => d.repId && allowedIds.has(d.repId));
+      scopedReps = reps.length ? reps : dms;
+    } else if (selectedRep === 'all_dms') {
+      targetList = targetList.filter((d) => d.repId && allowedIds.has(d.repId));
+      scopedReps = dms;
+    } else if (selectedRep === 'all_reps') {
+      targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
+      scopedReps = reps;
+    } else if (dmIds.includes(selectedRep)) {
+      const dmReps = reps.filter((r) => r.managerId === selectedRep);
+      const dmTeamIds = new Set([selectedRep, ...dmReps.map((r) => r.id)]);
+      targetList = targetList.filter((d) => d.repId && dmTeamIds.has(d.repId) && allowedIds.has(d.repId));
+      scopedReps = dmReps.length ? dmReps : [allUsers.find((u) => u && u.id === selectedRep)].filter(Boolean);
+    } else if (allowedIds.has(selectedRep)) {
+      targetList = targetList.filter((d) => _covMatchesRepTarget(d, selectedRep, allUsers, allAreas) && (!d.repId || allowedIds.has(d.repId)));
+      const singleUser = allUsers.find((u) => u && u.id === selectedRep) || (selectedRep === user.id ? user : null);
+      scopedReps = singleUser ? [singleUser] : [];
+    } else {
+      // Out-of-scope target requested by LM: fail-closed
+      targetList = [];
+      scopedReps = [];
+    }
+  } else if (role === 'business_unit') {
+    const buSubordinates = _covGetBuSubordinates(user.id, allUsers);
+    const allowedTeamIds = new Set([user.id, ...buSubordinates.map((u) => u.id)]);
+
+    if (isVacantFilter) {
+      targetList = filterVacantAreaTargets(selectedRep, targetList);
+    } else if (selectedRep === 'all') {
+      targetList = targetList.filter((d) => d.repId && allowedTeamIds.has(d.repId));
+      const downstreamReps = buSubordinates.filter((u) => _covIsRep(u));
+      scopedReps = downstreamReps.length ? downstreamReps : buSubordinates;
+    } else if (selectedRep === 'all_reps') {
+      const downstreamReps = buSubordinates.filter((u) => _covIsRep(u));
+      const repIds = new Set(downstreamReps.map((u) => u.id));
+      targetList = targetList.filter((d) => d.repId && repIds.has(d.repId));
+      scopedReps = downstreamReps;
+    } else if (selectedRep === 'all_dms') {
+      const downstreamDms = buSubordinates.filter((u) => _covNormRole(u.role) === 'district_manager');
+      const dmIds = downstreamDms.map((d) => d.id);
+      const dmTeamRepIds = buSubordinates.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      const dmScopeIds = new Set([...dmIds, ...dmTeamRepIds]);
+      targetList = targetList.filter((d) => d.repId && dmScopeIds.has(d.repId));
+      scopedReps = downstreamDms;
+    } else if (allowedTeamIds.has(selectedRep)) {
+      const selUser = allUsers.find((u) => u && u.id === selectedRep);
+      const selRole = _covNormRole(selUser && selUser.role);
+      if (selRole === 'line_manager') {
+        const lmSub = _covGetLmSubordinates(selectedRep, allUsers);
+        const lmTeamIds = new Set([selectedRep, ...lmSub.dmIds, ...lmSub.repIds]);
+        targetList = targetList.filter((d) => d.repId && lmTeamIds.has(d.repId) && allowedTeamIds.has(d.repId));
+        scopedReps = lmSub.reps.length ? lmSub.reps : (lmSub.dms.length ? lmSub.dms : [selUser]);
+      } else if (selRole === 'district_manager') {
+        const dmReps = allUsers.filter((u) => u && u.managerId === selectedRep && allowedTeamIds.has(u.id));
+        const dmTeamIds = new Set([selectedRep, ...dmReps.map((r) => r.id)]);
+        targetList = targetList.filter((d) => d.repId && dmTeamIds.has(d.repId) && allowedTeamIds.has(d.repId));
+        scopedReps = dmReps.length ? dmReps : [selUser];
+      } else {
+        targetList = targetList.filter((d) => _covMatchesRepTarget(d, selectedRep, allUsers, allAreas) && (!d.repId || allowedTeamIds.has(d.repId)));
+        scopedReps = selUser ? [selUser] : [];
+      }
+    } else {
+      // Out-of-scope target requested by BU: fail-closed
+      targetList = [];
+      scopedReps = [];
+    }
+  } else if (fullOrgAccess) {
+    if (isVacantFilter) {
+      targetList = filterVacantAreaTargets(selectedRep, targetList);
+    } else if (selectedRep && selectedRep !== 'all') {
+      if (selectedRep === 'all_reps') {
+        const repsOnly = allUsers.filter((u) => _covIsRep(u));
+        const repIds = repsOnly.map((u) => u.id);
+        targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
+        scopedReps = repsOnly;
+      } else if (selectedRep === 'all_dms') {
+        const dmsOnly = allUsers.filter((u) => _covNormRole(u.role) === 'district_manager');
+        const dmIds = dmsOnly.map((u) => u.id);
+        const dmTeamRepIds = allUsers.filter((u) => u && dmIds.includes(u.managerId)).map((u) => u.id);
+        targetList = targetList.filter((d) => d.repId && (dmIds.includes(d.repId) || dmTeamRepIds.includes(d.repId)));
+        scopedReps = dmsOnly;
+      } else {
+        const selUser = allUsers.find((u) => u && u.id === selectedRep);
+        const selRole = _covNormRole(selUser && selUser.role);
+        if (selRole === 'line_manager') {
+          const lmSub = _covGetLmSubordinates(selectedRep, allUsers);
+          const lmTeamIds = new Set([selectedRep, ...lmSub.dmIds, ...lmSub.repIds]);
+          targetList = targetList.filter((d) => d.repId && lmTeamIds.has(d.repId));
+          scopedReps = lmSub.reps.length ? lmSub.reps : (lmSub.dms.length ? lmSub.dms : [selUser].filter(Boolean));
+        } else if (selRole === 'district_manager') {
+          const dmReps = allUsers.filter((u) => u && u.managerId === selectedRep);
+          const dmTeamIds = new Set([selectedRep, ...dmReps.map((r) => r.id)]);
+          targetList = targetList.filter((d) => d.repId && dmTeamIds.has(d.repId));
+          scopedReps = dmReps.length ? dmReps : [selUser].filter(Boolean);
+        } else {
+          targetList = targetList.filter((d) => _covMatchesRepTarget(d, selectedRep, allUsers, allAreas));
+          scopedReps = selUser ? [selUser] : [{ id: selectedRep, name: selectedRep }];
+        }
+      }
+    }
+  } else {
+    // Unknown role: fail-closed
+    targetList = [];
+    scopedReps = [];
+  }
+
+  // 4. Apply selected Product Line filter identically for both screen & export
+  if (selectedLineId !== 'all') {
+    targetList = targetList.filter((d) => _covDocMatchesLine(d, selectedLineId, allAreas, fullOrgAccess));
+  }
+
+  // 5. Compute visits and target frequencies on shallow copies (never mutate store doctor records!)
+  const visits = Array.isArray(reportsData.visits) ? reportsData.visits : [];
+  const enrichedTargets = targetList.map((rawTarget) => {
+    const matchingVisits = visits.filter((v) => {
+      if (!v) return false;
+      const vStatus = String(v.status || '').toLowerCase();
+      const vSource = String(v.source || '').toLowerCase();
+      const isCompleted = vStatus === 'completed' || Boolean(v.isActual) || vSource === 'actual';
+      if (!isCompleted) return false;
+      const matchesTarget = (v.doctorId && rawTarget.id)
+        ? (v.doctorId === rawTarget.id)
+        : (v.targetName && rawTarget.name && v.targetName === rawTarget.name);
+      if (!matchesTarget) return false;
+      // Isolate to the representative assigned to this target
+      if (rawTarget.repId && v.repId && v.repId !== rawTarget.repId) return false;
+      const vDateStr = _covNormalizeDateStr(v.date);
+      return Boolean(vDateStr && vDateStr >= startDate && vDateStr <= endDate);
+    });
+
+    const clsUpper = String(rawTarget.class || '').toUpperCase();
+    const defaultQuarterlyRate = clsUpper === 'A'
+      ? freqA
+      : (clsUpper === 'B' ? freqB : (clsUpper === 'C' ? 1 : 6));
+    const quarterlyRate = rawTarget.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
+      ? window.getDoctorCallTarget(rawTarget)
+      : defaultQuarterlyRate);
+
+    return {
+      ...rawTarget,
+      _matchingVisits: matchingVisits,
+      _visitsCount: matchingVisits.length,
+      _actualVisitsCount: matchingVisits.length,
+      _hasDirectActual: matchingVisits.some((v) => Boolean(v.isActual) || String(v.source || '').toLowerCase() === 'actual'),
+      _targetFreq: Math.max(1, Math.round((quarterlyRate / 90) * diffDays)),
+    };
+  });
+
+  // 6. Finalize scopedReps for summary table
+  if (isVacantFilter) {
+    if (isRep) {
+      scopedReps = [user];
+    } else {
+      scopedReps = authorizedVacantArea
+        ? [{
+          id: selectedRep,
+          name: `Vacant (${authorizedVacantArea.name})`,
+          territory: authorizedVacantArea.name || '—',
+          _isVacantGroup: true,
+        }]
+        : [];
+    }
+  } else if (scopedReps.length === 0 && (fullOrgAccess || role === 'product_manager')) {
+    const repIdsInTargets = Array.from(new Set(enrichedTargets.map((d) => d.repId).filter(Boolean)));
+    scopedReps = allUsers.filter((u) => u && repIdsInTargets.includes(u.id));
+    if (!scopedReps.length && fullOrgAccess && selectedRep === 'all') {
+      scopedReps = allUsers.filter((u) => _covIsRep(u));
+    }
+  }
+
+  if (selectedLineId !== 'all' && !isVacantFilter && (!selectedRep || selectedRep === 'all' || selectedRep === 'all_reps' || selectedRep === 'all_dms')) {
+    scopedReps = scopedReps.filter((r) => _covGetUserLineIds(r && r.id).includes(selectedLineId));
+  }
+
+  return {
+    startDate,
+    endDate,
+    diffDays,
+    numMonths,
+    classFilter,
+    selectedRep,
+    selectedLineId,
+    lineObj,
+    freqA,
+    freqB,
+    targetList: enrichedTargets,
+    scopedReps,
+    allUsers,
+    lang,
+  };
+}
 
 // ============================================================================
 // Section 9: Tab 3 - Coverage & Frequency Report
@@ -74,287 +624,19 @@ function renderCoverageReport() {
   if (prompt) prompt.style.display = 'none';
   if (results) results.style.display = 'block';
 
-  syncReportsData();
-
-  const startDate = document.getElementById('coverageStartDate')?.value || _coverageStart();
-  const endDate = document.getElementById('coverageEndDate')?.value || _coverageEnd();
-  const classFilter = document.getElementById('coverageClassFilter')?.value || 'all';
-  const lmSelect = document.getElementById('coverageLmSelect');
-  const dmSelect = document.getElementById('coverageDmSelect');
-  const repSelect = document.getElementById('coverageRepSelect');
-  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
-  const lang = getCurrentLang();
-
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  const user = checkAuth() || (window.DEMO_DATA && window.DEMO_DATA.currentUser) || { id: 'u1790626000010', role: 'admin' };
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
-  const allUsers = typeof getSharedReportUsers === 'function'
-    ? getSharedReportUsers()
-    : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
-  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-
-  const diffDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-  // Accurate duration in months (1 decimal place) to avoid jump distortions
-  const numMonths = Math.max(1, Math.round((diffDays / 30.4375) * 10) / 10);
-
-  const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
-  let lineObj = null;
-  if (selectedRep && selectedRep !== 'all') {
-    const repUser = allUsers.find((u) => u.id === selectedRep);
-    const lId = repUser ? (repUser.lineIds && repUser.lineIds[0]) || repUser.lineId : null;
-    lineObj = allLines.find((l) => l.id === lId);
+  const dataset = buildCoverageDataset();
+  if (!dataset) {
+    coverageReportContext = null;
+    return;
   }
-  if (!lineObj && user) {
-    const lId = (user.lineIds && user.lineIds[0]) || user.lineId;
-    lineObj = allLines.find((l) => l.id === lId);
-  }
-  if (!lineObj && allLines.length > 0) {
-    lineObj = allLines[0];
-  }
-
-  const freqA = lineObj && lineObj.callFrequency && lineObj.callFrequency.classA !== undefined ? lineObj.callFrequency.classA : 4;
-  const freqB = lineObj && lineObj.callFrequency && lineObj.callFrequency.classB !== undefined ? lineObj.callFrequency.classB : 3;
 
   const rulesEl = document.getElementById('coverageRulesBox');
   if (rulesEl) {
-    const lineTag = lineObj && lineObj.name ? ` (${window.escapeHtml(lineObj.name)})` : '';
-    rulesEl.innerHTML = `<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg> <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${freqA} visits/Quarter | Class B Doctors = ${freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
+    const lineTag = dataset.lineObj && dataset.lineObj.name ? ` (${_covEsc(dataset.lineObj.name)})` : '';
+    rulesEl.innerHTML = `<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><line x1="10" y1="21" x2="14" y2="21"/></svg> <strong>Coverage Rules${lineTag}:</strong> Class A Doctors = ${dataset.freqA} visits/Quarter | Class B Doctors = ${dataset.freqB} visits/Quarter | AM Hospitals = 2 visits/Month`;
   }
 
-  // Filter raw doctors list by Doctor Class Filter
-  let targetList = (REPORTS_DATA.doctors || []).slice();
-  if (classFilter === 'all_doctors') {
-    targetList = targetList.filter((d) => d.class === 'A' || d.class === 'B');
-  } else if (classFilter === 'A') {
-    targetList = targetList.filter((d) => d.class === 'A');
-  } else if (classFilter === 'B') {
-    targetList = targetList.filter((d) => d.class === 'B');
-  } else if (classFilter === 'hospital') {
-    targetList = targetList.filter((d) => d.class === 'hospital' || (d.class || '').toLowerCase() === 'hospital');
-  }
-
-  // Scope doctors by user role and rep filter
-  if (selectedRep && selectedRep.startsWith('vacant:')) {
-    const vacantAreaId = selectedRep.split(':')[1];
-    const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
-    const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
-    targetList = targetList.filter((d) => {
-      if (d.areaId) return d.areaId === vacantAreaId;
-      if (areaNameLower && d.area && d.area.toLowerCase().trim() === areaNameLower) {
-        if (vacantArea && vacantArea.lineId && d.lineId) return d.lineId === vacantArea.lineId;
-        return true;
-      }
-      return false;
-    });
-  } else if (isRep) {
-    targetList = targetList.filter((d) => d.repId === user.id);
-  } else if (role === 'district_manager' || role === 'dm') {
-    const teamReps = allUsers.filter((u) => u.managerId === user.id);
-    const teamRepIds = teamReps.map((u) => u.id);
-    const allowedIds = [user.id, ...teamRepIds];
-
-    if (selectedRep === 'all') {
-      targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
-    } else {
-      const repUser = allUsers.find((u) => u.id === selectedRep);
-      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-      const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-      if (repUser && repUser.area) {
-        repUser.area.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) repAreaNames.push(t);
-        });
-      }
-      targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))) && (!d.repId || allowedIds.includes(d.repId)));
-    }
-  } else if (role === 'line_manager' || role === 'lm') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
-    const dmIds = dms.map((d) => d.id);
-    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
-    const repIds = reps.map((r) => r.id);
-    const allowedIds = [user.id, ...dmIds, ...repIds];
-
-    if (selectedRep === 'all') {
-      targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
-    } else if (dmIds.includes(selectedRep)) {
-      const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
-      targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
-    } else if (selectedRep) {
-      const repUser = allUsers.find((u) => u.id === selectedRep);
-      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-      const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-      if (repUser && repUser.area) {
-        repUser.area.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) repAreaNames.push(t);
-        });
-      }
-      targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))) && (!d.repId || allowedIds.includes(d.repId)));
-    }
-  } else if (role === 'business_unit' || role === 'bu') {
-    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
-    const lmIds = myLMs.map((u) => u.id);
-    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
-    const myDownstreamIds = myDownstream.map((u) => u.id);
-    const allowedTeamIds = [user.id, ...lmIds, ...myDownstreamIds];
-
-    if (selectedRep === 'all') {
-      targetList = targetList.filter((d) => d.repId && allowedTeamIds.includes(d.repId));
-    } else {
-      const isSelectedLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
-      const isSelectedDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-      if (isSelectedLM) {
-        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
-        targetList = targetList.filter((d) => (lmTeamIds.includes(d.repId)) && allowedTeamIds.includes(d.repId));
-      } else if (isSelectedDM) {
-        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedTeamIds.includes(d.repId));
-      } else {
-        targetList = targetList.filter((d) => d.repId === selectedRep && allowedTeamIds.includes(d.repId));
-      }
-    }
-  } else if (selectedRep && selectedRep !== 'all') {
-    if (selectedRep === 'all_reps') {
-      const repIds = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))).map((u) => u.id);
-      targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
-    } else if (selectedRep === 'all_dms') {
-      const dmIds = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm'))).map((u) => u.id);
-      const dmTeamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
-      targetList = targetList.filter((d) => d.repId && (dmIds.includes(d.repId) || dmTeamRepIds.includes(d.repId)));
-    } else {
-      const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-      if (isDM) {
-        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
-      } else {
-        const repUser = allUsers.find((u) => u.id === selectedRep);
-        const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-        const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-        if (repUser && repUser.area) {
-          repUser.area.split(',').forEach((s) => {
-            const t = s.trim().toLowerCase();
-            if (t) repAreaNames.push(t);
-          });
-        }
-        targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim())));
-      }
-    }
-  }
-
-  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-  if (selectedLineId !== 'all') {
-    targetList = targetList.filter((d) => {
-      if (d.areaId) {
-        const a = allAreas.find((x) => x.id === d.areaId);
-        if (a && a.lineId) return a.lineId === selectedLineId;
-      }
-      if (d.lineId) return d.lineId === selectedLineId;
-      if (Array.isArray(d.lineIds) && d.lineIds.length > 0) return d.lineIds.includes(selectedLineId);
-      if (d.repId) {
-        const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
-        if (repLines.some((l) => l.id === selectedLineId)) return true;
-      }
-      return !d.repId && (role === 'admin' || role === 'hr');
-    });
-  }
-
-  // Pre-calculate visit counts for each target within selected date range
-  const visits = REPORTS_DATA.visits || [];
-  targetList.forEach((target) => {
-    const matchingVisits = visits.filter((v) => {
-      const isCompleted = v.status === 'completed' || Boolean(v.isActual) || v.source === 'actual';
-      if (!isCompleted) return false;
-      const matchesTarget = (v.doctorId && target.id) ? (v.doctorId === target.id) : (v.targetName === target.name);
-      if (!matchesTarget) return false;
-      // Isolate to the representative assigned to this target
-      if (target.repId && v.repId && v.repId !== target.repId) return false;
-      const vDate = new Date(v.date);
-      return vDate >= start && vDate <= end;
-    });
-
-    target._matchingVisits = matchingVisits;
-    target._visitsCount = matchingVisits.length;
-    target._actualVisitsCount = matchingVisits.filter((v) => Boolean(v.isActual) || v.source === 'actual' || v.status === 'completed').length;
-    target._hasDirectActual = matchingVisits.some((v) => Boolean(v.isActual) || v.source === 'actual');
-
-    const quarterlyRate = target.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
-      ? window.getDoctorCallTarget(target)
-      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : (target.class === 'C' ? 1 : 6))));
-    target._targetFreq = Math.max(1, Math.round((quarterlyRate / 90) * diffDays));
-  });
-
-  // Determine scoped reps list for the summary table
-  let scopedReps = [];
-  if (isRep) {
-    scopedReps = [user];
-  } else if (selectedRep && selectedRep !== 'all' && selectedRep !== 'all_dms' && selectedRep !== 'all_reps') {
-    const singleUser = allUsers.find((u) => u.id === selectedRep) || { id: selectedRep, name: selectedRep };
-    scopedReps = [singleUser];
-  } else if (role === 'district_manager') {
-    const teamReps = allUsers.filter((u) => u.managerId === user.id);
-    const selfHasTargets = targetList.some((t) => t.repId === user.id);
-    scopedReps = selfHasTargets ? [user, ...teamReps] : teamReps;
-  } else if (role === 'line_manager') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
-    const dmIds = dms.map((d) => d.id);
-    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
-
-    if (selectedRep === 'all_dms') {
-      scopedReps = dms;
-    } else if (selectedRep === 'all_reps') {
-      scopedReps = reps;
-    } else if (dmIds.includes(selectedRep)) {
-      const dmReps = reps.filter((r) => r.managerId === selectedRep);
-      scopedReps = dmReps.length ? dmReps : [allUsers.find((u) => u.id === selectedRep)];
-    } else {
-      scopedReps = reps.length ? reps : dms;
-    }
-  } else if (role === 'business_unit') {
-    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
-    const downstreamReps = myDownstream.filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'));
-    scopedReps = downstreamReps.length ? downstreamReps : myDownstream;
-  } else {
-    const repIdsInTargets = Array.from(new Set(targetList.map((d) => d.repId).filter(Boolean)));
-    scopedReps = allUsers.filter((u) => repIdsInTargets.includes(u.id));
-    if (!scopedReps.length) {
-      scopedReps = allUsers.filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'));
-    }
-  }
-
-  if (selectedLineId !== 'all' && (!selectedRep || selectedRep === 'all' || selectedRep === 'all_reps' || selectedRep === 'all_dms')) {
-    scopedReps = scopedReps.filter((r) => {
-      const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
-      return rLines.some((l) => l.id === selectedLineId);
-    });
-  }
-
-  // Fallback if empty
-  if (scopedReps.length === 0 && user) {
-    scopedReps = [user];
-  }
-
-  // Save report context
-  coverageReportContext = {
-    startDate,
-    endDate,
-    start,
-    end,
-    numMonths,
-    classFilter,
-    selectedRep,
-    targetList,
-    scopedReps,
-    allUsers,
-    lang,
-  };
+  coverageReportContext = dataset;
 
   // Reset drilldown on full search
   coverageDrilldownState = {
@@ -371,14 +653,14 @@ function renderCoverageReport() {
  */
 function renderCoverageReportView() {
   if (!coverageReportContext) return;
-  const { startDate, endDate, targetList, scopedReps, lang } = coverageReportContext;
+  const { startDate, endDate, targetList, scopedReps, allUsers, selectedRep } = coverageReportContext;
 
   const summaryTbody = document.getElementById('coverageSummaryTbody');
   const detailsTbody = document.getElementById('coverageReportTbody');
   const drilldownBar = document.getElementById('coverageActiveDrilldownBar');
   const drilldownText = document.getElementById('coverageActiveDrilldownText');
 
-    const headerTerritory = document.getElementById('covColTerritory');
+  const headerTerritory = document.getElementById('covColTerritory');
   const headerEmployee = document.getElementById('covColEmployee');
   const headerDoctors = document.getElementById('covColDoctors');
   const headerVisited = document.getElementById('covColVisited');
@@ -393,7 +675,10 @@ function renderCoverageReportView() {
   if (headerActual) headerActual.textContent = 'Actual Visits';
   if (headerAvgFreq) headerAvgFreq.textContent = 'Average Frequency';
 
-  if (summaryTbody) summaryTbody.replaceChildren();
+  if (summaryTbody) {
+    summaryTbody.replaceChildren();
+    bindCoverageSummaryDelegation(summaryTbody);
+  }
   if (detailsTbody) detailsTbody.replaceChildren();
 
   // 1. Build & render Summary Table rows
@@ -403,9 +688,23 @@ function renderCoverageReportView() {
   let grandActualVisits = 0;
   const renderedRepRows = [];
 
+  const scopedRepIdsSet = new Set(scopedReps.filter(Boolean).map((r) => r.id));
+
   scopedReps.forEach((rep) => {
-    let repTargets = targetList.filter((d) => d.repId === rep.id);
-    if (scopedReps.length === 1 && repTargets.length === 0 && targetList.length > 0) {
+    if (!rep) return;
+    let repTargets;
+    if (rep._isVacantGroup) {
+      repTargets = targetList;
+    } else if (_covNormRole(rep.role) === 'district_manager' && selectedRep === 'all_dms') {
+      const dmTeamIds = new Set([
+        rep.id,
+        ...(allUsers || []).filter((u) => u && u.managerId === rep.id && !scopedRepIdsSet.has(u.id)).map((u) => u.id),
+      ]);
+      repTargets = targetList.filter((d) => d.repId && dmTeamIds.has(d.repId));
+    } else {
+      repTargets = targetList.filter((d) => d.repId === rep.id);
+    }
+    if (!rep._isVacantGroup && scopedReps.length === 1 && repTargets.length === 0 && targetList.length > 0) {
       repTargets = targetList;
     }
 
@@ -445,15 +744,19 @@ function renderCoverageReportView() {
     } else {
       renderedRepRows.forEach((row) => {
         const isCurrentRep = coverageDrilldownState.repId === row.rep.id;
+        const safeRepId = _covEsc(row.rep.id || '');
+        const safeRepName = _covEsc(row.rep.name || 'Rep');
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="font-weight: 700; color: var(--gray-900);">${window.escapeHtml(row.rep.name || 'Rep')}</td>
-          <td style="font-weight: 600; color: var(--gray-700);">${window.escapeHtml(row.territory)}</td>
+          <td style="font-weight: 700; color: var(--gray-900);">${safeRepName}</td>
+          <td style="font-weight: 600; color: var(--gray-700);">${_covEsc(row.territory)}</td>
           <td>
             <button
               type="button"
               class="drilldown-btn btn-all ${isCurrentRep && coverageDrilldownState.type === 'all' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('all', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
+              data-drilldown-type="all"
+              data-rep-id="${safeRepId}"
+              data-rep-name="${safeRepName}"
               title="Show all doctors for this rep"
             >
               ${row.doctorsCount}
@@ -463,7 +766,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-visited ${isCurrentRep && coverageDrilldownState.type === 'visited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('visited', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
+              data-drilldown-type="visited"
+              data-rep-id="${safeRepId}"
+              data-rep-name="${safeRepName}"
               title="Show visited doctors only"
             >
               ${row.visitedCount}
@@ -473,7 +778,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-unvisited ${isCurrentRep && coverageDrilldownState.type === 'unvisited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('unvisited', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
+              data-drilldown-type="unvisited"
+              data-rep-id="${safeRepId}"
+              data-rep-name="${safeRepName}"
               title="Show unvisited doctors only"
             >
               ${row.unvisitedCount}
@@ -483,7 +790,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-actual ${isCurrentRep && coverageDrilldownState.type === 'actual' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('actual', '${window.escapeHtml(row.rep.id)}', '${window.escapeHtml(row.rep.name)}')"
+              data-drilldown-type="actual"
+              data-rep-id="${safeRepId}"
+              data-rep-name="${safeRepName}"
               title="Show actual visits doctors"
             >
               ${row.actualVisitsCount}
@@ -511,7 +820,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-all ${isTotalActive && coverageDrilldownState.type === 'all' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('all', null, 'All')"
+              data-drilldown-type="all"
+              data-rep-id=""
+              data-rep-name="All"
               title="Show all doctors"
             >
               ${grandDoctors}
@@ -521,7 +832,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-visited ${isTotalActive && coverageDrilldownState.type === 'visited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('visited', null, 'All')"
+              data-drilldown-type="visited"
+              data-rep-id=""
+              data-rep-name="All"
               title="Show all visited doctors"
             >
               ${grandVisited}
@@ -531,7 +844,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-unvisited ${isTotalActive && coverageDrilldownState.type === 'unvisited' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('unvisited', null, 'All')"
+              data-drilldown-type="unvisited"
+              data-rep-id=""
+              data-rep-name="All"
               title="Show all unvisited doctors"
             >
               ${grandUnvisited}
@@ -541,7 +856,9 @@ function renderCoverageReportView() {
             <button
               type="button"
               class="drilldown-btn btn-actual ${isTotalActive && coverageDrilldownState.type === 'actual' ? 'active' : ''}"
-              onclick="setCoverageDrilldown('actual', null, 'All')"
+              data-drilldown-type="actual"
+              data-rep-id=""
+              data-rep-name="All"
               title="Show all actual visit doctors"
             >
               ${grandActualVisits}
@@ -584,8 +901,9 @@ function renderCoverageReportView() {
   // 3. Filter targets for the Details Table based on active drilldown
   let detailsTargets = targetList.slice();
 
-  if (coverageDrilldownState.repId) {
-    detailsTargets = detailsTargets.filter((t) => t.repId === coverageDrilldownState.repId);
+  if (coverageDrilldownState.repId && !String(coverageDrilldownState.repId).startsWith('vacant:')) {
+    const matchedRow = renderedRepRows.find((r) => r.rep && r.rep.id === coverageDrilldownState.repId);
+    detailsTargets = matchedRow ? matchedRow.repTargets.slice() : detailsTargets.filter((t) => t.repId === coverageDrilldownState.repId);
   }
 
   if (coverageDrilldownState.type === 'visited') {
@@ -620,25 +938,31 @@ function renderCoverageReportView() {
         let timestampsHtml = '';
         if (matchingVisits.length > 0) {
           matchingVisits.forEach((v) => {
-            const isAct = Boolean(v.isActual) || v.source === 'actual';
+            const isAct = Boolean(v.isActual) || String(v.source || '').toLowerCase() === 'actual';
             const cardTypeClass = isAct ? 'actual-type' : 'planned-type';
             const typeLabel = isAct ? 'Actual' : 'Plan';
+
+            const insD = v.insertionDate || (v.createdAt ? String(v.createdAt).slice(0, 10) : v.date) || '';
+            let insT = v.insertionTime || '';
+            if (!insT && v.createdAt) {
+              const parsedCreated = new Date(v.createdAt);
+              if (!isNaN(parsedCreated.getTime())) {
+                insT = parsedCreated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+              }
+            }
+            if (!insT) insT = v.time || '10:00';
 
             timestampsHtml += `
               <div class="visit-timestamp-card ${cardTypeClass}" title="${isAct ? 'Direct Actual Visit' : 'Planned Visit'}">
                 <div class="visit-date-row">
-                  <span>${svgCalendar} ${v.date}</span>
+                  <span>${svgCalendar} ${_covEsc(v.date || '')}</span>
                   ${isAct ? `<span style="font-size: 0.7rem; color: #d97706;" title="Actual">★</span>` : ''}
                 </div>
                 <div class="visit-time-row">
-                  <span>${svgClock} ${v.time || '10:00'}</span>
+                  <span>${svgClock} ${_covEsc(v.time || '10:00')}</span>
                   <span style="opacity: 0.7;">• ${typeLabel}</span>
                 </div>
-                ${(() => {
-                  const insD = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date);
-                  const insT = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || '10:00'));
-                  return `<div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Ins: ${insD} ${insT}</div>`;
-                })()}
+                <div style="font-size: 0.68rem; color: #0d6efd; font-weight: 600; margin-top: 2px;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Ins: ${_covEsc(insD)} ${_covEsc(insT)}</div>
               </div>
             `;
           });
@@ -646,17 +970,23 @@ function renderCoverageReportView() {
           timestampsHtml = `<span style="color: var(--gray-400); font-style: italic; font-size: 0.8rem;">No visits in this period</span>`;
         }
 
+        const clsRaw = target.class != null ? String(target.class).trim() : '';
+        const clsUpper = clsRaw.toUpperCase();
+        const isHosp = clsRaw.toLowerCase() === 'hospital';
+        const classLabel = isHosp ? 'Hospital' : (clsRaw ? 'Class ' + clsRaw : 'Unclassified');
+        const badgeBg = clsUpper === 'A' ? 'var(--primary)' : (clsUpper === 'B' ? 'var(--info)' : '#6f42c1');
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <strong>${window.escapeHtml(target.name)}</strong>
+            <strong>${_covEsc(target.name || '')}</strong>
           </td>
           <td>
-            <span class="badge" style="background: ${target.class === 'A' ? 'var(--primary)' : target.class === 'B' ? 'var(--info)' : '#6f42c1'}; color: white; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem;">
-              ${target.class === 'hospital' || (target.class || '').toLowerCase() === 'hospital' ? 'Hospital' : 'Class ' + target.class}
+            <span class="badge" style="background: ${badgeBg}; color: white; padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem;">
+              ${_covEsc(classLabel)}
             </span>
           </td>
-          <td>${window.escapeHtml(target.specialty || '')}</td>
+          <td>${_covEsc(target.specialty || '')}</td>
           <td style="font-weight: 700; text-align: center;">${targetFreq}</td>
           <td style="font-weight: 800; color: var(--primary); text-align: center;">${visitsCount}</td>
           <td>
@@ -706,183 +1036,40 @@ function renderCoverageReportView() {
 // Section 9.1: Export CSV
 // ============================================================================
 function exportCoverageReport() {
-  syncReportsData();
-  const startDate = document.getElementById('coverageStartDate')?.value || _coverageStart();
-  const endDate = document.getElementById('coverageEndDate')?.value || _coverageEnd();
-  const classFilter = document.getElementById('coverageClassFilter')?.value || 'all';
-  const lmSelect = document.getElementById('coverageLmSelect');
-  const dmSelect = document.getElementById('coverageDmSelect');
-  const repSelect = document.getElementById('coverageRepSelect');
-  const selectedRep = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
+  const dataset = buildCoverageDataset();
+  if (!dataset) return;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  let targetList = (REPORTS_DATA.doctors || []).slice();
-  if (classFilter === 'all_doctors') targetList = targetList.filter((d) => d.class === 'A' || d.class === 'B');
-  else if (classFilter === 'A') targetList = targetList.filter((d) => d.class === 'A');
-  else if (classFilter === 'B') targetList = targetList.filter((d) => d.class === 'B');
-  else if (classFilter === 'hospital') targetList = targetList.filter((d) => d.class === 'hospital' || (d.class || '').toLowerCase() === 'hospital');
-
-  const user = checkAuth();
-  const allUsers = typeof getSharedReportUsers === 'function'
-    ? getSharedReportUsers()
-    : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
-  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
-  const isRep = window.isRepRole ? window.isRepRole(user) : (role === 'medical_rep' || role === 'rep');
-
-  // Scope doctors by user role and rep filter (aligned with renderCoverageReport)
-  if (selectedRep && selectedRep.startsWith('vacant:')) {
-    const vacantAreaId = selectedRep.split(':')[1];
-    const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
-    const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
-    targetList = targetList.filter((d) => {
-      if (d.areaId) return d.areaId === vacantAreaId;
-      if (areaNameLower && d.area && d.area.toLowerCase().trim() === areaNameLower) {
-        if (vacantArea && vacantArea.lineId && d.lineId) return d.lineId === vacantArea.lineId;
-        return true;
-      }
-      return false;
-    });
-  } else if (isRep) {
-    targetList = targetList.filter((d) => d.repId === user.id);
-  } else if (role === 'district_manager' || role === 'dm') {
-    const teamReps = allUsers.filter((u) => u.managerId === user.id);
-    const teamRepIds = teamReps.map((u) => u.id);
-    const allowedIds = [user.id, ...teamRepIds];
-
-    if (selectedRep === 'all') {
-      targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
-    } else {
-      const repUser = allUsers.find((u) => u.id === selectedRep);
-      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-      const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-      if (repUser && repUser.area) {
-        repUser.area.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) repAreaNames.push(t);
-        });
-      }
-      targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))) && (!d.repId || allowedIds.includes(d.repId)));
-    }
-  } else if (role === 'line_manager' || role === 'lm') {
-    const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
-    const dmIds = dms.map((d) => d.id);
-    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
-    const repIds = reps.map((r) => r.id);
-    const allowedIds = [user.id, ...dmIds, ...repIds];
-
-    if (selectedRep === 'all') {
-      targetList = targetList.filter((d) => d.repId && allowedIds.includes(d.repId));
-    } else if (dmIds.includes(selectedRep)) {
-      const dmReps = reps.filter((r) => r.managerId === selectedRep).map((r) => r.id);
-      targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedIds.includes(d.repId));
-    } else if (selectedRep) {
-      const repUser = allUsers.find((u) => u.id === selectedRep);
-      const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-      const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-      const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-      if (repUser && repUser.area) {
-        repUser.area.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) repAreaNames.push(t);
-        });
-      }
-      targetList = targetList.filter((d) => (d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim()))) && (!d.repId || allowedIds.includes(d.repId)));
-    }
-  } else if (role === 'business_unit' || role === 'bu') {
-    const myLMs = allUsers.filter((u) => u.managerId === user.id && (u.role === 'line_manager' || u.role === 'lm'));
-    const lmIds = myLMs.map((u) => u.id);
-    const myDownstream = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
-    const myDownstreamIds = myDownstream.map((u) => u.id);
-    const allowedTeamIds = [user.id, ...lmIds, ...myDownstreamIds];
-
-    if (selectedRep === 'all') {
-      targetList = targetList.filter((d) => d.repId && allowedTeamIds.includes(d.repId));
-    } else {
-      const isSelectedLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
-      const isSelectedDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-      if (isSelectedLM) {
-        const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        const lmTeamIds = [selectedRep, ...dmsUnderLM, ...repsUnderLM];
-        targetList = targetList.filter((d) => (lmTeamIds.includes(d.repId)) && allowedTeamIds.includes(d.repId));
-      } else if (isSelectedDM) {
-        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        targetList = targetList.filter((d) => (d.repId === selectedRep || dmReps.includes(d.repId)) && allowedTeamIds.includes(d.repId));
-      } else {
-        targetList = targetList.filter((d) => d.repId === selectedRep && allowedTeamIds.includes(d.repId));
-      }
-    }
-  } else if (selectedRep && selectedRep !== 'all') {
-    if (selectedRep === 'all_reps') {
-      const repIds = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))).map((u) => u.id);
-      targetList = targetList.filter((d) => d.repId && repIds.includes(d.repId));
-    } else if (selectedRep === 'all_dms') {
-      const dmIds = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm'))).map((u) => u.id);
-      const dmTeamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
-      targetList = targetList.filter((d) => d.repId && (dmIds.includes(d.repId) || dmTeamRepIds.includes(d.repId)));
-    } else {
-      const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
-      if (isDM) {
-        const dmReps = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        targetList = targetList.filter((d) => d.repId === selectedRep || dmReps.includes(d.repId));
-      } else {
-        const repUser = allUsers.find((u) => u.id === selectedRep);
-        const repUserAreaIds = repUser ? (repUser.areaIds || (repUser.areaId ? [repUser.areaId] : [])) : [];
-        const repAreaIds = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => a.id);
-        const repAreaNames = allAreas.filter((a) => a.repId === selectedRep || repUserAreaIds.includes(a.id)).map((a) => (a.name || '').toLowerCase().trim());
-        if (repUser && repUser.area) {
-          repUser.area.split(',').forEach((s) => {
-            const t = s.trim().toLowerCase();
-            if (t) repAreaNames.push(t);
-          });
-        }
-        targetList = targetList.filter((d) => d.repId === selectedRep || (d.areaId && repAreaIds.includes(d.areaId)) || (d.area && repAreaNames.includes(d.area.toLowerCase().trim())));
-      }
-    }
-  }
-
-  const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-  if (selectedLineId !== 'all') {
-    targetList = targetList.filter((d) => {
-      if (d.lineId) return d.lineId === selectedLineId;
-      if (!d.repId) return true;
-      const repLines = window.getUserLines ? window.getUserLines(d.repId) : [];
-      return repLines.some((l) => l.id === selectedLineId);
-    });
-  }
-
-  const diffDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  const { startDate, endDate, targetList } = dataset;
 
   let totalTarget = 0;
   let totalExecuted = 0;
 
   let csv = 'Target Name,Area,Class,Specialty,Target Visits,Actual Visits\n';
   targetList.forEach((target) => {
-    const matchingVisits = (REPORTS_DATA.visits || []).filter((v) => {
-      const isCompleted = v.status === 'completed' || Boolean(v.isActual) || v.source === 'actual';
-      if (!isCompleted) return false;
-      const matchesTarget = (v.doctorId && target.id) ? (v.doctorId === target.id) : (v.targetName === target.name);
-      if (!matchesTarget) return false;
-      const vDate = new Date(v.date);
-      return vDate >= start && vDate <= end;
-    });
-    const visitsCount = matchingVisits.length;
-    const quarterlyRate = target.targetQuarterly || ((typeof window.getDoctorCallTarget === 'function')
-      ? window.getDoctorCallTarget(target)
-      : (target.class === 'A' ? 4 : (target.class === 'B' ? 3 : (target.class === 'C' ? 1 : 6))));
-    const targetFreq = Math.max(1, Math.round((quarterlyRate / 90) * diffDays));
+    const visitsCount = target._visitsCount || 0;
+    const targetFreq = target._targetFreq || 1;
     totalTarget += targetFreq;
     totalExecuted += visitsCount;
 
-    csv += `"${target.name}","${target.area || ''}","${target.class}","${target.specialty || ''}",${targetFreq},${visitsCount}\n`;
+    csv += [
+      _covCsvCell(target.name || ''),
+      _covCsvCell(target.area || ''),
+      _covCsvCell(target.class || ''),
+      _covCsvCell(target.specialty || ''),
+      targetFreq,
+      visitsCount,
+    ].join(',') + '\n';
   });
 
   const overallCoverage = totalTarget > 0 ? Math.round((totalExecuted / totalTarget) * 100) : 0;
-  csv += `\n"Total Period Coverage","${startDate} to ${endDate}","${overallCoverage}%",,${totalTarget},${totalExecuted}\n`;
+  csv += '\n' + [
+    _covCsvCell('Total Period Coverage'),
+    _covCsvCell(`${startDate} to ${endDate}`),
+    _covCsvCell(`${overallCoverage}%`),
+    '',
+    totalTarget,
+    totalExecuted,
+  ].join(',') + '\n';
 
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -890,6 +1077,9 @@ function exportCoverageReport() {
   a.href = url;
   a.download = `PharmaCare_Coverage_${startDate}_to_${endDate}.csv`;
   a.click();
+  setTimeout(() => {
+    try { URL.revokeObjectURL(url); } catch (e) {}
+  }, 1000);
 }
 
 window.onCoverageFilterChange = function () {
@@ -898,4 +1088,3 @@ window.onCoverageFilterChange = function () {
     renderCoverageReport();
   }
 };
-

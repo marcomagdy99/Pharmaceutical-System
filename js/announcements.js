@@ -70,26 +70,97 @@ const announcementTranslations = {
   },
 };
 /* --- END TRANSLATIONS --- */
+/* --- START SECURITY & SANITIZATION HELPERS --- */
+const ALLOWED_PRIORITIES = ["high", "normal", "low"];
+const ALLOWED_TARGETS = ["all", "line_team", "dm_lm_bu", "lm_bu", "bu", "rep", "sales", "hr_admin", "hr"];
+const PM_ALLOWED_TARGETS = ["line_team", "dm_lm_bu", "lm_bu", "bu", "rep"];
+const ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+const SAFE_IMAGE_SRC_RE = /^(data:image\/(jpeg|jpg|png|webp|gif);base64,[A-Za-z0-9+/=]+|https?:\/\/[^\s"'<>]+|\/(?!\/)[^\s"'<>]+|\.\/[^\s"'<>]+|images\/[^\s"'<>]+)$/i;
+
+function _esc(str) {
+  if (typeof window !== "undefined" && typeof window.escapeHtml === "function") {
+    return window.escapeHtml(str);
+  }
+  if (str === undefined || str === null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/`/g, "&#96;");
+}
+
+function safeImageUrl(src) {
+  if (typeof src !== "string") return "";
+  const trimmed = src.trim();
+  if (!trimmed || trimmed.includes("..")) return "";
+  return SAFE_IMAGE_SRC_RE.test(trimmed) ? trimmed : "";
+}
+
+function getAnnTranslations(lang) {
+  return (lang && announcementTranslations[lang]) || announcementTranslations.en;
+}
+
+function getNormalizedRole(userOrRole) {
+  const raw = typeof userOrRole === "object" && userOrRole !== null ? userOrRole.role : userOrRole;
+  if (typeof window !== "undefined" && typeof window.normalizeRole === "function") {
+    return window.normalizeRole(raw);
+  }
+  const r = String(raw || "").toLowerCase().trim();
+  if (r === "pm" || r === "product manager") return "product_manager";
+  if (r === "dm" || r === "district manager") return "district_manager";
+  if (r === "lm" || r === "line manager") return "line_manager";
+  if (r === "bu" || r === "business unit") return "business_unit";
+  if (r === "rep" || r === "medical rep") return "medical_rep";
+  if (r === "gm" || r === "general manager") return "general_manager";
+  if (r === "administrator") return "admin";
+  if (r === "human_resources" || r === "human resources") return "hr";
+  return r;
+}
+
+function normalizeAnnouncementItem(a) {
+  if (!a || typeof a !== "object") return null;
+  return {
+    ...a,
+    priority: ALLOWED_PRIORITIES.includes(a.priority) ? a.priority : "normal",
+    target: ALLOWED_TARGETS.includes(a.target) ? a.target : "all",
+    readBy: Array.isArray(a.readBy) ? a.readBy : [],
+    image: a.image ? safeImageUrl(a.image) || null : null,
+  };
+}
+/* --- END SECURITY & SANITIZATION HELPERS --- */
 /* --- START STORAGE HELPERS --- */
 function loadAnnouncements() {
+  // Prefer cloud-synced DEMO_DATA.announcements if populated, else fall back to pharmaAnnouncements localStorage key
   try {
+    if (typeof window !== "undefined" && window.DEMO_DATA && Array.isArray(window.DEMO_DATA.announcements) && window.DEMO_DATA.announcements.length > 0) {
+      const normalized = window.DEMO_DATA.announcements.map(normalizeAnnouncementItem).filter(Boolean);
+      window.DEMO_DATA.announcements = normalized;
+      try {
+        localStorage.setItem("pharmaAnnouncements", JSON.stringify(normalized));
+      } catch (e) {}
+      return normalized;
+    }
     const saved = localStorage.getItem("pharmaAnnouncements");
-    if (saved) {
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        if (window.DEMO_DATA) window.DEMO_DATA.announcements = parsed;
-        return parsed;
+      if (Array.isArray(parsed)) {
+        const normalized = parsed.map(normalizeAnnouncementItem).filter(Boolean);
+        if (window.DEMO_DATA) window.DEMO_DATA.announcements = normalized;
+        return normalized;
       }
     }
   } catch (e) {
     console.error("Failed to load announcements from storage:", e);
   }
-  const fallback = [...demoAnnouncements];
-  if (window.DEMO_DATA && (!window.DEMO_DATA.announcements || !window.DEMO_DATA.announcements.length)) {
+  const fallback = demoAnnouncements.map(normalizeAnnouncementItem).filter(Boolean);
+  if (window.DEMO_DATA && !Array.isArray(window.DEMO_DATA.announcements)) {
     window.DEMO_DATA.announcements = fallback;
   }
   return fallback;
 }
+
 function saveAnnouncementsToStorage() {
   try {
     localStorage.setItem("pharmaAnnouncements", JSON.stringify(announcements));
@@ -99,8 +170,13 @@ function saveAnnouncementsToStorage() {
     if (typeof window.saveDataToStorage === "function") {
       window.saveDataToStorage();
     }
+    return true;
   } catch (e) {
     console.error("Failed to save announcements to storage:", e);
+    const errMsg = "Failed to save announcement (storage quota may be exceeded). Please try a smaller image or clear old items.";
+    if (typeof showToast === "function") showToast(errMsg, "error");
+    else if (typeof window.showToast === "function") window.showToast(errMsg, "error");
+    return false;
   }
 }
 /* --- END STORAGE HELPERS --- */
@@ -115,17 +191,21 @@ let currentUserLineIds = [];
 let expandedCards = new Set();
 let editAnnouncementId = null;
 let currentAnnouncementImage = null;
+let announcementsInitialized = false;
 /* --- END STATE --- */
 /* --- START LINE & ROLE HELPERS --- */
 function isPMUser(user) {
   if (!user) return false;
-  const r = (user.role || "").toLowerCase();
-  return r === "product_manager" || r === "pm";
+  return getNormalizedRole(user) === "product_manager";
 }
 function isAdminOrHrUser(user) {
   if (!user) return false;
-  const r = (user.role || "").toLowerCase();
+  const r = getNormalizedRole(user);
   return r === "admin" || r === "hr";
+}
+function isGMUser(user) {
+  if (!user) return false;
+  return getNormalizedRole(user) === "general_manager";
 }
 function canUserCreateAnnouncements(user) {
   return isAdminOrHrUser(user) || isPMUser(user);
@@ -152,6 +232,17 @@ function getProductLineName(lineId) {
 function getUserLineIds(user) {
   if (!user) return [];
   const lines = new Set();
+  // Use centralized app.js getUserLines when available (handles BU -> LM hierarchy & lineManagerId)
+  if (user.id && typeof window.getUserLines === "function") {
+    try {
+      const resolved = window.getUserLines(user.id);
+      if (Array.isArray(resolved)) {
+        resolved.forEach((l) => {
+          if (l && l.id) lines.add(l.id);
+        });
+      }
+    } catch (e) {}
+  }
   if (Array.isArray(user.lineIds)) {
     user.lineIds.forEach((l) => { if (l) lines.add(l); });
   }
@@ -184,10 +275,12 @@ function initAnnouncementsPage() {
         : (typeof checkAuth === "function" ? checkAuth() : (window.checkAuth ? window.checkAuth() : null)));
   if (!authUser) return;
   currentAuthUser = authUser;
-  currentUserRole = authUser.role || "medical_rep";
+  currentUserRole = getNormalizedRole(authUser) || "medical_rep";
   currentUserId = authUser.id || "";
   currentUserName = authUser.name || "";
   currentUserLineIds = getUserLineIds(authUser);
+  announcements = loadAnnouncements();
+  announcementsInitialized = true;
   if (window.i18n) {
     window.i18n.translations = {
       ...window.i18n.translations,
@@ -203,14 +296,16 @@ function initAnnouncementsPage() {
  * @returns {string} Time ago representation
  */
 function timeAgo(dateString) {
+  if (!dateString) return "";
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "";
   const now = new Date();
-  const diffMs = now - date;
+  const diffMs = Math.max(0, now - date);
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
   const lang = window.i18n ? window.i18n.currentLang : "en";
-  const t = announcementTranslations[lang];
+  const t = getAnnTranslations(lang);
   if (diffMins < 1) return t.justNow;
   if (diffMins < 60) return t.timeAgo.replace("{0}", diffMins + " " + t.mins);
   if (diffHours < 24)
@@ -224,9 +319,11 @@ function timeAgo(dateString) {
  */
 function renderPage() {
   const content = document.getElementById("pageContent");
-  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
-  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
-  const canCreate = canUserCreateAnnouncements(currentAuthUser || { role: currentUserRole });
+  if (!content) return;
+  const userObj = currentAuthUser || { role: currentUserRole };
+  const isHR = isAdminOrHrUser(userObj);
+  const isPM = isPMUser(userObj);
+  const canCreate = canUserCreateAnnouncements(userObj);
   let html = `
         <div class="announcements-header">
             <h1 data-i18n="announcements">Announcements</h1>
@@ -239,11 +336,11 @@ function renderPage() {
   html += `
         <div class="announcements-controls">
             <select class="filter-select" onchange="setFilter(this.value)">
-                <option value="all" data-i18n="filterAll">All</option>
-                ${!canCreate ? `<option value="unread" data-i18n="filterUnread">Unread Only</option>` : ""}
-                <option value="high" data-i18n="filterHigh">High Priority</option>
-                <option value="normal" data-i18n="filterNormal">Normal Priority</option>
-                <option value="low" data-i18n="filterLow">Low Priority</option>
+                <option value="all" data-i18n="filterAll" ${currentFilter === "all" ? "selected" : ""}>All</option>
+                ${!isHR ? `<option value="unread" data-i18n="filterUnread" ${currentFilter === "unread" ? "selected" : ""}>Unread Only</option>` : ""}
+                <option value="high" data-i18n="filterHigh" ${currentFilter === "high" ? "selected" : ""}>High Priority</option>
+                <option value="normal" data-i18n="filterNormal" ${currentFilter === "normal" ? "selected" : ""}>Normal Priority</option>
+                <option value="low" data-i18n="filterLow" ${currentFilter === "low" ? "selected" : ""}>Low Priority</option>
             </select>
         </div>
         <div class="announcements-list">
@@ -251,6 +348,31 @@ function renderPage() {
         </div>
     `;
   content.innerHTML = html;
+
+  if (content.dataset && !content.dataset.annDelegated && typeof content.addEventListener === "function") {
+    content.dataset.annDelegated = "true";
+    content.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!target || typeof target.closest !== "function") return;
+      const actionEl = target.closest("[data-ann-action]");
+      if (!actionEl) return;
+      const action = actionEl.dataset.annAction;
+      const annId = actionEl.dataset.annId;
+      if (!annId) return;
+      if (action === "edit") {
+        openAnnouncementModal(annId);
+      } else if (action === "delete") {
+        openDeleteModal(annId);
+      } else if (action === "lightbox") {
+        openImageLightbox(annId);
+      } else if (action === "toggle-expand") {
+        toggleExpand(annId);
+      } else if (action === "mark-read") {
+        markAsRead(annId);
+      }
+    });
+  }
+
   const modalContainer = document.getElementById("modalContainer");
   if (!document.getElementById("announcementModal")) {
     let modalsHtml = renderLightboxModal();
@@ -277,7 +399,9 @@ function renderUserStats(isPM = false) {
   const thisMonth = visible.filter((a) => {
     const d = new Date(a.createdAt);
     return (
-      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      !isNaN(d.getTime()) &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
     );
   }).length;
   return `
@@ -311,18 +435,18 @@ function renderHRStats() {
  */
 function isUserInTargetAudience(annTarget, userRole) {
   if (!annTarget || annTarget === "all" || annTarget === "line_team") return true;
-  const r = (userRole || "").toLowerCase();
-  const isHR = (r === "hr");
-  const isAdmin = (r === "admin");
-  const isPM = (r === "product_manager" || r === "pm");
+  const r = getNormalizedRole(userRole);
+  const isHR = r === "hr";
+  const isAdmin = r === "admin";
+  const isGM = r === "general_manager";
   if (annTarget === "hr_admin" || annTarget === "hr") {
-    return isHR || isAdmin;
+    return isHR || isAdmin || isGM;
   }
-  if (r === "hr" || r === "admin") return true;
-  const isRep = (r === "medical_rep" || r === "rep");
-  const isDM = (r === "district_manager" || r === "dm");
-  const isLM = (r === "line_manager" || r === "lm");
-  const isBU = (r === "business_unit" || r === "bu");
+  if (isHR || isAdmin || isGM) return true;
+  const isRep = r === "medical_rep";
+  const isDM = r === "district_manager";
+  const isLM = r === "line_manager";
+  const isBU = r === "business_unit";
   if (annTarget === "dm_lm_bu") {
     return isDM || isLM || isBU;
   }
@@ -346,10 +470,11 @@ function isUserInTargetAudience(annTarget, userRole) {
  */
 function isAnnouncementVisibleToUser(ann, user) {
   if (!ann || !user) return false;
-  const role = (user.role || "").toLowerCase();
-  const isAdmin = (role === "admin");
-  const isHR = (role === "hr");
-  const isAuthor = (ann.createdBy && ann.createdBy === user.id);
+  const role = getNormalizedRole(user);
+  const isAdmin = role === "admin";
+  const isHR = role === "hr";
+  const isGM = role === "general_manager";
+  const isAuthor = Boolean(ann.createdBy && ann.createdBy === user.id);
   // Draft check: only author or Admin/HR can see unpublished announcements
   if (!ann.published && !isAuthor && !isAdmin && !isHR) {
     return false;
@@ -357,8 +482,8 @@ function isAnnouncementVisibleToUser(ann, user) {
   // 1. Line Scoping Check:
   // If announcement is scoped to a specific product line (targetLineId):
   if (ann.targetLineId) {
-    // Admin and HR always have global oversight
-    if (!isAdmin && !isHR) {
+    // Admin, HR, and GM have global oversight
+    if (!isAdmin && !isHR && !isGM && !isAuthor) {
       const uLines = getUserLineIds(user);
       // Strictly hidden if the user does NOT belong to this product line
       if (!uLines.includes(ann.targetLineId)) {
@@ -367,7 +492,7 @@ function isAnnouncementVisibleToUser(ann, user) {
     }
   }
   // 2. Target Audience Check (Reps, DMs, LMs, BU, HR, etc.)
-  if (!isAdmin && !isHR && !isAuthor) {
+  if (!isAdmin && !isHR && !isGM && !isAuthor) {
     if (!isUserInTargetAudience(ann.target, role)) {
       return false;
     }
@@ -389,7 +514,8 @@ function getVisibleAnnouncements() {
 function renderAnnouncementsList() {
   const visible = getVisibleAnnouncements();
   let filtered = visible.filter((a) => {
-    if (currentFilter === "unread") return !a.readBy.includes(currentUserId);
+    const readList = Array.isArray(a.readBy) ? a.readBy : [];
+    if (currentFilter === "unread") return !readList.includes(currentUserId);
     if (
       currentFilter === "high" ||
       currentFilter === "normal" ||
@@ -399,7 +525,7 @@ function renderAnnouncementsList() {
     }
     return true;
   });
-  filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   if (filtered.length === 0) {
     return `<div class="empty-state" data-i18n="noAnnouncements">No announcements found.</div>`;
   }
@@ -412,25 +538,34 @@ function renderAnnouncementsList() {
  */
 function renderAnnouncementCard(ann) {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
-  const isAuthor = (ann.createdBy && ann.createdBy === currentUserId);
+  const isAuthor = Boolean(ann.createdBy && ann.createdBy === currentUserId);
   const canManageCard = isHR || isAuthor;
-  const safeId = window.escapeHtml(ann.id || "");
-  const safePriority = window.escapeHtml(ann.priority || "normal");
-  const isRead = ann.readBy.includes(currentUserId);
+  const safeId = _esc(ann.id || "");
+  const rawPriority = ALLOWED_PRIORITIES.includes(ann.priority) ? ann.priority : "normal";
+  const safePriority = _esc(rawPriority);
+  const readBy = Array.isArray(ann.readBy) ? ann.readBy : [];
+  const isRead = Boolean(currentUserId && readBy.includes(currentUserId));
   const isExpanded = expandedCards.has(ann.id);
   const lang = window.i18n ? window.i18n.currentLang : "en";
-  const title = window.escapeHtml(ann.title || ann.titleAr || "");
-  const body = window.escapeHtml(ann.body || ann.bodyAr || "");
-  const authorName = window.escapeHtml((ann.createdBy && window.store && window.store.users && window.store.users.getById(ann.createdBy) ? window.store.users.getById(ann.createdBy).name : "") || ann.createdByName || "HR Department");
-  const safeImage = ann.image ? window.escapeHtml(ann.image) : "";
+  const t = getAnnTranslations(lang);
+  const title = _esc(ann.title || ann.titleAr || "");
+  const body = _esc(ann.body || ann.bodyAr || "");
+  const authorObj = (ann.createdBy && window.store && window.store.users && typeof window.store.users.getById === "function")
+    ? window.store.users.getById(ann.createdBy)
+    : null;
+  const authorName = _esc((authorObj && authorObj.name) || ann.createdByName || "HR Department");
+  const validatedImg = safeImageUrl(ann.image);
+  const safeImage = validatedImg ? _esc(validatedImg) : "";
   const priorityClass = `priority-${safePriority}`;
   const unreadClass = !isRead && !isHR ? "unread" : "";
   const priorityIcon =
-    ann.priority === "high"
+    rawPriority === "high"
       ? "exclamation-circle"
-      : ann.priority === "normal"
+      : rawPriority === "normal"
         ? "info-circle"
         : "circle";
+  const priorityKey = "priority" + rawPriority.charAt(0).toUpperCase() + rawPriority.slice(1);
+  const priorityLabel = _esc(t[priorityKey] || rawPriority);
   const targetKeyMap = {
     all: "targetAll",
     line_team: "targetLineTeam",
@@ -443,19 +578,19 @@ function renderAnnouncementCard(ann) {
     hr: "targetHrAdmin"
   };
   const targetKey = targetKeyMap[ann.target] || "targetAll";
-  const targetLabel = (announcementTranslations[lang] && announcementTranslations[lang][targetKey]) || (announcementTranslations.en && announcementTranslations.en[targetKey]) || "All Company";
+  const targetLabel = _esc(t[targetKey] || announcementTranslations.en[targetKey] || "All Company");
   let lineBadgeHtml = "";
   if (ann.targetLineId) {
     const lineName = getProductLineName(ann.targetLineId);
-    const scopeTpl = (announcementTranslations[lang] && announcementTranslations[lang].lineScopeBadge) || "Line: {0}";
-    lineBadgeHtml = `<span class="badge badge-line"><i class="fas fa-layer-group"></i> ${scopeTpl.replace("{0}", window.escapeHtml(lineName))}</span>`;
+    const scopeTpl = t.lineScopeBadge || "Line: {0}";
+    lineBadgeHtml = `<span class="badge badge-line"><i class="fas fa-layer-group"></i> ${scopeTpl.replace("{0}", _esc(lineName))}</span>`;
   }
   return `
         <div class="announcement-card ${priorityClass} ${unreadClass}" id="card-${safeId}">
             <div class="card-header">
                 <div class="badges">
                     <span class="badge badge-${safePriority}">
-                        <i class="fas fa-${priorityIcon}"></i> <span data-i18n="priority${ann.priority.charAt(0).toUpperCase() + ann.priority.slice(1)}">${safePriority}</span>
+                        <i class="fas fa-${priorityIcon}"></i> <span data-i18n="${priorityKey}">${priorityLabel}</span>
                     </span>
                     ${lineBadgeHtml}
                     <span class="badge badge-target">
@@ -468,8 +603,8 @@ function renderAnnouncementCard(ann) {
                   canManageCard
                     ? `
                 <div class="actions">
-                    <button class="btn-icon" onclick="openAnnouncementModal('${safeId}')" title="Edit"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon text-danger" onclick="openDeleteModal('${safeId}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    <button type="button" class="btn-icon" data-ann-action="edit" data-ann-id="${safeId}" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn-icon text-danger" data-ann-action="delete" data-ann-id="${safeId}" title="Delete"><i class="fas fa-trash"></i></button>
                 </div>
                 `
                     : ""
@@ -479,12 +614,12 @@ function renderAnnouncementCard(ann) {
             <div class="card-meta">
                 <span><i class="fas fa-user"></i> ${authorName}</span>
                 <span><i class="fas fa-clock"></i> ${timeAgo(ann.createdAt)}</span>
-                ${canManageCard ? `<span title="Read by"><i class="fas fa-eye"></i> ${ann.readBy.length}</span>` : ""}
+                ${canManageCard ? `<span title="Read by"><i class="fas fa-eye"></i> ${readBy.length}</span>` : ""}
             </div>
             ${
               safeImage
                 ? `
-            <div class="announcement-image-box" onclick="openImageLightbox('${safeId}')" title="Click to view image">
+            <div class="announcement-image-box" data-ann-action="lightbox" data-ann-id="${safeId}" title="Click to view image">
                 <img src="${safeImage}" alt="${title}" class="announcement-image" loading="lazy" />
             </div>
             `
@@ -494,11 +629,11 @@ function renderAnnouncementCard(ann) {
                 ${body}
             </div>
             <div class="card-footer">
-                <button class="btn btn-text" onclick="toggleExpand('${safeId}')">
+                <button type="button" class="btn btn-text" data-ann-action="toggle-expand" data-ann-id="${safeId}">
                     <span data-i18n="${isExpanded ? "readLess" : "readMore"}">${isExpanded ? "Read Less" : "Read More"}</span>
                     <i class="fas fa-chevron-${isExpanded ? "up" : "down"}"></i>
                 </button>
-                ${!isRead && !isHR ? `<button class="btn btn-outline-primary btn-sm" onclick="markAsRead('${safeId}')" data-i18n="markAsRead">Mark as Read</button>` : ""}
+                ${!isRead && !isHR ? `<button type="button" class="btn btn-outline-primary btn-sm" data-ann-action="mark-read" data-ann-id="${safeId}" data-i18n="markAsRead">Mark as Read</button>` : ""}
             </div>
         </div>
     `;
@@ -557,7 +692,7 @@ function renderModals() {
                         </div>
                         <div class="form-group">
                             <label data-i18n="imageOptional">Announcement Image (Optional)</label>
-                            <input type="file" id="annImageInput" accept="image/*" class="hidden-file-input" onchange="handleImageSelect(event)">
+                            <input type="file" id="annImageInput" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden-file-input" onchange="handleImageSelect(event)">
                             <div class="image-upload-dropzone" id="annImageUploadDropzone" onclick="document.getElementById('annImageInput').click()">
                                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                 <span class="upload-text" data-i18n="uploadImage">Upload Image</span>
@@ -623,7 +758,8 @@ function renderLightboxModal() {
  * @param {string} val Filter value
  */
 function setFilter(val) {
-  currentFilter = val;
+  const allowedFilters = ["all", "unread", "high", "normal", "low"];
+  currentFilter = allowedFilters.includes(val) ? val : "all";
   renderPage();
   if (window.i18n) window.i18n.updatePage();
 }
@@ -645,8 +781,13 @@ function toggleExpand(id) {
  * @param {string} id Announcement ID
  */
 function markAsRead(id) {
+  if (!currentUserId) return;
   const ann = announcements.find((a) => a.id === id);
-  if (ann && !ann.readBy.includes(currentUserId)) {
+  if (!ann) return;
+  const userObj = currentAuthUser || { id: currentUserId, role: currentUserRole };
+  if (!isAnnouncementVisibleToUser(ann, userObj)) return;
+  if (!Array.isArray(ann.readBy)) ann.readBy = [];
+  if (!ann.readBy.includes(currentUserId)) {
     ann.readBy.push(currentUserId);
     saveAnnouncementsToStorage();
     renderPage();
@@ -658,18 +799,29 @@ function markAsRead(id) {
  * @param {string|null} id Announcement ID to edit, or null for new
  */
 function openAnnouncementModal(id = null) {
-  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
-  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  const userObj = currentAuthUser || { id: currentUserId, role: currentUserRole };
+  const isHR = isAdminOrHrUser(userObj);
+  const isPM = isPMUser(userObj);
   if (!isHR && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
+  }
+  // Refresh PM lines dynamically; Fail-Closed if PM has no assigned product lines
+  if (isPM && !isHR) {
+    currentUserLineIds = getUserLineIds(userObj);
+    if (currentUserLineIds.length === 0) {
+      if (typeof showToast === "function") {
+        showToast("Cannot create announcement: No product line is assigned to your Product Manager account.", "error");
+      }
+      return;
+    }
   }
   // If editing, check if user is allowed to edit this announcement
   let existingAnn = null;
   if (id) {
     existingAnn = announcements.find((a) => a.id === id);
     if (!existingAnn) return;
-    const isAuthor = (existingAnn.createdBy && existingAnn.createdBy === currentUserId);
+    const isAuthor = Boolean(existingAnn.createdBy && existingAnn.createdBy === currentUserId);
     if (!isHR && !isAuthor) {
       if (typeof showToast === "function") showToast("Permission Denied: You can only edit your own announcements.", "error");
       return;
@@ -678,63 +830,100 @@ function openAnnouncementModal(id = null) {
   editAnnouncementId = id;
   const modal = document.getElementById("announcementModal");
   const titleEl = document.getElementById("modalTitle");
-  // Populate line selection dropdown
   const lineSelect = document.getElementById("annTargetLine");
+  const targetSelect = document.getElementById("annTarget");
   const lineHint = document.getElementById("annLineHint");
   const allLines = getAllProductLines();
   const lang = window.i18n ? window.i18n.currentLang : "en";
-  if (lineSelect) {
-    const allLinesLabel = (announcementTranslations[lang] && announcementTranslations[lang].allLines) || "All Lines (Company-wide)";
-    lineSelect.innerHTML = `<option value="">${allLinesLabel}</option>` +
-      allLines.map((l) => `<option value="${l.id}">${window.escapeHtml((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
+  const t = getAnnTranslations(lang);
+
+  // Enforce target audience options (PM cannot target Company-wide "all" or "hr_admin")
+  if (targetSelect) {
+    const allowedTargetsForUser = (isPM && !isHR)
+      ? [
+          { v: "line_team", k: "targetLineTeam" },
+          { v: "dm_lm_bu", k: "targetDmLmBu" },
+          { v: "lm_bu", k: "targetLmBu" },
+          { v: "bu", k: "targetBu" },
+          { v: "rep", k: "targetRep" },
+        ]
+      : [
+          { v: "all", k: "targetAll" },
+          { v: "line_team", k: "targetLineTeam" },
+          { v: "dm_lm_bu", k: "targetDmLmBu" },
+          { v: "lm_bu", k: "targetLmBu" },
+          { v: "bu", k: "targetBu" },
+          { v: "rep", k: "targetRep" },
+          { v: "hr_admin", k: "targetHrAdmin" },
+        ];
+    targetSelect.innerHTML = allowedTargetsForUser
+      .map((opt) => `<option value="${_esc(opt.v)}" data-i18n="${opt.k}">${_esc(t[opt.k] || opt.v)}</option>`)
+      .join("");
   }
+
   // Enforce PM line scoping rules:
   if (isPM && !isHR) {
-    // PM can only publish to their line
-    const pmLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || "";
-    const pmLineName = getProductLineName(pmLineId);
+    const pmLines = allLines.filter((l) => currentUserLineIds.includes(l.id));
+    const pmLineOptions = pmLines.length > 0
+      ? pmLines.map((l) => `<option value="${_esc(l.id)}">${_esc((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("")
+      : currentUserLineIds.map((lid) => `<option value="${_esc(lid)}">${_esc(getProductLineName(lid))}</option>`).join("");
     if (lineSelect) {
-      lineSelect.value = pmLineId;
-      lineSelect.disabled = true; // Locked to PM line
+      lineSelect.innerHTML = pmLineOptions;
+      const defaultPmLine = (existingAnn && existingAnn.targetLineId && currentUserLineIds.includes(existingAnn.targetLineId))
+        ? existingAnn.targetLineId
+        : currentUserLineIds[0];
+      lineSelect.value = defaultPmLine;
+      lineSelect.disabled = currentUserLineIds.length <= 1;
     }
     if (lineHint) {
-      const pmNotice = (announcementTranslations[lang] && announcementTranslations[lang].pmLineNotice) || "This announcement will only be visible to team members within your product line ({0}).";
-      lineHint.textContent = pmNotice.replace("{0}", pmLineName || pmLineId);
+      const pmLineNames = currentUserLineIds.map((lid) => getProductLineName(lid) || lid).join(", ");
+      const pmNotice = t.pmLineNotice || "This announcement will only be visible to team members within your product line ({0}).";
+      lineHint.textContent = pmNotice.replace("{0}", pmLineNames);
       lineHint.style.color = "var(--primary, #0d6efd)";
     }
   } else {
     // HR / Admin can choose any line or company-wide
     if (lineSelect) {
+      const allLinesLabel = _esc(t.allLines || "All Lines (Company-wide)");
+      lineSelect.innerHTML = `<option value="">${allLinesLabel}</option>` +
+        allLines.map((l) => `<option value="${_esc(l.id)}">${_esc((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
       lineSelect.disabled = false;
     }
     if (lineHint) {
       lineHint.textContent = "";
     }
   }
+
   if (existingAnn) {
     document.getElementById("annTitle").value = existingAnn.title || existingAnn.titleAr || "";
     document.getElementById("annBody").value = existingAnn.body || existingAnn.bodyAr || "";
-    document.getElementById("annPriority").value = existingAnn.priority || "normal";
-    document.getElementById("annTarget").value = existingAnn.target || "all";
+    document.getElementById("annPriority").value = ALLOWED_PRIORITIES.includes(existingAnn.priority) ? existingAnn.priority : "normal";
+    if (targetSelect) {
+      const existingTarget = (isPM && !isHR && !PM_ALLOWED_TARGETS.includes(existingAnn.target)) ? "line_team" : (existingAnn.target || "all");
+      targetSelect.value = existingTarget;
+    }
     if (lineSelect && !isPM) {
       lineSelect.value = existingAnn.targetLineId || "";
     }
     document.getElementById("annPublish").checked = existingAnn.published !== false;
-    currentAnnouncementImage = existingAnn.image || null;
-    titleEl.setAttribute("data-i18n", "editAnnouncement");
-    if (window.i18n) {
-      titleEl.textContent = announcementTranslations[window.i18n.currentLang].editAnnouncement;
+    currentAnnouncementImage = existingAnn.image ? safeImageUrl(existingAnn.image) || null : null;
+    if (titleEl) {
+      titleEl.setAttribute("data-i18n", "editAnnouncement");
+      titleEl.textContent = t.editAnnouncement;
     }
   } else {
-    document.getElementById("announcementForm").reset();
+    const form = document.getElementById("announcementForm");
+    if (form) form.reset();
     currentAnnouncementImage = null;
-    if (isPM && lineSelect) {
-      const pmLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || "";
-      lineSelect.value = pmLineId;
+    if (isPM && !isHR && lineSelect) {
+      lineSelect.value = currentUserLineIds[0] || "";
     }
-    titleEl.setAttribute("data-i18n", "createAnnouncement");
-    if (window.i18n) {
-      titleEl.textContent = announcementTranslations[window.i18n.currentLang].createAnnouncement;
+    if (isPM && !isHR && targetSelect) {
+      targetSelect.value = "line_team";
+    }
+    if (titleEl) {
+      titleEl.setAttribute("data-i18n", "createAnnouncement");
+      titleEl.textContent = t.createAnnouncement;
     }
   }
   const fileInput = document.getElementById("annImageInput");
@@ -755,21 +944,23 @@ function openAnnouncementModal(id = null) {
  * @param {Event} event File input change event
  */
 function handleImageSelect(event) {
-  const file = event.target.files && event.target.files[0];
+  const file = event && event.target && event.target.files && event.target.files[0];
   if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    const msg = 'Please select a valid image file.';
-    if (typeof showToast === 'function') showToast(msg, 'warning');
-    else if (typeof window.showToast === 'function') window.showToast(msg, 'warning');
+  const mime = String(file.type || "").toLowerCase();
+  if (!ALLOWED_IMAGE_MIME_TYPES.includes(mime)) {
+    const msg = "Please select a valid JPG, PNG, WebP, or GIF image file.";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    else if (typeof window.showToast === "function") window.showToast(msg, "warning");
+    if (event.target) event.target.value = "";
     return;
   }
   // File size guard (max 2MB)
   const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
   if (file.size > MAX_IMAGE_SIZE) {
-    const sizeMsg = 'Image file size exceeds 2MB limit. Please select a smaller image.';
-    if (typeof showToast === 'function') showToast(sizeMsg, 'warning');
-    else if (typeof window.showToast === 'function') window.showToast(sizeMsg, 'warning');
-    if (event.target) event.target.value = '';
+    const sizeMsg = "Image file size exceeds 2MB limit. Please select a smaller image.";
+    if (typeof showToast === "function") showToast(sizeMsg, "warning");
+    else if (typeof window.showToast === "function") window.showToast(sizeMsg, "warning");
+    if (event.target) event.target.value = "";
     return;
   }
 
@@ -795,8 +986,14 @@ function handleImageSelect(event) {
       canvas.height = height;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
-      currentAnnouncementImage = canvas.toDataURL("image/jpeg", 0.70);
+      currentAnnouncementImage = safeImageUrl(canvas.toDataURL("image/jpeg", 0.70)) || null;
       renderImagePreview();
+    };
+    img.onerror = function () {
+      const errMsg = "Could not load selected image. Please choose a valid image file.";
+      if (typeof showToast === "function") showToast(errMsg, "warning");
+      else if (typeof window.showToast === "function") window.showToast(errMsg, "warning");
+      if (event.target) event.target.value = "";
     };
     img.src = rawDataUrl;
   };
@@ -818,22 +1015,37 @@ function renderImagePreview() {
   const previewContainer = document.getElementById("annImagePreviewContainer");
   const dropzone = document.getElementById("annImageUploadDropzone");
   const previewImg = document.getElementById("annImagePreview");
-  if (currentAnnouncementImage) {
-    if (previewImg) previewImg.src = currentAnnouncementImage;
-    if (previewContainer) previewContainer.style.display = "block";
-    if (dropzone) dropzone.style.display = "none";
+  const safeSrc = safeImageUrl(currentAnnouncementImage);
+  if (safeSrc) {
+    if (previewImg) previewImg.src = safeSrc;
+    if (previewContainer) {
+      previewContainer.classList.remove("d-none");
+      previewContainer.style.display = "block";
+    }
+    if (dropzone) {
+      dropzone.classList.add("d-none");
+      dropzone.style.display = "none";
+    }
   } else {
     if (previewImg) previewImg.src = "";
-    if (previewContainer) previewContainer.style.display = "none";
-    if (dropzone) dropzone.style.display = "flex";
+    if (previewContainer) {
+      previewContainer.classList.add("d-none");
+      previewContainer.style.display = "none";
+    }
+    if (dropzone) {
+      dropzone.classList.remove("d-none");
+      dropzone.style.display = "flex";
+    }
   }
 }
 /**
- * Sets up drag-and-drop support for the image upload area.
+ * Sets up drag-and-drop support for the image upload area (bound once).
  */
 function setupDragAndDrop() {
   const dropzone = document.getElementById("annImageUploadDropzone");
   if (!dropzone) return;
+  if (dropzone.dataset && dropzone.dataset.dndBound === "true") return;
+  if (dropzone.dataset) dropzone.dataset.dndBound = "true";
   dropzone.addEventListener("dragover", (e) => {
     e.preventDefault();
     dropzone.classList.add("dragover");
@@ -857,12 +1069,20 @@ function openImageLightbox(idOrSrc) {
   const lightbox = document.getElementById("imageLightboxModal");
   const lightboxImg = document.getElementById("lightboxImage");
   if (lightbox && lightboxImg) {
-    let resolvedSrc = idOrSrc;
-    if (typeof idOrSrc === "string" && !idOrSrc.startsWith("data:") && !idOrSrc.startsWith("http") && !idOrSrc.includes("/")) {
-      const ann = announcements.find((a) => a.id === idOrSrc);
-      if (ann && ann.image) resolvedSrc = ann.image;
+    let resolvedSrc = "";
+    if (typeof idOrSrc === "string") {
+      const byId = announcements.find((a) => a.id === idOrSrc);
+      if (byId) {
+        const userObj = currentAuthUser || { id: currentUserId, role: currentUserRole };
+        if (!isAnnouncementVisibleToUser(byId, userObj)) return;
+        resolvedSrc = byId.image || "";
+      } else {
+        resolvedSrc = idOrSrc;
+      }
     }
-    lightboxImg.src = resolvedSrc;
+    const safeSrc = safeImageUrl(resolvedSrc);
+    if (!safeSrc) return;
+    lightboxImg.src = safeSrc;
     lightbox.classList.add("active");
     lightbox.style.display = "flex";
     document.body.style.overflow = "hidden";
@@ -873,11 +1093,13 @@ function openImageLightbox(idOrSrc) {
  */
 function closeImageLightbox() {
   const lightbox = document.getElementById("imageLightboxModal");
+  const lightboxImg = document.getElementById("lightboxImage");
   if (lightbox) {
     lightbox.classList.remove("active");
     lightbox.classList.remove("show");
     lightbox.style.display = "none";
   }
+  if (lightboxImg) lightboxImg.src = "";
   document.body.style.overflow = "";
 }
 /**
@@ -891,63 +1113,100 @@ function closeModal(modalId) {
     modal.classList.remove("show");
     modal.style.display = "none";
   }
+  if (modalId === "announcementModal" || modalId === "deleteModal") {
+    editAnnouncementId = null;
+  }
   document.body.style.overflow = "";
 }
 /**
  * Saves announcement (create or update).
  */
 function saveAnnouncement() {
-  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
-  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  const userObj = currentAuthUser || { id: currentUserId, role: currentUserRole };
+  const isHR = isAdminOrHrUser(userObj);
+  const isPM = isPMUser(userObj);
   if (!isHR && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
-  const title = (document.getElementById("annTitle").value || "").trim();
-  const body = (document.getElementById("annBody").value || "").trim();
-  const priority = document.getElementById("annPriority").value;
-  const target = document.getElementById("annTarget").value;
-  const published = document.getElementById("annPublish").checked;
+  const title = (document.getElementById("annTitle")?.value || "").trim();
+  const body = (document.getElementById("annBody")?.value || "").trim();
+  const rawPriority = document.getElementById("annPriority")?.value;
+  const rawTarget = document.getElementById("annTarget")?.value;
+  const published = Boolean(document.getElementById("annPublish")?.checked);
+
+  const priority = ALLOWED_PRIORITIES.includes(rawPriority) ? rawPriority : "normal";
+  let target = ALLOWED_TARGETS.includes(rawTarget) ? rawTarget : "all";
   let targetLineId = null;
+
   if (isPM && !isHR) {
-    // PM announcements are STRICTLY scoped to their product line
-    targetLineId = currentUserLineIds[0] || (currentAuthUser && currentAuthUser.lineId) || null;
+    // PM announcements are STRICTLY scoped to their assigned product line(s) — Fail-Closed!
+    currentUserLineIds = getUserLineIds(userObj);
+    if (currentUserLineIds.length === 0) {
+      if (typeof showToast === "function") {
+        showToast("Permission Denied: No product line is assigned to your Product Manager account.", "error");
+      }
+      return;
+    }
+    const selectedLine = document.getElementById("annTargetLine") ? document.getElementById("annTargetLine").value : "";
+    targetLineId = (selectedLine && currentUserLineIds.includes(selectedLine)) ? selectedLine : currentUserLineIds[0];
+    if (!targetLineId) {
+      if (typeof showToast === "function") showToast("Permission Denied: Valid product line is required.", "error");
+      return;
+    }
+    if (!PM_ALLOWED_TARGETS.includes(target)) {
+      target = "line_team";
+    }
   } else {
     // HR / Admin can target a specific line or leave null for all lines
     const lineVal = document.getElementById("annTargetLine") ? document.getElementById("annTargetLine").value : "";
     targetLineId = lineVal || null;
   }
+
   if (!title || !body) {
-    const msg = 'Please fill all required fields.';
-    if (typeof showToast === 'function') showToast(msg, 'warning');
-    else if (typeof window.showToast === 'function') window.showToast(msg, 'warning');
+    const msg = "Please fill all required fields.";
+    if (typeof showToast === "function") showToast(msg, "warning");
+    else if (typeof window.showToast === "function") window.showToast(msg, "warning");
     return;
   }
+
+  const safeImg = currentAnnouncementImage ? (safeImageUrl(currentAnnouncementImage) || null) : null;
+  const prevAnnouncements = announcements.slice();
+
   if (editAnnouncementId) {
     const index = announcements.findIndex((a) => a.id === editAnnouncementId);
-    if (index > -1) {
-      const existing = announcements[index];
-      const isAuthor = (existing.createdBy && existing.createdBy === currentUserId);
-      if (!isHR && !isAuthor) {
-        if (typeof showToast === "function") showToast("Permission Denied: You cannot modify this announcement.", "error");
-        return;
-      }
-      announcements[index] = {
-        ...existing,
-        title,
-        titleAr: title,
-        body,
-        bodyAr: body,
-        priority,
-        target,
-        targetLineId: isPM ? targetLineId : (targetLineId || null),
-        published,
-        image: currentAnnouncementImage,
-      };
+    if (index === -1) {
+      const missingMsg = "This announcement no longer exists.";
+      if (typeof showToast === "function") showToast(missingMsg, "warning");
+      else if (typeof window.showToast === "function") window.showToast(missingMsg, "warning");
+      closeModal("announcementModal");
+      renderPage();
+      return;
     }
+    const existing = announcements[index];
+    const isAuthor = Boolean(existing.createdBy && existing.createdBy === currentUserId);
+    if (!isHR && !isAuthor) {
+      if (typeof showToast === "function") showToast("Permission Denied: You cannot modify this announcement.", "error");
+      return;
+    }
+    announcements[index] = {
+      ...existing,
+      title,
+      titleAr: title,
+      body,
+      bodyAr: body,
+      priority,
+      target,
+      targetLineId: isPM && !isHR ? targetLineId : (targetLineId || null),
+      published,
+      image: safeImg,
+    };
   } else {
+    const newId = (typeof window.genId === "function")
+      ? window.genId("ann_")
+      : ("ann_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8));
     const newAnn = {
-      id: "ann" + Date.now(),
+      id: newId,
       title,
       titleAr: title,
       body,
@@ -956,7 +1215,7 @@ function saveAnnouncement() {
       target,
       targetLineId: targetLineId,
       published,
-      image: currentAnnouncementImage,
+      image: safeImg,
       createdBy: currentUserId,
       createdByName: currentUserName || "HR Department",
       createdByRole: currentUserRole,
@@ -965,7 +1224,12 @@ function saveAnnouncement() {
     };
     announcements.unshift(newAnn);
   }
-  saveAnnouncementsToStorage();
+
+  if (!saveAnnouncementsToStorage()) {
+    announcements = prevAnnouncements;
+    return;
+  }
+  editAnnouncementId = null;
   closeModal("announcementModal");
   renderPage();
   if (window.i18n) window.i18n.updatePage();
@@ -975,15 +1239,16 @@ function saveAnnouncement() {
  * @param {string} id Announcement ID
  */
 function openDeleteModal(id) {
-  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
-  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  const userObj = currentAuthUser || { id: currentUserId, role: currentUserRole };
+  const isHR = isAdminOrHrUser(userObj);
+  const isPM = isPMUser(userObj);
   if (!isHR && !isPM) {
     if (typeof showToast === "function") showToast("Permission Denied: HR/Admin or Product Manager only.", "error");
     return;
   }
   const ann = announcements.find((a) => a.id === id);
   if (!ann) return;
-  const isAuthor = (ann.createdBy && ann.createdBy === currentUserId);
+  const isAuthor = Boolean(ann.createdBy && ann.createdBy === currentUserId);
   if (!isHR && !isAuthor) {
     if (typeof showToast === "function") showToast("Permission Denied: You can only delete your own announcements.", "error");
     return;
@@ -1001,21 +1266,40 @@ function openDeleteModal(id) {
  * Confirms deletion of announcement.
  */
 function confirmDelete() {
-  const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
-  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  const userObj = currentAuthUser || { id: currentUserId, role: currentUserRole };
+  const isHR = isAdminOrHrUser(userObj);
+  const isPM = isPMUser(userObj);
   if (!isHR && !isPM) return;
   if (editAnnouncementId) {
     const ann = announcements.find((a) => a.id === editAnnouncementId);
-    const isAuthor = ann && (ann.createdBy === currentUserId);
+    const isAuthor = Boolean(ann && ann.createdBy && ann.createdBy === currentUserId);
     if (!isHR && !isAuthor) return;
+    const prevAnnouncements = announcements.slice();
     announcements = announcements.filter((a) => a.id !== editAnnouncementId);
-    saveAnnouncementsToStorage();
+    if (!saveAnnouncementsToStorage()) {
+      announcements = prevAnnouncements;
+      return;
+    }
+    editAnnouncementId = null;
     closeModal("deleteModal");
     renderPage();
     if (window.i18n) window.i18n.updatePage();
   }
 }
 /* --- END ACTION FUNCTIONS --- */
+document.addEventListener("pharma:storage:synced", () => {
+  if (!announcementsInitialized) return;
+  if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.announcements)) {
+    announcements = window.DEMO_DATA.announcements.map(normalizeAnnouncementItem).filter(Boolean);
+    try {
+      localStorage.setItem("pharmaAnnouncements", JSON.stringify(announcements));
+    } catch (e) {}
+  } else {
+    announcements = loadAnnouncements();
+  }
+  renderPage();
+  if (window.i18n) window.i18n.updatePage();
+});
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeModal("announcementModal");

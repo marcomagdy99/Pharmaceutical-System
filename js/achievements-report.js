@@ -263,8 +263,8 @@ function populateAchAreas(filterUser) {
       areasToDisplay = allAreas.filter((a) => {
         if (a.repId && lmReps.includes(a.repId)) return true;
         const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
-        if (mgrId && (mgrId === curUser.id || dms.includes(mgrId))) return true;
-        if (!mgrId && (a.dmId && dms.includes(a.dmId))) return true;
+        if (mgrId && (mgrId === curUser.id || dmIds.includes(mgrId))) return true;
+        if (!mgrId && (a.dmId && dmIds.includes(a.dmId))) return true;
         if (lineLmsCount(a.lineId) <= 1) {
           if (curUser.lineId && a.lineId === curUser.lineId) return true;
           if (curUser.lineIds && curUser.lineIds.includes(a.lineId)) return true;

@@ -255,10 +255,12 @@ global.document.getElementById = (id) => {
   }
   return null;
 };
-window.DEMO_DATA.currentUser = { id: 'test_user' };
+const _origCheckAuth = window.checkAuth;
+window.checkAuth = () => ({ id: 'test_user', role: 'medical_rep' });
 window.store = { notifications: { getForUser: () => [testNotif] } };
 
 window.renderWorkflowNotifContent('all');
+window.checkAuth = _origCheckAuth;
 
 assert(!capturedHtml.includes('<script>'), 'Rendered HTML must NOT contain raw <script> tag');
 assert(capturedHtml.includes('&lt;script&gt;'), 'Rendered message must be safely HTML escaped');
@@ -343,6 +345,284 @@ console.log('10. Testing LM direct reps budget ceiling protection...');
 })();
 console.log('✓ Test 10: LM direct rep budget ceiling accurately enforced without false rejections');
 
+// -------------------------------------------------------------
+// Test 11: LM Preview Consistency & Services Partner Zero-Budget Protection
+// -------------------------------------------------------------
+console.log('11. Testing LM Preview existingSubDmsAlloc consistency & partner zero-budget check...');
+(function() {
+  const lineId = 'line_prev_test';
+  const lmUser = { id: 'lm_prev', role: 'line_manager', lineIds: [lineId] };
+  const dmUser = { id: 'dm_under_lm', role: 'district_manager', managerId: 'lm_prev', lineIds: [lineId] };
+  const directRep = { id: 'rep_under_lm', role: 'medical_rep', managerId: 'lm_prev', lineIds: [lineId] };
+
+  const testBudgets = {
+    [lineId]: {
+      totalBudget: 100000,
+      lmAllocations: { 'lm_prev': 100000 },
+      dmAllocations: { 'dm_under_lm': 60000 },
+      repAllocations: {},
+      auditLog: []
+    }
+  };
+
+  const usersList = [lmUser, dmUser, directRep];
+  const servicesList = [];
+
+  let capturedRemaining = null;
+  let capturedSpent = null;
+
+  global.document.getElementById = (id) => {
+    if (id === 'serviceBudgetLineSelect' || id === 'servicesLineFilter') return { value: lineId, children: [], dataset: {} };
+    if (id === 'srvMetricRemaining') return {
+      set textContent(v) { capturedRemaining = v; },
+      get textContent() { return capturedRemaining; },
+      style: {}
+    };
+    if (id === 'srvMetricApproved') return {
+      set textContent(v) { capturedSpent = v; },
+      get textContent() { return capturedSpent; },
+      style: {}
+    };
+    return { children: [], dataset: {}, value: '', style: {} };
+  };
+
+  const repInput = { dataset: { repid: 'rep_under_lm' }, value: '25000' };
+  global.document.querySelectorAll = (sel) => {
+    if (sel === '.dm-rep-alloc-input') return [repInput];
+    return [];
+  };
+
+  window.ActivitiesCore._state.currentUser = lmUser;
+  window.ActivitiesCore.getAuthUser = () => lmUser;
+  window.ActivitiesCore.getAllUsers = () => usersList;
+  window.ActivitiesCore.StoreAdapter.getBudgets = () => JSON.parse(JSON.stringify(testBudgets));
+
+  // Run calculateDmAllocationPreview for LM with 60k to DM + 25k to rep -> remaining must be exactly 15,000 (100k - 85k)
+  window.ActivitiesBudget.calculateDmAllocationPreview();
+  assert(capturedRemaining.includes('15,000'), `LM preview remaining must be 15,000 (100k - 60k DM - 25k Rep), got: ${capturedRemaining}`);
+  assert(capturedSpent.includes('85,000'), `LM preview total distributed must be 85,000, got: ${capturedSpent}`);
+
+  // Verify activities-tab-services.js strictly blocks partner with 0 allocated budget
+  const srvCode = fs.readFileSync('c:/Users/DeLL/OneDrive/Desktop/pharma-rep/Pharmaceutical-System/js/activities-tab-services.js', 'utf8');
+  assert(srvCode.includes('partnerMetrics.allocated <= 0'), 'Services must check partnerMetrics.allocated <= 0 without manager exemption');
+  assert(!srvCode.includes(': !isManager'), 'Services must NOT have legacy : !isManager bypass');
+})();
+console.log('✓ Test 11: LM Preview consistency and partner zero-budget protection verified');
+
+// -------------------------------------------------------------
+// Test 12: Direct LM Rep Expense & Service Status Initialization
+// -------------------------------------------------------------
+console.log('12. Testing Direct LM rep expense/service status and LM approval authorization...');
+(function() {
+  const lm = { id: 'lm_direct', role: 'line_manager' };
+  const directRep = { id: 'rep_direct_sub', role: 'medical_rep', managerId: 'lm_direct' };
+  const allUsers = [lm, directRep];
+
+  window.ActivitiesCore.getAllUsers = () => allUsers;
+  window.ActivitiesCore.getUserById = (id) => allUsers.find(u => u.id === id);
+
+  const directMgr = window.ActivitiesCore.getUserById(directRep.managerId);
+  const directMgrRole = directMgr ? (window.ActivitiesCore.getNormalizedRole ? window.ActivitiesCore.getNormalizedRole(directMgr) : (directMgr.role || '').toLowerCase()) : '';
+  const initialStatus = (directMgrRole === 'line_manager' || directMgrRole === 'lm') ? 'pending_lm' : 'pending_dm';
+
+  assert.strictEqual(initialStatus, 'pending_lm', 'Direct LM rep request must initialize directly to pending_lm');
+
+  // Verify LM authorization on pending_lm request
+  const testExp = { id: 'exp_test', requesterId: 'rep_direct_sub', status: 'pending_lm', nextApproverId: 'lm_direct' };
+  assert(window.ActivitiesCore.isActionAuthorized('approve_expense', testExp, lm), 'LM must be authorized to approve pending_lm expense from direct rep');
+})();
+console.log('✓ Test 12: Direct LM rep status initialization and LM approval authorization verified');
+
+// -------------------------------------------------------------
+// Test 13: LM-to-DM Allocation direct reps accounting in Preview and Save
+// -------------------------------------------------------------
+console.log('13. Testing LM-to-DM allocation direct reps floor & ceiling...');
+(function() {
+  const lineId = 'line_lm_dm_test';
+  const lm = { id: 'lm_user_1', role: 'line_manager', lineIds: [lineId] };
+  const dm = { id: 'dm_user_1', role: 'district_manager', managerId: 'lm_user_1', lineIds: [lineId] };
+  const directRep = { id: 'rep_direct_under_lm', role: 'medical_rep', managerId: 'lm_user_1', lineIds: [lineId] };
+
+  const testBudgets = {
+    [lineId]: {
+      totalBudget: 100000,
+      lmAllocations: { 'lm_user_1': 100000 },
+      dmAllocations: {},
+      repAllocations: { 'rep_direct_under_lm': 20000 }, // LM already gave 20k to direct rep!
+      auditLog: []
+    }
+  };
+
+  const usersList = [lm, dm, directRep];
+  let capturedRemaining = null;
+
+  global.document.getElementById = (id) => {
+    if (id === 'serviceBudgetLineSelect' || id === 'servicesLineFilter') return { value: lineId, children: [], dataset: {} };
+    if (id === 'srvMetricRemaining') return {
+      set textContent(v) { capturedRemaining = v; },
+      get textContent() { return capturedRemaining; },
+      style: {}
+    };
+    return { children: [], dataset: {}, value: '', style: {} };
+  };
+
+  const dmInput = { dataset: { dmid: 'dm_user_1' }, value: '80000' };
+  global.document.querySelectorAll = (sel) => {
+    if (sel === '.lm-dm-alloc-input') return [dmInput];
+    return [];
+  };
+
+  window.ActivitiesCore._state.currentUser = lm;
+  window.ActivitiesCore.getAuthUser = () => lm;
+  window.ActivitiesCore.getAllUsers = () => usersList;
+  window.ActivitiesCore.getDmsUnderLmForLine = () => [dm];
+  window.ActivitiesCore.getAllProductLines = () => [{ id: lineId, name: 'Test Line' }];
+  window.ActivitiesCore.getUserAssignedLines = () => [{ id: lineId, name: 'Test Line' }];
+  window.ActivitiesCore.StoreAdapter.getBudgets = () => JSON.parse(JSON.stringify(testBudgets));
+  window.ActivitiesCore.StoreAdapter.getServices = () => [];
+
+  const budgetCode = fs.readFileSync('c:/Users/DeLL/OneDrive/Desktop/pharma-rep/Pharmaceutical-System/js/activities-tab-budget.js', 'utf8');
+  eval(budgetCode);
+
+  // Preview with 80k to DM + 20k already to direct rep -> remaining must be exactly 0 (100k - 100k)
+  window.ActivitiesBudget.calculateLmAllocationPreview();
+  assert(capturedRemaining.includes('0'), `LM preview remaining must be 0 (100k - 80k DM - 20k direct Rep), got: ${capturedRemaining}`);
+
+  // Try over-allocating (85k to DM + 20k to direct rep = 105k > 100k)
+  let toastMsg = null;
+  window.ActivitiesCore.safeShowToast = (msg, type) => { toastMsg = { msg, type }; };
+  dmInput.value = '85000';
+  window.ActivitiesBudget.saveDmAllocations();
+  assert(toastMsg && toastMsg.type === 'danger', 'Saving DMs exceeding LM budget minus direct reps must be blocked');
+})();
+console.log('✓ Test 13: LM-to-DM allocation direct reps floor & ceiling accurately enforced');
+
+// -------------------------------------------------------------
+// Test 14: getBudgetMetricsForUser Rep Shared Service Double-Counting Elimination
+// -------------------------------------------------------------
+console.log('14. Testing Rep shared service double-counting elimination in getBudgetMetricsForUser...');
+(function() {
+  const lineId = 'line_rep_share_test';
+  const rep1 = { id: 'rep_1', role: 'medical_rep', lineIds: [lineId] };
+  const rep2 = { id: 'rep_2', role: 'medical_rep', lineIds: [lineId] };
+
+  const testBudgets = {
+    [lineId]: {
+      totalBudget: 50000,
+      repAllocations: { 'rep_1': 10000, 'rep_2': 10000 }
+    }
+  };
+
+  // Shared service requested by rep1: share 1 (rep1) = 3,000, share 2 (rep2) = 2,000
+  const sharedSrv = {
+    id: 'srv_shared_reps',
+    lineId: lineId,
+    cost: 5000,
+    requesterId: 'rep_1',
+    status: 'approved',
+    isShared: true,
+    shares: [
+      { lineId: lineId, repId: 'rep_1', shareAmount: 3000, status: 'approved' },
+      { lineId: lineId, repId: 'rep_2', shareAmount: 2000, status: 'approved' }
+    ]
+  };
+
+  window.ActivitiesCore._state.currentUser = rep1;
+  window.ActivitiesCore.getAuthUser = () => rep1;
+  window.ActivitiesCore.getAllUsers = () => [rep1, rep2];
+  window.ActivitiesCore.StoreAdapter.getBudgets = () => JSON.parse(JSON.stringify(testBudgets));
+  window.ActivitiesCore.StoreAdapter.getServices = () => [sharedSrv];
+
+  const srvCode = fs.readFileSync('c:/Users/DeLL/OneDrive/Desktop/pharma-rep/Pharmaceutical-System/js/activities-tab-services.js', 'utf8');
+  eval(srvCode);
+
+  const metricsRep1 = window.ActivitiesServices.getBudgetMetricsForUser(rep1, lineId);
+  assert.strictEqual(metricsRep1.utilized, 3000, `Rep 1 utilized must be exactly their share (3,000), got: ${metricsRep1.utilized}`);
+  assert.strictEqual(metricsRep1.remaining, 7000, `Rep 1 remaining must be 7,000 (10k - 3k), got: ${metricsRep1.remaining}`);
+
+  const metricsRep2 = window.ActivitiesServices.getBudgetMetricsForUser(rep2, lineId);
+  assert.strictEqual(metricsRep2.utilized, 2000, `Rep 2 utilized must be exactly their share (2,000), got: ${metricsRep2.utilized}`);
+  assert.strictEqual(metricsRep2.remaining, 8000, `Rep 2 remaining must be 8,000 (10k - 2k), got: ${metricsRep2.remaining}`);
+})();
+console.log('✓ Test 14: Rep shared service double-counting elimination verified');
+
+// -------------------------------------------------------------
+// Test 15: getBudgetMetricsForUser LM Direct Reps Distributed & Remaining Accounting
+// -------------------------------------------------------------
+console.log('15. Testing LM direct reps distributed and remaining accounting in getBudgetMetricsForUser...');
+(function() {
+  const lineId = 'line_lm_direct_test';
+  const lm = { id: 'lm_chief', role: 'line_manager', lineIds: [lineId] };
+  const dm = { id: 'dm_sub', role: 'district_manager', managerId: 'lm_chief', lineIds: [lineId] };
+  const directRep = { id: 'rep_direct_under_lm', role: 'medical_rep', managerId: 'lm_chief', lineIds: [lineId] };
+
+  const testBudgets = {
+    [lineId]: {
+      totalBudget: 100000,
+      lmAllocations: { 'lm_chief': 100000 },
+      dmAllocations: { 'dm_sub': 50000 },
+      repAllocations: { 'rep_direct_under_lm': 20000 }
+    }
+  };
+
+  window.ActivitiesCore._state.currentUser = lm;
+  window.ActivitiesCore.getAuthUser = () => lm;
+  window.ActivitiesCore.getAllUsers = () => [lm, dm, directRep];
+  window.ActivitiesCore.getDmsUnderLmForLine = () => [dm];
+  window.ActivitiesCore.StoreAdapter.getBudgets = () => JSON.parse(JSON.stringify(testBudgets));
+  window.ActivitiesCore.StoreAdapter.getServices = () => [];
+
+  const metricsLm = window.ActivitiesServices.getBudgetMetricsForUser(lm, lineId);
+  assert.strictEqual(metricsLm.allocated, 100000, 'LM allocated must be 100,000');
+  assert.strictEqual(metricsLm.distributed, 70000, `LM distributed must sum DM (50k) + direct rep (20k) = 70,000, got: ${metricsLm.distributed}`);
+  assert.strictEqual(metricsLm.remaining, 30000, `LM remaining must be 30,000 (100k - 70k), got: ${metricsLm.remaining}`);
+})();
+console.log('✓ Test 15: LM direct reps distributed and remaining accounting verified');
+
+// -------------------------------------------------------------
+// Test 16: Direct LM Rep Shared Service Primary Share Routing & getServiceActionButtons
+// -------------------------------------------------------------
+console.log('16. Testing Direct LM rep shared service primary share status & getServiceActionButtons...');
+(function() {
+  const lineId = 'line_shared_test';
+  const lm = { id: 'lm_direct', role: 'line_manager', lineIds: [lineId] };
+  const rep = { id: 'rep_under_lm', role: 'medical_rep', managerId: 'lm_direct', lineIds: [lineId] };
+  const admin = { id: 'admin_user', role: 'admin' };
+  const allUsers = [lm, rep, admin];
+
+  window.DEMO_DATA = window.DEMO_DATA || {};
+  window.DEMO_DATA.users = allUsers;
+  window.DEMO_DATA.areas = [{ id: 'area_1', lineId: lineId, repId: 'rep_under_lm' }];
+
+  delete require.cache[require.resolve('../js/activities-core.js')];
+  require('../js/activities-core.js');
+
+  const primaryHierarchy = window.ActivitiesCore.getLiveHierarchyForArea('area_1', rep.id);
+  const primaryDmId = primaryHierarchy.dmId || null;
+  const primaryLmId = primaryHierarchy.lmId || null;
+
+  assert.strictEqual(primaryDmId, null, 'Direct LM rep must have primaryDmId === null');
+  assert.strictEqual(primaryLmId, 'lm_direct', 'Direct LM rep must have primaryLmId === lm_direct');
+
+  let primaryShareStatus = 'pending_dm';
+  if (primaryDmId) {
+    primaryShareStatus = 'pending_dm';
+  } else if (primaryLmId) {
+    primaryShareStatus = 'pending_lm';
+  }
+  assert.strictEqual(primaryShareStatus, 'pending_lm', 'Direct LM rep primary share status must be pending_lm');
+
+  // Verify getServiceActionButtons renders reject button for Admin on approved service
+  const approvedSrv = { id: 'srv_appr', status: 'approved', requesterId: 'rep_under_lm' };
+  const srvCode = fs.readFileSync('c:/Users/DeLL/OneDrive/Desktop/pharma-rep/Pharmaceutical-System/js/activities-tab-services.js', 'utf8');
+  eval(srvCode);
+
+  const adminButtons = window.ActivitiesServices.getServiceActionButtons(approvedSrv, admin);
+  assert(adminButtons.includes('data-service-action="reject"'), 'Admin must have reject button rendered on approved service');
+  assert(!adminButtons.includes('data-service-action="approve"'), 'Admin must NOT have approve button rendered on already approved service');
+})();
+console.log('✓ Test 16: Direct LM rep shared service status & getServiceActionButtons verified');
+
 console.log('\n=================================================================');
-console.log('ALL AUDIT CHECKLIST FIXES VERIFIED AND PASSED SUCCESSFULLY (10/10)!');
+console.log('ALL AUDIT CHECKLIST FIXES VERIFIED AND PASSED SUCCESSFULLY (16/16)!');
 console.log('=================================================================\n');

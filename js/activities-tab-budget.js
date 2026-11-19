@@ -213,7 +213,15 @@
         }
       });
 
-      const lmFloor = Math.max(existingDmSum, lmUtilized + lmPending);
+      const directRepsUnderLm = allUsers.filter(u => {
+        const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : (u.role || "").toLowerCase();
+        return (r === Core.ROLES.REP || r === Core.ROLES.REP_ALT) && u.managerId === lmId;
+      });
+      const existingDirectRepsAlloc = directRepsUnderLm.reduce(
+        (sum, r) => sum + ((budgets[lineId].repAllocations && Number(budgets[lineId].repAllocations[r.id])) || 0),
+        0
+      );
+      const lmFloor = Math.max(existingDmSum + existingDirectRepsAlloc, lmUtilized + lmPending);
       if (val < lmFloor) {
         Core.safeShowToast(
           (Core.t("cannotReduceBelowUtilized") || "Cannot reduce allocation below already spent/utilized amount.") +
@@ -383,7 +391,7 @@
             s.shares.forEach((sh) => {
               if (
                 sh.lineId === lineId &&
-                (sh.dmId === dm.id || sh.requesterId === dm.id || repsUnderDmIds.has(sh.repId)) &&
+                (sh.repId === dm.id || repsUnderDmIds.has(sh.repId) || (!sh.repId && (sh.dmId === dm.id || s.requesterId === dm.id))) &&
                 (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED)
               ) {
                 dmUtilized += Number(sh.shareAmount || 0);
@@ -447,7 +455,18 @@
       }
     });
 
-    const committed = distributed + directLmCommitted;
+    // Account for direct reps under this LM
+    const allUsers = Core.getAllUsers();
+    const directRepsUnderLm = allUsers.filter((u) => {
+      const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : (u.role || "").toLowerCase();
+      return (r === Core.ROLES.REP || r === Core.ROLES.REP_ALT) && u.managerId === Core._state.currentUser.id;
+    }).map((r) => r.id);
+    const existingDirectRepsAlloc = directRepsUnderLm.reduce(
+      (sum, repId) => sum + ((lineBudget.repAllocations && Number(lineBudget.repAllocations[repId])) || 0),
+      0
+    );
+
+    const committed = distributed + existingDirectRepsAlloc + directLmCommitted;
     const remaining = Math.max(0, myLmAlloc - committed);
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
@@ -543,6 +562,19 @@
       if (Number.isFinite(val) && val >= 0) distributed += val;
     });
 
+    let existingSubDmsAlloc = 0;
+    if (isLm) {
+      const allUsers = Core.getAllUsers();
+      const dmsUnderThisLm = allUsers.filter((u) => {
+        const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : (u.role || "").toLowerCase();
+        return (r === Core.ROLES.DM || r === "dm" || r === "district_manager") && u.managerId === Core._state.currentUser.id;
+      }).map((d) => d.id);
+      existingSubDmsAlloc = dmsUnderThisLm.reduce(
+        (sum, dId) => sum + ((lineBudget.dmAllocations && Number(lineBudget.dmAllocations[dId])) || 0),
+        0
+      );
+    }
+
     // Calculate DM direct committed (approved + pending) for this line
     let directDmCommitted = 0;
     const allServices = Core.StoreAdapter.getServices();
@@ -562,7 +594,7 @@
       }
     });
 
-    const committed = distributed + directDmCommitted;
+    const committed = distributed + existingSubDmsAlloc + directDmCommitted;
     const remaining = Math.max(0, myDmAlloc - committed);
     const spentTitle = document.getElementById("srvMetricApprovedTitle");
     const spentEl = document.getElementById("srvMetricApproved");
@@ -570,8 +602,12 @@
     const remEl = document.getElementById("srvMetricRemaining");
 
     const curr = Core.t("currency") || "EGP";
-    if (spentTitle) spentTitle.textContent = Core.t("distributedToReps") || "Distributed to Reps";
-    if (spentEl) spentEl.textContent = `${distributed.toLocaleString("en-US")} ${curr}`;
+    if (spentTitle) {
+      spentTitle.textContent = isLm && existingSubDmsAlloc > 0
+        ? `${Core.t("distributedToReps") || "Distributed"} (+DMs: ${existingSubDmsAlloc.toLocaleString("en-US")})`
+        : (Core.t("distributedToReps") || "Distributed to Reps");
+    }
+    if (spentEl) spentEl.textContent = `${(distributed + existingSubDmsAlloc).toLocaleString("en-US")} ${curr}`;
     if (remTitle) remTitle.textContent = Core.t("unallocatedRemaining") || "Remaining Balance";
     if (remEl) {
       remEl.textContent = `${remaining.toLocaleString("en-US")} ${curr}`;
@@ -812,6 +848,8 @@
     if (!budgets[lineId].dmAllocations) budgets[lineId].dmAllocations = {};
     if (!Array.isArray(budgets[lineId].auditLog)) budgets[lineId].auditLog = [];
 
+    const allUsers = Core.getAllUsers();
+    const allServices = Core.StoreAdapter.getServices();
     const allowedDms = Core.getDmsUnderLmForLine(Core._state.currentUser.id, lineId).map((d) => d.id);
 
     let totalAlloc = 0;
@@ -839,7 +877,6 @@
     const curUserRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser?.role || "").toLowerCase();
     if (curUserRole === Core.ROLES.LM) {
       let directLmCommitted = 0;
-      const allServices = Core.StoreAdapter.getServices();
       allServices.forEach((s) => {
         if (s.status === Core.REQUEST_STATUS.REJECTED || s.status === "rejected" || s.status === "cancelled") return;
         if (s.isShared && Array.isArray(s.shares)) {
@@ -857,10 +894,19 @@
         }
       });
 
-      if (totalAlloc + directLmCommitted > myLmAlloc) {
+      const directRepsUnderLm = allUsers.filter((u) => {
+        const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : (u.role || "").toLowerCase();
+        return (r === Core.ROLES.REP || r === Core.ROLES.REP_ALT) && u.managerId === Core._state.currentUser.id;
+      }).map((r) => r.id);
+      const existingDirectRepsAlloc = directRepsUnderLm.reduce(
+        (sum, repId) => sum + ((budgets[lineId].repAllocations && Number(budgets[lineId].repAllocations[repId])) || 0),
+        0
+      );
+
+      if (totalAlloc + existingDirectRepsAlloc + directLmCommitted > myLmAlloc) {
         Core.safeShowToast(
-          (Core.t("budgetOverAllocated") || "Total allocated to district managers plus your direct commitments exceeds your available line budget.") +
-          ` (DMs ${totalAlloc.toLocaleString("en-US")} + direct ${directLmCommitted.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
+          (Core.t("budgetOverAllocated") || "Total allocated to district managers plus direct reps and commitments exceeds your available line budget.") +
+          ` (DMs ${totalAlloc.toLocaleString("en-US")}${existingDirectRepsAlloc ? " + direct reps " + existingDirectRepsAlloc.toLocaleString("en-US") : ""} + direct ${directLmCommitted.toLocaleString("en-US")} / ${myLmAlloc.toLocaleString("en-US")} ${Core.t("currency") || "EGP"})`,
           "danger"
         );
         return; // Hard constraint: do not save!
@@ -878,8 +924,6 @@
     }
 
     // Sub-budget protection: Cannot reduce DM budget below what they already allocated to Reps OR what DM utilized
-    const allUsers = Core.getAllUsers();
-    const allServices = Core.StoreAdapter.getServices();
     for (const [dmId, val] of Object.entries(tempAlloc)) {
       const repsUnderDm = allUsers.filter((u) => (u.managerId === dmId || u.dmId === dmId) && (u.role === Core.ROLES.REP || u.role === Core.ROLES.REP_ALT));
       const repsUnderDmIds = new Set(repsUnderDm.map((u) => u.id));
@@ -895,7 +939,7 @@
           s.shares.forEach((sh) => {
             if (
               sh.lineId === lineId &&
-              (sh.dmId === dmId || sh.requesterId === dmId || repsUnderDmIds.has(sh.repId))
+              (sh.repId === dmId || repsUnderDmIds.has(sh.repId) || (!sh.repId && (sh.dmId === dmId || s.requesterId === dmId)))
             ) {
               if (sh.status === Core.REQUEST_STATUS.APPROVED || s.status === Core.REQUEST_STATUS.APPROVED) {
                 dmUtilized += Number(sh.shareAmount || 0);

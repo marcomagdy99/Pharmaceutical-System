@@ -543,7 +543,13 @@
 
     const role = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser.role || "").toLowerCase();
     if (role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) {
-      initialStatus = Core.REQUEST_STATUS.PENDING_DM;
+      const directMgr = Core.getUserById(Core._state.currentUser.managerId);
+      const directMgrRole = directMgr ? (Core.getNormalizedRole ? Core.getNormalizedRole(directMgr) : (directMgr.role || "").toLowerCase()) : "";
+      if (directMgrRole === Core.ROLES.LM || directMgrRole === "lm" || directMgrRole === "line_manager") {
+        initialStatus = Core.REQUEST_STATUS.PENDING_LM;
+      } else {
+        initialStatus = Core.REQUEST_STATUS.PENDING_DM;
+      }
       nextApprover = Core._state.currentUser.managerId || null;
     } else if (role === Core.ROLES.DM) {
       initialStatus = Core.REQUEST_STATUS.PENDING_LM;

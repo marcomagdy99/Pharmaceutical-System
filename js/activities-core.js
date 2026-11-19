@@ -1310,15 +1310,21 @@
         dmId = null;
         lmId = rep.id;
       } else {
-        dmId = rep.managerId || null;
-        if (dmId) {
-          const dm = allUsers.find((u) => u.id === dmId);
-          lmId = dm ? dm.managerId : null;
+        const mgr = rep.managerId ? allUsers.find((u) => u.id === rep.managerId) : null;
+        const mgrRole = mgr ? getNormalizedRole(mgr) : null;
+        if (mgrRole === ROLES.LM) {
+          // Rep reports directly to Line Manager (no intermediary DM)
+          dmId = null;
+          lmId = mgr.id;
+        } else {
+          dmId = mgr ? mgr.id : (rep.managerId || null);
+          lmId = mgr ? mgr.managerId : null;
         }
       }
     }
 
-    if (!dmId) {
+    // Defensive fallback: only attempt line-level derivation if NEITHER DM nor LM could be determined
+    if (!dmId && !lmId) {
       const area = getLiveAreaById(areaId);
       if (area && area.lineId) {
         const dmsInLine = allUsers.filter(u => getNormalizedRole(u) === ROLES.DM && ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId));

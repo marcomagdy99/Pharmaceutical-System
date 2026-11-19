@@ -48,35 +48,133 @@ const areaTranslations = {
   },
 };
 
+const SECTOR_CODE_PREFIX = {
+  Cairo: "CAI",
+  Giza: "GZA",
+  Qalyubia: "QLY",
+  Alex: "ALX",
+  Beheira: "BHR",
+  KafrElSheikh: "KFS",
+  Gharbia: "GHB",
+  Menoufia: "MNF",
+  Dakahlia: "DKH",
+  Sharkia: "SHK",
+  Canal: "CNL",
+  BeniSuef: "BSF",
+  Minya: "MNY",
+  Assiut: "AST",
+  Sohag: "SHG",
+  UpperSouth: "UPR",
+};
+
+const BRICKS_PAGE_STEP = 200;
+
+function _esc(val) {
+  if (typeof window.escapeHtml === "function") return window.escapeHtml(val);
+  return String(val == null ? "" : val).replace(/[&<>"'`]/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "`": "&#96;",
+  }[ch]));
+}
+
+function formatBrickAreaCode(brick) {
+  if (!brick) return "";
+  const prefix = SECTOR_CODE_PREFIX[brick.sector] || "EGY";
+  return brick.imsCode ? `${prefix}-${brick.imsCode}` : (brick.id || "");
+}
+
+function getDefaultLineId() {
+  return (window.store && window.store.areas && typeof window.store.areas._defaultLineId === "function"
+    ? window.store.areas._defaultLineId()
+    : null) || "line_1790626000001";
+}
+
+function getNormalizedUserRole(user) {
+  if (!user || !user.role) return "";
+  return typeof window.normalizeRole === "function"
+    ? window.normalizeRole(user.role)
+    : String(user.role).trim().toLowerCase();
+}
+
+function isBuRole(user) {
+  const role = getNormalizedUserRole(user);
+  return role === "business_unit" || role === "bu";
+}
+
+function isAreasAuthorized(user) {
+  if (!user || !user.id) return false;
+  if (typeof window.hasAnyRole === "function") {
+    return window.hasAnyRole(["admin", "business_unit", "hr"], user);
+  }
+  const role = getNormalizedUserRole(user);
+  return role === "admin" || role === "business_unit" || role === "bu" || role === "hr";
+}
+
+function isLineWithinUserScope(lineId, user) {
+  if (!isAreasAuthorized(user)) return false;
+  if (!isBuRole(user)) return true;
+  if (!lineId || typeof window.getUserLines !== "function") return false;
+  const userLines = window.getUserLines(user.id) || [];
+  return userLines.some((l) => l && l.id === lineId);
+}
+
+function recordBelongsToArea(rec, area, defaultLineId) {
+  if (!rec || !area) return false;
+  if (rec.areaId) return rec.areaId === area.id;
+  if (!rec.area || !area.name) return false;
+  if (String(rec.area).trim().toLowerCase() !== String(area.name).trim().toLowerCase()) {
+    return false;
+  }
+  const areaLine = area.lineId || defaultLineId;
+  const recLine = rec.lineId || defaultLineId;
+  return !areaLine || !recLine || recLine === areaLine;
+}
+
+function getActiveRepForArea(area, allUsers) {
+  if (!area || !area.repId) return { repId: null, repName: null };
+  const users = Array.isArray(allUsers) ? allUsers : [];
+  const repUser = users.find((u) => u && u.id === area.repId);
+  if (!repUser || String(repUser.status || "").toLowerCase() === "inactive") {
+    return { repId: null, repName: null };
+  }
+  return {
+    repId: area.repId,
+    repName: area.repName || repUser.name || repUser.nameAr || area.repId,
+  };
+}
+
 function getAreasList() {
-  const allUsers = (window.store && window.store.users.getAll()) || [];
+  const allUsers = (window.store && window.store.users && window.store.users.getAll()) || [];
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  const defaultLineId = getDefaultLineId();
   let rawAreas;
 
   // Filter areas by selected product line
   if (currentSelectedLineId && window.store && window.store.areas) {
     rawAreas = window.store.areas.getByLine(currentSelectedLineId);
+  } else if (isBuRole(user)) {
+    // Fail-closed for BU with zero active lines: never fall back to all company areas
+    rawAreas = [];
   } else {
-    rawAreas = (window.store && window.store.areas.getAll()) || [];
+    rawAreas = (window.store && window.store.areas && window.store.areas.getAll()) || [];
+  }
+
+  if (isBuRole(user)) {
+    rawAreas = rawAreas.filter((a) => isLineWithinUserScope(a.lineId || defaultLineId, user));
   }
 
   return rawAreas.map((a) => {
-    let rId = a.repId || null;
-    let rName = a.repName || null;
-    if (rId) {
-      const repUser = allUsers.find((u) => u.id === rId);
-      if (!repUser || repUser.status === "Inactive") {
-        rId = null;
-        rName = null;
-      } else if (!rName) {
-        rName = repUser.name;
-      }
-    }
+    const activeRep = getActiveRepForArea(a, allUsers);
     return {
       id: a.id,
-      name: a.name,
+      name: a.name || "",
       code: a.code || ("AREA-" + String(a.id || "").slice(-4).toUpperCase()),
-      repId: rId,
-      repName: rName,
+      repId: activeRep.repId,
+      repName: activeRep.repName,
       lineId: a.lineId || null,
       bricks: Array.isArray(a.bricks) ? a.bricks : [],
     };
@@ -155,10 +253,11 @@ function getAreaScopeInfo(area) {
       "faisal": "B46",
       "haram": "B43",
       "bolak el dakror": "B50",
-      "shobra": "B19",
+      "shobra": "B13",
+      "shoubra": "B13",
       "heliopolis": "B01",
-      "nasr city": "B06",
-      "maadi": "B13"
+      "nasr city": "B16",
+      "maadi": "B32"
     };
     if (legacyMap[raw]) {
       const b = crmBricks.find((cb) => cb.id === legacyMap[raw]);
@@ -180,20 +279,24 @@ function toggleAreaStreetsDrawer(drawerId, btn) {
   const isHidden = drawer.style.display === "none" || !drawer.style.display;
   if (isHidden) {
     drawer.style.display = "block";
-    btn.classList.add("active");
-    btn.setAttribute("aria-expanded", "true");
-    const label = btn.querySelector(".scope-btn-label");
-    if (label) label.textContent = "Hide Area Details";
-    const chevron = btn.querySelector(".scope-chevron");
-    if (chevron) chevron.style.transform = "rotate(180deg)";
+    if (btn) {
+      btn.classList.add("active");
+      btn.setAttribute("aria-expanded", "true");
+      const label = btn.querySelector(".scope-btn-label");
+      if (label) label.textContent = "Hide Area Details";
+      const chevron = btn.querySelector(".scope-chevron");
+      if (chevron) chevron.style.transform = "rotate(180deg)";
+    }
   } else {
     drawer.style.display = "none";
-    btn.classList.remove("active");
-    btn.setAttribute("aria-expanded", "false");
-    const label = btn.querySelector(".scope-btn-label");
-    if (label) label.textContent = "View Area Details";
-    const chevron = btn.querySelector(".scope-chevron");
-    if (chevron) chevron.style.transform = "rotate(0deg)";
+    if (btn) {
+      btn.classList.remove("active");
+      btn.setAttribute("aria-expanded", "false");
+      const label = btn.querySelector(".scope-btn-label");
+      if (label) label.textContent = "View Area Details";
+      const chevron = btn.querySelector(".scope-chevron");
+      if (chevron) chevron.style.transform = "rotate(0deg)";
+    }
   }
 }
 window.toggleAreaStreetsDrawer = toggleAreaStreetsDrawer;
@@ -229,55 +332,63 @@ function migrateLegacyAreaNames() {
     if (!area.name) return;
     const key = area.name.trim().toLowerCase();
     const target = legacyToCrmMap[key];
-    if (target) {
+    const hasOfficialBricks =
+      Array.isArray(area.bricks) &&
+      area.bricks.length > 0 &&
+      area.bricks.every((bn) => typeof bn === "string" && bn.startsWith("[B") && bn.includes("]"));
+
+    if (target && !hasOfficialBricks) {
       area.name = target.name;
       if (!area.code || area.code.startsWith("GIZ-") || area.code.startsWith("CAI-")) {
         area.code = target.code;
       }
       area.bricks = [target.brick];
       updated = true;
-    } else {
+    } else if (Array.isArray(area.bricks)) {
       // Clean legacy raw subarea strings from area.bricks so only real CRM Bricks remain
-      if (Array.isArray(area.bricks)) {
-        const cleanBricks = [];
-        area.bricks.forEach((bn) => {
-          if (typeof bn === "string" && bn.startsWith("[B") && bn.includes("]")) {
-            cleanBricks.push(bn);
-          } else {
-            const m = typeof window.findCRMBrick === "function" ? window.findCRMBrick(bn) : null;
-            if (m && m.name) cleanBricks.push(m.name);
-          }
-        });
-        if (cleanBricks.length !== area.bricks.length || cleanBricks.length === 0) {
-          if (cleanBricks.length > 0) {
-            area.bricks = Array.from(new Set(cleanBricks));
-          } else {
-            const m = typeof window.findCRMBrick === "function" ? window.findCRMBrick(area.name) : null;
-            if (m && m.name) area.bricks = [m.name];
-          }
-          updated = true;
+      const cleanBricks = [];
+      area.bricks.forEach((bn) => {
+        if (typeof bn === "string" && bn.startsWith("[B") && bn.includes("]")) {
+          cleanBricks.push(bn);
+        } else {
+          const m = typeof window.findCRMBrick === "function" ? window.findCRMBrick(bn) : null;
+          if (m && m.name) cleanBricks.push(m.name);
         }
+      });
+      let nextBricks = Array.from(new Set(cleanBricks));
+      if (nextBricks.length === 0) {
+        const m = typeof window.findCRMBrick === "function" ? window.findCRMBrick(area.name) : null;
+        if (m && m.name) nextBricks = [m.name];
+      }
+      const changed =
+        nextBricks.length !== area.bricks.length ||
+        nextBricks.some((val, i) => val !== area.bricks[i]);
+      if (changed) {
+        area.bricks = nextBricks;
+        updated = true;
       }
     }
   });
 
-  // Ensure Giza IV - Brick 1 exists for line 1 if not present
-  const line1Id = (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line_1790626000001");
-  if (line1Id) {
-    const hasGiza4InLine1 = allAreas.some(
-      (a) => (a.lineId === line1Id || !a.lineId) && a.name === "Giza IV - Brick 1"
-    );
-    if (!hasGiza4InLine1) {
-      allAreas.push({
-        id: "area_" + line1Id + "_giza4_brick1",
-        name: "Giza IV - Brick 1",
-        code: "GZA-B48",
-        repId: null,
-        repName: null,
-        lineId: line1Id,
-        bricks: ["[B48] Giza IV - Brick 1 (Giza 10)"]
-      });
-      updated = true;
+  // Only seed Giza IV - Brick 1 automatically in explicit DEMO_MODE so production deletions stay permanent
+  if (window.DEMO_MODE === true) {
+    const line1Id = getDefaultLineId();
+    if (line1Id) {
+      const hasGiza4InLine1 = allAreas.some(
+        (a) => (a.lineId === line1Id || !a.lineId) && a.name === "Giza IV - Brick 1"
+      );
+      if (!hasGiza4InLine1) {
+        allAreas.push({
+          id: "area_" + line1Id + "_giza4_brick1",
+          name: "Giza IV - Brick 1",
+          code: "GZA-B48",
+          repId: null,
+          repName: null,
+          lineId: line1Id,
+          bricks: ["[B48] Giza IV - Brick 1 (Giza 10)"]
+        });
+        updated = true;
+      }
     }
   }
 
@@ -296,15 +407,18 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
   // Filter reps by specified or selected line
   const effectiveLineId = targetLineId || currentSelectedLineId;
   let activeReps;
-  if (effectiveLineId && window.store && window.store.areas) {
-    activeReps = window.store.areas.getRepsByLine(effectiveLineId);
+  if (effectiveLineId && window.store && window.store.areas && typeof window.store.areas.getRepsByLine === "function") {
+    activeReps = window.store.areas.getRepsByLine(effectiveLineId) || [];
   } else {
-    activeReps = (window.store && window.store.users.getReps()) || [];
+    activeReps = (window.store && window.store.users && typeof window.store.users.getReps === "function"
+      ? window.store.users.getReps()
+      : []) || [];
   }
 
-  const user = (window.checkAuth && window.checkAuth()) || {};
-  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
-  if (role === "business_unit" || role === "bu") {
+  activeReps = activeReps.filter((r) => r && String(r.status || "").toLowerCase() !== "inactive");
+
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (isBuRole(user)) {
     const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
     const subIds = new Set(subs.map((s) => s.id));
     activeReps = activeReps.filter((r) => subIds.has(r.id));
@@ -312,9 +426,9 @@ function populateRepDropdown(selectedRepId = "", targetLineId = null) {
 
   let html = `<option value="">${unassignedLabel}</option>`;
   activeReps.forEach((r) => {
-    const rName = r.name || r.nameAr;
+    const rName = r.name || r.nameAr || r.id;
     const sel = r.id === selectedRepId ? "selected" : "";
-    html += `<option value="${window.escapeHtml(r.id)}" ${sel}>${window.escapeHtml(rName)} (${window.escapeHtml(r.employeeCode || r.code || r.id)})</option>`;
+    html += `<option value="${_esc(r.id)}" ${sel}>${_esc(rName)} (${_esc(r.employeeCode || r.code || r.id)})</option>`;
   });
   repSelect.innerHTML = html;
 }
@@ -339,10 +453,10 @@ function populateLineSelector() {
 
   let html = "";
   allLines.forEach((line) => {
-    if (line.status && line.status !== "Active") return;
+    if (line.status && String(line.status).toLowerCase() !== "active") return;
     const sel = line.id === currentSelectedLineId ? "selected" : "";
-    const label = line.name || line.nameAr;
-    html += `<option value="${window.escapeHtml(line.id)}" ${sel}>${window.escapeHtml(label)}</option>`;
+    const label = line.name || line.nameAr || line.id;
+    html += `<option value="${_esc(line.id)}" ${sel}>${_esc(label)}</option>`;
   });
   select.innerHTML = html;
 
@@ -351,6 +465,8 @@ function populateLineSelector() {
   if ((!currentSelectedLineId || !optionValues.includes(currentSelectedLineId)) && select.options.length > 0) {
     currentSelectedLineId = select.options[0].value;
     select.value = currentSelectedLineId;
+  } else if (select.options.length === 0) {
+    currentSelectedLineId = null;
   }
 }
 
@@ -360,7 +476,14 @@ function populateLineSelector() {
  */
 function onLineChanged() {
   const select = document.getElementById("lineSelector");
-  currentSelectedLineId = select ? select.value : null;
+  const nextLineId = select ? select.value : null;
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (isBuRole(user) && nextLineId && !isLineWithinUserScope(nextLineId, user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+    if (select) select.value = currentSelectedLineId || "";
+    return;
+  }
+  currentSelectedLineId = nextLineId;
   const searchInput = document.getElementById("search-input");
   if (searchInput) searchInput.value = "";
   renderAreas();
@@ -368,11 +491,8 @@ function onLineChanged() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const user = (window.checkAuth && window.checkAuth()) || {};
-  if (
-    window.hasAnyRole &&
-    !window.hasAnyRole(["admin", "business_unit", "hr"], user)
-  ) {
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function")
       showToast("Access Denied: Admins only.", "error");
     window.location.replace("index.html");
@@ -392,11 +512,13 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // Initialize line selector and set default
-  const currentUser = (window.DEMO_DATA && window.DEMO_DATA.currentUser) || user;
+  // Initialize line selector and set default (authenticated user takes priority over DEMO_DATA)
+  const currentUser = (user && user.id)
+    ? user
+    : ((window.DEMO_MODE === true && window.DEMO_DATA && window.DEMO_DATA.currentUser) || {});
   if (currentUser.lineId) {
     currentSelectedLineId = currentUser.lineId;
-  } else if (currentUser.lineIds && currentUser.lineIds.length > 0) {
+  } else if (Array.isArray(currentUser.lineIds) && currentUser.lineIds.length > 0) {
     currentSelectedLineId = currentUser.lineIds[0];
   }
   migrateLegacyAreaNames();
@@ -405,11 +527,20 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAreas();
   updateStats();
 
+  // Refresh UI cleanly when Firestore cloud sync finishes
+  document.addEventListener("pharma:storage:synced", () => {
+    populateLineSelector();
+    const activeSearch = document.getElementById("search-input")?.value || "";
+    renderAreas(activeSearch);
+    updateStats();
+  });
+
   // Listen to language changes across the app
   document.addEventListener("languageChanged", (e) => {
     const lang = e.detail?.lang || (typeof getCurrentLang === "function" ? getCurrentLang() : "en");
     if (typeof applyTranslations === "function") applyTranslations(lang);
-    renderAreas();
+    const activeSearch = document.getElementById("search-input")?.value || "";
+    renderAreas(activeSearch);
     updateStats();
     updateSelectedBricksCount();
   });
@@ -497,9 +628,13 @@ function filterBricksBySector(sector) {
 }
 window.filterBricksBySector = filterBricksBySector;
 
-function toggleBrickCard(event, brickName) {
-  if (event.target.tagName === "INPUT") return;
-  const card = event.currentTarget;
+function toggleBrickCard(event) {
+  if (!event || !event.target) return;
+  if (event.target.tagName === "INPUT" || (typeof event.target.closest === "function" && event.target.closest("label"))) {
+    return;
+  }
+  const card = event.currentTarget || (typeof event.target.closest === "function" ? event.target.closest(".brick-checkbox-card") : null);
+  if (!card) return;
   const cb = card.querySelector('input[type="checkbox"]');
   if (cb) {
     cb.checked = !cb.checked;
@@ -507,6 +642,39 @@ function toggleBrickCard(event, brickName) {
   }
 }
 window.toggleBrickCard = toggleBrickCard;
+
+function bindModalBricksDelegation(container) {
+  if (!container || !container.dataset || container.dataset.bricksBound === "1") return;
+  container.dataset.bricksBound = "1";
+  container.addEventListener("click", (e) => {
+    const loadMoreBtn = e.target && typeof e.target.closest === "function"
+      ? e.target.closest('[data-action="load-more-bricks"]')
+      : null;
+    if (loadMoreBtn) {
+      e.preventDefault();
+      loadMoreModalBricks();
+      return;
+    }
+    if (e.target && (e.target.tagName === "INPUT" || (typeof e.target.closest === "function" && e.target.closest("label")))) {
+      return;
+    }
+    const card = e.target && typeof e.target.closest === "function"
+      ? e.target.closest(".brick-checkbox-card")
+      : null;
+    if (card) {
+      const cb = card.querySelector('input[type="checkbox"]');
+      if (cb) {
+        cb.checked = !cb.checked;
+        onBrickCheckboxChange(cb);
+      }
+    }
+  });
+  container.addEventListener("change", (e) => {
+    if (e.target && e.target.matches && e.target.matches('input.brick-checkbox-input[type="checkbox"]')) {
+      onBrickCheckboxChange(e.target);
+    }
+  });
+}
 function searchMasterBricks(allMaster, rawQuery, sector) {
   const activeSector = sector || currentBrickSector || "all";
   let list = allMaster;
@@ -617,9 +785,10 @@ function renderModalBricksList(filterQuery = "") {
     const noMatchText = areaTranslations.en.no_matching_bricks;
     container.innerHTML = headerHtml + `
       <div class="text-center text-muted py-3">
-        <i class="fas fa-search me-1"></i> ${window.escapeHtml(noMatchText)}
+        <i class="fas fa-search me-1"></i> ${_esc(noMatchText)}
       </div>
     `;
+    bindModalBricksDelegation(container);
     return;
   }
 
@@ -628,26 +797,26 @@ function renderModalBricksList(filterQuery = "") {
     const isChecked = selectedBrickNames.has(b.name) ||
                       (b.crmCode && selectedBrickNames.has(b.crmCode)) ||
                       (b.imsCode && selectedBrickNames.has(b.imsCode));
-    const escapedValue = window.escapeHtml(b.name);
+    const escapedValue = _esc(b.name);
     const inputId = `brick_chk_${idx}`;
     html += `
       <div class="col-12">
-        <div class="p-2 px-3 border rounded-3 brick-checkbox-card ${isChecked ? 'selected' : ''}" onclick="toggleBrickCard(event, '${escapedValue}')">
+        <div class="p-2 px-3 border rounded-3 brick-checkbox-card ${isChecked ? 'selected' : ''}" data-brick-card="1">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
             <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
-              <input class="form-check-input ms-0 me-1" type="checkbox" id="${inputId}" value="${escapedValue}" ${isChecked ? 'checked' : ''} onchange="onBrickCheckboxChange(this)" onclick="event.stopPropagation()">
+              <input class="form-check-input ms-0 me-1 brick-checkbox-input" type="checkbox" id="${inputId}" value="${escapedValue}" ${isChecked ? 'checked' : ''}>
               <label class="form-check-label mb-0 cursor-pointer fw-bold text-truncate" for="${inputId}">
-                ${b.imsCode ? `<span class="badge bg-primary text-white me-1 font-monospace">${window.escapeHtml(b.imsCode)}</span>` : ''}
-                <span class="brick-crm-code">${window.escapeHtml(b.crmCode || b.name)}</span>
-                ${b.imsName && b.imsName !== b.crmCode ? `<span class="text-muted fw-normal ms-1 small">(${window.escapeHtml(b.imsName)})</span>` : ''}
+                ${b.imsCode ? `<span class="badge bg-primary text-white me-1 font-monospace">${_esc(b.imsCode)}</span>` : ''}
+                <span class="brick-crm-code">${_esc(b.crmCode || b.name)}</span>
+                ${b.imsName && b.imsName !== b.crmCode ? `<span class="text-muted fw-normal ms-1 small">(${_esc(b.imsName)})</span>` : ''}
               </label>
             </div>
-            ${b.sectorAr ? `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle small">${window.escapeHtml(b.sectorAr)}</span>` : ''}
+            ${b.sectorAr ? `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle small">${_esc(b.sectorAr)}</span>` : ''}
           </div>
           ${b.scopeText && b.scopeText !== b.name ? `
             <div class="mt-1 ps-4 small brick-scope-description d-flex align-items-start gap-1">
               <i class="fas fa-map-marker-alt text-danger mt-1 flex-shrink-0" style="font-size: 0.75rem;"></i>
-              <span class="flex-grow-1 text-wrap" style="line-height: 1.35;">${window.escapeHtml(b.scopeText)}</span>
+              <span class="flex-grow-1 text-wrap" style="line-height: 1.35;">${_esc(b.scopeText)}</span>
             </div>
           ` : ''}
         </div>
@@ -659,25 +828,27 @@ function renderModalBricksList(filterQuery = "") {
   if (!isFiltered && displayBricks.length < totalMasterCount) {
     html += `
       <div class="text-center pt-3 pb-1">
-        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="loadMoreModalBricks()">
-          <i class="fas fa-chevron-down me-1"></i> Load More Bricks (+200)
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-action="load-more-bricks">
+          <i class="fas fa-chevron-down me-1"></i> Load More Bricks (+${BRICKS_PAGE_STEP})
         </button>
       </div>
     `;
   }
 
   container.innerHTML = html;
+  bindModalBricksDelegation(container);
 }
 
 function loadMoreModalBricks() {
-  currentBricksLimit += 300;
+  currentBricksLimit += BRICKS_PAGE_STEP;
   const q = document.getElementById("searchBricksInput")?.value || "";
   renderModalBricksList(q);
 }
 
 function onBrickCheckboxChange(el) {
+  if (!el) return;
   const brickName = el.value;
-  const parentCard = el.closest(".brick-checkbox-card");
+  const parentCard = typeof el.closest === "function" ? el.closest(".brick-checkbox-card") : null;
   if (el.checked) {
     selectedBrickNames.add(brickName);
     if (parentCard) {
@@ -696,13 +867,18 @@ function onBrickCheckboxChange(el) {
       if (match) {
         if (match.crmCode) nameInput.value = match.crmCode;
         if (codeInput && !codeInput.value.trim()) {
-          const prefix = match.sector === "Cairo" ? "CAI" : (match.sector === "Alex" ? "ALX" : "GZA");
-          codeInput.value = match.imsCode ? `${prefix}-${match.imsCode}` : match.id;
+          codeInput.value = formatBrickAreaCode(match);
         }
       }
     }
   } else {
     selectedBrickNames.delete(brickName);
+    const match = (typeof window.findCRMBrick === "function" ? window.findCRMBrick(brickName) : null)
+      || (typeof window.findMasterBrickByName === "function" ? window.findMasterBrickByName(brickName) : null);
+    if (match) {
+      if (match.crmCode) selectedBrickNames.delete(match.crmCode);
+      if (match.imsCode) selectedBrickNames.delete(match.imsCode);
+    }
     if (parentCard) {
       parentCard.classList.remove("selected");
       parentCard.classList.add("bg-white");
@@ -719,22 +895,31 @@ function filterModalBricks() {
 function selectAllFilteredBricks(selectState) {
   const rawQ = (document.getElementById("searchBricksInput")?.value || "").trim();
   const allMaster = (window.getMasterBricks && window.getMasterBricks()) || (window.EGYPT_MASTER_BRICKS || []);
+  const scopedMaster = (currentBrickSector && currentBrickSector !== "all")
+    ? allMaster.filter((b) => b.sector === currentBrickSector)
+    : allMaster;
 
   if (selectState) {
     if (rawQ) {
-      const targets = searchMasterBricks(allMaster, rawQ);
+      const targets = searchMasterBricks(allMaster, rawQ, currentBrickSector);
       targets.forEach((b) => selectedBrickNames.add(b.name));
     } else {
-      const container = document.getElementById("modalBricksContainer");
-      if (container) {
-        const checkboxes = container.querySelectorAll("input[type='checkbox']");
-        checkboxes.forEach((cb) => selectedBrickNames.add(cb.value));
-      }
+      scopedMaster.forEach((b) => selectedBrickNames.add(b.name));
     }
   } else {
     if (rawQ) {
-      const targets = searchMasterBricks(allMaster, rawQ);
-      targets.forEach((b) => selectedBrickNames.delete(b.name));
+      const targets = searchMasterBricks(allMaster, rawQ, currentBrickSector);
+      targets.forEach((b) => {
+        selectedBrickNames.delete(b.name);
+        if (b.crmCode) selectedBrickNames.delete(b.crmCode);
+        if (b.imsCode) selectedBrickNames.delete(b.imsCode);
+      });
+    } else if (currentBrickSector && currentBrickSector !== "all") {
+      scopedMaster.forEach((b) => {
+        selectedBrickNames.delete(b.name);
+        if (b.crmCode) selectedBrickNames.delete(b.crmCode);
+        if (b.imsCode) selectedBrickNames.delete(b.imsCode);
+      });
     } else {
       selectedBrickNames.clear();
     }
@@ -759,18 +944,47 @@ window.filterModalBricks = filterModalBricks;
 window.selectAllFilteredBricks = selectAllFilteredBricks;
 window.updateSelectedBricksCount = updateSelectedBricksCount;
 
+function bindAreaActionsDelegation(container) {
+  if (!container || !container.dataset || container.dataset.areasBound === "1") return;
+  container.dataset.areasBound = "1";
+  container.addEventListener("click", (e) => {
+    const actionEl = e.target && typeof e.target.closest === "function"
+      ? e.target.closest("[data-action]")
+      : null;
+    if (!actionEl) return;
+    const action = actionEl.dataset.action;
+    if (action === "edit") {
+      e.preventDefault();
+      openEditModal(actionEl.dataset.areaId);
+    } else if (action === "delete") {
+      e.preventDefault();
+      openDeleteModal(actionEl.dataset.areaId);
+    } else if (action === "toggle-drawer") {
+      e.preventDefault();
+      toggleAreaStreetsDrawer(actionEl.dataset.drawerId, actionEl);
+    }
+  });
+}
+
 function renderAreas(filterText = "") {
   const tableBody = document.getElementById("areas-table-body");
   const cardsView = document.getElementById("cards-view");
 
-  if (tableBody) tableBody.replaceChildren();
-  if (cardsView) cardsView.replaceChildren();
+  if (tableBody) {
+    tableBody.replaceChildren();
+    bindAreaActionsDelegation(tableBody);
+  }
+  if (cardsView) {
+    cardsView.replaceChildren();
+    bindAreaActionsDelegation(cardsView);
+  }
 
   const currentAreas = getAreasList();
+  const q = String(filterText || "").toLowerCase();
   const filteredAreas = currentAreas.filter(
     (a) =>
-      a.name.toLowerCase().includes(filterText.toLowerCase()) ||
-      a.code.toLowerCase().includes(filterText.toLowerCase()),
+      String(a.name || "").toLowerCase().includes(q) ||
+      String(a.code || "").toLowerCase().includes(q),
   );
 
   const assignedText = areaTranslations.en.assigned;
@@ -784,8 +998,8 @@ function renderAreas(filterText = "") {
 
     const repDisplay = isAssigned
       ? `<div class="d-flex align-items-center">
-           <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${window.escapeHtml((area.repName || "U").charAt(0))}</div>
-           <span>${window.escapeHtml(area.repName)}</span>
+           <div class="avatar-circle me-2" style="width: 32px; height: 32px; font-size: 14px;">${_esc((area.repName || "U").charAt(0))}</div>
+           <span>${_esc(area.repName || area.repId)}</span>
          </div>`
       : `<span class="text-muted fst-italic">${unassignedText}</span>`;
 
@@ -797,24 +1011,25 @@ function renderAreas(filterText = "") {
       : areaTranslations.en.no_bricks_assigned;
 
     const bricksBadge = bricksCount > 0
-      ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}" style="cursor:help;">
+      ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill" title="${_esc(bricksTooltip)}" style="cursor:help;">
            <i class="fas fa-cubes me-1"></i>${bricksCount} bricks
          </span>`
-      : `<span class="badge bg-light text-muted border px-2 py-1 rounded-pill" title="${window.escapeHtml(bricksTooltip)}">0</span>`;
+      : `<span class="badge bg-light text-muted border px-2 py-1 rounded-pill" title="${_esc(bricksTooltip)}">0</span>`;
 
     const scopes = getAreaScopeInfo(area);
     const hasScopes = scopes && scopes.length > 0;
     const safeId = String(area.id || Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_-]/g, "_");
     const drawerId = `area_streets_${safeId}`;
+    const cardDrawerId = `${drawerId}_card`;
 
     // Optional IMS Name subtitle if distinct from area.name
     let imsSubtitle = "";
     if (scopes.length === 1 && scopes[0].imsName && scopes[0].imsName !== area.name && scopes[0].imsName !== scopes[0].crmCode) {
-      imsSubtitle = `<span class="text-muted small fw-normal">(${window.escapeHtml(scopes[0].imsName)})</span>`;
+      imsSubtitle = `<span class="text-muted small fw-normal">(${_esc(scopes[0].imsName)})</span>`;
     }
 
-    const toggleBtnHtml = hasScopes ? `
-      <button type="button" class="btn btn-xs area-scope-toggle-btn mt-1 d-inline-flex align-items-center gap-1" onclick="toggleAreaStreetsDrawer('${drawerId}', this)" aria-expanded="false" title="View Area Details">
+    const buildToggleBtnHtml = (targetDrawerId) => hasScopes ? `
+      <button type="button" class="btn btn-xs area-scope-toggle-btn mt-1 d-inline-flex align-items-center gap-1" data-action="toggle-drawer" data-drawer-id="${_esc(targetDrawerId)}" aria-expanded="false" title="View Area Details">
         <svg class="scope-pin-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
           <circle cx="12" cy="10" r="3"/>
@@ -826,87 +1041,91 @@ function renderAreas(filterText = "") {
       </button>
     ` : "";
 
-    const drawerHtml = hasScopes ? `
-      <div id="${drawerId}" class="area-scope-drawer mt-2 p-2 rounded-3 text-start" style="display: none;">
+    const buildDrawerHtml = (targetDrawerId) => hasScopes ? `
+      <div id="${_esc(targetDrawerId)}" class="area-scope-drawer mt-2 p-2 rounded-3 text-start" style="display: none;">
         ${scopes.map(s => `
           <div class="area-scope-item d-flex align-items-start gap-2 py-1">
-            ${s.imsCode ? `<span class="badge bg-primary text-white font-monospace px-1.5 py-0.5 small flex-shrink-0">${window.escapeHtml(s.imsCode)}${s.imsName && s.imsName !== s.imsCode ? ` (${window.escapeHtml(s.imsName)})` : ""}</span>` : ""}
-            <span class="small area-scope-streets text-wrap flex-grow-1" style="line-height: 1.45; direction: rtl; text-align: right;">${window.escapeHtml(s.scopeText)}</span>
+            ${s.imsCode ? `<span class="badge bg-primary text-white font-monospace px-1.5 py-0.5 small flex-shrink-0">${_esc(s.imsCode)}${s.imsName && s.imsName !== s.imsCode ? ` (${_esc(s.imsName)})` : ""}</span>` : ""}
+            <span class="small area-scope-streets text-wrap flex-grow-1" style="line-height: 1.45; direction: rtl; text-align: right;">${_esc(s.scopeText)}</span>
           </div>
         `).join("")}
       </div>
     ` : "";
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="px-4 py-3"><span class="area-code-badge">${window.escapeHtml(area.code)}</span></td>
-      <td class="px-4 py-3 fw-medium">
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span class="area-title-text fw-bold">${window.escapeHtml(area.name)}</span>
-          ${imsSubtitle}
-        </div>
-        ${toggleBtnHtml}
-        ${drawerHtml}
-      </td>
-      <td class="px-4 py-3">${bricksBadge}</td>
-      <td class="px-4 py-3">${repDisplay}</td>
-      <td class="px-4 py-3">${statusBadge}</td>
-      <td class="px-4 py-3 text-end area-actions-cell">
-        <button class="btn btn-sm btn-action-edit me-1 text-primary" onclick="openEditModal('${window.escapeHtml(area.id)}')" title="Edit" aria-label="Edit Area">
-          <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-            <path d="m15 5 4 4"/>
-          </svg>
-        </button>
-        <button class="btn btn-sm btn-action-delete text-danger" onclick="openDeleteModal('${window.escapeHtml(area.id)}')" title="Delete" aria-label="Delete Area">
-          <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
-            <path d="M3 6h18"/>
-            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-            <line x1="10" y1="11" x2="10" y2="17"/>
-            <line x1="14" y1="11" x2="14" y2="17"/>
-          </svg>
-        </button>
-      </td>
-    `;
-    tableBody.appendChild(tr);
+    if (tableBody) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="px-4 py-3"><span class="area-code-badge">${_esc(area.code)}</span></td>
+        <td class="px-4 py-3 fw-medium">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="area-title-text fw-bold">${_esc(area.name)}</span>
+            ${imsSubtitle}
+          </div>
+          ${buildToggleBtnHtml(drawerId)}
+          ${buildDrawerHtml(drawerId)}
+        </td>
+        <td class="px-4 py-3">${bricksBadge}</td>
+        <td class="px-4 py-3">${repDisplay}</td>
+        <td class="px-4 py-3">${statusBadge}</td>
+        <td class="px-4 py-3 text-end area-actions-cell">
+          <button type="button" class="btn btn-sm btn-action-edit me-1 text-primary" data-action="edit" data-area-id="${_esc(area.id)}" title="Edit" aria-label="Edit Area">
+            <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+              <path d="m15 5 4 4"/>
+            </svg>
+          </button>
+          <button type="button" class="btn btn-sm btn-action-delete text-danger" data-action="delete" data-area-id="${_esc(area.id)}" title="Delete" aria-label="Delete Area">
+            <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
+              <path d="M3 6h18"/>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+          </button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    }
 
-    // Cards view
-    const cardClass = isAssigned ? "assigned" : "unassigned";
-    const card = document.createElement("div");
-    card.className = "col-md-6 col-lg-4";
-    card.innerHTML = `
-      <div class="card border-0 shadow-sm area-card h-100 ${cardClass}">
-        <div class="card-body d-flex flex-column">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="area-code-badge fs-6">${window.escapeHtml(area.code)}</span>
-            <div class="dropdown">
-              <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-ellipsis-v"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                <li><a class="dropdown-item" href="#" onclick="openEditModal('${window.escapeHtml(area.id)}')"><i class="fas fa-edit me-2 text-primary"></i> <span>${areaTranslations.en.edit}</span></a></li>
-                <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteModal('${window.escapeHtml(area.id)}')"><i class="fas fa-trash me-2"></i> <span>${areaTranslations.en.delete}</span></a></li>
-              </ul>
+    if (cardsView) {
+      // Cards view
+      const cardClass = isAssigned ? "assigned" : "unassigned";
+      const card = document.createElement("div");
+      card.className = "col-md-6 col-lg-4";
+      card.innerHTML = `
+        <div class="card border-0 shadow-sm area-card h-100 ${cardClass}">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="area-code-badge fs-6">${_esc(area.code)}</span>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                  <li><a class="dropdown-item" href="#" data-action="edit" data-area-id="${_esc(area.id)}"><i class="fas fa-edit me-2 text-primary"></i> <span>${areaTranslations.en.edit}</span></a></li>
+                  <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-area-id="${_esc(area.id)}"><i class="fas fa-trash me-2"></i> <span>${areaTranslations.en.delete}</span></a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="mb-2">
+              <h5 class="card-title fw-bold mb-0">${_esc(area.name)} ${imsSubtitle}</h5>
+              ${buildToggleBtnHtml(cardDrawerId)}
+              ${buildDrawerHtml(cardDrawerId)}
+            </div>
+            <div class="mb-3 d-flex align-items-center justify-content-between mt-1">
+              <small class="text-muted"><i class="fas fa-cubes me-1"></i>${areaTranslations.en.assigned_bricks}:</small>
+              ${bricksBadge}
+            </div>
+            <div class="mt-auto pt-3 border-top">
+              <small class="text-muted d-block mb-1">${areaTranslations.en.assigned_rep}</small>
+              ${repDisplay}
             </div>
           </div>
-          <div class="mb-2">
-            <h5 class="card-title fw-bold mb-0">${window.escapeHtml(area.name)} ${imsSubtitle}</h5>
-            ${toggleBtnHtml ? toggleBtnHtml.replace(drawerId, `${drawerId}_card`) : ""}
-            ${drawerHtml ? drawerHtml.replace(`id="${drawerId}"`, `id="${drawerId}_card"`) : ""}
-          </div>
-          <div class="mb-3 d-flex align-items-center justify-content-between mt-1">
-            <small class="text-muted"><i class="fas fa-cubes me-1"></i>${areaTranslations.en.assigned_bricks}:</small>
-            ${bricksBadge}
-          </div>
-          <div class="mt-auto pt-3 border-top">
-            <small class="text-muted d-block mb-1">${areaTranslations.en.assigned_rep}</small>
-            ${repDisplay}
-          </div>
         </div>
-      </div>
-    `;
-    cardsView.appendChild(card);
+      `;
+      cardsView.appendChild(card);
+    }
   });
 
   if (typeof applyTranslations === "function") {
@@ -920,23 +1139,28 @@ function updateStats() {
   const assigned = currentAreas.filter((a) => a.repId !== null).length;
   const unassigned = total - assigned;
 
-  document.getElementById("total-count-header").textContent = total;
-  document.getElementById("stat-total").textContent = total;
-  document.getElementById("stat-assigned").textContent = assigned;
-  document.getElementById("stat-unassigned").textContent = unassigned;
+  const totalHeader = document.getElementById("total-count-header");
+  const statTotal = document.getElementById("stat-total");
+  const statAssigned = document.getElementById("stat-assigned");
+  const statUnassigned = document.getElementById("stat-unassigned");
+  if (totalHeader) totalHeader.textContent = total;
+  if (statTotal) statTotal.textContent = total;
+  if (statAssigned) statAssigned.textContent = assigned;
+  if (statUnassigned) statUnassigned.textContent = unassigned;
 }
 
 function filterAreas() {
-  const term = document.getElementById("search-input").value;
+  const searchInput = document.getElementById("search-input");
+  const term = searchInput ? searchInput.value : "";
   renderAreas(term);
 }
 
 function toggleView(view) {
   currentView = view;
-  document.getElementById("table-view").style.display =
-    view === "table" ? "block" : "none";
-  document.getElementById("cards-view").style.display =
-    view === "cards" ? "flex" : "none";
+  const tableViewEl = document.getElementById("table-view");
+  const cardsViewEl = document.getElementById("cards-view");
+  if (tableViewEl) tableViewEl.style.display = view === "table" ? "block" : "none";
+  if (cardsViewEl) cardsViewEl.style.display = view === "cards" ? "flex" : "none";
 }
 
 /**
@@ -958,7 +1182,7 @@ function populateAreaNamesDatalist() {
       if (!uniqueOptions.has(key)) {
         uniqueOptions.set(key, {
           name: b.crmCode,
-          code: b.imsCode ? `GZA-${b.imsCode}` : b.id,
+          code: formatBrickAreaCode(b),
           sub: b.imsName || ""
         });
       }
@@ -977,7 +1201,7 @@ function populateAreaNamesDatalist() {
 
   let html = "";
   uniqueOptions.forEach(({ name, code, sub }) => {
-    html += `<option value="${window.escapeHtml(name)}">${code ? `[${window.escapeHtml(code)}] ` : ""}${sub ? `(${window.escapeHtml(sub)})` : ""}</option>`;
+    html += `<option value="${_esc(name)}">${code ? `[${_esc(code)}] ` : ""}${sub ? `(${_esc(sub)})` : ""}</option>`;
   });
   datalist.innerHTML = html;
 }
@@ -996,8 +1220,7 @@ function onAreaNameInput() {
 
   if (crmMatch) {
     if (codeInput && !codeInput.value.trim()) {
-      const prefix = crmMatch.sector === "Cairo" ? "CAI" : (crmMatch.sector === "Alex" ? "ALX" : "GZA");
-      codeInput.value = crmMatch.imsCode ? `${prefix}-${crmMatch.imsCode}` : crmMatch.id;
+      codeInput.value = formatBrickAreaCode(crmMatch);
     }
     // Pre-check this brick in selected bricks
     if (crmMatch.name && !selectedBrickNames.has(crmMatch.name)) {
@@ -1016,22 +1239,39 @@ function onAreaNameInput() {
     (a) => a.name && a.name.trim().toLowerCase() === entered && a.code
   );
 
-  if (matched && matched.code && codeInput) {
+  if (matched && matched.code && codeInput && !codeInput.value.trim()) {
     codeInput.value = matched.code.toUpperCase();
   }
 }
 window.onAreaNameInput = onAreaNameInput;
 
 function openAddModal() {
-  document.getElementById("areaForm").reset();
-  document.getElementById("areaId").value = "";
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (!isAreasAuthorized(user)) {
+    if (areaModal) areaModal.hide();
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  const effectiveLineId = currentSelectedLineId || getDefaultLineId();
+  if (isBuRole(user) && !isLineWithinUserScope(effectiveLineId, user)) {
+    if (areaModal) areaModal.hide();
+    if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+    return;
+  }
+
+  const form = document.getElementById("areaForm");
+  if (form) form.reset();
+  const areaIdEl = document.getElementById("areaId");
+  if (areaIdEl) areaIdEl.value = "";
   populateRepDropdown("", currentSelectedLineId);
   populateAreaNamesDatalist();
   populateBricksSelector([]);
 
-  document.getElementById("areaModalTitle").textContent = areaTranslations.en.add_area;
+  const titleEl = document.getElementById("areaModalTitle");
+  if (titleEl) titleEl.textContent = areaTranslations.en.add_area;
   if (typeof applyTranslations === "function") {
-    applyTranslations("en");
+    const lang = typeof getCurrentLang === "function" ? getCurrentLang() : (document.documentElement.lang || "en");
+    applyTranslations(lang);
   }
 
   // Update line label in modal
@@ -1043,57 +1283,82 @@ function openAddModal() {
   if (modalLineEl) modalLineEl.textContent = lineLabel;
 
   // Show the modal
-  areaModal.show();
+  if (areaModal) areaModal.show();
 }
 
 function openEditModal(id) {
-  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
-    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
-  const area = allAreas.find((a) => a.id === id);
-  if (area) {
-    document.getElementById("areaId").value = area.id;
-    document.getElementById("areaName").value = area.name;
-    document.getElementById("areaCode").value = area.code;
-
-    const areaLineId = area.lineId || currentSelectedLineId;
-    populateRepDropdown(area.repId || "", areaLineId);
-    populateAreaNamesDatalist();
-    populateBricksSelector(area.bricks || []);
-
-    document.getElementById("areaModalTitle").textContent = areaTranslations.en.edit;
-  if (typeof applyTranslations === "function") {
-    applyTranslations("en");
-  }
-
-    // Update line label in modal
-    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
-      || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
-    const lineObj = allLines.find((l) => l.id === areaLineId);
-    const lineLabel = lineObj ? (lineObj.name || lineObj.nameAr) : (areaLineId || "");
-    const modalLineEl = document.getElementById("modalLineName");
-    if (modalLineEl) modalLineEl.textContent = lineLabel;
-
-    areaModal.show();
-  }
-}
-
-function saveArea() {
-  const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
     return;
   }
-  const id = document.getElementById("areaId").value;
-  const name = document.getElementById("areaName").value.trim();
-  const code = document.getElementById("areaCode").value.trim();
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+  const area = allAreas.find((a) => a.id === id);
+  if (!area) return;
+
+  const areaLineId = area.lineId || currentSelectedLineId || getDefaultLineId();
+  if (!isLineWithinUserScope(areaLineId, user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+    return;
+  }
+
+  const areaIdEl = document.getElementById("areaId");
+  const areaNameEl = document.getElementById("areaName");
+  const areaCodeEl = document.getElementById("areaCode");
+  if (areaIdEl) areaIdEl.value = area.id;
+  if (areaNameEl) areaNameEl.value = area.name || "";
+  if (areaCodeEl) areaCodeEl.value = area.code || "";
+
+  populateRepDropdown(area.repId || "", areaLineId);
+  populateAreaNamesDatalist();
+  populateBricksSelector(area.bricks || []);
+
+  const titleEl = document.getElementById("areaModalTitle");
+  if (titleEl) titleEl.textContent = areaTranslations.en.edit;
+  if (typeof applyTranslations === "function") {
+    const lang = typeof getCurrentLang === "function" ? getCurrentLang() : (document.documentElement.lang || "en");
+    applyTranslations(lang);
+  }
+
+  // Update line label in modal
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const lineObj = allLines.find((l) => l.id === areaLineId);
+  const lineLabel = lineObj ? (lineObj.name || lineObj.nameAr) : (areaLineId || "");
+  const modalLineEl = document.getElementById("modalLineName");
+  if (modalLineEl) modalLineEl.textContent = lineLabel;
+
+  if (areaModal) areaModal.show();
+}
+
+function saveArea() {
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (!isAreasAuthorized(user)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  const areaIdEl = document.getElementById("areaId");
+  const areaNameEl = document.getElementById("areaName");
+  const areaCodeEl = document.getElementById("areaCode");
   const repSelect = document.getElementById("assignRep");
-  const repId = repSelect.value || null;
+  if (!areaNameEl || !areaCodeEl) return;
+
+  const id = areaIdEl ? areaIdEl.value : "";
+  const name = areaNameEl.value.trim();
+  const code = areaCodeEl.value.trim();
+  const repId = (repSelect && repSelect.value) ? repSelect.value : null;
 
   // Fetch rep name directly from store to avoid formatted dropdown text
+  let repObj = null;
   let repName = null;
   if (repId && window.store && window.store.users) {
-    const rep = window.store.users.getById(repId);
-    repName = rep ? rep.name : null;
+    repObj = window.store.users.getById(repId);
+    if (!repObj || String(repObj.status || "").toLowerCase() === "inactive") {
+      if (typeof showToast === "function") showToast("Selected representative is inactive or no longer exists.", "warning");
+      return;
+    }
+    repName = repObj.name || repObj.nameAr || null;
   }
 
   if (!name || !code) {
@@ -1102,18 +1367,41 @@ function saveArea() {
     return;
   }
 
-  const existingArea = id ? (window.store && window.store.areas ? window.store.areas.getById(id) : null) : null;
-  const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line_1790626000001");
-  const targetId = id || `area_${effectiveLineId}_${Date.now()}`;
+  if (!(window.store && window.store.areas)) {
+    if (typeof showToast === "function") showToast("Store is not initialized. Please reload the page.", "error");
+    return;
+  }
 
-  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
-  if (role === "business_unit" || role === "bu") {
-    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map((l) => l.id) : [];
-    if (!userLines.includes(effectiveLineId)) {
-      if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+  const defaultLineId = getDefaultLineId();
+  const existingArea = id ? window.store.areas.getById(id) : null;
+  if (id && !existingArea) {
+    if (areaModal) areaModal.hide();
+    if (typeof showToast === "function") showToast("This area no longer exists (it may have been deleted).", "warning");
+    renderAreas(document.getElementById("search-input")?.value || "");
+    updateStats();
+    return;
+  }
+  const effectiveLineId = (existingArea && existingArea.lineId) || currentSelectedLineId || defaultLineId;
+  const targetId = id || (typeof window.genId === "function"
+    ? window.genId(`area_${effectiveLineId}_`)
+    : `area_${effectiveLineId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`);
+
+  if (!isLineWithinUserScope(effectiveLineId, user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+    return;
+  }
+  if (repId && repObj) {
+    const repLines = Array.isArray(repObj.lineIds) && repObj.lineIds.length > 0
+      ? repObj.lineIds
+      : (repObj.lineId ? [repObj.lineId] : []);
+    if (repLines.length > 0 && !repLines.includes(effectiveLineId)) {
+      if (typeof showToast === "function") showToast("Selected representative does not belong to this product line.", "warning");
       return;
     }
-    if (repId && typeof window.canApproveFor === "function" && !window.canApproveFor(repId)) {
+  }
+  if (isBuRole(user) && repId) {
+    const allowedRep = typeof window.canApproveFor === "function" ? window.canApproveFor(repId) : false;
+    if (!allowedRep) {
       if (typeof showToast === "function") showToast("Permission Denied: Rep outside your BU scope.", "error");
       return;
     }
@@ -1122,10 +1410,10 @@ function saveArea() {
   // Validate unique Area Code within the same product line (case-insensitive)
   // Allows the same area code (e.g. CAI-N01 for Nasr City) across different lines,
   // but prevents duplicate codes within the same line.
-  const allAreasGlobal = (window.store && window.store.areas) ? window.store.areas.getAll() : [];
+  const allAreasGlobal = window.store.areas.getAll() || [];
   const isDuplicateCode = allAreasGlobal.some((a) => {
     if (a.id === targetId) return false;
-    const aLine = a.lineId || (window.store && window.store.areas ? window.store.areas._defaultLineId() : "line_1790626000001");
+    const aLine = a.lineId || defaultLineId;
     if (aLine !== effectiveLineId) return false;
     return a.code && a.code.trim().toUpperCase() === code.toUpperCase();
   });
@@ -1138,19 +1426,17 @@ function saveArea() {
   const bricks = Array.from(selectedBrickNames);
 
   let reassignResult = null;
-  if (window.store && window.store.areas) {
-    window.store.areas.save({
-      id: targetId,
-      name,
-      code: code.toUpperCase(),
-      repId,
-      repName,
-      lineId: effectiveLineId,
-      bricks,
-    });
-    if (typeof window.store.areas.reassignAreaCustomers === "function") {
-      reassignResult = window.store.areas.reassignAreaCustomers(targetId, repId, name);
-    }
+  window.store.areas.save({
+    id: targetId,
+    name,
+    code: code.toUpperCase(),
+    repId,
+    repName,
+    lineId: effectiveLineId,
+    bricks,
+  });
+  if (typeof window.store.areas.reassignAreaCustomers === "function") {
+    reassignResult = window.store.areas.reassignAreaCustomers(targetId, repId, name);
   }
 
   // Automatically rematch distributor sales rows to the newly assigned representative
@@ -1161,8 +1447,9 @@ function saveArea() {
     window.store.distributorSales.applyAreaMatching(false, false);
   }
 
-  areaModal.hide();
-  renderAreas();
+  if (areaModal) areaModal.hide();
+  const activeSearch = document.getElementById("search-input")?.value || "";
+  renderAreas(activeSearch);
   updateStats();
 
   let successMsg = "Area saved successfully.";
@@ -1175,23 +1462,54 @@ function saveArea() {
   if (typeof showToast === "function") showToast(successMsg, "success");
 }
 
+function getLinkedAreaRecords(area, defaultLineId) {
+  const allDoctors = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.doctors)) ? window.DEMO_DATA.doctors : [];
+  const allVisits = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) ? window.DEMO_DATA.visits : [];
+  const allPharmacies = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.pharmacies)) ? window.DEMO_DATA.pharmacies : [];
+  const allHospitals = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.hospitals)) ? window.DEMO_DATA.hospitals : [];
+
+  return {
+    doctors: allDoctors.filter((d) => recordBelongsToArea(d, area, defaultLineId)),
+    visits: allVisits.filter((v) => recordBelongsToArea(v, area, defaultLineId)),
+    pharmacies: allPharmacies.filter((p) => recordBelongsToArea(p, area, defaultLineId)),
+    hospitals: allHospitals.filter((h) => recordBelongsToArea(h, area, defaultLineId)),
+  };
+}
+
 function openDeleteModal(id) {
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (!isAreasAuthorized(user)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
   const currentAreas = getAreasList();
-  const area = currentAreas.find((a) => a.id === id);
+  const area = currentAreas.find((a) => a.id === id) || allAreas.find((a) => a.id === id);
   if (!area) return;
 
-  document.getElementById("deleteAreaId").value = id;
+  const defaultLineId = getDefaultLineId();
+  const areaLineId = area.lineId || defaultLineId;
+  if (!isLineWithinUserScope(areaLineId, user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+    return;
+  }
 
-  const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const deleteIdEl = document.getElementById("deleteAreaId");
+  if (deleteIdEl) deleteIdEl.value = id;
 
-  const linkedDoctors = allDoctors.filter(
-    (d) => d.areaId === id || (d.area && d.area.toLowerCase() === area.name.toLowerCase())
-  );
-  const linkedVisits = allVisits.filter(
-    (v) => v.areaId === id || (v.area && v.area.toLowerCase() === area.name.toLowerCase())
-  );
-  const hasRep = Boolean(area.repId);
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const activeSourceRep = getActiveRepForArea(area, allUsers);
+  const linked = getLinkedAreaRecords(area, defaultLineId);
+  const hasRep = Boolean(activeSourceRep.repId);
+  const hasActiveRecords =
+    linked.doctors.length > 0 ||
+    linked.visits.length > 0 ||
+    linked.pharmacies.length > 0 ||
+    linked.hospitals.length > 0 ||
+    hasRep;
 
   const warningContainer = document.getElementById("deleteWarningContainer");
   const warningDetails = document.getElementById("deleteWarningDetails");
@@ -1199,132 +1517,153 @@ function openDeleteModal(id) {
   const deleteMsg = document.getElementById("deleteAreaMsg");
   const confirmBtn = document.getElementById("confirmDeleteBtn");
 
-  const otherAreas = currentAreas.filter((a) => a.id !== id);
+  // Only allow transferring to other areas within the exact same product line
+  const otherAreas = allAreas.filter(
+    (a) => a.id !== id && (a.lineId || defaultLineId) === areaLineId
+  );
 
-  if (linkedDoctors.length > 0 || linkedVisits.length > 0 || hasRep) {
-    warningContainer.style.display = "block";
-    deleteMsg.textContent = `Warning: "${area.name}" contains active records and cannot be deleted directly:`;
-    warningDetails.innerHTML = `
-      <ul class="mb-1 ps-3">
-        <li><strong>${linkedDoctors.length}</strong> registered doctor(s).</li>
-        <li><strong>${linkedVisits.length}</strong> logged visit(s).</li>
-        ${hasRep ? `<li>Assigned rep: <strong>${window.escapeHtml(area.repName || area.repId)}</strong>.</li>` : ""}
-      </ul>
-    `;
-    confirmBtn.textContent = "Transfer & Delete";
+  if (hasActiveRecords) {
+    if (warningContainer) warningContainer.style.display = "block";
+    if (deleteMsg) deleteMsg.textContent = `Warning: "${area.name}" contains active records and cannot be deleted directly:`;
+    if (warningDetails) {
+      warningDetails.innerHTML = `
+        <ul class="mb-1 ps-3">
+          <li><strong>${linked.doctors.length}</strong> registered doctor(s).</li>
+          ${linked.pharmacies.length > 0 ? `<li><strong>${linked.pharmacies.length}</strong> registered pharmacy/pharmacies.</li>` : ""}
+          ${linked.hospitals.length > 0 ? `<li><strong>${linked.hospitals.length}</strong> registered hospital(s).</li>` : ""}
+          <li><strong>${linked.visits.length}</strong> logged visit(s).</li>
+          ${hasRep ? `<li>Assigned rep: <strong>${_esc(activeSourceRep.repName || activeSourceRep.repId)}</strong>.</li>` : ""}
+        </ul>
+      `;
+    }
+    if (confirmBtn) confirmBtn.textContent = "Transfer & Delete";
 
     let optHtml = "";
     otherAreas.forEach((oa) => {
-      optHtml += `<option value="${window.escapeHtml(oa.id)}">${window.escapeHtml(oa.name)} (${window.escapeHtml(oa.code)})</option>`;
+      optHtml += `<option value="${_esc(oa.id)}">${_esc(oa.name)} (${_esc(oa.code)})</option>`;
     });
 
     if (otherAreas.length === 0) {
-      optHtml = `<option value="">No other areas available for transfer!</option>`;
-      confirmBtn.disabled = true;
+      optHtml = `<option value="">No other areas available in this line for transfer!</option>`;
+      if (confirmBtn) confirmBtn.disabled = true;
     } else {
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+    if (transferSelect) transferSelect.innerHTML = optHtml;
+  } else {
+    if (warningContainer) warningContainer.style.display = "none";
+    if (deleteMsg) deleteMsg.textContent = `Are you sure you want to delete "${area.name}"? (Area is empty with no linked accounts or visits)`;
+    if (confirmBtn) {
+      confirmBtn.textContent = "Delete";
       confirmBtn.disabled = false;
     }
-    transferSelect.innerHTML = optHtml;
-  } else {
-    warningContainer.style.display = "none";
-    deleteMsg.textContent = `Are you sure you want to delete "${area.name}"? (Area is empty with no doctors or visits)`;
-    confirmBtn.textContent = "Delete";
-    confirmBtn.disabled = false;
   }
 
-  deleteModal.show();
+  if (deleteModal) deleteModal.show();
 }
 
 function confirmDelete() {
-  const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin", "business_unit", "hr"], user)) {
+  const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
     return;
   }
-  const id = document.getElementById("deleteAreaId").value;
-  const currentAreas = getAreasList();
-  const area = currentAreas.find((a) => a.id === id);
+  if (!(window.store && window.store.areas)) {
+    if (typeof showToast === "function") showToast("Store is not initialized. Please reload the page.", "error");
+    return;
+  }
+
+  const deleteIdEl = document.getElementById("deleteAreaId");
+  const id = deleteIdEl ? deleteIdEl.value : "";
+  const allAreas = window.store.areas.getAll() || [];
+  const area = allAreas.find((a) => a.id === id);
   if (!area) return;
 
+  const defaultLineId = getDefaultLineId();
+  const areaLineId = area.lineId || defaultLineId;
+  if (!isLineWithinUserScope(areaLineId, user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Line outside your BU scope.", "error");
+    return;
+  }
+
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null)
+    || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const activeSourceRep = getActiveRepForArea(area, allUsers);
+  const linked = getLinkedAreaRecords(area, defaultLineId);
   const warningContainer = document.getElementById("deleteWarningContainer");
-  const isTransferRequired = warningContainer && warningContainer.style.display !== "none";
+  const hasActiveRecords =
+    linked.doctors.length > 0 ||
+    linked.visits.length > 0 ||
+    linked.pharmacies.length > 0 ||
+    linked.hospitals.length > 0 ||
+    Boolean(activeSourceRep.repId);
+  const isTransferRequired = hasActiveRecords || Boolean(warningContainer && warningContainer.style.display !== "none");
 
   let destinationArea = null;
 
   if (isTransferRequired) {
     const transferSelect = document.getElementById("transferAreaSelect");
     const targetAreaId = transferSelect ? transferSelect.value : "";
-    destinationArea = currentAreas.find((a) => a.id === targetAreaId);
+    destinationArea = allAreas.find((a) => a.id === targetAreaId);
 
-    if (!destinationArea) {
-      const msg = "Please select a valid destination area for transfer.";
+    const destLineId = destinationArea ? (destinationArea.lineId || defaultLineId) : null;
+    if (!destinationArea || destinationArea.id === id || destLineId !== areaLineId) {
+      const msg = "Please select a valid destination area in the same product line for transfer.";
       if (typeof showToast === "function") showToast(msg, "warning");
       return;
     }
-    // Reassign doctors to the destination area
-    const targetRepId = destinationArea.repId || null;
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-    const targetRep = targetRepId ? allUsers.find((u) => u.id === targetRepId) : null;
-    const targetRepName = targetRep ? targetRep.name : (destinationArea.repName || "");
 
-    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.doctors)) {
-      window.DEMO_DATA.doctors.forEach((d) => {
-        if (d.areaId === id || (d.area && d.area.toLowerCase() === area.name.toLowerCase())) {
-          d.areaId = destinationArea.id;
-          d.area = destinationArea.name;
-          d.repId = targetRepId;
-          if (targetRepName) d.repName = targetRepName;
-        }
-      });
-    }
+    const activeDestRep = getActiveRepForArea(destinationArea, allUsers);
+    const targetRepId = activeDestRep.repId;
+    const targetRepName = activeDestRep.repName;
 
-    // Reassign visits to the destination area
-    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
-      window.DEMO_DATA.visits.forEach((v) => {
-        if (v.areaId === id || (v.area && v.area.toLowerCase() === area.name.toLowerCase())) {
-          v.areaId = destinationArea.id;
-          v.area = destinationArea.name;
-        }
-      });
-    }
+    // Reassign doctors strictly belonging to this area & line
+    linked.doctors.forEach((d) => {
+      d.areaId = destinationArea.id;
+      d.area = destinationArea.name;
+      d.lineId = destLineId;
+      d.repId = targetRepId;
+      d.repName = targetRepName;
+    });
 
-    // Reassign pharmacies to the destination area
-    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.pharmacies)) {
-      window.DEMO_DATA.pharmacies.forEach((p) => {
-        if (p.areaId === id || (p.area && p.area.toLowerCase() === area.name.toLowerCase())) {
-          p.areaId = destinationArea.id;
-          p.area = destinationArea.name;
-          p.repId = targetRepId;
-          if (targetRepName) p.repName = targetRepName;
-        }
-      });
-    }
+    // Reassign visits strictly belonging to this area & line
+    linked.visits.forEach((v) => {
+      v.areaId = destinationArea.id;
+      v.area = destinationArea.name;
+    });
 
-    // Reassign hospitals to the destination area
-    if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.hospitals)) {
-      window.DEMO_DATA.hospitals.forEach((h) => {
-        if (h.areaId === id || (h.area && h.area.toLowerCase() === area.name.toLowerCase())) {
-          h.areaId = destinationArea.id;
-          h.area = destinationArea.name;
-          h.repId = targetRepId;
-          if (targetRepName) h.repName = targetRepName;
-        }
-      });
-    }
+    // Reassign pharmacies strictly belonging to this area & line
+    linked.pharmacies.forEach((p) => {
+      p.areaId = destinationArea.id;
+      p.area = destinationArea.name;
+      p.lineId = destLineId;
+      p.repId = targetRepId;
+      p.repName = targetRepName;
+    });
+
+    // Reassign hospitals strictly belonging to this area & line
+    linked.hospitals.forEach((h) => {
+      h.areaId = destinationArea.id;
+      h.area = destinationArea.name;
+      h.lineId = destLineId;
+      h.repId = targetRepId;
+      h.repName = targetRepName;
+    });
 
     if (typeof window.saveDataToStorage === "function") {
       window.saveDataToStorage();
     }
   }
 
-  if (window.store && window.store.areas) {
-    window.store.areas.delete(id);
-  }
+  window.store.areas.delete(id);
 
-  deleteModal.hide();
-  renderAreas();
+  if (deleteModal) deleteModal.hide();
+  const activeSearch = document.getElementById("search-input")?.value || "";
+  renderAreas(activeSearch);
   updateStats();
 
-  const successMsg = isTransferRequired ? `All records safely transferred to ${destinationArea ? destinationArea.name : ""} and area deleted.` : "Area deleted successfully.";
+  const successMsg = isTransferRequired
+    ? `All records safely transferred to ${destinationArea ? destinationArea.name : ""} and area deleted.`
+    : "Area deleted successfully.";
   if (typeof showToast === "function") showToast(successMsg, "info");
 }

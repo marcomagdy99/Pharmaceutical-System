@@ -3,6 +3,10 @@
  * @description Core shared logic, synchronous theme execution, authentication, and universal topbar rendering across all pages.
  */
 
+if (typeof window !== "undefined" && typeof window.DEMO_MODE === "undefined") {
+  window.DEMO_MODE = Boolean(window.IS_DEMO_MODE);
+}
+
 // ============================================================================
 // Immediate Synchronous Theme Engine (Eliminates Flash of Light Theme - FOUC)
 // ============================================================================
@@ -33,7 +37,8 @@ function escapeHtml(str) {
 window.escapeHtml = escapeHtml;
 
 /**
- * Enterprise XSS Sanitizer: strips executable tags, javascript: urls, and inline event handlers.
+ * Enterprise XSS Sanitizer (best-effort only): strips executable tags, javascript: urls, and inline event handlers.
+ * NOTE: Best-effort only — do NOT use for notification icons or any user-supplied text fields; rely on escapeHtml instead.
  * @param {string} html Raw user input or HTML markup.
  * @returns {string} Clean, safe markup.
  */
@@ -51,10 +56,17 @@ function sanitizeHtml(html) {
 }
 window.sanitizeHtml = sanitizeHtml;
 
+function genId(prefix) {
+  const rnd = (typeof window !== "undefined" && window.crypto && typeof window.crypto.randomUUID === "function")
+    ? window.crypto.randomUUID().replace(/-/g, "").slice(0, 16)
+    : (Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  return prefix + rnd;
+}
+window.genId = genId;
+
 // ============================================================================
 // Section 0.4: Dual Anti-Timestamp Tampering Engine (Network Time Protocol)
 // Primary: Current Host Origin (window.location.origin HEAD Date header - RFC 7231)
-// Fallback: Cloudflare Edge Trace (https://cloudflare.com/cdn-cgi/trace)
 // Monotonic Guard: performance.now() tracks true elapsed time immune to device clock hacks
 // ============================================================================
 const NetworkTime = {
@@ -99,44 +111,24 @@ const NetworkTime = {
         }
       }
     } catch (e) {
-      // Origin HEAD failed or offline, fall through to Cloudflare
+      // Origin HEAD failed or offline, fall through to session cache / device clock
     }
 
-    // Attempt 2: Cloudflare Edge Trace Fallback
-    try {
-      const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
-      const res = await fetch("https://cloudflare.com/cdn-cgi/trace", {
-        cache: "no-store",
-        signal: controller ? controller.signal : undefined
-      });
-      if (timeoutId) clearTimeout(timeoutId);
-      const text = await res.text();
-      const match = text.match(/ts=([0-9.]+)/);
-      if (match) {
-        const serverMs = Math.floor(parseFloat(match[1]) * 1000);
-        if (!isNaN(serverMs) && serverMs > 0) {
-          this._applySync(serverMs, "cloudflare");
-          return true;
-        }
-      }
-    } catch (e) {
-      // Cloudflare fallback failed or offline
-    }
-
-    // Attempt 3: Restore cached session sync if available
+    // Attempt 2: Restore cached session sync if available
+    // Note: Do NOT restore basePerf across page loads because performance.now() resets to 0 on every navigation.
     try {
       if (typeof sessionStorage !== "undefined") {
         const cachedOffset = sessionStorage.getItem("pharma_net_time_offset");
-        const cachedPerf = sessionStorage.getItem("pharma_net_time_perf");
-        const cachedBase = sessionStorage.getItem("pharma_net_time_base");
-        if (cachedOffset !== null && cachedPerf !== null && cachedBase !== null) {
-          this.offsetMs = parseInt(cachedOffset, 10) || 0;
-          this.basePerf = parseFloat(cachedPerf) || 0;
-          this.baseServerMs = parseInt(cachedBase, 10) || 0;
-          this.isSynced = true;
-          this.syncSource = "session_cache";
-          return true;
+        if (cachedOffset !== null) {
+          const parsedOffset = parseInt(cachedOffset, 10);
+          if (!isNaN(parsedOffset)) {
+            this.offsetMs = parsedOffset;
+            this.basePerf = 0;
+            this.baseServerMs = 0;
+            this.isSynced = true;
+            this.syncSource = "session_cache";
+            return true;
+          }
         }
       }
     } catch (e) {}
@@ -1613,12 +1605,13 @@ function loadDataFromStorage() {
       const data = JSON.parse(cached);
       if (data) {
         if (Array.isArray(data.users)) {
-          // Auto-migrate legacy medical rep EMP- codes to REP-
+          // Preserve existing Arabic nameAr; only default to English name if missing
           data.users.forEach((u) => {
-            if (u.name) {
+            if (u && u.name && !u.nameAr) {
               u.nameAr = u.name;
             }
           });
+          // Auto-migrate legacy medical rep EMP- codes to REP-
           data.users.forEach((u) => {
             if (u.role === "medical_rep" || u.role === "rep") {
               if (u.employeeCode && u.employeeCode.startsWith("EMP-")) {
@@ -1626,31 +1619,6 @@ function loadDataFromStorage() {
               }
               if (u.code && u.code.startsWith("EMP-")) {
                 u.code = u.code.replace(/^EMP-/, "REP-");
-              }
-            }
-          });
-
-          // Normalize Mohamed Ramadan and Fady Adel IDs
-          data.users.forEach((u) => {
-            if (u.email === "rep5@pharmacare.com" || u.code === "REP-005" || u.code === "EMP-005" || u.employeeCode === "REP-005" || u.employeeCode === "EMP-005") {
-              u.id = "u1790626000005";
-              u.email = "rep5@pharmacare.com";
-              u.employeeCode = "REP-005";
-              u.code = "REP-005";
-              u.name = "Mohamed Ramadan";
-              u.role = "medical_rep";
-            }
-            if (u.email === "pm2@pharmacare.com" || u.code === "PM-002" || u.employeeCode === "PM-002") {
-              u.id = "u1790626000019";
-              u.role = "product_manager";
-              u.email = "pm2@pharmacare.com";
-              u.code = "PM-002";
-              u.employeeCode = "PM-002";
-              u.name = "Fady Adel";
-              u.lineId = "";
-              u.lineIds = [];
-              if (!Array.isArray(u.productIds) || u.productIds.length === 0) {
-                u.productIds = [];
               }
             }
           });
@@ -1669,7 +1637,7 @@ function loadDataFromStorage() {
           data.users.forEach((u) => {
             if (!u) return;
             if (!u.id || typeof u.id !== "string" || !u.id.trim()) {
-              u.id = "u" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+              u.id = genId("u");
             }
             const idKey = String(u.id);
             const emailKey = (u.email || "").toLowerCase().trim();
@@ -1684,12 +1652,14 @@ function loadDataFromStorage() {
 
           data.users = uniqueUsers;
 
-          DEFAULT_DEMO_DATA.users.forEach((u) => {
-            const emailKey = (u.email || "").toLowerCase().trim();
-            if (!data.users.some((existing) => existing.id === u.id || (emailKey && (existing.email || "").toLowerCase().trim() === emailKey))) {
-              data.users.push(u);
-            }
-          });
+          if ((typeof window !== "undefined" && window.DEMO_MODE === true) || data.users.length === 0) {
+            DEFAULT_DEMO_DATA.users.forEach((u) => {
+              const emailKey = (u.email || "").toLowerCase().trim();
+              if (!data.users.some((existing) => existing.id === u.id || (emailKey && (existing.email || "").toLowerCase().trim() === emailKey))) {
+                data.users.push(u);
+              }
+            });
+          }
 
           // Self-healing: Repair missing managerId and hierarchy for existing stored users from default seed
           data.users.forEach((u) => {
@@ -1810,15 +1780,18 @@ function loadDataFromStorage() {
 
         if (!Array.isArray(data.pharmacyOverrides)) data.pharmacyOverrides = [];
         if (!Array.isArray(data.notifications)) data.notifications = [];
-        data.notifications = data.notifications.filter((n) => n && n.userId && !demoUserIds.includes(n.userId));
+        const legacyDemoNotifIds = ["notif_rep_1", "notif_rep_2", "notif_rep_3", "notif_dm_1", "notif_dm_2", "notif_hr_1"];
+        data.notifications = data.notifications.filter((n) => n && n.userId && !legacyDemoNotifIds.includes(n.id));
 
         if (!Array.isArray(data.users)) data.users = [];
-        DEFAULT_DEMO_DATA.users.forEach((defUser) => {
-          const emailKey = (defUser.email || "").toLowerCase().trim();
-          if (!data.users.some((u) => u.id === defUser.id || (emailKey && (u.email || "").toLowerCase().trim() === emailKey))) {
-            data.users.push(defUser);
-          }
-        });
+        if ((typeof window !== "undefined" && window.DEMO_MODE === true) || data.users.length === 0) {
+          DEFAULT_DEMO_DATA.users.forEach((defUser) => {
+            const emailKey = (defUser.email || "").toLowerCase().trim();
+            if (!data.users.some((u) => u.id === defUser.id || (emailKey && (u.email || "").toLowerCase().trim() === emailKey))) {
+              data.users.push(defUser);
+            }
+          });
+        }
         // Auto-migration: If pharma_master_data still contains distributorSales, extract it to pharma_sales_data
         if ("distributorSales" in data) {
           if (Array.isArray(data.distributorSales) && data.distributorSales.length > 0) {
@@ -1884,11 +1857,16 @@ function loadDataFromStorage() {
         "070a3b5e8d4bd5c46acccb91c9c54614c0cd649e78c4c4719e3a64270bae5ddf"
       ];
       if (Array.isArray(data.users)) {
+        let legacyHashSkippedCount = 0;
         data.users.forEach((u) => {
           if (legacyIdMap[u.id]) u.id = legacyIdMap[u.id];
           if (u.passwordHash && legacyOldHashes.includes(u.passwordHash)) {
-            u.passwordHash = "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f";
-            u.mustChangePassword = false;
+            if (typeof window !== "undefined" && window.DEMO_MODE === true) {
+              u.passwordHash = "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f";
+              u.mustChangePassword = true;
+            } else {
+              legacyHashSkippedCount++;
+            }
           }
           if (legacyIdMap[u.managerId]) u.managerId = legacyIdMap[u.managerId];
           if (legacyLineMap[u.lineId]) u.lineId = legacyLineMap[u.lineId];
@@ -1897,6 +1875,9 @@ function loadDataFromStorage() {
           if (Array.isArray(u.areaIds)) u.areaIds = u.areaIds.map((a) => legacyAreaMap[a] || a);
           if (Array.isArray(u.productIds)) u.productIds = u.productIds.map((p) => legacyProdMap[p] || p);
         });
+        if (legacyHashSkippedCount > 0) {
+          console.warn("[Security] Skipped legacy password hash migration for " + legacyHashSkippedCount + " account(s) (DEMO_MODE is false).");
+        }
       }
       if (Array.isArray(data.areas)) {
         data.areas.forEach((a) => {
@@ -2177,8 +2158,9 @@ function getAllSubordinates(managerId, visited = new Set()) {
   const manager = users.find((u) => u.id === managerId);
   if (!manager) return [];
 
-  if (manager.role === "admin") {
-    return users.filter((u) => u.role !== "admin");
+  const mgrRole = normalizeRole(manager.role);
+  if (mgrRole === "admin" || mgrRole === "general_manager") {
+    return users.filter((u) => normalizeRole(u.role) !== "admin");
   }
 
   visited.add(managerId);
@@ -2215,9 +2197,9 @@ function parseTimeToMinutes(timeStr) {
 function checkVisitTimeConflict(repId, visitDate, visitTime, currentVisitId = null) {
   const companySettings = (window.store && window.store.companySettings)
     ? window.store.companySettings.get()
-    : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
 
-  if (!companySettings || !companySettings.requireGpsValidation) {
+  if (companySettings && companySettings.enforceVisitTimeConflict === false) {
     return { hasConflict: false };
   }
 
@@ -2514,7 +2496,8 @@ window.getManagerChain = getManagerChain;
 function canApproveFor(targetUserId) {
   const currentUser = checkAuth();
   if (!currentUser) return false;
-  if (currentUser.role === "admin" || currentUser.role === "hr") return true;
+  const role = normalizeRole(currentUser.role);
+  if (role === "admin" || role === "general_manager") return true;
 
   const chain = getManagerChain(targetUserId);
   return chain.some((m) => m.id === currentUser.id);
@@ -2661,23 +2644,67 @@ window.isPlannedVisitExpired = isPlannedVisitExpired;
  * @param {string} str - Plaintext password to hash.
  * @returns {Promise<string>} Hexadecimal SHA-256 hash or fallback hash.
  */
+function _sha256FallbackHex(input) {
+  const utf8 = unescape(encodeURIComponent(String(input)));
+  const words = [];
+  for (let i = 0; i < utf8.length; i++) {
+    words[i >> 2] |= utf8.charCodeAt(i) << (24 - (i % 4) * 8);
+  }
+  const bitLen = utf8.length * 8;
+  words[bitLen >> 5] |= 0x80 << (24 - (bitLen % 32));
+  words[(((bitLen + 64) >> 9) << 4) + 15] = bitLen;
+
+  const K = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ];
+  const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  const W = new Array(64);
+  const rotr = (n, x) => (x >>> n) | (x << (32 - n));
+
+  for (let i = 0; i < words.length; i += 16) {
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let t = 0; t < 64; t++) {
+      if (t < 16) {
+        W[t] = words[i + t] | 0;
+      } else {
+        const s0 = rotr(7, W[t - 15]) ^ rotr(18, W[t - 15]) ^ (W[t - 15] >>> 3);
+        const s1 = rotr(17, W[t - 2]) ^ rotr(19, W[t - 2]) ^ (W[t - 2] >>> 10);
+        W[t] = (W[t - 16] + s0 + W[t - 7] + s1) | 0;
+      }
+      const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e);
+      const ch = (e & f) ^ (~e & g);
+      const temp1 = (h + S1 + ch + K[t] + W[t]) | 0;
+      const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const temp2 = (S0 + maj) | 0;
+      h = g; g = f; f = e; e = (d + temp1) | 0;
+      d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  return H.map((v) => (v >>> 0).toString(16).padStart(8, "0")).join("");
+}
+
 async function hashPassword(str) {
-  if (window.crypto && window.crypto.subtle) {
+  if (typeof window !== "undefined" && window.crypto && window.crypto.subtle) {
     try {
       const encoder = new TextEncoder();
       const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
       return Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
     } catch (e) {}
   }
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return "fallback_" + Math.abs(hash).toString(16);
+  return _sha256FallbackHex(str);
 }
 window.hashPassword = hashPassword;
 
@@ -2814,10 +2841,14 @@ function getAreaManagerId(area, allUsers = []) {
 
     if (area.lineId) {
       const dmsInLine = userList.filter((u) =>
-        (u.role === "district_manager" || u.role === "dm") &&
+        normalizeRole(u.role) === "district_manager" &&
         ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
       );
-      if (dmsInLine.length === 1) {
+      const lmsInLine = userList.filter((u) =>
+        normalizeRole(u.role) === "line_manager" &&
+        ((u.lineIds && u.lineIds.includes(area.lineId)) || u.lineId === area.lineId)
+      );
+      if (dmsInLine.length === 1 && lmsInLine.length <= 1) {
         return dmsInLine[0].id;
       }
     }
@@ -2882,11 +2913,12 @@ function parseSalesNumber(val) {
   // Check if negative in accounting formats: (1,500) or 1500- or -1500
   const isAccountingNegative = (s.startsWith("(") && s.endsWith(")")) || s.endsWith("-") || s.startsWith("-");
 
-  // Convert Eastern Arabic-Indic digits (0-9) to Latin
+  // Convert Eastern Arabic-Indic and Persian digits (0-9) to Latin
   s = s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
+  s = s.replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d).toString());
 
-  // Clean parentheses and trailing/leading minus
-  s = s.replace(/[\(\)]/g, "");
+  // Clean parentheses and leading/trailing minus signs before format detection
+  s = s.replace(/[\(\)]/g, "").replace(/^-+|-+$/g, "").trim();
 
   // European format: dot as thousands separator, comma as decimal (e.g. 1.250,50)
   if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) {
@@ -2901,7 +2933,8 @@ function parseSalesNumber(val) {
 
   const num = parseFloat(s.replace(/[^0-9.]/g, ""));
   if (isNaN(num)) return NaN;
-  return isAccountingNegative ? -Math.abs(num) : num;
+  const res = isAccountingNegative ? -Math.abs(num) : num;
+  return res === 0 ? 0 : res;
 }
 window.parseSalesNumber = parseSalesNumber;
 
@@ -2920,22 +2953,37 @@ function parseDateStrict(dateRaw) {
   const str = String(dateRaw).trim();
   if (!str) return null;
 
-  // Check DD/MM/YYYY or DD-MM-YYYY
+  const isValidCalendarDate = (y, m, d) => {
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  };
+
+  // Check DD/MM/YYYY or DD-MM-YYYY (with safe swap if US MM/DD/YYYY where second part > 12)
   const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
   if (dmy) {
-    const day = dmy[1].padStart(2, "0");
-    const month = dmy[2].padStart(2, "0");
-    const year = dmy[3];
-    return `${year}-${month}-${day}`;
+    let p1 = parseInt(dmy[1], 10);
+    let p2 = parseInt(dmy[2], 10);
+    const year = parseInt(dmy[3], 10);
+    if (p2 > 12 && p1 >= 1 && p1 <= 12) {
+      const tmp = p1; p1 = p2; p2 = tmp;
+    }
+    if (isValidCalendarDate(year, p2, p1)) {
+      return `${dmy[3]}-${String(p2).padStart(2, "0")}-${String(p1).padStart(2, "0")}`;
+    }
+    return null;
   }
 
   // Check YYYY-MM-DD or YYYY/MM/DD
   const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   if (ymd) {
-    const year = ymd[1];
-    const month = ymd[2].padStart(2, "0");
-    const day = ymd[3].padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    const year = parseInt(ymd[1], 10);
+    const m = parseInt(ymd[2], 10);
+    const d = parseInt(ymd[3], 10);
+    if (isValidCalendarDate(year, m, d)) {
+      return `${ymd[1]}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+    return null;
   }
 
   const d = new Date(str);
@@ -2991,10 +3039,7 @@ function resolveUserForAuth(user) {
     const auth = checkAuth();
     if (auth && auth.role) return auth;
   }
-  const rawRole = localStorage.getItem("userRole");
-  if (rawRole)
-    return { role: rawRole, id: localStorage.getItem("userId") || "u1790626000001" };
-  return { role: "medical_rep", id: "u1790626000001" };
+  return { role: "", id: null };
 }
 
 /**
@@ -3256,7 +3301,7 @@ function getStatusBadgeConfig(status) {
 function renderStatusBadge(status, customLabel = null) {
   const config = getStatusBadgeConfig(status);
   const label = customLabel || config.text;
-  return `<span class="badge ${config.css} status-badge">${label}</span>`;
+  return `<span class="badge ${config.css} status-badge">${escapeHtml(label)}</span>`;
 }
 
 function isStatusPending(status) {
@@ -3880,10 +3925,12 @@ function renderSidebar(activePage) {
 function getImpersonationInfo() {
   try {
     const raw = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
-    const originalAdmin = raw ? JSON.parse(raw) : null;
+    const originalAdmin = validateImpersonationRecord(raw);
+    const currentUser = typeof checkAuth === "function" ? checkAuth() : null;
+    const isImpersonating = Boolean(originalAdmin && currentUser && currentUser.id && currentUser.id !== originalAdmin.id);
     return {
-      isImpersonating: Boolean(originalAdmin),
-      originalAdmin: originalAdmin
+      isImpersonating: isImpersonating,
+      originalAdmin: isImpersonating ? originalAdmin : null
     };
   } catch (e) {
     return { isImpersonating: false, originalAdmin: null };
@@ -3921,6 +3968,11 @@ function renderTopbar(force = false) {
   const codeLabel =
     "Code:";
   const avatarChar = user.name ? user.name.charAt(0) : "U";
+  const safeUserName = escapeHtml(userName);
+  const safeUserCode = escapeHtml(userCode);
+  const safeRoleBadge = escapeHtml(roleBadge);
+  const safeAvatarChar = escapeHtml(avatarChar);
+  const safeOriginalAdminName = escapeHtml(originalAdminName);
 
   const { primaryNavItems, managementNavItems } = getNavItemsForRole(user.role);
   const allTopNavItems = primaryNavItems.concat(managementNavItems);
@@ -3948,7 +4000,7 @@ function renderTopbar(force = false) {
         <div class="pharma-impersonation-content">
           <span class="pharma-impersonation-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
           <span class="pharma-impersonation-text">
-            <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>
+            <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${safeUserName}</strong> (${safeRoleBadge}) — logged in by Admin <strong>${safeOriginalAdminName}</strong>
           </span>
         </div>
         <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
@@ -3964,7 +4016,7 @@ function renderTopbar(force = false) {
       if (el.textContent !== userName) el.textContent = userName;
     });
     topbarEl.querySelectorAll(".user-display-code").forEach((el) => {
-      const codeHtml = `${codeLabel} <strong>${userCode}</strong>`;
+      const codeHtml = `${codeLabel} <strong>${safeUserCode}</strong>`;
       if (el.innerHTML !== codeHtml) el.innerHTML = codeHtml;
     });
     topbarEl.querySelectorAll(".user-role-tag").forEach((el) => {
@@ -4065,7 +4117,7 @@ function renderTopbar(force = false) {
       <div class="pharma-impersonation-content">
         <span class="pharma-impersonation-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <span class="pharma-impersonation-text">
-          <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleBadge}) — logged in by Admin <strong>${originalAdminName}</strong>
+          <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${safeUserName}</strong> (${safeRoleBadge}) — logged in by Admin <strong>${safeOriginalAdminName}</strong>
         </span>
       </div>
       <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
@@ -4089,12 +4141,12 @@ function renderTopbar(force = false) {
       </div>
 
       <div class="pharma-user-status-pill pharma-user-desktop-pill">
-        <div class="user-avatar-mini">${avatarChar}</div>
+        <div class="user-avatar-mini">${safeAvatarChar}</div>
         <div class="user-info-text">
-          <span class="user-display-name">${userName}</span>
-          <span class="user-display-code">${codeLabel} <strong>${userCode}</strong></span>
+          <span class="user-display-name">${safeUserName}</span>
+          <span class="user-display-code">${codeLabel} <strong>${safeUserCode}</strong></span>
         </div>
-        <span class="user-role-tag">${roleBadge}</span>
+        <span class="user-role-tag">${safeRoleBadge}</span>
       </div>
       
       <div id="cloudSyncStatus" class="cloud-sync-status-wrap">
@@ -4128,12 +4180,12 @@ function renderTopbar(force = false) {
 
     <div class="pharma-user-mobile-row">
       <div class="pharma-user-status-pill">
-        <div class="user-avatar-mini">${avatarChar}</div>
+        <div class="user-avatar-mini">${safeAvatarChar}</div>
         <div class="user-info-text">
-          <span class="user-display-name">${userName}</span>
-          <span class="user-display-code">${codeLabel} <strong>${userCode}</strong></span>
+          <span class="user-display-name">${safeUserName}</span>
+          <span class="user-display-code">${codeLabel} <strong>${safeUserCode}</strong></span>
         </div>
-        <span class="user-role-tag">${roleBadge}</span>
+        <span class="user-role-tag">${safeRoleBadge}</span>
       </div>
     </div>
 
@@ -4219,16 +4271,38 @@ window.formatWorkflowNotifTime = function (isoString, lang) {
 
 window.currentNotifFilter = "all";
 
-window.updateWorkflowNotifUI = function () {
-  let user = window.checkAuth ? window.checkAuth() : null;
-  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "u1790626000001";
+const SAFE_NOTIF_LINK = /^[A-Za-z0-9_\-]+\.html(\?[\w=&%.\-]*)?(#[\w\-]*)?$/;
+function safeNotifLink(l) {
+  return typeof l === "string" && SAFE_NOTIF_LINK.test(l) ? l : "#";
+}
+window.safeNotifLink = safeNotifLink;
 
-  const unread = (window.store && window.store.notifications)
-    ? window.store.notifications.getUnreadCount(userId)
-    : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
-        (n) => (n.userId === userId || n.userId === "all") && !n.read
-      ).length;
+function resolveNotifIcon(item, defaultIconHtml) {
+  const raw = item && item.icon;
+  if (typeof raw !== "string" || !raw.trim()) return defaultIconHtml;
+  if (raw.indexOf("<") !== -1) return defaultIconHtml;
+  const trimmed = Array.from(raw.trim()).slice(0, 8).join("");
+  return escapeHtml(trimmed);
+}
+
+function getSessionUserId() {
+  let u = typeof window !== "undefined" && typeof window.checkAuth === "function" ? window.checkAuth() : null;
+  if (!u && typeof window !== "undefined" && window.DEMO_MODE === true && window.DEMO_DATA) {
+    u = window.DEMO_DATA.currentUser;
+  }
+  return u && u.id ? u.id : null;
+}
+
+window.updateWorkflowNotifUI = function () {
+  const userId = getSessionUserId();
+
+  const unread = !userId
+    ? 0
+    : (window.store && window.store.notifications)
+      ? window.store.notifications.getUnreadCount(userId)
+      : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
+          (n) => (n.userId === userId || n.userId === "all") && !n.read
+        ).length;
 
   document.querySelectorAll("#topbarNotifBadge").forEach((badgeEl) => {
     badgeEl.textContent = unread > 99 ? "99+" : unread;
@@ -4263,16 +4337,41 @@ window.renderWorkflowNotifContent = function (filter = "all") {
   const container = document.getElementById("workflowNotifDropdown");
   if (!container) return;
 
-  const lang = window.getCurrentLang ? window.getCurrentLang() : "en";
-  let user = window.checkAuth ? window.checkAuth() : null;
-  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "u1790626000001";
+  if (container.dataset && !container.dataset.notifBound && typeof container.addEventListener === "function") {
+    container.dataset.notifBound = "true";
+    container.addEventListener("click", function (e) {
+      const target = e.target;
+      if (!target || typeof target.closest !== "function") return;
+      const deleteBtn = target.closest('[data-notif-action="delete"]');
+      if (deleteBtn) {
+        const itemEl = deleteBtn.closest("[data-notif-id]");
+        const id = itemEl && itemEl.dataset ? itemEl.dataset.notifId : null;
+        if (id) window.deleteWorkflowNotif(e, id);
+        return;
+      }
+      const openEl = target.closest('[data-notif-action="open"]');
+      if (openEl) {
+        if (openEl.classList && openEl.classList.contains("notif-btn-open")) {
+          e.stopPropagation();
+        }
+        const itemEl = openEl.closest("[data-notif-id]");
+        const id = itemEl && itemEl.dataset ? itemEl.dataset.notifId : null;
+        const link = itemEl && itemEl.dataset ? itemEl.dataset.notifLink : "#";
+        if (id) window.handleWorkflowNotifClick(id, link);
+      }
+    });
+  }
 
-  const allNotifs = (window.store && window.store.notifications)
-    ? window.store.notifications.getForUser(userId)
-    : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
-        (n) => n.userId === userId || n.userId === "all"
-      );
+  const lang = window.getCurrentLang ? window.getCurrentLang() : "en";
+  const userId = getSessionUserId();
+
+  const allNotifs = !userId
+    ? []
+    : (window.store && window.store.notifications)
+      ? window.store.notifications.getForUser(userId)
+      : ((window.DEMO_DATA && window.DEMO_DATA.notifications) || []).filter(
+          (n) => n.userId === userId || n.userId === "all"
+        );
 
   const unreadNotifs = allNotifs.filter((n) => !n.read);
   const unreadCount = unreadNotifs.length;
@@ -4298,25 +4397,25 @@ window.renderWorkflowNotifContent = function (filter = "all") {
         const title = item.titleEn || item.title || "Notification";
         const msg = item.messageEn || item.message || "";
         const timeStr = window.formatWorkflowNotifTime(item.createdAt, lang);
+        const itemType = String(item.type || "");
 
-        let icon = item.icon || '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+        let typeIcon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
         let iconTypeClass = "type-default";
 
-        if (item.type && item.type.includes("approval")) {
+        if (itemType.includes("approval")) {
           iconTypeClass = "type-approval";
-          if (!item.icon) icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="20 6 9 17 4 12"/></svg>';
+          typeIcon = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><polyline points="20 6 9 17 4 12"/></svg>';
         } else if (
-          item.type &&
-          (item.type.includes("rejection") || item.type.includes("reject"))
+          itemType.includes("rejection") || itemType.includes("reject")
         ) {
           iconTypeClass = "type-rejection";
-          if (!item.icon) icon = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-        } else if (item.type && item.type.includes("leave")) {
+          typeIcon = '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        } else if (itemType.includes("leave")) {
           iconTypeClass = "type-leave";
-          if (!item.icon) icon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
-        } else if (item.type && item.type.includes("plan")) {
+          typeIcon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
+        } else if (itemType.includes("plan")) {
           iconTypeClass = "type-plan";
-          if (!item.icon) icon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+          typeIcon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
         }
 
         // Robust context-aware escaping for all dynamic text
@@ -4330,15 +4429,11 @@ window.renderWorkflowNotifContent = function (filter = "all") {
           </div>
         `
           : "";
-        let safeIcon = icon;
-        if (typeof safeIcon === "string" && (safeIcon.toLowerCase().includes("<script") || safeIcon.toLowerCase().includes("javascript:") || safeIcon.toLowerCase().includes("onerror=") || safeIcon.toLowerCase().includes("onload="))) {
-          safeIcon = '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
-        }
-
-        const linkTarget = item.link || "#";
+        const safeIcon = resolveNotifIcon(item, typeIcon);
+        const safeLink = safeNotifLink(item.link);
 
         return `
-          <div class="notif-item ${isUnread ? "unread" : "read"}" onclick="window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
+          <div class="notif-item ${isUnread ? "unread" : "read"}" data-notif-id="${_esc(item.id)}" data-notif-link="${_esc(safeLink)}" data-notif-action="open">
             <div class="notif-item-icon ${iconTypeClass}">
               ${safeIcon}
             </div>
@@ -4354,15 +4449,15 @@ window.renderWorkflowNotifContent = function (filter = "all") {
               ${noteHtml}
               <div class="notif-item-actions">
                 ${
-                  linkTarget !== "#"
+                  safeLink !== "#"
                     ? `
-                  <button type="button" class="notif-btn-open" onclick="event.stopPropagation(); window.handleWorkflowNotifClick('${item.id}', '${linkTarget}')">
+                  <button type="button" class="notif-btn-open" data-notif-action="open">
                     View ↗
                   </button>
                 `
                     : "<span></span>"
                 }
-                <button type="button" class="notif-btn-delete" title="Delete" onclick="window.deleteWorkflowNotif(event, '${item.id}')">
+                <button type="button" class="notif-btn-delete" title="Delete" data-notif-action="delete">
                   <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
               </div>
@@ -4424,10 +4519,18 @@ window.renderWorkflowNotifContent = function (filter = "all") {
 };
 
 window.handleWorkflowNotifClick = function (notifId, link) {
-  if (window.store && window.store.notifications) {
-    window.store.notifications.markAsRead(notifId);
-  } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
-    const n = window.DEMO_DATA.notifications.find((item) => item.id === notifId);
+  const userId = getSessionUserId();
+  if (userId && window.store && window.store.notifications) {
+    const canRead = typeof window.store.notifications.getForUser === "function"
+      ? window.store.notifications.getForUser(userId).some((n) => n.id === notifId)
+      : true;
+    if (canRead) {
+      window.store.notifications.markAsRead(notifId);
+    }
+  } else if (userId && window.DEMO_DATA && window.DEMO_DATA.notifications) {
+    const n = window.DEMO_DATA.notifications.find(
+      (item) => item.id === notifId && (item.userId === userId || item.userId === "all")
+    );
     if (n) {
       n.read = true;
       if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
@@ -4435,10 +4538,11 @@ window.handleWorkflowNotifClick = function (notifId, link) {
   }
   window.updateWorkflowNotifUI();
 
-  if (link && link !== "#") {
+  const safe = safeNotifLink(link);
+  if (safe !== "#") {
     const currentPath = window.location.pathname.split("/").pop() || "index.html";
-    if (currentPath !== link) {
-      window.location.href = link;
+    if (currentPath !== safe) {
+      window.location.href = safe;
     } else {
       const dd = document.getElementById("workflowNotifDropdown");
       if (dd) dd.style.display = "none";
@@ -4451,11 +4555,21 @@ window.deleteWorkflowNotif = function (event, notifId) {
     event.stopPropagation();
     event.preventDefault();
   }
+  const userId = getSessionUserId();
+  if (!userId) return;
+  const curUser = typeof window.checkAuth === "function" ? window.checkAuth() : null;
+  const isAdm = Boolean(curUser && normalizeRole(curUser.role) === "admin");
+
   if (window.store && window.store.notifications) {
-    window.store.notifications.remove(notifId);
+    const target = typeof window.store.notifications.getForUser === "function"
+      ? window.store.notifications.getForUser(userId).find((n) => n.id === notifId)
+      : null;
+    if (target && (target.userId === userId || (isAdm && target.userId === "all"))) {
+      window.store.notifications.remove(notifId);
+    }
   } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
     window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
-      (n) => n.id !== notifId
+      (n) => !(n.id === notifId && (n.userId === userId || (isAdm && n.userId === "all")))
     );
     if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
     window.updateWorkflowNotifUI();
@@ -4467,9 +4581,8 @@ window.markAllWorkflowNotifsRead = function (event) {
     event.stopPropagation();
     event.preventDefault();
   }
-  let user = window.checkAuth ? window.checkAuth() : null;
-  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "u1790626000001";
+  const userId = getSessionUserId();
+  if (!userId) return;
 
   if (window.store && window.store.notifications) {
     window.store.notifications.markAllAsRead(userId);
@@ -4487,15 +4600,16 @@ window.clearAllWorkflowNotifs = function (event) {
     event.stopPropagation();
     event.preventDefault();
   }
-  let user = window.checkAuth ? window.checkAuth() : null;
-  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  const userId = user ? user.id : "u1790626000001";
+  const userId = getSessionUserId();
+  if (!userId) return;
+  const curUser = typeof window.checkAuth === "function" ? window.checkAuth() : null;
+  const isAdm = Boolean(curUser && normalizeRole(curUser.role) === "admin");
 
   if (window.store && window.store.notifications) {
     window.store.notifications.clearAll(userId);
   } else if (window.DEMO_DATA && window.DEMO_DATA.notifications) {
     window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
-      (n) => n.userId !== userId && n.userId !== "all"
+      (n) => n.userId !== userId && !(isAdm && n.userId === "all")
     );
     if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
     window.updateWorkflowNotifUI();
@@ -4503,25 +4617,39 @@ window.clearAllWorkflowNotifs = function (event) {
 };
 
 window.addWorkflowNotification = function (notif) {
+  if (!notif || typeof notif.userId !== "string" || !notif.userId.trim()) {
+    console.warn("[Notification] Refused to store notification without a valid non-empty userId.");
+    return null;
+  }
+
+  const sanitizedIcon = (typeof notif.icon === "string" && notif.icon.indexOf("<") !== -1)
+    ? ""
+    : (typeof notif.icon === "string" ? notif.icon : "");
+  const safeNotif = Object.assign({}, notif, {
+    userId: notif.userId.trim(),
+    link: safeNotifLink(notif.link),
+    icon: sanitizedIcon
+  });
+
   let created = null;
   if (window.store && window.store.notifications) {
-    created = window.store.notifications.add(notif);
+    created = window.store.notifications.add(safeNotif);
   } else if (window.DEMO_DATA) {
     if (!window.DEMO_DATA.notifications) window.DEMO_DATA.notifications = [];
     created = {
-      id: "notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      id: genId("notif_"),
       createdAt: new Date().toISOString(),
       read: false,
-      userId: notif.userId || "u1790626000001",
-      type: notif.type || "system",
-      title: notif.title || notif.titleEn || "New Notification",
-      message: notif.message || notif.messageEn || "",
-      note: notif.note || null,
-      link: notif.link || "#",
-      icon: notif.icon || '<svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-      badgeClass: notif.badgeClass || "bg-primary",
-      actorName: notif.actorName || null,
-      action: notif.action || null,
+      userId: safeNotif.userId,
+      type: safeNotif.type || "system",
+      title: safeNotif.title || safeNotif.titleEn || "New Notification",
+      message: safeNotif.message || safeNotif.messageEn || "",
+      note: safeNotif.note || null,
+      link: safeNotif.link,
+      icon: safeNotif.icon,
+      badgeClass: safeNotif.badgeClass || "bg-primary",
+      actorName: safeNotif.actorName || null,
+      action: safeNotif.action || null,
     };
     window.DEMO_DATA.notifications.unshift(created);
     if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
@@ -4532,10 +4660,9 @@ window.addWorkflowNotification = function (notif) {
   }
 
   // Live Toast feedback if recipient matches current active user
-  let user = window.checkAuth ? window.checkAuth() : null;
-  if (!user && window.DEMO_DATA) user = window.DEMO_DATA.currentUser;
-  if (user && (notif.userId === user.id || notif.userId === "all")) {
-    const toastMsg = notif.title || notif.titleEn || notif.message || notif.messageEn || "Notification";
+  const currentUid = getSessionUserId();
+  if (currentUid && (safeNotif.userId === currentUid || safeNotif.userId === "all")) {
+    const toastMsg = safeNotif.title || safeNotif.titleEn || safeNotif.message || safeNotif.messageEn || "Notification";
     if (typeof window.showToast === "function") {
       window.showToast(toastMsg, "info");
     }
@@ -4570,7 +4697,60 @@ if (!window._workflowNotifListenersAttached) {
 // ============================================================================
 // Section 9: Authentication, Session Integrity & Tamper-Proof Auth Guard
 // ============================================================================
+// ثابت في الكود ومش سر؛ التوقيع مجرد كشف تلاعب عرضي، مش حماية (الإنفاذ الحقيقي لازم server-side)
 const SESSION_SIGNATURE_SALT = "pharma_sec_token_2026_#9xK2@pLm!";
+const DEFAULT_DEMO_PASSWORD_HASH = "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f";
+
+function getRegisteredUsers() {
+  if (typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users) && DEMO_DATA.users.length > 0) {
+    return DEMO_DATA.users;
+  }
+  if (typeof window !== "undefined" && window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users) && window.DEMO_DATA.users.length > 0) {
+    return window.DEMO_DATA.users;
+  }
+  if (typeof window !== "undefined" && window.store && window.store.users && typeof window.store.users.getAll === "function") {
+    const storeUsers = window.store.users.getAll();
+    if (Array.isArray(storeUsers)) return storeUsers;
+  }
+  return [];
+}
+
+function isUserInactive(user) {
+  if (!user || !user.status) return false;
+  const st = String(user.status).trim().toLowerCase();
+  return st === "inactive" || st === "suspended" || st === "disabled";
+}
+
+function getCurrentPageName() {
+  if (typeof window === "undefined" || !window.location) return "";
+  const rawPath = String(window.location.pathname || "").split("?")[0].split("#")[0];
+  return (rawPath.split("/").pop() || "index.html").toLowerCase();
+}
+
+function validateImpersonationRecord(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.id) return null;
+    const registeredUsers = getRegisteredUsers();
+    const reg = registeredUsers.find((u) => u && u.id === parsed.id);
+    if (!reg) return null;
+    const regRole = typeof window !== "undefined" && typeof window.normalizeRole === "function"
+      ? window.normalizeRole(reg.role)
+      : String(reg.role || "").toLowerCase().trim();
+    if (regRole !== "admin") return null;
+    if (isUserInactive(reg)) return null;
+    if (parsed.email && reg.email && String(parsed.email).toLowerCase().trim() !== String(reg.email).toLowerCase().trim()) {
+      return null;
+    }
+    if (parsed._sig && parsed._sig !== computeSessionSignature(reg)) {
+      return null;
+    }
+    return reg;
+  } catch (e) {
+    return null;
+  }
+}
 
 /**
  * Computes deterministic cryptographic session integrity signature for a user.
@@ -4609,14 +4789,18 @@ function purgeTamperedSession(reason) {
   console.warn("[Security Guard] Tampered or invalid session terminated:", reason);
   try {
     sessionStorage.removeItem("pharmaUser");
+    sessionStorage.removeItem("impersonating_admin");
     localStorage.removeItem("pharmaUser");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userId");
+    localStorage.removeItem("impersonating_admin");
   } catch (e) {}
-  if (typeof window !== "undefined" && window.location && typeof window.location.replace === "function") {
-    const path = (window.location.pathname || "").split("/").pop().toLowerCase();
-    if (path !== "login.html" && !path.includes("login")) {
-      window.location.replace("login.html");
+  if (typeof window !== "undefined") {
+    window.currentUser = null;
+    if (window.location && typeof window.location.replace === "function") {
+      if (getCurrentPageName() !== "login.html") {
+        window.location.replace("login.html");
+      }
     }
   }
 }
@@ -4633,81 +4817,102 @@ function checkAuth() {
 
   try {
     const parsed = JSON.parse(userStr);
-    if (!parsed || !parsed.id) {
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !parsed.id || !String(parsed.id).trim()) {
       purgeTamperedSession("Missing user ID");
       return null;
     }
 
-    if (parsed && (parsed.email === "pm2@pharmacare.com" || parsed.id === "u1790626000019") && parsed.role === "medical_rep") {
-      parsed.id = "u1790626000019";
-      parsed.name = "Fady Adel";
-      parsed.nameAr = "Fady Adel";
-      parsed.role = "product_manager";
-      parsed.employeeCode = "PM-002";
-      parsed.code = "PM-002";
-      parsed.lineId = "";
-      parsed.lineIds = [];
-      parsed.productIds = [];
+    // Authority Binding: Lookup against genuine company database (DEMO_DATA or store.users)
+    const registeredUsers = getRegisteredUsers();
+
+    // If user store has not loaded yet, do NOT treat session as verified or elevate privileges
+    if (registeredUsers.length === 0) {
+      parsed._unverified = true;
+      return parsed;
     }
 
-    // Authority Binding: Lookup against genuine company database (DEMO_DATA or store.users)
-    const registeredUsers = (typeof DEMO_DATA !== "undefined" && Array.isArray(DEMO_DATA.users))
-      ? DEMO_DATA.users
-      : ((window.store && window.store.users && window.store.users.getAll) ? window.store.users.getAll() : []);
-
-    const registered = registeredUsers.find((u) => u.id === parsed.id || (u.email && u.email.toLowerCase() === (parsed.email || "").toLowerCase()));
+    // Lookup strictly by ID (never id OR email)
+    const registered = registeredUsers.find((u) => u && u.id === parsed.id);
 
     // Strict Anti-Impersonation:
-    // If registered users exist in system and parsed.id does not match any registered user:
-    if (registeredUsers.length > 0 && !registered) {
+    if (!registered) {
       purgeTamperedSession("Unknown user identity");
+      return null;
+    }
+
+    // Active account guard: immediately revoke sessions of deactivated/suspended users
+    if (isUserInactive(registered)) {
+      purgeTamperedSession("Account is inactive or suspended");
+      return null;
+    }
+
+    // Email/ID consistency guard
+    if (parsed.email && registered.email && String(parsed.email).toLowerCase().trim() !== String(registered.email).toLowerCase().trim()) {
+      purgeTamperedSession("Email/ID mismatch");
       return null;
     }
 
     // Role Tamper Guard: Never allow client-side role elevation via localStorage!
     // Always bind role strictly to the authoritative registered role
-    if (registered && registered.role && parsed.role !== registered.role) {
+    if (registered.role && parsed.role !== registered.role) {
       console.warn("[Security Alert] Role escalation detected! Reverting to registered role:", registered.role);
       parsed.role = registered.role;
-      parsed.dept = registered.dept || parsed.dept;
     }
 
-    // Synchronize organizational hierarchy and profile details from registered user
-    if (registered) {
-      if (registered.managerId !== undefined) {
-        parsed.managerId = registered.managerId;
-      }
-      if (registered.lineId !== undefined) {
-        parsed.lineId = registered.lineId;
-      }
-      if (Array.isArray(registered.lineIds)) {
-        parsed.lineIds = registered.lineIds;
-      }
-      if (Array.isArray(registered.areaIds)) {
-        parsed.areaIds = registered.areaIds;
-      }
-      if (registered.areaId !== undefined) {
-        parsed.areaId = registered.areaId;
-      }
-      if (!parsed.employeeCode && (registered.employeeCode || registered.code)) {
-        parsed.employeeCode = registered.employeeCode || registered.code;
-      }
-      if (!parsed.name && registered.name) {
-        parsed.name = registered.name;
-      }
-      if (!parsed.nameAr && registered.nameAr) {
-        parsed.nameAr = registered.nameAr;
-      }
-      if (!parsed.hireDate && registered.hireDate) {
-        parsed.hireDate = registered.hireDate;
-      }
-      if (!parsed.phone && registered.phone) {
-        parsed.phone = registered.phone;
-      }
+    // Synchronize authoritative organizational hierarchy, security flags, and profile details from registered user
+    if (registered.dept !== undefined) {
+      parsed.dept = registered.dept;
+    }
+    if (registered.email) {
+      parsed.email = registered.email;
+    }
+    if (registered.status !== undefined) {
+      parsed.status = registered.status;
+    }
+    if (registered.mustChangePassword !== undefined) {
+      parsed.mustChangePassword = Boolean(registered.mustChangePassword);
+    }
+    if (registered.managerId !== undefined) {
+      parsed.managerId = registered.managerId;
+    }
+    if (registered.lineId !== undefined) {
+      parsed.lineId = registered.lineId;
+    }
+    if (Array.isArray(registered.lineIds)) {
+      parsed.lineIds = registered.lineIds;
+    }
+    if (Array.isArray(registered.areaIds)) {
+      parsed.areaIds = registered.areaIds;
+    }
+    if (Array.isArray(registered.productIds)) {
+      parsed.productIds = registered.productIds;
+    }
+    if (registered.areaId !== undefined) {
+      parsed.areaId = registered.areaId;
+    }
+    if (registered.employeeCode || registered.code) {
+      parsed.employeeCode = registered.employeeCode || registered.code;
+    }
+    if (registered.name) {
+      parsed.name = registered.name;
+    }
+    if (registered.nameAr !== undefined) {
+      parsed.nameAr = registered.nameAr;
+    }
+    if (registered.hireDate !== undefined) {
+      parsed.hireDate = registered.hireDate;
+    }
+    if (registered.phone !== undefined) {
+      parsed.phone = registered.phone;
+    }
+    if (parsed._unverified) {
+      delete parsed._unverified;
     }
 
-    // Cryptographic Session Signature Check
-    const expectedSig = computeSessionSignature(registered || parsed);
+    // Client-side Session Signature Check (computed strictly from registered record).
+    // NOTE: Client-side signature is NOT a cryptographic security boundary (SESSION_SIGNATURE_SALT
+    // is hardcoded in client JS and hash is non-cryptographic); real enforcement must be server-side.
+    const expectedSig = computeSessionSignature(registered);
     if (parsed._sig && parsed._sig !== expectedSig) {
       purgeTamperedSession("Cryptographic session signature mismatch");
       return null;
@@ -4715,11 +4920,20 @@ function checkAuth() {
     // Auto-sign legitimate sessions
     parsed._sig = expectedSig;
 
-    // Sync verified session back
-    sessionStorage.setItem("pharmaUser", JSON.stringify(parsed));
-    localStorage.setItem("pharmaUser", JSON.stringify(parsed));
-    if (parsed.role) localStorage.setItem("userRole", parsed.role);
-    localStorage.setItem("userId", parsed.id);
+    // Sync verified session back only if serialized content or role/id keys changed
+    const nextSerialized = JSON.stringify(parsed);
+    if (nextSerialized !== sessionStr) {
+      sessionStorage.setItem("pharmaUser", nextSerialized);
+    }
+    if (nextSerialized !== localStr) {
+      localStorage.setItem("pharmaUser", nextSerialized);
+    }
+    if (parsed.role && localStorage.getItem("userRole") !== parsed.role) {
+      localStorage.setItem("userRole", parsed.role);
+    }
+    if (localStorage.getItem("userId") !== parsed.id) {
+      localStorage.setItem("userId", parsed.id);
+    }
     return parsed;
   } catch (err) {
     purgeTamperedSession("Corrupted session JSON");
@@ -4727,13 +4941,13 @@ function checkAuth() {
   }
 }
 
-function enforcePageRoleSecurity() {
+function enforcePageRoleSecurity(precheckedUser) {
   if (typeof window !== "undefined" && window.AuthService && typeof window.AuthService.enforcePageRoleSecurity === "function") {
-    return window.AuthService.enforcePageRoleSecurity();
+    return window.AuthService.enforcePageRoleSecurity(precheckedUser);
   }
-  const user = checkAuth();
-  if (!user) return;
-  const path = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
+  const user = precheckedUser || checkAuth();
+  if (!user) return false;
+  const path = getCurrentPageName();
   const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
 
   const restrictions = {
@@ -4741,16 +4955,22 @@ function enforcePageRoleSecurity() {
     "distributors.html": ["admin"],
     "areas.html": ["admin", "hr"],
     "products.html": ["admin"],
-    "plans-review.html": ["admin", "district_manager", "line_manager", "business_unit"],
-    "reports.html": ["admin", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
+    "plans-review.html": ["admin", "general_manager", "district_manager", "line_manager", "business_unit"],
+    "reports.html": ["admin", "general_manager", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
   };
 
-  if (restrictions[path] && !restrictions[path].includes(role)) {
-    console.warn(`[RBAC] Access denied: role '${role}' cannot access '${path}'. Redirecting.`);
-    sessionStorage.setItem("pharma_rbac_denied", "true");
-    const targetRedirect = role === "hr" ? "users.html" : "index.html";
-    window.location.replace(targetRedirect);
+  if (restrictions[path] && (user._unverified === true || !restrictions[path].includes(role))) {
+    console.warn(`[RBAC] Access denied: role '${role}' (unverified=${Boolean(user._unverified)}) cannot access '${path}'. Redirecting.`);
+    try {
+      sessionStorage.setItem("pharma_rbac_denied", "true");
+    } catch (e) {}
+    const targetRedirect = !user._unverified && role === "hr" ? "users.html" : "index.html";
+    if (typeof window !== "undefined" && window.location && typeof window.location.replace === "function") {
+      window.location.replace(targetRedirect);
+    }
+    return false;
   }
+  return true;
 }
 window.enforcePageRoleSecurity = enforcePageRoleSecurity;
 
@@ -4759,11 +4979,17 @@ function requireAuth() {
     return window.AuthService.requireAuth();
   }
   const user = checkAuth();
-  if (!user && !window.location.href.includes("login.html")) {
-    window.location.replace("login.html");
+  if (!user) {
+    if (typeof window !== "undefined" && window.location && getCurrentPageName() !== "login.html") {
+      if (typeof window.location.replace === "function") {
+        window.location.replace("login.html");
+      }
+    }
     return null;
   }
-  enforcePageRoleSecurity();
+  if (!enforcePageRoleSecurity(user)) {
+    return null;
+  }
   return user;
 }
 
@@ -4773,7 +4999,7 @@ window.requireAuth = requireAuth;
 // Eager Global Authentication Guard: Runs synchronously when app.js parses
 (function enforceGlobalAuthImmediately() {
   if (typeof window === "undefined" || !window.location) return;
-  const path = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();
+  const path = getCurrentPageName();
   if (path !== "login.html") {
     requireAuth();
   }
@@ -4789,6 +5015,7 @@ function logout() {
   localStorage.removeItem("userId");
   localStorage.removeItem("impersonating_admin");
   sessionStorage.setItem("pharma_logged_out", "true");
+  if (typeof window !== "undefined") window.currentUser = null;
   window.location.replace("login.html");
 }
 
@@ -4972,7 +5199,7 @@ function checkAndRenderImpersonationBanner() {
     <div class="pharma-impersonation-content">
       <span class="pharma-impersonation-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
       <span class="pharma-impersonation-text">
-        <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${userName}</strong> (${roleLabel}) — logged in by Admin <strong>${adminName}</strong>
+        <strong>Impersonation Mode (Log in as):</strong> You are currently viewing as <strong>${escapeHtml(userName)}</strong> (${escapeHtml(roleLabel)}) — logged in by Admin <strong>${escapeHtml(adminName)}</strong>
       </span>
     </div>
     <button type="button" class="pharma-impersonation-btn" onclick="window.exitImpersonation()">
@@ -4995,27 +5222,71 @@ window.exitImpersonation = function () {
   }
   const impersonatingAdminStr = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
   if (!impersonatingAdminStr) {
-    window.location.replace("users.html");
+    const cur = checkAuth();
+    if (!cur) {
+      window.location.replace("login.html");
+      return;
+    }
+    const curRole = window.normalizeRole ? window.normalizeRole(cur.role) : String(cur.role || "").toLowerCase();
+    window.location.replace(curRole === "admin" || curRole === "hr" ? "users.html" : "index.html");
     return;
   }
 
-  let originalAdmin = null;
-  try {
-    originalAdmin = JSON.parse(impersonatingAdminStr);
-  } catch (e) {}
-
-  if (originalAdmin) {
-    sessionStorage.setItem("pharmaUser", JSON.stringify(originalAdmin));
-    localStorage.setItem("pharmaUser", JSON.stringify(originalAdmin));
-    localStorage.setItem("userRole", originalAdmin.role || "admin");
-    localStorage.setItem("userId", originalAdmin.id);
-    window.currentUser = originalAdmin;
+  const admin = validateImpersonationRecord(impersonatingAdminStr);
+  if (!admin) {
+    try {
+      sessionStorage.removeItem("impersonating_admin");
+      localStorage.removeItem("impersonating_admin");
+    } catch (e) {}
+    purgeTamperedSession("Invalid impersonation record");
+    return;
   }
+
+  const restoredSession = {
+    id: admin.id,
+    email: admin.email || "",
+    name: admin.name || "",
+    nameAr: admin.nameAr || "",
+    role: admin.role,
+    dept: admin.dept || "",
+    status: admin.status || "Active",
+    mustChangePassword: Boolean(admin.mustChangePassword),
+    employeeCode: admin.employeeCode || admin.code || "",
+    code: admin.code || admin.employeeCode || "",
+    managerId: admin.managerId !== undefined ? admin.managerId : null,
+    lineId: admin.lineId !== undefined ? admin.lineId : "",
+    lineIds: Array.isArray(admin.lineIds) ? admin.lineIds : [],
+    areaId: admin.areaId !== undefined ? admin.areaId : "",
+    areaIds: Array.isArray(admin.areaIds) ? admin.areaIds : [],
+    hireDate: admin.hireDate || "",
+    phone: admin.phone || ""
+  };
+  restoredSession._sig = computeSessionSignature(admin);
+
+  const serialized = JSON.stringify(restoredSession);
+  sessionStorage.setItem("pharmaUser", serialized);
+  localStorage.setItem("pharmaUser", serialized);
+  localStorage.setItem("userRole", admin.role);
+  localStorage.setItem("userId", admin.id);
+  window.currentUser = restoredSession;
 
   sessionStorage.removeItem("impersonating_admin");
   localStorage.removeItem("impersonating_admin");
   window.location.replace("users.html");
 };
+
+// T9: Warn once on load if non-DEMO_MODE accounts still use the default demo password hash
+(function warnDefaultDemoPasswordsOnLoad() {
+  if (typeof window !== "undefined" && window.DEMO_MODE !== true) {
+    try {
+      const users = getRegisteredUsers();
+      const count = users.filter((u) => u && u.passwordHash === DEFAULT_DEMO_PASSWORD_HASH).length;
+      if (count > 0) {
+        console.warn("[Security] " + count + " registered account(s) still use the default demo password hash while DEMO_MODE is disabled.");
+      }
+    } catch (e) {}
+  }
+})();
 
 document.addEventListener("DOMContentLoaded", () => {
   const currentPath = (window.location.pathname.split("/").pop() || "index.html").split("?")[0].toLowerCase();

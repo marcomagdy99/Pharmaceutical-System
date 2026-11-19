@@ -47,6 +47,7 @@ const calendarTranslations = {
     ],
     amActivities: "AM Activities",
     pmActivities: "PM Activities",
+    otherActivities: "Other Activities",
     leaves: "Leaves",
     noEvents: "No events on this day.",
     statusCompleted: "Completed",
@@ -56,33 +57,116 @@ const calendarTranslations = {
   },
 };
 
+const MAX_LEAVE_EXPANSION_DAYS = 366;
+
+function _esc(val) {
+  if (typeof window !== "undefined" && typeof window.escapeHtml === "function") {
+    return window.escapeHtml(val);
+  }
+  return String(val == null ? "" : val).replace(/[&<>"'`]/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "`": "&#96;",
+  }[ch]));
+}
+
+function getCalendarAuthUser() {
+  if (typeof window !== "undefined" && typeof window.checkAuth === "function") {
+    const u = window.checkAuth();
+    if (u && u.id) return u;
+  }
+  return null;
+}
+
+function getNormalizedRole(role) {
+  if (typeof window !== "undefined" && typeof window.normalizeRole === "function") {
+    return window.normalizeRole(role);
+  }
+  if (!role) return "";
+  const r = String(role).toLowerCase().trim();
+  if (r === "dm" || r === "district_manager" || r === "district manager") return "district_manager";
+  if (r === "lm" || r === "line_manager" || r === "line manager") return "line_manager";
+  if (r === "bu" || r === "business_unit" || r === "business unit") return "business_unit";
+  if (r === "rep" || r === "medical_rep" || r === "medical rep") return "medical_rep";
+  if (r === "pm" || r === "product_manager" || r === "product manager") return "product_manager";
+  if (r === "admin" || r === "administrator") return "admin";
+  if (r === "hr" || r === "human_resources" || r === "human resources") return "hr";
+  if (r === "gm" || r === "general_manager" || r === "general manager") return "general_manager";
+  return r;
+}
+
+function hasFullOrgCalendarAccess(user) {
+  if (!user) return false;
+  const role = getNormalizedRole(user.role);
+  return role === "admin" || role === "hr" || role === "general_manager";
+}
+
+function isCalendarRep(user) {
+  if (!user) return false;
+  return getNormalizedRole(user.role) === "medical_rep";
+}
+
+function isUserInactive(u) {
+  if (!u || !u.status) return false;
+  const st = String(u.status).trim().toLowerCase();
+  return st === "inactive" || st === "suspended" || st === "disabled";
+}
+
+function getAllCalendarUsers() {
+  if (typeof window !== "undefined" && window.store && window.store.users && typeof window.store.users.getAll === "function") {
+    const list = window.store.users.getAll();
+    if (Array.isArray(list)) return list;
+  }
+  return (typeof window !== "undefined" && window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
+    ? window.DEMO_DATA.users
+    : [];
+}
+
+function getCalendarHolidays() {
+  if (typeof window !== "undefined" && window.store && window.store.publicHolidays && typeof window.store.publicHolidays.getAll === "function") {
+    const list = window.store.publicHolidays.getAll();
+    if (Array.isArray(list)) return list;
+  }
+  if (typeof window !== "undefined" && window.DEMO_DATA && Array.isArray(window.DEMO_DATA.publicHolidays)) {
+    return window.DEMO_DATA.publicHolidays;
+  }
+  return [];
+}
+
 /**
  * Dynamically aggregates visits, leaves, and activities from Central Store and persistent storage.
  */
 function getDynamicCalendarEvents() {
   const events = [];
-  const currentCalendarUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
+  const currentCalendarUser = getCalendarAuthUser();
+  if (!currentCalendarUser) return events;
 
   // 1. Synchronize visits from store or DEMO_DATA
   const visits =
-    (window.store && window.store.visits
+    (window.store && window.store.visits && typeof window.store.visits.getAll === "function"
       ? window.store.visits.getAll()
       : window.DEMO_DATA && window.DEMO_DATA.visits) || [];
 
   visits.forEach((v) => {
+    if (!v) return;
     const isPharm =
       v.targetType === "pharmacy" ||
-      (v.period || "").toLowerCase() === "pharmacy" ||
+      String(v.period || "").toLowerCase() === "pharmacy" ||
       (v.doctorId && String(v.doctorId).startsWith("pharm"));
     events.push({
       id: v.id,
       date: v.date,
       type: "visit",
       targetType: isPharm ? "pharmacy" : v.targetType,
-      period: isPharm ? "pharmacy" : (v.period || "pm").toLowerCase(),
+      period: isPharm ? "pharmacy" : String(v.period || "pm").toLowerCase(),
       title: v.doctorName || v.targetName || "Visit",
-      status: v.status || "planned",
+      status: String(v.status || "planned").toLowerCase(),
       repId: v.repId,
+      lineId: v.lineId || null,
+      doctorId: v.doctorId,
       visitType: v.visitType,
       doubleWithUserId: v.doubleWithUserId,
       doubleWithUserName: v.doubleWithUserName,
@@ -91,54 +175,69 @@ function getDynamicCalendarEvents() {
 
   // 2. Synchronize leaves from store or DEMO_DATA across all scheduled days
   const leaves =
-    (window.store && window.store.leaves
+    (window.store && window.store.leaves && typeof window.store.leaves.getAll === "function"
       ? window.store.leaves.getAll()
       : window.DEMO_DATA && window.DEMO_DATA.leaves) || [];
 
   leaves.forEach((l) => {
-    if (l.status === "rejected") return;
+    if (!l) return;
+    const lStatus = String(l.status || "").trim().toLowerCase();
+    if (lStatus === "rejected" || lStatus === "cancelled" || lStatus === "canceled") return;
     if (l.startDate && l.endDate) {
-      const cur = new Date(l.startDate + "T00:00:00");
-      const end = new Date(l.endDate + "T00:00:00");
-      while (cur <= end) {
+      const startStr = String(l.startDate).slice(0, 10);
+      const endStr = String(l.endDate).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr) || !/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return;
+      const cur = new Date(startStr + "T00:00:00");
+      const end = new Date(endStr + "T00:00:00");
+      if (isNaN(cur.getTime()) || isNaN(end.getTime()) || cur > end) return;
+
+      const rawType = String(l.type || "annual");
+      const leaveTitle = `${rawType.charAt(0).toUpperCase() + rawType.slice(1)} Leave`;
+      let steps = 0;
+
+      while (cur <= end && steps < MAX_LEAVE_EXPANSION_DAYS) {
         const y = cur.getFullYear();
         const m = String(cur.getMonth() + 1).padStart(2, "0");
         const d = String(cur.getDate()).padStart(2, "0");
         const dateStr = `${y}-${m}-${d}`;
 
-        const leaveTitle = `${(l.type || "annual").charAt(0).toUpperCase() + (l.type || "annual").slice(1)} Leave`;
         events.push({
           id: l.id,
           date: dateStr,
           type: "leave",
           title: leaveTitle,
           leaveType: l.type,
-          status: l.status,
+          status: lStatus,
           repId: l.userId || l.repId,
           dayDuration: l.dayDuration,
         });
 
         cur.setDate(cur.getDate() + 1);
+        steps++;
       }
     }
   });
 
   // 3. Synchronize logged daily activities from localStorage (Per-User Isolation)
   try {
-    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : window.DEMO_DATA?.users) || [];
+    const allUsers = getAllCalendarUsers();
     const userList = [...allUsers];
-    if (currentCalendarUser && !userList.some((u) => u.id === currentCalendarUser.id)) {
+    if (currentCalendarUser && currentCalendarUser.id && !userList.some((u) => u && u.id === currentCalendarUser.id)) {
       userList.push(currentCalendarUser);
     }
 
     userList.forEach((u) => {
+      if (!u || !u.id) return;
       const userActKey = `pharma_activities_data_${u.id}`;
       const raw =
         localStorage.getItem(userActKey) ||
-        (u.id === "u1790626000001" ? localStorage.getItem("pharma_activities_data") : null);
+        (window.DEMO_MODE === true && u.id === "u1790626000001"
+          ? localStorage.getItem("pharma_activities_data")
+          : null);
       if (raw) {
         try {
           const activities = JSON.parse(raw);
+          if (!activities || typeof activities !== "object") return;
           Object.keys(activities).forEach((dateStr) => {
             const dayActs = activities[dateStr] || {};
             ["AM", "PM"].forEach((period) => {
@@ -146,7 +245,7 @@ function getDynamicCalendarEvents() {
               if (act && act.type) {
                 events.push({
                   date: dateStr,
-                  type: act.type.toLowerCase().replace(/\s+/g, "_"),
+                  type: String(act.type).toLowerCase().replace(/\s+/g, "_"),
                   period: period.toLowerCase(),
                   title: `${act.type}: ${act.notes || "Activity"}`,
                   status: "completed",
@@ -171,12 +270,19 @@ window.currentCalendarTargetName = "All Subordinates (Team View)";
 window.currentCalendarTargetRole = "Team";
 
 function getRoleBadgeInfo(role) {
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    switch (role) {
+  const norm = getNormalizedRole(role);
+  switch (norm) {
     case "admin":
       return {
         label: "System Admin",
         short: "Admin",
+        badgeClass: "role-admin",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+      };
+    case "general_manager":
+      return {
+        label: "General Manager (GM)",
+        short: "GM",
         badgeClass: "role-admin",
         icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
       };
@@ -186,6 +292,13 @@ function getRoleBadgeInfo(role) {
         short: "BU",
         badgeClass: "role-business_unit",
         icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
+      };
+    case "product_manager":
+      return {
+        label: "Product Manager (PM)",
+        short: "PM",
+        badgeClass: "role-business_unit",
+        icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/></svg>',
       };
     case "line_manager":
       return {
@@ -217,8 +330,8 @@ function getRoleBadgeInfo(role) {
       };
     default:
       return {
-        label: role,
-        short: role,
+        label: String(role || "User"),
+        short: String(role || "User"),
         badgeClass: "badge bg-secondary",
         icon: '<svg class="badge-svg-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       };
@@ -226,16 +339,19 @@ function getRoleBadgeInfo(role) {
 }
 
 function getUserHierarchyBreadcrumb(userId, allUsers) {
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const crumbs = [];
-  let curr = allUsers.find((u) => u.id === userId);
-  while (curr) {
+  const crumbs = [];
+  const visited = new Set();
+  let curr = allUsers.find((u) => u && u.id === userId);
+  while (curr && !visited.has(curr.id)) {
+    visited.add(curr.id);
     const roleInfo = getRoleBadgeInfo(curr.role);
-    const name = curr.name || curr.nameAr;
+    const name = curr.name || curr.nameAr || curr.id;
     crumbs.unshift(`${roleInfo.short}: ${name}`);
-    if (!curr.managerId || curr.managerId === "u1790626000010" || curr.role === "admin")
+    const normRole = getNormalizedRole(curr.role);
+    if (!curr.managerId || curr.managerId === "u1790626000010" || normRole === "admin") {
       break;
-    curr = allUsers.find((u) => u.id === curr.managerId);
+    }
+    curr = allUsers.find((u) => u && u.id === curr.managerId);
   }
   return crumbs.join(" ➔ ");
 }
@@ -243,13 +359,18 @@ function getUserHierarchyBreadcrumb(userId, allUsers) {
 function renderCalendar() {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const grid = document.getElementById("calendarGrid");
+  const monthYearEl = document.getElementById("monthYearDisplay");
   const t = calendarTranslations[lang] || calendarTranslations.en;
 
-  const monthYearStr =
-    t.months[currentDate.getMonth()] + " " + currentDate.getFullYear();
-  document.getElementById("monthYearDisplay").textContent = monthYearStr;
+  if (monthYearEl) {
+    monthYearEl.textContent = t.months[currentDate.getMonth()] + " " + currentDate.getFullYear();
+  }
+  if (!grid) return;
 
   grid.replaceChildren();
+
+  const currentUser = getCalendarAuthUser();
+  if (!currentUser) return;
 
   t.days.forEach((day) => {
     const div = document.createElement("div");
@@ -271,19 +392,44 @@ function renderCalendar() {
   const _todayStrLocal = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
   const todayStr = window.getSystemTodayStr ? window.getSystemTodayStr() : _todayStrLocal;
 
-  const targetId = window.currentCalendarTargetId || "all";
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    role: "admin",
-    id: "u1790626000010",
-  };
+  const fullOrgAccess = hasFullOrgCalendarAccess(currentUser);
+  let targetId = isCalendarRep(currentUser)
+    ? currentUser.id
+    : (window.currentCalendarTargetId || "all");
+  const publicHolidays = getCalendarHolidays();
 
-  const publicHolidays =
-    (window.DEMO_DATA && window.DEMO_DATA.publicHolidays) || [
-      { date: "2026-10-06", title: "Armed Forces Day" },
-    ];
+  // Enforce RBAC scope inside renderCalendar() itself (defense-in-depth against direct window.currentCalendarTargetId tampering)
+  if (!fullOrgAccess && targetId !== "all" && targetId !== currentUser.id) {
+    const mySubs = typeof window.getAllSubordinates === "function"
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    if (!mySubs.some((s) => s && s.id === targetId)) {
+      targetId = currentUser.id;
+      window.currentCalendarTargetId = currentUser.id;
+    }
+  }
+
+  // Pre-compute allowed user IDs once per render instead of 42 times inside the day loop
+  let visibleUserIds = null;
+  if (targetId !== "all") {
+    visibleUserIds = new Set([targetId]);
+    if (typeof window.getAllSubordinates === "function") {
+      window.getAllSubordinates(targetId).forEach((sub) => {
+        if (sub && !isUserInactive(sub)) visibleUserIds.add(sub.id);
+      });
+    }
+  } else if (!fullOrgAccess) {
+    visibleUserIds = new Set([currentUser.id]);
+    if (typeof window.getAllSubordinates === "function") {
+      window.getAllSubordinates(currentUser.id).forEach((sub) => {
+        if (sub && !isUserInactive(sub)) visibleUserIds.add(sub.id);
+      });
+    }
+  }
 
   // Retrieve dynamic events
   const allEvents = getDynamicCalendarEvents();
+  const selectedLineId = window.selectedCalendarLineId || "all";
 
   for (let i = 0; i < 42; i++) {
     const cell = document.createElement("div");
@@ -324,44 +470,31 @@ function renderCalendar() {
 
     let dayEvents = allEvents.filter((e) => e.date === cellDateStr);
 
-    if (targetId !== "all") {
-      const targetUserIds = new Set([targetId]);
-      if (window.getAllSubordinates) {
-        window.getAllSubordinates(targetId).forEach((sub) => {
-          if (sub.status !== "Inactive") targetUserIds.add(sub.id);
-        });
-      }
-      dayEvents = dayEvents.filter((e) => targetUserIds.has(e.repId) || (e.doubleWithUserId && targetUserIds.has(e.doubleWithUserId)));
-    } else {
-      const hasFullOrgAccess =
-        currentUser.role === "admin" || currentUser.role === "hr";
-      if (!hasFullOrgAccess) {
-        const mySubIds = new Set([currentUser.id]);
-        if (window.getAllSubordinates) {
-          window.getAllSubordinates(currentUser.id).forEach((sub) => {
-            if (sub.status !== "Inactive") mySubIds.add(sub.id);
-          });
-        }
-        dayEvents = dayEvents.filter((e) => mySubIds.has(e.repId) || (e.doubleWithUserId && mySubIds.has(e.doubleWithUserId)));
-      }
+    if (visibleUserIds) {
+      dayEvents = dayEvents.filter(
+        (e) =>
+          visibleUserIds.has(e.repId) ||
+          (e.doubleWithUserId && visibleUserIds.has(e.doubleWithUserId)),
+      );
     }
 
     // Filter by selected product line if scoped
-    const selectedLineId = window.selectedCalendarLineId || "all";
     if (selectedLineId !== "all") {
       dayEvents = dayEvents.filter((e) => {
         if (e.type === "holiday") return true;
+        if (e.lineId) return e.lineId === selectedLineId;
         if (!e.repId) return true;
-        const repLines = window.getUserLines ? window.getUserLines(e.repId) : [];
-        return repLines.some((l) => l.id === selectedLineId);
+        const repLines = typeof window.getUserLines === "function" ? window.getUserLines(e.repId) : [];
+        return repLines.some((l) => l && l.id === selectedLineId);
       });
     }
 
-    const matchedHoliday = publicHolidays.find((ph) => ph.date === cellDateStr);
-    if (matchedHoliday) {
+    // Match all public holidays on this date (keep raw title; escape only at HTML sink)
+    const matchedHolidays = publicHolidays.filter((ph) => ph && ph.date === cellDateStr);
+    for (let hIdx = matchedHolidays.length - 1; hIdx >= 0; hIdx--) {
       dayEvents.unshift({
         type: "holiday",
-        title: window.escapeHtml(matchedHoliday.title),
+        title: String(matchedHolidays[hIdx].title || t.publicHoliday),
         status: "holiday",
       });
     }
@@ -423,10 +556,10 @@ function renderCalendar() {
 
 function openDayDetail(dateObj, events) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = calendarTranslations[lang] || calendarTranslations.en;
+  const t = calendarTranslations[lang] || calendarTranslations.en;
 
   const titleEl = document.getElementById("detailDateTitle");
-  if (titleEl) {
+  if (titleEl && dateObj) {
     titleEl.textContent = `${t.months[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
   }
 
@@ -434,18 +567,22 @@ function openDayDetail(dateObj, events) {
   if (!contentEl) return;
   contentEl.replaceChildren();
 
-  if (events.length === 0) {
-    contentEl.innerHTML = `<p style="color: var(--gray-500); padding: 15px;">${t.noEvents}</p>`;
+  const safeEvents = Array.isArray(events) ? events : [];
+  if (safeEvents.length === 0) {
+    contentEl.innerHTML = `<p style="color: var(--gray-500); padding: 15px;">${_esc(t.noEvents)}</p>`;
   } else {
     const isPharm = (e) =>
       e.targetType === "pharmacy" ||
       e.period === "pharmacy" ||
       (e.doctorId && String(e.doctorId).startsWith("pharm"));
-    const amEvents = events.filter((e) => e.period === "am" && !isPharm(e));
-    const pmEvents = events.filter((e) => e.period === "pm" && !isPharm(e));
-    const pharmacyEvents = events.filter(isPharm);
-    const leaveEvents = events.filter(
-      (e) => e.type === "leave" || e.type === "holiday",
+    const isLeaveOrHoliday = (e) => e.type === "leave" || e.type === "holiday";
+
+    const leaveEvents = safeEvents.filter(isLeaveOrHoliday);
+    const amEvents = safeEvents.filter((e) => !isLeaveOrHoliday(e) && !isPharm(e) && e.period === "am");
+    const pmEvents = safeEvents.filter((e) => !isLeaveOrHoliday(e) && !isPharm(e) && e.period === "pm");
+    const pharmacyEvents = safeEvents.filter((e) => !isLeaveOrHoliday(e) && isPharm(e));
+    const otherEvents = safeEvents.filter(
+      (e) => !isLeaveOrHoliday(e) && !isPharm(e) && e.period !== "am" && e.period !== "pm",
     );
 
     if (leaveEvents.length > 0)
@@ -456,25 +593,25 @@ function openDayDetail(dateObj, events) {
       renderDetailSection(t.pmActivities, pmEvents, contentEl, t, lang);
     if (pharmacyEvents.length > 0)
       renderDetailSection("Pharmacy Visits", pharmacyEvents, contentEl, t, lang);
+    if (otherEvents.length > 0)
+      renderDetailSection(t.otherActivities || "Other Activities", otherEvents, contentEl, t, lang);
   }
 
   const panel = document.getElementById("dayDetailPanel");
   const overlay = document.getElementById("detailOverlay");
   if (panel) panel.classList.add("active");
   if (overlay) overlay.classList.add("active");
-  document.body.style.overflow = "hidden";
+  if (document.body) document.body.style.overflow = "hidden";
 }
 
 function renderDetailSection(title, evts, container, t, lang) {
-  const currentLang =
-    lang || (window.getCurrentLang && window.getCurrentLang()) || "en";
-  
   const sec = document.createElement("div");
   sec.className = "detail-section";
-  sec.innerHTML = `<div class="detail-section-title">${window.escapeHtml(title)}</div>`;
+  sec.innerHTML = `<div class="detail-section-title">${_esc(title)}</div>`;
 
   const list = document.createElement("div");
   list.className = "detail-list";
+  const allUsers = getAllCalendarUsers();
 
   evts.forEach((evt) => {
     const item = document.createElement("div");
@@ -484,8 +621,6 @@ function renderDetailSection(title, evts, container, t, lang) {
     let badgeClass = "";
     let statusText = "";
     let iconChar = '<svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
 
     if (evt.type === "holiday") {
       iconClass = "icon-visit-completed";
@@ -543,10 +678,10 @@ function renderDetailSection(title, evts, container, t, lang) {
 
     let ownerText = "";
     if (evt.repId) {
-      const u = allUsers.find((user) => user.id === evt.repId);
+      const u = allUsers.find((user) => user && user.id === evt.repId);
       if (u) {
-        const uName = u.name || u.nameAr;
-        ownerText = ` • <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(uName)}`;
+        const uName = u.name || u.nameAr || u.id;
+        ownerText = ` • <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${_esc(uName)}`;
       }
     }
 
@@ -554,11 +689,11 @@ function renderDetailSection(title, evts, container, t, lang) {
       <div class="detail-item-info">
         <div class="detail-item-icon ${iconClass}">${iconChar}</div>
         <div class="detail-item-text">
-          <span class="detail-item-title">${window.escapeHtml(evt.title)}</span>
-          <span class="detail-item-time">${window.escapeHtml((evt.type || "").toUpperCase())}${ownerText}</span>
+          <span class="detail-item-title">${_esc(evt.title)}</span>
+          <span class="detail-item-time">${_esc((evt.type || "").toUpperCase())}${ownerText}</span>
         </div>
       </div>
-      <div class="badge ${badgeClass}">${statusText}</div>
+      <div class="badge ${badgeClass}">${_esc(statusText)}</div>
     `;
     list.appendChild(item);
   });
@@ -572,10 +707,13 @@ function closeDayDetail() {
   const overlay = document.getElementById("detailOverlay");
   if (panel) panel.classList.remove("active");
   if (overlay) overlay.classList.remove("active");
-  document.body.style.overflow = "";
+  if (document.body) document.body.style.overflow = "";
 }
 
 function openOrgTreeModal() {
+  const currentUser = getCalendarAuthUser();
+  if (!currentUser || isCalendarRep(currentUser)) return;
+
   const overlay = document.getElementById("orgTreeOverlay");
   const modal = document.getElementById("orgTreeModal");
   const searchInput = document.getElementById("orgTreeSearchInput");
@@ -602,7 +740,7 @@ function closeOrgTreeModal() {
 }
 
 function toggleTreeNode(nodeId, event) {
-  if (event) event.stopPropagation();
+  if (event && typeof event.stopPropagation === "function") event.stopPropagation();
   const childrenContainer = document.getElementById("children_" + nodeId);
   const toggleBtn = document.getElementById("toggle_" + nodeId);
   if (!childrenContainer || !toggleBtn) return;
@@ -613,38 +751,52 @@ function toggleTreeNode(nodeId, event) {
 }
 
 function selectCalendarTarget(targetId, targetName, targetRole) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "admin", id: "u1790626000010" };
-  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
-  const isRep = role === "medical_rep" || role === "rep";
+  const currentUser = getCalendarAuthUser();
+  if (!currentUser) return;
 
-  if (isRep) {
+  let overridden = false;
+  if (isCalendarRep(currentUser)) {
+    if (targetId !== currentUser.id) overridden = true;
     targetId = currentUser.id;
-  } else if (role !== "admin" && role !== "hr") {
+  } else if (!hasFullOrgCalendarAccess(currentUser)) {
     if (targetId !== "all" && targetId !== currentUser.id) {
       const subordinates = typeof window.getAllSubordinates === "function"
         ? window.getAllSubordinates(currentUser.id)
         : [];
-      const isAllowed = subordinates.some((s) => s.id === targetId);
+      const isAllowed = subordinates.some((s) => s && s.id === targetId);
       if (!isAllowed) {
         console.warn(`[RBAC] User '${currentUser.id}' cannot view calendar of '${targetId}'. Defaulting.`);
         targetId = currentUser.id;
+        overridden = true;
       }
     }
   }
 
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = calendarTranslations[lang] || calendarTranslations.en;
+  if (overridden) {
+    targetName = null;
+    targetRole = null;
+  }
 
+  const allUsers = getAllCalendarUsers();
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+  const t = calendarTranslations[lang] || calendarTranslations.en;
+
+  let resolvedCanonicalRole = "";
   if (targetId === "all") {
     targetName = targetName || t.allTeamView;
     targetRole = targetRole || t.teamBadge;
-  } else if (!targetName || !targetRole) {
-    const foundUser = allUsers.find((u) => u.id === targetId);
+  } else {
+    const foundUser = allUsers.find((u) => u && u.id === targetId);
     if (foundUser) {
-      targetName = foundUser.name || foundUser.nameAr;
+      resolvedCanonicalRole = foundUser.role || "";
       const badgeInfo = getRoleBadgeInfo(foundUser.role);
-      targetRole = badgeInfo.short;
+      if (!targetName) targetName = foundUser.name || foundUser.nameAr || foundUser.id;
+      if (!targetRole) targetRole = badgeInfo.short;
+    } else if (targetId === currentUser.id) {
+      resolvedCanonicalRole = currentUser.role || "";
+      const badgeInfo = getRoleBadgeInfo(currentUser.role);
+      if (!targetName) targetName = currentUser.name || currentUser.nameAr || currentUser.id;
+      if (!targetRole) targetRole = badgeInfo.short;
     }
   }
 
@@ -657,21 +809,21 @@ function selectCalendarTarget(targetId, targetName, targetRole) {
   const resetBtn = document.getElementById("btnResetCalendar");
 
   if (roleBadge) {
-    roleBadge.textContent = targetRole;
+    roleBadge.textContent = targetRole || "";
     if (targetId === "all") {
       roleBadge.className = "target-role-badge badge bg-primary";
     } else {
-      const badgeInfo = getRoleBadgeInfo(targetRole.toLowerCase());
+      const badgeInfo = getRoleBadgeInfo(resolvedCanonicalRole || targetRole);
       roleBadge.className = `target-role-badge role-badge ${badgeInfo.badgeClass}`;
     }
   }
 
   if (nameDisplay) {
-    nameDisplay.textContent = targetName;
+    nameDisplay.textContent = targetName || "";
   }
 
   if (resetBtn) {
-    resetBtn.style.display = targetId === "all" ? "none" : "inline-flex";
+    resetBtn.style.display = (targetId === "all" || isCalendarRep(currentUser)) ? "none" : "inline-flex";
   }
 
   closeOrgTreeModal();
@@ -679,41 +831,74 @@ function selectCalendarTarget(targetId, targetName, targetRole) {
 }
 
 function resetCalendarToAll() {
+  const currentUser = getCalendarAuthUser();
+  if (!currentUser) return;
+  if (isCalendarRep(currentUser)) {
+    selectCalendarTarget(currentUser.id);
+    return;
+  }
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = calendarTranslations[lang] || calendarTranslations.en;
   selectCalendarTarget("all", t.allTeamView, t.teamBadge);
 }
 
+function bindOrgTreeDelegation(container) {
+  if (!container || !container.dataset || container.dataset.orgTreeBound === "1") return;
+  container.dataset.orgTreeBound = "1";
+  container.addEventListener("click", (e) => {
+    const actionEl = e.target && typeof e.target.closest === "function"
+      ? e.target.closest("[data-action]")
+      : null;
+    if (!actionEl) return;
+    const action = actionEl.dataset.action;
+    if (action === "select-target") {
+      e.preventDefault();
+      selectCalendarTarget(actionEl.dataset.userId);
+    } else if (action === "toggle-node") {
+      e.preventDefault();
+      toggleTreeNode(actionEl.dataset.nodeId, e);
+    }
+  });
+}
+
 function renderOrgTreeNodes(searchTerm = "") {
   const container = document.getElementById("orgTreeContainer");
   if (!container) return;
+  bindOrgTreeDelegation(container);
+
+  const currentUser = getCalendarAuthUser();
+  if (!currentUser) {
+    container.replaceChildren();
+    return;
+  }
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = calendarTranslations[lang] || calendarTranslations.en;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    role: "admin",
-    id: "u1790626000010",
-  };
-  const hasFullOrgAccess =
-    currentUser.role === "admin" || currentUser.role === "hr";
+  const t = calendarTranslations[lang] || calendarTranslations.en;
+  const allUsers = getAllCalendarUsers();
+  const fullOrgAccess = hasFullOrgCalendarAccess(currentUser);
 
-  const query = searchTerm.trim().toLowerCase();
+  const query = String(searchTerm || "").trim().toLowerCase();
   if (query) {
     let filteredUsers = allUsers.filter((u) => {
-      if (u.status === "Inactive") return false;
-      const nameMatch = u.name && u.name.toLowerCase().includes(query);
-      const nameArMatch = u.nameAr && u.nameAr.toLowerCase().includes(query);
+      if (!u || isUserInactive(u)) return false;
+      const nameMatch = u.name && String(u.name).toLowerCase().includes(query);
+      const nameArMatch = u.nameAr && String(u.nameAr).toLowerCase().includes(query);
       const codeMatch =
-        u.employeeCode && u.employeeCode.toLowerCase().includes(query);
-      const roleMatch = u.role && u.role.toLowerCase().includes(query);
+        u.employeeCode && String(u.employeeCode).toLowerCase().includes(query);
+      const roleMatch =
+        (u.role && String(u.role).toLowerCase().includes(query)) ||
+        getRoleBadgeInfo(u.role).short.toLowerCase().includes(query);
       return nameMatch || nameArMatch || codeMatch || roleMatch;
     });
 
-    if (!hasFullOrgAccess && window.getAllSubordinates) {
+    // Fail-closed scoping: non-full-org users ONLY ever see themselves + verified subordinates
+    if (!fullOrgAccess) {
+      const subs = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(currentUser.id)
+        : [];
       const allowedIds = new Set([
         currentUser.id,
-        ...window.getAllSubordinates(currentUser.id).map((s) => s.id),
+        ...subs.filter(Boolean).map((s) => s.id),
       ]);
       filteredUsers = filteredUsers.filter((u) => allowedIds.has(u.id));
     }
@@ -721,8 +906,8 @@ function renderOrgTreeNodes(searchTerm = "") {
     const selectedLineId = window.selectedCalendarLineId || "all";
     if (selectedLineId !== "all") {
       filteredUsers = filteredUsers.filter((u) => {
-        const uLines = window.getUserLines ? window.getUserLines(u.id) : [];
-        return uLines.some((l) => l.id === selectedLineId);
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(u.id) : [];
+        return uLines.some((l) => l && l.id === selectedLineId);
       });
     }
 
@@ -730,7 +915,7 @@ function renderOrgTreeNodes(searchTerm = "") {
       container.innerHTML = `
         <div class="search-empty-state">
           <div style="font-size: 2.5rem; margin-bottom: 8px;"><svg style="width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.85;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-          <h5>${t.noResults}</h5>
+          <h5>${_esc(t.noResults)}</h5>
         </div>
       `;
       return;
@@ -738,7 +923,7 @@ function renderOrgTreeNodes(searchTerm = "") {
 
     let searchHtml = '<div class="search-results-list">';
     filteredUsers.forEach((u) => {
-      const uName = u.name || u.nameAr;
+      const uName = u.name || u.nameAr || u.id;
       const roleInfo = getRoleBadgeInfo(u.role);
       const breadcrumb = getUserHierarchyBreadcrumb(u.id, allUsers);
       const isSelected = window.currentCalendarTargetId === u.id;
@@ -747,15 +932,15 @@ function renderOrgTreeNodes(searchTerm = "") {
         <div class="search-result-card">
           <div class="search-result-info">
             <div class="d-flex align-items-center gap-2">
-              <span class="role-badge ${roleInfo.badgeClass}">${roleInfo.short}</span>
-              <span class="fw-bold" style="color: var(--gray-900);">${window.escapeHtml(uName)}</span>
-              <span class="text-muted small">(${window.escapeHtml(u.employeeCode || u.id)})</span>
+              <span class="role-badge ${_esc(roleInfo.badgeClass)}">${_esc(roleInfo.short)}</span>
+              <span class="fw-bold" style="color: var(--gray-900);">${_esc(uName)}</span>
+              <span class="text-muted small">(${_esc(u.employeeCode || u.id)})</span>
             </div>
-            <div class="search-breadcrumb">${window.escapeHtml(breadcrumb)}</div>
+            <div class="search-breadcrumb">${_esc(breadcrumb)}</div>
           </div>
-          <button class="btn-select-node ${isSelected ? "active-target" : ""}"
-            onclick="selectCalendarTarget('${u.id}')">
-            ${isSelected ? t.selectedBtn : t.selectBtn}
+          <button type="button" class="btn-select-node ${isSelected ? "active-target" : ""}"
+            data-action="select-target" data-user-id="${_esc(u.id)}">
+            ${_esc(isSelected ? t.selectedBtn : t.selectBtn)}
           </button>
         </div>
       `;
@@ -765,16 +950,20 @@ function renderOrgTreeNodes(searchTerm = "") {
     return;
   }
 
-  function renderUserNode(userNode, level = 0) {
-    const isInactive = userNode.status === "Inactive";
-    const nodeName = userNode.name || userNode.nameAr;
+  function renderUserNode(userNode, level = 0, visited = new Set()) {
+    if (!userNode || !userNode.id || visited.has(userNode.id) || level > 20) return "";
+    const nextVisited = new Set(visited);
+    nextVisited.add(userNode.id);
+
+    const isInactive = isUserInactive(userNode);
+    const nodeName = userNode.name || userNode.nameAr || userNode.id;
     const roleInfo = getRoleBadgeInfo(userNode.role);
     const directs = allUsers.filter((u) => {
-      if (u.managerId !== userNode.id) return false;
+      if (!u || u.managerId !== userNode.id || nextVisited.has(u.id)) return false;
       const selectedLineId = window.selectedCalendarLineId || "all";
       if (selectedLineId !== "all") {
-        const uLines = window.getUserLines ? window.getUserLines(u.id) : [];
-        return uLines.some((l) => l.id === selectedLineId);
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(u.id) : [];
+        return uLines.some((l) => l && l.id === selectedLineId);
       }
       return true;
     });
@@ -785,49 +974,50 @@ function renderOrgTreeNodes(searchTerm = "") {
       ? `(${directs.length} ${t.directReports})`
       : "";
 
-    let displayName = window.escapeHtml(nodeName);
-    let subline = `(${window.escapeHtml(userNode.employeeCode || userNode.id)})`;
+    let displayName = _esc(nodeName);
+    let subline = `(${_esc(userNode.employeeCode || userNode.id)})`;
     let cardStyle = "";
     let actionBtnHtml = "";
 
     if (isInactive) {
       cardStyle = "border: 1px dashed #cbd5e1; background: #fffdf5;";
       const vacantBadge = `<span class="badge bg-warning text-dark me-1" style="font-size:0.7rem;">[Vacant]</span>`;
-      if (userNode.role === "medical_rep") {
+      if (getNormalizedRole(userNode.role) === "medical_rep") {
         const areaName = userNode.vacantArea || userNode.area || "Territory";
-        displayName = `${vacantBadge} Area: ${window.escapeHtml(areaName)}`;
-        subline = `(Former: ${window.escapeHtml(nodeName)})`;
+        displayName = `${vacantBadge} Area: ${_esc(areaName)}`;
+        subline = `(Former: ${_esc(nodeName)})`;
       } else {
-        displayName = `${vacantBadge} ${roleInfo.short} Position`;
-        subline = `(Position Open • Former: ${window.escapeHtml(nodeName)})`;
+        displayName = `${vacantBadge} ${_esc(roleInfo.short)} Position`;
+        subline = `(Position Open • Former: ${_esc(nodeName)})`;
       }
       actionBtnHtml = `<span class="badge bg-light text-muted border px-2 py-1" style="font-size:0.75rem;">Vacant</span>`;
     } else {
       actionBtnHtml = `
-        <button class="btn-select-node ${isSelected ? "active-target" : ""}" 
-                onclick="selectCalendarTarget('${userNode.id}')">
-          ${isSelected ? t.selectedBtn : t.selectBtn}
+        <button type="button" class="btn-select-node ${isSelected ? "active-target" : ""}"
+                data-action="select-target" data-user-id="${_esc(userNode.id)}">
+          ${_esc(isSelected ? t.selectedBtn : t.selectBtn)}
         </button>
       `;
     }
 
+    const safeNodeId = _esc(userNode.id);
     let html = `
-      <div class="org-node-card" id="node_${userNode.id}" style="${cardStyle}">
+      <div class="org-node-card" id="node_${safeNodeId}" style="${cardStyle}">
         <div class="org-node-row">
           <div class="org-node-left">
-            <button class="org-node-toggle ${hasChildren ? "" : "no-children"}" 
-                    id="toggle_${userNode.id}" 
-                    onclick="toggleTreeNode('${userNode.id}', event)">
+            <button type="button" class="org-node-toggle ${hasChildren ? "" : "no-children"}"
+                    id="toggle_${safeNodeId}"
+                    data-action="toggle-node" data-node-id="${safeNodeId}">
               ${hasChildren ? "▼" : "•"}
             </button>
             <span class="org-node-icon">${isInactive ? '<svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : roleInfo.icon}</span>
             <div class="org-node-details">
               <div class="org-node-header-line">
-                <span class="role-badge ${roleInfo.badgeClass}">${roleInfo.short}</span>
+                <span class="role-badge ${_esc(roleInfo.badgeClass)}">${_esc(roleInfo.short)}</span>
                 <span class="org-node-name">${displayName}</span>
                 <span class="org-node-code text-muted small">${subline}</span>
               </div>
-              ${hasChildren ? `<div class="org-node-subtext">${subCountStr}</div>` : ""}
+              ${hasChildren ? `<div class="org-node-subtext">${_esc(subCountStr)}</div>` : ""}
             </div>
           </div>
           ${actionBtnHtml}
@@ -835,9 +1025,9 @@ function renderOrgTreeNodes(searchTerm = "") {
     `;
 
     if (hasChildren) {
-      html += `<div class="org-node-children" id="children_${userNode.id}">`;
+      html += `<div class="org-node-children" id="children_${safeNodeId}">`;
       directs.forEach((child) => {
-        html += renderUserNode(child, level + 1);
+        html += renderUserNode(child, level + 1, nextVisited);
       });
       html += `</div>`;
     }
@@ -850,35 +1040,38 @@ function renderOrgTreeNodes(searchTerm = "") {
 
   const selectedLineId = window.selectedCalendarLineId || "all";
 
-  if (hasFullOrgAccess) {
-    let topManagers = allUsers.filter(
-      (u) =>
-        u.role === "business_unit" ||
-        (u.managerId === "u1790626000010" && u.role !== "admin" && u.role !== "hr"),
-    );
+  if (fullOrgAccess) {
+    let topManagers = allUsers.filter((u) => {
+      if (!u) return false;
+      const r = getNormalizedRole(u.role);
+      return (
+        r === "business_unit" ||
+        (u.managerId === "u1790626000010" && r !== "admin" && r !== "hr")
+      );
+    });
     if (selectedLineId !== "all") {
       topManagers = topManagers.filter((m) => {
-        const mLines = window.getUserLines ? window.getUserLines(m.id) : [];
-        return mLines.some((l) => l.id === selectedLineId);
+        const mLines = typeof window.getUserLines === "function" ? window.getUserLines(m.id) : [];
+        return mLines.some((l) => l && l.id === selectedLineId);
       });
     }
     topManagers.forEach((m) => {
-      treeHtml += renderUserNode(m, 0);
+      treeHtml += renderUserNode(m, 0, new Set());
     });
   } else {
-    const managerNode = allUsers.find((u) => u.id === currentUser.id);
+    const managerNode = allUsers.find((u) => u && u.id === currentUser.id);
     if (managerNode) {
-      treeHtml += renderUserNode(managerNode, 0);
+      treeHtml += renderUserNode(managerNode, 0, new Set());
     } else {
-      let directs = allUsers.filter((u) => u.managerId === currentUser.id);
+      let directs = allUsers.filter((u) => u && u.managerId === currentUser.id);
       if (selectedLineId !== "all") {
         directs = directs.filter((d) => {
-          const dLines = window.getUserLines ? window.getUserLines(d.id) : [];
-          return dLines.some((l) => l.id === selectedLineId);
+          const dLines = typeof window.getUserLines === "function" ? window.getUserLines(d.id) : [];
+          return dLines.some((l) => l && l.id === selectedLineId);
         });
       }
       directs.forEach((d) => {
-        treeHtml += renderUserNode(d, 0);
+        treeHtml += renderUserNode(d, 0, new Set());
       });
     }
   }
@@ -895,26 +1088,40 @@ function populateCalendarLineFilter(user = null) {
   const lineSelect = document.getElementById("calendarLineFilter");
   if (!lineSelect) return;
 
-  const currentUser = user || (window.checkAuth && window.checkAuth()) || { role: "admin", id: "u1790626000010" };
-  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
-  const isRep = role === "medical_rep" || role === "rep";
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
+  const currentUser = user || getCalendarAuthUser();
+  if (!currentUser) {
+    lineSelect.replaceChildren();
+    lineSelect.disabled = true;
+    return;
+  }
+
+  const isRep = isCalendarRep(currentUser);
+  const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
   const curVal = lineSelect.value;
 
   lineSelect.replaceChildren();
 
   if (isRep) {
     if (userLines.length > 0) {
+      if (userLines.length > 1) {
+        const optAll = document.createElement("option");
+        optAll.value = "all";
+        optAll.textContent = "All Product Lines";
+        lineSelect.appendChild(optAll);
+      }
       userLines.forEach((l) => {
         const opt = document.createElement("option");
         opt.value = l.id;
-        opt.textContent = l.name || l.nameAr;
+        opt.textContent = l.name || l.nameAr || l.id;
         lineSelect.appendChild(opt);
       });
-      lineSelect.value = userLines[0].id;
-      window.selectedCalendarLineId = userLines[0].id;
-      lineSelect.disabled = true;
+      if (curVal && Array.from(lineSelect.options).some((o) => o.value === curVal)) {
+        lineSelect.value = curVal;
+      } else {
+        lineSelect.value = lineSelect.options[0]?.value || userLines[0].id;
+      }
+      window.selectedCalendarLineId = lineSelect.value;
+      lineSelect.disabled = userLines.length <= 1;
     } else {
       const opt = document.createElement("option");
       opt.value = "";
@@ -926,11 +1133,11 @@ function populateCalendarLineFilter(user = null) {
     return;
   }
 
-  // Managers & Admin
+  // Managers & Admin / HR / GM
   lineSelect.disabled = false;
-  const isFullAdmin = role === "admin" || role === "hr";
+  const fullOrgAccess = hasFullOrgCalendarAccess(currentUser);
 
-  if (isFullAdmin || userLines.length > 1) {
+  if (fullOrgAccess || userLines.length > 1) {
     const optAll = document.createElement("option");
     optAll.value = "all";
     optAll.textContent = "All Product Lines";
@@ -940,7 +1147,7 @@ function populateCalendarLineFilter(user = null) {
   userLines.forEach((l) => {
     const opt = document.createElement("option");
     opt.value = l.id;
-    opt.textContent = `${l.name || l.nameAr}`;
+    opt.textContent = `${l.name || l.nameAr || l.id}`;
     lineSelect.appendChild(opt);
   });
 
@@ -953,11 +1160,41 @@ function populateCalendarLineFilter(user = null) {
 }
 
 window.onCalendarLineChange = function (selectedLineId) {
+  const currentUser = getCalendarAuthUser();
+  if (!currentUser) return;
+
+  const lineSelect = document.getElementById("calendarLineFilter");
+  const fullOrgAccess = hasFullOrgCalendarAccess(currentUser);
+  const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
+  const allowedLineIds = new Set(userLines.filter(Boolean).map((l) => l.id));
+
+  if (isCalendarRep(currentUser)) {
+    const canSelectAll = userLines.length > 1;
+    const isAllowed =
+      (selectedLineId === "all" && canSelectAll) ||
+      allowedLineIds.has(selectedLineId) ||
+      (userLines.length === 0 && selectedLineId === "");
+    if (!isAllowed) {
+      const repLine = window.selectedCalendarLineId || (userLines.length > 0 ? userLines[0].id : "");
+      if (lineSelect) lineSelect.value = repLine;
+      window.selectedCalendarLineId = repLine;
+      return;
+    }
+  } else if (!fullOrgAccess) {
+    const canSelectAll = userLines.length > 1;
+    const isAllowed = (selectedLineId === "all" && canSelectAll) || allowedLineIds.has(selectedLineId);
+    if (!isAllowed) {
+      const fallback = window.selectedCalendarLineId || (userLines[0] ? userLines[0].id : "all");
+      if (lineSelect) lineSelect.value = fallback;
+      return;
+    }
+  }
+
   window.selectedCalendarLineId = selectedLineId;
   const targetId = window.currentCalendarTargetId;
   if (targetId && targetId !== "all") {
-    const targetLines = window.getUserLines ? window.getUserLines(targetId) : [];
-    if (selectedLineId !== "all" && !targetLines.some((l) => l.id === selectedLineId)) {
+    const targetLines = typeof window.getUserLines === "function" ? window.getUserLines(targetId) : [];
+    if (selectedLineId !== "all" && !targetLines.some((l) => l && l.id === selectedLineId)) {
       resetCalendarToAll();
       return;
     }
@@ -974,12 +1211,11 @@ function setupManagerFilter(user) {
   const btnReset = document.getElementById("btnResetCalendar");
   const targetRoleBadge = document.getElementById("targetRoleBadge");
   const targetNameDisplay = document.getElementById("targetNameDisplay");
-  if (!managerFilter) return;
+  if (!managerFilter || !user) return;
 
-  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
-  const isRep = role === "medical_rep" || role === "rep";
+  const isRep = isCalendarRep(user);
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = calendarTranslations[lang] || calendarTranslations.en;
+  const t = calendarTranslations[lang] || calendarTranslations.en;
 
   managerFilter.classList.add("active");
   managerFilter.style.display = "flex";
@@ -992,12 +1228,15 @@ function setupManagerFilter(user) {
       targetRoleBadge.className = "target-role-badge role-badge role-medical_rep";
     }
     if (targetNameDisplay) {
-      targetNameDisplay.textContent = user.name || user.nameAr;
+      targetNameDisplay.textContent = user.name || user.nameAr || user.id;
     }
   } else {
     if (btnOpenTree) btnOpenTree.style.display = "inline-flex";
     if (window.currentCalendarTargetId === "all") {
-      if (targetRoleBadge) targetRoleBadge.textContent = t.teamBadge;
+      if (targetRoleBadge) {
+        targetRoleBadge.textContent = t.teamBadge;
+        targetRoleBadge.className = "target-role-badge badge bg-primary";
+      }
       if (targetNameDisplay) targetNameDisplay.textContent = t.allTeamView;
       if (btnReset) btnReset.style.display = "none";
     } else {
@@ -1006,29 +1245,32 @@ function setupManagerFilter(user) {
   }
 }
 
+let calendarListenersBound = false;
+
 function setupCalendar() {
-  const user = (window.checkAuth && window.checkAuth()) || {
-    role: "admin",
-    id: "u1790626000010",
-  };
-  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
-  const isRep = role === "medical_rep" || role === "rep";
-  if (isRep) {
+  const user = getCalendarAuthUser();
+  if (!user) return;
+
+  if (isCalendarRep(user)) {
     window.currentCalendarTargetId = user.id;
-    window.currentCalendarTargetName = user.name;
+    window.currentCalendarTargetName = user.name || user.nameAr || user.id;
     window.currentCalendarTargetRole = "Rep";
   }
-  populateCalendarLineFilter();
+  populateCalendarLineFilter(user);
   setupManagerFilter(user);
   renderCalendar();
 
+  if (calendarListenersBound) return;
+  calendarListenersBound = true;
+
+  // Use day=1 to prevent JS Date month-overflow bug (e.g. Mar 31 - 1 month -> Mar 3!)
   document.getElementById("prevMonth")?.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
     renderCalendar();
   });
 
   document.getElementById("nextMonth")?.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
     renderCalendar();
   });
 
@@ -1054,9 +1296,24 @@ function setupCalendar() {
     }
   });
 
+  document.addEventListener("pharma:storage:synced", () => {
+    const freshUser = getCalendarAuthUser();
+    if (!freshUser) return;
+    populateCalendarLineFilter(freshUser);
+    setupManagerFilter(freshUser);
+    renderCalendar();
+    if (document.getElementById("orgTreeModal")?.style.display !== "none") {
+      renderOrgTreeNodes(
+        document.getElementById("orgTreeSearchInput")?.value || "",
+      );
+    }
+  });
+
   document.addEventListener("languageChanged", () => {
-    populateCalendarLineFilter();
-    setupManagerFilter(user);
+    const freshUser = getCalendarAuthUser();
+    if (!freshUser) return;
+    populateCalendarLineFilter(freshUser);
+    setupManagerFilter(freshUser);
     renderCalendar();
     if (document.getElementById("orgTreeModal")?.style.display !== "none") {
       renderOrgTreeNodes(
@@ -1087,8 +1344,8 @@ window.openOrgTreeModal = function () {
 window.closeOrgTreeModal = function () {
   calendarApp.closeOrgTreeModal();
 };
-window.toggleTreeNode = function (nodeId) {
-  calendarApp.toggleTreeNode(nodeId);
+window.toggleTreeNode = function (nodeId, event) {
+  calendarApp.toggleTreeNode(nodeId, event);
 };
 window.selectCalendarTarget = function (id, name, role) {
   calendarApp.selectCalendarTarget(id, name, role);
