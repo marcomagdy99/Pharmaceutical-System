@@ -105,6 +105,14 @@ function isBuRole(user) {
   return role === "business_unit" || role === "bu";
 }
 
+function isAreaAdmin(user) {
+  if (!user || !user.id) return false;
+  const role = getNormalizedUserRole(user);
+  return role === "admin";
+}
+window.isAreaAdmin = isAreaAdmin;
+window.isAreasAuthorized = isAreasAuthorized;
+
 function isAreasAuthorized(user) {
   if (!user || !user.id) return false;
   if (typeof window.hasAnyRole === "function") {
@@ -494,9 +502,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
   if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function")
-      showToast("Access Denied: Admins only.", "error");
+      showToast("Access Denied.", "error");
     window.location.replace("index.html");
     return;
+  }
+
+  const addAreaBtnInit = document.getElementById("addAreaBtn");
+  if (addAreaBtnInit) {
+    if (isAreaAdmin(user)) {
+      addAreaBtnInit.classList.remove("d-none");
+    } else {
+      addAreaBtnInit.classList.add("d-none");
+    }
   }
 
   if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
@@ -979,6 +996,17 @@ function renderAreas(filterText = "") {
     bindAreaActionsDelegation(cardsView);
   }
 
+  const authUser = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
+  const canAdmin = isAreaAdmin(authUser);
+  const addAreaBtnRender = document.getElementById("addAreaBtn");
+  if (addAreaBtnRender) {
+    if (canAdmin) {
+      addAreaBtnRender.classList.remove("d-none");
+    } else {
+      addAreaBtnRender.classList.add("d-none");
+    }
+  }
+
   const currentAreas = getAreasList();
   const q = String(filterText || "").toLowerCase();
   const filteredAreas = currentAreas.filter(
@@ -1068,6 +1096,7 @@ function renderAreas(filterText = "") {
         <td class="px-4 py-3">${repDisplay}</td>
         <td class="px-4 py-3">${statusBadge}</td>
         <td class="px-4 py-3 text-end area-actions-cell">
+          ${canAdmin ? `
           <button type="button" class="btn btn-sm btn-action-edit me-1 text-primary" data-action="edit" data-area-id="${_esc(area.id)}" title="Edit" aria-label="Edit Area">
             <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
               <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -1083,6 +1112,7 @@ function renderAreas(filterText = "") {
               <line x1="14" y1="11" x2="14" y2="17"/>
             </svg>
           </button>
+          ` : `<span class="text-muted small">—</span>`}
         </td>
       `;
       tableBody.appendChild(tr);
@@ -1098,6 +1128,7 @@ function renderAreas(filterText = "") {
           <div class="card-body d-flex flex-column">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <span class="area-code-badge fs-6">${_esc(area.code)}</span>
+              ${canAdmin ? `
               <div class="dropdown">
                 <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
                   <i class="fas fa-ellipsis-v"></i>
@@ -1107,6 +1138,7 @@ function renderAreas(filterText = "") {
                   <li><a class="dropdown-item text-danger" href="#" data-action="delete" data-area-id="${_esc(area.id)}"><i class="fas fa-trash me-2"></i> <span>${areaTranslations.en.delete}</span></a></li>
                 </ul>
               </div>
+              ` : ""}
             </div>
             <div class="mb-2">
               <h5 class="card-title fw-bold mb-0">${_esc(area.name)} ${imsSubtitle}</h5>
@@ -1252,6 +1284,11 @@ function openAddModal() {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
     return;
   }
+  if (!isAreaAdmin(user)) {
+    if (areaModal) areaModal.hide();
+    if (typeof showToast === "function") showToast("Permission Denied: Only Admins can create areas.", "error");
+    return;
+  }
   const effectiveLineId = currentSelectedLineId || getDefaultLineId();
   if (isBuRole(user) && !isLineWithinUserScope(effectiveLineId, user)) {
     if (areaModal) areaModal.hide();
@@ -1290,6 +1327,11 @@ function openEditModal(id) {
   const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
   if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  if (!isAreaAdmin(user)) {
+    if (areaModal) areaModal.hide();
+    if (typeof showToast === "function") showToast("Permission Denied: Only Admins can modify areas.", "error");
     return;
   }
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
@@ -1336,6 +1378,10 @@ function saveArea() {
   const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
   if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  if (!isAreaAdmin(user)) {
+    if (typeof showToast === "function") showToast("Permission Denied: Only Admins can modify areas.", "error");
     return;
   }
   const areaIdEl = document.getElementById("areaId");
@@ -1482,6 +1528,11 @@ function openDeleteModal(id) {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
     return;
   }
+  if (!isAreaAdmin(user)) {
+    if (deleteModal) deleteModal.hide();
+    if (typeof showToast === "function") showToast("Permission Denied: Only Admins can delete areas.", "error");
+    return;
+  }
 
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : null)
     || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
@@ -1566,6 +1617,11 @@ function confirmDelete() {
   const user = (typeof window.checkAuth === "function" && window.checkAuth()) || null;
   if (!isAreasAuthorized(user)) {
     if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  if (!isAreaAdmin(user)) {
+    if (deleteModal) deleteModal.hide();
+    if (typeof showToast === "function") showToast("Permission Denied: Only Admins can delete areas.", "error");
     return;
   }
   if (!(window.store && window.store.areas)) {

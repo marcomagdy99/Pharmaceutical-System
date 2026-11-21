@@ -348,10 +348,16 @@ function getUserHierarchyBreadcrumb(userId, allUsers) {
     const name = curr.name || curr.nameAr || curr.id;
     crumbs.unshift(`${roleInfo.short}: ${name}`);
     const normRole = getNormalizedRole(curr.role);
-    if (!curr.managerId || curr.managerId === "u1790626000010" || normRole === "admin") {
+    if (!curr.managerId || normRole === "admin" || normRole === "general_manager") {
       break;
     }
-    curr = allUsers.find((u) => u && u.id === curr.managerId);
+    const mgr = allUsers.find((u) => u && u.id === curr.managerId);
+    if (!mgr) break;
+    const mgrRole = getNormalizedRole(mgr.role);
+    if (mgrRole === "admin" || mgrRole === "general_manager") {
+      break;
+    }
+    curr = mgr;
   }
   return crumbs.join(" ➔ ");
 }
@@ -1044,10 +1050,23 @@ function renderOrgTreeNodes(searchTerm = "") {
     let topManagers = allUsers.filter((u) => {
       if (!u) return false;
       const r = getNormalizedRole(u.role);
-      return (
-        r === "business_unit" ||
-        (u.managerId === "u1790626000010" && r !== "admin" && r !== "hr")
-      );
+      if (r === "admin" || r === "hr" || r === "medical_rep" || r === "rep") return false;
+      if (r === "business_unit" || r === "bu" || r === "general_manager" || r === "gm") return true;
+      if (
+        r === "line_manager" ||
+        r === "lm" ||
+        r === "product_manager" ||
+        r === "pm" ||
+        r === "district_manager" ||
+        r === "dm"
+      ) {
+        if (!u.managerId) return true;
+        const mgr = allUsers.find((m) => m && m.id === u.managerId);
+        if (!mgr) return false;
+        const mr = getNormalizedRole(mgr.role);
+        return mr === "admin" || mr === "hr" || mr === "general_manager" || mr === "gm";
+      }
+      return false;
     });
     if (selectedLineId !== "all") {
       topManagers = topManagers.filter((m) => {

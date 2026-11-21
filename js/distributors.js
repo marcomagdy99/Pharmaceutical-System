@@ -6,6 +6,45 @@
  * list that the (future) sales-sheet import mapping will reference by id.
  */
 
+const LEGACY_DIST_MAP = {
+  dist1: "dist_1790626000001",
+  dist2: "dist_1790626000002",
+  dist3: "dist_1790626000003",
+};
+
+function normalizeDistributorId(distId) {
+  return (distId && LEGACY_DIST_MAP[distId]) || distId;
+}
+
+function isDistributorAdmin(user) {
+  const u = user || (window.checkAuth && window.checkAuth());
+  if (!u || !u.role) return false;
+  return String(u.role).toLowerCase() === "admin";
+}
+
+function detectHeaderRowIndex(rows, inspectLimit = 15) {
+  let headerRowIndex = 0;
+  let maxColsCount = 0;
+  const limit = Math.min(inspectLimit, rows.length);
+  for (let i = 0; i < limit; i++) {
+    const row = rows[i];
+    if (Array.isArray(row)) {
+      const filledCount = row.filter(
+        (c) => c !== null && c !== undefined && String(c).trim() !== "",
+      ).length;
+      if (filledCount > maxColsCount) {
+        maxColsCount = filledCount;
+        headerRowIndex = i;
+      }
+    }
+  }
+  return { headerRowIndex, headerRow: rows[headerRowIndex] || [] };
+}
+
+window.isDistributorAdmin = isDistributorAdmin;
+window.normalizeDistributorId = normalizeDistributorId;
+window.detectHeaderRowIndex = detectHeaderRowIndex;
+
 let distributorModal = null;
 let deleteModal = null;
 
@@ -150,8 +189,7 @@ function getDistributorsList() {
 
 function resolveDistributorItem(distId, distList) {
   if (!distId) return null;
-  const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
-  const targetId = legacyDistMap[distId] || distId;
+    const targetId = normalizeDistributorId(distId) || distId;
   const list = distList || getDistributorsList();
   return (
     list.find((d) => d.id === targetId || d.id === distId) ||
@@ -168,10 +206,7 @@ function getDistributorItemName(distId, distList) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (
-    window.hasAnyRole &&
-    !window.hasAnyRole(["admin", "business_unit", "hr"], user)
-  ) {
+  if (!isDistributorAdmin(user)) {
     if (typeof showToast === "function")
       showToast("Access Denied: Admins only.", "error");
     window.location.replace("index.html");
@@ -277,19 +312,19 @@ function renderDistributors(filterText = "") {
       <td class="px-4 py-3">
         <div class="d-flex align-items-center gap-2">
           ${mappingBadge}
-          <button class="btn btn-sm btn-outline-primary" onclick="openMappingModal('${window.escapeHtml(dist.id)}')">
+          <button class="btn btn-sm btn-outline-primary" data-dist-action="open-mapping" data-dist-id="${window.escapeHtml(dist.id)}">
             <i class="fas fa-table-columns me-1"></i>${window.escapeHtml(configureLabel)}
           </button>
         </div>
       </td>
       <td class="px-4 py-3 text-end area-actions-cell">
-        <button class="btn btn-sm btn-action-edit me-1 text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.edit}" aria-label="Edit Distributor">
+        <button class="btn btn-sm btn-action-edit me-1 text-primary" data-dist-action="open-edit-dist" data-dist-id="${window.escapeHtml(dist.id)}" title="${distributorTranslations.en.edit}" aria-label="Edit Distributor">
           <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
             <path d="m15 5 4 4"/>
           </svg>
         </button>
-        <button class="btn btn-sm btn-action-delete text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.delete}" aria-label="Delete Distributor">
+        <button class="btn btn-sm btn-action-delete text-danger" data-dist-action="open-delete-dist" data-dist-id="${window.escapeHtml(dist.id)}" title="${distributorTranslations.en.delete}" aria-label="Delete Distributor">
           <svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
             <path d="M3 6h18"/>
             <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
@@ -315,13 +350,13 @@ function renderDistributors(filterText = "") {
           </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="openMappingModal('${window.escapeHtml(dist.id)}')">
+          <button class="btn btn-sm btn-outline-primary flex-grow-1" data-dist-action="open-mapping" data-dist-id="${window.escapeHtml(dist.id)}">
             <i class="fas fa-table-columns me-1"></i>${window.escapeHtml(configureLabel)}
           </button>
-          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-primary" onclick="openEditModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.edit}">
+          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-primary" data-dist-action="open-edit-dist" data-dist-id="${window.escapeHtml(dist.id)}" title="${distributorTranslations.en.edit}">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-danger" onclick="openDeleteModal('${window.escapeHtml(dist.id)}')" title="${distributorTranslations.en.delete}">
+          <button class="btn btn-sm btn-light rounded-circle dist-mobile-action text-danger" data-dist-action="open-delete-dist" data-dist-id="${window.escapeHtml(dist.id)}" title="${distributorTranslations.en.delete}">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -347,6 +382,10 @@ function filterDistributors() {
 }
 
 function openAddModal() {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   document.getElementById("distributorForm").reset();
   document.getElementById("distributorId").value = "";
   document.getElementById("distributorType").value = "commercial";
@@ -356,6 +395,10 @@ function openAddModal() {
 }
 
 function openEditModal(id) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const dist = getDistributorsList().find((d) => d.id === id);
   if (dist) {
     document.getElementById("distributorId").value = dist.id;
@@ -370,12 +413,9 @@ function openEditModal(id) {
 
 function saveDistributor() {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (
-    window.hasAnyRole &&
-    !window.hasAnyRole(["admin", "business_unit", "hr"], user)
-  ) {
+  if (!isDistributorAdmin(user)) {
     if (typeof showToast === "function")
-      showToast("Permission Denied.", "error");
+      showToast("Access Denied: Admins only.", "error");
     return;
   }
   const id = document.getElementById("distributorId").value;
@@ -402,7 +442,7 @@ function saveDistributor() {
       .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
       .replace(/^-+|-+$/g, "") +
       "-" +
-      Date.now().toString(36);
+      (typeof window.genId === "function" ? window.genId() : Date.now().toString(36));
 
   if (window.store && window.store.distributors) {
     window.store.distributors.save({ id: targetId, name, type });
@@ -416,18 +456,19 @@ function saveDistributor() {
 }
 
 function openDeleteModal(id) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   document.getElementById("deleteDistributorId").value = id;
   deleteModal.show();
 }
 
 function confirmDelete() {
   const user = (window.checkAuth && window.checkAuth()) || {};
-  if (
-    window.hasAnyRole &&
-    !window.hasAnyRole(["admin", "business_unit", "hr"], user)
-  ) {
+  if (!isDistributorAdmin(user)) {
     if (typeof showToast === "function")
-      showToast("Permission Denied.", "error");
+      showToast("Access Denied: Admins only.", "error");
     return;
   }
   const id = document.getElementById("deleteDistributorId").value;
@@ -484,8 +525,31 @@ function resetMappingUpload() {
 }
 
 function handleMappingFileSelected(event) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const file = event.target.files[0];
   if (!file) return;
+
+  // File extension and size validation (DoS / OOM protection)
+  const mapExt = file.name ? file.name.split(".").pop().toLowerCase() : "";
+  const allowedExts = ["xlsx", "xls", "csv"];
+  if (!allowedExts.includes(mapExt)) {
+    if (typeof showToast === "function") {
+      showToast("Invalid file format. Only .xlsx, .xls, and .csv files are supported.", "error");
+    }
+    event.target.value = "";
+    return;
+  }
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
+  if (file.size > MAX_FILE_SIZE) {
+    if (typeof showToast === "function") {
+      showToast("File is too large. Maximum supported size is 10MB.", "error");
+    }
+    event.target.value = "";
+    return;
+  }
   if (typeof XLSX === "undefined") {
     if (typeof showToast === "function")
       showToast(
@@ -495,6 +559,14 @@ function handleMappingFileSelected(event) {
     return;
   }
   const reader = new FileReader();
+  reader.onerror = function () {
+    if (typeof showToast === "function") {
+      showToast("Failed to read mapping file. Please check file permissions or try again.", "error");
+    }
+    if (event && event.target) {
+      event.target.value = "";
+    }
+  };
   reader.onload = function (e) {
     try {
       const data = new Uint8Array(e.target.result);
@@ -772,6 +844,10 @@ function buildRolesTable(headers) {
 }
 
 function saveMapping() {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const selects = document.querySelectorAll(".mapping-role-select");
   const columnMap = {};
   const usedRoles = {};
@@ -882,7 +958,7 @@ function renderPendingAreas() {
         </select>
       </td>
       <td class="px-3 py-2">
-        <button class="btn btn-sm btn-primary" onclick="linkAreaAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.areaRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
+        <button type="button" class="btn btn-sm btn-primary" data-dist-action="link-area" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-area-raw="${window.escapeHtml(entry.areaRaw)}" data-select-id="${rowId}_select">
           ${window.escapeHtml(t.link)}
         </button>
       </td>
@@ -905,7 +981,7 @@ function renderPendingAreas() {
             <option value="">${window.escapeHtml(t.select_area)}</option>
             ${areaOptionsHtml}
           </select>
-          <button class="btn btn-sm btn-primary px-3 text-nowrap" onclick="linkAreaAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.areaRaw).replace(/'/g, "&#39;")}', '${rowId}_mobile_select')">
+          <button type="button" class="btn btn-sm btn-primary px-3 text-nowrap" data-dist-action="link-area" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-area-raw="${window.escapeHtml(entry.areaRaw)}" data-select-id="${rowId}_mobile_select">
             <i class="fas fa-link me-1"></i>${window.escapeHtml(t.link)}
           </button>
         </div>
@@ -916,6 +992,10 @@ function renderPendingAreas() {
 }
 
 function linkAreaAlias(distributorId, areaRaw, selectId) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const select = document.getElementById(selectId);
   const areaId = select ? select.value : "";
@@ -1004,7 +1084,7 @@ function renderPendingProducts() {
         </select>
       </td>
       <td class="px-3 py-2">
-        <button class="btn btn-sm btn-primary" onclick="linkProductAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.productRaw).replace(/'/g, "&#39;")}', '${rowId}_select')">
+        <button type="button" class="btn btn-sm btn-primary" data-dist-action="link-product" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-product-raw="${window.escapeHtml(entry.productRaw)}" data-select-id="${rowId}_select">
           ${window.escapeHtml(t.link)}
         </button>
       </td>
@@ -1027,7 +1107,7 @@ function renderPendingProducts() {
             <option value="">${window.escapeHtml(t.select_product)}</option>
             ${optionsHtml}
           </select>
-          <button class="btn btn-sm btn-primary px-3 text-nowrap" onclick="linkProductAlias('${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.productRaw).replace(/'/g, "&#39;")}', '${rowId}_mobile_select')">
+          <button type="button" class="btn btn-sm btn-primary px-3 text-nowrap" data-dist-action="link-product" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-product-raw="${window.escapeHtml(entry.productRaw)}" data-select-id="${rowId}_mobile_select">
             <i class="fas fa-link me-1"></i>${window.escapeHtml(t.link)}
           </button>
         </div>
@@ -1038,6 +1118,10 @@ function renderPendingProducts() {
 }
 
 function linkProductAlias(distributorId, productRaw, selectId) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const select = document.getElementById(selectId);
   const combined = select ? select.value : "";
@@ -1141,10 +1225,9 @@ function renderMappedAliases() {
 
     let areaAliases = allAreaAliases;
     if (filterDist) {
-      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
-      const targetDist = legacyDistMap[filterDist] || filterDist;
+            const targetDist = normalizeDistributorId(filterDist) || filterDist;
       areaAliases = areaAliases.filter(a => {
-        const aDist = legacyDistMap[a.distributorId] || a.distributorId;
+        const aDist = normalizeDistributorId(a.distributorId) || a.distributorId;
         return aDist === targetDist || a.distributorId === filterDist;
       });
     }
@@ -1187,10 +1270,10 @@ function renderMappedAliases() {
           </td>
           <td class="px-3 py-2">
             <div class="d-flex gap-1">
-              <button class="btn btn-sm btn-outline-primary" onclick="openEditAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+              <button type="button" class="btn btn-sm btn-outline-primary" data-dist-action="edit-area-alias" data-area-id="${window.escapeHtml(entry.areaId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.edit}">
                 <i class="fas fa-edit me-1"></i>${t.edit}
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="unlinkAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+              <button type="button" class="btn btn-sm btn-outline-danger" data-dist-action="unlink-area-alias" data-area-id="${window.escapeHtml(entry.areaId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.unlink}">
                 <i class="fas fa-unlink me-1"></i>${t.unlink}
               </button>
             </div>
@@ -1205,10 +1288,10 @@ function renderMappedAliases() {
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(distName)}</span>
               <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" onclick="openEditAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" data-dist-action="edit-area-alias" data-area-id="${window.escapeHtml(entry.areaId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.edit}">
                   <i class="fas fa-edit me-1"></i><span>${t.edit}</span>
                 </button>
-                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" onclick="unlinkAreaAlias('${window.escapeHtml(entry.areaId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" data-dist-action="unlink-area-alias" data-area-id="${window.escapeHtml(entry.areaId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.unlink}">
                   <i class="fas fa-unlink me-1"></i><span>${t.unlink}</span>
                 </button>
               </div>
@@ -1238,10 +1321,9 @@ function renderMappedAliases() {
 
     let prodAliases = allProdAliases;
     if (filterDist) {
-      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
-      const targetDist = legacyDistMap[filterDist] || filterDist;
+            const targetDist = normalizeDistributorId(filterDist) || filterDist;
       prodAliases = prodAliases.filter(p => {
-        const pDist = legacyDistMap[p.distributorId] || p.distributorId;
+        const pDist = normalizeDistributorId(p.distributorId) || p.distributorId;
         return pDist === targetDist || p.distributorId === filterDist;
       });
     }
@@ -1284,10 +1366,10 @@ function renderMappedAliases() {
           </td>
           <td class="px-3 py-2">
             <div class="d-flex gap-1">
-              <button class="btn btn-sm btn-outline-primary" onclick="openEditProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+              <button type="button" class="btn btn-sm btn-outline-primary" data-dist-action="edit-product-alias" data-line-id="${window.escapeHtml(entry.lineId)}" data-product-id="${window.escapeHtml(entry.productId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.edit}">
                 <i class="fas fa-edit me-1"></i>${t.edit}
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="unlinkProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+              <button type="button" class="btn btn-sm btn-outline-danger" data-dist-action="unlink-product-alias" data-line-id="${window.escapeHtml(entry.lineId)}" data-product-id="${window.escapeHtml(entry.productId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.unlink}">
                 <i class="fas fa-unlink me-1"></i>${t.unlink}
               </button>
             </div>
@@ -1302,10 +1384,10 @@ function renderMappedAliases() {
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(distName)}</span>
               <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" onclick="openEditProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.edit}">
+                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" data-dist-action="edit-product-alias" data-line-id="${window.escapeHtml(entry.lineId)}" data-product-id="${window.escapeHtml(entry.productId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.edit}">
                   <i class="fas fa-edit me-1"></i><span>${t.edit}</span>
                 </button>
-                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" onclick="unlinkProductAlias('${window.escapeHtml(entry.lineId)}', '${window.escapeHtml(entry.productId)}', '${window.escapeHtml(entry.distributorId)}', '${window.escapeHtml(entry.rawText).replace(/'/g, "\\'")}')" title="${t.unlink}">
+                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" data-dist-action="unlink-product-alias" data-line-id="${window.escapeHtml(entry.lineId)}" data-product-id="${window.escapeHtml(entry.productId)}" data-dist-id="${window.escapeHtml(entry.distributorId)}" data-raw-text="${window.escapeHtml(entry.rawText)}" title="${t.unlink}">
                   <i class="fas fa-unlink me-1"></i><span>${t.unlink}</span>
                 </button>
               </div>
@@ -1332,10 +1414,9 @@ function renderMappedAliases() {
 
     let overrides = allOverrides;
     if (filterDist) {
-      const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
-      const targetDist = legacyDistMap[filterDist] || filterDist;
+            const targetDist = normalizeDistributorId(filterDist) || filterDist;
       overrides = overrides.filter(o => {
-        const oDist = legacyDistMap[o.distributorId] || o.distributorId;
+        const oDist = normalizeDistributorId(o.distributorId) || o.distributorId;
         return oDist === targetDist || o.distributorId === filterDist;
       });
     }
@@ -1427,10 +1508,10 @@ function renderMappedAliases() {
           <td class="px-3 py-2"><span class="badge ${scopeBadgeClass} border">${window.escapeHtml(scopeLabel)}</span></td>
           <td class="px-3 py-2 text-end">
             <div class="d-flex gap-1 justify-content-end">
-              <button class="btn btn-sm btn-outline-primary" onclick="openPharmacyOverrideModal('${window.escapeHtml(entry.id)}')" title="${t.edit}">
+              <button class="btn btn-sm btn-outline-primary" data-dist-action="edit-override" data-override-id="${window.escapeHtml(entry.id)}" title="${t.edit}">
                 <i class="fas fa-edit me-1"></i>${t.edit}
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="deletePharmacyOverride('${window.escapeHtml(entry.id)}')" title="${t.delete}">
+              <button class="btn btn-sm btn-outline-danger" data-dist-action="delete-override" data-override-id="${window.escapeHtml(entry.id)}" title="${t.delete}">
                 <i class="fas fa-trash me-1"></i>${t.delete}
               </button>
             </div>
@@ -1445,10 +1526,10 @@ function renderMappedAliases() {
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="badge bg-secondary-subtle text-secondary border font-monospace"><i class="fas fa-truck me-1"></i>${window.escapeHtml(distName)}</span>
               <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" onclick="openPharmacyOverrideModal('${window.escapeHtml(entry.id)}')" title="${t.edit}">
+                <button class="btn btn-sm btn-outline-primary py-1 px-3 d-inline-flex align-items-center" data-dist-action="edit-override" data-override-id="${window.escapeHtml(entry.id)}" title="${t.edit}">
                   <i class="fas fa-edit me-1"></i><span>${t.edit}</span>
                 </button>
-                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" onclick="deletePharmacyOverride('${window.escapeHtml(entry.id)}')" title="${t.delete}">
+                <button class="btn btn-sm btn-outline-danger py-1 px-3 d-inline-flex align-items-center" data-dist-action="delete-override" data-override-id="${window.escapeHtml(entry.id)}" title="${t.delete}">
                   <i class="fas fa-trash me-1"></i><span>${t.delete}</span>
                 </button>
               </div>
@@ -1741,6 +1822,10 @@ function openPharmacyOverrideModal(editId = null) {
 window.openPharmacyOverrideModal = openPharmacyOverrideModal;
 
 function savePharmacyOverride() {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
 
   const editId = document.getElementById("povrEditId")?.value;
@@ -1865,6 +1950,10 @@ function savePharmacyOverride() {
 window.savePharmacyOverride = savePharmacyOverride;
 
 function deletePharmacyOverride(id) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   if (!confirm(t.confirm_delete_override)) return;
 
@@ -1892,6 +1981,10 @@ function deletePharmacyOverride(id) {
 window.deletePharmacyOverride = deletePharmacyOverride;
 
 function unlinkAreaAlias(areaId, distributorId, rawText) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const confirmMsg = `Are you sure you want to unlink "${rawText}"? It will return to pending and its sales rows will be unlinked until re-mapped.`;
   if (!confirm(confirmMsg)) return;
 
@@ -1906,6 +1999,10 @@ function unlinkAreaAlias(areaId, distributorId, rawText) {
 window.unlinkAreaAlias = unlinkAreaAlias;
 
 function unlinkProductAlias(lineId, productId, distributorId, rawText) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const confirmMsg = `Are you sure you want to unlink product "${rawText}"? It will return to pending and sales rows will be unlinked.`;
   if (!confirm(confirmMsg)) return;
 
@@ -2055,6 +2152,10 @@ function openEditProductAlias(lineId, productId, distributorId, rawText) {
 }
 
 function saveEditedAlias() {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const type = document.getElementById("editAliasType").value;
   const distId = document.getElementById("editAliasDistId").value;
@@ -2178,10 +2279,9 @@ function renderImportBatches() {
 
   let filteredBatches = batches;
   if (filterDist) {
-    const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
-    const targetDist = legacyDistMap[filterDist] || filterDist;
+        const targetDist = normalizeDistributorId(filterDist) || filterDist;
     filteredBatches = filteredBatches.filter(b => {
-      const bDist = legacyDistMap[b.distributorId] || b.distributorId;
+      const bDist = normalizeDistributorId(b.distributorId) || b.distributorId;
       return bDist === targetDist || b.distributorId === filterDist;
     });
   }
@@ -2226,7 +2326,7 @@ function renderImportBatches() {
       <td class="px-3 py-2">${window.escapeHtml(b.fileName || "")}</td>
       <td class="px-3 py-2" style="white-space:nowrap;">${window.escapeHtml(uploadedLabel)}</td>
       <td class="px-3 py-2 text-end">
-        <button class="btn btn-sm btn-light text-danger" onclick="deleteImportBatch('${window.escapeHtml(b.id)}')" title="Delete">
+        <button class="btn btn-sm btn-light text-danger" data-dist-action="delete-batch" data-batch-id="${window.escapeHtml(b.id)}" title="Delete">
           <svg class="btn-svg-icon text-danger" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         </button>
       </td>
@@ -2236,6 +2336,10 @@ function renderImportBatches() {
 }
 
 function deleteImportBatch(batchId) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const batch =
     window.store && window.store.importBatches
@@ -2331,20 +2435,6 @@ function populateUploadControls() {
       "November",
       "December",
     ];
-    const monthNamesAr = [
-      "يناير",
-      "فبراير",
-      "مارس",
-      "أبريل",
-      "مايو",
-      "يونيو",
-      "يوليو",
-      "أغسطس",
-      "سبتمبر",
-      "أكتوبر",
-      "نوفمبر",
-      "ديسمبر",
-    ];
     const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
     monthNamesEn.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, "0");
@@ -2407,8 +2497,31 @@ function triggerExcelUpload() {
 }
 
 function handleExcelUpload(e) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const file = e.target.files[0];
   if (!file) return;
+
+  // File extension and size validation (DoS / OOM protection)
+  const excelExt = file.name ? file.name.split(".").pop().toLowerCase() : "";
+  const allowedExcelExts = ["xlsx", "xls", "csv"];
+  if (!allowedExcelExts.includes(excelExt)) {
+    if (typeof showToast === "function") {
+      showToast("Invalid file format. Only .xlsx, .xls, and .csv files are supported.", "error");
+    }
+    e.target.value = "";
+    return;
+  }
+  const MAX_EXCEL_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
+  if (file.size > MAX_EXCEL_FILE_SIZE) {
+    if (typeof showToast === "function") {
+      showToast("File is too large. Maximum supported size is 10MB.", "error");
+    }
+    e.target.value = "";
+    return;
+  }
 
   const distSelect = document.getElementById("uploadDistributorSelect");
   const monthSelect = document.getElementById("uploadMonthSelect");
@@ -2477,6 +2590,14 @@ function handleExcelUpload(e) {
   }
 
   const reader = new FileReader();
+  reader.onerror = function () {
+    if (typeof showToast === "function") {
+      showToast("Failed to read Excel file. Please try again.", "error");
+    }
+    if (e && e.target) {
+      e.target.value = "";
+    }
+  };
   reader.onload = async function (ev) {
     let progress = null;
     try {
@@ -2513,6 +2634,14 @@ function handleExcelUpload(e) {
       });
 
       const totalRows = rows.length;
+      const MAX_ALLOWED_ROWS = 15000;
+      if (totalRows > MAX_ALLOWED_ROWS) {
+        if (typeof showToast === "function") {
+          showToast(`Excel file contains ${totalRows} rows. Maximum allowed is ${MAX_ALLOWED_ROWS} rows per upload batch.`, "error");
+        }
+        e.target.value = "";
+        return;
+      }
       if (typeof window.openExcelImportProgress === "function") {
         progress = window.openExcelImportProgress({
           title: `Importing Sales: ${dist.name}`,
@@ -2522,7 +2651,7 @@ function handleExcelUpload(e) {
       }
 
       const map = dist.columnMap;
-      const batchId = "batch_" + Date.now();
+      const batchId = typeof window.genId === "function" ? window.genId() : ("batch_" + Date.now());
       const imported = [];
       let returnsCount = 0;
       let skippedInvalid = 0;
@@ -2587,7 +2716,7 @@ function handleExcelUpload(e) {
           }
 
           imported.push({
-            id: `dsale_${Date.now()}_${idx}`,
+            id: typeof window.genId === "function" ? window.genId() : `dsale_${Date.now()}_${idx}`,
             batchId,
             distributorId: distId,
             month: monthKey,
@@ -2713,5 +2842,38 @@ document.addEventListener("pharma:storage:synced", (e) => {
     try { if (typeof renderMappedAliases === "function") renderMappedAliases(); } catch (e) {}
     try { if (typeof renderDistributors === "function") renderDistributors(); } catch (e) {}
     try { if (typeof updateStats === "function") updateStats(); } catch (e) {}
+  }
+});
+
+
+// Secure Event Delegation Handler for all distributor actions (eliminates inline onclick & prevents Stored XSS)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-dist-action]");
+  if (!btn) return;
+  const action = btn.dataset.distAction;
+  if (action === "link-area") {
+    linkAreaAlias(btn.dataset.distId, btn.dataset.areaRaw, btn.dataset.selectId);
+  } else if (action === "link-product") {
+    linkProductAlias(btn.dataset.distId, btn.dataset.productRaw, btn.dataset.selectId);
+  } else if (action === "edit-area-alias") {
+    openEditAreaAlias(btn.dataset.areaId, btn.dataset.distId, btn.dataset.rawText);
+  } else if (action === "unlink-area-alias") {
+    unlinkAreaAlias(btn.dataset.areaId, btn.dataset.distId, btn.dataset.rawText);
+  } else if (action === "edit-product-alias") {
+    openEditProductAlias(btn.dataset.lineId, btn.dataset.productId, btn.dataset.distId, btn.dataset.rawText);
+  } else if (action === "unlink-product-alias") {
+    unlinkProductAlias(btn.dataset.lineId, btn.dataset.productId, btn.dataset.distId, btn.dataset.rawText);
+  } else if (action === "edit-override") {
+    openPharmacyOverrideModal(btn.dataset.overrideId);
+  } else if (action === "delete-override") {
+    deletePharmacyOverride(btn.dataset.overrideId);
+  } else if (action === "delete-batch") {
+    deleteImportBatch(btn.dataset.batchId);
+  } else if (action === "open-mapping") {
+    openMappingModal(btn.dataset.distId);
+  } else if (action === "open-edit-dist") {
+    openEditModal(btn.dataset.distId);
+  } else if (action === "open-delete-dist") {
+    openDeleteModal(btn.dataset.distId);
   }
 });

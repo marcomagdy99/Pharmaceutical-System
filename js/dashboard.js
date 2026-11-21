@@ -222,6 +222,9 @@ window.switchDmLineFilter = function (lineId) {
  * @param {string} dmId
  */
 window.openDmTeamModal = function (dmId) {
+  const authUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_MODE && window.DEMO_DATA && window.DEMO_DATA.currentUser) || null;
+  if (!authUser) return;
+
   const allUsers =
     (window.store && window.store.users
       ? window.store.users.getAll()
@@ -229,6 +232,22 @@ window.openDmTeamModal = function (dmId) {
 
   const dm = allUsers.find((u) => u.id === dmId);
   if (!dm) return;
+
+  // Authorization: Admins, GM, HR, or direct manager/line peers
+  const userRole = (authUser.role || "").toLowerCase();
+  const isExecutive = ["admin", "general_manager", "hr"].includes(userRole);
+  if (!isExecutive && authUser.id !== dmId) {
+    const dmLines = dm.lineIds || (dm.lineId ? [dm.lineId] : []);
+    const userLines = typeof window.getUserLines === "function"
+      ? window.getUserLines(authUser.id).map((l) => l.id)
+      : (authUser.lineIds || (authUser.lineId ? [authUser.lineId] : []));
+    const sharesLine = dmLines.some((lid) => userLines.includes(lid));
+    const reportsToMe = dm.managerId === authUser.id;
+    if (!sharesLine && !reportsToMe) {
+      if (typeof showToast === "function") showToast("Unauthorized to view this team.", "error");
+      return;
+    }
+  }
 
   const allLines =
     (window.store && window.store.productLines
@@ -320,7 +339,7 @@ window.openDmTeamModal = function (dmId) {
                 <div class="dm-team-rep-avatar">${initials}</div>
                 <div class="dm-team-rep-info">
                   <div class="dm-team-rep-header">
-                    <div class="dm-team-rep-name">${repName}</div>
+                    <div class="dm-team-rep-name">${window.escapeHtml(repName)}</div>
                     <span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"} dm-team-rep-badge">
                       ${isActive ? "Active" : "Inactive"}
                     </span>
@@ -359,13 +378,13 @@ window.openDmTeamModal = function (dmId) {
             <span class="dm-team-count-highlight">${window.escapeHtml(repsCountText)}</span>
           </div>
         </div>
-        <button type="button" class="dm-team-modal-close" onclick="window.closeDmTeamModal()" aria-label="Close" title="Close">✕</button>
+        <button type="button" class="dm-team-modal-close" data-dash-action="close-dm-team" aria-label="Close" title="Close">✕</button>
       </div>
       <div class="dm-team-modal-body">
         ${repsHtml}
       </div>
       <div class="dm-team-modal-footer">
-        <button type="button" class="btn btn-secondary dm-team-modal-btn" onclick="window.closeDmTeamModal()">
+        <button type="button" class="btn btn-secondary dm-team-modal-btn" data-dash-action="close-dm-team">
           Close
         </button>
       </div>
@@ -540,7 +559,8 @@ function getDashboardSalesData() {
 function initDashboardCharts(user) {
   if (typeof window.renderSalesTargetTrendChart !== "function") return;
 
-  const currentUserId = user?.id || "u1790626000001";
+  const currentUserId = user?.id || "";
+  if (!currentUserId) return;
   const role = (user?.role || "rep").toLowerCase();
   const allSales = getDashboardSalesData();
   const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
@@ -733,7 +753,7 @@ function getActiveCycleCampaignBanner(user, lang) {
               ${focus.updatedBy ? `<small class="text-muted cycle-campaign-meta"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Set by: ${window.escapeHtml(focus.updatedBy)}</small>` : ""}
             </div>
           </div>
-          <button type="button" class="btn-close opacity-75" onclick="this.closest('.cycle-campaign-banner').remove()" title="Dismiss"></button>
+          <button type="button" class="btn-close opacity-75" data-dash-action="dismiss-banner" title="Dismiss"></button>
         </div>
       `;
     })
@@ -745,10 +765,14 @@ function renderDashboard() {
   const container = document.getElementById("pageContent");
   if (!container) return;
 
-  const user = (window.checkAuth && window.checkAuth()) || {
-    role: "admin",
-    name: "System Admin",
-  };
+  const user = window.checkAuth ? window.checkAuth() : null;
+  if (!user) {
+    if (typeof showToast === "function") {
+      showToast("Session expired or unauthorized. Please log in.", "warning");
+    }
+    window.location.replace("login.html");
+    return;
+  }
   const role = (user.role || "admin").toLowerCase();
   const userName = user.name || "User";
   if (typeof window.destroyAllCharts === "function") {
@@ -791,7 +815,7 @@ function renderDashboard() {
         <p class="dash-fallback-msg">
           A new update has been released. Please refresh your browser cache to apply changes.
         </p>
-        <button onclick="if(window.forceClearCacheAndReload){window.forceClearCacheAndReload();}else{window.location.reload(true);}" class="btn btn-primary dash-fallback-btn">
+        <button data-dash-action="reload-cache" class="btn btn-primary dash-fallback-btn">
           <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh & Clear Cache
         </button>
       </div>
@@ -805,7 +829,7 @@ function renderDashboard() {
 function renderRepDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const currentUserId = user?.id || "u1790626000001";
+  const currentUserId = user?.id || "";
 
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
   const allDoctors =
@@ -1035,7 +1059,7 @@ function renderRepDashboard(userName, user) {
       : activeTab === "all"
       ? "All Active Planned Visits"
       : activeTab === "date"
-      ? `Plan for: ${window.currentRepPlanDate}`
+      ? `Plan for: ${window.escapeHtml(window.currentRepPlanDate)}`
       : t.todays_plan;
 
   const expiryDays = (typeof window.getPlannedVisitExpiryDays === "function")
@@ -1046,8 +1070,8 @@ function renderRepDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner rep">
-        <h2 class="welcome-title">${t.welcome_back}, Medical Representative ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || "Medical Representative"}</div>
+        <h2 class="welcome-title">${t.welcome_back}, Medical Representative ${window.escapeHtml(userName)}!</h2>
+        <div class="welcome-subtitle">${window.escapeHtml(lineNames || "Medical Representative")}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -1119,20 +1143,20 @@ function renderRepDashboard(userName, user) {
 
           <div class="rep-plan-filter-toolbar">
             <div class="rep-plan-tabs">
-              <button type="button" class="rep-plan-tab-btn ${activeTab === 'today' ? 'active' : ''}" onclick="switchRepPlanTab('today')">
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'today' ? 'active' : ''}" data-dash-action="switch-rep-plan-tab" data-tab="today">
                 <svg class="nav-svg-icon me-1" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg> ${t.filter_today} <span class="badge">${todayPlanned.length}</span>
               </button>
               ${overduePlanned.length > 0 ? `
-              <button type="button" class="rep-plan-tab-btn tab-btn-overdue ${activeTab === 'overdue' ? 'active' : ''}" onclick="switchRepPlanTab('overdue')">
+              <button type="button" class="rep-plan-tab-btn tab-btn-overdue ${activeTab === 'overdue' ? 'active' : ''}" data-dash-action="switch-rep-plan-tab" data-tab="overdue">
                 <svg class="nav-svg-icon me-1" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Overdue <span class="badge badge-overdue">${overduePlanned.length}</span>
               </button>` : ''}
-              <button type="button" class="rep-plan-tab-btn ${activeTab === 'tomorrow' ? 'active' : ''}" onclick="switchRepPlanTab('tomorrow')">
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'tomorrow' ? 'active' : ''}" data-dash-action="switch-rep-plan-tab" data-tab="tomorrow">
                 <svg class="nav-svg-icon me-1" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> ${t.filter_tomorrow} <span class="badge">${tomorrowPlanned.length}</span>
               </button>
-              <button type="button" class="rep-plan-tab-btn ${activeTab === 'upcoming' ? 'active' : ''}" onclick="switchRepPlanTab('upcoming')">
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'upcoming' ? 'active' : ''}" data-dash-action="switch-rep-plan-tab" data-tab="upcoming">
                 <svg class="nav-svg-icon me-1" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${t.filter_upcoming} <span class="badge">${upcomingPlanned.length}</span>
               </button>
-              <button type="button" class="rep-plan-tab-btn ${activeTab === 'all' ? 'active' : ''}" onclick="switchRepPlanTab('all')">
+              <button type="button" class="rep-plan-tab-btn ${activeTab === 'all' ? 'active' : ''}" data-dash-action="switch-rep-plan-tab" data-tab="all">
                 <svg class="nav-svg-icon me-1" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> ${t.filter_all_planned} <span class="badge">${allRepPlannedVisits.length}</span>
               </button>
             </div>
@@ -1164,10 +1188,10 @@ function renderRepDashboard(userName, user) {
                         </div>
                       </div>
                       <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <button class="btn-convert-action" onclick="openCompletePlanModal('${h.id}', false)">
+                        <button class="btn-convert-action" data-dash-action="complete-plan" data-visit-id="${window.escapeHtml(h.id)}" data-join-double="false">
                           <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${t.convert_to_actual}
                         </button>
-                        <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${h.id}')" title="Reschedule or Missed Call">
+                        <button type="button" class="btn-plan-reschedule" data-dash-action="reschedule" data-visit-id="${window.escapeHtml(h.id)}" title="Reschedule or Missed Call">
                           <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
                         </button>
                       </div>
@@ -1201,10 +1225,10 @@ function renderRepDashboard(userName, user) {
                         </div>
                       </div>
                       <div class="d-flex gap-2 align-items-center flex-wrap">
-                        <button class="btn-convert-action" onclick="openCompletePlanModal('${d.id}', false)">
+                        <button class="btn-convert-action" data-dash-action="complete-plan" data-visit-id="${window.escapeHtml(d.id)}" data-join-double="false">
                           <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${t.convert_to_actual}
                         </button>
-                        <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${d.id}')" title="Reschedule or Missed Call">
+                        <button type="button" class="btn-plan-reschedule" data-dash-action="reschedule" data-visit-id="${window.escapeHtml(d.id)}" title="Reschedule or Missed Call">
                           <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
                         </button>
                       </div>
@@ -1237,10 +1261,10 @@ function renderRepDashboard(userName, user) {
                       </div>
                     </div>
                     <div class="d-flex gap-2 align-items-center flex-wrap">
-                      <button class="btn-convert-action" onclick="openCompletePlanModal('${p.id}', false)">
+                      <button class="btn-convert-action" data-dash-action="complete-plan" data-visit-id="${window.escapeHtml(p.id)}" data-join-double="false">
                         <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${t.convert_to_actual}
                       </button>
-                      <button type="button" class="btn-plan-reschedule" onclick="openRescheduleModal('${p.id}')" title="Reschedule or Missed Call">
+                      <button type="button" class="btn-plan-reschedule" data-dash-action="reschedule" data-visit-id="${window.escapeHtml(p.id)}" title="Reschedule or Missed Call">
                           <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
                         </button>
                     </div>
@@ -1294,7 +1318,7 @@ function renderRepDashboard(userName, user) {
                       <span class="entry-type-badge ${v.source === "actual" ? "actual" : "plan"}">
                         ${v.source === "actual" ? t.direct_actual : t.from_plan}
                       </span>
-                      ${v.visitType === "double" ? `<div class="double-companion-tag">[Double: ${v.doubleWithUserName || "Companion"}]</div>` : ""}
+                      ${v.visitType === "double" ? `<div class="double-companion-tag">[Double: ${window.escapeHtml(v.doubleWithUserName || "Companion")}]</div>` : ""}
                     </td>
                     <td>
                       <span class="status-badge completed">
@@ -1367,10 +1391,10 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
         </div>
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
-          <button type="button" class="btn btn-sm ${filterMode === "all" ? "btn-primary" : "btn-outline"} feed-filter-btn" onclick="window.switchDmFollowUpFilter('all')">
+          <button type="button" class="btn btn-sm ${filterMode === "all" ? "btn-primary" : "btn-outline"} feed-filter-btn" data-dash-action="switch-dm-followup-filter" data-mode="all">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Latest 15 Visits (${teamCompleted.length})
           </button>
-          <button type="button" class="btn btn-sm ${filterMode === "today" ? "btn-primary" : "btn-outline"} feed-filter-btn" onclick="window.switchDmFollowUpFilter('today')">
+          <button type="button" class="btn btn-sm ${filterMode === "today" ? "btn-primary" : "btn-outline"} feed-filter-btn" data-dash-action="switch-dm-followup-filter" data-mode="today">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Today's Visits (${todayCount})
           </button>
           <a href="visits.html" class="btn btn-sm btn-outline feed-filter-btn">
@@ -1674,8 +1698,8 @@ function renderDMDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner dm">
-        <h2 class="welcome-title">${t.welcome_back}, District Manager ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || "District Management"}</div>
+        <h2 class="welcome-title">${t.welcome_back}, District Manager ${window.escapeHtml(userName)}!</h2>
+        <div class="welcome-subtitle">${window.escapeHtml(lineNames || "District Management")}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -1685,13 +1709,13 @@ function renderDMDashboard(userName, user) {
           ? `
         <div class="dashboard-line-filter">
           <span class="line-filter-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> Filter by Line:</span>
-          <button type="button" class="line-filter-btn ${activeDmLine === "all" ? "active" : ""}" onclick="window.switchDmLineFilter('all')">
+          <button type="button" class="line-filter-btn ${activeDmLine === "all" ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="dm" data-line-id="all">
             All Lines (${dmLines.length})
           </button>
           ${dmLines
             .map(
               (l) => `
-            <button type="button" class="line-filter-btn ${activeDmLine === l.id ? "active" : ""}" onclick="window.switchDmLineFilter('${l.id}')">
+            <button type="button" class="line-filter-btn ${activeDmLine === l.id ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="dm" data-line-id="${window.escapeHtml(l.id)}">
               ${lang === "ar" ? (l.nameAr || l.name) : l.name}
             </button>
           `,
@@ -1756,10 +1780,10 @@ function renderDMDashboard(userName, user) {
         </div>
 
         <div class="dm-schedule-tabs-wrap">
-          <button type="button" class="dm-schedule-tab-btn ${activeTab === "all" ? "active" : ""}" onclick="window.switchDmScheduleTab('all')">
+          <button type="button" class="dm-schedule-tab-btn ${activeTab === "all" ? "active" : ""}" data-dash-action="switch-dm-schedule-tab" data-tab="all">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> All Scheduled Days (${scheduledDates.length})
           </button>
-          <button type="button" class="dm-schedule-tab-btn ${activeTab === "daily" ? "active" : ""}" onclick="window.switchDmScheduleTab('daily')">
+          <button type="button" class="dm-schedule-tab-btn ${activeTab === "daily" ? "active" : ""}" data-dash-action="switch-dm-schedule-tab" data-tab="daily">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Daily View
           </button>
         </div>
@@ -1801,7 +1825,7 @@ function renderDMDashboard(userName, user) {
                     ${
                       isOffice
                         ? `<span class="pill-office"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg> Office</span>`
-                        : `<span class="pill-rep"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${repObj ? repObj.name : "Rep"}</span>`
+                        : `<span class="pill-rep"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(repObj ? repObj.name : "Rep")}</span>`
                     }
                   </div>
                 `;
@@ -1870,11 +1894,11 @@ function renderDMDashboard(userName, user) {
                         <td class="dm-covisit-products-col">
                           ${(() => {
                             const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(sv) : (sv.products || []);
-                            return prods.length ? `<span class="badge badge-product"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
+                            return prods.length ? `<span class="badge badge-product"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.map((p) => window.escapeHtml(p)).join(", ")}</span>` : '<span class="text-muted">-</span>';
                           })()}
                         </td>
                         <td class="text-end covisit-action-cell">
-                          <button class="btn-convert-action" onclick="openCompletePlanModal('${sv.id}', true)">
+                          <button class="btn-convert-action" data-dash-action="complete-plan" data-visit-id="${window.escapeHtml(sv.id)}" data-join-double="true">
                             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Log Double Visit
                           </button>
                         </td>
@@ -1926,7 +1950,7 @@ function renderDMDashboard(userName, user) {
                       : { dayName: "" };
                   const isAct = dateStr === selectedDate;
                   return `
-                  <button type="button" class="btn btn-sm ${isAct ? "btn-primary" : "btn-outline"} dm-schedule-date-btn" onclick="onDmChangeDate('${dateStr}')">
+                  <button type="button" class="btn btn-sm ${isAct ? "btn-primary" : "btn-outline"} dm-schedule-date-btn" data-dash-action="change-dm-date" data-date="${window.escapeHtml(dateStr)}">
                     <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dt.dayName ? dt.dayName + " " : ""}${dateStr} (${repObj ? repObj.name.split(" ")[0] : "Rep"})
                   </button>
                 `;
@@ -1959,12 +1983,12 @@ function renderDMDashboard(userName, user) {
               <div class="dm-accompanied-banner">
                 <div class="d-flex align-items-center gap-3">
                   <div class="dm-team-rep-avatar">
-                    ${accompaniedRep.name.charAt(0)}
+                    ${window.escapeHtml(accompaniedRep.name.charAt(0))}
                   </div>
                   <div>
                     <div class="dm-accompanied-title">
-                      <span>Joint Field Accompaniment with: ${accompaniedRep.name}</span>
-                      <span class="badge badge-primary dm-team-rep-badge">${accompaniedRep.employeeCode || "Rep"}</span>
+                      <span>Joint Field Accompaniment with: ${window.escapeHtml(accompaniedRep.name)}</span>
+                      <span class="badge badge-primary dm-team-rep-badge">${window.escapeHtml(accompaniedRep.employeeCode || "Rep")}</span>
                     </div>
                     <div class="dm-accompanied-sub">
                       <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? "• (Today)" : ""} • ${pendingAccompaniedVisits.length} planned joint visits
@@ -2026,7 +2050,7 @@ function renderDMDashboard(userName, user) {
                             })()}
                           </td>
                           <td class="text-end covisit-action-cell">
-                            <button class="btn-convert-action" onclick="openCompletePlanModal('${pv.id}', true)">
+                            <button class="btn-convert-action" data-dash-action="complete-plan" data-visit-id="${window.escapeHtml(pv.id)}" data-join-double="true">
                               <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Log Double Visit
                             </button>
                           </td>
@@ -2133,7 +2157,7 @@ function renderDMDashboard(userName, user) {
                     rowsHtml.push(`
                       <tr>
                         <td class="dm-vacant-row">
-                          ${area.name} <span class="badge badge-vacant">Vacant Area</span>
+                          ${window.escapeHtml(area.name)} <span class="badge badge-vacant">Vacant Area</span>
                         </td>
                         <td class="dm-vacant-text text-end">
                           Vacant
@@ -2243,8 +2267,8 @@ function renderLMDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner lm">
-        <h2 class="welcome-title">${t.welcome_back}, Line Manager ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || "Product Line Management"}</div>
+        <h2 class="welcome-title">${t.welcome_back}, Line Manager ${window.escapeHtml(userName)}!</h2>
+        <div class="welcome-subtitle">${window.escapeHtml(lineNames || "Product Line Management")}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -2254,13 +2278,13 @@ function renderLMDashboard(userName, user) {
           ? `
         <div class="dashboard-line-filter">
           <span class="line-filter-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> Filter by Line:</span>
-          <button type="button" class="line-filter-btn ${activeLmLine === "all" ? "active" : ""}" onclick="window.switchLmLineFilter('all')">
+          <button type="button" class="line-filter-btn ${activeLmLine === "all" ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="lm" data-line-id="all">
             All Lines (${lmLines.length})
           </button>
           ${lmLines
             .map(
               (l) => `
-            <button type="button" class="line-filter-btn ${activeLmLine === l.id ? "active" : ""}" onclick="window.switchLmLineFilter('${l.id}')">
+            <button type="button" class="line-filter-btn ${activeLmLine === l.id ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="lm" data-line-id="${window.escapeHtml(l.id)}">
               ${lang === "ar" ? (l.nameAr || l.name) : l.name}
             </button>
           `,
@@ -2335,7 +2359,7 @@ function renderLMDashboard(userName, user) {
                                 ${
                                   repsForThisDM.length > 0
                                     ? `
-                                  <button type="button" class="btn-view-team" onclick="window.openDmTeamModal('${dm.id}')" title="View Team Members">
+                                  <button type="button" class="btn-view-team" data-dash-action="open-dm-team" data-dm-id="${window.escapeHtml(dm.id)}" title="View Team Members">
                                     <span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                     <span>View Team</span>
                                   </button>
@@ -2389,7 +2413,7 @@ function renderLMDashboard(userName, user) {
           <div class="line-trend-card">
             <div class="line-trend-card-header">
               <h4 class="line-trend-title">
-                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${line.name}
+                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(line.name)}
               </h4>
               <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                 Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
@@ -2421,7 +2445,7 @@ function renderPMDashboard(userName, user) {
 
   const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
   const now = (window.getSystemDate && window.getSystemDate()) || new Date();
-  const currentMonthPrefix = now.toISOString().slice(0, 7);
+  const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const repIds = team.reps.map((r) => r.id);
   const lineVisitsThisMonth = allVisits.filter((v) => {
     return v.status === "completed" &&
@@ -2451,8 +2475,8 @@ function renderPMDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner pm">
-        <h2 class="welcome-title">Welcome back, Product Manager ${userName}!</h2>
-        <div class="welcome-subtitle"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> ${lineNames || "Product Line Management"} • Nationwide Line Scope</div>
+        <h2 class="welcome-title">Welcome back, Product Manager ${window.escapeHtml(userName)}!</h2>
+        <div class="welcome-subtitle"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> ${window.escapeHtml(lineNames || "Product Line Management")} • Nationwide Line Scope</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, "en")}
@@ -2506,7 +2530,7 @@ function renderPMDashboard(userName, user) {
       <!-- Quick Action Cards -->
       <div class="pm-quick-actions-grid">
         <a href="visits.html?action=new" class="pm-action-card">
-          <div class="pm-action-icon pm-icon-blue">undefined</div>
+          <div class="pm-action-icon pm-icon-blue"><svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
           <div>
             <div class="pm-action-title">Field Double Visit</div>
             <div class="pm-action-desc">With line LMs & DMs</div>
@@ -2702,8 +2726,8 @@ function renderBUDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner bu">
-        <h2 class="welcome-title">${t.welcome_back}, Business Unit Head ${userName}!</h2>
-        <div class="welcome-subtitle">${lineNames || "Business Unit Management"}</div>
+        <h2 class="welcome-title">${t.welcome_back}, Business Unit Head ${window.escapeHtml(userName)}!</h2>
+        <div class="welcome-subtitle">${window.escapeHtml(lineNames || "Business Unit Management")}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -2713,13 +2737,13 @@ function renderBUDashboard(userName, user) {
           ? `
         <div class="dashboard-line-filter">
           <span class="line-filter-label"><svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><circle cx="7" cy="7" r=".5" fill="currentColor"/></svg> Filter by Line:</span>
-          <button type="button" class="line-filter-btn ${activeBuLine === "all" ? "active" : ""}" onclick="window.switchBuLineFilter('all')">
+          <button type="button" class="line-filter-btn ${activeBuLine === "all" ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="bu" data-line-id="all">
             All Lines (${lines.length})
           </button>
           ${lines
             .map(
               (l) => `
-            <button type="button" class="line-filter-btn ${activeBuLine === l.id ? "active" : ""}" onclick="window.switchBuLineFilter('${l.id}')">
+            <button type="button" class="line-filter-btn ${activeBuLine === l.id ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="bu" data-line-id="${window.escapeHtml(l.id)}">
               ${lang === "ar" ? (l.nameAr || l.name) : l.name}
             </button>
           `,
@@ -2818,8 +2842,8 @@ function renderBUDashboard(userName, user) {
                                   ${
                                     lm
                                       ? `
-                                    <strong>${lm.name}</strong>
-                                    ${lm.email ? `<div class="bu-line-subtext">${lm.email}</div>` : ""}
+                                    <strong>${window.escapeHtml(lm.name)}</strong>
+                                    ${lm.email ? `<div class="bu-line-subtext">${window.escapeHtml(lm.email)}</div>` : ""}
                                   `
                                       : `<em class="text-muted">Unassigned</em>`
                                   }
@@ -3073,7 +3097,7 @@ function renderAdminDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner admin">
-        <h2 class="welcome-title">${t.welcome_back}, System Administrator ${userName}!</h2>
+        <h2 class="welcome-title">${t.welcome_back}, System Administrator ${window.escapeHtml(userName)}!</h2>
         <div class="welcome-subtitle">All Product Lines & Operations</div>
       </div>
 
@@ -3151,7 +3175,7 @@ function renderHRDashboard(userName) {
   return `
     <div class="flex-col">
       <div class="welcome-banner hr">
-        <h2 class="welcome-title">${t.welcome_back}, HR Manager ${userName}!</h2>
+        <h2 class="welcome-title">${t.welcome_back}, HR Manager ${window.escapeHtml(userName)}!</h2>
         <div class="welcome-subtitle">Human Resources & People Operations</div>
       </div>
       <div class="stat-grid">
@@ -3178,7 +3202,7 @@ function attachDashboardModal() {
       <div class="modal-box dash-complete-modal-box" id="dashModalCard">
         <div class="dash-complete-header">
           <h4 id="dashModalTitle" class="dash-complete-title">${t.convert_to_actual}</h4>
-          <button type="button" onclick="closeDashCompleteModal()" class="dash-complete-close-btn">&times;</button>
+          <button type="button" data-dash-action="close-complete-modal" class="dash-complete-close-btn">&times;</button>
         </div>
         <form id="dashCompleteForm" onsubmit="handleDashCompleteSubmit(event)">
           <div class="row g-2 mb-3">
@@ -3240,7 +3264,7 @@ function attachDashboardModal() {
           </div>
 
           <div class="dash-complete-footer">
-            <button type="button" class="btn btn-secondary px-3" onclick="closeDashCompleteModal()">${t.cancel}</button>
+            <button type="button" class="btn btn-secondary px-3" data-dash-action="close-complete-modal">${t.cancel}</button>
             <button type="submit" class="btn btn-primary px-3 fw-bold" id="btnDashSubmit">${t.confirm_actual_visit}</button>
           </div>
         </form>
@@ -3250,7 +3274,8 @@ function attachDashboardModal() {
   document.body.insertAdjacentHTML("beforeend", modalHtml);
 }
 
-window.toggleDashDoubleVisit = function () {
+function toggleDashDoubleVisit() {
+
   const checked = document.querySelector('input[name="dashVisitType"]:checked');
   const section = document.getElementById("dashDoubleSection");
   if (section && checked) {
@@ -3284,14 +3309,9 @@ function populateDashCompanions(repId) {
   }
 
   if (managers.length === 0) {
-    const fallbackRep = users.find((u) => u.id === "u1790626000001");
-    if (fallbackRep && typeof window.getManagerChain === "function") {
-      managers = window
-        .getManagerChain(fallbackRep.id)
-        .filter(
-          (u) => managerRoles.includes(u.role) && u.status !== "Inactive",
-        );
-    }
+    managers = users.filter(
+      (u) => managerRoles.includes(u.role) && u.status !== "Inactive",
+    );
   }
 
   const roleTags = {
@@ -3307,7 +3327,7 @@ function populateDashCompanions(repId) {
     lbl.className = "pill-item";
     lbl.style.cssText =
       "display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.82rem;";
-    lbl.innerHTML = `<input type="checkbox" name="dashDoubleCompanion" value="${val}"> ${val}`;
+    lbl.innerHTML = `<input type="checkbox" name="dashDoubleCompanion" value="${window.escapeHtml(val)}"> ${window.escapeHtml(val)}`;
     container.appendChild(lbl);
   });
 }
@@ -3339,7 +3359,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
         ? rep.nameAr || rep.name
         : rep.name
       : "Medical Rep";
-    if (titleEl) titleEl.innerHTML = `<svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.join_double_visit} - ${repName}`;
+    if (titleEl) titleEl.innerHTML = `<svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.join_double_visit} - ${window.escapeHtml(repName)}`;
     if (typeContainer) typeContainer.style.display = "none";
     if (lockedBadge) lockedBadge.style.display = "flex";
     if (lockedText) {
@@ -3364,10 +3384,11 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
       singleRadio.checked = true;
     }
 
+    const authUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_MODE && window.DEMO_DATA && window.DEMO_DATA.currentUser) || null;
     const activeRepId =
       (target && target.repId) ||
-      (window.checkAuth && window.checkAuth() ? window.checkAuth().id : null) ||
-      "u1790626000001";
+      (authUser ? authUser.id : "") ||
+      "";
     populateDashCompanions(activeRepId);
     toggleDashDoubleVisit();
 
@@ -3440,7 +3461,8 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   const container = document.getElementById("dashProdContainer");
   if (container) {
     container.replaceChildren();
-    const effectiveRepId = (target && target.repId) || (user && user.id);
+    const modalAuth = (window.checkAuth && window.checkAuth()) || (window.DEMO_MODE && window.DEMO_DATA && window.DEMO_DATA.currentUser) || null;
+    const effectiveRepId = (target && target.repId) || (modalAuth && modalAuth.id) || "";
     const repLines = (effectiveRepId && typeof window.getUserLines === "function")
       ? window.getUserLines(effectiveRepId)
       : [];
@@ -3475,7 +3497,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
         lbl.className = "pill-item";
         lbl.style.cssText =
           "display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.82rem;";
-        lbl.innerHTML = `<input type="checkbox" name="dashProd" value="${prod.id}" data-name="${displayName}" ${isChecked ? "checked" : ""}> ${displayName}`;
+        lbl.innerHTML = `<input type="checkbox" name="dashProd" value="${window.escapeHtml(prod.id)}" data-name="${window.escapeHtml(displayName)}" ${isChecked ? "checked" : ""}> ${window.escapeHtml(displayName)}`;
         container.appendChild(lbl);
       });
     }
@@ -3499,7 +3521,8 @@ function updateDashModalDayDisplay() {
 
 window.updateDashModalDayDisplay = updateDashModalDayDisplay;
 
-window.closeDashCompleteModal = function () {
+function closeDashCompleteModal() {
+
   const modal = document.getElementById("dashCompleteModal");
   if (modal) {
     modal.style.display = "none";
@@ -3582,7 +3605,7 @@ window.handleDashCompleteSubmit = function (e) {
     visitType = "double";
     const authUser =
       (window.checkAuth && window.checkAuth()) ||
-      (window.DEMO_DATA && window.DEMO_DATA.currentUser) ||
+      (window.DEMO_MODE && window.DEMO_DATA && window.DEMO_DATA.currentUser) ||
       {};
     const dmName = authUser.name || "District Manager";
     doubleWithUserName = `${dmName} (DM)`;
@@ -3621,9 +3644,32 @@ window.handleDashCompleteSubmit = function (e) {
 
   const authUser =
     (window.checkAuth && window.checkAuth()) ||
-    (window.DEMO_DATA && window.DEMO_DATA.currentUser) ||
-    {};
-  const targetRepId = target.repId || authUser.id || "u1790626000001";
+    (window.DEMO_MODE && window.DEMO_DATA && window.DEMO_DATA.currentUser) ||
+    null;
+  if (!authUser || !authUser.id) {
+    resetSubmitBtn();
+    if (typeof showToast === "function") {
+      showToast("Unauthorized: An active login session is required to submit visits.", "error");
+    }
+    return;
+  }
+  const targetRepId = target.repId || authUser.id;
+
+  // Authorization Guard: Only the assigned rep, authorized managers, or Admin can complete this plan
+  if (!isCurrentActionJoinDouble) {
+    const isOwner = authUser && authUser.id && target.repId && (authUser.id === target.repId);
+    const isAdmin = authUser && (authUser.role === "admin" || authUser.role === "general_manager");
+    const canManage = (authUser && authUser.id && target.repId && typeof window.canApproveFor === "function")
+      ? window.canApproveFor(authUser.id, target.repId)
+      : false;
+    if (!isOwner && !isAdmin && !canManage) {
+      resetSubmitBtn();
+      if (typeof showToast === "function") {
+        showToast("Unauthorized: You cannot complete visits assigned to another representative.", "error");
+      }
+      return;
+    }
+  }
 
   // SFE Audit Check: Validate public holiday and leave
   if (typeof window.checkVisitDateAllowed === "function") {
@@ -3655,7 +3701,8 @@ window.handleDashCompleteSubmit = function (e) {
     target.date = dateVal;
     target.time = timeVal;
     const nowStamp = new Date();
-    target.insertionDate = nowStamp.toISOString().slice(0, 10);
+    const localTodayStr = (typeof window.getSystemTodayStr === "function") ? window.getSystemTodayStr() : `${nowStamp.getFullYear()}-${String(nowStamp.getMonth() + 1).padStart(2, "0")}-${String(nowStamp.getDate()).padStart(2, "0")}`;
+    target.insertionDate = localTodayStr;
     target.insertionTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
     target.completedAt = nowStamp.toISOString();
     if (!target.createdAt) target.createdAt = nowStamp.toISOString();
@@ -3745,4 +3792,81 @@ document.addEventListener("DOMContentLoaded", () => {
   window.currentUser = user;
   if (window.initPage) window.initPage("home");
   renderDashboard();
+});
+
+
+// Defensive fallback for openRescheduleModal if reschedule.js has not finished loading
+if (typeof window.openRescheduleModal !== "function") {
+  window.openRescheduleModal = function (id) {
+    if (typeof showToast === "function") {
+      showToast("Redirecting to calendar for visit rescheduling...", "info");
+    }
+    window.location.href = "calendar.html";
+  };
+}
+
+
+// Secure Event Delegation Handler for all dashboard actions (eliminates inline onclick & prevents attribute XSS)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-dash-action]");
+  if (!btn) return;
+  const action = btn.dataset.dashAction;
+  if (action === "dismiss-banner") {
+    btn.closest(".cycle-campaign-banner")?.remove();
+  } else if (action === "reload-cache") {
+    if (window.forceClearCacheAndReload) {
+      window.forceClearCacheAndReload();
+    } else {
+      window.location.reload(true);
+    }
+  } else if (action === "complete-plan") {
+    const visitId = btn.dataset.visitId;
+    const isJoin = btn.dataset.joinDouble === "true";
+    if (typeof window.openCompletePlanModal === "function") {
+      window.openCompletePlanModal(visitId, isJoin);
+    }
+  } else if (action === "reschedule") {
+    const visitId = btn.dataset.visitId;
+    if (typeof window.openRescheduleModal === "function") {
+      window.openRescheduleModal(visitId);
+    }
+  } else if (action === "close-complete-modal") {
+    if (typeof window.closeDashCompleteModal === "function") {
+      window.closeDashCompleteModal();
+    }
+  } else if (action === "open-dm-team") {
+    if (typeof window.openDmTeamModal === "function") {
+      window.openDmTeamModal(btn.dataset.dmId);
+    }
+  } else if (action === "close-dm-team") {
+    if (typeof window.closeDmTeamModal === "function") {
+      window.closeDmTeamModal();
+    }
+  } else if (action === "switch-rep-plan-tab") {
+    if (typeof window.switchRepPlanTab === "function") {
+      window.switchRepPlanTab(btn.dataset.tab);
+    }
+  } else if (action === "change-dm-date") {
+    if (typeof window.onDmChangeDate === "function") {
+      window.onDmChangeDate(btn.dataset.date);
+    }
+  } else if (action === "switch-dm-schedule-tab") {
+    if (typeof window.switchDmScheduleTab === "function") {
+      window.switchDmScheduleTab(btn.dataset.tab);
+    }
+  } else if (action === "switch-dm-followup-filter") {
+    if (typeof window.switchDmFollowUpFilter === "function") {
+      window.switchDmFollowUpFilter(btn.dataset.mode);
+    }
+  } else if (action === "switch-line-filter") {
+    const scope = btn.dataset.lineScope;
+    const lineId = btn.dataset.lineId;
+    if (scope === "dm" && typeof window.switchDmLineFilter === "function") {
+      window.switchDmLineFilter(lineId);
+    } else if (scope === "lm" && typeof window.switchLmLineFilter === "function") {
+      window.switchLmLineFilter(lineId);
+    } else if (scope === "bu" && typeof window.switchBuLineFilter === "function") {
+      window.switchBuLineFilter(lineId);
+    }
+  }
 });

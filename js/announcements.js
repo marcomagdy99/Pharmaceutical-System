@@ -539,7 +539,8 @@ function renderAnnouncementsList() {
 function renderAnnouncementCard(ann) {
   const isHR = isAdminOrHrUser(currentAuthUser || { role: currentUserRole });
   const isAuthor = Boolean(ann.createdBy && ann.createdBy === currentUserId);
-  const canManageCard = isHR || isAuthor;
+  const isPM = isPMUser(currentAuthUser || { role: currentUserRole });
+  const canManageCard = isHR || (isPM && isAuthor);
   const safeId = _esc(ann.id || "");
   const rawPriority = ALLOWED_PRIORITIES.includes(ann.priority) ? ann.priority : "normal";
   const safePriority = _esc(rawPriority);

@@ -3664,7 +3664,7 @@ const NAV_CONFIG = [
   // Management & Operations Navigation
   { id: "plans-review", file: "plans-review.html", icon: NAV_ICONS["plans-review"], i18n: "navPlansReview", section: "management", roles: ["district_manager", "line_manager", "business_unit"] },
   { id: "distributors", file: "distributors.html", icon: NAV_ICONS.distributors, i18n: "navDistributors", section: "management", roles: ["admin"] },
-  { id: "areas", file: "areas.html", icon: NAV_ICONS.areas, i18n: "navAreas", section: "management", roles: ["admin", "hr"] },
+  { id: "areas", file: "areas.html", icon: NAV_ICONS.areas, i18n: "navAreas", section: "management", roles: ["admin", "hr", "business_unit"] },
   { id: "products", file: "products.html", icon: NAV_ICONS.products, i18n: "navProducts", section: "management", roles: ["admin"] },
   { id: "quizzes", file: "quizzes.html", icon: NAV_ICONS.quizzes, i18n: "navQuizzes", section: "management", roles: ["all"], excludeRoles: ["hr"] },
 ];
@@ -4953,7 +4953,7 @@ function enforcePageRoleSecurity(precheckedUser) {
   const restrictions = {
     "users.html": ["admin", "hr"],
     "distributors.html": ["admin"],
-    "areas.html": ["admin", "hr"],
+    "areas.html": ["admin", "hr", "business_unit"],
     "products.html": ["admin"],
     "plans-review.html": ["admin", "general_manager", "district_manager", "line_manager", "business_unit"],
     "reports.html": ["admin", "general_manager", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],

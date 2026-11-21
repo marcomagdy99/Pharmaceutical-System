@@ -295,7 +295,7 @@
     const restrictions = {
       "users.html": ["admin", "hr"],
       "distributors.html": ["admin"],
-      "areas.html": ["admin", "hr"],
+      "areas.html": ["admin", "hr", "business_unit"],
       "products.html": ["admin"],
       "plans-review.html": ["admin", "general_manager", "district_manager", "line_manager", "business_unit"],
       "reports.html": ["admin", "general_manager", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
