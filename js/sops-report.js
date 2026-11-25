@@ -80,7 +80,7 @@ function getSafeSystemDate() {
         cb.addEventListener('change', window.onSopsMonthCheckboxChange);
 
         const span = document.createElement('span');
-        span.textContent = lang === 'ar' ? `${m.num} - ${m.nameAr}` : `${m.num} - ${m.nameEn}`;
+        span.textContent = `${m.num} - ${m.nameEn || m.nameAr}`;
 
         label.appendChild(cb);
         label.appendChild(span);
@@ -247,7 +247,7 @@ function getSafeSystemDate() {
       ? window.store.companySettings.get()
       : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
 
-    const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? 'thursday' : 'saturday');
+    const secDay = companySettings.secondaryWeekendDay || (companySettings.isThursdayWeekend ? 'thursday' : 'none');
     const secMode = companySettings.secondaryWeekendMode || 'full_day';
 
     const publicHolidays = (window.store && window.store.publicHolidays)
@@ -326,17 +326,28 @@ function getSafeSystemDate() {
     const totalPeriodCalendarDays = monthCalendars.reduce((acc, c) => acc + c.daysInMonth, 0);
     const secDayPolicy = monthCalendars[0]?.secDay || 'saturday';
 
-    const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
+    const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null);
+    if (!currentUser) {
+      return {
+        periodInfo: {
+          year,
+          monthsArr,
+          totalPeriodWorkingDays,
+          totalPeriodCalendarDays,
+          secDayPolicy
+        },
+        repRows: []
+      };
+    }
+
     const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
     const isRep = window.isRepRole ? window.isRepRole(currentUser) : (role === 'medical_rep' || role === 'rep');
 
-    const allUsers = typeof getSharedReportUsers === 'function'
-      ? getSharedReportUsers()
-      : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
+    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null)
+      || (window.DEMO_DATA && window.DEMO_DATA.productLines)
+      || [];
 
-    const allLines = (window.store && window.store.lines ? window.store.lines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.lines) || []);
-
-    // Filter Reps based on Role & Hierarchy Scope
+    // Filter Reps based on Role & Hierarchy Scope (Fail-Closed)
     let targetReps = [];
 
     if (isRep) {
@@ -348,8 +359,6 @@ function getSafeSystemDate() {
 
       if (scope && Array.isArray(scope.allowedReps)) {
         targetReps = scope.allowedReps;
-      } else {
-        targetReps = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')));
       }
 
       // Check rep selector filter if manager selected a specific rep
@@ -366,7 +375,7 @@ function getSafeSystemDate() {
 
     const repRows = targetReps.map((rep) => {
       const repLine = allLines.find((l) => l.id === rep.lineId || (rep.lineIds && rep.lineIds.includes(l.id)));
-      const lineName = repLine ? repLine.name : (rep.division || 'Clinics & Poly Clinics');
+      const lineName = repLine ? repLine.name : (rep.division || 'Unassigned');
 
       // Daily Visits Target (Defaults to company settings default or 8.0, with rep individual override)
       const companySettings = (window.store && window.store.companySettings)
@@ -398,14 +407,23 @@ function getSafeSystemDate() {
         });
 
         repLeaves.forEach((leave) => {
-          const lStart = new Date(Math.max(new Date(leave.startDate + 'T12:00:00').getTime(), new Date(mStartStr + 'T12:00:00').getTime()));
-          const lEnd = new Date(Math.min(new Date(leave.endDate + 'T12:00:00').getTime(), new Date(mEndStr + 'T12:00:00').getTime()));
+          const rawStart = leave.startDate ? new Date(leave.startDate + 'T12:00:00').getTime() : NaN;
+          const rawEnd = leave.endDate ? new Date(leave.endDate + 'T12:00:00').getTime() : NaN;
+          if (isNaN(rawStart) || isNaN(rawEnd)) return;
+          const lStart = new Date(Math.max(rawStart, new Date(mStartStr + 'T12:00:00').getTime()));
+          const lEnd = new Date(Math.min(rawEnd, new Date(mEndStr + 'T12:00:00').getTime()));
+          const isHalfLeave = leave.durationType === 'half' ||
+            leave.dayDuration === 'half' ||
+            leave.type === 'half_day' ||
+            Number(leave.days) === 0.5;
           const curL = new Date(lStart);
-          while (curL <= lEnd) {
+          let iterCount = 0;
+          while (curL <= lEnd && iterCount < 62) {
+            iterCount++;
             const dayStr = `${curL.getFullYear()}-${String(curL.getMonth() + 1).padStart(2, '0')}-${String(curL.getDate()).padStart(2, '0')}`;
             if (mCal.workingDateStrings.has(dayStr) && !deductedVacationDates.has(dayStr)) {
               deductedVacationDates.add(dayStr);
-              monthVacations += (leave.durationType === 'half' ? 0.5 : 1);
+              monthVacations += (isHalfLeave ? 0.5 : 1);
             }
             curL.setDate(curL.getDate() + 1);
           }
@@ -503,18 +521,18 @@ function getSafeSystemDate() {
       // Actual Executed Visits across all selected months
       const repVisits = allVisits.filter((v) => {
         if (!v) return false;
-        const matchesRep = (v.repId === rep.id || v.userId === rep.id || v.repName === rep.name);
+        const matchesRep = (v.repId === rep.id || v.userId === rep.id);
         if (!matchesRep) return false;
 
         // Exclude activities if mixed into visits array
         if (v.type === 'activity' || v.source === 'activity') return false;
 
-        // Exclude cancelled or rejected visits
+        // Exclude non-executed / non-completed statuses
         const vStatus = (v.status || '').toLowerCase();
-        if (vStatus === 'cancelled' || vStatus === 'rejected') return false;
+        if (['cancelled', 'rejected', 'planned', 'pending_approval', 'missed', 'rescheduled'].includes(vStatus)) return false;
 
         // Must be executed/completed visit
-        const isExecuted = vStatus === 'completed' || Boolean(v.isActual) || v.source === 'actual' || (!v.status && !v.source);
+        const isExecuted = vStatus === 'completed' || Boolean(v.isActual) || v.source === 'actual';
         if (!isExecuted) return false;
 
         const vDate = v.date || v.visitDate || '';
@@ -646,7 +664,7 @@ function getSafeSystemDate() {
           <div class="fw-bold text-primary">${window.escapeHtml(r.repName)}</div>
           <small class="text-muted">${window.escapeHtml(r.repCode)} • ${window.escapeHtml(r.lineName)}</small>
         </td>
-        <td class="text-center fw-semibold">${r.workingDays} <small class="text-muted">(${r.workingDays})</small></td>
+        <td class="text-center fw-semibold">${r.workingDays} <small class="text-muted">/ ${r.daysInMonth}</small></td>
         <td class="text-center fw-semibold text-secondary">${r.dailyVisitsTarget.toFixed(1)}</td>
         <td class="text-center ${r.vacations > 0 ? 'fw-bold text-danger' : 'text-muted'}">${r.vacations > 0 ? r.vacations : '—'}</td>
         <td class="text-center ${r.officeWork > 0 ? 'fw-bold text-info' : 'text-muted'}">${r.officeWork > 0 ? r.officeWork : '0'}</td>
@@ -654,7 +672,7 @@ function getSafeSystemDate() {
         <td class="text-center fw-bold text-dark fs-6">${r.netWorkingDays}</td>
         <td class="text-center fw-bold text-dark fs-6">${r.monthlyVisitsTarget.toFixed(1)}</td>
         <td class="text-center">
-          <span class="badge sops-actual-badge" onclick="window.viewSopsRepVisits('${r.repId}')" title="View actual visits details">
+          <span class="badge sops-actual-badge" data-action="view-sops-visits" data-rep-id="${window.escapeHtml(r.repId)}" role="button" tabindex="0" title="View actual visits details">
             ${r.actualVisits}
           </span>
         </td>
@@ -694,6 +712,18 @@ function getSafeSystemDate() {
         <td class="text-center fw-bold text-primary fs-6">${avgVelocity.toFixed(2)}</td>
       `;
       tbody.appendChild(totalTr);
+    }
+
+    if (!tbody.dataset.sopsDelegated) {
+      tbody.dataset.sopsDelegated = 'true';
+      tbody.addEventListener('click', (e) => {
+        const badge = e.target && e.target.closest ? e.target.closest('[data-action="view-sops-visits"]') : null;
+        if (!badge) return;
+        const repId = badge.dataset.repId;
+        if (repId && typeof window.viewSopsRepVisits === 'function') {
+          window.viewSopsRepVisits(repId);
+        }
+      });
     }
   }
 
@@ -759,7 +789,9 @@ function getSafeSystemDate() {
         if (toInput) toInput.value = `${year}-${endM}-${String(lastDay).padStart(2, '0')}`;
       }
 
-      if (typeof window.renderTimelineReport === 'function') {
+      if (typeof window.renderDailyTimeline === 'function') {
+        window.renderDailyTimeline();
+      } else if (typeof window.renderTimelineReport === 'function') {
         window.renderTimelineReport();
       }
     }
@@ -779,10 +811,6 @@ function getSafeSystemDate() {
     const year = yearSelect?.value || now.getFullYear();
     const months = getSelectedSopsMonths().join('-');
 
-    let csv = '';
-    csv += 'PharmaCare - Monthly Record Analysis (SOPs & Field Productivity)\n';
-    csv += `Period: ${year} (Months: ${months}) | Statutory Working Days: ${currentPeriodSummary?.totalPeriodWorkingDays || 21}\n\n`;
-
     const headers = [
       'Employee Name',
       'Employee Code',
@@ -800,35 +828,52 @@ function getSafeSystemDate() {
       'Avg. Visits / Day'
     ];
 
-    csv += headers.map((h) => `"${h}"`).join(',') + '\n';
+    const dataRows = currentSopsData.map((r) => [
+      r.repName || '',
+      r.repCode || '',
+      r.lineName || '',
+      r.workingDays,
+      Number(r.dailyVisitsTarget.toFixed(1)),
+      r.vacations,
+      r.officeWork,
+      r.activities,
+      r.netWorkingDays,
+      Number(r.monthlyVisitsTarget.toFixed(1)),
+      r.actualVisits,
+      `${r.sopsPercentage.toFixed(2)}%`,
+      r.dailyReportDays,
+      Number(r.avgVisitsPerDay.toFixed(2))
+    ]);
 
-    currentSopsData.forEach((r) => {
-      const row = [
-        `"${(r.repName || '').replace(/"/g, '""')}"`,
-        `"${(r.repCode || '').replace(/"/g, '""')}"`,
-        `"${(r.lineName || '').replace(/"/g, '""')}"`,
-        r.workingDays,
-        r.dailyVisitsTarget.toFixed(1),
-        r.vacations,
-        r.officeWork,
-        r.activities,
-        r.netWorkingDays,
-        r.monthlyVisitsTarget.toFixed(1),
-        r.actualVisits,
-        `"${r.sopsPercentage.toFixed(2)}%"`,
-        r.dailyReportDays,
-        r.avgVisitsPerDay.toFixed(2)
-      ];
-      csv += row.join(',') + '\n';
+    const fileName = `PharmaCare_SOPs_Report_${year}_M${months}`;
+    if (window.ExportService && typeof window.ExportService.downloadExcelOrCsv === 'function' && typeof window.downloadExcelOrCsv === 'function') {
+      window.downloadExcelOrCsv(fileName, 'SOPs Report', dataRows, headers);
+      return;
+    }
+
+    const escapeCsv = (val) => {
+      let s = val === null || val === undefined ? '' : String(val);
+      if (/^[=@\t\r]|(^[+-](?![\d\s().-]+$))/.test(s)) {
+        s = "'" + s;
+      }
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+
+    let csv = '';
+    csv += 'PharmaCare - Monthly Record Analysis (SOPs & Field Productivity)\n';
+    csv += `Period: ${year} (Months: ${months}) | Statutory Working Days: ${currentPeriodSummary?.totalPeriodWorkingDays || 0}\n\n`;
+    csv += headers.map(escapeCsv).join(',') + '\n';
+    dataRows.forEach((row) => {
+      csv += row.map((cell) => (typeof cell === 'number' ? cell : escapeCsv(cell))).join(',') + '\n';
     });
 
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `PharmaCare_SOPs_Report_${year}_M${months}.csv`;
+    a.download = `${fileName}.csv`;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   // Global exposure

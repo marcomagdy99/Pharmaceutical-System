@@ -33,12 +33,24 @@
       if (!firebase.apps || !firebase.apps.length) {
         firebase.initializeApp(window.firebaseConfig);
       }
+      if (typeof firebase.auth === "function") {
+        window.firebaseAuth = firebase.auth();
+      }
       db = firebase.firestore();
       window.db = db;
       return db;
     } catch (err) {
       console.error("[FirebaseSync] Initialization error:", err);
       return null;
+    }
+  }
+
+  function hasFirebaseAuthUser() {
+    if (typeof firebase === "undefined" || typeof firebase.auth !== "function") return false;
+    try {
+      return Boolean(firebase.auth().currentUser);
+    } catch (e) {
+      return false;
     }
   }
 
@@ -155,9 +167,9 @@
           }
         });
 
-        // ✅ Deletion sync: remove local items that no longer exist in cloud (only when cloud has valid items)
+        // ✅ Deletion sync: remove local items that no longer exist in cloud (including when cloud collection is cleared to [])
         const validCloudItems = cloudData[collKey].filter((it) => it && !isMock(it));
-        if (validCloudItems.length > 0) {
+        if (Array.isArray(cloudData[collKey])) {
           const cloudIds = new Set(validCloudItems.map((it) => String(it.id)));
           const beforeLen = window.DEMO_DATA[collKey].length;
           window.DEMO_DATA[collKey] = window.DEMO_DATA[collKey].filter((it) => {
@@ -292,12 +304,14 @@
       db = initFirestore();
       if (!db) return;
     }
+    if (!hasFirebaseAuthUser()) return false;
     if (!window.DEMO_DATA) return;
 
     clearTimeout(pushDebounceTimer);
 
     const executePush = async () => {
       try {
+        if (!hasFirebaseAuthUser()) return;
         isLocalPushInProgress = true;
         updateSyncStatusUI("syncing");
 
@@ -309,7 +323,7 @@
         await db.collection("app_state").doc("master_data").set({
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
           updatedAtMs: Date.now(),
-          updatedBy: (window.currentUser && (window.currentUser.email || window.currentUser.id)) || "system",
+          updatedBy: (hasFirebaseAuthUser() && firebase.auth().currentUser.email) || (window.currentUser && (window.currentUser.email || window.currentUser.id)) || "system",
           payload: payloadString
         }, { merge: true });
 
@@ -477,12 +491,14 @@
       db = initFirestore();
       if (!db) return;
     }
+    if (!hasFirebaseAuthUser()) return false;
     if (!window.DEMO_DATA) return;
 
     clearTimeout(salesPushDebounceTimer);
 
     const executeSalesPush = async () => {
       try {
+        if (!hasFirebaseAuthUser()) return;
         isLocalSalesPushInProgress = true;
         updateSyncStatusUI("syncing");
 
@@ -583,6 +599,7 @@
       db = initFirestore();
       if (!db) return;
     }
+    if (!hasFirebaseAuthUser()) return false;
     try {
       const docRef = db.collection("visits").doc(String(visitObj.id));
       if (action === "delete") {
@@ -645,11 +662,18 @@
 
         if (hasChanges) {
           console.log("[FirebaseSync] Realtime visits updated from Cloud collection.");
+          window._suppressCloudPush = true;
           try {
-            window._suppressCloudPush = true;
-            localStorage.setItem("pharma_master_data", JSON.stringify(window.DEMO_DATA));
+            if (typeof window.saveDataToStorage === "function") {
+              window.saveDataToStorage();
+            } else {
+              const { distributorSales, ...cleanData } = window.DEMO_DATA || {};
+              localStorage.setItem("pharma_master_data", JSON.stringify(cleanData));
+            }
+          } catch (e) {
+          } finally {
             window._suppressCloudPush = false;
-          } catch (e) {}
+          }
           notifyActiveViews();
         }
       }, (err) => {
@@ -668,11 +692,16 @@
 
     try {
       db.collection("app_state").doc("master_data").onSnapshot((snapshot) => {
+        const markCloudReady = () => {
+          window._pharmaCloudInitialSyncDone = true;
+          try { document.dispatchEvent(new CustomEvent("pharma:cloud:ready")); } catch (e) {}
+        };
         if (!snapshot.exists) {
           console.info("[FirebaseSync] Cloud master_data not found. Initializing seed upload...");
           if (window.DEMO_DATA) {
             pushLocalToCloud(true);
           }
+          markCloudReady();
           return;
         }
 
@@ -680,11 +709,15 @@
         if (isLocalPushInProgress) return;
 
         const data = snapshot.data();
-        if (!data || !data.payload) return;
+        if (!data || !data.payload) {
+          markCloudReady();
+          return;
+        }
 
         const cloudMs = data.updatedAtMs || 0;
         if (cloudMs > 0 && cloudMs <= lastCloudTimestamp) {
           // Already have this version or newer
+          markCloudReady();
           return;
         }
         lastCloudTimestamp = cloudMs;
@@ -702,8 +735,11 @@
               // Save locally to keep localStorage in sync without triggering an outgoing cloud push
               if (typeof window.saveDataToStorage === "function") {
                 window._suppressCloudPush = true;
-                window.saveDataToStorage();
-                window._suppressCloudPush = false;
+                try {
+                  window.saveDataToStorage();
+                } finally {
+                  window._suppressCloudPush = false;
+                }
               }
 
               notifyActiveViews(parsed);
@@ -711,9 +747,13 @@
           }
         } catch (err) {
           console.warn("[FirebaseSync] Failed to parse cloud payload:", err);
+        } finally {
+          markCloudReady();
         }
       }, (error) => {
         console.warn("[FirebaseSync] Firestore snapshot listener warning:", error);
+        window._pharmaCloudInitialSyncDone = true;
+        try { document.dispatchEvent(new CustomEvent("pharma:cloud:ready")); } catch (e) {}
         updateSyncStatusUI("offline");
       });
     } catch (err) {
@@ -750,8 +790,12 @@
         if (isManual && typeof window.showToast === "function") {
           window.showToast("Unable to connect to Firebase. Check internet connection.", "error");
         }
-        return;
+        return false;
       }
+    }
+    if (!hasFirebaseAuthUser()) {
+      updateSyncStatusUI("offline");
+      return false;
     }
 
     const syncBtnIcon = document.getElementById("syncCloudIcon");
@@ -778,8 +822,11 @@
             if (hasNewChanges || isManual) {
               if (typeof window.saveDataToStorage === "function") {
                 window._suppressCloudPush = true;
-                window.saveDataToStorage();
-                window._suppressCloudPush = false;
+                try {
+                  window.saveDataToStorage();
+                } finally {
+                  window._suppressCloudPush = false;
+                }
               }
               notifyActiveViews(parsed);
             }
@@ -820,9 +867,18 @@
               }
             });
             window.DEMO_DATA.visits = localVisits;
+            window._suppressCloudPush = true;
             try {
-              localStorage.setItem("pharma_master_data", JSON.stringify(window.DEMO_DATA));
-            } catch (e) {}
+              if (typeof window.saveDataToStorage === "function") {
+                window.saveDataToStorage();
+              } else {
+                const { distributorSales, ...cleanData } = window.DEMO_DATA || {};
+                localStorage.setItem("pharma_master_data", JSON.stringify(cleanData));
+              }
+            } catch (e) {
+            } finally {
+              window._suppressCloudPush = false;
+            }
             console.log(`[FirebaseSync] Loaded ${cloudVisits.length} discrete visits from Cloud collection.`);
           }
         } else {
@@ -892,28 +948,40 @@
     }
   }
 
-  // Offline Auto-Sync: detects offline visits and syncs to cloud upon network recovery
-  function syncPendingOfflineVisits() {
+  // Offline Auto-Sync: detects offline visits and syncs each to Cloud Firestore upon network recovery
+  async function syncPendingOfflineVisits() {
     if (!window.DEMO_DATA || !Array.isArray(window.DEMO_DATA.visits)) return;
     const pending = window.DEMO_DATA.visits.filter((v) => v && v.isOffline && !v.syncedToCloud);
     if (pending.length === 0) return;
 
+    let syncedCount = 0;
     const nowIso = new Date().toISOString();
-    pending.forEach((v) => {
-      v.syncedToCloud = true;
-      v.syncedAt = nowIso;
-    });
+    for (const v of pending) {
+      try {
+        const uploaded = await syncVisitToCloud("create", v);
+        if (uploaded !== false) {
+          v.syncedToCloud = true;
+          v.syncedAt = nowIso;
+          syncedCount++;
+        }
+      } catch (err) {
+        console.warn("[FirebaseSync] Failed to sync offline visit:", v && v.id, err);
+      }
+    }
+
+    if (syncedCount === 0) return;
 
     if (typeof window.saveDataToStorage === "function") {
       window._suppressCloudPush = true;
-      window.saveDataToStorage();
-      window._suppressCloudPush = false;
+      try {
+        window.saveDataToStorage();
+      } finally {
+        window._suppressCloudPush = false;
+      }
     }
 
-    pushLocalToCloud(true);
-
     if (typeof window.showToast === "function") {
-      const msg = `Back Online: ${pending.length} offline visit(s) synced to cloud successfully!`;
+      const msg = `Back Online: ${syncedCount} offline visit(s) synced to cloud successfully!`;
       window.showToast(msg, "success");
     }
 
@@ -926,18 +994,31 @@
   window.syncFromCloudNow = fetchCloudInitial;
   window.syncPendingOfflineVisits = syncPendingOfflineVisits;
   window.syncVisitToCloud = syncVisitToCloud;
+  window.ensureFirebaseAuthSync = async function () {
+    if (!db) db = initFirestore();
+    if (!db || !hasFirebaseAuthUser()) return false;
+    await fetchCloudInitial(false);
+    if (!isListening) startCloudListener();
+    if (!isSalesListening) startSalesCloudListener();
+    if (!isVisitsListening) startVisitsCloudListener();
+    window._pharmaCloudInitialSyncDone = true;
+    try { document.dispatchEvent(new CustomEvent("pharma:cloud:ready")); } catch (e) {}
+    return true;
+  };
 
   // Network status listeners
   window.addEventListener("online", () => {
     console.log("[FirebaseSync] Connection restored. Synchronizing pending offline data...");
     updateSyncStatusUI("syncing");
-    syncPendingOfflineVisits();
     if (!db) db = initFirestore();
-    if (db) {
+    if (db && hasFirebaseAuthUser()) {
+      syncPendingOfflineVisits();
       fetchCloudInitial(false);
       if (!isListening) startCloudListener();
       if (!isSalesListening) startSalesCloudListener();
       if (!isVisitsListening) startVisitsCloudListener();
+    } else {
+      updateSyncStatusUI("offline");
     }
   });
 
@@ -949,19 +1030,37 @@
     }
   });
 
-  // Initialize on load
+  // Initialize on load: gate all Firestore operations behind Firebase Auth state
   function init() {
     db = initFirestore();
-    if (typeof navigator !== "undefined" && navigator.onLine) {
-      syncPendingOfflineVisits();
+    if (!db) return;
+
+    if (typeof firebase !== "undefined" && typeof firebase.auth === "function") {
+      const auth = firebase.auth();
+      window.firebaseAuth = auth;
+      auth.onAuthStateChanged((fbUser) => {
+        if (fbUser) {
+          if (typeof navigator !== "undefined" && navigator.onLine) {
+            syncPendingOfflineVisits();
+          } else {
+            updateSyncStatusUI("offline");
+          }
+          fetchCloudInitial(false).finally(() => {
+            window._pharmaCloudInitialSyncDone = true;
+            try { document.dispatchEvent(new CustomEvent("pharma:cloud:ready")); } catch (e) {}
+          });
+          startCloudListener();
+          startSalesCloudListener();
+          startVisitsCloudListener();
+        } else {
+          window._pharmaCloudInitialSyncDone = true;
+          try { document.dispatchEvent(new CustomEvent("pharma:cloud:ready")); } catch (e) {}
+          updateSyncStatusUI("offline");
+        }
+      });
     } else {
+      window._pharmaCloudInitialSyncDone = true;
       updateSyncStatusUI("offline");
-    }
-    if (db) {
-      fetchCloudInitial(false);
-      startCloudListener();
-      startSalesCloudListener();
-      startVisitsCloudListener();
     }
   }
 

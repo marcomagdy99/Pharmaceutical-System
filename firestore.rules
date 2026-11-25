@@ -1,20 +1,192 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Safety guard for app_state collection during testing / prototype phase:
-    // 1. Only allow reading and writing to the specific docs used by the system.
-    // 2. FORBID deleting the document entirely to prevent catastrophic data wipeout.
-    // 3. Enforce maximum document size guard.
-    match /app_state/{docId} {
-      allow read: if docId in ['master_data', 'distributor_sales'];
-      allow create, update: if docId in ['master_data', 'distributor_sales'];
-      allow delete: if false; // STRICT: Clients cannot delete the root data document!
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Authentication Assumption:
+    //   - All access requires an authenticated Firebase Auth user via Email/Password
+    //     (request.auth != null, non-empty uid, and non-empty string token.email).
+    //   - Prototype Multi-User Assumption: Before Firebase Auth custom claims are
+    //     provisioned for RBAC, all authenticated company users share master_data,
+    //     distributor_sales, and visits (managers/DMs/LMs/admins also reschedule,
+    //     approve, and accompany rep visits).
+    //
+    // Collection: app_state
+    // Document ID: 'master_data' | 'distributor_sales' (strictly constrained)
+    //
+    //   Doc 'master_data':
+    //     - updatedAt: timestamp (required, must equal request.time / serverTimestamp)
+    //     - updatedAtMs: int | float (required, > 0)
+    //     - updatedBy: string (required, 1..200 chars)
+    //     - payload: string (required, serialized JSON, 1..1,000,000 chars)
+    //     - Delete: strictly forbidden (allow delete: if false)
+    //
+    //   Doc 'distributor_sales':
+    //     - updatedAt: timestamp (required, must equal request.time / serverTimestamp)
+    //     - updatedAtMs: int | float (required, > 0)
+    //     - rowCount: int (required, 0..100,000)
+    //     - payload: string (required, serialized JSON, 1..1,000,000 chars)
+    //     - Delete: strictly forbidden (allow delete: if false)
+    //
+    // Collection: visits
+    // Document ID: visitId (non-empty string, 1..128 chars, matches data.id)
+    // Fields:
+    //   - id: string (required, immutable, matches visitId, 1..128 chars)
+    //   - repId: string (required, 1..128 chars)
+    //   - status: string (required, 1..64 chars)
+    //   - Optional metadata fields (date, time, period, targetType, visitType,
+    //     doctorId, doctorName, lineId, areaId, area, planId, source, comment,
+    //     doubleWithUserId, doubleWithUserName, gpsStatus, products, productIds,
+    //     rescheduleHistory, companionIds, syncedAt, syncedToCloud, isOffline, etc.)
+    //     bounded by key count (<= 60) and field size/type guards.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the request carries a Firebase Auth context
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Granular Visits Collection: discrete atomic documents preventing race condition & 1MB limit
+    // Check if the user is signed in with a valid UID and Email/Password identity
+    function isSignedIn() {
+      return isAuthenticated() &&
+             request.auth.uid != null &&
+             request.auth.uid is string &&
+             request.auth.uid.size() > 0 &&
+             request.auth.token.email is string &&
+             request.auth.token.email.size() > 0;
+    }
+
+    // Validate optional string that may also be explicitly null in JS payloads
+    function isValidOptionalNullableString(data, field, maxLen) {
+      return !(field in data) ||
+             data[field] == null ||
+             (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    // Validate that a list is a list and enforces size limits
+    function isValidList(listVal, maxSize) {
+      return listVal is list && listVal.size() <= maxSize;
+    }
+
+    // Validate optional list that may be omitted or null
+    function isValidOptionalList(data, field, maxSize) {
+      return !(field in data) ||
+             data[field] == null ||
+             isValidList(data[field], maxSize);
+    }
+
+    // ===============================================================
+    // Domain Validators (Used in BOTH create and update)
+    // ===============================================================
+
+    function isValidMasterData(data) {
+      return data.keys().hasOnly(['updatedAt', 'updatedAtMs', 'updatedBy', 'payload']) &&
+             data.keys().hasAll(['updatedAt', 'updatedAtMs', 'updatedBy', 'payload']) &&
+             data.updatedAt is timestamp &&
+             data.updatedAt == request.time &&
+             (data.updatedAtMs is int || data.updatedAtMs is float) &&
+             data.updatedAtMs > 0 &&
+             data.updatedBy is string &&
+             data.updatedBy.size() > 0 &&
+             data.updatedBy.size() <= 200 &&
+             data.payload is string &&
+             data.payload.size() > 0 &&
+             data.payload.size() <= 1000000;
+    }
+
+    function isValidDistributorSales(data) {
+      return data.keys().hasOnly(['updatedAt', 'updatedAtMs', 'rowCount', 'payload']) &&
+             data.keys().hasAll(['updatedAt', 'updatedAtMs', 'rowCount', 'payload']) &&
+             data.updatedAt is timestamp &&
+             data.updatedAt == request.time &&
+             (data.updatedAtMs is int || data.updatedAtMs is float) &&
+             data.updatedAtMs > 0 &&
+             data.rowCount is int &&
+             data.rowCount >= 0 &&
+             data.rowCount <= 100000 &&
+             data.payload is string &&
+             data.payload.size() > 0 &&
+             data.payload.size() <= 1000000;
+    }
+
+    function isValidAppState(docId, data) {
+      return (docId == 'master_data' && isValidMasterData(data)) ||
+             (docId == 'distributor_sales' && isValidDistributorSales(data));
+    }
+
+    function isValidVisit(visitId, data) {
+      return visitId is string &&
+             visitId.size() > 0 &&
+             visitId.size() <= 128 &&
+             data.keys().size() <= 60 &&
+             data.keys().hasAll(['id', 'repId', 'status']) &&
+             data.id is string &&
+             data.id == visitId &&
+             data.id.size() > 0 &&
+             data.id.size() <= 128 &&
+             data.repId is string &&
+             data.repId.size() > 0 &&
+             data.repId.size() <= 128 &&
+             data.status is string &&
+             data.status.size() > 0 &&
+             data.status.size() <= 64 &&
+             isValidOptionalNullableString(data, 'planId', 128) &&
+             isValidOptionalNullableString(data, 'lineId', 128) &&
+             isValidOptionalNullableString(data, 'areaId', 128) &&
+             isValidOptionalNullableString(data, 'area', 500) &&
+             isValidOptionalNullableString(data, 'doctorId', 128) &&
+             isValidOptionalNullableString(data, 'hospitalId', 128) &&
+             isValidOptionalNullableString(data, 'pharmacyId', 128) &&
+             isValidOptionalNullableString(data, 'doctorName', 200) &&
+             isValidOptionalNullableString(data, 'hospitalName', 200) &&
+             isValidOptionalNullableString(data, 'pharmacyName', 200) &&
+             isValidOptionalNullableString(data, 'date', 32) &&
+             isValidOptionalNullableString(data, 'time', 32) &&
+             isValidOptionalNullableString(data, 'period', 32) &&
+             isValidOptionalNullableString(data, 'targetType', 64) &&
+             isValidOptionalNullableString(data, 'visitType', 64) &&
+             isValidOptionalNullableString(data, 'source', 64) &&
+             isValidOptionalNullableString(data, 'doubleWithUserId', 128) &&
+             isValidOptionalNullableString(data, 'doubleWithUserName', 200) &&
+             isValidOptionalNullableString(data, 'comment', 2000) &&
+             isValidOptionalNullableString(data, 'gpsStatus', 64) &&
+             isValidOptionalNullableString(data, 'syncedAt', 64) &&
+             isValidOptionalNullableString(data, 'createdAt', 64) &&
+             isValidOptionalList(data, 'products', 100) &&
+             isValidOptionalList(data, 'productIds', 100) &&
+             isValidOptionalList(data, 'rescheduleHistory', 50) &&
+             isValidOptionalList(data, 'companionIds', 50);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Singleton application state documents (master_data & distributor_sales)
+    match /app_state/{docId} {
+      allow read: if isSignedIn() && docId in ['master_data', 'distributor_sales'];
+      allow create: if isSignedIn() && isValidAppState(docId, request.resource.data);
+      allow update: if isSignedIn() && isValidAppState(docId, request.resource.data);
+      allow delete: if false; // Strictly forbid catastrophic root document deletion
+    }
+
+    // Granular visits collection (atomic per-visit documents)
     match /visits/{visitId} {
-      allow read, write: if true;
+      allow get: if isSignedIn() && visitId.size() > 0 && visitId.size() <= 128;
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidVisit(visitId, request.resource.data);
+      allow update: if isSignedIn() &&
+                       isValidVisit(visitId, request.resource.data) &&
+                       request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && visitId.size() > 0 && visitId.size() <= 128;
     }
 
     // Default deny for all other paths and arbitrary collections

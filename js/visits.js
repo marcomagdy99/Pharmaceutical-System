@@ -183,7 +183,7 @@ function isWorkdayExemptFromMinVisits(dateStr, repId) {
   }
 
   // 2. Official public holidays check
-  const holidays = (window.DEMO_DATA && window.DEMO_DATA.publicHolidays) || [];
+  const holidays = [...((window.DEMO_DATA && window.DEMO_DATA.publicHolidays) || [])];
   try {
     const cachedHolidays = localStorage.getItem("pharma_public_holidays");
     if (cachedHolidays) {
@@ -384,6 +384,11 @@ function triggerManualGpsCheck() {
 }
 
 function handlePinClinicLocation() {
+  const _pinRole = typeof window.normalizeRole === "function" ? window.normalizeRole(currentUser?.role) : String(currentUser?.role || "").toLowerCase();
+  if (!["admin", "business_unit", "line_manager", "district_manager", "medical_rep"].includes(_pinRole)) {
+    showToast("You do not have permission to pin clinic locations.", "warning");
+    return;
+  }
   const allDocs = getMockDoctors();
   const allHosps = getMockHospitals();
   const targetSelect = document.getElementById("visitTarget");
@@ -453,6 +458,11 @@ function closeRelocationModal() {
 }
 
 function submitRelocationRequest() {
+  const _relocRole = typeof window.normalizeRole === "function" ? window.normalizeRole(currentUser?.role) : String(currentUser?.role || "").toLowerCase();
+  if (!["admin", "business_unit", "line_manager", "district_manager", "medical_rep"].includes(_relocRole)) {
+    showToast("You do not have permission to submit relocation requests.", "warning");
+    return;
+  }
   const targetSelect = document.getElementById("visitTarget");
   const targetId = targetSelect ? targetSelect.value : null;
   const allDocs = getMockDoctors();
@@ -565,53 +575,143 @@ function updateAdminGpsButton() {
 // ============================================================================
 // Section 3: Active User Session & Role Scope
 // ============================================================================
-const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
+const currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
 
-const currentUserRole = window.normalizeRole
-  ? window.normalizeRole(currentUser.role)
-  : (currentUser.role || "medical_rep").toLowerCase();
+const currentUserRole = currentUser && currentUser.role
+  ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : String(currentUser.role).toLowerCase())
+  : "";
 
-const isManager =
-  (window.isManagerRole
-    ? window.isManagerRole(currentUser)
-    : currentUserRole !== "medical_rep") || currentUserRole === "hr";
+const isManager = Boolean(
+  currentUser &&
+    currentUser.id &&
+    ((window.isManagerRole
+      ? window.isManagerRole(currentUser)
+      : ["admin", "general_manager", "business_unit", "line_manager", "district_manager", "product_manager", "hr"].includes(currentUserRole)) ||
+      currentUserRole === "hr"),
+);
 
-function getReportingReps() {
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  if (currentUserRole === "admin" || currentUserRole === "hr") {
-    return allUsers.filter((u) =>
-      window.isRepRole
-        ? window.isRepRole(u)
-        : u.role === "medical_rep" || u.role === "rep",
+function _getUserEffectiveLineIds(userOrId) {
+  if (!userOrId) return [];
+  const uid = typeof userOrId === "object" ? userOrId.id : userOrId;
+  const userObj = typeof userOrId === "object"
+    ? userOrId
+    : (((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || [])).find((u) => u.id === uid) || null);
+  if (uid && typeof window.getUserLines === "function") {
+    const derived = window.getUserLines(uid);
+    if (Array.isArray(derived) && derived.length > 0) {
+      return Array.from(new Set(derived.map((l) => l.id).filter(Boolean)));
+    }
+  }
+  if (!userObj) return [];
+  const raw = Array.isArray(userObj.lineIds) && userObj.lineIds.length > 0
+    ? userObj.lineIds
+    : (userObj.lineId ? [userObj.lineId] : []);
+  return Array.from(new Set(raw.filter(Boolean)));
+}
+
+function _getLmTeamIds(lmId, allUsers) {
+  if (!lmId) return { dmIds: [], repIds: [], allIds: [] };
+  const usersList = Array.isArray(allUsers) ? allUsers : [];
+  const dmIds = usersList
+    .filter((u) => {
+      const r = window.normalizeRole ? window.normalizeRole(u.role) : String(u.role || "").toLowerCase();
+      return u.managerId === lmId && r === "district_manager";
+    })
+    .map((d) => d.id);
+  const directSubIds = usersList.filter((u) => u.managerId === lmId).map((u) => u.id);
+  const dmSubRepIds = usersList.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+  const repIds = Array.from(new Set([...directSubIds.filter((id) => !dmIds.includes(id)), ...dmSubRepIds]));
+  const allIds = Array.from(new Set([lmId, ...dmIds, ...repIds]));
+  return { dmIds, repIds, allIds };
+}
+
+function _isVacantAreaAuthorized(areaObj, user, role, allUsers) {
+  if (!areaObj || !user || !user.id) return false;
+  if (role === "admin" || role === "hr") return true;
+  if (role === "product_manager") {
+    const pmLines = _getUserEffectiveLineIds(user);
+    return Boolean(areaObj.lineId && pmLines.includes(areaObj.lineId));
+  }
+  const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(areaObj, allUsers) : null;
+  if (role === "general_manager") {
+    const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+    const subIds = new Set(downstream.map((s) => s.id));
+    return Boolean(
+      (areaObj.buId && subIds.has(areaObj.buId)) ||
+      (mgrId && (mgrId === user.id || subIds.has(mgrId))),
     );
   }
-  if (currentUserRole === "business_unit") {
-    const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
-    return downstream.filter((u) =>
-      window.isRepRole
-        ? window.isRepRole(u)
-        : u.role === "medical_rep" || u.role === "rep",
+  if (role === "business_unit") {
+    const buLines = _getUserEffectiveLineIds(user);
+    const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+    const subIds = new Set(downstream.map((s) => s.id));
+    return Boolean(
+      areaObj.buId === user.id ||
+      (mgrId && (mgrId === user.id || subIds.has(mgrId))) ||
+      (areaObj.lineId && buLines.includes(areaObj.lineId)),
     );
+  }
+  if (role === "line_manager") {
+    const lmLines = _getUserEffectiveLineIds(user);
+    const { allIds } = _getLmTeamIds(user.id, allUsers);
+    return Boolean(
+      areaObj.managerId === user.id ||
+      areaObj.lmId === user.id ||
+      (mgrId && allIds.includes(mgrId)) ||
+      (areaObj.lineId && lmLines.includes(areaObj.lineId)),
+    );
+  }
+  if (role === "district_manager") {
+    if (typeof window.isAreaManagedByDm === "function") {
+      return window.isAreaManagedByDm(areaObj, user.id, allUsers);
+    }
+    return Boolean(
+      mgrId === user.id ||
+      areaObj.dmId === user.id ||
+      areaObj.districtManagerId === user.id ||
+      (Array.isArray(user.areaIds) && user.areaIds.includes(areaObj.id)) ||
+      user.areaId === areaObj.id,
+    );
+  }
+  return false;
+}
+
+function _getLocalDateStr(dObj) {
+  const d = dObj || ((window.getSystemDate && window.getSystemDate()) || new Date());
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function getReportingReps() {
+  if (!currentUser || !currentUser.id) return [];
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const checkIsRep = (u) => window.isRepRole ? window.isRepRole(u) : (u.role === "medical_rep" || u.role === "rep");
+  if (currentUserRole === "admin" || currentUserRole === "hr") {
+    return allUsers.filter(checkIsRep);
+  }
+  if (currentUserRole === "business_unit" || currentUserRole === "general_manager") {
+    const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+    return downstream.filter(checkIsRep);
   }
   if (currentUserRole === "district_manager") {
     return allUsers.filter((u) => u.managerId === currentUser.id);
   }
   if (currentUserRole === "line_manager") {
-    const dms = allUsers
-      .filter((u) => u.managerId === currentUser.id)
-      .map((d) => d.id);
-    return allUsers.filter((u) => dms.includes(u.managerId));
+    const { repIds } = _getLmTeamIds(currentUser.id, allUsers);
+    return allUsers.filter((u) => repIds.includes(u.id));
   }
   if (currentUserRole === "product_manager") {
-    const pmLineId = currentUser?.lineId || (currentUser?.lineIds && currentUser?.lineIds[0]);
+    const pmLineIds = _getUserEffectiveLineIds(currentUser);
+    if (pmLineIds.length === 0) return [];
     return allUsers.filter((u) => {
-      const isRep = window.isRepRole ? window.isRepRole(u) : (u.role === "medical_rep" || u.role === "rep");
-      if (!isRep) return false;
-      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return pmLineId ? uLineIds.includes(pmLineId) : true;
+      if (!checkIsRep(u)) return false;
+      const uLineIds = _getUserEffectiveLineIds(u);
+      return uLineIds.some((lid) => pmLineIds.includes(lid));
     });
   }
-  return allUsers.filter((u) => u.id === currentUser.id);
+  if (checkIsRep(currentUser)) {
+    return allUsers.filter((u) => u.id === currentUser.id);
+  }
+  return [];
 }
 
 // ============================================================================
@@ -760,6 +860,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  ["timelineEventsContainer", "timelinePharmacyEventsContainer"].forEach((cid) => {
+    const cont = document.getElementById(cid);
+    if (!cont) return;
+    cont.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const vid = btn.dataset.visitId || "";
+      if (action === "showTimeline") {
+        renderVisitsTimeline(true);
+      } else if (action === "openCompleteModal" && vid) {
+        openCompleteModal(vid);
+      } else if (action === "openRescheduleModal" && vid && typeof openRescheduleModal === "function") {
+        openRescheduleModal(vid);
+      } else if (action === "confirmDeleteVisit" && vid) {
+        confirmDeleteVisit(vid);
+      }
+    });
+  });
+
   setupRoleBasedView();
   populateAreaFilters();
   renderVisitsTimeline(false);
@@ -845,7 +965,7 @@ function populateVisitsLineFilter() {
       filterLine.appendChild(opt);
     });
     filterLine.disabled = false;
-  } else {
+  } else if (currentUser && currentUser.id) {
     const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
 
     if (userLines.length > 1) {
@@ -876,6 +996,12 @@ function populateVisitsLineFilter() {
       filterLine.appendChild(opt);
       filterLine.disabled = true;
     }
+  } else {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No Line Assigned";
+    filterLine.appendChild(opt);
+    filterLine.disabled = true;
   }
 
   if (curVal && Array.from(filterLine.options).some((o) => o.value === curVal)) {
@@ -898,12 +1024,16 @@ function getAreaManagerId(area, allUsers = []) {
 function populateManagerRepDropdown(selectedLineId = "all") {
   const filterRep = document.getElementById("filterRep");
   if (!filterRep) return;
+  if (!currentUser || !currentUser.id) {
+    filterRep.replaceChildren();
+    filterRep.disabled = true;
+    return;
+  }
 
-
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
   const scopedTeam = window.getScopedTeamForLine
     ? window.getScopedTeamForLine(selectedLineId, currentUser)
-    : allUsers;
+    : [currentUser];
 
   filterRep.replaceChildren();
 
@@ -917,7 +1047,7 @@ function populateManagerRepDropdown(selectedLineId = "all") {
   filterRep.appendChild(optAll);
 
   // Self Option
-  if (isManager && !isAdmin) {
+  if (isManager && !isAdmin && currentUserRole !== "general_manager") {
     const optSelf = document.createElement("option");
     optSelf.value = currentUser.id;
     optSelf.textContent = `${currentUser.name} (My Visits)`;
@@ -926,15 +1056,9 @@ function populateManagerRepDropdown(selectedLineId = "all") {
 
   // Vacant Areas for managers and admin
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-  let vacantAreas = allAreas.filter((a) => !a.repId);
+  let vacantAreas = allAreas.filter((a) => !a.repId && _isVacantAreaAuthorized(a, currentUser, currentUserRole, allUsers));
   if (selectedLineId !== "all") {
     vacantAreas = vacantAreas.filter((a) => a.lineId === selectedLineId);
-  } else if (!isAdmin) {
-    const mgrLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
-    const mgrLineIds = mgrLines.map((l) => l.id);
-    if (mgrLineIds.length > 0) {
-      vacantAreas = vacantAreas.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
-    }
   }
 
   if (isDM) {
@@ -943,19 +1067,13 @@ function populateManagerRepDropdown(selectedLineId = "all") {
       (u) => u.id !== currentUser.id && (u.role === "medical_rep" || u.role === "rep")
     );
     const myVacantAreas = vacantAreas.filter((a) => {
+      if (typeof window.isAreaManagedByDm === "function") {
+        return window.isAreaManagedByDm(a, currentUser.id, allUsers);
+      }
       const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
       if (mgrId === currentUser.id || a.dmId === currentUser.id || a.districtManagerId === currentUser.id) return true;
       if (currentUser.areaIds && currentUser.areaIds.includes(a.id)) return true;
       if (currentUser.areaId && currentUser.areaId === a.id) return true;
-      if (!mgrId && !a.dmId && !a.districtManagerId && a.lineId) {
-        const dmsInLine = allUsers.filter((u) =>
-          (u.role === "district_manager" || u.role === "dm") &&
-          ((u.lineIds && u.lineIds.includes(a.lineId)) || u.lineId === a.lineId)
-        );
-        if (dmsInLine.length === 1 && dmsInLine[0].id === currentUser.id) {
-          return true;
-        }
-      }
       return false;
     });
 
@@ -1007,6 +1125,9 @@ function populateManagerRepDropdown(selectedLineId = "all") {
       dms.forEach((dm) => {
         const dmReps = reps.filter((r) => r.managerId === dm.id);
         const dmVacantAreas = vacantAreas.filter((a) => {
+          if (typeof window.isAreaManagedByDm === "function") {
+            return window.isAreaManagedByDm(a, dm.id, allUsers);
+          }
           const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
           return mgrId === dm.id;
         });
@@ -1204,7 +1325,7 @@ function getAvailableAreas() {
 
   if (filterRepVal.startsWith("vacant:")) {
     const vAreaId = filterRepVal.split(":")[1];
-    finalAreas = allAreas.filter((a) => a.id === vAreaId);
+    finalAreas = allAreas.filter((a) => a.id === vAreaId && _isVacantAreaAuthorized(a, activeUser, activeRole, allUsers));
   } else if (filterRepVal !== "all" && !filterRepVal.startsWith("all_")) {
     if (filterRepVal === activeUser.id) {
       let myDirectAreas = getRepAssignedAreas(activeUser.id);
@@ -1238,29 +1359,13 @@ function getAvailableAreas() {
       );
       dmAreas.push(...directDmAreas);
 
-      const vacantAreas = allAreas.filter((a) => {
-        if (a.repId) return false;
-        const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
-        if (mgrId === activeUser.id || a.dmId === activeUser.id || a.districtManagerId === activeUser.id) return true;
-        if (activeUser.areaIds && activeUser.areaIds.includes(a.id)) return true;
-        if (activeUser.areaId && activeUser.areaId === a.id) return true;
-        if (!mgrId && !a.dmId && !a.districtManagerId && a.lineId) {
-          const dmsInLine = allUsers.filter((u) =>
-            (u.role === "district_manager" || u.role === "dm") &&
-            ((u.lineIds && u.lineIds.includes(a.lineId)) || u.lineId === a.lineId)
-          );
-          if (dmsInLine.length === 1 && dmsInLine[0].id === activeUser.id) {
-            return true;
-          }
-        }
-        return false;
-      });
+      const vacantAreas = allAreas.filter((a) => !a.repId && _isVacantAreaAuthorized(a, activeUser, "district_manager", allUsers));
       dmAreas.push(...vacantAreas);
       finalAreas = dmAreas;
     } else if (activeRole === "line_manager" || activeRole === "lm") {
-      const myDMs = allUsers.filter((u) => u.managerId === activeUser.id && (u.role === "district_manager" || u.role === "dm"));
-      const myDmIds = myDMs.map((u) => u.id);
-      const myReps = allUsers.filter((u) => myDmIds.includes(u.managerId) || u.managerId === activeUser.id);
+      const { dmIds: myDmIds, repIds: myRepIds } = _getLmTeamIds(activeUser.id, allUsers);
+      const myDMs = allUsers.filter((u) => myDmIds.includes(u.id));
+      const myReps = allUsers.filter((u) => myRepIds.includes(u.id));
       let lmAreas = [];
       [...myDMs, ...myReps].forEach((u) => {
         lmAreas.push(...getRepAssignedAreas(u.id));
@@ -1273,36 +1378,25 @@ function getAvailableAreas() {
       );
       lmAreas.push(...directLmAreas);
 
-      const vacantAreas = allAreas.filter((a) => {
-        if (a.repId) return false;
-        const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
-        if (mgrId === activeUser.id || myDmIds.includes(mgrId)) return true;
-        if (!mgrId && !a.dmId && !a.districtManagerId) {
-          const userLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
-          return a.lineId && userLineIds.includes(a.lineId);
-        }
-        return false;
-      });
+      const vacantAreas = allAreas.filter((a) => !a.repId && _isVacantAreaAuthorized(a, activeUser, "line_manager", allUsers));
       lmAreas.push(...vacantAreas);
       finalAreas = lmAreas;
-    } else if (activeRole === "business_unit" || activeRole === "bu") {
+    } else if (activeRole === "business_unit" || activeRole === "bu" || activeRole === "general_manager" || activeRole === "gm") {
       const subordinates = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(activeUser.id) : [];
       let buAreas = [];
       subordinates.forEach((sub) => {
         buAreas.push(...getRepAssignedAreas(sub.id));
       });
-      const buLines = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
-      const lineAreas = allAreas.filter((a) => a.lineId && buLines.includes(a.lineId));
-      buAreas.push(...lineAreas);
+      const vacantAreas = allAreas.filter((a) => !a.repId && _isVacantAreaAuthorized(a, activeUser, activeRole === "general_manager" || activeRole === "gm" ? "general_manager" : "business_unit", allUsers));
+      buAreas.push(...vacantAreas);
       finalAreas = buAreas;
     } else if (activeRole === "product_manager" || activeRole === "pm") {
-      const pmLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
-      finalAreas = allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId));
+      const pmLineIds = _getUserEffectiveLineIds(activeUser);
+      finalAreas = pmLineIds.length > 0
+        ? allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId))
+        : [];
     } else {
-      const userLineIds = activeUser.lineIds || (activeUser.lineId ? [activeUser.lineId] : []);
-      if (userLineIds.length > 0) {
-        finalAreas = allAreas.filter((a) => a.lineId && userLineIds.includes(a.lineId));
-      }
+      finalAreas = [];
     }
   }
 
@@ -1390,29 +1484,33 @@ window.populateAreaFilters = populateAreaFilters;
 window.getAvailableAreas = getAvailableAreas;
 
 function getScopedVisits() {
-  let list = demoVisits;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  if (!currentUser || !currentUser.id) return [];
+  let list = getLiveVisits();
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const normRoleFn = (u) => (window.normalizeRole ? window.normalizeRole(u && u.role) : String((u && u.role) || "").toLowerCase());
+  const isRepUser = window.isRepRole ? window.isRepRole(currentUser) : currentUserRole === "medical_rep";
 
-  if (!isManager) {
+  if (!isManager || isRepUser) {
     list = list.filter(
-      (v) =>
-        v.repId === currentUser.id ||
-        v.doubleWithUserId === currentUser.id ||
-        (v.doubleWithUserName && v.doubleWithUserName.includes(currentUser.name)),
+      (v) => v.repId === currentUser.id || v.doubleWithUserId === currentUser.id,
     );
   } else if (document.getElementById("filterRep")?.value?.startsWith("vacant:")) {
     const vAreaId = document.getElementById("filterRep").value.split(":")[1];
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     const vArea = allAreas.find((a) => a.id === vAreaId);
-    const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
-    list = list.filter((v) => {
-      if (v.areaId) return v.areaId === vAreaId;
-      if (vNameLower && v.area && v.area.toLowerCase().trim() === vNameLower) {
-        if (vArea && vArea.lineId && v.lineId) return v.lineId === vArea.lineId;
-        return true;
-      }
-      return false;
-    });
+    if (!vArea || !_isVacantAreaAuthorized(vArea, currentUser, currentUserRole, allUsers)) {
+      list = [];
+    } else {
+      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
+      list = list.filter((v) => {
+        if (v.areaId) return v.areaId === vAreaId;
+        if (vNameLower && v.area && v.area.toLowerCase().trim() === vNameLower) {
+          if (vArea && vArea.lineId && v.lineId) return v.lineId === vArea.lineId;
+          return true;
+        }
+        return false;
+      });
+    }
   } else if (currentUserRole === "admin" || currentUserRole === "hr") {
     const selectedRepFilter =
       document.getElementById("filterRep")?.value || "all";
@@ -1420,21 +1518,21 @@ function getScopedVisits() {
       // Keep all
     } else if (selectedRepFilter === "all_lms") {
       const lmIds = allUsers
-        .filter((u) => u.role === "line_manager")
+        .filter((u) => normRoleFn(u) === "line_manager")
         .map((u) => u.id);
       list = list.filter(
         (v) => lmIds.includes(v.repId) || lmIds.includes(v.doubleWithUserId),
       );
     } else if (selectedRepFilter === "all_dms") {
       const dmIds = allUsers
-        .filter((u) => u.role === "district_manager")
+        .filter((u) => normRoleFn(u) === "district_manager")
         .map((u) => u.id);
       list = list.filter(
         (v) => dmIds.includes(v.repId) || dmIds.includes(v.doubleWithUserId),
       );
     } else if (selectedRepFilter === "all_reps") {
       const repIds = allUsers
-        .filter((u) => u.role === "medical_rep" || u.role === "rep")
+        .filter((u) => window.isRepRole ? window.isRepRole(u) : normRoleFn(u) === "medical_rep")
         .map((u) => u.id);
       list = list.filter((v) => repIds.includes(v.repId));
     } else {
@@ -1444,21 +1542,20 @@ function getScopedVisits() {
           v.doubleWithUserId === selectedRepFilter,
       );
     }
-  } else if (currentUserRole === "business_unit") {
-    const myLMs = allUsers.filter(
-      (u) => u.managerId === currentUser.id && (u.role === "line_manager" || u.role === "lm"),
-    );
-    const lmIds = myLMs.map((u) => u.id);
+  } else if (currentUserRole === "business_unit" || currentUserRole === "general_manager") {
     const myDownstream = window.getAllSubordinates
       ? window.getAllSubordinates(currentUser.id)
       : [];
+    const lmIds = myDownstream
+      .filter((u) => normRoleFn(u) === "line_manager")
+      .map((u) => u.id);
     const dmIds = myDownstream
-      .filter((u) => u.role === "district_manager" || u.role === "dm")
+      .filter((u) => normRoleFn(u) === "district_manager")
       .map((u) => u.id);
     const repIds = myDownstream
-      .filter((u) => u.role === "medical_rep" || u.role === "rep")
+      .filter((u) => window.isRepRole ? window.isRepRole(u) : normRoleFn(u) === "medical_rep")
       .map((u) => u.id);
-    const allAllowedSubordinateIds = [currentUser.id, ...lmIds, ...dmIds, ...repIds];
+    const allAllowedSubordinateIds = Array.from(new Set([currentUser.id, ...lmIds, ...dmIds, ...repIds, ...myDownstream.map((u) => u.id)]));
 
     const selectedRepFilter =
       document.getElementById("filterRep")?.value || "all";
@@ -1479,31 +1576,25 @@ function getScopedVisits() {
       );
     } else if (selectedRepFilter === "all_reps") {
       list = list.filter((v) => repIds.includes(v.repId));
-    } else {
+    } else if (allAllowedSubordinateIds.includes(selectedRepFilter)) {
       list = list.filter(
         (v) =>
           (v.repId === selectedRepFilter || v.doubleWithUserId === selectedRepFilter) &&
           (allAllowedSubordinateIds.includes(v.repId) || allAllowedSubordinateIds.includes(v.doubleWithUserId)),
       );
+    } else {
+      list = [];
     }
   } else if (currentUserRole === "line_manager") {
-    const dms = allUsers.filter(
-      (u) => u.managerId === currentUser.id && u.role === "district_manager",
-    );
-    const dmIds = dms.map((d) => d.id);
-    const reps = allUsers.filter((u) => dmIds.includes(u.managerId));
-    const repIds = reps.map((r) => r.id);
+    const { dmIds, repIds, allIds: allowedLmFilter } = _getLmTeamIds(currentUser.id, allUsers);
 
     const selectedFilter = document.getElementById("filterRep")?.value || "all";
 
     if (selectedFilter === "all") {
       list = list.filter(
         (v) =>
-          dmIds.includes(v.repId) ||
-          repIds.includes(v.repId) ||
-          v.repId === currentUser.id ||
-          dmIds.includes(v.doubleWithUserId) ||
-          v.doubleWithUserId === currentUser.id,
+          allowedLmFilter.includes(v.repId) ||
+          allowedLmFilter.includes(v.doubleWithUserId),
       );
     } else if (selectedFilter === "all_dms") {
       list = list.filter(
@@ -1511,37 +1602,42 @@ function getScopedVisits() {
       );
     } else if (selectedFilter === "all_reps") {
       list = list.filter((v) => repIds.includes(v.repId));
-    } else {
-      const allowedLmFilter = [...dmIds, ...repIds, currentUser.id];
+    } else if (allowedLmFilter.includes(selectedFilter)) {
       list = list.filter(
-        (v) =>
-          (v.repId === selectedFilter || v.doubleWithUserId === selectedFilter) &&
-          allowedLmFilter.includes(selectedFilter),
+        (v) => v.repId === selectedFilter || v.doubleWithUserId === selectedFilter,
       );
+    } else {
+      list = [];
     }
   } else if (currentUserRole === "product_manager") {
-    const pmLineId = currentUser?.lineId || (currentUser?.lineIds && currentUser?.lineIds[0]);
-    const lineUsers = allUsers.filter((u) => {
-      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return pmLineId ? uLineIds.includes(pmLineId) : false;
-    });
-    const lineUserIds = lineUsers.map((u) => u.id);
-    lineUserIds.push(currentUser.id);
-
-    const selectedRepFilter = document.getElementById("filterRep")?.value || "all";
-    if (selectedRepFilter === "all") {
-      list = list.filter(
-        (v) => lineUserIds.includes(v.repId) || lineUserIds.includes(v.doubleWithUserId),
-      );
+    const pmLineIds = _getUserEffectiveLineIds(currentUser);
+    if (pmLineIds.length === 0) {
+      list = [];
     } else {
-      list = list.filter(
-        (v) =>
-          (v.repId === selectedRepFilter || v.doubleWithUserId === selectedRepFilter) &&
-          lineUserIds.includes(selectedRepFilter),
-      );
+      const lineUsers = allUsers.filter((u) => {
+        const uLineIds = _getUserEffectiveLineIds(u);
+        return uLineIds.some((lid) => pmLineIds.includes(lid));
+      });
+      const lineUserIds = Array.from(new Set([...lineUsers.map((u) => u.id), currentUser.id]));
+
+      const selectedRepFilter = document.getElementById("filterRep")?.value || "all";
+      if (selectedRepFilter === "all") {
+        list = list.filter(
+          (v) => (lineUserIds.includes(v.repId) || lineUserIds.includes(v.doubleWithUserId)) &&
+                 (!v.lineId || pmLineIds.includes(v.lineId)),
+        );
+      } else if (lineUserIds.includes(selectedRepFilter)) {
+        list = list.filter(
+          (v) => (v.repId === selectedRepFilter || v.doubleWithUserId === selectedRepFilter) &&
+                 (!v.lineId || pmLineIds.includes(v.lineId)),
+        );
+      } else {
+        list = [];
+      }
     }
-  } else {
+  } else if (currentUserRole === "district_manager") {
     const myRepsIds = getReportingReps().map((r) => r.id);
+    const allowedDmFilter = [...myRepsIds, currentUser.id];
     const selectedRepFilter =
       document.getElementById("filterRep")?.value || "all";
 
@@ -1557,15 +1653,18 @@ function getScopedVisits() {
         (v) =>
           v.repId === currentUser.id || v.doubleWithUserId === currentUser.id,
       );
-    } else {
-      const allowedDmFilter = [...myRepsIds, currentUser.id];
+    } else if (allowedDmFilter.includes(selectedRepFilter)) {
       list = list.filter(
         (v) =>
-          (v.repId === selectedRepFilter ||
-          v.doubleWithUserId === selectedRepFilter) &&
-          allowedDmFilter.includes(selectedRepFilter),
+          v.repId === selectedRepFilter ||
+          v.doubleWithUserId === selectedRepFilter,
       );
+    } else {
+      list = [];
     }
+  } else {
+    // Unknown role: Fail-Closed
+    list = [];
   }
 
   // Filter visits strictly by the selected Product Line if specific line is selected
@@ -1629,10 +1728,11 @@ window.updateVisitModalDayDisplay = updateVisitModalDayDisplay;
 function isSameDayVisit(v) {
   if (!v) return false;
 
-  const now = new Date();
-  const realToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
+  const realToday = _getLocalDateStr(now);
   const currentSysDate =
-    typeof todayStr !== "undefined" && todayStr ? todayStr : realToday;
+    (typeof window.getSystemTodayStr === "function" && window.getSystemTodayStr()) ||
+    (typeof todayStr !== "undefined" && todayStr ? todayStr : realToday);
 
   let visitEntryDate = v.entryDate || "";
   if (!visitEntryDate && v.createdAt) {
@@ -1660,7 +1760,7 @@ function isPlanApproved(v) {
 }
 
 function canDeleteVisit(v) {
-  if (!v || !currentUser) return false;
+  if (!v || !currentUser || !currentUser.id) return false;
 
   if (currentUserRole === "admin" || currentUserRole === "hr") return true;
 
@@ -1724,7 +1824,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
         <p class="timeline-prompt-sub" data-i18n="promptSelectDateSub">
           ${trans.promptSelectDateSub || "Choose your desired date and filters above, then click the Show button to load the daily visits timeline."}
         </p>
-        <button type="button" class="btn btn-primary timeline-show-btn" onclick="renderVisitsTimeline(true)">
+        <button type="button" class="btn btn-primary timeline-show-btn" data-action="showTimeline">
           <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span data-i18n="btnShow">${trans.btnShow || "Show"}</span>
         </button>
       </div>
@@ -1829,21 +1929,75 @@ function renderVisitsTimeline(triggeredByShow = false) {
 
   if (shouldIncludeActivities) {
     let targetActUserIds = [];
-    if (!isManager) {
+    const normRoleFn = (u) => (window.normalizeRole ? window.normalizeRole(u && u.role) : String((u && u.role) || "").toLowerCase());
+    const isRepUser = currentUser && currentUser.id && (window.isRepRole ? window.isRepRole(currentUser) : currentUserRole === "medical_rep");
+
+    if (!currentUser || !currentUser.id) {
+      targetActUserIds = [];
+    } else if (!isManager || isRepUser) {
       targetActUserIds = [currentUser.id];
-    } else if (selectedRepFilter && selectedRepFilter !== "all") {
-      targetActUserIds = [selectedRepFilter];
     } else {
-      targetActUserIds = allUsers.map((u) => u.id);
-      if (!targetActUserIds.includes(currentUser.id)) targetActUserIds.push(currentUser.id);
+      // Build authorized team ID set based on role (Fail-Closed)
+      let allowedActSet = new Set();
+      if (currentUserRole === "admin" || currentUserRole === "hr") {
+        allowedActSet = new Set(allUsers.map((u) => u.id));
+        allowedActSet.add(currentUser.id);
+      } else if (currentUserRole === "business_unit" || currentUserRole === "general_manager") {
+        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+        allowedActSet = new Set([currentUser.id, ...downstream.map((u) => u.id)]);
+      } else if (currentUserRole === "line_manager") {
+        const { allIds } = _getLmTeamIds(currentUser.id, allUsers);
+        allowedActSet = new Set(allIds);
+      } else if (currentUserRole === "district_manager") {
+        const dmReps = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+        allowedActSet = new Set([currentUser.id, ...dmReps]);
+      } else if (currentUserRole === "product_manager") {
+        const pmLineIds = _getUserEffectiveLineIds(currentUser);
+        if (pmLineIds.length > 0) {
+          allUsers.forEach((u) => {
+            if (_getUserEffectiveLineIds(u).some((lid) => pmLineIds.includes(lid))) {
+              allowedActSet.add(u.id);
+            }
+          });
+          allowedActSet.add(currentUser.id);
+        }
+      }
+
+      if (selectedRepFilter && selectedRepFilter.startsWith("vacant:")) {
+        targetActUserIds = [];
+      } else if (selectedRepFilter === "all_lms") {
+        targetActUserIds = allUsers
+          .filter((u) => allowedActSet.has(u.id) && normRoleFn(u) === "line_manager")
+          .map((u) => u.id);
+      } else if (selectedRepFilter === "all_dms") {
+        targetActUserIds = allUsers
+          .filter((u) => allowedActSet.has(u.id) && normRoleFn(u) === "district_manager")
+          .map((u) => u.id);
+      } else if (selectedRepFilter === "all_reps") {
+        targetActUserIds = allUsers
+          .filter((u) => allowedActSet.has(u.id) && (window.isRepRole ? window.isRepRole(u) : normRoleFn(u) === "medical_rep"))
+          .map((u) => u.id);
+      } else if (selectedRepFilter && selectedRepFilter !== "all") {
+        targetActUserIds = allowedActSet.has(selectedRepFilter) ? [selectedRepFilter] : [];
+      } else {
+        targetActUserIds = Array.from(allowedActSet);
+      }
+
+      const filterLineVal = document.getElementById("filterLine")?.value || "all";
+      if (filterLineVal && filterLineVal !== "all") {
+        targetActUserIds = targetActUserIds.filter((uid) => _getUserEffectiveLineIds(uid).includes(filterLineVal));
+      }
     }
 
     targetActUserIds.forEach((uId) => {
       let userActs = {};
       try {
-        const raw = localStorage.getItem(`pharma_activities_data_${uId}`) ||
-          (uId === "u1790626000001" ? localStorage.getItem("pharma_activities_data") : null);
-        if (raw) userActs = JSON.parse(raw);
+        if (window.store && window.store.activities && typeof window.store.activities.getAllForUser === "function") {
+          userActs = window.store.activities.getAllForUser(uId) || {};
+        } else {
+          const raw = localStorage.getItem(`pharma_activities_data_${uId}`);
+          if (raw) userActs = JSON.parse(raw);
+        }
       } catch (e) {}
 
       const dayActs = userActs[selectedDate] || {};
@@ -2121,15 +2275,15 @@ function renderVisitsTimeline(triggeredByShow = false) {
           (!isManager || v.repId === currentUser.id)
             ? `
           <div class="timeline-card-actions">
-            <button type="button" class="btn btn-primary btn-timeline-complete" onclick="openCompleteModal('${v.id}')">
+            <button type="button" class="btn btn-primary btn-timeline-complete" data-action="openCompleteModal" data-visit-id="${window.escapeHtml(v.id)}">
               <svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${trans.btnComplete}
             </button>
-            <button type="button" class="btn btn-timeline-reschedule" onclick="openRescheduleModal('${v.id}')">
+            <button type="button" class="btn btn-timeline-reschedule" data-action="openRescheduleModal" data-visit-id="${window.escapeHtml(v.id)}">
               <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reschedule
             </button>
             ${
               canDeleteVisit(v)
-                ? `<button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> ${trans.btnDelete}</button>`
+                ? `<button type="button" class="btn-outline-danger btn-timeline-danger" data-action="confirmDeleteVisit" data-visit-id="${window.escapeHtml(v.id)}"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> ${trans.btnDelete}</button>`
                 : ""
             }
           </div>
@@ -2137,7 +2291,7 @@ function renderVisitsTimeline(triggeredByShow = false) {
             : !isActivity && canDeleteVisit(v)
               ? `
           <div class="timeline-card-actions">
-            <button type="button" class="btn-outline-danger btn-timeline-danger" onclick="confirmDeleteVisit('${v.id}')"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> ${trans.btnDelete}</button>
+            <button type="button" class="btn-outline-danger btn-timeline-danger" data-action="confirmDeleteVisit" data-visit-id="${window.escapeHtml(v.id)}"><svg class="btn-svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> ${trans.btnDelete}</button>
           </div>
         `
               : ""
@@ -2228,11 +2382,13 @@ function populateVisitProducts(selectedProducts = [], targetRepId = null) {
   if (repLines.length > 0) {
     const allowedLineIds = repLines.map((l) => l.id);
     linesToShow = allLines.filter((l) => allowedLineIds.includes(l.id));
-  } else if (currentUser && role !== "admin") {
+  } else if (!currentUser || !currentUser.id) {
+    linesToShow = [];
+  } else if (role !== "admin" && role !== "hr") {
     const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
     if (userLines.length > 0) {
       linesToShow = userLines;
-    } else if (["business_unit", "line_manager", "district_manager", "medical_rep", "rep"].includes(role)) {
+    } else {
       linesToShow = [];
     }
   }
@@ -2278,77 +2434,89 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
   const container = document.getElementById("visitManagersGroup");
   if (!container) return;
   container.replaceChildren();
+  if (!currentUser || !currentUser.id) return;
 
-  const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const effectiveId = targetId || currentUser.id || "u1790626000001";
+  const users = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const effectiveId = targetId || currentUser.id;
   let candidates = [];
 
-  const currentUserObj = users.find((u) => u.id === currentUser.id);
+  const currentUserObj = users.find((u) => u.id === currentUser.id) || currentUser;
   const role = currentUserRole;
+  const normRoleFn = (u) => (window.normalizeRole ? window.normalizeRole(u && u.role) : String((u && u.role) || "").toLowerCase());
 
   if (role === "product_manager") {
-    // Product Manager double visits: LMs, DMs, and BU of the PM's line
-    const pmLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
-    const lmsInLine = users.filter((u) => {
-      if (u.role !== "line_manager") return false;
-      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return pmLineId ? uLineIds.includes(pmLineId) : true;
-    });
-    const buManagerIds = lmsInLine.map((lm) => lm.managerId).filter(Boolean);
+    // Product Manager double visits: LMs, DMs, Reps, and BU of the PM's lines (Fail-Closed if 0 lines)
+    const pmLineIds = _getUserEffectiveLineIds(currentUserObj);
+    if (pmLineIds.length > 0) {
+      const lmsInLine = users.filter((u) => {
+        if (normRoleFn(u) !== "line_manager") return false;
+        const uLineIds = _getUserEffectiveLineIds(u);
+        return uLineIds.some((lid) => pmLineIds.includes(lid));
+      });
+      const buManagerIds = lmsInLine.map((lm) => lm.managerId).filter(Boolean);
 
+      candidates = users.filter((u) => {
+        if (u.id === currentUser.id || u.status === "Inactive") return false;
+        const uRole = normRoleFn(u);
+        const uLineIds = _getUserEffectiveLineIds(u);
+        const matchesLine = uLineIds.some((lid) => pmLineIds.includes(lid));
+
+        if (uRole === "line_manager" || uRole === "district_manager" || uRole === "medical_rep") {
+          return matchesLine;
+        }
+        if (uRole === "business_unit") {
+          return matchesLine || buManagerIds.includes(u.id);
+        }
+        return false;
+      });
+    }
+  } else if (role === "business_unit") {
+    const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+    const subIds = new Set(subs.map((s) => s.id));
+    const buLineIds = _getUserEffectiveLineIds(currentUser);
     candidates = users.filter((u) => {
-      if (u.id === currentUser.id || u.status === "Inactive") return false;
-      const uRole = u.role;
-      const uLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      const matchesLine = pmLineId ? uLineIds.includes(pmLineId) : true;
-
-      if (uRole === "line_manager" || uRole === "district_manager" || uRole === "medical_rep" || uRole === "rep") {
-        return matchesLine;
-      }
-      if (uRole === "business_unit") {
-        return matchesLine || buManagerIds.includes(u.id);
+      if (u.id === currentUser.id || u.id === effectiveId || u.status === "Inactive") return false;
+      const uRole = normRoleFn(u);
+      if (uRole === "line_manager" || uRole === "district_manager") return subIds.has(u.id);
+      if (uRole === "product_manager") {
+        const uLineIds = _getUserEffectiveLineIds(u);
+        return buLineIds.length > 0 && uLineIds.some((lid) => buLineIds.includes(lid));
       }
       return false;
     });
-  } else if (role === "business_unit") {
-    candidates = users.filter(
-      (u) =>
-        u.id !== currentUser.id &&
-        u.id !== effectiveId &&
-        u.status !== "Inactive" &&
-        (u.role === "line_manager" || u.role === "district_manager" || u.role === "product_manager"),
-    );
+  } else if (role === "general_manager") {
+    const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
+    candidates = subs.filter((u) => u.id !== currentUser.id && u.id !== effectiveId && u.status !== "Inactive");
   } else if (role === "admin" || role === "hr") {
     candidates = users.filter(
       (u) =>
         u.id !== currentUser.id &&
         u.id !== effectiveId &&
         u.status !== "Inactive" &&
-        u.role !== "admin" &&
-        u.role !== "hr",
+        !["admin", "hr"].includes(normRoleFn(u)),
     );
   } else if (role === "line_manager") {
     const dms = users.filter(
-      (u) => u.managerId === currentUser.id && u.role === "district_manager",
+      (u) => u.managerId === currentUser.id && normRoleFn(u) === "district_manager",
     );
     let chain = [];
     if (typeof window.getManagerChain === "function") {
       chain = window.getManagerChain(currentUser.id);
     }
     const higherManagers = chain.filter(
-      (u) => u.role === "business_unit",
+      (u) => normRoleFn(u) === "business_unit" || normRoleFn(u) === "general_manager",
     );
-    const lmLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const lmLineIds = _getUserEffectiveLineIds(currentUserObj);
     const linePMs = users.filter((u) => {
-      if (u.status === "Inactive" || u.role !== "product_manager" || u.id === currentUser.id) return false;
-      const pmLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return lmLineId && pmLineIds.length > 0 ? pmLineIds.includes(lmLineId) : true;
+      if (u.status === "Inactive" || normRoleFn(u) !== "product_manager" || u.id === currentUser.id) return false;
+      const pmLineIds = _getUserEffectiveLineIds(u);
+      return lmLineIds.length > 0 && pmLineIds.some((lid) => lmLineIds.includes(lid));
     });
     candidates = [...dms, ...higherManagers, ...linePMs].filter(
       (u, idx, arr) =>
         u.id !== currentUser.id &&
         u.status !== "Inactive" &&
-        u.role !== "admin" &&
+        normRoleFn(u) !== "admin" &&
         arr.findIndex((x) => x.id === u.id) === idx,
     );
   } else if (role === "district_manager") {
@@ -2357,18 +2525,17 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
     if (typeof window.getManagerChain === "function") {
       chain = window.getManagerChain(currentUser.id);
     }
-    const dmLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const dmLineIds = _getUserEffectiveLineIds(currentUserObj);
     const linePMs = users.filter((u) => {
-      if (u.status === "Inactive" || u.role !== "product_manager" || u.id === currentUser.id) return false;
-      const pmLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return dmLineId && pmLineIds.length > 0 ? pmLineIds.includes(dmLineId) : true;
+      if (u.status === "Inactive" || normRoleFn(u) !== "product_manager" || u.id === currentUser.id) return false;
+      const pmLineIds = _getUserEffectiveLineIds(u);
+      return dmLineIds.length > 0 && pmLineIds.some((lid) => dmLineIds.includes(lid));
     });
     candidates = [...myReps, ...chain, ...linePMs].filter(
       (u, idx, arr) =>
         u.id !== currentUser.id &&
         u.status !== "Inactive" &&
-        u.role !== "admin" &&
-        u.role !== "hr" &&
+        !["admin", "hr"].includes(normRoleFn(u)) &&
         arr.findIndex((x) => x.id === u.id) === idx,
     );
   } else {
@@ -2382,19 +2549,18 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
         if (curr) chain.push(curr);
       }
     }
-    const repLineId = currentUserObj?.lineId || (currentUserObj?.lineIds && currentUserObj?.lineIds[0]);
+    const repLineIds = _getUserEffectiveLineIds(currentUserObj);
     const linePMs = users.filter((u) => {
-      if (u.status === "Inactive" || u.role !== "product_manager" || u.id === currentUser.id || u.id === effectiveId) return false;
-      const pmLineIds = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return repLineId && pmLineIds.length > 0 ? pmLineIds.includes(repLineId) : true;
+      if (u.status === "Inactive" || normRoleFn(u) !== "product_manager" || u.id === currentUser.id || u.id === effectiveId) return false;
+      const pmLineIds = _getUserEffectiveLineIds(u);
+      return repLineIds.length > 0 && pmLineIds.some((lid) => repLineIds.includes(lid));
     });
     candidates = [...chain, ...linePMs].filter(
       (u, idx, arr) =>
         u.status !== "Inactive" &&
         u.id !== effectiveId &&
         u.id !== currentUser.id &&
-        u.role !== "admin" &&
-        u.role !== "hr" &&
+        !["admin", "hr"].includes(normRoleFn(u)) &&
         arr.findIndex((x) => x.id === u.id) === idx,
     );
   }
@@ -2431,6 +2597,13 @@ function populateVisitCompanions(targetId, selectedCompanions = []) {
 }
 
 function openVisitModal(isActual = false) {
+  const _allowedLogRoles = ["admin", "business_unit", "line_manager", "district_manager", "medical_rep"];
+  if (!currentUser || !currentUser.id || !_allowedLogRoles.includes(currentUserRole)) {
+    if (typeof showToast === "function") {
+      showToast("Permission Denied: You do not have permission to log or plan visits.", "error");
+    }
+    return;
+  }
   currentEditVisitId = null;
 
   // 1. Immediately open modal so user gets instant visual response
@@ -2471,7 +2644,7 @@ function openVisitModal(isActual = false) {
     }
   }
 
-  const now = new Date();
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   const timeInput = document.getElementById("visitTime");
   if (timeInput) {
     timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -2485,7 +2658,7 @@ function openVisitModal(isActual = false) {
   const insTimeEl = document.getElementById("visitInsertionTimeDisplay");
   if (insertionMeta) {
     insertionMeta.style.display = "block";
-    const curDate = now.toISOString().slice(0, 10);
+    const curDate = _getLocalDateStr(now);
     const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     if (insDateEl) insDateEl.innerText = `${curDate} (Auto on Save)`;
     if (insTimeEl) insTimeEl.innerText = `${curTime} (Auto on Save)`;
@@ -2629,8 +2802,11 @@ function setupModalTargetFilter() {
       dmVacant = dmVacant.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
     }
     const myVacantAreas = dmVacant.filter((a) => {
+      if (typeof window.isAreaManagedByDm === "function") {
+        return window.isAreaManagedByDm(a, currentUser.id, allUsers);
+      }
       const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
-      return mgrId === currentUser.id || (!mgrId && (!a.lineId || mgrLineIds.includes(a.lineId)));
+      return mgrId === currentUser.id;
     });
     myVacantAreas.forEach((va) => {
       const opt = document.createElement("option");
@@ -2702,6 +2878,9 @@ function setupModalTargetFilter() {
       });
 
       const dmVacant = lmVacant.filter((a) => {
+        if (typeof window.isAreaManagedByDm === "function") {
+          return window.isAreaManagedByDm(a, dm.id, allUsers);
+        }
         const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
         return mgrId === dm.id;
       });
@@ -2723,7 +2902,7 @@ function setupModalTargetFilter() {
       opt.textContent = `[Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
       filterSelect.appendChild(opt);
     });
-  } else if (role === "business_unit" || role === "admin") {
+  } else if (role === "business_unit" || role === "admin" || role === "general_manager") {
     if (filterLabel) {
       filterLabel.textContent = "Filter Doctors by Manager (LM / DM):";
     }
@@ -2731,22 +2910,28 @@ function setupModalTargetFilter() {
     filterSelect.appendChild(allOpt);
 
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-    let buVacant = allAreas.filter((a) => !a.repId);
+    let buVacant = allAreas.filter((a) => !a.repId && _isVacantAreaAuthorized(a, currentUser, role, allUsers));
     if (activeLineId !== "all") {
       buVacant = buVacant.filter((a) => a.lineId === activeLineId);
-    } else if (role !== "admin") {
-      const mgrLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
-      const mgrLineIds = mgrLines.map((l) => l.id);
-      if (mgrLineIds.length > 0) {
-        buVacant = buVacant.filter((a) => !a.lineId || mgrLineIds.includes(a.lineId));
-      }
     }
+
+    const gmDownstream = role === "general_manager" && typeof window.getAllSubordinates === "function"
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    const gmDownstreamIds = new Set(gmDownstream.map((u) => u.id));
 
     let lms =
       role === "business_unit"
         ? allUsers.filter(
             (u) =>
               u.managerId === currentUser.id &&
+              u.role === "line_manager" &&
+              u.status !== "Inactive",
+          )
+        : role === "general_manager"
+        ? allUsers.filter(
+            (u) =>
+              gmDownstreamIds.has(u.id) &&
               u.role === "line_manager" &&
               u.status !== "Inactive",
           )
@@ -2787,6 +2972,13 @@ function setupModalTargetFilter() {
               u.role === "district_manager" &&
               u.status !== "Inactive",
           )
+        : role === "general_manager"
+        ? allUsers.filter(
+            (u) =>
+              gmDownstreamIds.has(u.id) &&
+              u.role === "district_manager" &&
+              u.status !== "Inactive",
+          )
         : allUsers.filter(
             (u) => u.role === "district_manager" && u.status !== "Inactive",
           );
@@ -2816,6 +3008,9 @@ function setupModalTargetFilter() {
         dmGrp.appendChild(opt);
 
         const dmVacant = buVacant.filter((a) => {
+          if (typeof window.isAreaManagedByDm === "function") {
+            return window.isAreaManagedByDm(a, dm.id, allUsers);
+          }
           const mgrId = typeof getAreaManagerId === "function" ? getAreaManagerId(a, allUsers) : null;
           return mgrId === dm.id;
         });
@@ -2851,84 +3046,82 @@ function setupModalTargetFilter() {
     allOpt.textContent = "All Line Targets";
     filterSelect.appendChild(allOpt);
 
-    const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
-    const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
-    const effectiveLines = (activeLineId !== "all") ? [activeLineId] : pmLineIds;
+    const currentUserObj = allUsers.find((u) => u.id === currentUser.id) || currentUser;
+    const pmLineIds = _getUserEffectiveLineIds(currentUserObj);
+    const effectiveLines = (activeLineId !== "all")
+      ? (pmLineIds.includes(activeLineId) ? [activeLineId] : [])
+      : pmLineIds;
+    const normRoleFn = (u) => (window.normalizeRole ? window.normalizeRole(u && u.role) : String((u && u.role) || "").toLowerCase());
 
-    // 1. Line Managers in PM's line
-    const lineLMs = allUsers.filter((u) => {
-      if (u.status === "Inactive" || (u.role !== "line_manager" && u.role !== "lm")) return false;
-      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return effectiveLines.length > 0 ? uLines.some((l) => effectiveLines.includes(l)) : true;
-    });
-    if (lineLMs.length > 0) {
-      const lmGrp = document.createElement("optgroup");
-      lmGrp.label = "Line Managers (LMs)";
-      lineLMs.forEach((lm) => {
-        const lmName = lm.name;
-        const opt = document.createElement("option");
-        opt.value = `lm:${lm.id}`;
-        opt.textContent = `${lmName} (LM)`;
-        lmGrp.appendChild(opt);
-      });
-      filterSelect.appendChild(lmGrp);
-    }
-
-    // 2. District Managers in PM's line
-    const lineDMs = allUsers.filter((u) => {
-      if (u.status === "Inactive" || (u.role !== "district_manager" && u.role !== "dm")) return false;
-      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return effectiveLines.length > 0 ? uLines.some((l) => effectiveLines.includes(l)) : true;
-    });
-    if (lineDMs.length > 0) {
-      const dmGrp = document.createElement("optgroup");
-      dmGrp.label = "District Managers (DMs)";
-      lineDMs.forEach((dm) => {
-        const dmName = dm.name;
-        const opt = document.createElement("option");
-        opt.value = `dm:${dm.id}`;
-        opt.textContent = `${dmName} (DM)`;
-        dmGrp.appendChild(opt);
-      });
-      filterSelect.appendChild(dmGrp);
-    }
-
-    // 3. Medical Reps in PM's line
-    const lineReps = allUsers.filter((u) => {
-      if (u.status === "Inactive" || (u.role !== "medical_rep" && u.role !== "rep")) return false;
-      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return effectiveLines.length > 0 ? uLines.some((l) => effectiveLines.includes(l)) : true;
-    });
-    if (lineReps.length > 0) {
-      const repGrp = document.createElement("optgroup");
-      repGrp.label = "Medical Reps";
-      lineReps.forEach((rep) => {
-        const repName = rep.name;
-        const opt = document.createElement("option");
-        opt.value = `rep:${rep.id}`;
-        opt.textContent = repName;
-        repGrp.appendChild(opt);
-      });
-      filterSelect.appendChild(repGrp);
-    }
-
-    // 4. Vacant areas in PM's line
-    const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
-    let pmVacant = allAreas.filter((a) => !a.repId);
     if (effectiveLines.length > 0) {
-      pmVacant = pmVacant.filter((a) => !a.lineId || effectiveLines.includes(a.lineId));
-    }
-    if (pmVacant.length > 0) {
-      const vaGrp = document.createElement("optgroup");
-      vaGrp.label = "Vacant Areas";
-      pmVacant.forEach((va) => {
-        const vaName = va.name;
-        const vaOpt = document.createElement("option");
-        vaOpt.value = `vacant:${va.id}`;
-        vaOpt.textContent = `[Vacant] ${vaName}${va.code ? ' (' + va.code + ')' : ''}`;
-        vaGrp.appendChild(vaOpt);
+      // 1. Line Managers in PM's line
+      const lineLMs = allUsers.filter((u) => {
+        if (u.status === "Inactive" || normRoleFn(u) !== "line_manager") return false;
+        const uLines = _getUserEffectiveLineIds(u);
+        return uLines.some((l) => effectiveLines.includes(l));
       });
-      filterSelect.appendChild(vaGrp);
+      if (lineLMs.length > 0) {
+        const lmGrp = document.createElement("optgroup");
+        lmGrp.label = "Line Managers (LMs)";
+        lineLMs.forEach((lm) => {
+          const opt = document.createElement("option");
+          opt.value = `lm:${lm.id}`;
+          opt.textContent = `${lm.name} (LM)`;
+          lmGrp.appendChild(opt);
+        });
+        filterSelect.appendChild(lmGrp);
+      }
+
+      // 2. District Managers in PM's line
+      const lineDMs = allUsers.filter((u) => {
+        if (u.status === "Inactive" || normRoleFn(u) !== "district_manager") return false;
+        const uLines = _getUserEffectiveLineIds(u);
+        return uLines.some((l) => effectiveLines.includes(l));
+      });
+      if (lineDMs.length > 0) {
+        const dmGrp = document.createElement("optgroup");
+        dmGrp.label = "District Managers (DMs)";
+        lineDMs.forEach((dm) => {
+          const opt = document.createElement("option");
+          opt.value = `dm:${dm.id}`;
+          opt.textContent = `${dm.name} (DM)`;
+          dmGrp.appendChild(opt);
+        });
+        filterSelect.appendChild(dmGrp);
+      }
+
+      // 3. Medical Reps in PM's line
+      const lineReps = allUsers.filter((u) => {
+        if (u.status === "Inactive" || !(window.isRepRole ? window.isRepRole(u) : normRoleFn(u) === "medical_rep")) return false;
+        const uLines = _getUserEffectiveLineIds(u);
+        return uLines.some((l) => effectiveLines.includes(l));
+      });
+      if (lineReps.length > 0) {
+        const repGrp = document.createElement("optgroup");
+        repGrp.label = "Medical Reps";
+        lineReps.forEach((rep) => {
+          const opt = document.createElement("option");
+          opt.value = `rep:${rep.id}`;
+          opt.textContent = rep.name;
+          repGrp.appendChild(opt);
+        });
+        filterSelect.appendChild(repGrp);
+      }
+
+      // 4. Vacant areas in PM's line
+      const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+      const pmVacant = allAreas.filter((a) => !a.repId && a.lineId && effectiveLines.includes(a.lineId));
+      if (pmVacant.length > 0) {
+        const vaGrp = document.createElement("optgroup");
+        vaGrp.label = "Vacant Areas";
+        pmVacant.forEach((va) => {
+          const vaOpt = document.createElement("option");
+          vaOpt.value = `vacant:${va.id}`;
+          vaOpt.textContent = `[Vacant] ${va.name}${va.code ? ' (' + va.code + ')' : ''}`;
+          vaGrp.appendChild(vaOpt);
+        });
+        filterSelect.appendChild(vaGrp);
+      }
     }
   }
 }
@@ -2958,103 +3151,127 @@ function updateTargetOptions() {
   const filterSelect = document.getElementById("modalTargetFilterSelect");
   if (!targetSelect) return;
   targetSelect.replaceChildren();
+  if (!currentUser || !currentUser.id) {
+    if (filterContainer) filterContainer.style.display = "none";
+    const emptyOpt = document.createElement("option");
+    emptyOpt.value = "";
+    emptyOpt.textContent = "-- No targets found --";
+    emptyOpt.disabled = true;
+    emptyOpt.selected = true;
+    targetSelect.appendChild(emptyOpt);
+    return;
+  }
 
   const role = window.normalizeRole
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
-  const isManager = [
+  const isModalManager = [
     "district_manager",
     "line_manager",
     "business_unit",
     "product_manager",
+    "general_manager",
     "admin",
   ].includes(role);
 
   if (filterContainer) {
-    filterContainer.style.display = isManager ? "block" : "none";
+    filterContainer.style.display = isModalManager ? "block" : "none";
   }
 
   const allUsers =
     (window.store && window.store.users
       ? window.store.users.getAll()
       : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+  const normRoleFn = (u) => (window.normalizeRole ? window.normalizeRole(u && u.role) : String((u && u.role) || "").toLowerCase());
+  const isOpenRole = role === "admin" || role === "hr";
+  const currentUserObj = allUsers.find((u) => u.id === currentUser.id) || currentUser;
+  const pmLineIds = role === "product_manager" ? _getUserEffectiveLineIds(currentUserObj) : [];
 
   let allowedRepIds = [currentUser.id];
-  if (role === "admin" || role === "hr") {
+  if (isOpenRole) {
     allowedRepIds = null;
   } else if (role === "product_manager") {
-    const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
-    const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
-    const lineUsers = allUsers.filter((u) => {
-      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-      return pmLineIds.length > 0 ? uLines.some((l) => pmLineIds.includes(l)) : true;
-    });
-    allowedRepIds = [currentUser.id, ...lineUsers.map((u) => u.id)];
+    if (pmLineIds.length === 0) {
+      allowedRepIds = [];
+    } else {
+      const lineUsers = allUsers.filter((u) => _getUserEffectiveLineIds(u).some((l) => pmLineIds.includes(l)));
+      allowedRepIds = Array.from(new Set([currentUser.id, ...lineUsers.map((u) => u.id)]));
+    }
   } else if (role === "district_manager") {
     const myRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
     allowedRepIds = [currentUser.id, ...myRepIds];
   } else if (role === "line_manager") {
-    const myDms = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
-    const myReps = allUsers.filter((u) => myDms.includes(u.managerId)).map((u) => u.id);
-    allowedRepIds = [currentUser.id, ...myDms, ...myReps];
-  } else if (role === "business_unit") {
+    const { allIds } = _getLmTeamIds(currentUser.id, allUsers);
+    allowedRepIds = allIds;
+  } else if (role === "business_unit" || role === "general_manager") {
     const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
-    allowedRepIds = [currentUser.id, ...downstream.map((u) => u.id)];
+    allowedRepIds = Array.from(new Set([currentUser.id, ...downstream.map((u) => u.id)]));
+  } else if (role !== "medical_rep") {
+    allowedRepIds = [];
   }
 
   let options = [];
   const selectedFilter = filterSelect ? filterSelect.value : "all";
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
 
+  const filterVacantTargets = (allTargets) => {
+    const vAreaId = selectedFilter.split(":")[1];
+    const vArea = allAreas.find((a) => a.id === vAreaId);
+    if (!vArea || !_isVacantAreaAuthorized(vArea, currentUser, role, allUsers)) return [];
+    const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
+    return allTargets.filter((item) => {
+      let matchesArea = false;
+      if (item.areaId) {
+        matchesArea = item.areaId === vAreaId;
+      } else if (vNameLower && item.area && item.area.toLowerCase().trim() === vNameLower) {
+        matchesArea = true;
+      }
+      if (!matchesArea) return false;
+      if (vArea && vArea.lineId) {
+        return doctorMatchesLine(item, vArea.lineId, allAreas);
+      }
+      return true;
+    });
+  };
+
+  const filterPmTargets = (allTargets) => {
+    if (pmLineIds.length === 0) return [];
+    const lineScopedTargets = allTargets.filter((t) => pmLineIds.some((lId) => doctorMatchesLine(t, lId, allAreas)));
+    if (selectedFilter && selectedFilter.startsWith("rep:")) {
+      const repId = selectedFilter.split(":")[1];
+      return allowedRepIds.includes(repId) ? lineScopedTargets.filter((t) => t.repId === repId) : [];
+    }
+    if (selectedFilter && selectedFilter.startsWith("dm:")) {
+      const dmId = selectedFilter.split(":")[1];
+      if (!allowedRepIds.includes(dmId)) return [];
+      const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+      const allowed = [dmId, ...dmReps];
+      return lineScopedTargets.filter((t) => allowed.includes(t.repId));
+    }
+    if (selectedFilter && selectedFilter.startsWith("lm:")) {
+      const lmId = selectedFilter.split(":")[1];
+      if (!allowedRepIds.includes(lmId)) return [];
+      const { allIds } = _getLmTeamIds(lmId, allUsers);
+      return lineScopedTargets.filter((t) => allIds.includes(t.repId));
+    }
+    return lineScopedTargets;
+  };
+
   if (period.toLowerCase() === "am") {
     const allHosps = getMockHospitals();
     if (targetLabel) targetLabel.textContent = "Hospital";
     if (selectedFilter && selectedFilter.startsWith("vacant:")) {
-      const vAreaId = selectedFilter.split(":")[1];
-      const vArea = allAreas.find((a) => a.id === vAreaId);
-      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
-      options = allHosps.filter((h) => {
-        let matchesArea = false;
-        if (h.areaId) {
-          matchesArea = h.areaId === vAreaId;
-        } else if (vNameLower && h.area && h.area.toLowerCase().trim() === vNameLower) {
-          matchesArea = true;
-        }
-        if (!matchesArea) return false;
-        if (vArea && vArea.lineId) {
-          return doctorMatchesLine(h, vArea.lineId, allAreas);
-        }
-        return true;
-      });
+      options = filterVacantTargets(allHosps);
     } else if (role === "product_manager") {
-      const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
-      const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
-      if (selectedFilter && selectedFilter.startsWith("rep:")) {
-        const repId = selectedFilter.split(":")[1];
-        options = allHosps.filter((h) => h.repId === repId);
-      } else if (selectedFilter && selectedFilter.startsWith("dm:")) {
-        const dmId = selectedFilter.split(":")[1];
-        const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
-        const allowed = [dmId, ...dmReps];
-        options = allHosps.filter((h) => allowed.includes(h.repId));
-      } else if (selectedFilter && selectedFilter.startsWith("lm:")) {
-        const lmId = selectedFilter.split(":")[1];
-        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(lmId) : [];
-        const allowed = [lmId, ...downstream.map((u) => u.id)];
-        options = allHosps.filter((h) => allowed.includes(h.repId));
+      options = filterPmTargets(allHosps);
+    } else if (!isModalManager) {
+      if (role === "medical_rep") {
+        const repAreas = window.store && window.store.areas ? window.store.areas.getByRep(currentUser.id) : [];
+        const repAreaIds = repAreas.map((a) => a.id);
+        options = allHosps.filter((h) => h.areaId && repAreaIds.includes(h.areaId));
       } else {
-        options = allHosps.filter((h) => pmLineIds.length === 0 || pmLineIds.some((lId) => doctorMatchesLine(h, lId, allAreas)));
-        if (options.length === 0 && allHosps.length > 0) options = allHosps;
+        options = [];
       }
-    } else if (!isManager) {
-      const repAreas =
-        window.store && window.store.areas
-          ? window.store.areas.getByRep(currentUser.id)
-          : [];
-      const repAreaIds = repAreas.map((a) => a.id);
-      options = allHosps.filter(
-        (h) => (h.areaId && repAreaIds.includes(h.areaId))
-      );
     } else if (allowedRepIds) {
       options = allHosps.filter((h) => allowedRepIds.includes(h.repId));
     } else {
@@ -3064,51 +3281,17 @@ function updateTargetOptions() {
     const allPharms = getMockPharmacies();
     if (targetLabel) targetLabel.textContent = "Pharmacy";
     if (selectedFilter && selectedFilter.startsWith("vacant:")) {
-      const vAreaId = selectedFilter.split(":")[1];
-      const vArea = allAreas.find((a) => a.id === vAreaId);
-      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
-      options = allPharms.filter((p) => {
-        let matchesArea = false;
-        if (p.areaId) {
-          matchesArea = p.areaId === vAreaId;
-        } else if (vNameLower && p.area && p.area.toLowerCase().trim() === vNameLower) {
-          matchesArea = true;
-        }
-        if (!matchesArea) return false;
-        if (vArea && vArea.lineId) {
-          return doctorMatchesLine(p, vArea.lineId, allAreas);
-        }
-        return true;
-      });
+      options = filterVacantTargets(allPharms);
     } else if (role === "product_manager") {
-      const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
-      const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
-      if (selectedFilter && selectedFilter.startsWith("rep:")) {
-        const repId = selectedFilter.split(":")[1];
-        options = allPharms.filter((p) => p.repId === repId);
-      } else if (selectedFilter && selectedFilter.startsWith("dm:")) {
-        const dmId = selectedFilter.split(":")[1];
-        const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
-        const allowed = [dmId, ...dmReps];
-        options = allPharms.filter((p) => allowed.includes(p.repId));
-      } else if (selectedFilter && selectedFilter.startsWith("lm:")) {
-        const lmId = selectedFilter.split(":")[1];
-        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(lmId) : [];
-        const allowed = [lmId, ...downstream.map((u) => u.id)];
-        options = allPharms.filter((p) => allowed.includes(p.repId));
+      options = filterPmTargets(allPharms);
+    } else if (!isModalManager) {
+      if (role === "medical_rep") {
+        const repAreas = window.store && window.store.areas ? window.store.areas.getByRep(currentUser.id) : [];
+        const repAreaIds = repAreas.map((a) => a.id);
+        options = allPharms.filter((p) => p.areaId && repAreaIds.includes(p.areaId));
       } else {
-        options = allPharms.filter((p) => pmLineIds.length === 0 || pmLineIds.some((lId) => doctorMatchesLine(p, lId, allAreas)));
-        if (options.length === 0 && allPharms.length > 0) options = allPharms;
+        options = [];
       }
-    } else if (!isManager) {
-      const repAreas =
-        window.store && window.store.areas
-          ? window.store.areas.getByRep(currentUser.id)
-          : [];
-      const repAreaIds = repAreas.map((a) => a.id);
-      options = allPharms.filter(
-        (p) => (p.areaId && repAreaIds.includes(p.areaId))
-      );
     } else if (allowedRepIds) {
       options = allPharms.filter((p) => allowedRepIds.includes(p.repId));
     } else {
@@ -3122,203 +3305,169 @@ function updateTargetOptions() {
       .filter((u) => u.status === "Inactive")
       .map((u) => u.id);
 
-    if (!isManager) {
-      const repAreas =
-        window.store && window.store.areas
-          ? window.store.areas.getByRep(currentUser.id)
-          : [];
-      const repAreaIds = repAreas.map((a) => a.id);
-      options = allDocs.filter(
-        (d) => (d.areaId && repAreaIds.includes(d.areaId))
-      );
+    if (!isModalManager) {
+      if (role === "medical_rep") {
+        const repAreas = window.store && window.store.areas ? window.store.areas.getByRep(currentUser.id) : [];
+        const repAreaIds = repAreas.map((a) => a.id);
+        options = allDocs.filter((d) => d.areaId && repAreaIds.includes(d.areaId));
+      } else {
+        options = [];
+      }
     } else if (selectedFilter && selectedFilter.startsWith("vacant:")) {
-      const vAreaId = selectedFilter.split(":")[1];
-      const vArea = allAreas.find((a) => a.id === vAreaId);
-      const vNameLower = vArea && vArea.name ? vArea.name.toLowerCase().trim() : null;
-      options = allDocs.filter((d) => {
-        let matchesArea = false;
-        if (d.areaId) {
-          matchesArea = d.areaId === vAreaId;
-        } else if (vNameLower && d.area && d.area.toLowerCase().trim() === vNameLower) {
-          matchesArea = true;
-        }
-        if (!matchesArea) return false;
-        if (vArea && vArea.lineId) {
-          return doctorMatchesLine(d, vArea.lineId, allAreas);
-        }
-        return true;
-      });
+      options = filterVacantTargets(allDocs);
     } else if (selectedFilter === "vacant") {
       if (role === "district_manager") {
-        const myRepIds = allUsers
-          .filter((u) => u.managerId === currentUser.id)
-          .map((u) => u.id);
-        const myInactiveRepIds = myRepIds.filter((id) =>
-          inactiveUserIds.includes(id),
-        );
-        options = allDocs.filter(
-          (d) => !d.repId || myInactiveRepIds.includes(d.repId),
-        );
+        const myRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+        const myInactiveRepIds = myRepIds.filter((id) => inactiveUserIds.includes(id));
+        const dmAreaIds = allAreas
+          .filter((a) => {
+            const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a) : (a.managerId || a.dmId);
+            return mgrId === currentUser.id;
+          })
+          .map((a) => a.id);
+        options = allDocs.filter((d) => (!d.repId && d.areaId && dmAreaIds.includes(d.areaId)) || myInactiveRepIds.includes(d.repId));
       } else if (role === "line_manager") {
-        const myDms = allUsers
-          .filter((u) => u.managerId === currentUser.id)
-          .map((u) => u.id);
-        const myReps = allUsers
-          .filter((u) => myDms.includes(u.managerId))
-          .map((u) => u.id);
-        const myTeamRepIds = [...myDms, ...myReps];
-        const myInactiveRepIds = myTeamRepIds.filter((id) =>
-          inactiveUserIds.includes(id),
-        );
-        options = allDocs.filter(
-          (d) => !d.repId || myInactiveRepIds.includes(d.repId),
-        );
+        const { dmIds, repIds } = _getLmTeamIds(currentUser.id, allUsers);
+        const myTeamRepIds = [...dmIds, ...repIds];
+        const myInactiveRepIds = myTeamRepIds.filter((id) => inactiveUserIds.includes(id));
+        const lmAreaIds = allAreas
+          .filter((a) => {
+            const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a) : (a.managerId || a.dmId);
+            return dmIds.includes(mgrId) || mgrId === currentUser.id;
+          })
+          .map((a) => a.id);
+        options = allDocs.filter((d) => (!d.repId && d.areaId && lmAreaIds.includes(d.areaId)) || myInactiveRepIds.includes(d.repId));
+      } else if (role === "product_manager") {
+        options = pmLineIds.length > 0
+          ? allDocs.filter((d) => (!d.repId || inactiveUserIds.includes(d.repId)) && pmLineIds.some((lId) => doctorMatchesLine(d, lId, allAreas)))
+          : [];
+      } else if (role === "business_unit") {
+        const buLineIds = _getUserEffectiveLineIds(currentUserObj);
+        const buSubIds = new Set((window.getAllSubordinates ? window.getAllSubordinates(currentUser.id) : []).map((u) => u.id));
+        buSubIds.add(currentUser.id);
+        const buAreaIds = allAreas
+          .filter((a) => {
+            const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a) : (a.managerId || a.dmId);
+            return buSubIds.has(mgrId) || (a.repId && buSubIds.has(a.repId));
+          })
+          .map((a) => a.id);
+        options = buLineIds.length > 0
+          ? allDocs.filter((d) => ((!d.repId && d.areaId && buAreaIds.includes(d.areaId)) || (inactiveUserIds.includes(d.repId) && buSubIds.has(d.repId))) && buLineIds.some((lId) => doctorMatchesLine(d, lId, allAreas)))
+          : [];
       } else {
-        options = allDocs.filter(
-          (d) => !d.repId || inactiveUserIds.includes(d.repId),
-        );
+        options = allDocs.filter((d) => !d.repId || inactiveUserIds.includes(d.repId));
       }
     } else if (role === "district_manager") {
-      const myRepIds = allUsers
-        .filter((u) => u.managerId === currentUser.id)
-        .map((u) => u.id);
-      const allowedRepIds = [...myRepIds, currentUser.id];
+      const myRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
+      const dmAllowedIds = [...myRepIds, currentUser.id];
+      const dmAreaIds = allAreas
+        .filter((a) => {
+          const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a) : (a.managerId || a.dmId);
+          return mgrId === currentUser.id;
+        })
+        .map((a) => a.id);
       if (!selectedFilter || selectedFilter === "all") {
-        options = allDocs.filter(
-          (d) => !d.repId || allowedRepIds.includes(d.repId),
-        );
+        options = allDocs.filter((d) => dmAllowedIds.includes(d.repId) || (!d.repId && d.areaId && dmAreaIds.includes(d.areaId)));
       } else {
-        options = allDocs.filter((d) => d.repId === selectedFilter);
+        const cleanSel = selectedFilter.startsWith("rep:") ? selectedFilter.split(":")[1] : selectedFilter;
+        options = dmAllowedIds.includes(cleanSel) ? allDocs.filter((d) => d.repId === cleanSel) : [];
       }
     } else if (role === "line_manager") {
-      const myDms = allUsers.filter(
-        (u) => u.managerId === currentUser.id && u.role === "district_manager",
-      );
-      const myDmIds = myDms.map((u) => u.id);
-      const myReps = allUsers.filter((u) => myDmIds.includes(u.managerId));
-      const myRepIds = myReps.map((u) => u.id);
-      const allowedTeamIds = [currentUser.id, ...myDmIds, ...myRepIds];
+      const { dmIds, allIds: allowedTeamIds } = _getLmTeamIds(currentUser.id, allUsers);
+      const lmAreaIds = allAreas
+        .filter((a) => {
+          const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a) : (a.managerId || a.dmId);
+          return dmIds.includes(mgrId) || mgrId === currentUser.id;
+        })
+        .map((a) => a.id);
 
       if (!selectedFilter || selectedFilter === "all") {
-        options = allDocs.filter(
-          (d) => !d.repId || allowedTeamIds.includes(d.repId),
-        );
+        options = allDocs.filter((d) => allowedTeamIds.includes(d.repId) || (!d.repId && d.areaId && lmAreaIds.includes(d.areaId)));
       } else if (selectedFilter.startsWith("dm:")) {
         const dmId = selectedFilter.split(":")[1];
-        const dmRepIds = allUsers
-          .filter((u) => u.managerId === dmId)
-          .map((u) => u.id);
-        const allowed = [dmId, ...dmRepIds];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
+        if (!allowedTeamIds.includes(dmId)) {
+          options = [];
+        } else {
+          const dmRepIds = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+          const allowed = [dmId, ...dmRepIds];
+          options = allDocs.filter((d) => allowed.includes(d.repId));
+        }
       } else if (selectedFilter.startsWith("rep:")) {
         const repId = selectedFilter.split(":")[1];
-        options = allDocs.filter((d) => d.repId === repId);
+        options = allowedTeamIds.includes(repId) ? allDocs.filter((d) => d.repId === repId) : [];
       } else {
-        options = allDocs.filter((d) => d.repId === selectedFilter);
+        options = allowedTeamIds.includes(selectedFilter) ? allDocs.filter((d) => d.repId === selectedFilter) : [];
       }
     } else if (role === "business_unit") {
-      const myLMs = allUsers.filter(
-        (u) => u.managerId === currentUser.id && (u.role === "line_manager" || u.role === "lm"),
-      );
+      const myLMs = allUsers.filter((u) => u.managerId === currentUser.id && normRoleFn(u) === "line_manager");
       const myLmIds = myLMs.map((u) => u.id);
-      const myDownstream = window.getAllSubordinates
-        ? window.getAllSubordinates(currentUser.id)
-        : [];
-      const myDmIds = myDownstream
-        .filter((u) => u.role === "district_manager" || u.role === "dm")
-        .map((u) => u.id);
-      const myRepIds = myDownstream
-        .filter((u) => u.role === "medical_rep" || u.role === "rep")
-        .map((u) => u.id);
-      const allowedTeamIds = [currentUser.id, ...myLmIds, ...myDmIds, ...myRepIds];
+      const myDownstream = window.getAllSubordinates ? window.getAllSubordinates(currentUser.id) : [];
+      const allowedTeamIds = Array.from(new Set([currentUser.id, ...myLmIds, ...myDownstream.map((u) => u.id)]));
+      const buAreaIds = allAreas
+        .filter((a) => {
+          const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a) : (a.managerId || a.dmId);
+          return allowedTeamIds.includes(mgrId) || (a.repId && allowedTeamIds.includes(a.repId));
+        })
+        .map((a) => a.id);
 
       if (!selectedFilter || selectedFilter === "all") {
-        options = allDocs.filter((d) => !d.repId || allowedTeamIds.includes(d.repId));
-      } else if (selectedFilter === "vacant") {
-        options = allDocs.filter((d) => !d.repId);
+        options = allDocs.filter((d) => allowedTeamIds.includes(d.repId) || (!d.repId && d.areaId && buAreaIds.includes(d.areaId)));
       } else if (selectedFilter.startsWith("lm:")) {
         const lmId = selectedFilter.split(":")[1];
-        const lmDmIds = allUsers
-          .filter((u) => u.managerId === lmId)
-          .map((u) => u.id);
-        const lmRepIds = allUsers
-          .filter((u) => lmDmIds.includes(u.managerId))
-          .map((u) => u.id);
-        const allowed = [lmId, ...lmDmIds, ...lmRepIds];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
+        if (!allowedTeamIds.includes(lmId)) {
+          options = [];
+        } else {
+          const { allIds: lmAllowed } = _getLmTeamIds(lmId, allUsers);
+          options = allDocs.filter((d) => lmAllowed.includes(d.repId));
+        }
       } else if (selectedFilter.startsWith("dm:")) {
         const dmId = selectedFilter.split(":")[1];
-        const dmRepIds = allUsers
-          .filter((u) => u.managerId === dmId)
-          .map((u) => u.id);
-        const allowed = [dmId, ...dmRepIds];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
+        if (!allowedTeamIds.includes(dmId)) {
+          options = [];
+        } else {
+          const dmRepIds = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+          const allowed = [dmId, ...dmRepIds];
+          options = allDocs.filter((d) => allowed.includes(d.repId));
+        }
       } else {
         options = allDocs.filter((d) => allowedTeamIds.includes(d.repId));
       }
     } else if (role === "product_manager") {
-      const currentUserObj = allUsers.find((u) => u.id === currentUser.id);
-      const pmLineIds = currentUserObj?.lineIds || (currentUserObj?.lineId ? [currentUserObj.lineId] : []);
       if (!selectedFilter || selectedFilter === "all") {
-        options = allDocs.filter((d) => pmLineIds.length === 0 || pmLineIds.some((lId) => doctorMatchesLine(d, lId, allAreas)));
-        if (options.length === 0 && allDocs.length > 0) options = allDocs;
-      } else if (selectedFilter === "vacant") {
-        options = allDocs.filter((d) => !d.repId);
-      } else if (selectedFilter.startsWith("vacant:")) {
-        const vAreaId = selectedFilter.split(":")[1];
-        options = allDocs.filter((d) => d.areaId === vAreaId);
+        options = filterPmTargets(allDocs);
+      } else if (selectedFilter.startsWith("rep:") || selectedFilter.startsWith("dm:") || selectedFilter.startsWith("lm:")) {
+        options = filterPmTargets(allDocs);
+      } else {
+        options = (pmLineIds.length > 0 && allowedRepIds.includes(selectedFilter))
+          ? allDocs.filter((d) => d.repId === selectedFilter && pmLineIds.some((lId) => doctorMatchesLine(d, lId, allAreas)))
+          : [];
+      }
+    } else if (isOpenRole) {
+      if (!selectedFilter || selectedFilter === "all") {
+        options = allDocs;
+      } else if (selectedFilter.startsWith("lm:")) {
+        const lmId = selectedFilter.split(":")[1];
+        const { allIds: lmAllowed } = _getLmTeamIds(lmId, allUsers);
+        options = allDocs.filter((d) => lmAllowed.includes(d.repId));
+      } else if (selectedFilter.startsWith("dm:")) {
+        const dmId = selectedFilter.split(":")[1];
+        const dmRepIds = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
+        const allowed = [dmId, ...dmRepIds];
+        options = allDocs.filter((d) => allowed.includes(d.repId));
       } else if (selectedFilter.startsWith("rep:")) {
         const repId = selectedFilter.split(":")[1];
         options = allDocs.filter((d) => d.repId === repId);
-      } else if (selectedFilter.startsWith("dm:")) {
-        const dmId = selectedFilter.split(":")[1];
-        const dmReps = allUsers.filter((u) => u.managerId === dmId).map((u) => u.id);
-        const allowed = [dmId, ...dmReps];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
-      } else if (selectedFilter.startsWith("lm:")) {
-        const lmId = selectedFilter.split(":")[1];
-        const downstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(lmId) : [];
-        const allowed = [lmId, ...downstream.map((u) => u.id)];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
-      } else {
-        options = allDocs.filter((d) => d.repId === selectedFilter);
-      }
-    } else if (role === "admin") {
-      if (!selectedFilter || selectedFilter === "all") {
-        options = allDocs;
-      } else if (selectedFilter === "vacant") {
-        options = allDocs.filter((d) => !d.repId);
-      } else if (selectedFilter.startsWith("lm:")) {
-        const lmId = selectedFilter.split(":")[1];
-        const lmDmIds = allUsers
-          .filter((u) => u.managerId === lmId)
-          .map((u) => u.id);
-        const lmRepIds = allUsers
-          .filter((u) => lmDmIds.includes(u.managerId))
-          .map((u) => u.id);
-        const allowed = [lmId, ...lmDmIds, ...lmRepIds];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
-      } else if (selectedFilter.startsWith("dm:")) {
-        const dmId = selectedFilter.split(":")[1];
-        const dmRepIds = allUsers
-          .filter((u) => u.managerId === dmId)
-          .map((u) => u.id);
-        const allowed = [dmId, ...dmRepIds];
-        options = allDocs.filter((d) => allowed.includes(d.repId));
       } else {
         options = allDocs;
       }
     } else {
-      options = allDocs;
+      options = [];
     }
   }
 
   const activeLineId = document.getElementById("filterLine")?.value || "all";
   if (activeLineId !== "all") {
-    const lineFiltered = options.filter((target) => doctorMatchesLine(target, activeLineId, allAreas));
-    if (lineFiltered.length > 0 || options.length === 0) {
-      options = lineFiltered;
-    }
+    options = options.filter((target) => doctorMatchesLine(target, activeLineId, allAreas));
   }
 
   if (options.length === 0) {
@@ -3331,17 +3480,16 @@ function updateTargetOptions() {
     return;
   }
 
-  const currentVisitLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   options.sort(window.sortBilingualByName || ((a, b) => {
-    const nA = (currentVisitLang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
-    const nB = (currentVisitLang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
-    return nA.localeCompare(nB, currentVisitLang === "ar" ? ["ar", "en"] : ["en", "ar"], { numeric: true, sensitivity: "base" });
+    const nA = (a.name || a.nameAr || "").trim();
+    const nB = (b.name || b.nameAr || "").trim();
+    return nA.localeCompare(nB, ["en", "ar"], { numeric: true, sensitivity: "base" });
   }));
 
   options.forEach((opt) => {
     const o = document.createElement("option");
     o.value = opt.id;
-    const displayName = (currentVisitLang === "ar" && opt.nameAr) ? opt.nameAr : (opt.name || opt.nameAr || "");
+    const displayName = opt.name || opt.nameAr || "";
     o.textContent = displayName;
     targetSelect.appendChild(o);
   });
@@ -3403,7 +3551,7 @@ function openCompleteModal(visitId) {
   }
   const timeInput = document.getElementById("visitTime");
   if (timeInput) {
-    const now = new Date();
+    const now = (window.getSystemDate && window.getSystemDate()) || new Date();
     timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   }
   updateVisitModalDayDisplay();
@@ -3413,8 +3561,8 @@ function openCompleteModal(visitId) {
   const insTimeEl = document.getElementById("visitInsertionTimeDisplay");
   if (insertionMeta) {
     insertionMeta.style.display = "block";
-    const now = new Date();
-    const curDate = now.toISOString().slice(0, 10);
+    const now = (window.getSystemDate && window.getSystemDate()) || new Date();
+    const curDate = _getLocalDateStr(now);
     const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     if (insDateEl) insDateEl.innerText = `${curDate} (Auto on Complete)`;
     if (insTimeEl) insTimeEl.innerText = `${curTime} (Auto on Complete)`;
@@ -3449,9 +3597,10 @@ function openCompleteModal(visitId) {
   const compList = visit.doubleWithUserName
     ? visit.doubleWithUserName.split(", ")
     : [];
-  populateVisitCompanions(visit.repId || currentUser.id || "u1790626000001", compList);
+  populateVisitCompanions(visit.repId || currentUser?.id, compList);
 
-  document.getElementById("visitComment").value = visit.comment || "";
+  const commentInput = document.getElementById("visitComment");
+  if (commentInput) commentInput.value = visit.comment || "";
   const samplesInput = document.getElementById("visitGiveawaySamples");
   if (samplesInput) samplesInput.value = visit.giveawaySamples || "";
 
@@ -3491,6 +3640,11 @@ function closeVisitModal() {
 }
 
 function saveVisit() {
+  const _allowedLogRoles = ["admin", "business_unit", "line_manager", "district_manager", "medical_rep"];
+  if (!currentUser || !currentUser.id || !_allowedLogRoles.includes(currentUserRole)) {
+    if (typeof showToast === "function") showToast("Permission Denied: You do not have permission to save visits.", "error");
+    return;
+  }
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const saveBtn = document.getElementById("btnSaveVisit") || document.querySelector("#visitModal button[onclick*='saveVisit']");
   if (saveBtn) {
@@ -3624,8 +3778,58 @@ function saveVisit() {
         showToast(cMsg, "warning");
         return;
       }
+      try {
+        const rawAcc = localStorage.getItem("pharma_dm_accompaniments");
+        if (rawAcc) {
+          const accMap = JSON.parse(rawAcc);
+          const bookedRep = accMap && accMap[doubleWithUserId] ? accMap[doubleWithUserId][visitDate] : null;
+          if (bookedRep && bookedRep !== targetRepId) {
+            resetSaveBtn();
+            showToast(`Companion is already booked for accompaniment with another rep on ${visitDate}.`, "warning");
+            return;
+          }
+        }
+      } catch (e) {}
     }
   }
+
+  const syncDoubleAccompanimentSlot = (repIdForSlot, dateForSlot, newCompId, prevCompId, prevDate) => {
+    try {
+      const storageKey = "pharma_dm_accompaniments";
+      const raw = localStorage.getItem(storageKey);
+      const cached = raw ? JSON.parse(raw) : {};
+      let changed = false;
+
+      if (prevCompId && prevDate && (prevCompId !== newCompId || prevDate !== dateForSlot)) {
+        const liveList = getLiveVisits();
+        const stillHasDouble = liveList.some(
+          (item) =>
+            item.date === prevDate &&
+            item.repId === repIdForSlot &&
+            item.doubleWithUserId === prevCompId &&
+            item.status !== "rejected" &&
+            item.status !== "missed",
+        );
+        if (!stillHasDouble && cached[prevCompId] && cached[prevCompId][prevDate] === repIdForSlot) {
+          delete cached[prevCompId][prevDate];
+          if (Object.keys(cached[prevCompId]).length === 0) delete cached[prevCompId];
+          changed = true;
+        }
+      }
+
+      if (newCompId && dateForSlot && repIdForSlot) {
+        if (!cached[newCompId]) cached[newCompId] = {};
+        if (cached[newCompId][dateForSlot] !== repIdForSlot) {
+          cached[newCompId][dateForSlot] = repIdForSlot;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        localStorage.setItem(storageKey, JSON.stringify(cached));
+      }
+    } catch (e) {}
+  };
 
   const checkedBoxes = Array.from(
     document.querySelectorAll('#visitProducts input[type="checkbox"]:checked'),
@@ -3634,102 +3838,136 @@ function saveVisit() {
   const selectedProductNames = checkedBoxes.map((cb) => cb.dataset.name || cb.value);
 
   const giveawaySamples = document.getElementById("visitGiveawaySamples")?.value.trim() || "";
+  const commentValue = document.getElementById("visitComment")?.value || "";
 
   if (currentEditVisitId) {
-    const visit = demoVisits.find((v) => v.id === currentEditVisitId);
-    if (visit) {
-      if (!visit.planId && visit.source === "plan") {
-        visit.planId = "plan_" + (visit.id || Date.now());
-      }
-      visit.status = "completed";
-      visit.date = visitDate;
-      visit.time = visitTime;
-      const nowStamp = (window.NetworkTime && window.NetworkTime.now) ? window.NetworkTime.now() : new Date();
-      if (isTimeTampered) {
-        visit.timeTampered = true;
-        visit.clockDriftMinutes = clockDriftMinutes;
-        visit.verifiedNetworkTime = nowStamp.toISOString();
-      }
-      visit.insertionDate = nowStamp.toISOString().slice(0, 10);
-      visit.insertionTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
-      visit.completedAt = nowStamp.toISOString();
-      if (!visit.createdAt) visit.createdAt = nowStamp.toISOString();
-      visit.entryDate = visit.insertionDate;
-      visit.comment = document.getElementById("visitComment").value;
-      visit.giveawaySamples = giveawaySamples;
-      visit.visitType = visitType;
-      visit.doubleWithUserName = doubleWithUserName;
-      if (doubleWithUserId) {
-        visit.doubleWithUserId = doubleWithUserId;
-      } else if (visitType === "single") {
-        delete visit.doubleWithUserId;
-      }
-      visit.productIds = selectedProductIds;
-      visit.products = selectedProductNames;
-
-      if (
-        visit.targetType === "pharmacy" ||
-        (visit.period || "").toLowerCase() === "pharmacy" ||
-        (visit.doctorId && String(visit.doctorId).startsWith("pharm"))
-      ) {
-        visit.targetType = "pharmacy";
-        visit.period = "pharmacy";
-      }
-
-      const companySettings = (window.store && window.store.companySettings)
-        ? window.store.companySettings.get()
-        : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
-
-      const finalizeEdit = (gpsPayload) => {
-        resetSaveBtn();
-        const isCurrentlyOffline = !navigator.onLine;
-        if (isCurrentlyOffline) {
-          visit.isOffline = true;
-          if (!visit.offlineLoggedAt) visit.offlineLoggedAt = new Date().toISOString();
-          visit.syncedToCloud = false;
-        }
-        if (gpsPayload) {
-          visit.gpsStatus = gpsPayload.status;
-          if (gpsPayload.distanceMeters != null) visit.distanceMeters = gpsPayload.distanceMeters;
-          if (gpsPayload.deviceLat != null) visit.deviceLat = gpsPayload.deviceLat;
-          if (gpsPayload.deviceLng != null) visit.deviceLng = gpsPayload.deviceLng;
-          if (gpsPayload.targetLat != null) visit.targetLat = gpsPayload.targetLat;
-          if (gpsPayload.targetLng != null) visit.targetLng = gpsPayload.targetLng;
-        }
-        persistVisits();
-        closeVisitModal();
-        renderVisits(true);
-        const successMsg = isCurrentlyOffline
-          ? "Visit saved locally offline with GPS. It will automatically sync once online."
-          : "Visit saved successfully.";
-        showToast(successMsg, isCurrentlyOffline ? "info" : "success");
-      };
-
-      if (companySettings.requireGpsValidation) {
-        captureVisitLocation((loc) => {
-          let gpsPayload = { status: "permission_denied" };
-          if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
-            const allDocs = getMockDoctors();
-            const allHosps = getMockHospitals();
-            const allPharms = getMockPharmacies();
-            const targetItem = allDocs.find((d) => d.id === visit.doctorId) || allHosps.find((h) => h.id === visit.doctorId) || allPharms.find((p) => p.id === visit.doctorId);
-            if (targetItem && targetItem.lat != null && targetItem.lng != null) {
-              const dist = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
-              const maxDist = companySettings.gpsMaxDistanceMeters || 200;
-              gpsPayload = dist <= maxDist
-                ? { status: "in_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng }
-                : { status: "out_of_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng };
-            } else {
-              gpsPayload = { status: "no_target_coords", distanceMeters: null, deviceLat: loc.lat, deviceLng: loc.lng };
-            }
-          }
-          finalizeEdit(gpsPayload);
-        });
-      } else {
-        finalizeEdit(null);
-      }
+    const visit = getLiveVisits().find((v) => v.id === currentEditVisitId);
+    if (!visit) {
+      resetSaveBtn();
       return;
     }
+    const canModifyVisit =
+      visit.repId === currentUser.id ||
+      currentUserRole === "admin";
+    if (!canModifyVisit) {
+      resetSaveBtn();
+      showToast("Permission Denied: You can only complete or update your own visits.", "error");
+      return;
+    }
+    if (currentUserRole !== "admin" && String(visit.status || "").toLowerCase() !== "planned") {
+      resetSaveBtn();
+      showToast("Only approved planned visits can be completed.", "warning");
+      return;
+    }
+
+    const prevDoubleCompId = visit.doubleWithUserId || null;
+    const prevVisitDate = visit.date || null;
+
+    if (!visit.planId && visit.source === "plan") {
+      visit.planId = "plan_" + (visit.id || Date.now());
+    }
+    visit.status = "completed";
+    visit.date = visitDate;
+    visit.time = visitTime;
+    const nowStamp = (window.NetworkTime && window.NetworkTime.now)
+      ? window.NetworkTime.now()
+      : ((window.getSystemDate && window.getSystemDate()) || new Date());
+    if (isTimeTampered) {
+      visit.timeTampered = true;
+      visit.clockDriftMinutes = clockDriftMinutes;
+      visit.verifiedNetworkTime = nowStamp.toISOString();
+    }
+    visit.insertionDate = _getLocalDateStr(nowStamp);
+    visit.insertionTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
+    visit.completedAt = nowStamp.toISOString();
+    if (!visit.createdAt) visit.createdAt = nowStamp.toISOString();
+    visit.entryDate = visit.insertionDate;
+    visit.comment = commentValue;
+    visit.giveawaySamples = giveawaySamples;
+    visit.visitType = visitType;
+    visit.doubleWithUserName = doubleWithUserName;
+    if (visitType === "double" && doubleWithUserId) {
+      visit.doubleWithUserId = doubleWithUserId;
+    } else {
+      delete visit.doubleWithUserId;
+    }
+    visit.productIds = selectedProductIds;
+    visit.products = selectedProductNames;
+
+    if (
+      visit.targetType === "pharmacy" ||
+      (visit.period || "").toLowerCase() === "pharmacy" ||
+      (visit.doctorId && String(visit.doctorId).startsWith("pharm"))
+    ) {
+      visit.targetType = "pharmacy";
+      visit.period = "pharmacy";
+    }
+
+    const companySettings = (window.store && window.store.companySettings)
+      ? window.store.companySettings.get()
+      : { requireGpsValidation: true, gpsMaxDistanceMeters: 200 };
+
+    const finalizeEdit = (gpsPayload) => {
+      resetSaveBtn();
+      const isCurrentlyOffline = !navigator.onLine;
+      if (isCurrentlyOffline) {
+        visit.isOffline = true;
+        if (!visit.offlineLoggedAt) visit.offlineLoggedAt = nowStamp.toISOString();
+        visit.syncedToCloud = false;
+      }
+      if (gpsPayload) {
+        visit.gpsStatus = gpsPayload.status;
+        if (gpsPayload.distanceMeters != null) visit.distanceMeters = gpsPayload.distanceMeters;
+        if (gpsPayload.deviceLat != null) visit.deviceLat = gpsPayload.deviceLat;
+        if (gpsPayload.deviceLng != null) visit.deviceLng = gpsPayload.deviceLng;
+        if (gpsPayload.targetLat != null) visit.targetLat = gpsPayload.targetLat;
+        if (gpsPayload.targetLng != null) visit.targetLng = gpsPayload.targetLng;
+      }
+      if (window.store && window.store.visits && typeof window.store.visits.update === "function") {
+        window.store.visits.update(visit.id, visit);
+        getLiveVisits();
+      } else {
+        persistVisits();
+      }
+      syncDoubleAccompanimentSlot(
+        visit.repId || currentUser.id,
+        visit.date,
+        visitType === "double" ? doubleWithUserId : null,
+        prevDoubleCompId,
+        prevVisitDate,
+      );
+      closeVisitModal();
+      renderVisits(true);
+      const successMsg = isCurrentlyOffline
+        ? "Visit saved locally offline with GPS. It will automatically sync once online."
+        : "Visit saved successfully.";
+      showToast(successMsg, isCurrentlyOffline ? "info" : "success");
+    };
+
+    if (companySettings.requireGpsValidation) {
+      captureVisitLocation((loc) => {
+        let gpsPayload = { status: "permission_denied" };
+        if (loc.status === "obtained" && loc.lat != null && loc.lng != null) {
+          const allDocs = getMockDoctors();
+          const allHosps = getMockHospitals();
+          const allPharms = getMockPharmacies();
+          const targetItem = allDocs.find((d) => d.id === visit.doctorId) || allHosps.find((h) => h.id === visit.doctorId) || allPharms.find((p) => p.id === visit.doctorId);
+          if (targetItem && targetItem.lat != null && targetItem.lng != null) {
+            const dist = calculateDistanceMeters(loc.lat, loc.lng, targetItem.lat, targetItem.lng);
+            const maxDist = companySettings.gpsMaxDistanceMeters || 200;
+            gpsPayload = dist <= maxDist
+              ? { status: "in_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng }
+              : { status: "out_of_range", distanceMeters: dist, deviceLat: loc.lat, deviceLng: loc.lng, targetLat: targetItem.lat, targetLng: targetItem.lng };
+          } else {
+            gpsPayload = { status: "no_target_coords", distanceMeters: null, deviceLat: loc.lat, deviceLng: loc.lng };
+          }
+        }
+        finalizeEdit(gpsPayload);
+      });
+    } else {
+      finalizeEdit(null);
+    }
+    return;
   } else {
     const period =
       document.querySelector('input[name="visitPeriod"]:checked')?.value ||
@@ -3786,12 +4024,14 @@ function saveVisit() {
       if (repLines.length > 0) resolvedLineId = repLines[0].id;
     }
 
-    const nowStamp = (window.NetworkTime && window.NetworkTime.now) ? window.NetworkTime.now() : new Date();
-    const insDate = nowStamp.toISOString().slice(0, 10);
+    const nowStamp = (window.NetworkTime && window.NetworkTime.now)
+      ? window.NetworkTime.now()
+      : ((window.getSystemDate && window.getSystemDate()) || new Date());
+    const insDate = _getLocalDateStr(nowStamp);
     const insTime = `${String(nowStamp.getHours()).padStart(2, "0")}:${String(nowStamp.getMinutes()).padStart(2, "0")}`;
 
     const newVisit = {
-      id: "v_" + Date.now(),
+      id: typeof window.genId === "function" ? window.genId("v") : ("v_" + Date.now()),
       repId: assignedRepId,
       lineId: resolvedLineId,
       areaId: targetDoc ? targetDoc.areaId : undefined,
@@ -3808,10 +4048,10 @@ function saveVisit() {
           : "doctor",
       visitType: visitType,
       doubleWithUserName: doubleWithUserName,
-      doubleWithUserId: doubleWithUserId || undefined,
+      doubleWithUserId: (visitType === "double" && doubleWithUserId) ? doubleWithUserId : undefined,
       productIds: selectedProductIds,
       products: selectedProductNames,
-      comment: document.getElementById("visitComment").value,
+      comment: commentValue,
       giveawaySamples: giveawaySamples,
       status: modalSource === "plan" ? "pending_approval" : "completed",
       timeTampered: isTimeTampered,
@@ -3829,7 +4069,7 @@ function saveVisit() {
       const isCurrentlyOffline = !navigator.onLine;
       if (isCurrentlyOffline) {
         newVisit.isOffline = true;
-        newVisit.offlineLoggedAt = new Date().toISOString();
+        newVisit.offlineLoggedAt = nowStamp.toISOString();
         newVisit.syncedToCloud = false;
       } else {
         newVisit.syncedToCloud = true;
@@ -3842,9 +4082,17 @@ function saveVisit() {
         if (gpsPayload.targetLat != null) newVisit.targetLat = gpsPayload.targetLat;
         if (gpsPayload.targetLng != null) newVisit.targetLng = gpsPayload.targetLng;
       }
-      getLiveVisits();
-      demoVisits.unshift(newVisit);
-      persistVisits();
+      if (window.store && window.store.visits && typeof window.store.visits.add === "function") {
+        window.store.visits.add(newVisit);
+        getLiveVisits();
+      } else {
+        getLiveVisits();
+        demoVisits.unshift(newVisit);
+        persistVisits();
+      }
+      if (visitType === "double" && doubleWithUserId) {
+        syncDoubleAccompanimentSlot(assignedRepId, visitDate, doubleWithUserId, null, null);
+      }
       closeVisitModal();
       renderVisits(true);
 
@@ -3914,10 +4162,6 @@ function exportVisitsToCSV() {
 
   let filtered = getScopedVisits();
 
-  if (fRep && fRep !== "all") {
-    filtered = filtered.filter((v) => v.repId === fRep);
-  }
-
   let exportDate = null;
 
   if (fDate) {
@@ -3933,9 +4177,9 @@ function exportVisitsToCSV() {
   // Status Filter (table or timeline filter)
   const activeStatus = (fStatus && fStatus !== "all") ? fStatus : (fTimelineStatus && fTimelineStatus !== "all" ? fTimelineStatus : null);
   if (activeStatus) {
-    if (activeStatus === "completed" || activeStatus === "executed") {
+    if (activeStatus === "completed" || activeStatus === "executed" || activeStatus === "actual") {
       filtered = filtered.filter((v) => v.source === "actual" || v.isActual || v.status === "completed");
-    } else if (activeStatus === "planned") {
+    } else if (activeStatus === "planned" || activeStatus === "plan") {
       filtered = filtered.filter((v) => (v.source === "plan" || v.source === "planned") && !v.isActual && v.status !== "completed");
     } else {
       filtered = filtered.filter((v) => v.status === activeStatus);
@@ -4021,9 +4265,25 @@ function exportVisitsToCSV() {
     });
   }
 
-  let csv =
-    "Target Name,Area,Visit Day,Visit Time,Insertion Date,Insertion Time,Period,Type,Status,Plan Status,GPS Status,Deviation (m),Rep ID,Products,Comment\n";
-  filtered.forEach((v) => {
+  const headers = [
+    "Target Name",
+    "Area",
+    "Visit Day",
+    "Visit Time",
+    "Insertion Date",
+    "Insertion Time",
+    "Period",
+    "Type",
+    "Status",
+    "Plan Status",
+    "GPS Status",
+    "Deviation (m)",
+    "Rep ID",
+    "Products",
+    "Comment",
+  ];
+
+  const dataRows = filtered.map((v) => {
     let areaName = v.area || "";
     if (!areaName) {
       const foundTarget =
@@ -4038,21 +4298,54 @@ function exportVisitsToCSV() {
         }
       }
     }
-    const insDate = v.insertionDate || (v.createdAt ? v.createdAt.slice(0, 10) : v.date) || "";
+    const insDate = v.insertionDate || (v.createdAt ? String(v.createdAt).slice(0, 10) : v.date) || "";
     const insTime = v.insertionTime || (v.createdAt ? new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : (v.time || "10:00")) || "";
     const prods = (window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || [])).join("; ");
     const planStatusLabel = (v.source === "actual" || v.isActual) ? "Actual without Plan" : "From Plan";
     const gpsStatusLabel = v.gpsStatus || "none";
     const devMeters = v.distanceMeters != null ? Math.round(v.distanceMeters) : "";
-    csv += `"${(v.doctorName || "").replace(/"/g, '""')}","${(areaName || "").replace(/"/g, '""')}","${v.date || ""}","${v.time || ""}","${insDate}","${insTime}","${(v.period || "").toUpperCase()}","${v.visitType || "single"}","${v.status || ""}","${planStatusLabel}","${gpsStatusLabel}","${devMeters}","${v.repId || ""}","${prods}","${(v.comment || "").replace(/"/g, '""')}"\n`;
+    return [
+      v.doctorName || "",
+      areaName || "",
+      v.date || "",
+      v.time || "",
+      insDate,
+      insTime,
+      (v.period || "").toUpperCase(),
+      v.visitType || "single",
+      v.status || "",
+      planStatusLabel,
+      gpsStatusLabel,
+      devMeters,
+      v.repId || "",
+      prods,
+      v.comment || "",
+    ];
+  });
+
+  const fileName = `PharmaCare_Visits_${exportDate || "All_Dates"}`;
+  if (typeof window.downloadExcelOrCsv === "function") {
+    window.downloadExcelOrCsv(fileName, "Visits", dataRows, headers);
+    return;
+  }
+
+  const safeCsvCell = (val) => {
+    const s = String(val === null || val === undefined ? "" : val);
+    const neutralized = /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+    return `"${neutralized.replace(/"/g, '""')}"`;
+  };
+  let csv = headers.map(safeCsvCell).join(",") + "\n";
+  dataRows.forEach((row) => {
+    csv += row.map(safeCsvCell).join(",") + "\n";
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `PharmaCare_Visits_${exportDate || "All_Dates"}.csv`;
+  a.download = `${fileName}.csv`;
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 
@@ -4089,8 +4382,10 @@ function executeDeleteVisit(visitId) {
   }
   if (window.store && window.store.visits && typeof window.store.visits.delete === "function") {
     window.store.visits.delete(visitId);
+    getLiveVisits();
+  } else {
+    persistVisits();
   }
-  persistVisits();
 
   try {
     const repDataStr = localStorage.getItem("pharma_reports_data");

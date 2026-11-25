@@ -82,7 +82,38 @@ var getDmAccompanimentSchedule = (typeof window !== "undefined" && window.getDmA
   return {};
 };
 
+function getAuthenticatedPlanUser() {
+  const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
+  if (!user || !user.id) return null;
+  return user;
+}
+
+function getPlanStoreUsers() {
+  return (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+}
+
+function getPlanStoreAreas() {
+  return (window.store && window.store.areas ? window.store.areas.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
+}
+
+function getPlanStoreDoctors() {
+  return (window.store && window.store.doctors ? window.store.doctors.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
+}
+
+function escapePlanHtml(val) {
+  if (typeof window.escapeHtml === "function") return window.escapeHtml(val);
+  return String(val === null || val === undefined ? "" : val)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function getMasterVisits() {
+  if (window.store && window.store.visits && typeof window.store.visits.getAll === "function") {
+    return window.store.visits.getAll();
+  }
   if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.visits)) {
     return window.DEMO_DATA.visits;
   }
@@ -96,9 +127,17 @@ function getMasterVisits() {
   return [];
 }
 
-function saveMasterVisits(visits) {
+function saveMasterVisits(visits, modifiedVisits = []) {
   if (window.DEMO_DATA) {
     window.DEMO_DATA.visits = visits;
+  }
+  if (window.store && window.store.visits && typeof window.store.visits.update === "function" && Array.isArray(modifiedVisits) && modifiedVisits.length > 0) {
+    modifiedVisits.forEach((v) => {
+      if (v && v.id) {
+        window.store.visits.update(v.id, v);
+      }
+    });
+    return;
   }
   if (typeof window.saveDataToStorage === "function") {
     window.saveDataToStorage();
@@ -110,18 +149,39 @@ function saveMasterVisits(visits) {
       localStorage.setItem("pharma_master_data", JSON.stringify(data));
     } catch (e) {}
   }
+  if (typeof window.syncVisitToCloud === "function" && Array.isArray(modifiedVisits)) {
+    modifiedVisits.forEach((v) => {
+      if (v && v.id) window.syncVisitToCloud("update", v);
+    });
+  }
+  if (typeof document !== "undefined" && typeof CustomEvent === "function") {
+    document.dispatchEvent(new CustomEvent("pharma:store:changed", {
+      detail: { entity: "visits", action: "update", payload: modifiedVisits }
+    }));
+  }
 }
 
 function getScopedSubordinateReps(currentUser) {
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  if (!currentUser || !currentUser.id) return [];
+  const allUsers = getPlanStoreUsers();
   const role = window.normalizeRole
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
 
-  if (role === "admin") {
-    return allUsers.filter(
-      (u) => u.role === "medical_rep" || u.role === "rep",
-    );
+  const isRepUser = (u) => typeof window.isRepRole === "function"
+    ? window.isRepRole(u)
+    : ((window.normalizeRole ? window.normalizeRole(u.role) : (u.role || "").toLowerCase()) === "medical_rep");
+
+  if (role === "admin" || role === "hr") {
+    return allUsers.filter(isRepUser);
+  }
+
+  if (role === "general_manager" || role === "gm") {
+    const subordinates = typeof window.getAllSubordinates === "function"
+      ? window.getAllSubordinates(currentUser.id)
+      : [];
+    const subIds = new Set(subordinates.map((s) => s.id));
+    return allUsers.filter((u) => isRepUser(u) && subIds.has(u.id));
   }
 
   if (role === "business_unit" || role === "bu" || role === "line_manager" || role === "lm") {
@@ -130,27 +190,14 @@ function getScopedSubordinateReps(currentUser) {
       : [];
     const subIds = new Set(subordinates.map((s) => s.id));
 
-    // Also include reps matching the Line Manager's or BU's product line(s)
-    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
-    const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
-    const myLines = (role === "business_unit" || role === "bu")
-      ? userLines.map((l) => l.id)
-      : (userLines.length > 0 ? userLines.map((l) => l.id) : allLines.filter((l) => l.lineManagerId === currentUser.id).map((l) => l.id));
-
-    return allUsers.filter((u) => {
-      if (u.role !== "medical_rep" && u.role !== "rep") return false;
-      if (subIds.has(u.id)) return true;
-      const uLines = u.lineIds || (u.lineId ? [u.lineId] : []);
-      if (uLines.some((lId) => myLines.includes(lId))) return true;
-      return false;
-    });
+    return allUsers.filter((u) => isRepUser(u) && subIds.has(u.id));
   }
 
   if (role === "district_manager" || role === "dm") {
     return allUsers.filter(
       (u) =>
         (u.managerId === currentUser.id || u.dmId === currentUser.id) &&
-        (u.role === "medical_rep" || u.role === "rep"),
+        isRepUser(u),
     );
   }
 
@@ -182,8 +229,9 @@ function canUserApproveForRep(currentUser, rep, allUsers) {
     ? window.normalizeRole(currentUser.role)
     : (currentUser.role || "").toLowerCase();
 
-  // 1. Admin always has full approval authority across the organization
+  // 1. Admin has full approval authority; General Manager is strictly view-only
   if (role === "admin") return true;
+  if (role === "general_manager" || role === "gm") return false;
 
   // 2. Medical Reps never have approval authority
   if (role === "medical_rep" || role === "rep") return false;
@@ -230,11 +278,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.initPage("plans-review");
   }
 
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "u1790626000014",
-    name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    role: "district_manager",
-  };
+  const currentUser = getAuthenticatedPlanUser();
+  if (!currentUser) return;
 
   const userRole = window.normalizeRole
     ? window.normalizeRole(currentUser.role)
@@ -253,11 +298,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("languageChanged", () => {
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "u1790626000014",
-    name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    role: "district_manager",
-  };
+  const currentUser = getAuthenticatedPlanUser();
+  if (!currentUser) return;
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   applyPlansReviewTranslations(lang);
@@ -318,11 +360,8 @@ function populatePlansLineFilter(currentUser) {
 
 window.onPlansLineFilterChange = function (selectedLineId) {
   window.selectedPlansLineId = selectedLineId;
-  const currentUser = (window.checkAuth && window.checkAuth()) || {
-    id: "u1790626000014",
-    name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    role: "district_manager",
-  };
+  const currentUser = getAuthenticatedPlanUser();
+  if (!currentUser) return;
   populateRepFilter(currentUser, selectedLineId);
   renderPlansReview(currentUser);
 };
@@ -415,7 +454,7 @@ function renderPlansReview(currentUser) {
 
   const btnApproveAll = document.getElementById("btnApproveAllGlobal");
   if (btnApproveAll) {
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const allUsers = getPlanStoreUsers();
     const canApproveAny = pendingVisits.some((v) => {
       const rep = scopedReps.find((r) => r.id === v.repId);
       return rep && canUserApproveForRep(currentUser, rep, allUsers);
@@ -462,7 +501,7 @@ function renderPlansReview(currentUser) {
     } else {
       container.innerHTML = `
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
-          <div style="margin-bottom: 12px; color: #10b981;"><svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M5.8 11.3 2 22l10.7-3.79d"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div style="margin-bottom: 12px; color: #10b981;"><svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><circle cx="12" cy="12" r="3"/></svg></div>
           <h4 class="fw-bold rep-title mb-2">${t.noPendingPlans}</h4>
           <p class="text-muted small mb-3">All visit plans have been approved and are active in team schedules.</p>
           <div>
@@ -481,8 +520,8 @@ function renderPlansReview(currentUser) {
     grouped[v.repId].push(v);
   });
 
-  const allAreas = (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allAreas = getPlanStoreAreas();
+  const allUsers = getPlanStoreUsers();
   const dmSchedule = getDmAccompanimentSchedule(currentUser.id);
 
   let html = "";
@@ -535,21 +574,21 @@ function renderPlansReview(currentUser) {
       if (canApproveRep) {
         if (isAccompaniedWithThisRep) {
           accompanyBadgeOrButton = `
-            <span class="badge bg-success-subtle text-success border border-success fw-bold px-3 py-2" style="font-size: 0.85rem;" title="${t.badgeAccompaniedLocked}">
-              ${t.badgeAccompaniedLocked}
+            <span class="badge bg-success-subtle text-success border border-success fw-bold px-3 py-2" style="font-size: 0.85rem;" title="${escapePlanHtml(t.badgeAccompaniedLocked)}">
+              ${escapePlanHtml(t.badgeAccompaniedLocked)}
             </span>
           `;
         } else if (isBookedWithAnotherRep) {
           const otherRep = allUsers.find((u) => u.id === bookedRepId);
           accompanyBadgeOrButton = `
-            <span class="badge bg-secondary-subtle text-muted border fw-bold px-3 py-2" style="font-size: 0.82rem;" title="${t.toastAlreadyBooked}">
-              ${t.badgeBookedOtherRep} (${otherRep ? otherRep.name : bookedRepId})
+            <span class="badge bg-secondary-subtle text-muted border fw-bold px-3 py-2" style="font-size: 0.82rem;" title="${escapePlanHtml(t.toastAlreadyBooked)}">
+              ${escapePlanHtml(t.badgeBookedOtherRep)} (${escapePlanHtml(otherRep ? otherRep.name : bookedRepId)})
             </span>
           `;
         } else {
           accompanyBadgeOrButton = `
-            <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="accompanyEntireDay('${repId}', '${dateStr}')">
-              ${t.btnAccompanyDay}
+            <button type="button" class="btn btn-sm btn-primary fw-bold" data-plan-action="accompany-day" data-rep-id="${escapePlanHtml(repId)}" data-date="${escapePlanHtml(dateStr)}">
+              ${escapePlanHtml(t.btnAccompanyDay)}
             </button>
           `;
         }
@@ -559,8 +598,8 @@ function renderPlansReview(currentUser) {
         ? `
           <div class="d-flex align-items-center gap-2 day-plan-actions">
             ${accompanyBadgeOrButton}
-            <button type="button" class="btn btn-sm btn-outline-success" onclick="approveEntireDay('${repId}', '${dateStr}')">
-              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${t.btnApproveDay}
+            <button type="button" class="btn btn-sm btn-outline-success" data-plan-action="approve-day" data-rep-id="${escapePlanHtml(repId)}" data-date="${escapePlanHtml(dateStr)}">
+              <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${escapePlanHtml(t.btnApproveDay)}
             </button>
           </div>
         `
@@ -571,7 +610,7 @@ function renderPlansReview(currentUser) {
           <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-2 day-plan-header">
             <div class="d-flex align-items-center gap-2">
               <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <strong style="font-size: 0.95rem;">${dt.dayName ? dt.dayName + " • " : ""}${dateStr}</strong>
+              <strong style="font-size: 0.95rem;">${dt.dayName ? escapePlanHtml(dt.dayName) + " • " : ""}${escapePlanHtml(dateStr)}</strong>
               <span class="badge plans-count-badge ms-1" style="font-size: 0.78rem;">${dayVisits.length} visits</span>
             </div>
             ${dayActionsHtml}
@@ -611,20 +650,20 @@ function renderPlansReview(currentUser) {
                     const actionsCellHtml = canApproveRep
                       ? `
                         <div class="d-inline-flex gap-2">
-                          <button class="btn btn-sm btn-outline-danger btn-action-reject" onclick="openRejectSingleModal('${v.id}')" title="${t.btnReject}">
+                          <button type="button" class="btn btn-sm btn-outline-danger btn-action-reject" data-plan-action="reject-single" data-visit-id="${escapePlanHtml(v.id)}" title="${escapePlanHtml(t.btnReject)}">
                             <svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
-                          <button class="btn btn-sm btn-primary text-white px-2 btn-action-accompany" onclick="accompanySingleVisit('${v.id}')" title="${t.btnAccompany}">
-                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${t.btnAccompany}
+                          <button type="button" class="btn btn-sm btn-primary text-white px-2 btn-action-accompany" data-plan-action="accompany-single" data-visit-id="${escapePlanHtml(v.id)}" title="${escapePlanHtml(t.btnAccompany)}">
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${escapePlanHtml(t.btnAccompany)}
                           </button>
-                          <button class="btn btn-sm btn-success text-white px-3 btn-action-approve" onclick="approveSingleVisit('${v.id}')">
-                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${t.btnApprove}
+                          <button type="button" class="btn btn-sm btn-success text-white px-3 btn-action-approve" data-plan-action="approve-single" data-visit-id="${escapePlanHtml(v.id)}">
+                            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${escapePlanHtml(t.btnApprove)}
                           </button>
                         </div>
                       `
                       : `
                         <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1" style="font-size: 0.78rem;">
-                          <i class="bi bi-hourglass-split me-1"></i>Pending DM Approval
+                          <i class="fas fa-hourglass-half me-1"></i>Pending DM Approval
                         </span>
                       `;
 
@@ -632,7 +671,7 @@ function renderPlansReview(currentUser) {
                       <tr class="visit-row">
                         <td class="plans-col-doctor">
                           <div class="d-flex align-items-center gap-2">
-                            <strong class="visit-doctor-title">${window.escapeHtml(v.doctorName)}</strong>
+                            <strong class="visit-doctor-title">${escapePlanHtml(v.doctorName)}</strong>
                             ${targetTypeBadge}
                           </div>
                         </td>
@@ -644,7 +683,7 @@ function renderPlansReview(currentUser) {
                             (() => {
                               const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
                               return prods.length
-                                ? `<span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.join(", ")}</span>`
+                                ? `<span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.75rem;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${escapePlanHtml(prods.join(", "))}</span>`
                                 : `<span class="text-muted small">-</span>`;
                             })()
                           }
@@ -668,21 +707,21 @@ function renderPlansReview(currentUser) {
         <div class="d-flex align-items-center gap-2 flex-wrap">
           ${
             isActingAsDm
-              ? `<span class="badge bg-warning text-dark border border-warning px-2 py-1 fw-semibold" style="font-size: 0.78rem;"><i class="bi bi-shield-check me-1"></i>${t.badgeActingDm}</span>`
+              ? `<span class="badge bg-warning text-dark border border-warning px-2 py-1 fw-semibold" style="font-size: 0.78rem;"><i class="fas fa-shield-halved me-1"></i>${escapePlanHtml(t.badgeActingDm)}</span>`
               : ""
           }
-          <button class="btn btn-sm btn-outline-danger" onclick="openRejectAllForRep('${repId}')">
-            <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ${t.btnRejectAllForRep}
+          <button type="button" class="btn btn-sm btn-outline-danger" data-plan-action="reject-rep" data-rep-id="${escapePlanHtml(repId)}">
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ${escapePlanHtml(t.btnRejectAllForRep)}
           </button>
-          <button class="btn btn-sm btn-success text-white" onclick="approveAllForRep('${repId}')">
-            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${t.btnApproveAllForRep} ${rep.name.split(" ")[0]}
+          <button type="button" class="btn btn-sm btn-success text-white" data-plan-action="approve-rep" data-rep-id="${escapePlanHtml(repId)}">
+            <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${escapePlanHtml(t.btnApproveAllForRep)} ${escapePlanHtml((rep.name || "").split(" ")[0])}
           </button>
         </div>
       `
       : `
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-info-subtle text-info-emphasis border px-3 py-2 fw-semibold" style="font-size: 0.82rem;">
-            <i class="bi bi-eye me-1"></i>${t.badgeSupervisory}
+            <i class="fas fa-eye me-1"></i>${escapePlanHtml(t.badgeSupervisory)}
           </span>
         </div>
       `;
@@ -692,24 +731,24 @@ function renderPlansReview(currentUser) {
         <div class="plans-rep-header">
           <div class="d-flex align-items-center gap-3">
             <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0d6efd, #0b5ed7); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem;">
-              ${rep.name.charAt(0)}
+              ${escapePlanHtml((rep.name || "R").trim().charAt(0).toUpperCase())}
             </div>
             <div>
               <div class="d-flex align-items-center gap-2">
-                <h5 class="fw-bold mb-0 rep-title">${rep.name}</h5>
+                <h5 class="fw-bold mb-0 rep-title">${escapePlanHtml(rep.name)}</h5>
                 <span class="badge-count">${repVisits.length} Pending</span>
               </div>
               <div class="text-muted small rep-meta-text" style="margin-top: 2px;">
-                Code: <strong>${rep.employeeCode || "REP-001"}</strong> 
-                ${area ? ` • Area: <strong>${area.name}</strong>` : ""}
+                Code: <strong>${escapePlanHtml(rep.employeeCode || rep.code || "—")}</strong> 
+                ${area ? ` • Area: <strong>${escapePlanHtml(area.name)}</strong>` : ""}
                 • DM: <strong>${
                   !dm
                     ? `<span class="badge bg-warning text-dark">Vacant</span>`
                     : (dm.status === "Inactive"
-                        ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Former: ${dm.name})</span>`
+                        ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Former: ${escapePlanHtml(dm.name)})</span>`
                         : (window.normalizeRole ? window.normalizeRole(dm.role) : (dm.role || "").toLowerCase()) !== "district_manager"
-                          ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Supervised by LM: ${dm.name})</span>`
-                          : dm.name)
+                          ? `<span class="badge bg-warning text-dark">Vacant</span> <span class="text-muted small">(Supervised by LM: ${escapePlanHtml(dm.name)})</span>`
+                          : escapePlanHtml(dm.name))
                 }</strong>
               </div>
             </div>
@@ -725,6 +764,26 @@ function renderPlansReview(currentUser) {
   });
 
   container.innerHTML = html;
+
+  if (!container.dataset) container.dataset = {};
+  if (!container.dataset.planEventsBound && typeof container.addEventListener === "function") {
+    container.dataset.planEventsBound = "true";
+    container.addEventListener("click", (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest("[data-plan-action]") : null;
+      if (!btn) return;
+      const action = btn.getAttribute("data-plan-action");
+      const repId = btn.getAttribute("data-rep-id");
+      const dateStr = btn.getAttribute("data-date");
+      const visitId = btn.getAttribute("data-visit-id");
+      if (action === "accompany-day") plansReview.accompanyEntireDay(repId, dateStr);
+      else if (action === "approve-day") plansReview.approveEntireDay(repId, dateStr);
+      else if (action === "reject-single") plansReview.openRejectSingleModal(visitId);
+      else if (action === "accompany-single") plansReview.accompanySingleVisit(visitId);
+      else if (action === "approve-single") plansReview.approveSingleVisit(visitId);
+      else if (action === "reject-rep") plansReview.openRejectAllForRep(repId);
+      else if (action === "approve-rep") plansReview.approveAllForRep(repId);
+    });
+  }
 }
 
 // ============================================================================
@@ -734,6 +793,10 @@ const plansReview = {
   activeRejectTarget: { visitId: null, repId: null },
 
   _ensureCanApprove(currentUser, targetRepId = null) {
+    if (!currentUser || !currentUser.id) {
+      if (typeof window.showToast === "function") window.showToast("Authentication required.", "error");
+      return false;
+    }
     const role = window.normalizeRole
       ? window.normalizeRole(currentUser.role)
       : (currentUser.role || "").toLowerCase();
@@ -745,16 +808,21 @@ const plansReview = {
       return false;
     }
 
-    // 2. Admin always has full approval authority
+    // 2. Admin has full approval authority; General Manager is strictly view-only
     if (role === "admin") return true;
+    if (role === "general_manager" || role === "gm") {
+      const msg = "Notice: General Manager has view-only oversight and does not approve or reject plans.";
+      if (typeof window.showToast === "function") window.showToast(msg, "warning");
+      return false;
+    }
 
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    const allUsers = getPlanStoreUsers();
 
-    // 3. District Manager: allowed for direct reports
+    // 3. District Manager: allowed only for direct reports
     if (role === "district_manager" || role === "dm") {
       if (targetRepId) {
         const rep = allUsers.find((u) => u.id === targetRepId);
-        if (rep && rep.managerId !== currentUser.id && rep.dmId !== currentUser.id) {
+        if (!rep || (rep.managerId !== currentUser.id && rep.dmId !== currentUser.id)) {
           const msg = "Notice: You can only approve plans for representatives in your direct district.";
           if (typeof window.showToast === "function") window.showToast(msg, "warning");
           return false;
@@ -787,18 +855,14 @@ const plansReview = {
   },
 
   filterPlansView() {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      role: "district_manager",
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     renderPlansReview(currentUser);
   },
 
   accompanyEntireDay(repId, dateStr) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
@@ -850,7 +914,7 @@ const plansReview = {
       count++;
     });
 
-    saveMasterVisits(visits);
+    saveMasterVisits(visits, eligibleVisits);
 
     if (typeof window.showToast === "function") {
       window.showToast(`${t.toastAccompanyDaySuccess} (${count})`, "success");
@@ -860,13 +924,11 @@ const plansReview = {
   },
 
   approveEntireDay(repId, dateStr) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
-    let count = 0;
+    const modifiedVisits = [];
     visits.forEach((v) => {
       if (
         v.repId === repId &&
@@ -877,35 +939,52 @@ const plansReview = {
         v.approvedBy = currentUser.id;
         v.approvedByName = currentUser.name;
         v.approvedAt = new Date().toISOString();
-        count++;
+        modifiedVisits.push(v);
       }
     });
 
-    if (count === 0) return;
-    saveMasterVisits(visits);
+    if (modifiedVisits.length === 0) return;
+    saveMasterVisits(visits, modifiedVisits);
 
     const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
-      window.showToast(`${t.toastApprovedAllRep} (${count})`, "success");
+      window.showToast(`${t.toastApprovedAllRep} (${modifiedVisits.length})`, "success");
 
     renderPlansReview(currentUser);
   },
 
   accompanySingleVisit(visitId) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
     if (!visit) return;
     if (!this._ensureCanApprove(currentUser, visit.repId)) return;
 
-    if (visit.status === "completed") {
-      const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-      const msg = "Cannot modify a visit that has already been completed.";
+    if (visit.status === "completed" || visit.status === "rejected" || visit.status === "missed") {
+      const msg = "Cannot accompany a visit that is already completed, rejected, or missed.";
       if (typeof window.showToast === "function") window.showToast(msg, "warning");
+      return;
+    }
+
+    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
+
+    // Prevent double-booking DM on the same date with a different rep
+    const storageKey = "pharma_dm_accompaniments";
+    let cachedSchedule = {};
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) cachedSchedule = JSON.parse(raw) || {};
+    } catch (e) {}
+    if (!cachedSchedule[currentUser.id]) cachedSchedule[currentUser.id] = {};
+
+    const existingRepId = cachedSchedule[currentUser.id][visit.date];
+    if (existingRepId && existingRepId !== visit.repId) {
+      if (typeof window.showToast === "function") {
+        window.showToast(t.toastAlreadyBooked, "warning");
+      }
       return;
     }
 
@@ -919,20 +998,14 @@ const plansReview = {
 
     // Register accompaniment schedule for this date and rep
     try {
-      const storageKey = "pharma_dm_accompaniments";
-      const cached = localStorage.getItem(storageKey);
-      const data = cached ? JSON.parse(cached) : {};
-      if (!data[currentUser.id]) data[currentUser.id] = {};
-      data[currentUser.id][visit.date] = visit.repId;
-      localStorage.setItem(storageKey, JSON.stringify(data));
+      cachedSchedule[currentUser.id][visit.date] = visit.repId;
+      localStorage.setItem(storageKey, JSON.stringify(cachedSchedule));
     } catch (e) {
       console.error("Error saving accompaniment schedule:", e);
     }
 
-    saveMasterVisits(visits);
+    saveMasterVisits(visits, [visit]);
 
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    const t = plansReviewTranslations[lang] || plansReviewTranslations.en;
     if (typeof window.showToast === "function")
       window.showToast(t.toastAccompanySuccess, "success");
 
@@ -940,23 +1013,28 @@ const plansReview = {
   },
 
   approveSingleVisit(visitId) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
     if (!visit) return;
     if (!this._ensureCanApprove(currentUser, visit.repId)) return;
+
+    if (visit.status !== "pending_approval" && visit.status !== "pending") {
+      if (typeof window.showToast === "function") {
+        window.showToast("Only pending visits can be approved.", "warning");
+      }
+      return;
+    }
 
     visit.status = "planned";
     visit.approvedBy = currentUser.id;
     visit.approvedByName = currentUser.name;
     visit.approvedAt = new Date().toISOString();
 
-    saveMasterVisits(visits);
+    saveMasterVisits(visits, [visit]);
 
-    const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === visit.doctorId);
+    const doc = getPlanStoreDoctors().find((d) => d.id === visit.doctorId);
     const docName = doc ? doc.name : (visit.doctorName || "Medical Visit");
     const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
     const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
@@ -985,14 +1063,12 @@ const plansReview = {
   },
 
   approveAllForRep(repId) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     if (!this._ensureCanApprove(currentUser, repId)) return;
     const visits = getMasterVisits();
 
-    let count = 0;
+    const modifiedVisits = [];
     const approvedDates = new Set();
     visits.forEach((v) => {
       if (v.repId === repId && v.status === "pending_approval") {
@@ -1001,12 +1077,13 @@ const plansReview = {
         v.approvedByName = currentUser.name;
         v.approvedAt = new Date().toISOString();
         if (v.date) approvedDates.add(v.date);
-        count++;
+        modifiedVisits.push(v);
       }
     });
 
-    if (count === 0) return;
-    saveMasterVisits(visits);
+    if (modifiedVisits.length === 0) return;
+    const count = modifiedVisits.length;
+    saveMasterVisits(visits, modifiedVisits);
 
     const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
     const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
@@ -1015,16 +1092,12 @@ const plansReview = {
     const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
 
     const sortedDates = Array.from(approvedDates).sort();
-    let dateTextAr = "";
     let dateTextEn = "";
     if (sortedDates.length === 0) {
-      // dateText removed
       dateTextEn = "new";
     } else if (sortedDates.length === 1) {
-      // dateText removed
       dateTextEn = `for ${sortedDates[0]}`;
     } else {
-      // dateText removed
       dateTextEn = `for the period (${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]})`;
     }
 
@@ -1049,31 +1122,37 @@ const plansReview = {
   },
 
   approveAllPendingAcrossTeam() {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     if (!this._ensureCanApprove(currentUser)) return;
     const visits = getMasterVisits();
-    const scopedReps = getScopedSubordinateReps(currentUser);
-    const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+    let scopedReps = getScopedSubordinateReps(currentUser);
+    const allUsers = getPlanStoreUsers();
+    const allDocs = getPlanStoreDoctors();
 
-    let count = 0;
-    const repCounts = {};
     const effectiveLineId = window.selectedPlansLineId || document.getElementById("plansLineFilter")?.value || "all";
+    if (effectiveLineId !== "all") {
+      scopedReps = scopedReps.filter((r) => {
+        const rLines = window.getUserLines ? window.getUserLines(r.id) : [];
+        return rLines.some((l) => l.id === effectiveLineId);
+      });
+    }
+
+    const modifiedVisits = [];
+    const repCounts = {};
     visits.forEach((v) => {
       // Only approve visits matching the currently active line filter
       if (effectiveLineId !== "all") {
         let visitLine = v.lineId;
         if (!visitLine) {
-          const doc = (window.DEMO_DATA && window.DEMO_DATA.doctors ? window.DEMO_DATA.doctors : []).find((d) => d.id === v.doctorId);
+          const doc = allDocs.find((d) => d.id === v.doctorId);
           visitLine = doc ? doc.lineId : null;
           if (!visitLine && typeof window.getUserLines === "function") {
             const rLines = window.getUserLines(v.repId);
             if (rLines.length > 0) visitLine = rLines[0].id;
           }
         }
-        if (visitLine && visitLine !== effectiveLineId) return;
+        if (visitLine !== effectiveLineId) return;
       }
       const rep = scopedReps.find((r) => r.id === v.repId);
       if (rep && canUserApproveForRep(currentUser, rep, allUsers) && v.status === "pending_approval") {
@@ -1082,12 +1161,13 @@ const plansReview = {
         v.approvedByName = currentUser.name;
         v.approvedAt = new Date().toISOString();
         repCounts[v.repId] = (repCounts[v.repId] || 0) + 1;
-        count++;
+        modifiedVisits.push(v);
       }
     });
 
-    if (count === 0) return;
-    saveMasterVisits(visits);
+    if (modifiedVisits.length === 0) return;
+    const count = modifiedVisits.length;
+    saveMasterVisits(visits, modifiedVisits);
 
     const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
     const isActingDm = (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu");
@@ -1121,10 +1201,8 @@ const plansReview = {
   },
 
   openRejectSingleModal(visitId) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      role: "district_manager",
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     const visits = getMasterVisits();
     const visit = visits.find((v) => v.id === visitId);
     if (!visit) return;
@@ -1132,20 +1210,20 @@ const plansReview = {
     this.activeRejectTarget = { visitId: visitId, repId: visit.repId };
     const modal = document.getElementById("rejectPlanModal");
     if (!modal) return;
-    document.getElementById("rejectReasonText").value = "";
+    const txt = document.getElementById("rejectReasonText");
+    if (txt) txt.value = "";
     modal.style.display = "flex";
   },
 
   openRejectAllForRep(repId) {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      role: "district_manager",
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     if (!this._ensureCanApprove(currentUser, repId)) return;
     this.activeRejectTarget = { visitId: null, repId: repId };
     const modal = document.getElementById("rejectPlanModal");
     if (!modal) return;
-    document.getElementById("rejectReasonText").value = "";
+    const txt = document.getElementById("rejectReasonText");
+    if (txt) txt.value = "";
     modal.style.display = "flex";
   },
 
@@ -1156,13 +1234,11 @@ const plansReview = {
   },
 
   confirmRejectPlan() {
-    const currentUser = (window.checkAuth && window.checkAuth()) || {
-      id: "u1790626000014",
-      name: (window.store && window.store.users && window.store.users.getById("u1790626000014") ? window.store.users.getById("u1790626000014").name : "District Manager"),
-      role: "district_manager",
-    };
+    const currentUser = getAuthenticatedPlanUser();
+    if (!currentUser) return;
     const visits = getMasterVisits();
     const targetRepId = this.activeRejectTarget.repId || (this.activeRejectTarget.visitId ? visits.find((v) => v.id === this.activeRejectTarget.visitId)?.repId : null);
+    if (!targetRepId) return;
     if (!this._ensureCanApprove(currentUser, targetRepId)) return;
     const reason =
       document.getElementById("rejectReasonText")?.value.trim() ||
@@ -1175,19 +1251,28 @@ const plansReview = {
     const actorTitle = isActingDm ? t.actorTitleActingDm : (role === "admin" ? t.actorTitleAdmin : t.actorTitleDm);
 
     const affectedDates = new Set();
+    const modifiedVisits = [];
 
     if (this.activeRejectTarget.visitId) {
       const v = visits.find(
         (item) => item.id === this.activeRejectTarget.visitId,
       );
       if (v) {
+        if (v.status !== "pending_approval" && v.status !== "pending") {
+          if (typeof window.showToast === "function") {
+            window.showToast("Only pending visits can be rejected.", "warning");
+          }
+          this.closeRejectModal();
+          return;
+        }
         if (v.date) affectedDates.add(v.date);
         v.status = "rejected";
         v.rejectionReason = reason;
         v.rejectedBy = currentUser.id;
+        modifiedVisits.push(v);
 
-        const doc = (window.DEMO_DATA.doctors || []).find((d) => d.id === v.doctorId);
-        const docName = doc ? (doc.name || doc.nameAr) : (v.doctorName || "Dr. Ahmed Mostafa");
+        const doc = getPlanStoreDoctors().find((d) => d.id === v.doctorId);
+        const docName = doc ? (doc.name || doc.nameAr) : (v.doctorName || "Medical Visit");
         if (typeof window.addWorkflowNotification === "function") {
           window.addWorkflowNotification({
             userId: v.repId,
@@ -1213,6 +1298,7 @@ const plansReview = {
           v.status = "rejected";
           v.rejectionReason = reason;
           v.rejectedBy = currentUser.id;
+          modifiedVisits.push(v);
         }
       });
 
@@ -1264,7 +1350,7 @@ const plansReview = {
       console.error("Error updating accompaniment schedule on rejection:", e);
     }
 
-    saveMasterVisits(visits);
+    saveMasterVisits(visits, modifiedVisits);
     this.closeRejectModal();
 
     if (typeof window.showToast === "function")

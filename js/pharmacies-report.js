@@ -14,22 +14,23 @@ function sortBilingualPharmacies(a, b) {
   if (typeof window !== "undefined" && typeof window.sortBilingualByName === "function") {
     return window.sortBilingualByName(a, b);
   }
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const nameA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
-  const nameB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
-  const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
-  return nameA.localeCompare(nameB, locales, { numeric: true, sensitivity: "base" });
+  const nameA = (a.name || a.nameAr || "").trim();
+  const nameB = (b.name || b.nameAr || "").trim();
+  return nameA.localeCompare(nameB, ["en", "ar"], { numeric: true, sensitivity: "base" });
 }
 
 function getScopedPharmacies(respectActiveFilters = true) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "u1790626000001" };
+  const currentUser = (window.checkAuth && window.checkAuth()) || null;
+  if (!currentUser || !currentUser.id) return [];
+
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
-  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
+  const isRep = window.isRepRole ? window.isRepRole(currentUser) : (role === "medical_rep" || role === "rep");
+  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : ["district_manager", "dm", "line_manager", "lm", "business_unit", "bu", "admin", "hr", "general_manager", "product_manager", "pm"].includes(role);
 
   let pharms = getPharmaciesData();
 
   // Role scoping: Reps get all pharmacies assigned to their id OR located in any of their assigned areas
-  if (!isMgr) {
+  if (isRep) {
     const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
@@ -38,21 +39,32 @@ function getScopedPharmacies(respectActiveFilters = true) {
       (p.areaId && repAreaIds.includes(p.areaId)) ||
       (p.area && repAreaNames.includes(p.area.toLowerCase().trim()))
     );
-  } else {
+  } else if (isMgr) {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
     const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
     let allowedTeamIds = null;
     let allowedAreaIds = null;
     let allowedAreaNames = null;
+    let pmLineIds = null;
 
-    if (role === "district_manager") {
+    if (role === "admin" || role === "hr") {
+      allowedTeamIds = null;
+      allowedAreaIds = null;
+      allowedAreaNames = null;
+    } else if (role === "district_manager") {
       const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...teamRepIds];
 
       const myVacantAreas = allAreas.filter((a) => {
         if (a.repId) return false;
+        if (typeof window.isAreaManagedByDm === "function") {
+          return window.isAreaManagedByDm(a, currentUser.id, allUsers);
+        }
+        if (a.dmId === currentUser.id || a.districtManagerId === currentUser.id) return true;
+        if (currentUser.areaIds && currentUser.areaIds.includes(a.id)) return true;
+        if (currentUser.areaId && currentUser.areaId === a.id) return true;
         const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a, allUsers) : null;
-        return mgrId === currentUser.id || (!mgrId && (!a.lineId || (currentUser.lineIds && currentUser.lineIds.includes(a.lineId)) || currentUser.lineId === a.lineId));
+        return mgrId === currentUser.id;
       });
 
       const dmAreas = allAreas.filter((a) =>
@@ -68,41 +80,113 @@ function getScopedPharmacies(respectActiveFilters = true) {
     } else if (role === "line_manager") {
       const dms = allUsers.filter((u) => u.managerId === currentUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
       const dmIds = dms.map((d) => d.id);
-      const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      const repIds = allUsers.filter((u) => dmIds.includes(u.managerId) || u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...dmIds, ...repIds];
 
-      const myLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+      const lmUserLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+      const lineLmsCount = (lineId) => allUsers.filter((u) => {
+        const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+        return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+      }).length;
+
+      const isAreaOwnedByDm = (area, dmId) => {
+        if (typeof window.isAreaManagedByDm === "function") return window.isAreaManagedByDm(area, dmId, allUsers);
+        if (area.dmId === dmId || area.districtManagerId === dmId) return true;
+        const dm = allUsers.find((u) => u.id === dmId);
+        if (dm) {
+          if (dm.areaIds && dm.areaIds.includes(area.id)) return true;
+          if (dm.areaId && dm.areaId === area.id) return true;
+        }
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(area, allUsers) : null;
+        return mgrId === dmId;
+      };
+
+      const lmVacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        if (a.managerId === currentUser.id || a.lmId === currentUser.id) return true;
+        if (dmIds.some((dmId) => isAreaOwnedByDm(a, dmId))) return true;
+        if (a.lineId && lmUserLineIds.includes(a.lineId) && lineLmsCount(a.lineId) <= 1) return true;
+        return false;
+      });
+
       const lmAreas = allAreas.filter((a) =>
         (a.repId && (repIds.includes(a.repId) || dmIds.includes(a.repId))) ||
-        (a.lineId && myLineIds.includes(a.lineId))
+        a.managerId === currentUser.id ||
+        a.lmId === currentUser.id ||
+        lmVacantAreas.some((va) => va.id === a.id)
       );
       allowedAreaIds = lmAreas.map((a) => a.id);
       allowedAreaNames = lmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
-    } else if (role === "business_unit") {
-      const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
-      const myLmIds = myLMs.map((u) => u.id);
+    } else if (role === "business_unit" || role === "general_manager") {
       const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
       const myDownstreamIds = myDownstream.map((u) => u.id);
-      allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
-      const buLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id).map(l => l.id) : [];
-      const buAreas = allAreas.filter((a) => (a.lineId && buLines.includes(a.lineId)) || (a.repId && allowedTeamIds.includes(a.repId)));
+      allowedTeamIds = [currentUser.id, ...myDownstreamIds];
+
+      const buDmIds = myDownstream.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm'))).map((u) => u.id);
+
+      const isAreaOwnedByDm = (area, dmId) => {
+        if (typeof window.isAreaManagedByDm === "function") return window.isAreaManagedByDm(area, dmId, allUsers);
+        if (area.dmId === dmId || area.districtManagerId === dmId) return true;
+        const dm = allUsers.find((u) => u.id === dmId);
+        if (dm) {
+          if (dm.areaIds && dm.areaIds.includes(area.id)) return true;
+          if (dm.areaId && dm.areaId === area.id) return true;
+        }
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(area, allUsers) : null;
+        return mgrId === dmId;
+      };
+
+      const buVacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        if (a.buId === currentUser.id) return true;
+        return buDmIds.some((dmId) => isAreaOwnedByDm(a, dmId));
+      });
+
+      const buAreas = allAreas.filter((a) =>
+        (a.repId && allowedTeamIds.includes(a.repId)) ||
+        a.buId === currentUser.id ||
+        buVacantAreas.some((va) => va.id === a.id)
+      );
       allowedAreaIds = buAreas.map((a) => a.id);
       allowedAreaNames = buAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
+    } else if (role === "product_manager" || role === "pm") {
+      const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
+      pmLineIds = pmLines.map((l) => l.id);
+      if (pmLineIds.length === 0) {
+        return []; // Fail-closed: PM without assigned lines sees no pharmacies
+      }
+      const pmAreas = allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId));
+      allowedAreaIds = pmAreas.map((a) => a.id);
+      allowedAreaNames = pmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
+      const pmReps = allUsers.filter((u) => {
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(u.id) : [];
+        return uLines.some((l) => pmLineIds.includes(l.id)) || (u.lineId && pmLineIds.includes(u.lineId)) || (u.lineIds && u.lineIds.some(lid => pmLineIds.includes(lid)));
+      });
+      allowedTeamIds = [currentUser.id, ...pmReps.map((u) => u.id)];
+    } else {
+      // Unknown or unauthenticated role: fail closed
+      return [];
     }
 
     const lmFilter = document.getElementById("pharmacyLmSelect");
     const dmFilter = document.getElementById("pharmacyDmSelect");
     const repFilter = document.getElementById("pharmacyRepSelect");
-    const repId = (repFilter && repFilter.value !== "all") ? repFilter.value : ((dmFilter && dmFilter.value !== "all") ? dmFilter.value : ((lmFilter && lmFilter.value !== "all") ? lmFilter.value : "all"));
+    const repVal = repFilter && repFilter.value ? repFilter.value : "all";
+    const dmVal = dmFilter && dmFilter.value ? dmFilter.value : "all";
+    const lmVal = lmFilter && lmFilter.value ? lmFilter.value : "all";
+    const repId = repVal !== "all" ? repVal : (dmVal !== "all" ? dmVal : (lmVal !== "all" ? lmVal : "all"));
 
-    if (allowedTeamIds) {
+    if (allowedTeamIds || allowedAreaIds) {
       pharms = pharms.filter((p) => {
         if (repId && repId.startsWith("vacant:")) {
           const vAreaId = repId.split(":")[1];
-          if (p.areaId === vAreaId) return true;
+          // Critical security fix: must verify that the vacant area is within allowedAreaIds for this manager
+          if (role === "admin" || role === "hr" || (allowedAreaIds && allowedAreaIds.includes(vAreaId))) {
+            if (p.areaId === vAreaId) return true;
+          }
         }
-        if (p.repId) {
-          return allowedTeamIds.includes(p.repId);
+        if (p.repId && allowedTeamIds && allowedTeamIds.includes(p.repId)) {
+          return true;
         }
         if (role === "admin" || role === "hr") {
           return true;
@@ -112,7 +196,14 @@ function getScopedPharmacies(respectActiveFilters = true) {
         }
         if (allowedAreaIds) {
           const pharmAreaName = (p.area || "").toLowerCase().trim();
-          return (p.areaId && allowedAreaIds.includes(p.areaId)) || (pharmAreaName && allowedAreaNames.includes(pharmAreaName));
+          if (p.areaId && allowedAreaIds.includes(p.areaId)) return true;
+          if (pharmAreaName && allowedAreaNames && allowedAreaNames.includes(pharmAreaName)) return true;
+        }
+        // Direct PM Product Line matching (in case pharmacy has no area or rep assigned yet)
+        if ((role === "product_manager" || role === "pm") && pmLineIds) {
+          if ((p.lineId && pmLineIds.includes(p.lineId)) || (Array.isArray(p.lineIds) && p.lineIds.some((lid) => pmLineIds.includes(lid)))) {
+            return true;
+          }
         }
         return false;
       });
@@ -121,6 +212,10 @@ function getScopedPharmacies(respectActiveFilters = true) {
     if (repId !== "all") {
       if (repId.startsWith("vacant:")) {
         const vacantAreaId = repId.split(":")[1];
+        // Critical: Non-admin users cannot access vacant areas outside their allowed scope
+        if (role !== "admin" && role !== "hr" && allowedAreaIds && !allowedAreaIds.includes(vacantAreaId)) {
+          return [];
+        }
         const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
         const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
         pharms = pharms.filter((p) => {
@@ -142,19 +237,34 @@ function getScopedPharmacies(respectActiveFilters = true) {
         const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
         const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
         if (isLM) {
+          const selLmUser = allUsers.find((u) => u.id === repId);
           const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-          const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+          const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId) || u.managerId === repId).map((u) => u.id);
           const lmTeamIds = [repId, ...dmsUnderLM, ...repsUnderLM];
-          const lmUser = allUsers.find((u) => u.id === repId);
-          const lmUserLineIds = lmUser ? (lmUser.lineIds || (lmUser.lineId ? [lmUser.lineId] : [])) : [];
-          const lmAreaIds = allAreas.filter((a) => (a.repId && lmTeamIds.includes(a.repId)) || (a.lineId && lmUserLineIds.includes(a.lineId))).map((a) => a.id);
+          const lmUserLineIds = selLmUser ? (selLmUser.lineIds || (selLmUser.lineId ? [selLmUser.lineId] : [])) : [];
+          const lineLmsCount = (lineId) => allUsers.filter((u) => {
+            const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+            return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+          }).length;
+          const lmAreaIds = allAreas.filter((a) => {
+            if (a.repId && lmTeamIds.includes(a.repId)) return true;
+            if (a.managerId === repId || a.lmId === repId) return true;
+            if (!a.repId && dmsUnderLM.some((dmId) => typeof window.isAreaManagedByDm === "function" ? window.isAreaManagedByDm(a, dmId, allUsers) : a.dmId === dmId)) return true;
+            if (!a.repId && a.lineId && lmUserLineIds.includes(a.lineId) && lineLmsCount(a.lineId) <= 1) return true;
+            return false;
+          }).map((a) => a.id);
           pharms = pharms.filter((p) => (p.repId && lmTeamIds.includes(p.repId)) || (p.areaId && lmAreaIds.includes(p.areaId)));
         } else if (isDM) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
           const dmTeamIds = [repId, ...repsUnderDM];
           const dmUser = allUsers.find((u) => u.id === repId);
           const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
-          const dmAreaIds = allAreas.filter((a) => (a.repId && dmTeamIds.includes(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === repId).map((a) => a.id);
+          const dmAreaIds = allAreas.filter((a) =>
+            (a.repId && dmTeamIds.includes(a.repId)) ||
+            dmUserAreaIds.includes(a.id) ||
+            a.dmId === repId ||
+            (!a.repId && (typeof window.isAreaManagedByDm === "function" ? window.isAreaManagedByDm(a, repId, allUsers) : a.dmId === repId))
+          ).map((a) => a.id);
           pharms = pharms.filter((p) =>
             (p.repId && dmTeamIds.includes(p.repId)) ||
             (p.areaId && dmAreaIds.includes(p.areaId))
@@ -178,6 +288,9 @@ function getScopedPharmacies(respectActiveFilters = true) {
         }
       }
     }
+  } else {
+    // Unknown or unauthorized role: fail closed
+    return [];
   }
 
   const selectedLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
@@ -190,7 +303,7 @@ function getScopedPharmacies(respectActiveFilters = true) {
       }
       if (p.area) {
         const aName = (p.area || '').toLowerCase().trim();
-        const a = allAreas.find((x) => (x.nameEn || '').toLowerCase().trim() === aName || (x.nameAr || '').toLowerCase().trim() === aName);
+        const a = allAreas.find((x) => (x.name || '').toLowerCase().trim() === aName || (x.nameEn || '').toLowerCase().trim() === aName || (x.nameAr || '').toLowerCase().trim() === aName);
         if (a && a.lineId) return a.lineId === selectedLineId;
       }
       if (p.lineId) return p.lineId === selectedLineId;
@@ -251,8 +364,9 @@ function renderPharmaciesReport() {
   grid.style.display = "grid";
   if (emptyState) emptyState.style.display = "none";
 
-  const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
-  const normalizedRole = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase()) : '';
+  const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!currentUser) return;
+  const normalizedRole = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
   const isAdmin = normalizedRole === 'admin';
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -264,7 +378,7 @@ function renderPharmaciesReport() {
       const areaObj = allAreas.find((a) => a.id === p.areaId);
       const areaName = areaObj ? (areaObj.name || areaObj.id) : (p.area || "General");
       const lineObj = allLines.find((l) => l.id === (areaObj?.lineId || p.lineId));
-      const lineName = lineObj ? (lang === "ar" && lineObj.nameAr ? lineObj.nameAr : lineObj.name) : "";
+      const lineName = lineObj ? (lineObj.name || lineObj.nameAr || "") : "";
       const effectiveRepId = p.repId || (areaObj ? (areaObj.repId || null) : null);
       const repObj = effectiveRepId ? allUsers.find((u) => u.id === effectiveRepId) : null;
       const repName = repObj ? repObj.name : "Unassigned";
@@ -274,7 +388,7 @@ function renderPharmaciesReport() {
         <div class="directory-card-header">
           <div class="directory-avatar pharmacy"><svg class="badge-svg-icon" style="width:18px;height:18px;" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div>
           <div class="directory-header-info">
-            <h4 class="directory-name">${window.escapeHtml((lang === "ar" && p.nameAr) ? p.nameAr : (p.name || p.nameAr || ""))}</h4>
+            <h4 class="directory-name">${window.escapeHtml(p.name || p.nameAr || "")}</h4>
             <span class="directory-meta-tag pharmacy">Partner Pharmacy</span>
           </div>
           ${lineName ? `<span class="badge bg-secondary ms-auto" style="font-size: 0.68rem;">${window.escapeHtml(lineName)}</span>` : ""}
@@ -303,10 +417,10 @@ function renderPharmaciesReport() {
         </div>
         ${isAdmin ? `
         <div class="directory-card-footer">
-          <button class="btn btn-sm btn-outline-primary" onclick="openPharmacyModal('${p.id}')">
+          <button class="btn btn-sm btn-outline-primary btn-edit-pharmacy" data-id="${window.escapeHtml(p.id)}">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Edit
           </button>
-          <button class="btn btn-sm btn-outline-danger" onclick="openDeletePharmacyModal('${p.id}')">
+          <button class="btn btn-sm btn-outline-danger btn-delete-pharmacy" data-id="${window.escapeHtml(p.id)}">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
           </button>
         </div>
@@ -449,9 +563,47 @@ function savePharmacy() {
   if (assignedRepId) {
     const repUserObj = allUsersList.find(u => u.id === assignedRepId);
     if (repUserObj && repUserObj.managerId) {
-      assignedDmId = repUserObj.managerId;
-      const dmUserObj = allUsersList.find(u => u.id === repUserObj.managerId);
-      if (dmUserObj && dmUserObj.managerId) assignedLmId = dmUserObj.managerId;
+      const directMgr = allUsersList.find(u => u.id === repUserObj.managerId);
+      if (directMgr) {
+        const mgrRole = window.normalizeRole ? window.normalizeRole(directMgr.role) : (directMgr.role || '').toLowerCase();
+        if (mgrRole === 'district_manager' || mgrRole === 'dm') {
+          assignedDmId = directMgr.id;
+          if (directMgr.managerId) {
+            const higherMgr = allUsersList.find(u => u.id === directMgr.managerId);
+            if (higherMgr) {
+              const higherRole = window.normalizeRole ? window.normalizeRole(higherMgr.role) : (higherMgr.role || '').toLowerCase();
+              if (higherRole === 'line_manager' || higherRole === 'lm') {
+                assignedLmId = higherMgr.id;
+              }
+            }
+          }
+        } else if (mgrRole === 'line_manager' || mgrRole === 'lm') {
+          assignedDmId = null; // Direct report to LM without DM
+          assignedLmId = directMgr.id;
+        }
+      }
+    }
+  } else if (areaObj) {
+    const dmId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(areaObj, allUsersList) : (areaObj.dmId || areaObj.districtManagerId || null);
+    if (dmId) {
+      assignedDmId = dmId;
+      const dmUserObj = allUsersList.find(u => u.id === dmId);
+      if (dmUserObj && dmUserObj.managerId) {
+        const lmUserObj = allUsersList.find(u => u.id === dmUserObj.managerId);
+        if (lmUserObj) assignedLmId = lmUserObj.id;
+      }
+    } else if (areaObj.lmId || areaObj.managerId) {
+      const lmCandidateId = areaObj.lmId || areaObj.managerId;
+      const lmUser = allUsersList.find(u => u.id === lmCandidateId);
+      if (lmUser) {
+        const r = window.normalizeRole ? window.normalizeRole(lmUser.role) : (lmUser.role || '').toLowerCase();
+        if (r === 'line_manager' || r === 'lm') assignedLmId = lmUser.id;
+      }
+    }
+    if (!assignedLmId && assignedLineId) {
+      const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
+      const lineObj = lines.find(l => l.id === assignedLineId);
+      if (lineObj && lineObj.lineManagerId) assignedLmId = lineObj.lineManagerId;
     }
   }
 
@@ -459,7 +611,7 @@ function savePharmacy() {
 
   const pharmacyObj = {
     ...(existingPharm || {}),
-    id: id || "pharm_" + Date.now(),
+    id: id || (typeof window.genId === "function" ? window.genId("pharm_") : "pharm_" + Date.now()),
     name,
     address,
     contactPerson,
@@ -544,10 +696,24 @@ function confirmDeletePharmacy() {
   if (typeof showToast === "function") showToast("Pharmacy deleted successfully.", "info");
 }
 
-function onPharmacyFilterChange() {}
+function onPharmacyFilterChange() {
+  const results = document.getElementById("pharmaciesResultsContainer");
+  if (results && results.style.display !== "none" && typeof renderPharmaciesReport === "function") {
+    renderPharmaciesReport();
+  }
+}
 
-function onPharmacyLmChange() {}
-function onPharmacyDmChange() {}
+function onPharmacyLmChange() {
+  if (typeof window.onReportLmChange === "function") {
+    window.onReportLmChange("pharmacies");
+  }
+}
+
+function onPharmacyDmChange() {
+  if (typeof window.onReportDmChange === "function") {
+    window.onReportDmChange("pharmacies");
+  }
+}
 
 function initPharmaciesDirectory(user) {
   // Directories only render when user clicks Show
@@ -612,9 +778,11 @@ function exportPharmaciesDirectory() {
     return [pharmName, areaName, lineName, repName, phone, addr, targetVisits, status];
   });
 
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const dateStr = (typeof window.getSystemTodayStr === "function" ? window.getSystemTodayStr() : (() => {
+    const now = (typeof window.getSystemDate === "function" ? window.getSystemDate() : new Date());
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  })());
   const fileName = `pharmacies_directory_${dateStr}`;
   const sheetTitle = "Pharmacies";
 
@@ -622,7 +790,10 @@ function exportPharmaciesDirectory() {
     window.downloadExcelOrCsv(fileName, sheetTitle, rows, headers);
   } else {
     const escapeCsv = (val) => {
-      const s = val === null || val === undefined ? "" : String(val);
+      let s = val === null || val === undefined ? "" : String(val);
+      if (/^[=@\t\r]|(^[+-](?![\d\s().-]+$))/.test(s)) {
+        s = "'" + s;
+      }
       if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
         return '"' + s.replace(/"/g, '""') + '"';
       }
@@ -637,7 +808,7 @@ function exportPharmaciesDirectory() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     const successMsg = "Directory exported successfully (.csv)";
     if (typeof showToast === "function") showToast(successMsg, "success");
   }
@@ -654,4 +825,32 @@ window.openDeletePharmacyModal = openDeletePharmacyModal;
 window.closeDeletePharmacyModal = closeDeletePharmacyModal;
 window.confirmDeletePharmacy = confirmDeletePharmacy;
 window.onPharmacyFilterChange = onPharmacyFilterChange;
+window.onPharmacyLmChange = onPharmacyLmChange;
+window.onPharmacyDmChange = onPharmacyDmChange;
+
+// Global document event delegation for Edit/Delete buttons and Enter key
+if (typeof document !== "undefined") {
+  document.addEventListener("click", (e) => {
+    const editBtn = e.target.closest(".btn-edit-pharmacy");
+    if (editBtn) {
+      const pharmId = editBtn.dataset.id;
+      if (typeof openPharmacyModal === "function") openPharmacyModal(pharmId);
+      return;
+    }
+    const deleteBtn = e.target.closest(".btn-delete-pharmacy");
+    if (deleteBtn) {
+      const pharmId = deleteBtn.dataset.id;
+      if (typeof openDeletePharmacyModal === "function") openDeletePharmacyModal(pharmId);
+      return;
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target && e.target.id === "pharmacySearchInput") {
+      if (typeof renderPharmaciesReport === "function") {
+        renderPharmaciesReport();
+      }
+    }
+  });
+}
 

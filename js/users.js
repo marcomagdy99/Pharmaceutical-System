@@ -22,6 +22,7 @@ const userTranslations = {
     search_user_ph: "Search by name, email, or code...",
     role_all: "All Roles",
     role_admin: "Admin",
+    role_gm: "General Manager",
     role_bu: "Business Unit",
     role_lm: "Line Manager",
     role_dm: "District Manager",
@@ -86,12 +87,54 @@ const userTranslations = {
 };
 
 const userMgmt = {
+  _esc(val) {
+    if (typeof window.escapeHtml === "function") return window.escapeHtml(val);
+    return String(val === null || val === undefined ? "" : val)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  },
+
+  _rawRole(u) {
+    if (!u || !u.role) return "";
+    return window.normalizeRole ? window.normalizeRole(u.role) : String(u.role).toLowerCase();
+  },
+
+  _isAdminOrHr(user) {
+    if (!user || !user.id) return false;
+    if (typeof window.hasAnyRole === "function") {
+      return window.hasAnyRole(["admin", "hr"], user);
+    }
+    const r = this._rawRole(user);
+    return r === "admin" || r === "hr";
+  },
+
+  _isRealAdmin(authUser) {
+    if (this._rawRole(authUser) === "admin") return true;
+    try {
+      const raw = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
+      if (!raw) return false;
+      const orig = JSON.parse(raw);
+      return Boolean(orig && this._rawRole(orig) === "admin");
+    } catch (e) {
+      return false;
+    }
+  },
+
+  _sanitizeSessionUser(u) {
+    if (!u || typeof u !== "object") return u;
+    const { passwordHash, password, ...safeUser } = u;
+    return safeUser;
+  },
+
   get users() {
     if (!window.store || !window.store.users) return [];
     return window.store.users.getAll().map((u) => {
       const code = u.employeeCode || u.code || u.id;
-      const email = u.email || (u.id ? `${u.id.toLowerCase()}@pharmacare.com` : "");
-      const phone = u.phone || "+201001234567";
+      const email = u.email || "";
+      const phone = u.phone || "";
       const status = u.status || "Active";
       return {
         ...u,
@@ -117,13 +160,73 @@ const userMgmt = {
 
   selectedUserId: null,
   editingLineId: null,
+  _delegatedEventsBound: false,
+
+  bindDelegatedEvents() {
+    if (this._delegatedEventsBound || typeof document === "undefined") return;
+    this._delegatedEventsBound = true;
+
+    const tableBody = document.getElementById("usersTableBody");
+    if (tableBody) {
+      tableBody.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-action]");
+        if (!el) return;
+        const action = el.dataset.action;
+        const uid = el.dataset.userId || "";
+        if (action === "openUserTerritoriesModal") {
+          e.stopPropagation();
+          if (uid) this.openUserTerritoriesModal(uid);
+        } else if (action === "impersonateUser" && uid) {
+          this.impersonateUser(uid);
+        } else if (action === "openEditModal" && uid) {
+          this.openEditModal(uid);
+        } else if (action === "openResetPwdModal" && uid) {
+          this.openResetPwdModal(uid);
+        } else if (action === "openDeactivateModal" && uid) {
+          this.openDeactivateModal(uid);
+        }
+      });
+    }
+
+    const treeView = document.getElementById("treeView");
+    if (treeView) {
+      treeView.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-action]");
+        if (!el) return;
+        const action = el.dataset.action;
+        const uid = el.dataset.userId || "";
+        if (action === "impersonateUser" && uid) {
+          e.stopPropagation();
+          this.impersonateUser(uid);
+        } else if (action === "openUserTerritoriesModal" && uid) {
+          e.stopPropagation();
+          this.openUserTerritoriesModal(uid);
+        }
+      });
+    }
+
+    const areaDisplayEl = document.getElementById("uAssignedAreasDisplay");
+    if (areaDisplayEl) {
+      areaDisplayEl.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-action='unassignArea']");
+        if (!el) return;
+        this.unassignArea(el.dataset.areaId || "", el.dataset.userId || "");
+      });
+    }
+
+    const lineFiltersEl = document.getElementById("territoriesModalLineFilters");
+    if (lineFiltersEl) {
+      lineFiltersEl.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-action='setTerritoriesLineFilter']");
+        if (!el) return;
+        this.setTerritoriesLineFilter(el.dataset.lineKey || "all");
+      });
+    }
+  },
 
   init() {
-    const user = (window.checkAuth && window.checkAuth()) || {};
-    if (
-      window.hasAnyRole &&
-      !window.hasAnyRole(["admin", "hr"], user)
-    ) {
+    const user = (typeof window.requireAuth === "function" ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
+    if (!this._isAdminOrHr(user)) {
       if (typeof showToast === "function") {
         showToast(
           "Access Denied: Admins & HR only.",
@@ -167,6 +270,7 @@ if (typeof renderSidebar === "function") {
       this.render();
     });
 
+    this.bindDelegatedEvents();
     this.render();
   },
 
@@ -245,7 +349,8 @@ if (typeof renderSidebar === "function") {
 
   initLines() {
     if (!window.store) return;
-    if (this.lines.length === 0) {
+    const compSettings = (window.store.companySettings ? window.store.companySettings.get() : (window.DEMO_DATA && window.DEMO_DATA.companySettings)) || {};
+    if (window.DEMO_MODE === true && !compSettings.isProductionLaunched && this.lines.length === 0) {
       window.store.productLines.save({
         id: "line_1790626000001",
         name: "Cardio Line",
@@ -269,88 +374,8 @@ if (typeof renderSidebar === "function") {
   },
 
   loadDemoData() {
-    if (!window.store) return;
-    if (this.users.length === 0) {
-      const defaultUsers = [
-        {
-          id: "u1790626000010",
-          name: "System Admin",
-          email: "admin@pharmacare.com",
-          code: "ADM-001",
-          employeeCode: "ADM-001",
-          role: "admin",
-          status: "Active",
-          managerId: null,
-        },
-        {
-          id: "u1790626000011",
-          name: "George Marzok",
-          email: "bu@pharmacare.com",
-          code: "BU-001",
-          employeeCode: "BU-001",
-          role: "business_unit",
-          status: "Active",
-          managerId: "u1790626000010",
-          lineId: "line_1790626000001",
-          lineIds: ["line_1790626000001", "line_1790626000002"],
-        },
-        {
-          id: "u1790626000012",
-          name: "John Mahfouz",
-          email: "lm@pharmacare.com",
-          code: "LM-001",
-          employeeCode: "LM-001",
-          role: "line_manager",
-          status: "Active",
-          managerId: "u1790626000011",
-          lineIds: ["line_1790626000001", "line_1790626000002"],
-        },
-        {
-          id: "u1790626000014",
-          name: "Amir Ayoup",
-          email: "dm@pharmacare.com",
-          code: "DM-001",
-          employeeCode: "DM-001",
-          role: "district_manager",
-          status: "Active",
-          managerId: "u1790626000012",
-          lineIds: ["line_1790626000001"],
-        },
-        {
-          id: "u1790626000001",
-          name: "Marco Magdy",
-          email: "rep1@pharmacare.com",
-          code: "REP-001",
-          employeeCode: "REP-001",
-          role: "medical_rep",
-          status: "Active",
-          managerId: "u1790626000014",
-          lineIds: ["line_1790626000001"],
-        },
-        {
-          id: "u1790626000002",
-          name: "Kerolos Boules",
-          email: "rep2@pharmacare.com",
-          code: "REP-002",
-          employeeCode: "REP-002",
-          role: "medical_rep",
-          status: "Active",
-          managerId: "u1790626000014",
-          lineIds: ["line_1790626000001"],
-        },
-        {
-          id: "u1790626000017",
-          name: "Fatma El-Sherif",
-          email: "hr@pharmacare.com",
-          code: "HR-001",
-          employeeCode: "HR-001",
-          role: "hr",
-          status: "Active",
-          managerId: null,
-        },
-      ];
-      defaultUsers.forEach((u) => window.store.users.save(u));
-    }
+    // Cloud-first / Bootstrap Admin architecture: no hardcoded demo employees are seeded locally.
+    return;
   },
 
   populateDropdowns() {
@@ -480,7 +505,7 @@ if (typeof renderSidebar === "function") {
           const lineBadge = lineObj ? ` [${window.escapeHtml(lineObj.name || lineObj.nameAr)}]` : "";
           return `<span class="badge bg-primary text-white me-1 mb-1 p-2 d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.82rem;">
             <span>${window.escapeHtml(areaName)} (${window.escapeHtml(a.code || "")})${lineBadge}</span>
-            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem; padding: 2px; margin-inline-start: 4px; opacity: 0.85;" onclick="userMgmt.unassignArea('${window.escapeHtml(a.id)}', '${window.escapeHtml(userId)}')" title="Unassign this area" aria-label="Remove"></button>
+            <button type="button" class="btn-close btn-close-white" style="font-size: 0.6rem; padding: 2px; margin-inline-start: 4px; opacity: 0.85;" data-action="unassignArea" data-area-id="${this._esc(a.id)}" data-user-id="${this._esc(userId)}" title="Unassign this area" aria-label="Remove"></button>
           </span>`;
         })
         .join("") +
@@ -516,8 +541,9 @@ if (typeof renderSidebar === "function") {
 
   normalizeRole(role) {
     if (!role) return "Rep";
-    const r = role.toLowerCase();
+    const r = String(role).toLowerCase();
     if (r === "admin") return "Admin";
+    if (r === "general_manager" || r === "gm") return "GM";
     if (r === "business_unit" || r === "bu") return "BU";
     if (r === "line_manager" || r === "lm") return "LM";
     if (r === "district_manager" || r === "dm") return "DM";
@@ -535,6 +561,7 @@ if (typeof renderSidebar === "function") {
       LM: "LM-",
       PM: "PM-",
       BU: "BU-",
+      GM: "GM-",
       HR: "HR-",
       Admin: "ADM-",
     };
@@ -578,14 +605,16 @@ if (typeof renderSidebar === "function") {
     }
     const activeAuth = window.checkAuth ? window.checkAuth() : null;
     if (activeAuth && updatedUser && updatedUser.id === activeAuth.id) {
-      sessionStorage.setItem("pharmaUser", JSON.stringify(updatedUser));
-      localStorage.setItem("userRole", updatedUser.role);
+      const safeUser = this._sanitizeSessionUser(updatedUser);
+      sessionStorage.setItem("pharmaUser", JSON.stringify(safeUser));
+      localStorage.setItem("userRole", safeUser.role);
     }
   },
 
   getRoleBadgeClass(role) {
     const map = {
       Admin: "bg-admin",
+      GM: "bg-gm",
       BU: "bg-bu",
       LM: "bg-lm",
       DM: "bg-dm",
@@ -600,7 +629,7 @@ if (typeof renderSidebar === "function") {
       return `<span class="text-muted" data-i18n="none">None</span>`;
     const mgr = this.users.find((u) => u.id === managerId);
     return mgr
-      ? mgr.name
+      ? this._esc(mgr.name)
       : `<span class="text-muted" data-i18n="none">None</span>`;
   },
   getManagerNameWithVacant(managerId) {
@@ -609,14 +638,14 @@ if (typeof renderSidebar === "function") {
     if (!mgrRaw) return `<span class="text-muted">None</span>`;
     if ((mgrRaw.status || "Active") === "Inactive") {
       return `<span class="badge bg-warning text-dark me-1">Vacant</span>
-              <small class="text-muted">(Former: ${mgrRaw.name})</small>`;
+              <small class="text-muted">(Former: ${this._esc(mgrRaw.name)})</small>`;
     }
-    return mgrRaw.name;
+    return this._esc(mgrRaw.name);
   },
   renderLinesSummary(user) {
     let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
     if ((!userLineIds || userLineIds.length === 0) && typeof window.getUserLines === "function") {
-      const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+      const role = this._rawRole(user);
       if (role !== "admin" && role !== "hr") {
         const derived = window.getUserLines(user.id);
         if (derived && derived.length > 0) {
@@ -627,8 +656,8 @@ if (typeof renderSidebar === "function") {
     const matched = this.lines.filter((l) => userLineIds.includes(l.id));
     if (matched.length === 0) return `<span class="text-muted">-</span>`;
     if (matched.length === 1)
-      return `<span class="badge bg-primary-subtle text-primary">${matched[0].name}</span>`;
-    return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => m.name).join(", ")})</span>`;
+      return `<span class="badge bg-primary-subtle text-primary">${this._esc(matched[0].name)}</span>`;
+    return `<span class="badge bg-purple-subtle text-purple fw-bold badge-multi-line">${matched.length} Lines (${matched.map((m) => this._esc(m.name)).join(", ")})</span>`;
   },
   currentTerritoriesModalData: null,
   activeTerritoriesLineFilter: "all",
@@ -673,20 +702,19 @@ if (typeof renderSidebar === "function") {
       return res;
     }
 
-    // 4. BU: All hierarchy under BU, or product lines
-    if (norm === "BU") {
-      const lmIds = new Set(allUsers.filter((u) => u.managerId === user.id).map((u) => u.id));
-      const dmIds = new Set(allUsers.filter((u) => lmIds.has(u.managerId) || u.managerId === user.id).map((u) => u.id));
-      const repIds = new Set(allUsers.filter((u) => dmIds.has(u.managerId) || lmIds.has(u.managerId) || u.managerId === user.id).map((u) => u.id));
+    // 4. BU / GM: All hierarchy under BU/GM, or product lines
+    if (norm === "BU" || norm === "GM") {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      const subIdSet = new Set([user.id, ...subs.map((u) => u.id)]);
       const res = [];
       const seenAreaIds = new Set();
       allAreas.forEach((a) => {
-        if ((repIds.has(a.repId) || dmIds.has(a.repId) || lmIds.has(a.repId) || a.repId === user.id) && !seenAreaIds.has(a.id)) {
+        if ((subIdSet.has(a.repId) || (norm === "BU" && a.buId === user.id)) && !seenAreaIds.has(a.id)) {
           seenAreaIds.add(a.id);
           res.push(a);
         }
       });
-      if (res.length === 0) {
+      if (res.length === 0 && norm === "BU") {
         let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
         if (userLineIds.length > 0) {
           allAreas.forEach((a) => {
@@ -716,14 +744,14 @@ if (typeof renderSidebar === "function") {
 
     const userId = user ? user.id : "";
     const openModalAttr = userId
-      ? `onclick="event.stopPropagation(); userMgmt.openUserTerritoriesModal('${userId}');"`
+      ? `data-action="openUserTerritoriesModal" data-user-id="${this._esc(userId)}"`
       : "";
 
     if (areas.length <= 2) {
       return areas
         .map(
           (a) =>
-            `<span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${window.escapeHtml(a.name)}</span>`,
+            `<span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${this._esc(a.name)}</span>`,
         )
         .join("");
     }
@@ -733,7 +761,7 @@ if (typeof renderSidebar === "function") {
     const moreText = `+${remainingCount} more`;
 
     return `
-      <span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${window.escapeHtml(firstOne.name)}</span>
+      <span class="badge ${badgeClass} me-1" style="cursor: pointer;" title="Click to view all assigned territories" ${openModalAttr}>${this._esc(firstOne.name)}</span>
       <button type="button" class="badge badge-more-areas" title="Click to view and filter all ${areas.length} assigned territories" ${openModalAttr}><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${moreText}</button>
     `;
   },
@@ -840,7 +868,7 @@ if (typeof renderSidebar === "function") {
 
     // Multiple lines: Render Filter Pills!
     let pillsHtml = `
-      <button type="button" class="line-filter-pill ${this.activeTerritoriesLineFilter === "all" ? "active" : ""}" onclick="userMgmt.setTerritoriesLineFilter('all')">
+      <button type="button" class="line-filter-pill ${this.activeTerritoriesLineFilter === "all" ? "active" : ""}" data-action="setTerritoriesLineFilter" data-line-key="all">
         All Lines (${data.areas.length})
       </button>
     `;
@@ -849,8 +877,8 @@ if (typeof renderSidebar === "function") {
       const key = info.lineId || "unassigned_line";
       const isActive = this.activeTerritoriesLineFilter === key;
       pillsHtml += `
-        <button type="button" class="line-filter-pill ${isActive ? "active" : ""}" onclick="userMgmt.setTerritoriesLineFilter('${key}')">
-          <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> ${window.escapeHtml(info.lineName)} (${info.count})
+        <button type="button" class="line-filter-pill ${isActive ? "active" : ""}" data-action="setTerritoriesLineFilter" data-line-key="${this._esc(key)}">
+          <svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg> ${this._esc(info.lineName)} (${info.count})
         </button>
       `;
     });
@@ -993,24 +1021,29 @@ if (typeof renderSidebar === "function") {
     if (window.applyTranslations) window.applyTranslations();
   },
   updateStats() {
-    document.getElementById("totalCountBadge").textContent = this.users.length;
-    document.getElementById("stat-total").textContent = this.users.length;
-    document.getElementById("stat-admins").textContent = this.users.filter(
+    const setTxt = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    setTxt("totalCountBadge", this.users.length);
+    setTxt("stat-total", this.users.length);
+    setTxt("stat-admins", this.users.filter(
       (u) => window.isAdmin ? window.isAdmin(u) : u.role === "Admin",
-    ).length;
-    document.getElementById("stat-managers").textContent = this.users.filter(
-      (u) => window.isBURole && window.isLMRole && window.isDMRole
+    ).length);
+    setTxt("stat-managers", this.users.filter(
+      (u) => (window.isGMRole && window.isGMRole(u)) || (window.isBURole && window.isLMRole && window.isDMRole
         ? (window.isBURole(u) || window.isLMRole(u) || window.isDMRole(u))
-        : ["BU", "LM", "DM"].includes(u.role),
-    ).length;
-    document.getElementById("stat-reps").textContent = this.users.filter(
+        : ["GM", "BU", "LM", "DM"].includes(u.role)),
+    ).length);
+    setTxt("stat-reps", this.users.filter(
       (u) => window.isRepRole ? window.isRepRole(u) : u.role === "Rep",
-    ).length;
+    ).length);
   },
   getFilteredUsers() {
-    const ROLE_ORDER = { Admin: 1, HR: 2, BU: 3, LM: 4, DM: 5, Rep: 6 };
-    const query = document.getElementById("searchUser").value.toLowerCase();
-    const role = document.getElementById("filterRole").value;
+    const ROLE_ORDER = { Admin: 1, GM: 2, HR: 3, BU: 4, LM: 5, PM: 6, DM: 7, Rep: 8 };
+    const LEVEL_FALLBACK = { Admin: 6, GM: 5, BU: 4, HR: 4, LM: 3, PM: 3, DM: 2, Rep: 1 };
+    const query = (document.getElementById("searchUser")?.value || "").toLowerCase();
+    const role = document.getElementById("filterRole")?.value || "All";
     return this.users
       .filter((u) => {
         const matchQuery =
@@ -1021,55 +1054,64 @@ if (typeof renderSidebar === "function") {
         return matchQuery && matchRole;
       })
       .sort((a, b) => {
-        const levelA = a.level != null ? a.level : (ROLE_ORDER[a.role] ? (6 - ROLE_ORDER[a.role]) : 1);
-        const levelB = b.level != null ? b.level : (ROLE_ORDER[b.role] ? (6 - ROLE_ORDER[b.role]) : 1);
+        const levelA = a.level != null ? a.level : (LEVEL_FALLBACK[a.role] || 1);
+        const levelB = b.level != null ? b.level : (LEVEL_FALLBACK[b.role] || 1);
         if (levelA !== levelB) return levelB - levelA;
+        const ordA = ROLE_ORDER[a.role] || 99;
+        const ordB = ROLE_ORDER[b.role] || 99;
+        if (ordA !== ordB) return ordA - ordB;
         return (a.name || "").localeCompare(b.name || "");
       });
   },
 
   renderTable() {
     const tbody = document.getElementById("usersTableBody");
+    if (!tbody) return;
     const filtered = this.getFilteredUsers();
     const authUser = (window.checkAuth && window.checkAuth()) || {};
-    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
-    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    const isRealAdmin = this._isRealAdmin(authUser);
 
     tbody.innerHTML = filtered
       .map((u) => {
-        const dispCode = u.employeeCode || u.code || "-";
-        const dispEmail = u.email || "-";
+        const safeId = this._esc(u.id);
+        const safeName = this._esc(u.name || "User");
+        const safeInitial = this._esc(((u.name || "?").trim() || "?").charAt(0).toUpperCase());
+        const dispCode = this._esc(u.employeeCode || u.code || "-");
+        const dispEmail = this._esc(u.email || "-");
         const dispStatus = u.status || "Active";
+        const safeStatus = this._esc(dispStatus);
+        const safeHireDate = this._esc(u.hireDate || "-");
         const canImpersonate = isRealAdmin && String(u.id) !== String(authUser.id) && dispStatus === "Active";
-        const loginAsTooltip = `Log in as ${u.name}`;
+        const loginAsTooltip = this._esc(`Log in as ${u.name || ""}`);
+        const statusBtnAction = dispStatus === "Active" ? "Deactivate" : "Activate";
 
         return `
         <tr>
           <td class="ps-4">
             <div class="d-flex align-items-center">
               <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center me-3 fw-bold user-avatar-circle" style="width:40px; height:40px;">
-                ${u.name.charAt(0)}
+                ${safeInitial}
               </div>
               <div>
-                <div class="fw-bold user-name-text">${u.name}</div>
+                <div class="fw-bold user-name-text">${safeName}</div>
                 <div class="text-muted small">${dispEmail}</div>
               </div>
             </div>
           </td>
           <td><span class="badge badge-neutral border">${dispCode}</span></td>
           <td>
-            <span class="badge rounded-pill role-badge ${this.getRoleBadgeClass(u.role)}">${window.escapeHtml(u.role)}</span>
+            <span class="badge rounded-pill role-badge ${this.getRoleBadgeClass(u.role)}">${this._esc(u.role)}</span>
           </td>
           <td>${this.getManagerNameWithVacant(u.managerId)}</td>
           <td>${this.renderLinesSummary(u)}</td>
           <td>${this.renderAreasSummary(u)}</td>
-          <td><span class="text-muted small text-nowrap"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${u.hireDate || "-"}</span></td>
-          <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${dispStatus}</span></td>
+          <td><span class="text-muted small text-nowrap"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${safeHireDate}</span></td>
+          <td><span class="badge bg-${dispStatus === "Active" ? "success" : "danger"}-subtle text-${dispStatus === "Active" ? "success" : "danger"} rounded-pill">${safeStatus}</span></td>
           <td class="text-end pe-4 user-actions-cell">
-            ${canImpersonate ? `<button class="btn btn-sm btn-user-impersonate me-1" title="${loginAsTooltip}" onclick="userMgmt.impersonateUser('${u.id}')" aria-label="Impersonate"><svg class="action-svg-icon text-info" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></button>` : ""}
-            <button class="btn btn-sm btn-action-edit text-primary me-1" onclick="userMgmt.openEditModal('${u.id}')" title="Edit" aria-label="Edit User"><svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
-            ${isRealAdmin ? `<button class="btn btn-sm btn-action-key text-warning me-1" title="Reset Password" onclick="userMgmt.openResetPwdModal('${u.id}')" aria-label="Reset Password"><svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></button>` : ""}
-            <button class="btn btn-sm btn-action-status text-${dispStatus === "Active" ? "danger" : "success"}" onclick="userMgmt.openDeactivateModal('${u.id}')" title="${dispStatus === "Active" ? "Deactivate" : "Activate"}" aria-label="${dispStatus === "Active" ? "Deactivate" : "Activate"}"><svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">${dispStatus === "Active" ? `<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>` : `<polyline points="20 6 9 17 4 12"/>`}</svg></button>
+            ${canImpersonate ? `<button class="btn btn-sm btn-user-impersonate me-1" title="${loginAsTooltip}" data-action="impersonateUser" data-user-id="${safeId}" aria-label="Impersonate"><svg class="action-svg-icon text-info" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></button>` : ""}
+            <button class="btn btn-sm btn-action-edit text-primary me-1" data-action="openEditModal" data-user-id="${safeId}" title="Edit" aria-label="Edit User"><svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
+            ${isRealAdmin ? `<button class="btn btn-sm btn-action-key text-warning me-1" title="Reset Password" data-action="openResetPwdModal" data-user-id="${safeId}" aria-label="Reset Password"><svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></button>` : ""}
+            <button class="btn btn-sm btn-action-status text-${dispStatus === "Active" ? "danger" : "success"}" data-action="openDeactivateModal" data-user-id="${safeId}" title="${statusBtnAction}" aria-label="${statusBtnAction}"><svg class="action-svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">${dispStatus === "Active" ? `<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>` : `<polyline points="20 6 9 17 4 12"/>`}</svg></button>
           </td>
         </tr>`;
       })
@@ -1082,7 +1124,7 @@ if (typeof renderSidebar === "function") {
     nextVisited.add(parentId);
 
     const authUser = (window.checkAuth && window.checkAuth()) || {};
-    const isRealAdmin = (window.isAdmin ? window.isAdmin(authUser) : authUser.role === "admin") || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    const isRealAdmin = this._isRealAdmin(authUser);
 
     const children = this.users.filter((u) => u.managerId === parentId && !nextVisited.has(u.id));
     if (children.length === 0) return "";
@@ -1090,23 +1132,28 @@ if (typeof renderSidebar === "function") {
       ${children
         .map((u) => {
           const isInactive = u.status === "Inactive";
-          const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1 tree-role-badge">${u.role}</span>`;
+          const safeRole = this._esc(u.role);
+          const safeName = this._esc(u.name || "User");
+          const safeInitial = this._esc(((u.name || "?").trim() || "?").charAt(0).toUpperCase());
+          const safeCode = this._esc(u.code || "");
+          const safeArea = u.area ? this._esc(u.area) : "";
+          const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1 tree-role-badge">${safeRole}</span>`;
           const canImpersonate = isRealAdmin && u.id !== authUser.id && !isInactive;
-          const loginAsTooltip = `Log in as ${u.name}`;
+          const loginAsTooltip = this._esc(`Log in as ${u.name || ""}`);
           const treeImpersonateBtn = canImpersonate
-            ? `<button class="btn btn-sm btn-light text-info py-0 px-2 ms-2" title="${loginAsTooltip}" onclick="event.stopPropagation(); userMgmt.impersonateUser('${u.id}')"><i class="fas fa-sign-in-alt"></i></button>`
+            ? `<button class="btn btn-sm btn-light text-info py-0 px-2 ms-2" title="${loginAsTooltip}" data-action="impersonateUser" data-user-id="${this._esc(u.id)}"><i class="fas fa-sign-in-alt"></i></button>`
             : "";
 
           if (isInactive) {
             const areaName = u.vacantArea || u.area;
-            const repAreaTag = areaName ? ` • Area: ${areaName}` : "";
+            const repAreaTag = areaName ? ` • Area: ${this._esc(areaName)}` : "";
             return `
             <div class="tree-node">
               <div class="node-content shadow-sm tree-node-vacant">
                 <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle"><svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
                 <div class="flex-grow-1">
-                  <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${u.role} Branch`} ${roleBadge}</div>
-                  <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${u.name})</small>
+                  <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role === "Rep" ? `Territory${repAreaTag}` : `${safeRole} Branch`} ${roleBadge}</div>
+                  <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${safeName})</small>
                 </div>
               </div>
               ${this.buildTree(u.id, nextVisited)}
@@ -1115,10 +1162,10 @@ if (typeof renderSidebar === "function") {
           return `
           <div class="tree-node">
             <div class="node-content shadow-sm">
-              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">${u.name.charAt(0)}</div>
+              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">${safeInitial}</div>
               <div class="flex-grow-1">
-                <div class="fw-bold small mb-0 user-name-text">${u.name} ${roleBadge} ${treeImpersonateBtn}</div>
-                <small class="text-muted tree-text-muted-xs">${u.code} ${u.area ? `• Area: ${u.area}` : ""}</small>
+                <div class="fw-bold small mb-0 user-name-text">${safeName} ${roleBadge} ${treeImpersonateBtn}</div>
+                <small class="text-muted tree-text-muted-xs">${safeCode} ${safeArea ? `• Area: ${safeArea}` : ""}</small>
               </div>
             </div>
             ${this.buildTree(u.id, nextVisited)}
@@ -1129,6 +1176,7 @@ if (typeof renderSidebar === "function") {
   },
   renderTree() {
     const container = document.getElementById("treeView");
+    if (!container) return;
     const managerIds = new Set(this.users.map((u) => u.id));
     const topLevelUsers = this.users.filter(
       (u) => !u.managerId || !managerIds.has(u.managerId),
@@ -1136,15 +1184,19 @@ if (typeof renderSidebar === "function") {
     let html = "";
     topLevelUsers.forEach((u) => {
       const isInactive = u.status === "Inactive";
-      const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1 tree-role-badge">${u.role}</span>`;
+      const safeRole = this._esc(u.role);
+      const safeName = this._esc(u.name || "User");
+      const safeInitial = this._esc(((u.name || "?").trim() || "?").charAt(0).toUpperCase());
+      const safeCode = this._esc(u.code || "");
+      const roleBadge = `<span class="badge ${this.getRoleBadgeClass(u.role)} ms-1 tree-role-badge">${safeRole}</span>`;
       if (isInactive) {
         html += `
           <div class="tree-node ms-0 ps-0 border-0">
             <div class="node-content shadow-sm tree-node-vacant">
               <div class="bg-warning-subtle text-warning rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle"><svg class="badge-svg-icon text-warning" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
               <div class="flex-grow-1">
-                <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${u.role} Position ${roleBadge}</div>
-                <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${u.name})</small>
+                <div class="fw-bold small mb-0 tree-node-vacant-title"><span class="badge bg-warning text-dark me-1">[Vacant]</span>${safeRole} Position ${roleBadge}</div>
+                <small class="text-muted tree-text-muted-xs">(Position Open • Former: ${safeName})</small>
               </div>
             </div>
             ${this.buildTree(u.id)}
@@ -1153,10 +1205,10 @@ if (typeof renderSidebar === "function") {
         html += `
           <div class="tree-node ms-0 ps-0 border-0">
             <div class="node-content shadow-sm">
-              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">${u.name.charAt(0)}</div>
+              <div class="bg-primary-light text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold tree-avatar-circle">${safeInitial}</div>
               <div class="flex-grow-1">
-                <div class="fw-bold small mb-0 user-name-text">${u.name} ${roleBadge}</div>
-                <small class="text-muted tree-text-muted-xs">${u.code}</small>
+                <div class="fw-bold small mb-0 user-name-text">${safeName} ${roleBadge}</div>
+                <small class="text-muted tree-text-muted-xs">${safeCode}</small>
               </div>
             </div>
             ${this.buildTree(u.id)}
@@ -1193,14 +1245,16 @@ if (typeof renderSidebar === "function") {
     if (!managerSelect) return;
 
     const normRole = this.normalizeRole(roleVal);
-    const levelMap = { Admin: 5, BU: 4, HR: 4, LM: 3, PM: 3, DM: 2, Rep: 1 };
+    const levelMap = { Admin: 6, GM: 5, BU: 4, HR: 4, LM: 3, PM: 3, DM: 2, Rep: 1 };
     const userLevel = levelMap[normRole] || 1;
 
-    if (normRole === "Admin" || userLevel >= 5) {
-      document.getElementById("managerGroup").style.display = "none";
+    if (normRole === "Admin" || userLevel >= 6) {
+      const mgrGroup = document.getElementById("managerGroup");
+      if (mgrGroup) mgrGroup.style.display = "none";
       return;
     }
-    document.getElementById("managerGroup").style.display = "block";
+    const mgrGroup = document.getElementById("managerGroup");
+    if (mgrGroup) mgrGroup.style.display = "block";
 
     const currentUserId = document.getElementById("userId")?.value;
 
@@ -1230,7 +1284,7 @@ if (typeof renderSidebar === "function") {
     if (possibleManagers.length === 0) {
       possibleManagers = this.users.filter(
         (u) =>
-          ["Admin", "BU", "LM", "DM"].includes(u.role) &&
+          ["Admin", "GM", "BU", "LM", "DM"].includes(this.normalizeRole(u.role)) &&
           (u.status || "Active") === "Active" &&
           u.id !== currentUserId &&
           !this.wouldCreateCycle(currentUserId, u.id),
@@ -1242,8 +1296,8 @@ if (typeof renderSidebar === "function") {
     managerSelect.innerHTML = `<option value="" data-i18n="select_manager">Select Manager...</option>
       ${possibleManagers
         .map((m) => {
-          const tName = m.role || "Manager";
-          return `<option value="${m.id}">${m.name} (${m.employeeCode || m.code || m.id}) - ${tName}</option>`;
+          const tName = this._esc(m.role || "Manager");
+          return `<option value="${this._esc(m.id)}">${this._esc(m.name)} (${this._esc(m.employeeCode || m.code || m.id)}) - ${tName}</option>`;
         })
         .join("")}`;
 
@@ -1268,7 +1322,7 @@ if (typeof renderSidebar === "function") {
       const currentCode = codeInput.value.trim().toUpperCase();
       const isAutoPattern =
         !currentCode ||
-        /^(REP|DM|LM|PM|BU|HR|ADM|EMP)-\d*$/i.test(currentCode);
+        /^(REP|DM|LM|PM|BU|GM|HR|ADM|EMP)-\d*$/i.test(currentCode);
       if (isAutoPattern) {
         codeInput.value = this.getNextEmployeeCode(normRole);
       }
@@ -1332,11 +1386,12 @@ if (typeof renderSidebar === "function") {
 
     container.innerHTML = availableProducts.map((p) => {
       const checked = isAll || (Array.isArray(selectedProductIds) && selectedProductIds.includes(p.id));
+      const safePid = this._esc(p.id);
       return `
         <div class="form-check form-check-sm mb-1">
-          <input class="form-check-input pm-product-cb" type="checkbox" value="${p.id}" id="pm_prod_${p.id}" ${checked ? 'checked' : ''}>
-          <label class="form-check-label" for="pm_prod_${p.id}" style="font-size: 0.8rem;">
-            ${p.name} ${p.form ? `<span class="text-muted">(${p.form})</span>` : ''}
+          <input class="form-check-input pm-product-cb" type="checkbox" value="${safePid}" id="pm_prod_${safePid}" ${checked ? 'checked' : ''}>
+          <label class="form-check-label" for="pm_prod_${safePid}" style="font-size: 0.8rem;">
+            ${this._esc(p.name)} ${p.form ? `<span class="text-muted">(${this._esc(p.form)})</span>` : ''}
           </label>
         </div>
       `;
@@ -1358,6 +1413,11 @@ if (typeof renderSidebar === "function") {
   },
 
   openAddModal() {
+    const authUser = (window.checkAuth && window.checkAuth()) || null;
+    if (!this._isAdminOrHr(authUser)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
+      return;
+    }
     this.pendingUnassignedAreaIds = new Set();
     document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
     if (document.getElementById("userForm"))
@@ -1386,7 +1446,8 @@ if (typeof renderSidebar === "function") {
     }
     const hireDateInput = document.getElementById("uHireDate");
     if (hireDateInput) {
-      hireDateInput.value = new Date().toISOString().slice(0, 10);
+      const sysNow = (window.getSystemDate && window.getSystemDate()) || new Date();
+      hireDateInput.value = (window.getSystemTodayStr && window.getSystemTodayStr()) || sysNow.toISOString().slice(0, 10);
     }
 
     this.renderAssignedAreasDisplay(null);
@@ -1399,10 +1460,19 @@ if (typeof renderSidebar === "function") {
   },
 
   openEditModal(id) {
+    const authUser = (window.checkAuth && window.checkAuth()) || null;
+    if (!this._isAdminOrHr(authUser)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
+      return;
+    }
     this.pendingUnassignedAreaIds = new Set();
     document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
     const user = this.users.find((u) => u.id === id);
     if (!user) return;
+    if (!this._isRealAdmin(authUser) && this._rawRole(user) === "admin") {
+      if (typeof showToast === "function") showToast("Permission Denied: HR cannot edit Administrator accounts.", "error");
+      return;
+    }
 
     this.populateDropdowns();
 
@@ -1450,7 +1520,7 @@ if (typeof renderSidebar === "function") {
 
     let userLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
     if ((!userLineIds || userLineIds.length === 0) && typeof window.getUserLines === "function") {
-      const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
+      const role = this._rawRole(user);
       if (role !== "admin" && role !== "hr") {
         const derived = window.getUserLines(user.id);
         if (derived && derived.length > 0) {
@@ -1500,8 +1570,8 @@ if (typeof renderSidebar === "function") {
   },
 
   async saveUser() {
-    const authUser = (window.checkAuth && window.checkAuth()) || {};
-    if (window.hasAnyRole && !window.hasAnyRole(["admin", "hr"], authUser)) {
+    const authUser = (window.checkAuth && window.checkAuth()) || null;
+    if (!this._isAdminOrHr(authUser)) {
       if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
       return;
     }
@@ -1519,7 +1589,7 @@ if (typeof renderSidebar === "function") {
     }
 
     const duplicateEmail = this.users.find(
-      (u) => u.id !== id && u.email?.toLowerCase() === email,
+      (u) => u.id !== id && u.email && u.email.toLowerCase() === email,
     );
     if (duplicateEmail)
       return showToast(
@@ -1544,16 +1614,9 @@ if (typeof renderSidebar === "function") {
     ).map((cb) => cb.value);
 
     const rawExistingUser = id ? window.store.users.getById(id) : null;
-    const enteredPwd = document.getElementById("uPassword")
-      ? document.getElementById("uPassword").value
-      : "";
-
-    let passwordHash = rawExistingUser ? rawExistingUser.passwordHash : null;
-    if (enteredPwd) passwordHash = await window.hashPassword(enteredPwd);
-    else if (!rawExistingUser) passwordHash = await window.hashPassword("Pharma@2026");
-
     const storeRoleMap = {
       Admin: "admin",
+      GM: "general_manager",
       BU: "business_unit",
       LM: "line_manager",
       DM: "district_manager",
@@ -1562,6 +1625,42 @@ if (typeof renderSidebar === "function") {
       HR: "hr",
     };
     const effectiveBaseRole = storeRoleMap[role] || (window.normalizeRole ? window.normalizeRole(role) : role.toLowerCase());
+
+    // Prevent HR privilege escalation: HR cannot create/promote to Admin or modify existing Admin accounts
+    if (!this._isRealAdmin(authUser)) {
+      if (effectiveBaseRole === "admin" || (rawExistingUser && this._rawRole(rawExistingUser) === "admin")) {
+        if (typeof showToast === "function") {
+          showToast("Permission Denied: Only Administrators can create or modify Admin accounts.", "error");
+        }
+        return;
+      }
+    }
+
+    const enteredPwd = document.getElementById("uPassword")
+      ? document.getElementById("uPassword").value
+      : "";
+
+    let passwordHash = rawExistingUser ? rawExistingUser.passwordHash : null;
+    if (enteredPwd) passwordHash = await window.hashPassword(enteredPwd);
+    else if (!rawExistingUser) passwordHash = await window.hashPassword("Pharma@2026");
+
+    // When creating a new user, provision their Firebase Auth account via secondary app so Admin stays logged in
+    if (!id && !rawExistingUser && typeof firebase !== "undefined" && typeof firebase.auth === "function" && navigator.onLine !== false && window.firebaseConfig) {
+      const initialPassword = enteredPwd || "Pharma@2026";
+      try {
+        const provName = "AdminUserProvisioner";
+        const secApp = (firebase.apps && firebase.apps.find((a) => a.name === provName)) || firebase.initializeApp(window.firebaseConfig, provName);
+        await secApp.auth().createUserWithEmailAndPassword(email, initialPassword);
+        await secApp.auth().signOut().catch(() => {});
+      } catch (fbCreateErr) {
+        const errCode = fbCreateErr && fbCreateErr.code ? String(fbCreateErr.code) : "";
+        if (errCode !== "auth/email-already-in-use") {
+          const msg = (fbCreateErr && fbCreateErr.message) ? fbCreateErr.message : "Failed to create Firebase Auth account.";
+          if (typeof showToast === "function") showToast(msg, "error");
+          return;
+        }
+      }
+    }
 
     let selectedProductIds = [];
     if (role === "PM") {
@@ -1581,8 +1680,11 @@ if (typeof renderSidebar === "function") {
       }
     }
 
+    const sysNow = (window.getSystemDate && window.getSystemDate()) || new Date();
+    const sysTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || sysNow.toISOString().slice(0, 10);
+
     const userData = {
-      id: id || "u" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      id: id || (typeof window.genId === "function" ? window.genId("u") : ("u" + Date.now() + "_" + Math.floor(Math.random() * 1000))),
       name,
       email,
       code: code,
@@ -1590,7 +1692,7 @@ if (typeof renderSidebar === "function") {
       role: effectiveBaseRole,
       title: role,
       titleCode: role,
-      level: ({"admin": 5, "business_unit": 4, "hr": 4, "line_manager": 3, "product_manager": 3, "district_manager": 2, "medical_rep": 1}[effectiveBaseRole] || 1),
+      level: ({"admin": 6, "general_manager": 5, "business_unit": 4, "hr": 4, "line_manager": 3, "product_manager": 3, "district_manager": 2, "medical_rep": 1}[effectiveBaseRole] || 1),
       passwordHash,
       mustChangePassword: id ? (rawExistingUser ? Boolean(rawExistingUser.mustChangePassword) : false) : true,
       phone: document.getElementById("uPhone")
@@ -1599,20 +1701,20 @@ if (typeof renderSidebar === "function") {
       hireDate: (() => {
         const hInput = document.getElementById("uHireDate");
         if (hInput && hInput.value) return hInput.value;
-        return rawExistingUser?.hireDate || new Date().toISOString().slice(0, 10);
+        return rawExistingUser?.hireDate || sysTodayStr;
       })(),
       managerId: managerId || null,
       status: rawExistingUser ? rawExistingUser.status : "Active",
       promotionHistory: (() => {
         if (rawExistingUser) {
-          const oldT = rawExistingUser.role;
-          const newT = role;
+          const oldNormRole = this.normalizeRole(rawExistingUser.role);
+          const newNormRole = this.normalizeRole(role);
           const hist = Array.isArray(rawExistingUser.promotionHistory) ? [...rawExistingUser.promotionHistory] : [];
-          if (oldT && oldT !== newT) {
+          if (oldNormRole && newNormRole && oldNormRole !== newNormRole) {
             hist.unshift({
-              fromTitle: oldT,
-              toTitle: newT,
-              promotedAt: new Date().toISOString(),
+              fromTitle: oldNormRole,
+              toTitle: newNormRole,
+              promotedAt: sysNow.toISOString(),
               promotedBy: authUser.name || "Admin"
             });
           }
@@ -1709,8 +1811,7 @@ if (typeof renderSidebar === "function") {
 
   openResetPwdModal(id) {
     const authUser = (window.checkAuth && window.checkAuth()) || {};
-    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
-    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    const isRealAdmin = this._isRealAdmin(authUser);
     if (!isRealAdmin) {
       if (typeof showToast === "function") showToast("Permission Denied: Only Administrator can reset passwords.", "error");
       return;
@@ -1724,40 +1825,81 @@ if (typeof renderSidebar === "function") {
   async confirmResetPassword() {
     if (!this.selectedUserId) return;
     const authUser = (window.checkAuth && window.checkAuth()) || {};
-    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
-    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin"));
+    const isRealAdmin = this._isRealAdmin(authUser);
     if (!isRealAdmin) {
       this.closeModal("resetPwd");
       if (typeof showToast === "function") showToast("Permission Denied: Only Administrator can reset passwords.", "error");
       return;
     }
 
-    const user = this.users.find((u) => u.id === this.selectedUserId) || (window.store && window.store.users && window.store.users.getById(this.selectedUserId));
-    if (!user) {
+    const rawUser = (window.store && window.store.users && typeof window.store.users.getById === "function"
+      ? window.store.users.getById(this.selectedUserId)
+      : null) || (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)
+      ? window.DEMO_DATA.users.find((u) => u.id === this.selectedUserId)
+      : null);
+    const uiUser = this.users.find((u) => u.id === this.selectedUserId);
+    const targetUser = rawUser || uiUser;
+    if (!targetUser) {
       this.closeModal("resetPwd");
       return;
     }
 
-    const defaultPwd = "Pharma@2026";
-    const newHash = await window.hashPassword(defaultPwd);
-    user.passwordHash = newHash;
-    user.mustChangePassword = true;
+    const targetEmail = (targetUser.email || "").trim().toLowerCase();
+    if (!targetEmail) {
+      this.closeModal("resetPwd");
+      if (typeof showToast === "function") showToast("User does not have a valid email address.", "error");
+      return;
+    }
+
+    if (typeof firebase !== "undefined" && typeof firebase.auth === "function" && navigator.onLine !== false) {
+      try {
+        if ((!firebase.apps || !firebase.apps.length) && window.firebaseConfig) {
+          firebase.initializeApp(window.firebaseConfig);
+        }
+        await firebase.auth().sendPasswordResetEmail(targetEmail);
+      } catch (resetErr) {
+        this.closeModal("resetPwd");
+        const msg = (resetErr && resetErr.message) ? resetErr.message : "Failed to send Firebase password reset email.";
+        if (typeof showToast === "function") showToast(msg, "error");
+        return;
+      }
+    }
+
+    targetUser.mustChangePassword = true;
+    delete targetUser.password;
+    if (uiUser && uiUser !== targetUser) {
+      uiUser.mustChangePassword = true;
+      delete uiUser.password;
+    }
 
     if (window.store && window.store.users && typeof window.store.users.save === "function") {
-      window.store.users.save(user);
+      window.store.users.save(targetUser);
     } else if (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)) {
-      const idx = window.DEMO_DATA.users.findIndex((u) => u.id === user.id);
-      if (idx !== -1) window.DEMO_DATA.users[idx] = { ...window.DEMO_DATA.users[idx], ...user };
+      const idx = window.DEMO_DATA.users.findIndex((u) => u.id === targetUser.id);
+      if (idx !== -1) window.DEMO_DATA.users[idx] = { ...window.DEMO_DATA.users[idx], mustChangePassword: true };
     }
 
     this.closeModal("resetPwd");
-    showToast(`Password for ${user.name} reset to ${defaultPwd} successfully. User must set a new password on next login.`, "success");
+    showToast(`Password reset email sent to ${targetEmail} via Firebase Auth.`, "success");
   },
 
   openDeactivateModal(id) {
+    const authUser = (window.checkAuth && window.checkAuth()) || null;
+    if (!this._isAdminOrHr(authUser)) {
+      if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
+      return;
+    }
     this.selectedUserId = id;
     const user = this.users.find((u) => u.id === id);
     if (!user) return;
+    if (!this._isRealAdmin(authUser) && this._rawRole(user) === "admin") {
+      if (typeof showToast === "function") showToast("Permission Denied: HR cannot deactivate or activate Administrator accounts.", "error");
+      return;
+    }
+    if (String(id) === String(authUser.id) && (user.status || "Active") === "Active") {
+      if (typeof showToast === "function") showToast("You cannot deactivate your own active account.", "warning");
+      return;
+    }
     const isActivating = user.status !== "Active";
 
     if (document.getElementById("deactivateModalTitle")) {
@@ -1785,18 +1927,28 @@ if (typeof renderSidebar === "function") {
   },
 
   confirmDeactivate() {
-    const authUser = (window.checkAuth && window.checkAuth()) || {};
-    if (window.hasAnyRole && !window.hasAnyRole(["admin", "hr"], authUser)) {
+    const authUser = (window.checkAuth && window.checkAuth()) || null;
+    if (!this._isAdminOrHr(authUser)) {
       if (typeof showToast === "function") showToast("Permission Denied: Admins & HR only.", "error");
       return;
     }
     if (!this.selectedUserId) return;
     const rawUser = window.store.users.getById(this.selectedUserId);
     if (rawUser) {
-      const willBeInactive = rawUser.status === "Active";
+      if (!this._isRealAdmin(authUser) && this._rawRole(rawUser) === "admin") {
+        this.closeModal("deactivate");
+        if (typeof showToast === "function") showToast("Permission Denied: HR cannot modify Administrator status.", "error");
+        return;
+      }
+      const willBeInactive = (rawUser.status || "Active") === "Active";
+      if (willBeInactive && String(rawUser.id) === String(authUser.id)) {
+        this.closeModal("deactivate");
+        if (typeof showToast === "function") showToast("You cannot deactivate your own active account.", "warning");
+        return;
+      }
       rawUser.status = willBeInactive ? "Inactive" : "Active";
 
-      const allSystemUsers = window.DEMO_DATA.users || [];
+      const allSystemUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
       let hasSubordinateUpdates = false;
 
       if (willBeInactive) {
@@ -1811,6 +1963,7 @@ if (typeof renderSidebar === "function") {
 
         this.lines.forEach((l) => {
           if (l.lineManagerId === rawUser.id) {
+            l.previousLineManagerId = rawUser.id;
             l.lineManagerId = null;
             window.store.productLines.save(l);
           }
@@ -1824,6 +1977,14 @@ if (typeof renderSidebar === "function") {
           }
         });
       } else {
+        this.lines.forEach((l) => {
+          if (l.previousLineManagerId === rawUser.id && !l.lineManagerId) {
+            l.lineManagerId = rawUser.id;
+            delete l.previousLineManagerId;
+            window.store.productLines.save(l);
+          }
+        });
+
         allSystemUsers.forEach((u) => {
           if (u.previousManagerId === rawUser.id) {
             u.managerId = rawUser.id;
@@ -1833,19 +1994,15 @@ if (typeof renderSidebar === "function") {
         });
       }
 
-      if (
-        hasSubordinateUpdates &&
-        typeof window.saveDataToStorage === "function"
-      ) {
-        window.saveDataToStorage();
+      window.store.users.save(rawUser);
+
+      if (hasSubordinateUpdates && typeof document !== "undefined") {
         document.dispatchEvent(
           new CustomEvent("pharma:store:changed", {
             detail: { entity: "users", action: "bulkUpdate", payload: null },
           }),
         );
       }
-
-      window.store.users.save(rawUser);
 
       this.render();
       const msg = willBeInactive
@@ -1858,9 +2015,8 @@ if (typeof renderSidebar === "function") {
 
   impersonateUser(targetUserId) {
     const authUser = (window.checkAuth && window.checkAuth()) || {};
-    const normRole = (window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "")).toLowerCase();
     const originalAdmin = sessionStorage.getItem("impersonating_admin") || localStorage.getItem("impersonating_admin");
-    const isRealAdmin = normRole === "admin" || (authUser.role || "").toLowerCase() === "admin" || Boolean(originalAdmin);
+    const isRealAdmin = this._isRealAdmin(authUser);
 
     if (!isRealAdmin) {
       if (typeof showToast === "function") {
@@ -1884,16 +2040,19 @@ if (typeof renderSidebar === "function") {
       return;
     }
 
-    // Save the original admin session if not already in impersonation mode
+    // Save the original admin session (without secrets) if not already in impersonation mode
     if (!originalAdmin) {
-      sessionStorage.setItem("impersonating_admin", JSON.stringify(authUser));
-      localStorage.setItem("impersonating_admin", JSON.stringify(authUser));
+      const safeAdmin = this._sanitizeSessionUser(authUser);
+      sessionStorage.setItem("impersonating_admin", JSON.stringify(safeAdmin));
+      localStorage.setItem("impersonating_admin", JSON.stringify(safeAdmin));
     }
 
     const targetSession = {
       id: targetUser.id,
       email: targetUser.email,
       role: targetUser.role,
+      title: targetUser.title || this.normalizeRole(targetUser.role),
+      status: targetUser.status || "Active",
       name: targetUser.name,
       nameAr: targetUser.nameAr,
       employeeCode: targetUser.employeeCode || targetUser.code,

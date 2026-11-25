@@ -296,7 +296,7 @@
       "users.html": ["admin", "hr"],
       "distributors.html": ["admin"],
       "areas.html": ["admin", "hr", "business_unit"],
-      "products.html": ["admin"],
+      "products.html": ["admin", "product_manager"],
       "plans-review.html": ["admin", "general_manager", "district_manager", "line_manager", "business_unit"],
       "reports.html": ["admin", "general_manager", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
     };
@@ -353,11 +353,74 @@
     } catch (e) {}
     if (typeof window !== "undefined") {
       window.currentUser = null;
-      if (window.location && typeof window.location.replace === "function") {
-        window.location.replace("login.html");
+      const redirectToLogin = () => {
+        if (window.location && typeof window.location.replace === "function") {
+          window.location.replace("login.html");
+        }
+      };
+      if (typeof firebase !== "undefined" && typeof firebase.auth === "function") {
+        try {
+          if (firebase.apps && firebase.apps.length) {
+            firebase.auth().signOut().catch(() => {}).finally(redirectToLogin);
+            return;
+          }
+        } catch (e) {}
       }
+      redirectToLogin();
     }
   }
+
+  // Enforce Firebase Auth session coherence on authenticated pages (skips login.html & non-SDK tests)
+  function initFirebaseAuthObserver() {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    if (getCurrentPageName() === "login.html") return;
+
+    const attach = () => {
+      if (typeof firebase === "undefined" || typeof firebase.auth !== "function") return;
+      try {
+        if (!firebase.apps || !firebase.apps.length) {
+          if (window.firebaseConfig && window.firebaseConfig.apiKey) {
+            firebase.initializeApp(window.firebaseConfig);
+          } else {
+            return;
+          }
+        }
+        firebase.auth().onAuthStateChanged((fbUser) => {
+          if (getCurrentPageName() === "login.html") return;
+          const active = checkAuth();
+          if (!fbUser) {
+            if (active && (typeof navigator === "undefined" || navigator.onLine !== false)) {
+              purgeTamperedSession("Firebase Auth session missing or signed out");
+            }
+            return;
+          }
+          if (active && fbUser.email) {
+            const fbEmail = String(fbUser.email).toLowerCase().trim();
+            const curEmail = String(active.email || "").toLowerCase().trim();
+            let impAdminEmail = "";
+            try {
+              const impRaw = (typeof sessionStorage !== "undefined" && sessionStorage.getItem("impersonating_admin")) ||
+                (typeof localStorage !== "undefined" && localStorage.getItem("impersonating_admin"));
+              const impAdmin = validateImpersonationRecord(impRaw);
+              if (impAdmin && impAdmin.email) {
+                impAdminEmail = String(impAdmin.email).toLowerCase().trim();
+              }
+            } catch (e) {}
+            if (curEmail && curEmail !== fbEmail && impAdminEmail !== fbEmail) {
+              purgeTamperedSession("Firebase Auth email mismatch");
+            }
+          }
+        });
+      } catch (e) {}
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", attach);
+    } else {
+      attach();
+    }
+  }
+  initFirebaseAuthObserver();
 
   /**
    * Exits impersonation and restores original admin session.

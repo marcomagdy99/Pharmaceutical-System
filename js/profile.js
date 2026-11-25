@@ -121,6 +121,11 @@ document.addEventListener("DOMContentLoaded", () => {
           if (typeof showToast === "function") showToast(msg, "warning");
           return;
         }
+        if (file.size > 5 * 1024 * 1024) {
+          const msg = "Image file is too large. Please select an image under 5MB.";
+          if (typeof showToast === "function") showToast(msg, "warning");
+          return;
+        }
 
         const reader = new FileReader();
         reader.onload = function (ev) {
@@ -155,8 +160,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (profileInitials) profileInitials.style.display = "none";
 
-            const currentUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
-            if (currentUser) {
+            const currentUser = (window.checkAuth && window.checkAuth()) || null;
+            if (currentUser && currentUser.id) {
               try {
                 localStorage.setItem("user_photo_" + (currentUser.id || currentUser.employeeCode || "current"), photoData);
               } catch (err) {
@@ -176,6 +181,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function isSafeAssetUrl(url) {
+    if (!url || typeof url !== "string") return false;
+    const trimmed = url.trim();
+    if (!trimmed) return false;
+    if (/^https:\/\//i.test(trimmed) || /^http:\/\//i.test(trimmed)) return true;
+    if (/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,/i.test(trimmed)) return true;
+    if (/^[a-zA-Z0-9_.\-/]+$/.test(trimmed) && !trimmed.startsWith("//")) return true;
+    return false;
+  }
+  window._isSafeProfileAssetUrl = isSafeAssetUrl;
+
   document
     .getElementById("personalInfoForm")
     ?.addEventListener("submit", (e) => {
@@ -184,9 +200,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("preferencesForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
-    const lang = document.getElementById("languageSelect").value;
-    if (window.switchLanguage) {
-      window.switchLanguage(lang);
+    const currentUser = (window.checkAuth && window.checkAuth()) || null;
+    if (currentUser && currentUser.id) {
+      try {
+        const toggles = e.target.querySelectorAll(".toggle-input");
+        const prefs = {
+          emailNotifications: toggles[0] ? !!toggles[0].checked : true,
+          pushNotifications: toggles[1] ? !!toggles[1].checked : true,
+        };
+        localStorage.setItem("user_prefs_" + currentUser.id, JSON.stringify(prefs));
+      } catch (err) {}
     }
     if (typeof showToast === "function") showToast("Preferences saved successfully!", "success");
   });
@@ -195,8 +218,8 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     
     const currentPass = document.getElementById("currentPassword")?.value || "";
-    const newPass = document.getElementById("newPassword").value;
-    const confirmPass = document.getElementById("confirmPassword").value;
+    const newPass = document.getElementById("newPassword")?.value || "";
+    const confirmPass = document.getElementById("confirmPassword")?.value || "";
 
     if (newPass.length < 8) {
       const msg = "Password must be at least 8 characters.";
@@ -222,31 +245,86 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const currentUser = (window.checkAuth && window.checkAuth());
-    if (currentUser && window.store && window.store.users) {
-      const userObj = window.store.users.getById(currentUser.id);
-      if (userObj) {
-        if (currentPass && userObj.passwordHash) {
-          const checkHash = await window.hashPassword(currentPass);
-          if (checkHash !== userObj.passwordHash && (!userObj.password || userObj.password !== currentPass)) {
-            const msg = "Current password is incorrect.";
-            if (typeof showToast === "function") showToast(msg, "error");
-            return;
-          }
-        }
-        userObj.passwordHash = await window.hashPassword(newPass);
-        if (userObj.password) userObj.password = newPass;
-        window.store.users.save(userObj);
+    const currentUser = (window.checkAuth && window.checkAuth()) || null;
+    if (!currentUser || !currentUser.id || !window.store || !window.store.users) {
+      if (typeof showToast === "function") showToast("Authentication or user store unavailable.", "error");
+      return;
+    }
 
-        try {
-          const sessionUser = JSON.parse(sessionStorage.getItem("pharmaUser") || "{}");
-          if (sessionUser && sessionUser.id === userObj.id) {
-            sessionUser.passwordHash = userObj.passwordHash;
-            sessionStorage.setItem("pharmaUser", JSON.stringify(sessionUser));
-          }
-        } catch (err) {}
+    const userObj = window.store.users.getById(currentUser.id);
+    if (!userObj) {
+      if (typeof showToast === "function") showToast("User record not found.", "error");
+      return;
+    }
+
+    if (typeof window.hashPassword !== "function") {
+      if (typeof showToast === "function") showToast("Security hashing service unavailable. Please reload the page.", "error");
+      return;
+    }
+
+    // Update password in Firebase Auth (reauthenticate with current password first)
+    if (typeof firebase !== "undefined" && typeof firebase.auth === "function" && firebase.auth().currentUser) {
+      if (!currentPass) {
+        if (typeof showToast === "function") showToast("Current password is required.", "error");
+        return;
+      }
+      try {
+        const fbUser = firebase.auth().currentUser;
+        const cred = firebase.auth.EmailAuthProvider.credential(fbUser.email || userObj.email, currentPass);
+        await fbUser.reauthenticateWithCredential(cred);
+        await fbUser.updatePassword(newPass);
+      } catch (fbPwdErr) {
+        const code = fbPwdErr && fbPwdErr.code ? String(fbPwdErr.code) : "";
+        let msg = (fbPwdErr && fbPwdErr.message) ? fbPwdErr.message : "Failed to update password.";
+        if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+          msg = "Current password is incorrect.";
+        } else if (code === "auth/requires-recent-login") {
+          msg = "Session expired. Please log out and log back in before changing your password.";
+        }
+        if (typeof showToast === "function") showToast(msg, "error");
+        return;
+      }
+    } else if (userObj.passwordHash || userObj.password) {
+      if (!currentPass) {
+        if (typeof showToast === "function") showToast("Current password is required.", "error");
+        return;
+      }
+      const checkHash = await window.hashPassword(currentPass);
+      const hashMatches = userObj.passwordHash && checkHash === userObj.passwordHash;
+      const legacyMatches = !userObj.passwordHash && userObj.password && userObj.password === currentPass;
+      if (!hashMatches && !legacyMatches) {
+        const msg = "Current password is incorrect.";
+        if (typeof showToast === "function") showToast(msg, "error");
+        return;
       }
     }
+
+    const newHash = await window.hashPassword(newPass);
+    if (userObj.passwordHash && newHash === userObj.passwordHash) {
+      if (typeof showToast === "function") showToast("New password must be different from your current password.", "warning");
+      return;
+    }
+
+    userObj.passwordHash = newHash;
+    delete userObj.password; // Never retain or re-store plaintext passwords
+    userObj.mustChangePassword = false;
+    window.store.users.save(userObj);
+
+    const syncSessionStorage = (storage) => {
+      try {
+        const raw = storage.getItem("pharmaUser");
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.id === userObj.id) {
+          delete parsed.passwordHash;
+          delete parsed.password;
+          parsed.mustChangePassword = false;
+          storage.setItem("pharmaUser", JSON.stringify(parsed));
+        }
+      } catch (err) {}
+    };
+    syncSessionStorage(sessionStorage);
+    syncSessionStorage(localStorage);
 
     const successMsg = "Password updated successfully!";
     if (typeof showToast === "function") showToast(successMsg, "success");
@@ -310,13 +388,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (document.documentElement.lang) {
-    const select = document.getElementById("languageSelect");
-    if (select) {
-      select.value = document.documentElement.lang;
-    }
-  }
-
   loadUserProfile();
 });
 
@@ -348,13 +419,14 @@ function loadUserProfile() {
   const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
   if (!user || !user.id) return;
 
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const allAreas = (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
-  const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
+  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
   const allLeaves = (window.store && window.store.leaves ? window.store.leaves.getAll() : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
 
+  const freshUser = allUsers.find((u) => u.id === user.id) || user;
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-  const displayName = (lang === "ar" && user.nameAr) ? user.nameAr : user.name;
+  const displayName = freshUser.name || freshUser.nameAr || user.name || "";
 
   const profileNameDisplay = document.getElementById("profileNameDisplay");
   const fullName = document.getElementById("fullName");
@@ -368,46 +440,51 @@ function loadUserProfile() {
 
   if (profileNameDisplay) profileNameDisplay.textContent = displayName;
   if (fullName) fullName.value = displayName;
-  if (email) email.value = user.email || `${user.id}@pharmacare.com`;
-  if (phone) phone.value = user.phone || "+201001234567";
-  if (empCodeInput) empCodeInput.value = user.employeeCode || user.code || "REP-001";
-  if (hireDateInput) hireDateInput.value = user.hireDate || "2024-01-15";
+  if (email) email.value = freshUser.email || user.email || "";
+  if (phone) phone.value = freshUser.phone || user.phone || "";
+  if (empCodeInput) empCodeInput.value = freshUser.employeeCode || freshUser.code || user.employeeCode || user.code || "—";
+  if (hireDateInput) hireDateInput.value = freshUser.hireDate || user.hireDate || "";
 
   const profileRoleBadge = document.getElementById("profileRoleBadge");
   const profileEmpBadge = document.getElementById("profileEmpBadge");
   const profileAreaBadge = document.getElementById("profileAreaBadge");
 
-  if (profileEmpBadge) profileEmpBadge.textContent = user.employeeCode || user.code || "REP-001";
+  if (profileEmpBadge) profileEmpBadge.textContent = freshUser.employeeCode || freshUser.code || user.employeeCode || user.code || "—";
 
   const roleLabels = {
     medical_rep: "Medical Rep",
     district_manager: "District Manager",
     line_manager: "Line Manager",
     business_unit: "Business Unit Head",
+    product_manager: "Product Manager",
+    general_manager: "General Manager",
     admin: "System Admin",
     hr: "HR Manager"
   };
+  const normRole = window.normalizeRole ? window.normalizeRole(freshUser.role || user.role) : String(freshUser.role || user.role || "").toLowerCase();
   if (profileRoleBadge) {
-    profileRoleBadge.textContent = user.title || roleLabels[user.role] || user.role;
+    profileRoleBadge.textContent = freshUser.title || user.title || roleLabels[normRole] || freshUser.role || user.role || "";
   }
 
-  const area = allAreas.find((a) => a.id === user.areaId || a.repId === user.id);
+  const area = allAreas.find((a) => a.id === freshUser.areaId || a.repId === freshUser.id);
   if (profileAreaBadge) {
-    profileAreaBadge.textContent = area ? `${area.name} (${area.code})` : "Headquarters";
+    profileAreaBadge.textContent = area ? `${area.name}${area.code ? ` (${area.code})` : ""}` : "Headquarters";
   }
 
-  const line = allLines.find((l) => l.id === user.lineId || (l.products && user.lineIds && user.lineIds.includes(l.id)));
+  const userLinesList = typeof window.getUserLines === "function"
+    ? window.getUserLines(freshUser.id)
+    : allLines.filter((l) => l.id === freshUser.lineId || (Array.isArray(freshUser.lineIds) && freshUser.lineIds.includes(l.id)));
   if (productLineInput) {
-    productLineInput.value = line ? line.name : ("All Product Lines");
+    productLineInput.value = userLinesList.length > 0 ? userLinesList.map((l) => l.name).filter(Boolean).join(", ") : "All Product Lines";
   }
 
-  const freshUser = allUsers.find((u) => u.id === user.id) || user;
   const activeManagerId = freshUser.managerId || user.managerId;
   const manager = activeManagerId ? allUsers.find((u) => u.id === activeManagerId) : null;
   if (managerInput) {
     if (manager) {
-      const managerRole = roleLabels[manager.role] || manager.title || manager.role || "";
-      const managerLine = allLines.find((l) => l.id === manager.lineId || (l.products && manager.lineIds && manager.lineIds.includes(l.id)));
+      const mgrNormRole = window.normalizeRole ? window.normalizeRole(manager.role) : String(manager.role || "").toLowerCase();
+      const managerRole = roleLabels[mgrNormRole] || manager.title || manager.role || "";
+      const managerLine = allLines.find((l) => l.id === manager.lineId || (Array.isArray(manager.lineIds) && manager.lineIds.includes(l.id)));
       const lineSuffix = managerLine ? ` - ${managerLine.name}` : "";
       const roleText = managerRole ? ` (${managerRole}${lineSuffix})` : "";
       managerInput.value = `${manager.name}${roleText}`;
@@ -416,28 +493,44 @@ function loadUserProfile() {
     }
   }
 
-  if (profileInitials && displayName) {
-    const parts = displayName.split(" ");
-    let inits = parts[0][0];
-    if (parts.length > 1) inits += parts[parts.length - 1][0];
+  if (profileInitials && displayName.trim()) {
+    const parts = displayName.trim().split(/\s+/);
+    let inits = parts[0] ? parts[0][0] : "";
+    if (parts.length > 1 && parts[parts.length - 1]) inits += parts[parts.length - 1][0];
     profileInitials.textContent = inits.toUpperCase();
   }
 
   const profileImagePreview = document.getElementById("profileImagePreview");
   const storedPhoto = localStorage.getItem("user_photo_" + (user.id || user.employeeCode || "current"));
-  if (storedPhoto && profileImagePreview) {
+  if (storedPhoto && storedPhoto.startsWith("data:image/") && profileImagePreview) {
     profileImagePreview.src = storedPhoto;
     profileImagePreview.style.display = "block";
     if (profileInitials) profileInitials.style.display = "none";
   }
 
+  // Restore user notification preferences if saved
+  const prefsForm = document.getElementById("preferencesForm");
+  if (prefsForm) {
+    try {
+      const rawPrefs = localStorage.getItem("user_prefs_" + user.id);
+      if (rawPrefs) {
+        const prefs = JSON.parse(rawPrefs);
+        const toggles = prefsForm.querySelectorAll(".toggle-input");
+        if (toggles[0] && typeof prefs.emailNotifications === "boolean") toggles[0].checked = prefs.emailNotifications;
+        if (toggles[1] && typeof prefs.pushNotifications === "boolean") toggles[1].checked = prefs.pushNotifications;
+      }
+    } catch (err) {}
+  }
+
+  const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : normRole === "admin";
   const adminShortcut = document.getElementById("adminManageUsersShortcut");
   if (adminShortcut) {
-    adminShortcut.style.display = (user.role === "admin") ? "block" : "none";
+    adminShortcut.style.display = isUserAdmin ? "block" : "none";
   }
 
   // Dynamic leave balances calculation synchronized with store leaves & rollover policy
-  const currentYearStr = String(new Date().getFullYear());
+  const sysNow = typeof window.getSystemDate === "function" ? window.getSystemDate() : new Date();
+  const currentYearStr = String(sysNow.getFullYear());
   const approvedLeaves = allLeaves.filter((l) => {
     if (l.userId !== user.id || l.status !== "approved") return false;
     const leaveYear = l.startDate ? String(l.startDate).slice(0, 4) : "";
@@ -445,7 +538,8 @@ function loadUserProfile() {
   });
   const used = { annual: 0, sick: 0, emergency: 0, unpaid: 0 };
   approvedLeaves.forEach((l) => {
-    const d = parseFloat(l.days) || 1;
+    const parsedDays = l.days !== undefined && l.days !== null && l.days !== "" ? parseFloat(l.days) : NaN;
+    const d = !isNaN(parsedDays) ? parsedDays : (l.dayDuration === "half" || l.type === "half_day" ? 0.5 : 1);
     if (l.type === "annual") used.annual += d;
     else if (l.type === "sick") used.sick += d;
     else if (l.type === "emergency" || l.type === "casual") used.emergency += d;
@@ -456,11 +550,11 @@ function loadUserProfile() {
   const rollover = getEmployeeLeaveRollover(user.id);
   const isWithinGrace = rollover && rollover.isValid;
   const baseAnnual = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
-  const activeAnnualTotal = isWithinGrace ? (baseAnnual + rollover.initialCarriedOver) : baseAnnual;
+  const activeAnnualTotal = isWithinGrace ? (baseAnnual + (rollover.initialCarriedOver || 0)) : baseAnnual;
 
   // After grace period ends, days consumed from rollover are not charged against new annual quota
   if (rollover && !isWithinGrace && rollover.initialCarriedOver > 0) {
-    used.annual = rollover.consumedFromNewAnnual;
+    used.annual = rollover.consumedFromNewAnnual || 0;
   }
 
   const totals = {
@@ -533,10 +627,10 @@ function loadUserProfile() {
       const secondaryModeGroup = document.getElementById("secondaryWeekendModeGroup");
 
       if (toggleInput) toggleInput.checked = !!currentSettings.requireGpsValidation;
-      if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters || 200;
+      if (radiusInput) radiusInput.value = currentSettings.gpsMaxDistanceMeters !== undefined ? currentSettings.gpsMaxDistanceMeters : 200;
       const defaultDailyInput = document.getElementById("defaultDailyVisitsTargetInput");
       if (defaultDailyInput) defaultDailyInput.value = currentSettings.defaultDailyVisitsTarget !== undefined ? currentSettings.defaultDailyVisitsTarget : 8;
-      if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay || 4;
+      if (minPmInput) minPmInput.value = currentSettings.minPmVisitsPerDay !== undefined ? currentSettings.minPmVisitsPerDay : 4;
 
       // Weekend Policy: backwards compatibility with isThursdayWeekend
       let secDay = currentSettings.secondaryWeekendDay;
@@ -578,7 +672,10 @@ function loadUserProfile() {
         gradient: "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)"
       };
 
-      currentBrandLogoData = branding.logoUrl || "images/pharma-icon-192.png";
+      const rawLogo = branding.logoUrl || "images/pharma-icon-192.png";
+      currentBrandLogoData = (typeof window._isSafeProfileAssetUrl === "function" && window._isSafeProfileAssetUrl(rawLogo))
+        ? rawLogo
+        : "images/pharma-icon-192.png";
       const previewEl = document.getElementById("brandLogoPreview");
       if (previewEl) previewEl.src = currentBrandLogoData;
 
@@ -655,11 +752,14 @@ function renderDirectReports(activeUser, allUsers, allAreas, allLines, roleLabel
     if (nameParts.length > 1) inits += nameParts[nameParts.length - 1][0];
     inits = inits.toUpperCase();
 
-    const roleName = roleLabels[rep.role] || rep.title || rep.role || "Representative";
+    const repNormRole = window.normalizeRole ? window.normalizeRole(rep.role) : String(rep.role || "").toLowerCase();
+    const roleName = roleLabels[repNormRole] || rep.title || rep.role || "Representative";
     const area = allAreas.find((a) => a.id === rep.areaId || a.repId === rep.id);
-    const areaName = area ? `${area.name} (${area.code})` : "Territory Unassigned";
-    const line = allLines.find((l) => l.id === rep.lineId || (l.products && rep.lineIds && rep.lineIds.includes(l.id)));
-    const lineName = line ? line.name : "All Lines";
+    const areaName = area ? `${area.name}${area.code ? ` (${area.code})` : ""}` : "Territory Unassigned";
+    const repLines = typeof window.getUserLines === "function"
+      ? window.getUserLines(rep.id)
+      : allLines.filter((l) => l.id === rep.lineId || (Array.isArray(rep.lineIds) && rep.lineIds.includes(l.id)));
+    const lineName = repLines.length > 0 ? repLines.map((l) => l.name).filter(Boolean).join(", ") : "All Lines";
     const code = rep.employeeCode || rep.code || "EMP";
     const phone = rep.phone || "";
     const email = rep.email || "";
@@ -725,7 +825,7 @@ function loadApprovalWorkflows() {
   if (wfCommDm) wfCommDm.checked = comm.requireDm !== false;
   if (wfCommLm) wfCommLm.checked = comm.requireLm !== false;
   if (wfCommBu) wfCommBu.checked = comm.requireBu !== false;
-  if (wfCommThreshold) wfCommThreshold.value = comm.buThresholdAmount || 5000;
+  if (wfCommThreshold) wfCommThreshold.value = comm.buThresholdAmount !== undefined && comm.buThresholdAmount !== null ? comm.buThresholdAmount : 5000;
   if (wfCommSkip) wfCommSkip.checked = comm.autoSkipSubmitterRole !== false;
 
   const commMode = comm.buThresholdMode || "all";
@@ -743,7 +843,7 @@ function loadApprovalWorkflows() {
   if (wfMktDm) wfMktDm.checked = !!mkt.requireDm;
   if (wfMktLm) wfMktLm.checked = !!mkt.requireLm;
   if (wfMktBu) wfMktBu.checked = mkt.requireBu !== false;
-  if (wfMktThreshold) wfMktThreshold.value = mkt.buThresholdAmount || 10000;
+  if (wfMktThreshold) wfMktThreshold.value = mkt.buThresholdAmount !== undefined && mkt.buThresholdAmount !== null ? mkt.buThresholdAmount : 10000;
 
   const mktMode = mkt.buThresholdMode || "all";
   const mktRadios = document.querySelectorAll('input[name="wf_mkt_bu_mode"]');
@@ -762,7 +862,7 @@ function loadApprovalWorkflows() {
   if (wfExpHr) wfExpHr.checked = exp.requireHr !== false;
   if (wfExpDisburse) wfExpDisburse.checked = exp.requireDisbursement !== false;
   if (wfExpBuEnabled) wfExpBuEnabled.checked = !!exp.requireBuThreshold;
-  if (wfExpThreshold) wfExpThreshold.value = exp.buThresholdAmount || 10000;
+  if (wfExpThreshold) wfExpThreshold.value = exp.buThresholdAmount !== undefined && exp.buThresholdAmount !== null ? exp.buThresholdAmount : 10000;
 
   // Leaves
   const wfLeaveDm = document.getElementById("wf_leave_dm");
@@ -844,13 +944,20 @@ window.handleSaveApprovalWorkflows = function(e) {
   const commBuModeRadio = document.querySelector('input[name="wf_comm_bu_mode"]:checked');
   const mktBuModeRadio = document.querySelector('input[name="wf_mkt_bu_mode"]:checked');
 
+  const parseNonNegInt = (id, fallback) => {
+    const raw = document.getElementById(id)?.value;
+    if (raw === undefined || raw === null || String(raw).trim() === "") return fallback;
+    const n = parseInt(raw, 10);
+    return isNaN(n) ? fallback : Math.max(0, n);
+  };
+
   const approvalWorkflows = {
     commercialServices: {
       requireDm: !!document.getElementById("wf_comm_dm")?.checked,
       requireLm: !!document.getElementById("wf_comm_lm")?.checked,
       requireBu: !!document.getElementById("wf_comm_bu")?.checked,
       buThresholdMode: commBuModeRadio ? commBuModeRadio.value : "all",
-      buThresholdAmount: Math.max(0, parseInt(document.getElementById("wf_comm_bu_threshold")?.value, 10) || 5000),
+      buThresholdAmount: parseNonNegInt("wf_comm_bu_threshold", 5000),
       autoSkipSubmitterRole: !!document.getElementById("wf_comm_skip")?.checked,
     },
     marketingServices: {
@@ -859,7 +966,7 @@ window.handleSaveApprovalWorkflows = function(e) {
       requireLm: !!document.getElementById("wf_mkt_lm")?.checked,
       requireBu: !!document.getElementById("wf_mkt_bu")?.checked,
       buThresholdMode: mktBuModeRadio ? mktBuModeRadio.value : "all",
-      buThresholdAmount: Math.max(0, parseInt(document.getElementById("wf_mkt_bu_threshold")?.value, 10) || 10000),
+      buThresholdAmount: parseNonNegInt("wf_mkt_bu_threshold", 10000),
       autoSkipSubmitterRole: true,
     },
     expenses: {
@@ -868,7 +975,7 @@ window.handleSaveApprovalWorkflows = function(e) {
       requireHr: !!document.getElementById("wf_exp_hr")?.checked,
       requireDisbursement: !!document.getElementById("wf_exp_disburse")?.checked,
       requireBuThreshold: !!document.getElementById("wf_exp_bu_threshold_enabled")?.checked,
-      buThresholdAmount: Math.max(0, parseInt(document.getElementById("wf_exp_bu_threshold")?.value, 10) || 10000),
+      buThresholdAmount: parseNonNegInt("wf_exp_bu_threshold", 10000),
       autoSkipSubmitterRole: true,
     },
     leaves: {
@@ -946,13 +1053,18 @@ function handleSaveCompanySettings(e) {
   const expirySelect = document.getElementById("plannedVisitExpirySelect");
 
   const requireGpsValidation = toggleInput ? toggleInput.checked : true;
-  const gpsMaxDistanceMeters = radiusInput ? (parseInt(radiusInput.value, 10) || 200) : 200;
+  const parsedRadius = radiusInput ? parseInt(radiusInput.value, 10) : NaN;
+  const gpsMaxDistanceMeters = !isNaN(parsedRadius) ? Math.max(10, parsedRadius) : 200;
   const defaultDailyInput = document.getElementById("defaultDailyVisitsTargetInput");
-  const defaultDailyVisitsTarget = defaultDailyInput ? (parseFloat(defaultDailyInput.value) || 8) : 8;
-  const minPmVisitsPerDay = minPmInput ? (parseInt(minPmInput.value, 10) || 4) : 4;
+  const parsedDaily = defaultDailyInput ? parseFloat(defaultDailyInput.value) : NaN;
+  const defaultDailyVisitsTarget = !isNaN(parsedDaily) ? Math.max(0, parsedDaily) : 8;
+  const parsedMinPm = minPmInput ? parseInt(minPmInput.value, 10) : NaN;
+  const minPmVisitsPerDay = !isNaN(parsedMinPm) ? Math.max(0, parsedMinPm) : 4;
   const allowLeaveRollover = rolloverToggle ? rolloverToggle.checked : true;
-  const leaveRolloverGraceMonths = rolloverGrace ? (parseInt(rolloverGrace.value, 10) || 3) : 3;
-  const leaveRolloverMaxDays = rolloverMax ? Math.max(0, parseInt(rolloverMax.value, 10) || 0) : 5;
+  const parsedGrace = rolloverGrace ? parseInt(rolloverGrace.value, 10) : NaN;
+  const leaveRolloverGraceMonths = !isNaN(parsedGrace) ? Math.max(0, parsedGrace) : 3;
+  const parsedMaxDays = rolloverMax ? parseInt(rolloverMax.value, 10) : NaN;
+  const leaveRolloverMaxDays = !isNaN(parsedMaxDays) ? Math.max(0, parsedMaxDays) : 5;
 
   const secondaryWeekendDay = secondaryDaySelect ? secondaryDaySelect.value : "saturday";
   const secondaryWeekendMode = secondaryModeSelect ? secondaryModeSelect.value : "full_day";
@@ -1079,16 +1191,20 @@ function handleSaveCompanySettings(e) {
     });
   }
 
-  // 6. Thursday Weekend Status Change
-  const prevThursday = !!prevSettings.isThursdayWeekend;
-  if (prevThursday !== isThursdayWeekend) {
+  // 6. Weekly Rest Day & Mode Change (covers Thursday, Saturday, None, and PM-Only mode)
+  const prevSecDay = prevSettings.secondaryWeekendDay || (prevSettings.isThursdayWeekend ? "thursday" : "none");
+  const prevSecMode = prevSettings.secondaryWeekendMode || "full_day";
+  if (prevSecDay !== secondaryWeekendDay || (secondaryWeekendDay !== "none" && prevSecMode !== secondaryWeekendMode)) {
+    const dayLabels = { thursday: "Thursday", saturday: "Saturday", none: "None (Friday Only)" };
+    const modeLabel = secondaryWeekendMode === "pm_only" ? "PM Clinic Exempted (Morning Work Allowed)" : "Full Day Off";
+    const dayLabel = dayLabels[secondaryWeekendDay] || secondaryWeekendDay;
     broadcastPolicyNotification({
       icon: "📅",
       badgeClass: "bg-info",
       title: "Work Schedule Policy Update",
-      message: isThursdayWeekend
-        ? "Notice: Thursday has been officially designated as a weekly day off (Thursday & Friday)."
-        : "Notice: Thursday is now designated as an official working day.",
+      message: secondaryWeekendDay === "none"
+        ? "Notice: Statutory weekend is now Friday only."
+        : `Notice: Secondary rest day updated to ${dayLabel} (${modeLabel}).`,
       link: "profile.html",
     });
   }
@@ -1203,8 +1319,12 @@ function handleSaveBrandingSettings(e) {
   const desc = (document.getElementById("brandDescEn")?.value || "").trim();
   const gradient = document.getElementById("brandGradientValue")?.value || "linear-gradient(135deg, #0d6efd 0%, #4dabf7 100%)";
 
+  const safeLogoUrl = (typeof window._isSafeProfileAssetUrl === "function" && window._isSafeProfileAssetUrl(currentBrandLogoData))
+    ? currentBrandLogoData
+    : "images/pharma-icon-192.png";
+
   const brandingObj = {
-    logoUrl: currentBrandLogoData || "images/pharma-icon-192.png",
+    logoUrl: safeLogoUrl,
     taglineEn: tagline || "Empowering Medical Representatives",
     taglineAr: tagline || "Empowering Medical Representatives",
     descEn: desc || "Streamline your workflow, manage relationships, and drive performance with our comprehensive CRM solution.",
@@ -1322,7 +1442,23 @@ function renderSystemManagementCard() {
 
 window.renderSystemManagementCard = renderSystemManagementCard;
 
+function requireAdminProfileAction() {
+  const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
+  if (!user || !user.id) {
+    if (typeof showToast === "function") showToast("Authentication required.", "error");
+    return false;
+  }
+  const normRole = window.normalizeRole ? window.normalizeRole(user.role) : String(user.role || "").toLowerCase();
+  const isUserAdmin = typeof window.isAdmin === "function" ? window.isAdmin(user) : normRole === "admin";
+  if (!isUserAdmin) {
+    if (typeof showToast === "function") showToast("Access Denied: System Admin privileges required.", "error");
+    return false;
+  }
+  return true;
+}
+
 window.exportDatabaseBackup = function () {
+  if (!requireAdminProfileAction()) return null;
   try {
     const isAr = (localStorage.getItem("pharmaLang") || "en") === "ar";
     const masterData = window.DEMO_DATA ? JSON.parse(JSON.stringify(window.DEMO_DATA)) : {};
@@ -1355,7 +1491,7 @@ window.exportDatabaseBackup = function () {
     setTimeout(() => {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(downloadLink.href);
-    }, 150);
+    }, 1000);
 
     if (typeof showToast === "function") {
       showToast("Database backup exported successfully!", "success");
@@ -1370,21 +1506,41 @@ window.exportDatabaseBackup = function () {
 };
 
 window.handleDatabaseRestore = function (event) {
+  if (!requireAdminProfileAction()) {
+    if (event && event.target) event.target.value = "";
+    return;
+  }
   const file = event && event.target && event.target.files && event.target.files[0];
   if (!file) return;
+
+  if (typeof confirm === "function" && !confirm("Are you sure you want to restore this backup? This will replace all current system data.")) {
+    if (event.target) event.target.value = "";
+    return;
+  }
 
   const isAr = (localStorage.getItem("pharmaLang") || "en") === "ar";
   const reader = new FileReader();
   reader.onload = function (e) {
     try {
       const parsed = JSON.parse(e.target.result);
-      if (!parsed || typeof parsed !== "object") {
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         throw new Error("Invalid backup JSON format.");
       }
 
       // Support both structured snapshots { masterData, salesData } and raw masterData dumps
-      const restoredMaster = parsed.masterData || parsed;
-      const restoredSales = parsed.salesData || restoredMaster.distributorSales || [];
+      const rawMaster = parsed.masterData || parsed;
+      if (!rawMaster || typeof rawMaster !== "object" || Array.isArray(rawMaster)) {
+        throw new Error("Invalid masterData structure.");
+      }
+      // Strip dangerous prototype pollution keys before merging
+      const restoredMaster = {};
+      Object.keys(rawMaster).forEach((k) => {
+        if (k === "__proto__" || k === "constructor" || k === "prototype") return;
+        restoredMaster[k] = rawMaster[k];
+      });
+      const restoredSales = Array.isArray(parsed.salesData)
+        ? parsed.salesData
+        : (Array.isArray(restoredMaster.distributorSales) ? restoredMaster.distributorSales : []);
 
       if (!restoredMaster.users && !restoredMaster.doctors && !restoredMaster.companySettings) {
         throw new Error("Backup file does not contain recognized PharmaCare database tables.");
@@ -1431,6 +1587,14 @@ window.handleDatabaseRestore = function (event) {
 };
 
 window.openGoLiveModal = function () {
+  if (!requireAdminProfileAction()) return;
+  const currentSettings = (window.store && window.store.companySettings && typeof window.store.companySettings.get === "function")
+    ? window.store.companySettings.get()
+    : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+  if (currentSettings.isProductionLaunched) {
+    if (typeof showToast === "function") showToast("System is already in Active Production mode.", "warning");
+    return;
+  }
   const modal = document.getElementById("goLiveModal");
   if (modal) {
     modal.style.display = "flex";
@@ -1479,6 +1643,14 @@ window.selectGoLiveOption = function (optionValue) {
 };
 
 window.confirmAndExecuteGoLive = async function () {
+  if (!requireAdminProfileAction()) return;
+  const preCheckSettings = (window.store && window.store.companySettings && typeof window.store.companySettings.get === "function")
+    ? window.store.companySettings.get()
+    : ((window.DEMO_DATA && window.DEMO_DATA.companySettings) || {});
+  if (preCheckSettings.isProductionLaunched) {
+    if (typeof showToast === "function") showToast("Go-Live blocked: Production is already active and locked.", "error");
+    return;
+  }
   const confirmBtn = document.getElementById("btnConfirmGoLive");
   if (confirmBtn) {
     confirmBtn.disabled = true;
@@ -1526,24 +1698,27 @@ window.confirmAndExecuteGoLive = async function () {
         });
       }
     } else if (selectedMode === "blank_slate") {
-      // White-label fresh start: keep only the Super Admin account
+      // White-label fresh start: keep only the active Super Admin account with valid credentials
       const authUser = (window.checkAuth && window.checkAuth()) || window.currentUser || {};
-      let activeAdmin = (Array.isArray(window.DEMO_DATA.users)
-        ? window.DEMO_DATA.users.find((u) => u.id === authUser.id || u.role === "admin")
-        : null);
+      const storeUsersList = (window.store && window.store.users && typeof window.store.users.getAll === "function")
+        ? window.store.users.getAll()
+        : ((window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users)) ? window.DEMO_DATA.users : []);
+      let activeAdmin = storeUsersList.find((u) => u.id === authUser.id);
       if (!activeAdmin) {
-        activeAdmin = {
-          id: "u1790626000010",
-          name: "System Admin",
-          
-          role: "admin",
-          email: "admin@pharmacare.com",
-          employeeCode: "ADM-001",
-        };
+        activeAdmin = storeUsersList.find((u) => {
+          const r = window.normalizeRole ? window.normalizeRole(u.role) : String(u.role || "").toLowerCase();
+          return r === "admin";
+        }) || null;
       }
+      if (!activeAdmin || (!activeAdmin.passwordHash && !activeAdmin.password)) {
+        throw new Error("Cannot perform Blank Slate Go-Live: active Admin record with valid credentials not found in store.");
+      }
+      activeAdmin = { ...activeAdmin };
       activeAdmin.areaIds = [];
       activeAdmin.areaId = null;
       activeAdmin.area = null;
+      activeAdmin.lineIds = [];
+      activeAdmin.lineId = null;
       activeAdmin.leaveBalance = { annual: 21, sick: 7, emergency: 6, unpaid: 0, maternity: 90 };
 
       window.DEMO_DATA.users = [activeAdmin];

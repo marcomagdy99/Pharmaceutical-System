@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  var FALLBACK_SW_VERSION = "v321";
+  var FALLBACK_SW_VERSION = "v325";
   var VERSION_STORAGE_KEY = "pharmacare_sw_cleared_version";
   var isClearing = false;
 

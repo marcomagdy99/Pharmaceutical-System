@@ -54,6 +54,23 @@
     },
   });
 
+  function _getUserLineIds(user) {
+    if (!user) return [];
+    if (typeof window.getUserLines === "function" && user.id) {
+      const derived = window.getUserLines(user.id);
+      if (Array.isArray(derived) && derived.length > 0) {
+        return derived.map((l) => l && l.id).filter(Boolean);
+      }
+    }
+    if (Array.isArray(user.lineIds) && user.lineIds.length > 0) return user.lineIds.filter(Boolean);
+    return user.lineId ? [user.lineId] : [];
+  }
+
+  function _isUserActive(user) {
+    if (!user) return false;
+    return String(user.status || "Active").trim().toLowerCase() === "active";
+  }
+
   const WorkflowEngine = {
     /**
      * Resolves the canonical base role for a user (accounting for custom titles & role codes).
@@ -65,6 +82,8 @@
 
       const map = {
         admin: "admin",
+        gm: "general_manager",
+        general_manager: "general_manager",
         bu: "business_unit",
         business_unit: "business_unit",
         pm: "product_manager",
@@ -88,6 +107,7 @@
       const base = this.getUserBaseRole(user);
       const levelMap = {
         admin: 5,
+        general_manager: 5,
         business_unit: 4,
         hr: 4,
         line_manager: 3,
@@ -116,7 +136,7 @@
         case "hr":
           return base === "hr";
         case "gm":
-          return base === "admin";
+          return base === "general_manager";
         default:
           return base === tier;
       }
@@ -130,11 +150,32 @@
         if (window.store && window.store.companySettings) {
           const settings = window.store.companySettings.get();
           if (settings && settings.approvalWorkflows) {
-            return settings.approvalWorkflows;
+            const raw = settings.approvalWorkflows;
+            return {
+              commercialServices: { ...DEFAULT_WORKFLOWS.commercialServices, ...(raw.commercialServices || {}) },
+              marketingServices: { ...DEFAULT_WORKFLOWS.marketingServices, ...(raw.marketingServices || {}) },
+              expenses: { ...DEFAULT_WORKFLOWS.expenses, ...(raw.expenses || {}) },
+              leaves: { ...DEFAULT_WORKFLOWS.leaves, ...(raw.leaves || {}) },
+              plans: { ...DEFAULT_WORKFLOWS.plans, ...(raw.plans || {}) },
+              relocation: { ...DEFAULT_WORKFLOWS.relocation, ...(raw.relocation || {}) },
+            };
           }
         }
       } catch (e) {}
       return DEFAULT_WORKFLOWS;
+    },
+
+    _isInHierarchyChain(approverUser, targetUserId) {
+      if (!approverUser || !approverUser.id || !targetUserId) return false;
+      const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const visited = new Set();
+      let curr = allUsers.find((u) => u && u.id === targetUserId);
+      while (curr && curr.managerId && !visited.has(curr.managerId)) {
+        visited.add(curr.managerId);
+        if (curr.managerId === approverUser.id) return true;
+        curr = allUsers.find((u) => u && u.id === curr.managerId);
+      }
+      return false;
     },
 
     /**
@@ -142,6 +183,7 @@
      */
     resolveHierarchy(lineId, areaId, repId) {
       const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const allAreas = (window.store && window.store.areas && typeof window.store.areas.getAll === "function" ? window.store.areas.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
       const rep = repId ? allUsers.find((u) => u.id === repId) : null;
 
       let dmUser = null;
@@ -149,54 +191,66 @@
       let buUser = null;
       let pmUser = null;
 
-      // 1. Resolve DM (direct manager or district tier)
+      // 1. Resolve DM (direct manager, vacant area manager, or district tier on line)
       if (rep) {
         if (this.userMatchesTier(rep, "dm")) {
           dmUser = rep;
         } else if (rep.managerId) {
-          dmUser = allUsers.find((u) => u.id === rep.managerId && this.userMatchesTier(u, "dm"));
+          dmUser = allUsers.find((u) => u.id === rep.managerId && this.userMatchesTier(u, "dm") && _isUserActive(u));
+        }
+      }
+      if (!dmUser && areaId) {
+        const areaObj = allAreas.find((a) => a && a.id === areaId);
+        if (areaObj) {
+          const areaMgrId = (typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(areaObj, allUsers) : null) || areaObj.dmId || areaObj.districtManagerId || areaObj.managerId;
+          if (areaMgrId) {
+            dmUser = allUsers.find((u) => u.id === areaMgrId && this.userMatchesTier(u, "dm") && _isUserActive(u)) || null;
+          }
         }
       }
       if (!dmUser && lineId) {
-        dmUser = allUsers.find((u) => this.userMatchesTier(u, "dm") && (u.lineId === lineId || (u.lineIds && u.lineIds.includes(lineId))));
+        dmUser = allUsers.find((u) => this.userMatchesTier(u, "dm") && _isUserActive(u) && (u.lineId === lineId || (Array.isArray(u.lineIds) && u.lineIds.includes(lineId))));
       }
 
       // 2. Resolve LM (next managerial escalation)
       if (dmUser && dmUser.managerId) {
-        lmUser = allUsers.find((u) => u.id === dmUser.managerId && this.userMatchesTier(u, "lm"));
+        lmUser = allUsers.find((u) => u.id === dmUser.managerId && this.userMatchesTier(u, "lm") && _isUserActive(u));
+      }
+      if (!lmUser && rep && rep.managerId) {
+        lmUser = allUsers.find((u) => u.id === rep.managerId && this.userMatchesTier(u, "lm") && _isUserActive(u));
       }
       if (!lmUser && rep && this.userMatchesTier(rep, "lm")) {
         lmUser = rep;
       }
       if (!lmUser && lineId) {
-        lmUser = allUsers.find((u) => this.userMatchesTier(u, "lm") && (u.lineId === lineId || (u.lineIds && u.lineIds.includes(lineId))));
+        lmUser = allUsers.find((u) => this.userMatchesTier(u, "lm") && _isUserActive(u) && (u.lineId === lineId || (Array.isArray(u.lineIds) && u.lineIds.includes(lineId))));
       }
 
       // 3. Resolve BU
       if (lmUser && lmUser.managerId) {
-        buUser = allUsers.find((u) => u.id === lmUser.managerId && this.userMatchesTier(u, "bu"));
+        buUser = allUsers.find((u) => u.id === lmUser.managerId && this.userMatchesTier(u, "bu") && _isUserActive(u));
       }
       if (!buUser && lineId) {
-        buUser = allUsers.find((u) => this.userMatchesTier(u, "bu") && (u.lineId === lineId || (u.lineIds && u.lineIds.includes(lineId))));
+        buUser = allUsers.find((u) => this.userMatchesTier(u, "bu") && _isUserActive(u) && (u.lineId === lineId || (Array.isArray(u.lineIds) && u.lineIds.includes(lineId))));
       }
       if (!buUser) {
-        buUser = allUsers.find((u) => this.userMatchesTier(u, "bu")) || null;
+        buUser = allUsers.find((u) => this.userMatchesTier(u, "bu") && _isUserActive(u)) || null;
       }
 
       // 4. Resolve PM (Product Manager for marketing)
       if (lineId) {
-        pmUser = allUsers.find((u) => this.userMatchesTier(u, "pm") && (u.lineId === lineId || (u.lineIds && u.lineIds.includes(lineId))));
+        pmUser = allUsers.find((u) => this.userMatchesTier(u, "pm") && _isUserActive(u) && (u.lineId === lineId || (Array.isArray(u.lineIds) && u.lineIds.includes(lineId))));
       }
       if (!pmUser) {
-        pmUser = allUsers.find((u) => this.userMatchesTier(u, "pm")) || null;
+        pmUser = allUsers.find((u) => this.userMatchesTier(u, "pm") && _isUserActive(u)) || null;
       }
 
       return {
         repId: rep ? rep.id : repId || null,
-        dmId: dmUser ? dmUser.id : "u1790626000014",
-        lmId: lmUser ? lmUser.id : "u1790626000012",
-        buId: buUser ? buUser.id : "u1790626000011",
-        pmId: pmUser ? pmUser.id : "u1790626000018",
+        dmId: dmUser ? dmUser.id : null,
+        lmId: lmUser ? lmUser.id : null,
+        buId: buUser ? buUser.id : null,
+        pmId: pmUser ? pmUser.id : null,
         dmUser,
         lmUser,
         buUser,
@@ -222,13 +276,11 @@
         if (cfg.requireLm) steps.push({ role: "lm", status: "pending_lm" });
         const needsBu = cfg.requireBu !== false && (cfg.buThresholdMode !== "threshold" || cost >= Number(cfg.buThresholdAmount || 10000));
         if (needsBu) steps.push({ role: "bu", status: "pending_bu" });
-        if (cfg.requireGm) steps.push({ role: "gm", status: "pending_gm" });
       } else {
         if (cfg.requireDm !== false) steps.push({ role: "dm", status: "pending_dm" });
         if (cfg.requireLm !== false) steps.push({ role: "lm", status: "pending_lm" });
         const needsBu = cfg.requireBu !== false && (cfg.buThresholdMode !== "threshold" || cost >= Number(cfg.buThresholdAmount || 5000));
         if (needsBu) steps.push({ role: "bu", status: "pending_bu" });
-        if (cfg.requireGm) steps.push({ role: "gm", status: "pending_gm" });
       }
 
       return steps;
@@ -249,9 +301,18 @@
       }
 
       const submitterBase = this.getUserBaseRole(submitterUser);
-      const submitterLvl = this.getUserLevel(submitterUser);
-      if (submitterBase === "admin" || submitterLvl >= 5) {
+      if (submitterBase === "admin") {
         return { status: "approved", nextApproverId: null, isFinal: true };
+      }
+
+      if (submitterBase === "hr" || submitterBase === "general_manager") {
+        const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+        const adminUser = allUsers.find((u) => this.getUserBaseRole(u) === "admin" && _isUserActive(u)) || null;
+        return {
+          status: "pending_admin",
+          nextApproverId: adminUser ? adminUser.id : null,
+          isFinal: false,
+        };
       }
 
       // Check auto-skip if enabled based on role
@@ -261,11 +322,11 @@
           return { status: "approved", nextApproverId: null, isFinal: true };
         }
         if (submitterBase === "line_manager") {
-          // Skip dm and lm steps, proceed directly to BU
-          const buIndex = steps.findIndex((s) => s.role === "bu" || s.role === "gm");
-          startIndex = buIndex >= 0 ? buIndex : steps.length;
+          // Skip dm and lm steps; preserve pm if this is a marketing request
+          const nextIndex = steps.findIndex((s) => s.role !== "dm" && s.role !== "lm");
+          startIndex = nextIndex >= 0 ? nextIndex : steps.length;
         } else if (submitterBase === "district_manager") {
-          // Skip dm step, proceed to LM
+          // Skip dm step, proceed to LM (or PM/BU)
           const lmIndex = steps.findIndex((s) => s.role !== "dm");
           startIndex = lmIndex >= 0 ? lmIndex : steps.length;
         } else if (submitterBase === "product_manager") {
@@ -285,7 +346,6 @@
       else if (targetStep.role === "lm") approverId = hierarchy.lmId;
       else if (targetStep.role === "bu") approverId = hierarchy.buId;
       else if (targetStep.role === "pm") approverId = hierarchy.pmId;
-      else if (targetStep.role === "gm") approverId = "u1790626000010";
 
       return {
         status: targetStep.status,
@@ -320,7 +380,6 @@
       else if (nextStep.role === "lm") approverId = hierarchy.lmId;
       else if (nextStep.role === "bu") approverId = hierarchy.buId;
       else if (nextStep.role === "pm") approverId = hierarchy.pmId;
-      else if (nextStep.role === "gm") approverId = "u1790626000010";
 
       return {
         nextStatus: nextStep.status,
@@ -335,8 +394,14 @@
     isServiceAuthorized(service, user, action) {
       if (!user || !service) return false;
       const baseRole = this.getUserBaseRole(user);
-      if (baseRole === "admin") return true;
+      const status = String(service.status || "").toLowerCase();
+      const isReject = action === "reject_service";
+
       if (service.requesterId === user.id) return false;
+      if (status === "rejected" || status === "cancelled") return false;
+      if (status === "approved" && (!isReject || baseRole !== "admin")) return false;
+      if (baseRole === "admin") return true;
+      if (baseRole === "general_manager") return false;
 
       // If shared service, check per-share permissions
       if (service.isShared && Array.isArray(service.shares)) {
@@ -347,41 +412,42 @@
           return service.shares.some((sh) => sh.lmId === user.id && sh.status === "pending_lm");
         }
         if (this.userMatchesTier(user, "bu")) {
-          const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map(l => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
-          const canApprove = typeof window.canApproveFor === "function" ? window.canApproveFor(service.requesterId) : true;
+          const uLines = _getUserLineIds(user);
+          const canApprove = this._isInHierarchyChain(user, service.requesterId);
           return canApprove && service.shares.some((sh) => {
-            const matchesLine = uLines.length === 0 ? false : uLines.includes(sh.lineId);
+            const matchesLine = uLines.length > 0 && uLines.includes(sh.lineId);
             return matchesLine && sh.status === "pending_bu";
           });
         }
         if (this.userMatchesTier(user, "pm")) {
+          const pmLines = _getUserLineIds(user);
           return service.department === "marketing" && service.shares.some((sh) => {
-            const matchesLine = !user.lineIds || user.lineIds.includes(sh.lineId) || user.lineId === sh.lineId;
+            const matchesLine = pmLines.length > 0 && pmLines.includes(sh.lineId);
             return matchesLine && sh.status === "pending_pm";
           });
         }
       }
 
       // Single service direct checks
-      const status = service.status;
       if (status === "pending_dm" && this.userMatchesTier(user, "dm")) {
-        return service.nextApproverId === user.id || !service.nextApproverId;
+        return service.nextApproverId === user.id || (!service.nextApproverId && this._isInHierarchyChain(user, service.requesterId));
       }
       if (status === "pending_lm" && this.userMatchesTier(user, "lm")) {
-        return service.nextApproverId === user.id || !service.nextApproverId;
+        return service.nextApproverId === user.id || (!service.nextApproverId && this._isInHierarchyChain(user, service.requesterId));
       }
       if (status === "pending_bu" && this.userMatchesTier(user, "bu")) {
-        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map(l => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
-        const canApprove = typeof window.canApproveFor === "function" ? window.canApproveFor(service.requesterId) : true;
-        const matchesLine = uLines.length === 0 ? false : uLines.includes(service.lineId);
+        const uLines = _getUserLineIds(user);
+        const canApprove = this._isInHierarchyChain(user, service.requesterId);
+        const matchesLine = uLines.length > 0 && uLines.includes(service.lineId);
         return canApprove && (matchesLine || service.nextApproverId === user.id);
       }
       if (status === "pending_pm" && this.userMatchesTier(user, "pm")) {
-        const matchesLine = !user.lineIds || user.lineIds.includes(service.lineId) || user.lineId === service.lineId;
-        return matchesLine || service.nextApproverId === user.id;
+        const pmLines = _getUserLineIds(user);
+        const matchesLine = pmLines.length > 0 && pmLines.includes(service.lineId);
+        return matchesLine || (service.nextApproverId === user.id && (!service.lineId || pmLines.length === 0));
       }
-      if (status === "pending_gm" && this.userMatchesTier(user, "gm")) {
-        return true;
+      if (status === "pending_gm") {
+        return false;
       }
 
       return false;
@@ -398,32 +464,36 @@
 
       const allUsers = (window.store && window.store.users && window.store.users.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
       const requester = allUsers.find((u) => u.id === expense.requesterId);
-      const dm = requester && requester.managerId ? allUsers.find((u) => u.id === requester.managerId) : currentActor;
-      const lm = dm && dm.managerId ? allUsers.find((u) => u.id === dm.managerId) : allUsers.find((u) => this.userMatchesTier(u, "lm"));
-      const bu = lm && lm.managerId ? allUsers.find((u) => u.id === lm.managerId) : allUsers.find((u) => this.userMatchesTier(u, "bu"));
-      const hr = allUsers.find((u) => this.userMatchesTier(u, "hr")) || { id: "u1790626000017" };
+      const reqLineId = expense.lineId || (requester ? (requester.lineId || (Array.isArray(requester.lineIds) ? requester.lineIds[0] : null)) : null);
+      const hierarchy = this.resolveHierarchy(reqLineId, expense.areaId, expense.requesterId);
+      const lmId = hierarchy.lmId;
+      const buId = hierarchy.buId;
+      const hr = allUsers.find((u) => this.userMatchesTier(u, "hr") && _isUserActive(u)) || null;
 
       const needsBu = (cfg.requireBu === true) || (cfg.requireBuThreshold && amount >= Number(cfg.buThresholdAmount || 10000));
+      const nextAfterBu = cfg.requireHr !== false
+        ? { nextStatus: "pending_hr", nextApproverId: hr ? hr.id : null, isFinal: false }
+        : { nextStatus: "approved", nextApproverId: null, isFinal: true };
 
       if (currentStatus === "pending_dm") {
         if (cfg.requireLm !== false) {
-          return { nextStatus: "pending_lm", nextApproverId: lm ? lm.id : "u1790626000012" };
+          return { nextStatus: "pending_lm", nextApproverId: lmId, isFinal: false };
         }
         if (needsBu) {
-          return { nextStatus: "pending_bu", nextApproverId: bu ? bu.id : "u1790626000011" };
+          return { nextStatus: "pending_bu", nextApproverId: buId, isFinal: false };
         }
-        return { nextStatus: "pending_hr", nextApproverId: hr.id };
+        return nextAfterBu;
       }
 
       if (currentStatus === "pending_lm") {
         if (needsBu) {
-          return { nextStatus: "pending_bu", nextApproverId: bu ? bu.id : "u1790626000011" };
+          return { nextStatus: "pending_bu", nextApproverId: buId, isFinal: false };
         }
-        return { nextStatus: "pending_hr", nextApproverId: hr.id };
+        return nextAfterBu;
       }
 
       if (currentStatus === "pending_bu") {
-        return { nextStatus: "pending_hr", nextApproverId: hr.id };
+        return nextAfterBu;
       }
 
       if (currentStatus === "pending_hr") {
@@ -439,37 +509,38 @@
     isExpenseAuthorized(expense, user, action) {
       if (!user || !expense) return false;
       const baseRole = this.getUserBaseRole(user);
-      if (baseRole === "admin") return true;
-      if (expense.requesterId === user.id) return false;
-      if (baseRole === "medical_rep" && this.getUserLevel(user) <= 1) return false;
+      const status = String(expense.status || "").toLowerCase();
 
-      const status = expense.status;
+      if (expense.requesterId === user.id) return false;
 
       if (action === "disburse_expense") {
         return (this.userMatchesTier(user, "hr") || baseRole === "admin") && status === "approved";
       }
 
+      const isReject = action === "reject_expense";
+      if (status === "rejected" || status === "disbursed" || status === "cancelled") return false;
+      if (status === "approved" && (!isReject || baseRole !== "admin")) return false;
+      if (baseRole === "admin") return true;
+      if (baseRole === "medical_rep" && this.getUserLevel(user) <= 1) return false;
+      if (baseRole === "general_manager") return false;
+
       if (status === "pending_dm") {
-        if (this.userMatchesTier(user, "dm") || this.userMatchesTier(user, "bu")) {
-          return typeof window.canApproveFor === "function" ? window.canApproveFor(expense.requesterId) : true;
-        }
-        return false;
+        if (!this.userMatchesTier(user, "dm")) return false;
+        return this._isInHierarchyChain(user, expense.requesterId);
       }
       if (status === "pending_lm") {
-        if (this.userMatchesTier(user, "lm") || this.userMatchesTier(user, "bu")) {
-          return typeof window.canApproveFor === "function" ? window.canApproveFor(expense.requesterId) : true;
-        }
-        return false;
+        if (!this.userMatchesTier(user, "lm")) return false;
+        return this._isInHierarchyChain(user, expense.requesterId);
       }
       if (status === "pending_bu") {
         if (!this.userMatchesTier(user, "bu")) return false;
-        return typeof window.canApproveFor === "function" ? window.canApproveFor(expense.requesterId) : true;
+        return this._isInHierarchyChain(user, expense.requesterId);
       }
       if (status === "pending_hr") {
         return this.userMatchesTier(user, "hr");
       }
       if (status === "pending_gm") {
-        return this.userMatchesTier(user, "gm") || baseRole === "admin";
+        return baseRole === "admin";
       }
 
       return false;

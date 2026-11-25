@@ -110,6 +110,7 @@ const dashboardTranslations = {
     monthly_sales: "Monthly Sales",
     quick_links: "Quick Management Links",
     manage_users: "Manage Users",
+    manage_areas: "Manage Areas",
     upload_sales: "Upload Sales",
     manage_products: "Manage Products",
     recent_activity: "Recent System Activity",
@@ -225,25 +226,26 @@ window.openDmTeamModal = function (dmId) {
   const authUser = (window.checkAuth && window.checkAuth()) || (window.DEMO_MODE && window.DEMO_DATA && window.DEMO_DATA.currentUser) || null;
   if (!authUser) return;
 
-  const allUsers =
-    (window.store && window.store.users
-      ? window.store.users.getAll()
-      : window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getDashboardUsers();
 
   const dm = allUsers.find((u) => u.id === dmId);
   if (!dm) return;
 
-  // Authorization: Admins, GM, HR, or direct manager/line peers
-  const userRole = (authUser.role || "").toLowerCase();
-  const isExecutive = ["admin", "general_manager", "hr"].includes(userRole);
-  if (!isExecutive && authUser.id !== dmId) {
-    const dmLines = dm.lineIds || (dm.lineId ? [dm.lineId] : []);
-    const userLines = typeof window.getUserLines === "function"
-      ? window.getUserLines(authUser.id).map((l) => l.id)
-      : (authUser.lineIds || (authUser.lineId ? [authUser.lineId] : []));
-    const sharesLine = dmLines.some((lid) => userLines.includes(lid));
+  // Authorization: Admins, HR, direct/indirect manager (hierarchy), or PM on their assigned lines
+  const userRole = window.normalizeRole ? window.normalizeRole(authUser.role) : (authUser.role || "").toLowerCase();
+  const isExecutive = ["admin", "hr"].includes(userRole);
+  const inSubordinates = typeof window.getAllSubordinates === "function" && window.getAllSubordinates(authUser.id).some((u) => u.id === dmId);
+  if (!isExecutive && authUser.id !== dmId && !inSubordinates) {
     const reportsToMe = dm.managerId === authUser.id;
-    if (!sharesLine && !reportsToMe) {
+    let isAuthorizedPm = false;
+    if (userRole === "product_manager" || userRole === "pm") {
+      const dmLines = dm.lineIds || (dm.lineId ? [dm.lineId] : []);
+      const userLines = typeof window.getUserLines === "function"
+        ? window.getUserLines(authUser.id).map((l) => l.id)
+        : (authUser.lineIds || (authUser.lineId ? [authUser.lineId] : []));
+      isAuthorizedPm = dmLines.some((lid) => userLines.includes(lid));
+    }
+    if (!reportsToMe && !isAuthorizedPm) {
       if (typeof showToast === "function") showToast("Unauthorized to view this team.", "error");
       return;
     }
@@ -339,7 +341,7 @@ window.openDmTeamModal = function (dmId) {
                 <div class="dm-team-rep-avatar">${initials}</div>
                 <div class="dm-team-rep-info">
                   <div class="dm-team-rep-header">
-                    <div class="dm-team-rep-name">${window.escapeHtml(repName)}</div>
+                    <div class="dm-team-rep-name">${repName}</div>
                     <span class="badge ${isActive ? "bg-success-subtle text-success" : "bg-secondary-subtle text-secondary"} dm-team-rep-badge">
                       ${isActive ? "Active" : "Inactive"}
                     </span>
@@ -553,6 +555,53 @@ function getDashboardSalesData() {
 }
 
 /**
+ * Unified central store resolution helpers for Dashboard widgets.
+ * Guaranteed Single Source of Truth with seamless DEMO_DATA fallback.
+ */
+function getDashboardVisits() {
+  return (window.store && window.store.visits && typeof window.store.visits.getAll === "function")
+    ? window.store.visits.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.visits) || []);
+}
+
+function getDashboardUsers() {
+  return (window.store && window.store.users && typeof window.store.users.getAll === "function")
+    ? window.store.users.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.users) || []);
+}
+
+function getDashboardLeaves() {
+  return (window.store && window.store.leaves && typeof window.store.leaves.getAll === "function")
+    ? window.store.leaves.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.leaves) || []);
+}
+
+function getDashboardAnnouncements() {
+  return (window.store && window.store.announcements && typeof window.store.announcements.getAll === "function")
+    ? window.store.announcements.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.announcements) || []);
+}
+
+function getDashboardDoctors() {
+  return (window.store && window.store.doctors && typeof window.store.doctors.getAll === "function")
+    ? window.store.doctors.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.doctors) || []);
+}
+
+function getDashboardHospitals() {
+  return (window.store && window.store.hospitals && typeof window.store.hospitals.getAll === "function")
+    ? window.store.hospitals.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.hospitals) || []);
+}
+
+window.getDashboardVisits = getDashboardVisits;
+window.getDashboardUsers = getDashboardUsers;
+window.getDashboardLeaves = getDashboardLeaves;
+window.getDashboardAnnouncements = getDashboardAnnouncements;
+window.getDashboardDoctors = getDashboardDoctors;
+window.getDashboardHospitals = getDashboardHospitals;
+
+/**
  * Initializes and updates Chart.js charts on the active dashboard.
  * @param {Object} user 
  */
@@ -561,34 +610,40 @@ function initDashboardCharts(user) {
 
   const currentUserId = user?.id || "";
   if (!currentUserId) return;
-  const role = (user?.role || "rep").toLowerCase();
+  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || "rep").toLowerCase();
   const allSales = getDashboardSalesData();
-  const allDoctors = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-  const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getDashboardUsers();
+  const allDoctors = getDashboardDoctors();
+  const allHospitals = getDashboardHospitals();
+  const allVisits = getDashboardVisits();
 
   let scopedRepIds = null;
   if (role === "medical_rep" || role === "rep") {
     scopedRepIds = [currentUserId];
-  } else if (role === "district_manager" || role === "dm" || role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+  } else if (role === "district_manager" || role === "dm" || role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm") {
     if (typeof window.getAllSubordinates === "function") {
       const allDownstreamUsers = window.getAllSubordinates(currentUserId);
       scopedRepIds = allDownstreamUsers
-        .filter((u) => u.role === "medical_rep" || u.role === "rep")
+        .filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === "medical_rep" || u.role === "rep")))
         .map((u) => u.id);
     } else {
-      // Fallback manual resolution
-      if (role === "district_manager" || role === "dm") {
-        scopedRepIds = allUsers.filter((u) => u.managerId === currentUserId).map((u) => u.id);
-      } else if (role === "line_manager" || role === "lm") {
-        const dms = allUsers.filter((u) => u.managerId === currentUserId).map((d) => d.id);
-        scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
-      } else if (role === "business_unit" || role === "bu") {
-        const lms = allUsers.filter((u) => u.managerId === currentUserId).map((l) => l.id);
-        const dms = allUsers.filter((u) => lms.includes(u.managerId)).map((d) => d.id);
-        scopedRepIds = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+      // Fallback manual BFS resolution across managerId tree
+      const frontier = [currentUserId];
+      const visited = new Set(frontier);
+      const reps = [];
+      while (frontier.length > 0) {
+        const mgrId = frontier.shift();
+        allUsers.forEach((u) => {
+          if (u && u.managerId === mgrId && !visited.has(u.id)) {
+            visited.add(u.id);
+            frontier.push(u.id);
+            if (window.isRepRole ? window.isRepRole(u) : (u.role === "medical_rep" || u.role === "rep")) {
+              reps.push(u.id);
+            }
+          }
+        });
       }
+      scopedRepIds = reps;
     }
   } else if (role === "product_manager" || role === "pm") {
     if (typeof window.getScopedTeamForLine === "function") {
@@ -675,9 +730,9 @@ function initDashboardCharts(user) {
 
   window.renderCoverageGaugeChart("dashCoverageGaugeChart", "dashCoverageGaugeLabel", coveragePct);
 
-  // 4. Per-Line Sales Trend Charts (LM, BU & PM dashboards)
+  // 4. Per-Line Sales Trend Charts (LM, BU, GM & PM dashboards)
   const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUserId) : [];
-  if (userLines.length > 0 && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "product_manager" || role === "pm")) {
+  if (userLines.length > 0 && (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm" || role === "product_manager" || role === "pm")) {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     userLines.forEach(function (line) {
@@ -773,7 +828,11 @@ function renderDashboard() {
     window.location.replace("login.html");
     return;
   }
-  const role = (user.role || "admin").toLowerCase();
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : String(user.role || "").toLowerCase();
+  if (!role) {
+    window.location.replace("login.html");
+    return;
+  }
   const userName = user.name || "User";
   if (typeof window.destroyAllCharts === "function") {
     window.destroyAllCharts();
@@ -790,7 +849,7 @@ function renderDashboard() {
       container.innerHTML = renderLMDashboard(userName, user);
     } else if (role === "product_manager" || role === "pm") {
       container.innerHTML = renderPMDashboard(userName, user);
-    } else if (role === "business_unit" || role === "bu") {
+    } else if (role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm") {
       container.innerHTML = renderBUDashboard(userName, user);
     } else if (role === "hr") {
       container.innerHTML = renderHRDashboard(userName);
@@ -831,11 +890,8 @@ function renderRepDashboard(userName, user) {
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
   const currentUserId = user?.id || "";
 
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
-  const allDoctors =
-    (window.store && window.store.doctors
-      ? window.store.doctors.getAll()
-      : (window.DEMO_DATA && window.DEMO_DATA.doctors)) || [];
+  const allVisits = getDashboardVisits();
+  const allDoctors = getDashboardDoctors();
 
   // Single Source of Truth for sales records
   const allSales = getDashboardSalesData();
@@ -857,10 +913,7 @@ function renderRepDashboard(userName, user) {
   );
   const totalDoctorsCount = repDoctors.length;
 
-  const allHospitals =
-    (window.store && window.store.hospitals
-      ? window.store.hospitals.getAll()
-      : (window.DEMO_DATA && window.DEMO_DATA.hospitals)) || [];
+  const allHospitals = getDashboardHospitals();
   const repHospitals = allHospitals.filter(
     (h) =>
       h.repId === currentUserId ||
@@ -1347,7 +1400,7 @@ function renderRepDashboard(userName, user) {
 function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
   const filterMode = window.dmFollowUpFilter || "all";
   const myRepIds = (myReps || []).map((r) => r.id);
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getDashboardUsers();
 
   // Filter completed/actual visits by this DM's reps
   const teamCompleted = (allVisits || []).filter(
@@ -1441,7 +1494,7 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
                           : `<span class="badge badge-target-doctor">🩺 Doctor</span>`;
 
                       const targetClassBadge = v.doctorClass || v.class
-                        ? `<span class="badge badge-target-class">Class ${v.doctorClass || v.class}</span>`
+                        ? `<span class="badge badge-target-class">Class ${window.escapeHtml(v.doctorClass || v.class)}</span>`
                         : "";
 
                       const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(v) : (v.products || []);
@@ -1537,8 +1590,8 @@ function renderDmFollowUpSection(myReps, allVisits, lang, todayStr) {
 function renderDMDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const allUsers = getDashboardUsers();
+  const allVisits = getDashboardVisits();
 
   const dmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
   const lineNames = dmLines.map((l) => l.name).join(", ");
@@ -1556,10 +1609,7 @@ function renderDMDashboard(userName, user) {
       });
   const myRepIds = myReps.map((r) => r.id);
 
-  const allLeaves =
-    (window.store && window.store.leaves
-      ? window.store.leaves.getAll()
-      : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
+  const allLeaves = getDashboardLeaves();
   const pendingLeavesCount = allLeaves.filter(
     (l) =>
       l.status !== "rejected" &&
@@ -1716,7 +1766,7 @@ function renderDMDashboard(userName, user) {
             .map(
               (l) => `
             <button type="button" class="line-filter-btn ${activeDmLine === l.id ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="dm" data-line-id="${window.escapeHtml(l.id)}">
-              ${lang === "ar" ? (l.nameAr || l.name) : l.name}
+              ${window.escapeHtml(l.name)}
             </button>
           `,
             )
@@ -1881,8 +1931,8 @@ function renderDMDashboard(userName, user) {
                           <div class="dt-date-line">${sv.date}</div>
                         </td>
                         <td>
-                          <strong class="cell-doctor-name"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${sv.repName}</strong>
-                          <div class="feed-cell-secondary">${sv.repCode}</div>
+                          <strong class="cell-doctor-name"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(sv.repName)}</strong>
+                          <div class="feed-cell-secondary">${window.escapeHtml(sv.repCode)}</div>
                         </td>
                         <td>
                           <div class="d-flex align-items-center gap-1 flex-wrap">
@@ -1951,7 +2001,7 @@ function renderDMDashboard(userName, user) {
                   const isAct = dateStr === selectedDate;
                   return `
                   <button type="button" class="btn btn-sm ${isAct ? "btn-primary" : "btn-outline"} dm-schedule-date-btn" data-dash-action="change-dm-date" data-date="${window.escapeHtml(dateStr)}">
-                    <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dt.dayName ? dt.dayName + " " : ""}${dateStr} (${repObj ? repObj.name.split(" ")[0] : "Rep"})
+                    <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dt.dayName ? window.escapeHtml(dt.dayName) + " " : ""}${window.escapeHtml(dateStr)} (${repObj ? window.escapeHtml(repObj.name.split(" ")[0]) : "Rep"})
                   </button>
                 `;
                 })
@@ -1964,7 +2014,7 @@ function renderDMDashboard(userName, user) {
               <div class="dm-prompt-banner">
                 <div class="prompt-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                 <strong class="prompt-title">
-                  Date ${selectedDate}: No field accompaniment scheduled for this day
+                  Date ${window.escapeHtml(selectedDate)}: No field accompaniment scheduled for this day
                 </strong>
                 <span>
                   Select a date from the scheduled days above or go to Plans to Review to schedule new days.
@@ -1975,7 +2025,7 @@ function renderDMDashboard(userName, user) {
                   ? `
               <div class="dm-office-banner">
                 <div class="prompt-icon"><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg></div>
-                <strong class="dm-office-title">Date ${selectedDate}: Office Work / Administrative Day</strong>
+                <strong class="dm-office-title">Date ${window.escapeHtml(selectedDate)}: Office Work / Administrative Day</strong>
               </div>
             `
                   : accompaniedRep
@@ -1991,7 +2041,7 @@ function renderDMDashboard(userName, user) {
                       <span class="badge badge-primary dm-team-rep-badge">${window.escapeHtml(accompaniedRep.employeeCode || "Rep")}</span>
                     </div>
                     <div class="dm-accompanied-sub">
-                      <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dtSelected.dayName} ${selectedDate} ${selectedDate === todayStr ? "• (Today)" : ""} • ${pendingAccompaniedVisits.length} planned joint visits
+                      <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${window.escapeHtml(dtSelected.dayName)} ${window.escapeHtml(selectedDate)} ${selectedDate === todayStr ? "• (Today)" : ""} • ${pendingAccompaniedVisits.length} planned joint visits
                     </div>
                   </div>
                 </div>
@@ -2046,7 +2096,7 @@ function renderDMDashboard(userName, user) {
                           <td class="dm-covisit-products-col">
                             ${(() => {
                               const prods = window.getVisitDisplayProducts ? window.getVisitDisplayProducts(pv) : (pv.products || []);
-                              return prods.length ? `<span class="badge badge-product"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.join(", ")}</span>` : '<span class="text-muted">-</span>';
+                              return prods.length ? `<span class="badge badge-product"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${prods.map((p) => window.escapeHtml(p)).join(", ")}</span>` : '<span class="text-muted">-</span>';
                             })()}
                           </td>
                           <td class="text-end covisit-action-cell">
@@ -2061,7 +2111,7 @@ function renderDMDashboard(userName, user) {
                         : `
                       <tr>
                         <td colspan="4" class="empty-table-msg">
-                          No planned visits scheduled by ${accompaniedRep ? accompaniedRep.name : "Rep"} on ${selectedDate}.
+                          No planned visits scheduled by ${window.escapeHtml(accompaniedRep ? accompaniedRep.name : "Rep")} on ${window.escapeHtml(selectedDate)}.
                         </td>
                       </tr>
                     `
@@ -2194,10 +2244,7 @@ function renderDMDashboard(userName, user) {
 function renderLMDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const allUsers =
-    (window.store && window.store.users
-      ? window.store.users.getAll()
-      : window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const allUsers = getDashboardUsers();
 
   const lmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
   const lineNames = lmLines.map((l) => l.name).join(", ");
@@ -2236,7 +2283,7 @@ function renderLMDashboard(userName, user) {
           return rLines.includes(activeLmLine);
         });
   const lineRepIds = myLineReps.map((r) => r.id);
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const allVisits = getDashboardVisits();
 
   const _lmNow = new Date();
   const _lmTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
@@ -2250,7 +2297,7 @@ function renderLMDashboard(userName, user) {
       v.date.startsWith(currentYearMonth),
   ).length;
 
-  const allLeaves = (window.DEMO_DATA && window.DEMO_DATA.leaves) || [];
+  const allLeaves = getDashboardLeaves();
   const lmSubordinateIds = [...dmIds, ...lineRepIds];
   const lmPendingLeavesCount = allLeaves.filter((l) => {
     if (l.status === "rejected" || l.status === "approved") return false;
@@ -2285,7 +2332,7 @@ function renderLMDashboard(userName, user) {
             .map(
               (l) => `
             <button type="button" class="line-filter-btn ${activeLmLine === l.id ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="lm" data-line-id="${window.escapeHtml(l.id)}">
-              ${lang === "ar" ? (l.nameAr || l.name) : l.name}
+              ${window.escapeHtml(l.name)}
             </button>
           `,
             )
@@ -2403,7 +2450,8 @@ function renderLMDashboard(userName, user) {
         </div>
         <div class="line-trend-grid">
           ${linesToShow.map(line => {
-            const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear));
+            const lmSubRepIds = new Set((myLineReps || []).map(r => r.id));
+            const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear) && (s.repId ? lmSubRepIds.has(s.repId) : false));
             const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
             const lTarget = lSales.reduce((sum, s) => sum + (parseFloat(s.target) || 0), 0);
             const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
@@ -2420,7 +2468,7 @@ function renderLMDashboard(userName, user) {
               </span>
             </div>
             <div class="line-trend-canvas-wrap">
-              <canvas id="dashLineTrend_${line.id}"></canvas>
+              <canvas id="dashLineTrend_${window.escapeHtml(line.id)}"></canvas>
             </div>
           </div>
           `;
@@ -2443,7 +2491,7 @@ function renderPMDashboard(userName, user) {
     ? window.getScopedTeamForLine(user)
     : { lms: [], dms: [], reps: [] };
 
-  const allVisits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const allVisits = getDashboardVisits();
   const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const repIds = team.reps.map((r) => r.id);
@@ -2613,7 +2661,7 @@ function renderPMDashboard(userName, user) {
 
       ${(() => {
         if (!pmLines || pmLines.length === 0) return "";
-        const allSales = (window.DEMO_DATA && window.DEMO_DATA.sales) || [];
+        const allSales = getDashboardSalesData();
         const activeYear = ((window.getSystemDate && window.getSystemDate()) || new Date()).getFullYear().toString();
         return `
         <div class="line-trend-section">
@@ -2637,7 +2685,7 @@ function renderPMDashboard(userName, user) {
               <div class="line-trend-card">
                 <div class="line-trend-card-header">
                   <h4 class="line-trend-title">
-                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${line.name}
+                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(line.name)}
               </h4>
                   <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                     Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
@@ -2663,15 +2711,23 @@ window.renderPMDashboard = renderPMDashboard;
 function renderBUDashboard(userName, user) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const viewerRole = window.normalizeRole ? window.normalizeRole(user.role) : String(user.role || "").toLowerCase();
+  const isGM = viewerRole === "general_manager" || viewerRole === "gm";
+  const allUsers = getDashboardUsers();
   const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const myUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
   const myLineIds = myUserLines.map((l) => l.id);
 
-  const myLMs = allUsers.filter(
-    (u) =>
-      u.managerId === user.id && (u.role === "line_manager" || u.role === "lm"),
-  );
+  const allDownstream = window.getAllSubordinates
+    ? window.getAllSubordinates(user.id)
+    : [];
+
+  const myLMs = isGM
+    ? allDownstream.filter((u) => u.role === "line_manager" || u.role === "lm")
+    : allUsers.filter(
+        (u) =>
+          u.managerId === user.id && (u.role === "line_manager" || u.role === "lm"),
+      );
 
   const lines = allLines.filter(
     (l) =>
@@ -2679,9 +2735,6 @@ function renderBUDashboard(userName, user) {
       myLMs.some((lm) => lm.id === l.lineManagerId || (lm.lineIds && lm.lineIds.includes(l.id)))
   );
 
-  const allDownstream = window.getAllSubordinates
-    ? window.getAllSubordinates(user.id)
-    : [];
   const myDMs = allDownstream.filter(
     (u) => u.role === "district_manager" || u.role === "dm",
   );
@@ -2726,8 +2779,8 @@ function renderBUDashboard(userName, user) {
   return `
     <div class="flex-col">
       <div class="welcome-banner bu">
-        <h2 class="welcome-title">${t.welcome_back}, Business Unit Head ${window.escapeHtml(userName)}!</h2>
-        <div class="welcome-subtitle">${window.escapeHtml(lineNames || "Business Unit Management")}</div>
+        <h2 class="welcome-title">${t.welcome_back}, ${isGM ? "General Manager" : "Business Unit Head"} ${window.escapeHtml(userName)}!</h2>
+        <div class="welcome-subtitle">${window.escapeHtml(lineNames || (isGM ? "Hierarchy Oversight (View Only)" : "Business Unit Management"))}</div>
       </div>
 
       ${getActiveCycleCampaignBanner(user, lang)}
@@ -2744,7 +2797,7 @@ function renderBUDashboard(userName, user) {
             .map(
               (l) => `
             <button type="button" class="line-filter-btn ${activeBuLine === l.id ? "active" : ""}" data-dash-action="switch-line-filter" data-line-scope="bu" data-line-id="${window.escapeHtml(l.id)}">
-              ${lang === "ar" ? (l.nameAr || l.name) : l.name}
+              ${window.escapeHtml(l.name)}
             </button>
           `,
             )
@@ -2835,7 +2888,7 @@ function renderBUDashboard(userName, user) {
                             return `
                               <tr>
                                 <td>
-                                  <strong>${lang === "ar" ? (line.nameAr || line.name) : line.name}</strong>
+                                  <strong>${window.escapeHtml(line.name)}</strong>
                                   <div class="bu-line-subtext">${(line.products || []).length} Products Active</div>
                                 </td>
                                 <td>
@@ -2875,8 +2928,8 @@ function renderBUDashboard(userName, user) {
                                     <em class="text-muted">Unassigned Line</em>
                                   </td>
                                   <td>
-                                    <strong>${lm.name}</strong>
-                                    ${lm.email ? `<div class="bu-line-subtext">${lm.email}</div>` : ""}
+                                    <strong>${window.escapeHtml(lm.name)}</strong>
+                                    ${lm.email ? `<div class="bu-line-subtext">${window.escapeHtml(lm.email)}</div>` : ""}
                                   </td>
                                   <td>
                                     <span class="badge bg-secondary-subtle text-secondary">No Line Assigned</span>
@@ -2898,18 +2951,17 @@ function renderBUDashboard(userName, user) {
         <div class="dashboard-card">
           <h3 class="card-title">${t.quick_actions}</h3>
           <div class="quick-actions-grid">
-            <a href="reports.html" class="quick-action-link primary"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> BU Sales & Target</a>
+            <a href="reports.html" class="quick-action-link primary"><svg class="btn-svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${isGM ? "Team Sales & Target" : "BU Sales & Target"}</a>
             <a href="visits.html" class="quick-action-link success"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Territory Visits</a>
-            <a href="leaves.html" class="quick-action-link warning"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Approvals Inbox</a>
+            <a href="leaves.html" class="quick-action-link warning"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg> ${isGM ? "Team Leaves" : "Approvals Inbox"}</a>
             <a href="calendar.html" class="quick-action-link neutral"><svg class="btn-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Team Calendar</a>
           </div>
         </div>
       </div>
 
       ${(() => {
-        const allLinesLocal = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
         const buUserLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
-        const rawLines = buUserLines.length > 0 ? buUserLines : allLinesLocal;
+        const rawLines = buUserLines;
         const linesToShow = rawLines.filter((l) => activeBuLine === "all" || l.id === activeBuLine);
         if (linesToShow.length === 0) return "";
         const currentYear = new Date().getFullYear().toString();
@@ -2922,12 +2974,13 @@ function renderBUDashboard(userName, user) {
             <svg class="header-svg-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Monthly Sales & Target Trend (Per Line)
           </h3>
           <small class="line-trend-section-subtitle">
-            Actual vs Target comparison for each independent product line under your business unit
+            Actual vs Target comparison for each independent product line under your ${isGM ? "hierarchy" : "business unit"}
           </small>
         </div>
         <div class="line-trend-grid">
           ${linesToShow.map(line => {
-            const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear));
+            const lmSubRepIds = new Set((myReps || []).map(r => r.id));
+            const lSales = allSales.filter(s => s.lineId === line.id && s.month && s.month.startsWith(currentYear) && (s.repId ? lmSubRepIds.has(s.repId) : false));
             const lActual = lSales.reduce((sum, s) => sum + (parseFloat(s.actual) || parseFloat(s.amount) || 0), 0);
             const lTarget = lSales.reduce((sum, s) => sum + (parseFloat(s.target) || 0), 0);
             const lAch = lTarget > 0 ? Math.round((lActual / lTarget) * 100) : (lActual > 0 ? 100 : 0);
@@ -2937,14 +2990,14 @@ function renderBUDashboard(userName, user) {
           <div class="line-trend-card">
             <div class="line-trend-card-header">
               <h4 class="line-trend-title">
-                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${line.name}
+                <svg class="header-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.85" fill="none"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(line.name)}
               </h4>
               <span class="line-trend-badge" style="color: ${badgeColor}; border-color: ${badgeColor};">
                 Ach: ${lAch}% (${lActual.toLocaleString()} / ${lTarget.toLocaleString()} EGP)
               </span>
             </div>
             <div class="line-trend-canvas-wrap">
-              <canvas id="dashLineTrend_${line.id}"></canvas>
+              <canvas id="dashLineTrend_${window.escapeHtml(line.id)}"></canvas>
             </div>
           </div>
           `;
@@ -3021,7 +3074,7 @@ function getSystemRecentActivities() {
 
   // 5. Staff & Users
   if (allUsers.length > 0) {
-    const reps = allUsers.filter(u => u.role === "rep").length;
+    const reps = allUsers.filter(u => (window.normalizeRole ? window.normalizeRole(u.role) === "medical_rep" : (u.role === "rep" || u.role === "medical_rep"))).length;
     const managers = allUsers.filter(u => ["dm", "manager", "bu", "business_unit"].includes(u.role)).length;
     activities.push({
       type: "primary",
@@ -3151,16 +3204,9 @@ function renderHRDashboard(userName) {
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
 
-  const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
-  const allLeaves = (window.DEMO_DATA && window.DEMO_DATA.leaves) || [];
-  let allAnnouncements =
-    (window.DEMO_DATA && window.DEMO_DATA.announcements) || [];
-  try {
-    const savedAnn = localStorage.getItem("pharmaAnnouncements");
-    if (savedAnn) {
-      allAnnouncements = JSON.parse(savedAnn);
-    }
-  } catch (e) {}
+  const allUsers = getDashboardUsers();
+  const allLeaves = getDashboardLeaves();
+  const allAnnouncements = getDashboardAnnouncements();
 
   const totalEmployees = allUsers.length;
   const pendingLeavesCount = allLeaves.filter(
@@ -3288,7 +3334,7 @@ function populateDashCompanions(repId) {
   if (!container) return;
   container.replaceChildren();
 
-  const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const users = getDashboardUsers();
   const managerRoles = ["district_manager", "line_manager", "business_unit"];
   let managers = [];
 
@@ -3339,12 +3385,12 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   const modal = document.getElementById("dashCompleteModal");
   if (!modal) return;
 
-  const visits = (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
+  const visits = getDashboardVisits();
   const target = visits.find((v) => v.id === visitId);
 
   const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const t = dashboardTranslations[lang] || dashboardTranslations.en;
-  const users = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+  const users = getDashboardUsers();
 
   const titleEl = document.getElementById("dashModalTitle");
   const typeContainer = document.getElementById("dashVisitTypeContainer");
@@ -3355,7 +3401,7 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   if (isCurrentActionJoinDouble) {
     const rep = users.find((u) => u.id === (target && target.repId));
     const repName = rep
-      ? lang === "ar"
+      ? false
         ? rep.nameAr || rep.name
         : rep.name
       : "Medical Rep";
@@ -3418,10 +3464,10 @@ window.openCompletePlanModal = function (visitId, isJoinDouble = false) {
   const lblFeedback = document.getElementById("lblDashFeedback");
   if (lblFeedback) lblFeedback.innerText = t.visit_feedback;
 
-  const now = new Date();
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   const pad = (n) => String(n).padStart(2, "0");
   const todayISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const twoDaysAgo = new Date();
+  const twoDaysAgo = new Date(now);
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
   const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${pad(twoDaysAgo.getMonth() + 1)}-${pad(twoDaysAgo.getDate())}`;
 
@@ -3511,7 +3557,7 @@ function updateDashModalDayDisplay() {
   const dateInput = document.getElementById("dashVisitDate");
   const displayEl = document.getElementById("dashModalDayDisplay");
   if (!dateInput || !displayEl) return;
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || "ar";
+  const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
   const dt =
     typeof window.formatVisitDateTime === "function"
       ? window.formatVisitDateTime(dateInput.value, null, lang)
@@ -3558,10 +3604,10 @@ window.handleDashCompleteSubmit = function (e) {
   };
 
   const dateInput = document.getElementById("dashVisitDate");
-  const now = new Date();
+  const now = (window.getSystemDate && window.getSystemDate()) || new Date();
   const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const dateVal = dateInput && dateInput.value ? dateInput.value : todayISO;
-  const twoDaysAgo = new Date();
+  const twoDaysAgo = new Date(now);
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
   const twoDaysAgoISO = `${twoDaysAgo.getFullYear()}-${String(twoDaysAgo.getMonth() + 1).padStart(2, "0")}-${String(twoDaysAgo.getDate()).padStart(2, "0")}`;
 
@@ -3626,7 +3672,7 @@ window.handleDashCompleteSubmit = function (e) {
         return;
       }
       doubleWithUserName = companions.join(", ");
-      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const allUsers = getDashboardUsers();
       const matchedMgr = allUsers.find((u) =>
         companions.some((compStr) => compStr.includes(u.name)),
       );
@@ -3634,8 +3680,7 @@ window.handleDashCompleteSubmit = function (e) {
     }
   }
 
-  const visits =
-    window.DEMO_DATA && window.DEMO_DATA.visits ? window.DEMO_DATA.visits : [];
+  const visits = getDashboardVisits();
   const target = visits.find((v) => v.id === targetVisitToCompleteId);
   if (!target) {
     resetSubmitBtn();
@@ -3655,17 +3700,44 @@ window.handleDashCompleteSubmit = function (e) {
   }
   const targetRepId = target.repId || authUser.id;
 
-  // Authorization Guard: Only the assigned rep, authorized managers, or Admin can complete this plan
-  if (!isCurrentActionJoinDouble) {
+  // Authorization Guard: Verify ownership or managerial permissions (GM is view-only oversight)
+  const normAuthRole = window.normalizeRole ? window.normalizeRole(authUser.role) : String(authUser.role || "").toLowerCase();
+  const isAdmin = normAuthRole === "admin";
+  const isGM = normAuthRole === "general_manager" || normAuthRole === "gm";
+  const canManage = (!isGM && authUser && target.repId && typeof window.canApproveFor === "function")
+    ? window.canApproveFor(target.repId)
+    : false;
+
+  if (isCurrentActionJoinDouble) {
+    // Only authorized managers (or admin) can join visits as a double visit accompaniment
+    if (!isAdmin && !canManage) {
+      resetSubmitBtn();
+      if (typeof showToast === "function") {
+        showToast("Unauthorized: Only authorized managers can join visits as a double visit accompaniment.", "error");
+      }
+      return;
+    }
+  } else {
+    // Standard completion: must be the assigned rep, authorized manager, or admin (never GM)
+    if (isGM) {
+      resetSubmitBtn();
+      if (typeof showToast === "function") {
+        showToast("Unauthorized: General Manager has view-only oversight and cannot complete visits.", "error");
+      }
+      return;
+    }
     const isOwner = authUser && authUser.id && target.repId && (authUser.id === target.repId);
-    const isAdmin = authUser && (authUser.role === "admin" || authUser.role === "general_manager");
-    const canManage = (authUser && authUser.id && target.repId && typeof window.canApproveFor === "function")
-      ? window.canApproveFor(authUser.id, target.repId)
-      : false;
     if (!isOwner && !isAdmin && !canManage) {
       resetSubmitBtn();
       if (typeof showToast === "function") {
         showToast("Unauthorized: You cannot complete visits assigned to another representative.", "error");
+      }
+      return;
+    }
+    if (String(target.status || "").toLowerCase() !== "planned") {
+      resetSubmitBtn();
+      if (typeof showToast === "function") {
+        showToast("Only approved planned visits can be marked as completed.", "warning");
       }
       return;
     }
@@ -3708,7 +3780,9 @@ window.handleDashCompleteSubmit = function (e) {
     if (!target.createdAt) target.createdAt = nowStamp.toISOString();
     target.entryDate = target.insertionDate;
     target.comment = commentVal;
-    target.giveawaySamples = giveawayVal;
+    if (document.getElementById("dashVisitGiveawaySamples")) {
+      target.giveawaySamples = giveawayVal;
+    }
     target.productIds = selectedProductIds;
     target.products = selectedProductNames;
     target.visitType = visitType;
@@ -3729,7 +3803,9 @@ window.handleDashCompleteSubmit = function (e) {
       target.syncedToCloud = true;
     }
 
-    if (window.saveDataToStorage) {
+    if (window.store && window.store.visits && typeof window.store.visits.update === "function") {
+      window.store.visits.update(target.id, target);
+    } else if (window.saveDataToStorage) {
       window.saveDataToStorage();
     }
   }

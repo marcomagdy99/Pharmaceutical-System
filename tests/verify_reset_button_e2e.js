@@ -61,6 +61,14 @@ console.log('1. User before reset:', {
 
 (async () => {
 global.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'System Admin' });
+let resetEmailSentTo = null;
+global.navigator = { onLine: true };
+global.firebase = {
+  apps: [{}],
+  auth: () => ({
+    sendPasswordResetEmail: async (em) => { resetEmailSentTo = em; }
+  })
+};
 
   // Simulate clicking the reset key button on user u1790626000001
   window.userMgmt.users = window.store.users.getAll();
@@ -73,12 +81,12 @@ global.checkAuth = () => ({ id: 'admin1', role: 'admin', name: 'System Admin' })
   console.log('2. User after reset:', {
     name: userAfter.name,
     mustChangePassword: userAfter.mustChangePassword,
-    passwordHash: userAfter.passwordHash
+    resetEmailSentTo
   });
 
-  const expectedHash = await hashPassword('Pharma@2026');
+  assert.strictEqual(resetEmailSentTo, 'ahmed@pharmacare.com', 'Firebase sendPasswordResetEmail must be triggered for target user email');
   assert.strictEqual(userAfter.mustChangePassword, true, 'mustChangePassword must be true');
-  assert.strictEqual(userAfter.passwordHash, expectedHash, 'passwordHash must match Pharma@2026 hash');
+  assert.strictEqual(userAfter.password, undefined, 'No plaintext password may remain');
 
-  console.log('🎉 100% SUCCESS: The real userMgmt.confirmResetPassword() function works perfectly end-to-end!');
+  console.log('🎉 100% SUCCESS: The real userMgmt.confirmResetPassword() triggers Firebase Auth reset email and updates metadata!');
 })();

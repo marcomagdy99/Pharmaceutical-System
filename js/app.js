@@ -56,11 +56,12 @@ function sanitizeHtml(html) {
 }
 window.sanitizeHtml = sanitizeHtml;
 
-function genId(prefix) {
+function genId(prefix = "") {
+  const safePrefix = typeof prefix === "string" ? prefix : "";
   const rnd = (typeof window !== "undefined" && window.crypto && typeof window.crypto.randomUUID === "function")
     ? window.crypto.randomUUID().replace(/-/g, "").slice(0, 16)
     : (Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
-  return prefix + rnd;
+  return safePrefix + rnd;
 }
 window.genId = genId;
 
@@ -245,19 +246,14 @@ function sortBilingualByName(a, b) {
   if (!a && !b) return 0;
   if (!a) return 1;
   if (!b) return -1;
-  const lang = (typeof window !== "undefined" && window.getCurrentLang && window.getCurrentLang()) || "en";
   const getName = (item) => {
     if (!item) return "";
     if (typeof item === "string") return item.trim();
-    if (lang === "ar") {
-      return (item.nameAr || item.name || "").trim();
-    }
     return (item.name || item.nameAr || "").trim();
   };
   const nameA = getName(a);
   const nameB = getName(b);
-  const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
-  return nameA.localeCompare(nameB, locales, { numeric: true, sensitivity: "base" });
+  return nameA.localeCompare(nameB, ["en", "ar"], { numeric: true, sensitivity: "base" });
 }
 window.sortBilingualByName = sortBilingualByName;
 window.sortByName = sortBilingualByName;
@@ -284,663 +280,35 @@ const DEFAULT_DEMO_DATA = {
       maternity: 90,
     },
   },
+  // Bootstrap Admin account only — all company users load from Firebase / Admin DB
   users: [
-    {
-        "id": "u1790626000001",
-        "name": "Marco Magdy",
-        "nameAr": "Marco Magdy",
-        "role": "medical_rep",
-        "employeeCode": "REP-001",
-        "managerId": "u1790626000014",
-        "areaId": "area_1790626000001",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "email": "rep@pharmacare.com",
-        "code": "REP-001",
-        "phone": "+201001234567",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Mohndseen, Bolak El Dakror",
-        "areaIds": [
-            "area_1790626000001",
-            "area_line1_1790688157353"
-        ],
-        "hireDate": "2024-01-15",
-        "status": "Active",
-        "productIds": [],
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000002",
-        "name": "Kerolos Boules",
-        "nameAr": "Kerolos Boules",
-        "role": "medical_rep",
-        "employeeCode": "REP-002",
-        "managerId": "u1790626000015",
-        "areaId": "area_1790626000002",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "areaIds": [
-            "area_1790626000002",
-            "area_line1_1790674637363"
-        ],
-        "area": "Heliopolis, Giza",
-        "hireDate": "2024-02-01",
-        "email": "rep2@pharmacare.com",
-        "phone": "+201001234568",
-        "status": "Active",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "code": "REP-002",
-        "productIds": [],
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000003",
-        "name": "Mina Mikhael",
-        "nameAr": "Mina Mikhael",
-        "role": "medical_rep",
-        "employeeCode": "REP-003",
-        "managerId": "u1790626000015",
-        "areaId": "area_line1_1790674718201",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "areaIds": [
-            "area_line1_1790674718201"
-        ],
-        "area": "Fisal",
-        "hireDate": "2024-03-10",
-        "email": "rep3@pharmacare.com",
-        "phone": "+201001234569",
-        "status": "Active",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "code": "REP-003",
-        "productIds": [],
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000004",
-        "name": "David Emad",
-        "nameAr": "David Emad",
-        "role": "medical_rep",
-        "employeeCode": "REP-004",
-        "managerId": "u1790626000014",
-        "areaId": "area_1790626000003",
-        "lineId": "line_1790626000002",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "areaIds": [
-            "area_1790626000003",
-            "area_line2_1790674745627",
-            "area_line2_1790688168385"
-        ],
-        "area": "Nasr City, Mohndseen, Bolak El Dakror",
-        "hireDate": "2024-04-01",
-        "email": "rep4@pharmacare.com",
-        "phone": "+201001234570",
-        "status": "Active",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "code": "REP-004",
-        "productIds": [],
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000005",
-        "name": "Mohamed Ramadan",
-        "nameAr": "Mohamed Ramadan",
-        "role": "medical_rep",
-        "employeeCode": "REP-005",
-        "email": "rep5@pharmacare.com",
-        "phone": "+20100999222",
-        "managerId": "u1790626000015",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "productIds": [],
-        "status": "Active",
-        "hireDate": "2023-06-01",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "areaIds": [
-            "area_line1_1790674592471",
-            "area_line1_1790688137857"
-        ],
-        "area": "Dokki, Haram",
-        "areaId": "area_line1_1790674592471",
-        "code": "REP-005",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626669586",
-        "name": "Mark Michel",
-        "email": "rep7@pharmacare.com",
-        "code": "REP-007",
-        "employeeCode": "REP-007",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-28",
-        "managerId": "u1790626000016",
-        "status": "Active",
-        "lineIds": [
-            "line_1790626000003"
-        ],
-        "lineId": "line_1790626000003",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Shobra",
-        "areaId": "area_line_1790626036368_1790674874231",
-        "areaIds": [
-            "area_line_1790626036368_1790674874231"
-        ],
-        "nameAr": "Mark Michel",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626607816",
-        "name": "Ahmed Harb",
-        "email": "rep6@pharmacare.com",
-        "code": "REP-006",
-        "employeeCode": "REP-006",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "01202379833",
-        "hireDate": "2026-09-28",
-        "managerId": "u1790626000015",
-        "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Giza",
-        "areaId": "area_line2_1790674781879",
-        "areaIds": [
-            "area_line2_1790674781879"
-        ],
-        "nameAr": "Ahmed Harb",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790687949946",
-        "name": "Mina Samir",
-        "email": "rep9@pharmacare.com",
-        "code": "REP-009",
-        "employeeCode": "REP-009",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "+201001234567",
-        "hireDate": "2026-09-29",
-        "managerId": "u1790626000016",
-        "status": "Active",
-        "lineIds": [
-            "line_1790626000003"
-        ],
-        "lineId": "line_1790626000003",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Mohndseen",
-        "areaId": "area_line_1790626036368_1790687909664",
-        "areaIds": [
-            "area_line_1790626036368_1790687909664"
-        ],
-        "nameAr": "Mina Samir",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790688369929",
-        "name": "Marina Shobra",
-        "email": "rep11@pharmacare.com",
-        "code": "REP-011",
-        "employeeCode": "REP-011",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-29",
-        "managerId": "u1790626000014",
-        "status": "Active",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "lineId": "line_1790626000001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Shobra",
-        "areaId": "area_line1_1790688305597",
-        "areaIds": [
-            "area_line1_1790688305597"
-        ],
-        "nameAr": "Marina Shobra",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790688412219",
-        "name": "Monica Shobra",
-        "email": "rep12@pharmacare.com",
-        "code": "REP-012",
-        "employeeCode": "REP-012",
-        "role": "medical_rep",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-29",
-        "managerId": "u1790626000014",
-        "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": "Shobra",
-        "areaId": "area_line2_1790688317554",
-        "areaIds": [
-            "area_line2_1790688317554"
-        ],
-        "nameAr": "Monica Shobra",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000011",
-        "name": "George Marzok",
-        "nameAr": "George Marzok",
-        "role": "business_unit",
-        "employeeCode": "BU-001",
-        "managerId": "u1790626000010",
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2021-06-01",
-        "email": "bu@pharmacare.com",
-        "phone": "+20100222333",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002",
-            "line_1790626000003"
-        ],
-        "status": "Active",
-        "code": "BU-001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000012",
-        "name": "John Mahfouz",
-        "nameAr": "John Mahfouz",
-        "role": "line_manager",
-        "employeeCode": "LM-001",
-        "managerId": "u1790626000011",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2022-01-15",
-        "email": "lm@pharmacare.com",
-        "phone": "+20100333444",
-        "status": "Active",
-        "code": "LM-001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000013",
-        "name": "Mario Magdy",
-        "nameAr": "Mario Magdy",
-        "role": "line_manager",
-        "employeeCode": "LM-002",
-        "managerId": "u1790626000011",
-        "lineId": "line_1790626000003",
-        "lineIds": [
-            "line_1790626000003"
-        ],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "email": "lm2@pharmacare.com",
-        "code": "LM-002",
-        "phone": "+20100444555",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "hireDate": "2022-03-01",
-        "status": "Active",
-        "productIds": [],
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000014",
-        "name": "Amir Ayoup",
-        "nameAr": "Amir Ayoup",
-        "role": "district_manager",
-        "employeeCode": "DM-001",
-        "managerId": "u1790626000012",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2023-01-10",
-        "email": "dm@pharmacare.com",
-        "phone": "+20100555666",
-        "status": "Active",
-        "code": "DM-001",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000015",
-        "name": "Jonathan Erian",
-        "nameAr": "Jonathan Erian",
-        "role": "district_manager",
-        "employeeCode": "DM-002",
-        "managerId": "u1790626000012",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001",
-            "line_1790626000002"
-        ],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2023-02-15",
-        "email": "dm2@pharmacare.com",
-        "phone": "+20100666777",
-        "status": "Active",
-        "code": "DM-002",
-        "productIds": [],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000016",
-        "name": "Marian Magdy",
-        "nameAr": "Marian Magdy",
-        "role": "district_manager",
-        "employeeCode": "DM-003",
-        "managerId": "u1790626000013",
-        "lineId": "line_1790626000003",
-        "lineIds": [
-            "line_1790626000003"
-        ],
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "email": "dm3@pharmacare.com",
-        "code": "DM-003",
-        "phone": "+20100777888",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "hireDate": "2023-05-01",
-        "status": "Active",
-        "productIds": [],
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000018",
-        "name": "Mina Kadry",
-        "nameAr": "Mina Kadry",
-        "role": "product_manager",
-        "employeeCode": "PM-001",
-        "email": "pm@pharmacare.com",
-        "phone": "+20100999111",
-        "managerId": "u1790626000011",
-        "lineId": "line_1790626000001",
-        "lineIds": [
-            "line_1790626000001"
-        ],
-        "productIds": [
-            "prod_1790626000001",
-            "prod_1790626000002",
-            "prod_1790626000003",
-            "prod_1790626000004",
-            "prod_1790625546491",
-            "prod_1790625561525",
-            "prod_1790625585077",
-            "prod_1790625595399",
-            "prod_1790625604666",
-            "prod_1790625614666",
-            "prod_1790625622736",
-            "prod_1790625631058"
-        ],
-        "status": "Active",
-        "hireDate": "2023-01-01",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "code": "PM-001",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000019",
-        "name": "Fady Adel",
-        "nameAr": "Fady Adel",
-        "email": "pm2@pharmacare.com",
-        "code": "PM-002",
-        "employeeCode": "PM-002",
-        "role": "product_manager",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "phone": "",
-        "hireDate": "2026-09-28",
-        "managerId": "u1790626000011",
-        "status": "Active",
-        "lineIds": [
-            "line_1790626000002"
-        ],
-        "lineId": "line_1790626000002",
-        "productIds": [
-            "prod_1790626000005",
-            "prod_1790626000006"
-        ],
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "area": null,
-        "areaId": null,
-        "areaIds": [],
-        "mustChangePassword": false
-    },
-    {
-        "id": "u1790626000010",
-        "name": "System Admin",
-        "nameAr": "System Admin",
-        "role": "admin",
-        "employeeCode": "ADM-001",
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2021-01-01",
-        "email": "admin@pharmacare.com",
-        "phone": "+20100111222",
-        "status": "Active",
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false,
-        "code": "ADM-001",
-        "leaveBalance": {
-            "annual": 21,
-            "casual": 6,
-            "emergency": 6,
-            "sick": 7,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "managerId": null
-    },
-    {
-        "id": "u1790626000017",
-        "name": "Fatma El-Sherif",
-        "nameAr": "Fatma El-Sherif",
-        "role": "hr",
-        "employeeCode": "HR-001",
-        "email": "hr@pharmacare.com",
-        "managerId": "u1790626000010",
-        "areaIds": [],
-        "area": null,
-        "areaId": null,
-        "hireDate": "2021-02-01",
-        "phone": "+20100888999",
-        "status": "Active",
-        "leaveBalance": {
-            "annual": 21,
-            "sick": 7,
-            "emergency": 6,
-            "unpaid": 0,
-            "maternity": 90
-        },
-        "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
-        "mustChangePassword": false,
-        "code": "HR-001"
-    }
-],
+      {
+          "id": "u1790626000010",
+          "name": "System Admin",
+          "nameAr": "System Admin",
+          "role": "admin",
+          "employeeCode": "ADM-001",
+          "areaIds": [],
+          "area": null,
+          "areaId": null,
+          "hireDate": "2021-01-01",
+          "email": "admin@pharmacare.com",
+          "phone": "+20100111222",
+          "status": "Active",
+          "passwordHash": "9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f",
+          "mustChangePassword": false,
+          "code": "ADM-001",
+          "leaveBalance": {
+              "annual": 21,
+              "casual": 6,
+              "emergency": 6,
+              "sick": 7,
+              "unpaid": 0,
+              "maternity": 90
+          },
+          "managerId": null
+      }
+  ],
   specialties: [
   {
     "id": "spec_im",
@@ -1306,277 +674,7 @@ const DEFAULT_DEMO_DATA = {
     ]
   }
 ],
-  areas: [
-      {
-          "id": "area_1790626000001",
-          "name": "Giza V - Brick 1",
-          "code": "GZA-B49",
-          "repId": "u1790626000001",
-          "lineId": "line_1790626000001",
-          "repName": "Marco Magdy",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "20502"
-              }
-          ],
-          "bricks": [
-              "[B49] Giza V - Brick 1 (Giza 11)"
-          ]
-      },
-      {
-          "id": "area_line1_giza4_brick1",
-          "name": "Giza IV - Brick 1",
-          "code": "GZA-B48",
-          "repId": null,
-          "lineId": "line_1790626000001",
-          "repName": null,
-          "bricks": [
-              "[B48] Giza IV - Brick 1 (Giza 10)"
-          ]
-      },
-      {
-          "id": "area_1790626000002",
-          "name": "Heliopolis I - Brick 1",
-          "code": "CAI-B01",
-          "repId": "u1790626000002",
-          "lineId": "line_1790626000001",
-          "repName": null,
-          "bricks": [
-              "[B01] Heliopolis I - Brick 1 (Heliopolis 1)"
-          ]
-      },
-      {
-          "id": "area_1790626000003",
-          "name": "Nasr City - Brick 1",
-          "code": "CAI-B16",
-          "repId": "u1790626000004",
-          "lineId": "line_1790626000002",
-          "repName": null,
-          "bricks": [
-              "[B16] Nasr City - Brick 1 (Nasr City 1)"
-          ]
-      },
-      {
-          "id": "area_1790626000004",
-          "name": "Maadi - Brick 1",
-          "code": "CAI-B32",
-        "repId": null,
-        "lineId": "line_1790626000002",
-        "repName": "Ahmed Mostafa",
-          "bricks": [
-              "[B32] Maadi - Brick 1 (Maadi 1)"
-          ]
-      },
-      {
-          "id": "area_line1_1790674592471",
-          "name": "Giza II - Brick 1",
-          "code": "GZA-B41",
-          "repId": "u1790626000005",
-          "repName": "Mohamed Ramadan",
-          "lineId": "line_1790626000001",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "20303"
-              }
-          ],
-          "bricks": [
-              "[B41] Giza II - Brick 1 (Giza 4)"
-          ]
-      },
-      {
-          "id": "area_line1_1790674637363",
-          "name": "Giza I - Brick 1",
-          "code": "GZA-B38",
-          "repId": "u1790626000002",
-          "repName": "Kerolos Boules",
-          "lineId": "line_1790626000001",
-          "bricks": [
-              "[B38] Giza I - Brick 1 (Giza 1)"
-          ]
-      },
-      {
-          "id": "area_line1_1790674718201",
-          "name": "Faisal - Brick 1",
-          "code": "GZA-B46",
-          "repId": "u1790626000003",
-          "repName": "Mina Mikhael",
-          "lineId": "line_1790626000001",
-          "bricks": [
-              "[B46] Faisal - Brick 1 (Faisal 1)"
-          ]
-      },
-      {
-          "id": "area_line2_1790674745627",
-          "name": "Giza V - Brick 1",
-          "code": "GZA-B49",
-          "repId": "u1790626000004",
-          "repName": "David Emad",
-          "lineId": "line_1790626000002",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "20502"
-              }
-          ],
-          "bricks": [
-              "[B49] Giza V - Brick 1 (Giza 11)"
-          ]
-      },
-      {
-          "id": "area_line2_giza4_brick1",
-          "name": "Giza IV - Brick 1",
-          "code": "GZA-B48",
-          "repId": null,
-          "lineId": "line_1790626000002",
-          "repName": null,
-          "bricks": [
-              "[B48] Giza IV - Brick 1 (Giza 10)"
-          ]
-      },
-      {
-          "id": "area_line2_1790674771516",
-          "name": "Giza II - Brick 1",
-          "code": "GZA-B41",
-          "repId": null,
-          "repName": null,
-          "lineId": "line_1790626000002",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "20303"
-              }
-          ],
-          "bricks": [
-              "[B41] Giza II - Brick 1 (Giza 4)"
-          ]
-      },
-      {
-          "id": "area_line2_1790674781879",
-          "name": "Giza I - Brick 1",
-          "code": "GZA-B38",
-          "repId": "u1790626607816",
-          "repName": "Ahmed Harb",
-          "lineId": "line_1790626000002",
-          "bricks": [
-              "[B38] Giza I - Brick 1 (Giza 1)"
-          ]
-      },
-      {
-          "id": "area_line_1790626036368_1790674874231",
-          "name": "Shobra - Brick 1",
-          "code": "CAI-B13",
-          "repId": "u1790626669586",
-          "repName": "Mark Michel",
-          "lineId": "line_1790626000003",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "11009"
-              },
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "11102"
-              }
-          ],
-          "bricks": [
-              "[B13] Shobra - Brick 1 (Shobra 1)"
-          ]
-      },
-      {
-          "id": "area_line_1790626036368_1790687909664",
-          "name": "Giza V - Brick 1",
-          "code": "GZA-B49",
-          "repId": "u1790687949946",
-          "repName": "Mina Samir",
-          "lineId": "line_1790626000003",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "20502"
-              }
-          ],
-          "bricks": [
-              "[B49] Giza V - Brick 1 (Giza 11)"
-          ]
-      },
-      {
-          "id": "area_line1_1790688137857",
-          "name": "Haram - Brick 1",
-          "code": "GZA-B43",
-          "repId": "u1790626000005",
-          "repName": "Mohamed Ramadan",
-          "lineId": "line_1790626000001",
-          "bricks": [
-              "[B43] Haram - Brick 1 (El Haram 1)"
-          ]
-      },
-      {
-          "id": "area_line1_1790688157353",
-          "name": "Giza V - Brick 2",
-          "code": "GZA-B50",
-          "repId": "u1790626000001",
-          "repName": "Marco Magdy",
-          "lineId": "line_1790626000001",
-          "bricks": [
-              "[B50] Giza V - Brick 2 (Giza 12)"
-          ]
-      },
-      {
-          "id": "area_line2_1790688168385",
-          "name": "Giza V - Brick 2",
-          "code": "GZA-B50",
-          "repId": "u1790626000004",
-          "repName": "David Emad",
-          "lineId": "line_1790626000002",
-          "bricks": [
-              "[B50] Giza V - Brick 2 (Giza 12)"
-          ]
-      },
-      {
-          "id": "area_line1_1790688305597",
-          "name": "Shobra - Brick 1",
-          "code": "CAI-B13",
-          "repId": "u1790688369929",
-          "repName": "Marina Shobra",
-          "lineId": "line_1790626000001",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "11009"
-              },
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "11102"
-              }
-          ],
-          "bricks": [
-              "[B13] Shobra - Brick 1 (Shobra 1)"
-          ]
-      },
-      {
-          "id": "area_line2_1790688317554",
-          "name": "Shobra - Brick 1",
-          "code": "CAI-B13",
-          "repId": "u1790688412219",
-          "repName": "Monica Shobra",
-          "lineId": "line_1790626000002",
-          "aliases": [
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "11009"
-              },
-              {
-                  "distributorId": "dist_1790626000001",
-                  "rawText": "11102"
-              }
-          ],
-          "bricks": [
-              "[B13] Shobra - Brick 1 (Shobra 1)"
-          ]
-      }
-  ],
+  areas: [],
   productLines: [],
   doctors: [],
   hospitals: [],
@@ -2159,7 +1257,7 @@ function getAllSubordinates(managerId, visited = new Set()) {
   if (!manager) return [];
 
   const mgrRole = normalizeRole(manager.role);
-  if (mgrRole === "admin" || mgrRole === "general_manager") {
+  if (mgrRole === "admin") {
     return users.filter((u) => normalizeRole(u.role) !== "admin");
   }
 
@@ -2333,23 +1431,19 @@ function getUserLines(userId) {
     return lines;
   }
 
-  if (role === 'business_unit') {
-    const isLM = (u) => {
-      const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
-      return r === 'line_manager' || r === 'lm';
-    };
-    const myLMs = users.filter((u) => u.managerId === userId && isLM(u));
-    const myLmIds = myLMs.map((u) => u.id);
+  if (role === 'business_unit' || role === 'general_manager') {
+    const subs = typeof getAllSubordinates === 'function' ? getAllSubordinates(userId) : [];
+    const subIds = subs.map((u) => u.id);
 
     lines.forEach((l) => {
-      if (myLmIds.includes(l.lineManagerId) && !assignedLineIds.includes(l.id)) {
+      if (subIds.includes(l.lineManagerId) && !assignedLineIds.includes(l.id)) {
         assignedLineIds.push(l.id);
       }
     });
 
-    myLMs.forEach((lm) => {
-      const lmLines = lm.lineIds || (lm.lineId ? [lm.lineId] : []);
-      lmLines.forEach((lId) => {
+    subs.forEach((sub) => {
+      const subLines = sub.lineIds || (sub.lineId ? [sub.lineId] : []);
+      subLines.forEach((lId) => {
         if (!assignedLineIds.includes(lId)) {
           assignedLineIds.push(lId);
         }
@@ -2411,7 +1505,7 @@ function getScopedTeamForLine(lineIdOrUser, maybeUser) {
     candidateUsers = [user];
   } else if (role === 'admin' || role === 'hr') {
     candidateUsers = users;
-  } else if (role === 'business_unit' || role === 'bu') {
+  } else if (role === 'business_unit' || role === 'bu' || role === 'general_manager' || role === 'gm') {
     const subordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
     candidateUsers = [user, ...subordinates];
   } else if (role === 'line_manager' || role === 'lm') {
@@ -2497,7 +1591,8 @@ function canApproveFor(targetUserId) {
   const currentUser = checkAuth();
   if (!currentUser) return false;
   const role = normalizeRole(currentUser.role);
-  if (role === "admin" || role === "general_manager") return true;
+  if (role === "admin") return true;
+  if (role === "general_manager") return false;
 
   const chain = getManagerChain(targetUserId);
   return chain.some((m) => m.id === currentUser.id);
@@ -2815,11 +1910,20 @@ function getAreaManagerId(area, allUsers = []) {
   try {
     if (!area) return null;
     if (area.dmId) return area.dmId;
+    if (area.districtManagerId) return area.districtManagerId;
     if (area.managerId) return area.managerId;
 
     const userList = (Array.isArray(allUsers) && allUsers.length > 0)
       ? allUsers
       : ((window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+
+    // Check if any DM directly has this area in their assigned areaIds or areaId
+    const dmWithArea = userList.find((u) => {
+      const r = normalizeRole(u.role);
+      return (r === "district_manager" || r === "dm") &&
+        ((Array.isArray(u.areaIds) && u.areaIds.includes(area.id)) || u.areaId === area.id);
+    });
+    if (dmWithArea) return dmWithArea.id;
 
     if (area.repId) {
       const rep = userList.find((u) => u.id === area.repId);
@@ -2860,6 +1964,30 @@ function getAreaManagerId(area, allUsers = []) {
 }
 window.getAreaManagerId = getAreaManagerId;
 window.__appGetAreaManagerId = getAreaManagerId;
+
+/**
+ * Checks whether an area (especially a vacant territory) is strictly assigned/managed by a specific DM.
+ * @param {object} area - Area object
+ * @param {string} dmId - District Manager ID
+ * @param {Array} [allUsers] - Optional user list
+ * @returns {boolean}
+ */
+function isAreaManagedByDm(area, dmId, allUsers = []) {
+  if (!area || !dmId) return false;
+  if (area.dmId === dmId || area.districtManagerId === dmId) return true;
+  const userList = (Array.isArray(allUsers) && allUsers.length > 0)
+    ? allUsers
+    : ((window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+  const dm = userList.find((u) => u.id === dmId);
+  if (dm) {
+    if (Array.isArray(dm.areaIds) && dm.areaIds.includes(area.id)) return true;
+    if (dm.areaId && dm.areaId === area.id) return true;
+  }
+  const mgrId = getAreaManagerId(area, userList);
+  if (mgrId === dmId) return true;
+  return false;
+}
+window.isAreaManagedByDm = isAreaManagedByDm;
 
 /**
  * Retrieves the DM accompaniment schedule mapping from local cache.
@@ -3440,6 +2568,7 @@ const translations = {
     navRequests: "Requests",
     navVacations: "Vacations",
     navNotifications: "Notifications",
+    navChat: "Team Chat",
     navSettings: "Settings",
     navReports: "Reports",
     navDoctors: "Doctors",
@@ -3644,6 +2773,7 @@ const NAV_ICONS = {
   sales: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
   plan: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>',
   coverage: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  chat: '<svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
 };
 window.NAV_ICONS = NAV_ICONS;
 
@@ -3657,15 +2787,16 @@ const NAV_CONFIG = [
   { id: "calendar", file: "calendar.html", icon: NAV_ICONS.calendar, i18n: "navCalendar", section: "primary" },
   { id: "activities", file: "activities.html", icon: NAV_ICONS.activities, i18n: "navRequests", section: "primary" },
   { id: "leaves", file: "leaves.html", icon: NAV_ICONS.leaves, i18n: "navVacations", section: "primary" },
+  { id: "chat", file: "chat.html", icon: NAV_ICONS.chat, i18n: "navChat", section: "primary" },
   { id: "announcements", file: "announcements.html", icon: NAV_ICONS.announcements, i18n: "navNotifications", section: "primary" },
   { id: "reports", file: "reports.html", icon: NAV_ICONS.reports, i18n: "navReports", section: "primary", excludeRoles: ["hr"] },
   { id: "profile", file: "profile.html", icon: NAV_ICONS.profile, i18n: "navSettings", section: "primary" },
 
   // Management & Operations Navigation
-  { id: "plans-review", file: "plans-review.html", icon: NAV_ICONS["plans-review"], i18n: "navPlansReview", section: "management", roles: ["district_manager", "line_manager", "business_unit"] },
+  { id: "plans-review", file: "plans-review.html", icon: NAV_ICONS["plans-review"], i18n: "navPlansReview", section: "management", roles: ["district_manager", "line_manager", "business_unit", "general_manager"] },
   { id: "distributors", file: "distributors.html", icon: NAV_ICONS.distributors, i18n: "navDistributors", section: "management", roles: ["admin"] },
   { id: "areas", file: "areas.html", icon: NAV_ICONS.areas, i18n: "navAreas", section: "management", roles: ["admin", "hr", "business_unit"] },
-  { id: "products", file: "products.html", icon: NAV_ICONS.products, i18n: "navProducts", section: "management", roles: ["admin"] },
+  { id: "products", file: "products.html", icon: NAV_ICONS.products, i18n: "navProducts", section: "management", roles: ["admin", "product_manager"] },
   { id: "quizzes", file: "quizzes.html", icon: NAV_ICONS.quizzes, i18n: "navQuizzes", section: "management", roles: ["all"], excludeRoles: ["hr"] },
 ];
 window.NAV_CONFIG = NAV_CONFIG;
@@ -3898,10 +3029,10 @@ function renderSidebar(activePage) {
       </div>
       <div class="sidebar-user-details">
         <div class="sidebar-user-name">
-          ${window.escapeHtml(lang === "ar" ? user.nameAr || user.name : user.name)}
+          ${window.escapeHtml(user.name)}
         </div>
         <div class="sidebar-user-role">
-          ${window.escapeHtml(getRoleBadge(user.role, lang))}
+          ${window.escapeHtml(getRoleBadge(user.role))}
         </div>
       </div>
     </div>
@@ -3946,12 +3077,12 @@ function renderTopbar(force = false) {
   if (!user) {
     return;
   }
-  const lang = getCurrentLang();
+  const lang = "en";
   const activePage = window.currentActivePage || resolveActivePage();
   const theme = document.documentElement.getAttribute("data-theme") || "light";
 
   const { isImpersonating, originalAdmin } = getImpersonationInfo();
-  const originalAdminName = originalAdmin ? (lang === "ar" ? (originalAdmin.nameAr || originalAdmin.name) : originalAdmin.name) || "Admin" : "";
+  const originalAdminName = originalAdmin ? (originalAdmin.name || "Admin") : "";
 
   const renderStateKey = `${user.id}_${user.role}_${lang}_${activePage}_${theme}_${isImpersonating ? "imp" : "norm"}`;
   if (!force && topbarEl.dataset.renderedState === renderStateKey && topbarEl.querySelector(".pharma-topbar-top-row")) {
@@ -3962,7 +3093,7 @@ function renderTopbar(force = false) {
   }
   topbarEl.dataset.renderedState = renderStateKey;
 
-  const userName = lang === "ar" ? user.nameAr || user.name : user.name;
+  const userName = user.name || "User";
   const userCode = user.employeeCode || user.code || "REP-001";
   const roleBadge = getRoleBadge(user.role, lang);
   const codeLabel =
@@ -4954,7 +4085,7 @@ function enforcePageRoleSecurity(precheckedUser) {
     "users.html": ["admin", "hr"],
     "distributors.html": ["admin"],
     "areas.html": ["admin", "hr", "business_unit"],
-    "products.html": ["admin"],
+    "products.html": ["admin", "product_manager"],
     "plans-review.html": ["admin", "general_manager", "district_manager", "line_manager", "business_unit"],
     "reports.html": ["admin", "general_manager", "business_unit", "line_manager", "district_manager", "medical_rep", "rep", "product_manager"],
   };
@@ -5345,3 +4476,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// Automatically ensure Chat Engine & Styles are available enterprise-wide
+(function ensureChatEngineLoaded() {
+  if (typeof document === "undefined") return;
+  let v = "v338";
+  try {
+    const scriptEl = document.querySelector('script[src*="cache-bust.js"]') || document.querySelector('script[src*="app.js"]');
+    const src = scriptEl && scriptEl.getAttribute ? scriptEl.getAttribute("src") : "";
+    const match = src && src.match(/[?&]v=([A-Za-z0-9._-]+)/);
+    if (match && match[1]) v = match[1];
+    else if (window.EXPECTED_SW) v = window.EXPECTED_SW;
+  } catch(e) {}
+
+  if (!document.querySelector('link[href*="css/chat.css"]')) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "css/chat.css?v=" + v;
+    if (document.head) document.head.appendChild(link);
+  }
+  if (!window.ChatService && !document.querySelector('script[src*="js/chat-service.js"]')) {
+    const script = document.createElement("script");
+    script.src = "js/chat-service.js?v=" + v;
+    script.defer = true;
+    if (document.body) document.body.appendChild(script);
+    else if (document.head) document.head.appendChild(script);
+  }
+})();

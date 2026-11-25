@@ -390,11 +390,35 @@
           const userId = Core._state.currentUser.id;
           let hasModifiedShare = false;
 
-          if (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.BU || userRole === "general_manager" || userRole === "gm" || rawRole === "admin" || rawRole === "bu") {
+          if (userRole === Core.ROLES.ADMIN || rawRole === "admin") {
             srv.shares.forEach((sh) => {
               if (sh.status !== Core.REQUEST_STATUS.APPROVED) {
                 sh.status = Core.REQUEST_STATUS.APPROVED;
                 sh.nextApproverId = null;
+                if (!sh.approvedBy) sh.approvedBy = [];
+                if (!sh.approvedBy.includes(userId)) sh.approvedBy.push(userId);
+                hasModifiedShare = true;
+              }
+            });
+          } else if (userRole === Core.ROLES.BU || rawRole === "bu" || rawRole === "business_unit") {
+            const userLines = Core.getUserAssignedLines ? Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id) : (Core._state.currentUser.lineIds || (Core._state.currentUser.lineId ? [Core._state.currentUser.lineId] : []));
+            srv.shares.forEach((sh) => {
+              if (sh.status === Core.REQUEST_STATUS.PENDING_BU && userLines.includes(sh.lineId)) {
+                if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
+                  const adv = window.WorkflowEngine.advanceServiceApproval({
+                    department: srv.department,
+                    cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
+                    lineId: sh.lineId,
+                    areaId: sh.areaId || srv.areaId,
+                    requesterId: srv.requesterId,
+                    status: sh.status
+                  }, Core._state.currentUser);
+                  sh.status = adv.nextStatus;
+                  sh.nextApproverId = adv.nextApproverId;
+                } else {
+                  sh.status = Core.REQUEST_STATUS.APPROVED;
+                  sh.nextApproverId = null;
+                }
                 if (!sh.approvedBy) sh.approvedBy = [];
                 if (!sh.approvedBy.includes(userId)) sh.approvedBy.push(userId);
                 hasModifiedShare = true;
@@ -408,6 +432,8 @@
                     department: srv.department,
                     cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
                     lineId: sh.lineId,
+                    areaId: sh.areaId || srv.areaId,
+                    requesterId: srv.requesterId,
                     status: sh.status
                   }, Core._state.currentUser);
                   sh.status = adv.nextStatus;
@@ -429,6 +455,8 @@
                     department: srv.department,
                     cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
                     lineId: sh.lineId,
+                    areaId: sh.areaId || srv.areaId,
+                    requesterId: srv.requesterId,
                     status: sh.status
                   }, Core._state.currentUser);
                   sh.status = adv.nextStatus;
@@ -445,12 +473,14 @@
           } else if (userRole === Core.ROLES.PM || rawRole === "pm" || rawRole === "product_manager") {
             const userLines = Core._state.currentUser.lineIds || (Core._state.currentUser.lineId ? [Core._state.currentUser.lineId] : []);
             srv.shares.forEach((sh) => {
-              if (userLines.includes(sh.lineId) && sh.status && sh.status.startsWith("pending")) {
+              if (userLines.includes(sh.lineId) && sh.status === Core.REQUEST_STATUS.PENDING_PM) {
                 if (window.WorkflowEngine && typeof window.WorkflowEngine.advanceServiceApproval === "function") {
                   const adv = window.WorkflowEngine.advanceServiceApproval({
                     department: srv.department,
                     cost: (sh.shareAmount !== undefined && sh.shareAmount !== null) ? Number(sh.shareAmount) : (sh.sharePercent ? (Number(srv.cost || 0) * Number(sh.sharePercent)) / 100 : Number(sh.cost || 0)),
                     lineId: sh.lineId,
+                    areaId: sh.areaId || srv.areaId,
+                    requesterId: srv.requesterId,
                     status: sh.status
                   }, Core._state.currentUser);
                   sh.status = adv.nextStatus;

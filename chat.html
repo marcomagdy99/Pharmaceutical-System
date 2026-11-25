@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="images/pharma-icon-192.png">
+    <link rel="apple-touch-icon" href="images/pharma-icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>PharmaCare - Team Chat & Messaging</title>
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('pharmaTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css?v=v346">
+    <link rel="stylesheet" href="css/chat.css?v=v346">
+    
+    <!-- Core Application & Store -->
+    <script src="js/auth-service.js?v=v346" defer></script>
+    <script src="js/app.js?v=v346" defer></script>
+    <script src="js/store.js?v=v346" defer></script>
+    
+    <!-- Firebase SDKs for Realtime Cloud Sync -->
+    <script src="js/vendor/firebase-app-compat.js?v=v346" defer></script>
+    <script src="js/vendor/firebase-auth-compat.js?v=v346" defer></script>
+    <script src="js/vendor/firebase-firestore-compat.js?v=v346" defer></script>
+    <script src="js/firebase-config.js?v=v346" defer></script>
+    <script src="js/firebase-sync.js?v=v346" defer></script>
+    
+    <!-- Chat Engine -->
+    <script src="js/chat-service.js?v=v346" defer></script>
+    <script src="js/chat-page.js?v=v346" defer></script>
+
+    <!-- Cache Invalidation -->
+    <script src="js/cache-bust.js?v=v346" defer></script>
+</head>
+<body>
+    <div class="app">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar"></aside>
+        
+        <main class="main-content">
+            <!-- Unified Topbar Strip -->
+            <header class="topbar" id="topbar">
+                <script>if (typeof renderTopbar === "function") renderTopbar();</script>
+            </header>
+            
+            <!-- PAGE CONTENT -->
+            <div class="content p-3" id="pageContent">
+                <div class="pharma-chat-app-container">
+                    <!-- Left Sidebar Pane: Contacts & Groups -->
+                    <aside class="pharma-chat-sidebar-pane" id="chatSidebarPane">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-surface">
+                            <div>
+                                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                                    <svg style="width:20px;height:20px;color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                    </svg>
+                                    Team Chat
+                                </h5>
+                                <span class="text-muted small" id="chatUserRoleBadge">Connecting...</span>
+                            </div>
+                            <span class="badge bg-success-subtle text-success d-flex align-items-center gap-1 py-1 px-2" style="font-size:0.75rem;">
+                                <span class="pharma-chat-status-dot online"></span> Online
+                            </span>
+                        </div>
+
+                        <!-- Filter Tabs -->
+                        <div class="pharma-chat-tabs-bar">
+                            <button type="button" class="pharma-chat-tab-btn active" id="chatTabAll" data-tab="all">All</button>
+                            <button type="button" class="pharma-chat-tab-btn" id="chatTabGroups" data-tab="group">👥 Teams</button>
+                            <button type="button" class="pharma-chat-tab-btn" id="chatTabDirect" data-tab="direct">👤 Direct</button>
+                        </div>
+
+                        <!-- Search -->
+                        <div class="pharma-chat-search-wrap">
+                            <svg class="pharma-chat-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" id="chatSearchInput" class="pharma-chat-search-input" placeholder="Search teams & colleagues..." />
+                        </div>
+
+                        <!-- Conversations List -->
+                        <div class="pharma-chat-convs-list flex-grow-1" id="chatConversationsList">
+                            <div class="p-4 text-center text-muted">
+                                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                                <div>Loading conversations...</div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- Right Main Pane: Active Conversation -->
+                    <section class="pharma-chat-main-pane mobile-hidden" id="chatMainPane">
+                        <!-- Empty Placeholder (when no chat selected) -->
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4 d-none" id="chatEmptyState">
+                            <div class="mb-3 p-4 rounded-circle bg-primary-subtle text-primary">
+                                <svg style="width:48px;height:48px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </div>
+                            <h4 class="fw-bold">PharmaCare Team Messaging</h4>
+                            <p class="text-muted" style="max-width: 380px;">
+                                Communicate instantly with your direct manager, medical rep colleagues, district teams, and HR department.
+                            </p>
+                            <span class="badge bg-secondary-subtle text-secondary px-3 py-2">Select a conversation from the left to start chatting</span>
+                        </div>
+
+                        <!-- Active Conversation Content -->
+                        <div class="d-flex flex-column h-100" id="chatActiveContent">
+                            <!-- Header -->
+                            <div class="pharma-chat-conversation-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <button class="btn btn-sm btn-outline-secondary d-md-none me-1" id="chatBackToContactsBtn" title="Back to Contacts">
+                                        <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                                    </button>
+                                    <div class="pharma-chat-avatar-circle bg-primary text-white" id="chatActiveAvatar">P</div>
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h6 class="mb-0 fw-bold" id="chatActiveName">Conversation Name</h6>
+                                            <span class="badge bg-primary-subtle text-primary" id="chatActiveBadge" style="font-size:0.7rem;">Direct</span>
+                                        </div>
+                                        <span class="text-muted small" id="chatActiveSub" style="font-size:0.75rem;">Active now</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary btn-icon" id="chatQuickShareDoctorBtn" title="Share Doctor or Visit Card">
+                                        <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Messages Area -->
+                            <div class="pharma-chat-full-messages" id="chatFullMessagesArea"></div>
+
+                            <!-- Input Bar -->
+                            <form id="chatFullMessageForm" class="pharma-chat-full-input-bar d-flex gap-2 align-items-center">
+                                <input type="text" id="chatFullTextInput" class="form-control" placeholder="Type your message... (Press Enter to send)" autocomplete="off" />
+                                <button type="submit" class="btn btn-primary px-4 fw-bold d-flex align-items-center gap-2">
+                                    <span>Send</span>
+                                    <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

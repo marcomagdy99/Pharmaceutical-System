@@ -226,7 +226,7 @@ function getProductLineName(lineId) {
   const found = lines.find((l) => l.id === lineId);
   if (!found) return lineId;
   const lang = window.i18n ? window.i18n.currentLang : "en";
-  if (lang === "ar" && found.nameAr) return found.nameAr;
+  
   return found.name || lineId;
 }
 function getUserLineIds(user) {
@@ -440,7 +440,7 @@ function isUserInTargetAudience(annTarget, userRole) {
   const isAdmin = r === "admin";
   const isGM = r === "general_manager";
   if (annTarget === "hr_admin" || annTarget === "hr") {
-    return isHR || isAdmin || isGM;
+    return isHR || isAdmin;
   }
   if (isHR || isAdmin || isGM) return true;
   const isRep = r === "medical_rep";
@@ -482,8 +482,8 @@ function isAnnouncementVisibleToUser(ann, user) {
   // 1. Line Scoping Check:
   // If announcement is scoped to a specific product line (targetLineId):
   if (ann.targetLineId) {
-    // Admin, HR, and GM have global oversight
-    if (!isAdmin && !isHR && !isGM && !isAuthor) {
+    // Admin and HR have global oversight; GM is scoped to subordinates' product lines
+    if (!isAdmin && !isHR && !isAuthor) {
       const uLines = getUserLineIds(user);
       // Strictly hidden if the user does NOT belong to this product line
       if (!uLines.includes(ann.targetLineId)) {
@@ -491,8 +491,8 @@ function isAnnouncementVisibleToUser(ann, user) {
       }
     }
   }
-  // 2. Target Audience Check (Reps, DMs, LMs, BU, HR, etc.)
-  if (!isAdmin && !isHR && !isGM && !isAuthor) {
+  // 2. Target Audience Check (Reps, DMs, LMs, BU, GM, HR, etc.)
+  if (!isAdmin && !isHR && !isAuthor) {
     if (!isUserInTargetAudience(ann.target, role)) {
       return false;
     }
@@ -866,7 +866,7 @@ function openAnnouncementModal(id = null) {
   if (isPM && !isHR) {
     const pmLines = allLines.filter((l) => currentUserLineIds.includes(l.id));
     const pmLineOptions = pmLines.length > 0
-      ? pmLines.map((l) => `<option value="${_esc(l.id)}">${_esc((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("")
+      ? pmLines.map((l) => `<option value="${_esc(l.id)}">${_esc(l.name)}</option>`).join("")
       : currentUserLineIds.map((lid) => `<option value="${_esc(lid)}">${_esc(getProductLineName(lid))}</option>`).join("");
     if (lineSelect) {
       lineSelect.innerHTML = pmLineOptions;
@@ -887,7 +887,7 @@ function openAnnouncementModal(id = null) {
     if (lineSelect) {
       const allLinesLabel = _esc(t.allLines || "All Lines (Company-wide)");
       lineSelect.innerHTML = `<option value="">${allLinesLabel}</option>` +
-        allLines.map((l) => `<option value="${_esc(l.id)}">${_esc((lang === "ar" && l.nameAr) ? l.nameAr : l.name)}</option>`).join("");
+        allLines.map((l) => `<option value="${_esc(l.id)}">${_esc(l.name)}</option>`).join("");
       lineSelect.disabled = false;
     }
     if (lineHint) {

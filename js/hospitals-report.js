@@ -10,15 +10,32 @@ function getHospitalsData() {
   return (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
 }
 
+function sortBilingualHospitals(a, b) {
+  if (typeof window !== "undefined" && typeof window.sortBilingualByName === "function") {
+    return window.sortBilingualByName(a, b);
+  }
+  const nameA = (a.name || a.nameAr || "").trim();
+  const nameB = (b.name || b.nameAr || "").trim();
+  return nameA.localeCompare(nameB, ["en", "ar"], { numeric: true, sensitivity: "base" });
+}
+
 function getScopedHospitals(respectActiveFilters = true) {
-  const currentUser = (window.checkAuth && window.checkAuth()) || { role: "rep", id: "u1790626000001" };
+  const currentUser = (typeof window.checkAuth === "function") ? window.checkAuth() : null;
+  if (!currentUser || !currentUser.id) {
+    return [];
+  }
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || "").toLowerCase();
-  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : currentUser.role !== "medical_rep";
+  const isRep = window.isRepRole ? window.isRepRole(currentUser) : (role === "rep" || role === "medical_rep");
+  const isMgr = window.isManagerRole ? window.isManagerRole(currentUser) : ["admin", "hr", "general_manager", "gm", "district_manager", "dm", "line_manager", "lm", "business_unit", "bu", "product_manager", "pm"].includes(role);
+
+  if (!isRep && !isMgr) {
+    return []; // Fail-closed: unknown or unauthorized role
+  }
 
   let hosps = getHospitalsData();
 
   // Role scoping: Reps get all hospitals assigned to their id OR located in any of their assigned areas
-  if (!isMgr) {
+  if (isRep) {
     const repAreas = (window.store && window.store.areas) ? window.store.areas.getByRep(currentUser.id) : [];
     const repAreaIds = repAreas.map((a) => a.id);
     const repAreaNames = repAreas.map((a) => (a.name || "").toLowerCase().trim());
@@ -34,14 +51,24 @@ function getScopedHospitals(respectActiveFilters = true) {
     let allowedAreaIds = null;
     let allowedAreaNames = null;
 
-    if (role === "district_manager") {
+    if (role === "admin" || role === "hr") {
+      allowedTeamIds = null;
+      allowedAreaIds = null;
+      allowedAreaNames = null;
+    } else if (role === "district_manager") {
       const teamRepIds = allUsers.filter((u) => u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...teamRepIds];
 
       const myVacantAreas = allAreas.filter((a) => {
         if (a.repId) return false;
+        if (typeof window.isAreaManagedByDm === "function") {
+          return window.isAreaManagedByDm(a, currentUser.id, allUsers);
+        }
+        if (a.dmId === currentUser.id || a.districtManagerId === currentUser.id) return true;
+        if (currentUser.areaIds && currentUser.areaIds.includes(a.id)) return true;
+        if (currentUser.areaId && currentUser.areaId === a.id) return true;
         const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a, allUsers) : null;
-        return mgrId === currentUser.id || (!mgrId && (!a.lineId || (currentUser.lineIds && currentUser.lineIds.includes(a.lineId)) || currentUser.lineId === a.lineId));
+        return mgrId === currentUser.id;
       });
 
       const dmAreas = allAreas.filter((a) =>
@@ -57,26 +84,92 @@ function getScopedHospitals(respectActiveFilters = true) {
     } else if (role === "line_manager") {
       const dms = allUsers.filter((u) => u.managerId === currentUser.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
       const dmIds = dms.map((d) => d.id);
-      const repIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+      const repIds = allUsers.filter((u) => dmIds.includes(u.managerId) || u.managerId === currentUser.id).map((u) => u.id);
       allowedTeamIds = [currentUser.id, ...dmIds, ...repIds];
 
-      const myLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+      const lmUserLineIds = currentUser.lineIds || (currentUser.lineId ? [currentUser.lineId] : []);
+      const lineLmsCount = (lineId) => allUsers.filter((u) => {
+        const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+        return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+      }).length;
+
+      const isAreaOwnedByDm = (area, dmId) => {
+        if (typeof window.isAreaManagedByDm === "function") return window.isAreaManagedByDm(area, dmId, allUsers);
+        if (area.dmId === dmId || area.districtManagerId === dmId) return true;
+        const dm = allUsers.find((u) => u.id === dmId);
+        if (dm) {
+          if (dm.areaIds && dm.areaIds.includes(area.id)) return true;
+          if (dm.areaId && dm.areaId === area.id) return true;
+        }
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(area, allUsers) : null;
+        return mgrId === dmId;
+      };
+
+      const lmVacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        if (a.managerId === currentUser.id || a.lmId === currentUser.id) return true;
+        if (dmIds.some((dmId) => isAreaOwnedByDm(a, dmId))) return true;
+        if (a.lineId && lmUserLineIds.includes(a.lineId) && lineLmsCount(a.lineId) <= 1) return true;
+        return false;
+      });
+
       const lmAreas = allAreas.filter((a) =>
         (a.repId && (repIds.includes(a.repId) || dmIds.includes(a.repId))) ||
-        (a.lineId && myLineIds.includes(a.lineId))
+        a.managerId === currentUser.id ||
+        a.lmId === currentUser.id ||
+        lmVacantAreas.some((va) => va.id === a.id)
       );
       allowedAreaIds = lmAreas.map((a) => a.id);
       allowedAreaNames = lmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
-    } else if (role === "business_unit") {
-      const myLMs = allUsers.filter((u) => u.managerId === currentUser.id);
-      const myLmIds = myLMs.map((u) => u.id);
+    } else if (role === "business_unit" || role === "general_manager") {
       const myDownstream = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(currentUser.id) : [];
       const myDownstreamIds = myDownstream.map((u) => u.id);
-      allowedTeamIds = [currentUser.id, ...myLmIds, ...myDownstreamIds];
-      const buLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id).map(l => l.id) : [];
-      const buAreas = allAreas.filter((a) => (a.lineId && buLines.includes(a.lineId)) || (a.repId && allowedTeamIds.includes(a.repId)));
+      allowedTeamIds = [currentUser.id, ...myDownstreamIds];
+
+      const buDmIds = myDownstream.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm'))).map((u) => u.id);
+
+      const isAreaOwnedByDm = (area, dmId) => {
+        if (typeof window.isAreaManagedByDm === "function") return window.isAreaManagedByDm(area, dmId, allUsers);
+        if (area.dmId === dmId || area.districtManagerId === dmId) return true;
+        const dm = allUsers.find((u) => u.id === dmId);
+        if (dm) {
+          if (dm.areaIds && dm.areaIds.includes(area.id)) return true;
+          if (dm.areaId && dm.areaId === area.id) return true;
+        }
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(area, allUsers) : null;
+        return mgrId === dmId;
+      };
+
+      const buVacantAreas = allAreas.filter((a) => {
+        if (a.repId) return false;
+        if (a.buId === currentUser.id) return true;
+        return buDmIds.some((dmId) => isAreaOwnedByDm(a, dmId));
+      });
+
+      const buAreas = allAreas.filter((a) =>
+        (a.repId && allowedTeamIds.includes(a.repId)) ||
+        a.buId === currentUser.id ||
+        buVacantAreas.some((va) => va.id === a.id)
+      );
       allowedAreaIds = buAreas.map((a) => a.id);
       allowedAreaNames = buAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
+    } else if (role === "product_manager" || role === "pm") {
+      const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
+      const pmLineIds = pmLines.map((l) => l.id);
+      if (pmLineIds.length === 0) {
+        return []; // Fail-closed: PM without assigned lines sees no hospitals
+      }
+      const pmAreas = allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId));
+      allowedAreaIds = pmAreas.map((a) => a.id);
+      allowedAreaNames = pmAreas.map((a) => (a.name || "").toLowerCase().trim()).filter(Boolean);
+      const pmReps = allUsers.filter((u) => {
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(u.id) : [];
+        return uLines.some((l) => pmLineIds.includes(l.id)) || (u.lineId && pmLineIds.includes(u.lineId)) || (u.lineIds && u.lineIds.some(lid => pmLineIds.includes(lid)));
+      });
+      allowedTeamIds = [currentUser.id, ...pmReps.map((u) => u.id)];
+    } else {
+      // Unknown or unauthenticated role: fail closed
+      return [];
     }
 
     const lmFilter = document.getElementById("hospitalLmSelect");
@@ -84,14 +177,17 @@ function getScopedHospitals(respectActiveFilters = true) {
     const repFilter = document.getElementById("hospitalRepSelect");
     const repId = (repFilter && repFilter.value !== "all") ? repFilter.value : ((dmFilter && dmFilter.value !== "all") ? dmFilter.value : ((lmFilter && lmFilter.value !== "all") ? lmFilter.value : "all"));
 
-    if (allowedTeamIds) {
+    if (allowedTeamIds || allowedAreaIds) {
       hosps = hosps.filter((h) => {
         if (repId && repId.startsWith("vacant:")) {
           const vAreaId = repId.split(":")[1];
-          if (h.areaId === vAreaId) return true;
+          // Critical security fix: must verify that the vacant area is within allowedAreaIds for this manager
+          if (role === "admin" || role === "hr" || (allowedAreaIds && allowedAreaIds.includes(vAreaId))) {
+            if (h.areaId === vAreaId) return true;
+          }
         }
-        if (h.repId) {
-          return allowedTeamIds.includes(h.repId);
+        if (h.repId && allowedTeamIds && allowedTeamIds.includes(h.repId)) {
+          return true;
         }
         if (role === "admin" || role === "hr") {
           return true;
@@ -101,7 +197,14 @@ function getScopedHospitals(respectActiveFilters = true) {
         }
         if (allowedAreaIds) {
           const hospAreaName = (h.area || "").toLowerCase().trim();
-          return (h.areaId && allowedAreaIds.includes(h.areaId)) || (hospAreaName && allowedAreaNames.includes(hospAreaName));
+          if (h.areaId && allowedAreaIds.includes(h.areaId)) return true;
+          if (hospAreaName && allowedAreaNames && allowedAreaNames.includes(hospAreaName)) return true;
+        }
+        if (role === "product_manager" || role === "pm") {
+          const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
+          const pmLineIds = pmLines.map((l) => l.id);
+          if (h.lineId && pmLineIds.includes(h.lineId)) return true;
+          if (Array.isArray(h.lineIds) && h.lineIds.some((lid) => pmLineIds.includes(lid))) return true;
         }
         return false;
       });
@@ -110,6 +213,10 @@ function getScopedHospitals(respectActiveFilters = true) {
     if (repId !== "all") {
       if (repId.startsWith("vacant:")) {
         const vacantAreaId = repId.split(":")[1];
+        // Critical: Non-admin users cannot access vacant areas outside their allowed scope
+        if (role !== "admin" && role !== "hr" && allowedAreaIds && !allowedAreaIds.includes(vacantAreaId)) {
+          return [];
+        }
         const vacantArea = allAreas.find((a) => a.id === vacantAreaId);
         const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
         hosps = hosps.filter((h) => {
@@ -131,19 +238,34 @@ function getScopedHospitals(respectActiveFilters = true) {
         const isLM = allUsers.some((u) => u.id === repId && (u.role === "line_manager" || u.role === "lm"));
         const isDM = allUsers.some((u) => u.id === repId && (u.role === "district_manager" || u.role === "dm"));
         if (isLM) {
+          const selLmUser = allUsers.find((u) => u.id === repId);
           const dmsUnderLM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
-          const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+          const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId) || u.managerId === repId).map((u) => u.id);
           const lmTeamIds = [repId, ...dmsUnderLM, ...repsUnderLM];
-          const lmUser = allUsers.find((u) => u.id === repId);
-          const lmUserLineIds = lmUser ? (lmUser.lineIds || (lmUser.lineId ? [lmUser.lineId] : [])) : [];
-          const lmAreaIds = allAreas.filter((a) => (a.repId && lmTeamIds.includes(a.repId)) || (a.lineId && lmUserLineIds.includes(a.lineId))).map((a) => a.id);
+          const lmUserLineIds = selLmUser ? (selLmUser.lineIds || (selLmUser.lineId ? [selLmUser.lineId] : [])) : [];
+          const lineLmsCount = (lineId) => allUsers.filter((u) => {
+            const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+            return (r === 'line_manager' || r === 'lm') && ((u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+          }).length;
+          const lmAreaIds = allAreas.filter((a) => {
+            if (a.repId && lmTeamIds.includes(a.repId)) return true;
+            if (a.managerId === repId || a.lmId === repId) return true;
+            if (!a.repId && dmsUnderLM.some((dmId) => typeof window.isAreaManagedByDm === "function" ? window.isAreaManagedByDm(a, dmId, allUsers) : a.dmId === dmId)) return true;
+            if (!a.repId && a.lineId && lmUserLineIds.includes(a.lineId) && lineLmsCount(a.lineId) <= 1) return true;
+            return false;
+          }).map((a) => a.id);
           hosps = hosps.filter((h) => (h.repId && lmTeamIds.includes(h.repId)) || (h.areaId && lmAreaIds.includes(h.areaId)));
         } else if (isDM) {
           const repsUnderDM = allUsers.filter((u) => u.managerId === repId).map((u) => u.id);
           const dmTeamIds = [repId, ...repsUnderDM];
           const dmUser = allUsers.find((u) => u.id === repId);
           const dmUserAreaIds = dmUser ? (dmUser.areaIds || (dmUser.areaId ? [dmUser.areaId] : [])) : [];
-          const dmAreaIds = allAreas.filter((a) => (a.repId && dmTeamIds.includes(a.repId)) || dmUserAreaIds.includes(a.id) || a.dmId === repId).map((a) => a.id);
+          const dmAreaIds = allAreas.filter((a) =>
+            (a.repId && dmTeamIds.includes(a.repId)) ||
+            dmUserAreaIds.includes(a.id) ||
+            a.dmId === repId ||
+            (!a.repId && (typeof window.isAreaManagedByDm === "function" ? window.isAreaManagedByDm(a, repId, allUsers) : a.dmId === repId))
+          ).map((a) => a.id);
           hosps = hosps.filter((h) =>
             (h.repId && dmTeamIds.includes(h.repId)) ||
             (h.areaId && dmAreaIds.includes(h.areaId))
@@ -179,7 +301,7 @@ function getScopedHospitals(respectActiveFilters = true) {
       }
       if (h.area) {
         const aName = (h.area || '').toLowerCase().trim();
-        const a = allAreas.find((x) => (x.nameEn || '').toLowerCase().trim() === aName || (x.nameAr || '').toLowerCase().trim() === aName);
+        const a = allAreas.find((x) => (x.name || '').toLowerCase().trim() === aName || (x.nameEn || '').toLowerCase().trim() === aName || (x.nameAr || '').toLowerCase().trim() === aName);
         if (a && a.lineId) return a.lineId === selectedLineId;
       }
       if (h.lineId) return h.lineId === selectedLineId;
@@ -193,13 +315,13 @@ function getScopedHospitals(respectActiveFilters = true) {
   }
 
   if (!respectActiveFilters) {
-    return hosps;
+    return hosps.slice().sort(sortBilingualHospitals);
   }
 
   const searchInput = document.getElementById("hospitalSearchInput");
   const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
-  return hosps.filter((h) => {
+  const filteredHosps = hosps.filter((h) => {
     return (
       !query ||
       (h.name && h.name.toLowerCase().includes(query)) ||
@@ -208,6 +330,8 @@ function getScopedHospitals(respectActiveFilters = true) {
       (h.phone && h.phone.toLowerCase().includes(query))
     );
   });
+
+  return filteredHosps.sort(sortBilingualHospitals);
 }
 
 function renderHospitalsReport() {
@@ -238,8 +362,9 @@ function renderHospitalsReport() {
   grid.style.display = "grid";
   if (emptyState) emptyState.style.display = "none";
 
-  const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null) || (window.DEMO_DATA && window.DEMO_DATA.currentUser);
-  const normalizedRole = currentUser ? (window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase()) : '';
+  const currentUser = (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!currentUser) return;
+  const normalizedRole = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
   const isAdmin = normalizedRole === 'admin';
   const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -286,10 +411,10 @@ function renderHospitalsReport() {
         </div>
         ${isAdmin ? `
         <div class="directory-card-footer">
-          <button class="btn btn-sm btn-outline-primary" onclick="openHospitalModal('${h.id}')">
+          <button type="button" class="btn btn-sm btn-outline-primary" data-hospital-action="edit" data-hospital-id="${window.escapeHtml(h.id)}">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Edit
           </button>
-          <button class="btn btn-sm btn-outline-danger" onclick="openDeleteHospitalModal('${h.id}')">
+          <button type="button" class="btn btn-sm btn-outline-danger" data-hospital-action="delete" data-hospital-id="${window.escapeHtml(h.id)}">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
           </button>
         </div>
@@ -298,6 +423,8 @@ function renderHospitalsReport() {
     `;
     })
     .join("");
+
+  // Delegated events handled globally via document listener below
 }
 
 function openHospitalModal(hospId = null) {
@@ -430,9 +557,48 @@ function saveHospital() {
   if (assignedRepId) {
     const repUserObj = allUsersList.find(u => u.id === assignedRepId);
     if (repUserObj && repUserObj.managerId) {
-      assignedDmId = repUserObj.managerId;
-      const dmUserObj = allUsersList.find(u => u.id === repUserObj.managerId);
-      if (dmUserObj && dmUserObj.managerId) assignedLmId = dmUserObj.managerId;
+      const directMgr = allUsersList.find(u => u.id === repUserObj.managerId);
+      if (directMgr) {
+        const mgrRole = window.normalizeRole ? window.normalizeRole(directMgr.role) : (directMgr.role || '').toLowerCase();
+        if (mgrRole === 'district_manager' || mgrRole === 'dm') {
+          assignedDmId = directMgr.id;
+          if (directMgr.managerId) {
+            const higherMgr = allUsersList.find(u => u.id === directMgr.managerId);
+            if (higherMgr) {
+              const higherRole = window.normalizeRole ? window.normalizeRole(higherMgr.role) : (higherMgr.role || '').toLowerCase();
+              if (higherRole === 'line_manager' || higherRole === 'lm') {
+                assignedLmId = higherMgr.id;
+              }
+            }
+          }
+        } else if (mgrRole === 'line_manager' || mgrRole === 'lm') {
+          assignedDmId = null; // Direct report to LM without DM
+          assignedLmId = directMgr.id;
+        }
+      }
+    }
+  } else if (areaObj) {
+    // Vacant territory: deduce DM and LM from area manager bindings
+    const dmId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(areaObj, allUsersList) : (areaObj.dmId || areaObj.districtManagerId || null);
+    if (dmId) {
+      assignedDmId = dmId;
+      const dmUserObj = allUsersList.find(u => u.id === dmId);
+      if (dmUserObj && dmUserObj.managerId) {
+        const lmUserObj = allUsersList.find(u => u.id === dmUserObj.managerId);
+        if (lmUserObj) assignedLmId = lmUserObj.id;
+      }
+    } else if (areaObj.lmId || areaObj.managerId) {
+      const lmCandidateId = areaObj.lmId || areaObj.managerId;
+      const lmUser = allUsersList.find(u => u.id === lmCandidateId);
+      if (lmUser) {
+        const r = window.normalizeRole ? window.normalizeRole(lmUser.role) : (lmUser.role || '').toLowerCase();
+        if (r === 'line_manager' || r === 'lm') assignedLmId = lmUser.id;
+      }
+    }
+    if (!assignedLmId && assignedLineId) {
+      const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
+      const lineObj = lines.find(l => l.id === assignedLineId);
+      if (lineObj && lineObj.lineManagerId) assignedLmId = lineObj.lineManagerId;
     }
   }
 
@@ -440,9 +606,9 @@ function saveHospital() {
 
   const hospitalObj = {
     ...(existingHosp || {}),
-    id: id || "hosp_" + Date.now(),
+    id: id || (window.genId ? window.genId("hosp_") : "hosp_" + Date.now()),
     name,
-    nameAr: nameAr || name,
+    nameAr: (existingHosp && existingHosp.nameAr) || name,
     type: "hospital",
     address,
     phone,
@@ -548,31 +714,68 @@ function exportHospitalsDirectory() {
     const rep = allUsers.find((u) => u.id === h.repId)?.name || "Unassigned";
     const area = allAreas.find((a) => a.id === h.areaId)?.name || h.area || "";
     return [
-      `"${h.id}"`,
-      `"${(h.name || h.nameAr || '').replace(/"/g, '""')}"`,
-      `"${(h.address || '').replace(/"/g, '""')}"`,
-      `"${(h.phone || '').replace(/"/g, '""')}"`,
-      `"${rep.replace(/"/g, '""')}"`,
-      `"${area.replace(/"/g, '""')}"`,
-      `"${h.lineId || ''}"`
-    ].join(",");
+      h.id,
+      h.name || h.nameAr || "",
+      h.address || "",
+      h.phone || "",
+      rep,
+      area,
+      h.lineId || ""
+    ];
   });
 
-  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  if (typeof window.downloadExcelOrCsv === "function") {
+    window.downloadExcelOrCsv("Hospitals_Directory", "Hospitals", rows, headers);
+    return;
+  }
+
+  const escapeCsvCell = (val) => {
+    let s = String(val == null ? "" : val).trim();
+    if (/^[=+\-@\t\r]/.test(s)) {
+      s = "'" + s;
+    }
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+
+  const csvRows = rows.map((r) => r.map(escapeCsvCell).join(","));
+  const csvHeaders = headers.map(escapeCsvCell).join(",");
+  const csvContent = "\uFEFF" + [csvHeaders, ...csvRows].join("\r\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `Hospitals_Directory_${new Date().toISOString().slice(0, 10)}.csv`);
+  const localDateStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || (() => {
+    const d = (window.getSystemDate && window.getSystemDate()) || new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  link.setAttribute("download", `Hospitals_Directory_${localDateStr}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+// Secure Event Delegation for hospital directory actions (eliminates inline onclick & prevents XSS)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-hospital-action]");
+  if (!btn) return;
+  const action = btn.dataset.hospitalAction || btn.getAttribute("data-hospital-action");
+  const hospId = btn.dataset.hospitalId || btn.getAttribute("data-hospital-id");
+  if (action === "edit" && hospId) {
+    if (typeof window.openHospitalModal === "function") {
+      window.openHospitalModal(hospId);
+    }
+  } else if (action === "delete" && hospId) {
+    if (typeof window.openDeleteHospitalModal === "function") {
+      window.openDeleteHospitalModal(hospId);
+    }
+  }
+});
 
 // Global window bindings
 window.getHospitalsData = getHospitalsData;
 window.getScopedHospitals = getScopedHospitals;
+window.sortBilingualHospitals = sortBilingualHospitals;
 window.renderHospitalsReport = renderHospitalsReport;
 window.openHospitalModal = openHospitalModal;
 window.closeHospitalModal = closeHospitalModal;

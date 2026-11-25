@@ -434,15 +434,16 @@ function saveDistributor() {
   // New distributors get a stable slug id (e.g. "ibn-sina") so the future
   // per-distributor column-mapping and area-alias records can reference
   // it predictably instead of a plain timestamp.
-  const targetId =
-    id ||
-    name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
-      .replace(/^-+|-+$/g, "") +
-      "-" +
-      (typeof window.genId === "function" ? window.genId() : Date.now().toString(36));
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const rnd =
+    typeof window.genId === "function"
+      ? window.genId("dist_")
+      : ("dist_" + Date.now().toString(36));
+  const targetId = id || (slug ? `${slug}-${rnd}` : rnd);
 
   if (window.store && window.store.distributors) {
     window.store.distributors.save({ id: targetId, name, type });
@@ -504,6 +505,10 @@ const MAPPING_ROLES = [
 ];
 
 function openMappingModal(id) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   mappingTargetDistId = id;
   mappingDetectedHeaders = [];
   const dist = getDistributorsList().find((d) => d.id === id);
@@ -579,23 +584,11 @@ function handleMappingFileSelected(event) {
         defval: "",
       });
 
-      // Defensive Header Detection: Find the row with the maximum number of populated cells
-      // in the first 15 rows to bypass report title banners and metadata rows (e.g. Ibn Sina/UCP banners).
-      let headerRow = [];
-      let maxColsCount = 0;
-      const inspectLimit = Math.min(15, rows.length);
-      for (let i = 0; i < inspectLimit; i++) {
-        const row = rows[i];
-        if (Array.isArray(row)) {
-          const filledCount = row.filter(
-            (c) => c !== null && c !== undefined && String(c).trim() !== "",
-          ).length;
-          if (filledCount > maxColsCount) {
-            maxColsCount = filledCount;
-            headerRow = row;
-          }
-        }
-      }
+      // Defensive Header Detection using unified detectHeaderRowIndex helper
+      const detected = (typeof detectHeaderRowIndex === "function")
+        ? detectHeaderRowIndex(rows, 15)
+        : { headerRowIndex: 0, headerRow: rows[0] || [] };
+      const headerRow = detected.headerRow;
 
       const headers = headerRow
         .map((h) => String(h).trim())
@@ -617,6 +610,10 @@ function handleMappingFileSelected(event) {
           "Couldn't read this file's columns. Make sure it's a valid Excel/CSV file.",
           "error",
         );
+    } finally {
+      if (event && event.target) {
+        event.target.value = "";
+      }
     }
   };
   reader.readAsArrayBuffer(file);
@@ -1698,6 +1695,10 @@ function togglePovrMonthPicker() {
 window.togglePovrMonthPicker = togglePovrMonthPicker;
 
 function openPharmacyOverrideModal(editId = null) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const modal = getPharmacyOverrideModal();
   if (!modal) return;
@@ -2037,6 +2038,10 @@ function getEditAliasModal() {
 }
 
 function openEditAreaAlias(areaId, distributorId, rawText) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const dist =
     (window.store && window.store.distributors
@@ -2095,6 +2100,10 @@ function openEditAreaAlias(areaId, distributorId, rawText) {
 }
 
 function openEditProductAlias(lineId, productId, distributorId, rawText) {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const t = distributorTranslations.en;
   const dist =
     (window.store && window.store.distributors
@@ -2463,6 +2472,10 @@ function populateUploadControls() {
 }
 
 function triggerExcelUpload() {
+  if (!isDistributorAdmin()) {
+    if (typeof showToast === "function") showToast("Access Denied: Admins only.", "error");
+    return;
+  }
   const distSelect = document.getElementById("uploadDistributorSelect");
   const distId = distSelect ? distSelect.value : "";
 
@@ -2605,27 +2618,17 @@ function handleExcelUpload(e) {
       const workbook = XLSX.read(data, { type: "array", cellDates: true });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Detect header row index to skip top banners and align object keys with mapped column names
+      // Detect header row index using unified detectHeaderRowIndex helper (preserve blank rows so range index matches worksheet)
       const rawMatrix = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
-        blankrows: false,
+        blankrows: true,
         defval: "",
       });
-      let headerRowIndex = 0;
-      let maxColsCount = 0;
-      const inspectLimit = Math.min(15, rawMatrix.length);
-      for (let i = 0; i < inspectLimit; i++) {
-        const row = rawMatrix[i];
-        if (Array.isArray(row)) {
-          const filledCount = row.filter(
-            (c) => c !== null && c !== undefined && String(c).trim() !== "",
-          ).length;
-          if (filledCount > maxColsCount) {
-            maxColsCount = filledCount;
-            headerRowIndex = i;
-          }
-        }
-      }
+      const detectedHeader = (typeof detectHeaderRowIndex === "function")
+        ? detectHeaderRowIndex(rawMatrix, 15)
+        : { headerRowIndex: 0, headerRow: rawMatrix[0] || [] };
+      const refStartRow = worksheet["!ref"] ? XLSX.utils.decode_range(worksheet["!ref"]).s.r : 0;
+      const headerRowIndex = refStartRow + detectedHeader.headerRowIndex;
 
       const rows = XLSX.utils.sheet_to_json(worksheet, {
         range: headerRowIndex,
@@ -2651,7 +2654,7 @@ function handleExcelUpload(e) {
       }
 
       const map = dist.columnMap;
-      const batchId = typeof window.genId === "function" ? window.genId() : ("batch_" + Date.now());
+      const batchId = typeof window.genId === "function" ? window.genId("batch_") : ("batch_" + Date.now());
       const imported = [];
       let returnsCount = 0;
       let skippedInvalid = 0;
@@ -2716,7 +2719,7 @@ function handleExcelUpload(e) {
           }
 
           imported.push({
-            id: typeof window.genId === "function" ? window.genId() : `dsale_${Date.now()}_${idx}`,
+            id: typeof window.genId === "function" ? window.genId("dsale_") : `dsale_${Date.now()}_${idx}`,
             batchId,
             distributorId: distId,
             month: monthKey,
@@ -2757,28 +2760,40 @@ function handleExcelUpload(e) {
         );
       }
 
-      if (
-        replacingPreviousBatch &&
-        existingBatch &&
-        window.store &&
-        window.store.distributorSales
-      ) {
-        window.store.distributorSales.deleteByBatch(existingBatch.id);
-        window.store.importBatches.delete(existingBatch.id);
-      }
-
-      if (window.store && window.store.distributorSales) {
-        window.store.distributorSales.addBatch(imported);
-      }
-      if (window.store && window.store.importBatches) {
-        window.store.importBatches.save({
-          id: batchId,
-          distributorId: distId,
-          month: monthKey,
-          rowCount: imported.length,
-          fileName: file.name,
-          uploadedAt: new Date().toISOString(),
-        });
+      // Transactional storage write: save new batch first, delete old only on success
+      try {
+        if (window.store && window.store.distributorSales) {
+          window.store.distributorSales.addBatch(imported);
+        }
+        if (window.store && window.store.importBatches) {
+          window.store.importBatches.save({
+            id: batchId,
+            distributorId: distId,
+            month: monthKey,
+            rowCount: imported.length,
+            fileName: file.name,
+            uploadedAt: new Date().toISOString(),
+          });
+        }
+        if (
+          replacingPreviousBatch &&
+          existingBatch &&
+          window.store &&
+          window.store.distributorSales
+        ) {
+          window.store.distributorSales.deleteByBatch(existingBatch.id);
+          window.store.importBatches.delete(existingBatch.id);
+        }
+      } catch (saveErr) {
+        try {
+          if (window.store && window.store.distributorSales) {
+            window.store.distributorSales.deleteByBatch(batchId);
+          }
+          if (window.store && window.store.importBatches) {
+            window.store.importBatches.delete(batchId);
+          }
+        } catch (_) {}
+        throw saveErr;
       }
 
       const totalValue = imported.reduce((sum, r) => sum + r.value, 0);

@@ -141,12 +141,16 @@
   };
 
   window.populateGpsTracingFilters = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
     const isLM = role === "line_manager" || role === "lm";
     const isBU = role === "business_unit" || role === "bu";
+    const isGM = role === "general_manager" || role === "gm";
+    const isPM = role === "product_manager" || role === "pm";
+    const isAdminOrHR = role === "admin" || role === "administrator" || role === "hr";
     const lang = "en";
 
     const lineSelect = document.getElementById("gpsLineSelect");
@@ -175,7 +179,7 @@
           lineSelect.appendChild(opt);
         }
         lineSelect.disabled = true;
-      } else if (isDM || isLM || isBU) {
+      } else if (isDM || isLM || isBU || isGM || isPM) {
         if (userLines.length > 1) {
           const optAll = document.createElement("option");
           optAll.value = "all";
@@ -190,8 +194,8 @@
         });
         lineSelect.disabled = userLines.length <= 1;
         lineSelect.value = userLines[0]?.id || "all";
-      } else {
-        // Admin / BU / HR
+      } else if (isAdminOrHR) {
+        // Admin / HR
         const optAll = document.createElement("option");
         optAll.value = "all";
         optAll.textContent = "All Product Lines";
@@ -209,6 +213,8 @@
         } else {
           lineSelect.value = "all";
         }
+      } else {
+        lineSelect.disabled = true;
       }
     }
 
@@ -217,7 +223,8 @@
   };
 
   window.onGpsLineChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
@@ -254,10 +261,18 @@
 
         if (role === "line_manager" || role === "lm") {
           eligibleDMs = eligibleDMs.filter((dm) => dm.managerId === user.id);
-        } else if (role === "business_unit" || role === "bu") {
+        } else if (role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm") {
           const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
           const subIds = new Set(subs.map((s) => s.id));
           eligibleDMs = eligibleDMs.filter((dm) => subIds.has(dm.id));
+        } else if (role === "product_manager" || role === "pm") {
+          const pmLines = window.getUserLines ? window.getUserLines(user.id).map(l => l.id) : [];
+          eligibleDMs = eligibleDMs.filter((dm) => {
+            const lines = window.getUserLines ? window.getUserLines(dm.id) : [];
+            return lines.some((l) => pmLines.includes(l.id));
+          });
+        } else if (role !== "admin" && role !== "administrator" && role !== "hr") {
+          eligibleDMs = [];
         }
 
         if (selectedLineId !== "all") {
@@ -287,7 +302,8 @@
   };
 
   window.onGpsDmChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const lang = "en";
@@ -316,15 +332,27 @@
           return r === "medical_rep" || r === "rep";
         });
 
-        if (role === "district_manager" || role === "dm") {
+        if (role === "admin" || role === "hr") {
+          // Organization-wide access: keep all reps in scope
+        } else if (role === "district_manager" || role === "dm") {
           eligibleReps = eligibleReps.filter((r) => r.managerId === user.id);
         } else if (role === "line_manager" || role === "lm") {
           const myDMs = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
-          eligibleReps = eligibleReps.filter((r) => myDMs.includes(r.managerId));
-        } else if (role === "business_unit" || role === "bu") {
+          // Include reps reporting to DMs under this LM as well as reps reporting directly to LM
+          eligibleReps = eligibleReps.filter((r) => r.managerId === user.id || myDMs.includes(r.managerId));
+        } else if (role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm") {
           const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
           const subIds = new Set(subs.map((s) => s.id));
           eligibleReps = eligibleReps.filter((r) => subIds.has(r.id));
+        } else if (role === "product_manager" || role === "pm") {
+          const pmLines = window.getUserLines ? window.getUserLines(user.id).map(l => l.id) : [];
+          eligibleReps = eligibleReps.filter((r) => {
+            const lines = window.getUserLines ? window.getUserLines(r.id) : [];
+            return lines.some((l) => pmLines.includes(l.id));
+          });
+        } else {
+          // Fail-closed: unauthenticated or unknown roles cannot inspect medical reps
+          eligibleReps = [];
         }
 
         if (selectedDmId !== "all") {
@@ -381,7 +409,8 @@
     }
 
     const lang = "en";
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
 
@@ -403,7 +432,7 @@
 
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
     const allDoctors = (window.store && window.store.doctors ? window.store.doctors.getAll() : (window.DEMO_DATA && window.DEMO_DATA.doctors) || []);
-    const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+    const allHospitals = (window.store && window.store.hospitals ? window.store.hospitals.getAll() : (window.DEMO_DATA && window.DEMO_DATA.hospitals)) || [];
     const allPharmacies = (window.store && window.store.pharmacies ? window.store.pharmacies.getAll() : (window.DEMO_DATA && window.DEMO_DATA.pharmacies) || []);
 
     const companySettings = (window.store && window.store.companySettings)
@@ -422,22 +451,41 @@
         return false;
       }
       return v.date === targetDate;
-    });
+    }).map((v) => ({ ...v }));
 
     // 1. Filter by Role & Hierarchy
     if (isRep) {
       visits = visits.filter((v) => v.repId === user.id);
+    } else if (role !== "admin" && role !== "hr") {
+      let allowedRepIds = new Set();
+      if (role === "product_manager" || role === "pm") {
+        const pmLines = window.getUserLines ? window.getUserLines(user.id).map((l) => l.id) : [];
+        const pmReps = allUsers.filter((u) => {
+          const uLines = window.getUserLines ? window.getUserLines(u.id) : [];
+          return uLines.some((l) => pmLines.includes(l.id));
+        });
+        allowedRepIds = new Set(pmReps.map((r) => r.id));
+      } else {
+        const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+        allowedRepIds = new Set([user.id, ...subs.map((s) => s.id)]);
+      }
+
+      if (selectedRep !== "all") {
+        if (!allowedRepIds.has(selectedRep)) {
+          visits = []; // Disallow unauthorized inspection
+        } else {
+          visits = visits.filter((v) => v.repId === selectedRep);
+        }
+      } else {
+        visits = visits.filter((v) => allowedRepIds.has(v.repId));
+      }
     } else if (selectedRep !== "all") {
       visits = visits.filter((v) => v.repId === selectedRep);
-    } else if (role !== "admin" && role !== "hr") {
-      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
-      const subIds = new Set([user.id, ...subs.map((s) => s.id)]);
-      visits = visits.filter((v) => subIds.has(v.repId));
     }
 
     if (selectedLm !== "all" && selectedDm === "all" && selectedRep === "all") {
       const lmDms = allUsers.filter((u) => u.managerId === selectedLm).map((u) => u.id);
-      const lmReps = allUsers.filter((u) => lmDms.includes(u.managerId)).map((u) => u.id);
+      const lmReps = allUsers.filter((u) => lmDms.includes(u.managerId) || u.managerId === selectedLm).map((u) => u.id);
       const lmTeamIds = new Set([selectedLm, ...lmDms, ...lmReps]);
       visits = visits.filter((v) => lmTeamIds.has(v.repId));
     }
@@ -582,10 +630,12 @@
       const targetType = v.targetType || (v.period === "am" ? "Hospital" : "Doctor");
       const area = v.area || (rep ? rep.area : "Territory");
 
-      // Coordinates strings
+      // Coordinates strings with finite numeric validation and attribute escaping
       let repCoordsStr = "";
-      if (v.deviceLat != null && v.deviceLng != null) {
-        repCoordsStr = `<code class="gps-coord-code" title="${v.deviceLat}, ${v.deviceLng}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${Number(v.deviceLat).toFixed(4)}, ${Number(v.deviceLng).toFixed(4)}</code>`;
+      if (v.deviceLat != null && v.deviceLng != null && Number.isFinite(Number(v.deviceLat)) && Number.isFinite(Number(v.deviceLng))) {
+        const dLat = Number(v.deviceLat);
+        const dLng = Number(v.deviceLng);
+        repCoordsStr = `<code class="gps-coord-code" title="${dLat.toFixed(6)}, ${dLng.toFixed(6)}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${dLat.toFixed(4)}, ${dLng.toFixed(4)}</code>`;
       } else if (v.gpsStatus === "permission_denied") {
         repCoordsStr = `<span class="badge badge-gps-denied">GPS Denied</span>`;
       } else {
@@ -593,8 +643,10 @@
       }
 
       let targetCoordsStr = "";
-      if (v.targetLat != null && v.targetLng != null) {
-        targetCoordsStr = `<code class="gps-coord-code" title="${v.targetLat}, ${v.targetLng}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg> ${Number(v.targetLat).toFixed(4)}, ${Number(v.targetLng).toFixed(4)}</code>`;
+      if (v.targetLat != null && v.targetLng != null && Number.isFinite(Number(v.targetLat)) && Number.isFinite(Number(v.targetLng))) {
+        const tLat = Number(v.targetLat);
+        const tLng = Number(v.targetLng);
+        targetCoordsStr = `<code class="gps-coord-code" title="${tLat.toFixed(6)}, ${tLng.toFixed(6)}"><svg class="badge-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg> ${tLat.toFixed(4)}, ${tLng.toFixed(4)}</code>`;
       } else {
         targetCoordsStr = `<span class="text-muted small">Not set</span>`;
       }
@@ -610,7 +662,7 @@
       } else if (v.gpsStatus === "in_range") {
         const dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : 0;
         deviationStr = `<span class="text-success fw-bold">${dist} m</span>`;
-        statusBadgeHtml = `<span class="badge badge-gps-in-range"><svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Verified (<200m)</span>`;
+        statusBadgeHtml = `<span class="badge badge-gps-in-range"><svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Verified (<${maxRadius}m)</span>`;
       } else if (v.gpsStatus === "out_of_range") {
         const dist = v.distanceMeters != null ? Math.round(v.distanceMeters) : 0;
         deviationStr = `<span class="text-danger fw-bold">${dist} m</span>`;
@@ -621,20 +673,26 @@
 
       // Action link: single visit map direction
       let actionBtnHtml = "";
-      if (v.deviceLat != null && v.deviceLng != null) {
+      if (v.deviceLat != null && v.deviceLng != null && Number.isFinite(Number(v.deviceLat)) && Number.isFinite(Number(v.deviceLng))) {
+        const dLat = Number(v.deviceLat);
+        const dLng = Number(v.deviceLng);
         let singleMapUrl = "";
-        if (v.targetLat != null && v.targetLng != null) {
-          singleMapUrl = `https://www.google.com/maps/dir/?api=1&origin=${v.targetLat},${v.targetLng}&destination=${v.deviceLat},${v.deviceLng}`;
+        if (v.targetLat != null && v.targetLng != null && Number.isFinite(Number(v.targetLat)) && Number.isFinite(Number(v.targetLng))) {
+          const tLat = Number(v.targetLat);
+          const tLng = Number(v.targetLng);
+          singleMapUrl = `https://www.google.com/maps/dir/?api=1&origin=${tLat},${tLng}&destination=${dLat},${dLng}`;
         } else {
-          singleMapUrl = `https://www.google.com/maps/search/?api=1&query=${v.deviceLat},${v.deviceLng}`;
+          singleMapUrl = `https://www.google.com/maps/search/?api=1&query=${dLat},${dLng}`;
         }
         actionBtnHtml = `
           <a href="${singleMapUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline gps-action-map-btn" title="View visit coordinates on Google Maps">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg> Map
           </a>
         `;
-      } else if (v.targetLat != null && v.targetLng != null) {
-        const singleMapUrl = `https://www.google.com/maps/search/?api=1&query=${v.targetLat},${v.targetLng}`;
+      } else if (v.targetLat != null && v.targetLng != null && Number.isFinite(Number(v.targetLat)) && Number.isFinite(Number(v.targetLng))) {
+        const tLat = Number(v.targetLat);
+        const tLng = Number(v.targetLng);
+        const singleMapUrl = `https://www.google.com/maps/search/?api=1&query=${tLat},${tLng}`;
         actionBtnHtml = `
           <a href="${singleMapUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline gps-action-map-btn" title="View Target on Google Maps">
             <svg class="btn-svg-icon" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg> Clinic
@@ -647,13 +705,13 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td style="text-align: center; font-weight: 700; color: var(--gray-600);">${idx + 1}</td>
-        <td style="font-weight: 600; font-family: monospace;">${svgClock} ${timeStr}</td>
+        <td style="font-weight: 600; font-family: monospace;">${svgClock} ${window.escapeHtml(timeStr)}</td>
         <td>
-          <div style="font-weight: 700; color: var(--gray-900);">${targetName}</div>
-          <div class="text-muted small">${svgUser} ${repName}</div>
+          <div style="font-weight: 700; color: var(--gray-900);">${window.escapeHtml(targetName)}</div>
+          <div class="text-muted small">${svgUser} ${window.escapeHtml(repName)}</div>
         </td>
-        <td style="text-align: center;"><span class="badge badge-soft-primary">${targetType}</span></td>
-        <td>${area}</td>
+        <td style="text-align: center;"><span class="badge badge-soft-primary">${window.escapeHtml(targetType)}</span></td>
+        <td>${window.escapeHtml(area)}</td>
         <td style="text-align: center;">${repCoordsStr}</td>
         <td style="text-align: center;">${targetCoordsStr}</td>
         <td style="text-align: center;">${deviationStr}</td>
@@ -680,10 +738,12 @@
     // Extract valid coordinate waypoints in chronological order
     const validWaypoints = [];
     currentFilteredGpsVisits.forEach((v) => {
-      const lat = v.deviceLat != null ? v.deviceLat : v.targetLat;
-      const lng = v.deviceLng != null ? v.deviceLng : v.targetLng;
-      if (lat != null && lng != null) {
-        validWaypoints.push(`${lat},${lng}`);
+      const rawLat = v.deviceLat != null && v.deviceLat !== "" ? v.deviceLat : v.targetLat;
+      const rawLng = v.deviceLng != null && v.deviceLng !== "" ? v.deviceLng : v.targetLng;
+      const numLat = Number(rawLat);
+      const numLng = Number(rawLng);
+      if (Number.isFinite(numLat) && Number.isFinite(numLng) && numLat !== 0 && numLng !== 0) {
+        validWaypoints.push(`${numLat},${numLng}`);
       }
     });
 
@@ -698,7 +758,7 @@
     // If only 1 point, open search map
     if (validWaypoints.length === 1) {
       const singleUrl = `https://www.google.com/maps/search/?api=1&query=${validWaypoints[0]}`;
-      window.open(singleUrl, "_blank");
+      window.open(singleUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -714,7 +774,7 @@
       routeUrl += `&waypoints=${encodeURIComponent(cappedStops.join("|"))}`;
     }
 
-    window.open(routeUrl, "_blank");
+    window.open(routeUrl, "_blank", "noopener,noreferrer");
   };
 
   // Export CSV

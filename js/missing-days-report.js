@@ -71,12 +71,13 @@ function getSafeSystemDate() {
       fromInput.value = formatDateForInput(new Date(y, m - 1, 1));
       toInput.value = formatDateForInput(new Date(y, m, 0));
     } else if (preset === "last_30_days") {
-      const past = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+      const past = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
       fromInput.value = formatDateForInput(past);
       toInput.value = formatDateForInput(now);
     }
 
-    // Preset updated; render strictly on Show button click
+    window.missingDaysState.dateFrom = fromInput.value;
+    window.missingDaysState.dateTo = toInput.value;
   };
 
   function formatDateForInput(d) {
@@ -91,15 +92,18 @@ function getSafeSystemDate() {
    * Populates Line, DM, and Rep dropdowns according to logged-in user permissions.
    */
   window.populateMissingDaysFilters = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
     const isLM = role === "line_manager" || role === "lm";
-    const isBU = role === "business_unit" || role === "bu";
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    
+    const isBU = role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm";
+    const isPM = role === "product_manager" || role === "pm";
+    const isAdminOrHR = role === "admin" || role === "hr";
+
     const lineSelect = document.getElementById("missingLineSelect");
+    const lmSelect = document.getElementById("missingLmSelect");
     const dmSelect = document.getElementById("missingDmSelect");
     const repSelect = document.getElementById("missingRepSelect");
 
@@ -109,7 +113,7 @@ function getSafeSystemDate() {
     // 1. Line Filter Population
     if (lineSelect) {
       lineSelect.replaceChildren();
-      const userLines = window.getUserLines ? window.getUserLines(user.id) : [];
+      const userLines = (isPM || isDM || isLM || isBU || isRep) && window.getUserLines ? window.getUserLines(user.id) : [];
 
       if (isRep) {
         if (userLines.length > 0) {
@@ -125,23 +129,31 @@ function getSafeSystemDate() {
           lineSelect.appendChild(opt);
         }
         lineSelect.disabled = true;
-      } else if (isDM || isLM || isBU) {
-        if (userLines.length > 1) {
-          const optAll = document.createElement("option");
-          optAll.value = "all";
-          optAll.textContent = "All My Lines";
-          lineSelect.appendChild(optAll);
-        }
-        userLines.forEach((l) => {
+      } else if (isDM || isLM || isBU || isPM) {
+        if (userLines.length === 0) {
           const opt = document.createElement("option");
-          opt.value = l.id;
-          opt.textContent = l.name || l.nameAr;
+          opt.value = "";
+          opt.textContent = "No Line Assigned";
           lineSelect.appendChild(opt);
-        });
-        lineSelect.disabled = userLines.length <= 1;
-        lineSelect.value = userLines[0]?.id || "all";
-      } else {
-        // Admin / BU
+          lineSelect.disabled = true;
+        } else {
+          if (userLines.length > 1) {
+            const optAll = document.createElement("option");
+            optAll.value = "all";
+            optAll.textContent = "All My Lines";
+            lineSelect.appendChild(optAll);
+          }
+          userLines.forEach((l) => {
+            const opt = document.createElement("option");
+            opt.value = l.id;
+            opt.textContent = l.name || l.nameAr;
+            lineSelect.appendChild(opt);
+          });
+          lineSelect.disabled = userLines.length <= 1;
+          lineSelect.value = userLines[0]?.id || "all";
+        }
+      } else if (isAdminOrHR) {
+        // Admin / HR / GM: Full Company Access
         const optAll = document.createElement("option");
         optAll.value = "all";
         optAll.textContent = "All Product Lines";
@@ -159,6 +171,71 @@ function getSafeSystemDate() {
         } else {
           lineSelect.value = "all";
         }
+      } else {
+        // Unknown role: fail closed
+        lineSelect.replaceChildren();
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Access Restricted";
+        lineSelect.appendChild(opt);
+        lineSelect.disabled = true;
+      }
+    }
+
+    // 2. LM Filter Population if present
+    if (lmSelect) {
+      lmSelect.replaceChildren();
+      if (isRep || isDM) {
+        const myMgr = allUsers.find((u) => u.id === user.managerId);
+        const myLm = myMgr && (myMgr.role === "line_manager" || myMgr.role === "lm") ? myMgr : (myMgr && allUsers.find((u) => u.id === myMgr.managerId));
+        const opt = document.createElement("option");
+        opt.value = myLm ? myLm.id : "";
+        opt.textContent = myLm ? myLm.name : "Line Manager";
+        lmSelect.appendChild(opt);
+        lmSelect.disabled = true;
+      } else if (isLM) {
+        const opt = document.createElement("option");
+        opt.value = user.id;
+        opt.textContent = `${user.name} (LM)`;
+        lmSelect.appendChild(opt);
+        lmSelect.disabled = true;
+      } else if (isAdminOrHR || isBU || isPM) {
+        const optAll = document.createElement("option");
+        optAll.value = "all";
+        optAll.textContent = "All Line Managers";
+        lmSelect.appendChild(optAll);
+
+        let lms = allUsers.filter((u) => {
+          const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || "").toLowerCase();
+          return r === "line_manager" || r === "lm";
+        });
+        if (isBU) {
+          const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+          const subIds = new Set(subs.map((s) => s.id));
+          lms = lms.filter((lm) => subIds.has(lm.id));
+        } else if (isPM) {
+          const pmLineIds = window.getUserLines ? window.getUserLines(user.id).map((l) => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
+          lms = pmLineIds.length === 0
+            ? []
+            : lms.filter((lm) => {
+                const lmLines = window.getUserLines ? window.getUserLines(lm.id).map((l) => l.id) : (lm.lineIds || (lm.lineId ? [lm.lineId] : []));
+                return lmLines.some((lid) => pmLineIds.includes(lid));
+              });
+        }
+        lms.forEach((lm) => {
+          const opt = document.createElement("option");
+          opt.value = lm.id;
+          opt.textContent = lm.name;
+          lmSelect.appendChild(opt);
+        });
+        lmSelect.disabled = false;
+      } else {
+        // Unknown role: fail closed
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Access Restricted";
+        lmSelect.appendChild(opt);
+        lmSelect.disabled = true;
       }
     }
 
@@ -172,17 +249,20 @@ function getSafeSystemDate() {
    * Cascading handler when line is changed.
    */
   window.onMissingDaysLineChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
     const isDM = role === "district_manager" || role === "dm";
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
+    const isLM = role === "line_manager" || role === "lm";
+    const isBU = role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm";
+    const isPM = role === "product_manager" || role === "pm";
+    const isAdminOrHR = role === "admin" || role === "hr";
     
     const lineSelect = document.getElementById("missingLineSelect");
     const dmSelect = document.getElementById("missingDmSelect");
-    const repSelect = document.getElementById("missingRepSelect");
 
-    const selectedLine = lineSelect ? lineSelect.value : "all";
+    const selectedLine = window.selectedReportLineId || (lineSelect && lineSelect.value ? lineSelect.value : "all");
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
 
     // DM Filter
@@ -202,8 +282,8 @@ function getSafeSystemDate() {
         opt.textContent = `${user.name} (DM)`;
         dmSelect.appendChild(opt);
         dmSelect.disabled = true;
-      } else {
-        // Admin or LM
+      } else if (isAdminOrHR || isLM || isBU || isPM) {
+        // Admin or LM or BU or PM
         const optAll = document.createElement("option");
         optAll.value = "all";
         optAll.textContent = "All District Managers";
@@ -214,15 +294,26 @@ function getSafeSystemDate() {
           return r === "district_manager" || r === "dm";
         });
 
-        if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+        if (isLM || isBU) {
           const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
           const subIds = new Set(subs.map((s) => s.id));
           dms = dms.filter((dm) => subIds.has(dm.id));
         }
 
-        if (selectedLine !== "all") {
+        if (isPM) {
+          const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+          const pmLineIds = pmLines.map((l) => l.id);
           dms = dms.filter((dm) => {
-            const lines = window.getUserLines ? window.getUserLines(dm.id).map((l) => l.id) : (dm.lineIds || (dm.lineId ? [dm.lineId] : []));
+            const uLines = typeof window.getUserLines === "function" ? window.getUserLines(dm.id).map((l) => l.id) : [];
+            const dmLines = uLines.length > 0 ? uLines : (dm.lineIds || (dm.lineId ? [dm.lineId] : []));
+            return dmLines.some((id) => pmLineIds.includes(id));
+          });
+        }
+
+        if (selectedLine && selectedLine !== "all") {
+          dms = dms.filter((dm) => {
+            const uLines = typeof window.getUserLines === "function" ? window.getUserLines(dm.id).map((l) => l.id) : [];
+            const lines = uLines.length > 0 ? uLines : (dm.lineIds || (dm.lineId ? [dm.lineId] : []));
             return lines.includes(selectedLine);
           });
         }
@@ -234,24 +325,32 @@ function getSafeSystemDate() {
           dmSelect.appendChild(opt);
         });
         dmSelect.disabled = false;
+      } else {
+        // Unknown role: fail closed
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Access Restricted";
+        dmSelect.appendChild(opt);
+        dmSelect.disabled = true;
       }
     }
 
     if (typeof window.onMissingDaysDmChange === "function") {
       window.onMissingDaysDmChange();
     }
-    // cascading filter updated
   };
 
   /**
    * Cascading handler when DM is changed.
    */
   window.onMissingDaysDmChange = function () {
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-    
+    const isPM = role === "product_manager" || role === "pm";
+    const isAdminOrHR = role === "admin" || role === "hr";
+
     const lineSelect = document.getElementById("missingLineSelect");
     const dmSelect = document.getElementById("missingDmSelect");
     const repSelect = document.getElementById("missingRepSelect");
@@ -274,8 +373,8 @@ function getSafeSystemDate() {
     repSelect.appendChild(optAll);
 
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
-    const selectedLine = lineSelect ? lineSelect.value : "all";
-    const selectedDm = dmSelect ? dmSelect.value : "all";
+    const selectedLine = window.selectedReportLineId || (lineSelect && lineSelect.value ? lineSelect.value : "all");
+    const selectedDm = (dmSelect && dmSelect.value) ? dmSelect.value : "all";
 
     let reps = allUsers.filter((u) => {
       const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || "").toLowerCase();
@@ -284,20 +383,37 @@ function getSafeSystemDate() {
 
     if (role === "district_manager" || role === "dm") {
       reps = reps.filter((r) => r.managerId === user.id);
-    } else if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+    } else if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm") {
       const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
       const subIds = new Set(subs.map((s) => s.id));
       reps = reps.filter((r) => subIds.has(r.id));
       if (selectedDm !== "all") {
         reps = reps.filter((r) => r.managerId === selectedDm);
       }
-    } else if (selectedDm !== "all") {
-      reps = reps.filter((r) => r.managerId === selectedDm);
+    } else if (isPM) {
+      const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+      const pmLineIds = pmLines.map(l => l.id);
+      reps = reps.filter((r) => {
+        const userLines = typeof window.getUserLines === "function" ? window.getUserLines(r.id).map(l => l.id) : [];
+        const rLines = userLines.length > 0 ? userLines : (r.lineIds || (r.lineId ? [r.lineId] : []));
+        return rLines.some(id => pmLineIds.includes(id));
+      });
+      if (selectedDm !== "all") {
+        reps = reps.filter((r) => r.managerId === selectedDm);
+      }
+    } else if (isAdminOrHR) {
+      if (selectedDm !== "all") {
+        reps = reps.filter((r) => r.managerId === selectedDm);
+      }
+    } else {
+      // Unknown role: fail closed
+      reps = [];
     }
 
     if (selectedLine !== "all") {
       reps = reps.filter((r) => {
-        const lines = window.getUserLines ? window.getUserLines(r.id).map((l) => l.id) : (r.lineIds || (r.lineId ? [r.lineId] : []));
+        const userLines = typeof window.getUserLines === "function" ? window.getUserLines(r.id).map((l) => l.id) : [];
+        const lines = userLines.length > 0 ? userLines : (r.lineIds || (r.lineId ? [r.lineId] : []));
         return lines.includes(selectedLine);
       });
     }
@@ -309,7 +425,6 @@ function getSafeSystemDate() {
       repSelect.appendChild(opt);
     });
     repSelect.disabled = false;
-    // cascading filter updated
   };
 
   window.onMissingDaysFilterChange = function () {
@@ -327,27 +442,49 @@ function getSafeSystemDate() {
   }
 
   /**
-   * Calculates Working Days (W.D) in date range excluding company-defined weekends.
+   * Helper to retrieve list of company public holiday date strings (YYYY-MM-DD)
+   */
+  function getPublicHolidaysList(companySettings) {
+    let list = [];
+    if (typeof window !== "undefined" && window.store && window.store.publicHolidays && typeof window.store.publicHolidays.getAll === "function") {
+      list = window.store.publicHolidays.getAll() || [];
+    } else if (typeof window !== "undefined" && window.DEMO_DATA && Array.isArray(window.DEMO_DATA.publicHolidays)) {
+      list = window.DEMO_DATA.publicHolidays;
+    } else if (companySettings && Array.isArray(companySettings.publicHolidays)) {
+      list = companySettings.publicHolidays;
+    }
+    return list.map((h) => (typeof h === "string" ? h : h?.date)).filter(Boolean);
+  }
+
+  /**
+   * Calculates Working Days (W.D) in date range excluding company-defined weekends and public holidays.
    * If secondary weekend is pm_only (half-day off), each such day contributes 0.5 to working days.
    */
   function calculateWorkingDays(startDate, endDate, companySettings) {
-    if (!startDate || !endDate) return 0;
+    if (!startDate || !endDate || startDate > endDate) return 0;
     const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
     const secMode = companySettings?.secondaryWeekendMode || "full_day";
+    const holidays = getPublicHolidaysList(companySettings);
 
     let workingDays = 0;
     const cur = new Date(startDate.getTime());
+    let safetyCounter = 0;
+    const maxDays = 366;
 
-    while (cur <= endDate) {
+    while (cur <= endDate && safetyCounter < maxDays) {
+      safetyCounter++;
+      const dStr = formatDateForInput(cur);
       const dayOfWeek = cur.getDay(); // 0: Sun, 1: Mon, ..., 4: Thu, 5: Fri, 6: Sat
 
       if (dayOfWeek === 5) {
         // Friday is statutory full weekend
       } else if ((secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4)) {
-        if (secMode === "pm_only") {
+        if (secMode === "pm_only" && !holidays.includes(dStr)) {
           workingDays += 0.5; // AM work, PM off
         }
         // if full_day -> 0
+      } else if (holidays.includes(dStr)) {
+        // Statutory public holiday: 0 working days
       } else {
         workingDays += 1;
       }
@@ -400,16 +537,22 @@ function getSafeSystemDate() {
       periodPill.textContent = `Period: ${fromDateStr} to ${toDateStr}`;
     }
 
-    const user = (typeof checkAuth === "function" ? checkAuth() : null) || { role: "admin", id: "u1790626000010" };
+    const user = (typeof checkAuth === "function" ? checkAuth() : null);
+    if (!user || !user.id) return;
     const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || "").toLowerCase();
     const isRep = role === "medical_rep" || role === "rep";
-    const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
     
     const lmSelect = document.getElementById("missingLmSelect");
-    const selectedLm = lmSelect ? lmSelect.value : "all";
-    const selectedLine = window.selectedReportLineId || (lineSelect ? lineSelect.value : "all");
-    const selectedDm = dmSelect ? dmSelect.value : "all";
-    const selectedRep = repSelect ? repSelect.value : "all";
+    const selectedLm = (lmSelect && lmSelect.value) ? lmSelect.value : "all";
+    const selectedLine = window.selectedReportLineId || (lineSelect && lineSelect.value ? lineSelect.value : "all");
+    const selectedDm = (dmSelect && dmSelect.value) ? dmSelect.value : "all";
+    const selectedRep = (repSelect && repSelect.value) ? repSelect.value : "all";
+
+    window.missingDaysState.dateFrom = fromDateStr;
+    window.missingDaysState.dateTo = toDateStr;
+    window.missingDaysState.selectedLineId = selectedLine;
+    window.missingDaysState.selectedDmId = selectedDm;
+    window.missingDaysState.selectedRepId = selectedRep;
 
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
     const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines) || []);
@@ -417,16 +560,25 @@ function getSafeSystemDate() {
     const minVisitsForFieldDay = Math.max(1, parseInt(companySettings.minPmVisitsPerDay || 4, 10));
 
     // Cap working days and expected field days calculation to today if the selected period extends into the future
-    const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || formatDateForInput(new Date());
-    const todayDate = parseLocalDate(todayStr) || new Date();
+    const today = (typeof window.getSystemDate === "function" ? window.getSystemDate() : new Date());
+    const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || formatDateForInput(today);
+    const todayDate = parseLocalDate(todayStr) || today;
     todayDate.setHours(23, 59, 59, 999);
-    const effectiveEndDate = endDate > todayDate ? (todayDate >= startDate ? todayDate : startDate) : endDate;
 
-    // Working days in period (capped to today for in-progress periods)
-    const totalWorkingDays = calculateWorkingDays(startDate, effectiveEndDate, companySettings);
+    let effectiveEndDate = endDate;
+    let totalWorkingDays = 0;
+
+    if (startDate > todayDate) {
+      // Period is entirely in the future: working days and target are 0
+      effectiveEndDate = null;
+      totalWorkingDays = 0;
+    } else {
+      effectiveEndDate = endDate > todayDate ? todayDate : endDate;
+      totalWorkingDays = calculateWorkingDays(startDate, effectiveEndDate, companySettings);
+    }
 
     // Target Field Days (standard is working days minus 1 buffer day for monthly meeting/admin, or min 1)
-    const defaultTargetFd = Math.max(1, totalWorkingDays > 20 ? totalWorkingDays - 1 : totalWorkingDays);
+    const defaultTargetFd = totalWorkingDays > 0 ? Math.max(1, totalWorkingDays > 20 ? totalWorkingDays - 1 : totalWorkingDays) : 0;
 
     // Filter Reps in scope
     let targetReps = allUsers.filter((u) => {
@@ -434,33 +586,54 @@ function getSafeSystemDate() {
       return (r === "medical_rep" || r === "rep") && u.status !== "Inactive";
     });
 
+    const isPM = role === "product_manager" || role === "pm";
+    const isAdminOrHR = role === "admin" || role === "hr";
+
     if (isRep) {
       targetReps = targetReps.filter((r) => r.id === user.id);
     } else if (role === "district_manager" || role === "dm") {
       targetReps = targetReps.filter((r) => r.managerId === user.id);
-    } else if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu") {
+    } else if (role === "line_manager" || role === "lm" || role === "business_unit" || role === "bu" || role === "general_manager" || role === "gm") {
       const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
       const subIds = new Set(subs.map((s) => s.id));
       targetReps = targetReps.filter((r) => subIds.has(r.id));
+    } else if (isPM) {
+      const pmLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id) : [];
+      const pmLineIds = pmLines.map(l => l.id);
+      if (pmLineIds.length === 0) {
+        targetReps = [];
+      } else {
+        targetReps = targetReps.filter((r) => {
+          const uLines = typeof window.getUserLines === "function" ? window.getUserLines(r.id).map(l => l.id) : [];
+          const rLines = uLines.length > 0 ? uLines : (r.lineIds || (r.lineId ? [r.lineId] : []));
+          return rLines.some(id => pmLineIds.includes(id));
+        });
+      }
+    } else if (isAdminOrHR) {
+      // Allowed all company reps
+    } else {
+      // Unknown or unauthorized role: fail closed!
+      targetReps = [];
     }
 
-    if (selectedLm !== "all") {
+    if (selectedLm && selectedLm !== "all") {
       const lmDmIds = allUsers.filter((u) => u.managerId === selectedLm).map((u) => u.id);
-      targetReps = targetReps.filter((r) => lmDmIds.includes(r.managerId));
+      targetReps = targetReps.filter((r) => r.managerId === selectedLm || lmDmIds.includes(r.managerId));
     }
 
-    if (selectedDm !== "all") {
+    if (selectedDm && selectedDm !== "all") {
       targetReps = targetReps.filter((r) => r.managerId === selectedDm);
     }
 
-    if (selectedLine !== "all") {
+    if (selectedLine && selectedLine !== "all") {
       targetReps = targetReps.filter((r) => {
-        const lines = window.getUserLines ? window.getUserLines(r.id).map((l) => l.id) : (r.lineIds || (r.lineId ? [r.lineId] : []));
+        const uLines = typeof window.getUserLines === "function" ? window.getUserLines(r.id).map((l) => l.id) : [];
+        const lines = uLines.length > 0 ? uLines : (r.lineIds || (r.lineId ? [r.lineId] : []));
         return lines.includes(selectedLine);
       });
     }
 
-    if (selectedRep !== "all") {
+    if (selectedRep && selectedRep !== "all") {
       targetReps = targetReps.filter((r) => r.id === selectedRep);
     }
 
@@ -475,22 +648,37 @@ function getSafeSystemDate() {
     targetReps.forEach((rep) => {
       // 1. Line info
       const repLines = rep.lineIds || (rep.lineId ? [rep.lineId] : []);
-      const matchedLine = allLines.find((l) => repLines.includes(l.id)) || { name: "CIRA Line" };
-      const lineName = matchedLine.name || matchedLine.nameAr;
+      const matchedLine = allLines.find((l) => repLines.includes(l.id)) || { name: "Unassigned" };
+      const lineName = matchedLine.name || matchedLine.nameAr || "Unassigned";
 
-      // 2. DM & AM info
-      const dm = allUsers.find((u) => u.id === rep.managerId);
-      const dmName = dm ? dm.name : (rep.managerName || "—");
-      const lm = dm ? allUsers.find((u) => u.id === dm.managerId) : null;
-      const amName = lm ? lm.name : "—";
+      // 2. DM & AM info (support direct reporting to LM)
+      const mgr = allUsers.find((u) => u.id === rep.managerId);
+      const mgrRole = mgr ? (window.normalizeRole ? window.normalizeRole(mgr.role) : (mgr.role || "").toLowerCase()) : "";
+      let dmName = "—";
+      let amName = "—";
+
+      if (mgrRole === "line_manager" || mgrRole === "lm") {
+        dmName = "—";
+        amName = mgr.name;
+      } else if (mgrRole === "district_manager" || mgrRole === "dm") {
+        dmName = mgr.name;
+        const lm = allUsers.find((u) => u.id === mgr.managerId);
+        amName = lm ? lm.name : "—";
+      } else {
+        dmName = mgr ? mgr.name : (rep.managerName || "—");
+        amName = "—";
+      }
 
       // 3. Hiring date adjustment (if hired after startDate)
       let repWorkingDays = totalWorkingDays;
-      let effectiveStartDate = startDate;
-      if (rep.hireDate) {
+      let repEffectiveStart = startDate;
+
+      if (!effectiveEndDate) {
+        repWorkingDays = 0;
+      } else if (rep.hireDate) {
         const hireDate = parseLocalDate(rep.hireDate);
         if (hireDate && hireDate > startDate && hireDate <= effectiveEndDate) {
-          effectiveStartDate = hireDate;
+          repEffectiveStart = hireDate;
           repWorkingDays = calculateWorkingDays(hireDate, effectiveEndDate, companySettings);
         } else if (hireDate && hireDate > effectiveEndDate) {
           // Not hired yet in this period
@@ -501,13 +689,13 @@ function getSafeSystemDate() {
       const repTargetFd = repWorkingDays > 0 ? Math.max(1, repWorkingDays > 20 ? repWorkingDays - 1 : repWorkingDays) : 0;
 
       // 4. Calculate Actual Field Days (Completed visits count per day in range)
-      const repVisits = allVisits.filter((v) => {
+      const repVisits = (!effectiveEndDate) ? [] : allVisits.filter((v) => {
         if (!v || v.repId !== rep.id) return false;
         const vDate = parseLocalDate(v.date || v.visitDate);
         if (!vDate) return false;
-        if (vDate < effectiveStartDate || vDate > effectiveEndDate) return false;
-        // Completed or executed
-        return v.status === "completed" || v.status === "executed" || !v.status;
+        if (vDate < repEffectiveStart || vDate > effectiveEndDate) return false;
+        const vStat = (v.status || "").toLowerCase();
+        return vStat === "completed" || vStat === "executed" || !v.status;
       });
 
       // Map visits by date
@@ -517,57 +705,69 @@ function getSafeSystemDate() {
         visitsByDate[dStr] = (visitsByDate[dStr] || 0) + 1;
       });
 
-      // Days where rep achieved minimum visit criteria
-      const fieldDates = Object.keys(visitsByDate).filter((d) => visitsByDate[d] >= 1); // 1 or more counts as field activity
+      // Days where rep achieved field visit activity (1 or more visits)
+      const fieldDates = Object.keys(visitsByDate).filter((d) => visitsByDate[d] >= 1);
       const actualFd = fieldDates.length;
 
       // 5. Calculate Non-Field Days (Office / Meetings / Activities)
       let nonFd = 0;
       const nonFdDates = [];
-      const userActivitiesObj = (window.store && window.store.activities ? window.store.activities.getAllForUser(rep.id) : {}) || {};
-      Object.keys(userActivitiesObj).forEach((actDateStr) => {
-        const dayActs = userActivitiesObj[actDateStr];
-        if (!dayActs || (!dayActs.AM && !dayActs.PM)) return;
-        const actDate = parseLocalDate(actDateStr);
-        if (!actDate) return;
-        if (actDate >= effectiveStartDate && actDate <= effectiveEndDate) {
-          if (!visitsByDate[actDateStr]) {
-            nonFdDates.push(actDateStr);
+      if (effectiveEndDate) {
+        const userActivitiesObj = (window.store && window.store.activities && typeof window.store.activities.getAllForUser === "function" ? window.store.activities.getAllForUser(rep.id) : {}) || {};
+        Object.keys(userActivitiesObj).forEach((actDateStr) => {
+          const dayActs = userActivitiesObj[actDateStr];
+          if (!dayActs || (!dayActs.AM && !dayActs.PM)) return;
+          const actDate = parseLocalDate(actDateStr);
+          if (!actDate) return;
+          if (actDate >= repEffectiveStart && actDate <= effectiveEndDate) {
+            if (!visitsByDate[actDateStr]) {
+              nonFdDates.push(actDateStr);
+            }
           }
-        }
-      });
+        });
+      }
       nonFd = nonFdDates.length;
 
-      // 6. Calculate Vacations in range
+      // 6. Calculate Vacations in range (deduplicated, approved only, excluding field and office days)
       let vacationDays = 0;
       const vacationDates = [];
-      const repLeaves = allLeaves.filter((l) => (l.userId === rep.id || l.repId === rep.id) && (l.status === "approved" || !l.status));
-      repLeaves.forEach((leave) => {
-        const lStart = parseLocalDate(leave.startDate);
-        const lEnd = parseLocalDate(leave.endDate || leave.startDate);
-        if (!lStart || !lEnd) return;
+      const holidaysList = getPublicHolidaysList(companySettings);
 
-        let curL = new Date(Math.max(lStart.getTime(), effectiveStartDate.getTime()));
-        const limitL = new Date(Math.min(lEnd.getTime(), effectiveEndDate.getTime()));
+      if (effectiveEndDate) {
+        const repLeaves = allLeaves.filter((l) => (l.userId === rep.id || l.repId === rep.id) && (l.status || "").toLowerCase() === "approved");
+        repLeaves.forEach((leave) => {
+          const lStart = parseLocalDate(leave.startDate);
+          const lEnd = parseLocalDate(leave.endDate || leave.startDate);
+          if (!lStart || !lEnd) return;
 
-        while (curL <= limitL) {
-          const dayOfWeek = curL.getDay();
-          const isFriday = dayOfWeek === 5;
-          const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
-          const secMode = companySettings?.secondaryWeekendMode || "full_day";
-          const isSecondaryFullOff = ((secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4)) && secMode === "full_day";
-          if (!isFriday && !isSecondaryFullOff) {
-            vacationDays++;
-            vacationDates.push(formatDateForInput(curL));
+          let curL = new Date(Math.max(lStart.getTime(), repEffectiveStart.getTime()));
+          const limitL = new Date(Math.min(lEnd.getTime(), effectiveEndDate.getTime()));
+          const isHalfDay = leave.type === "half_day" || leave.dayDuration === "half" || leave.duration === 0.5 || Number(leave.days) === 0.5;
+          let safetyL = 0;
+
+          while (curL <= limitL && safetyL < 366) {
+            safetyL++;
+            const dStr = formatDateForInput(curL);
+            const dayOfWeek = curL.getDay();
+            const isFriday = dayOfWeek === 5;
+            const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
+            const secMode = companySettings?.secondaryWeekendMode || "full_day";
+            const isSecondaryFullOff = ((secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4)) && secMode === "full_day";
+            const isHoliday = holidaysList.includes(dStr);
+
+            if (!isFriday && !isSecondaryFullOff && !isHoliday && !fieldDates.includes(dStr) && !nonFdDates.includes(dStr) && !vacationDates.includes(dStr)) {
+              vacationDays += (isHalfDay ? 0.5 : 1);
+              vacationDates.push(dStr);
+            }
+            curL.setDate(curL.getDate() + 1);
           }
-          curL.setDate(curL.getDate() + 1);
-        }
-      });
+        });
+      }
 
       // 7. Missing Days Equation: Target F.D - (Actual F.D + Non F.D + Vacation)
-      const missing = repTargetFd - (actualFd + nonFd + vacationDays);
+      const missing = repTargetFd > 0 ? (repTargetFd - (actualFd + nonFd + vacationDays)) : 0;
 
-      sumTotalMissing += missing;
+      sumTotalMissing += Math.max(0, missing);
       sumActualFd += actualFd;
 
       rows.push({
@@ -589,7 +789,7 @@ function getSafeSystemDate() {
         fieldDates,
         nonFdDates,
         vacationDates,
-        effectiveStartDate,
+        effectiveStartDate: repEffectiveStart,
         endDate
       });
     });
@@ -637,6 +837,8 @@ function getSafeSystemDate() {
       return;
     }
 
+    const escape = (s) => (typeof window.escapeHtml === "function" ? window.escapeHtml(s) : String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
+
     rows.forEach((r) => {
       const tr = document.createElement("tr");
 
@@ -651,13 +853,13 @@ function getSafeSystemDate() {
       }
 
       tr.innerHTML = `
-        <td style="font-weight:600;"><span class="badge badge-missing-line">${window.escapeHtml(r.lineName)}</span></td>
-        <td class="text-muted">${window.escapeHtml(r.amName)}</td>
-        <td style="font-weight:600; color:var(--gray-800);">${window.escapeHtml(r.dmName)}</td>
-        <td style="font-weight:700; color:var(--primary); cursor:pointer;" onclick="openMissingDaysDetailsModal('${r.repId}')" title="Click to view full days breakdown">
-          <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${window.escapeHtml(r.repName)}
+        <td style="font-weight:600;"><span class="badge badge-missing-line">${escape(r.lineName)}</span></td>
+        <td class="text-muted">${escape(r.amName)}</td>
+        <td style="font-weight:600; color:var(--gray-800);">${escape(r.dmName)}</td>
+        <td style="font-weight:700; color:var(--primary); cursor:pointer;" class="btn-missing-details" data-rep-id="${r.repId}" title="Click to view full days breakdown">
+          <svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escape(r.repName)}
         </td>
-        <td style="font-size:0.82rem; color:var(--gray-500);">${window.escapeHtml(r.hireDate)}</td>
+        <td style="font-size:0.82rem; color:var(--gray-500);">${escape(r.hireDate)}</td>
         <td style="text-align:center; font-weight:600;">${r.monthLabel}</td>
         <td style="text-align:center;">Q${r.quarter}</td>
         <td style="text-align:center; font-weight:700;">${r.wd}</td>
@@ -665,12 +867,23 @@ function getSafeSystemDate() {
         <td style="text-align:center; font-weight:700; color:var(--success); background:rgba(25,135,84,0.04);">${r.actualFd}</td>
         <td style="text-align:center; font-weight:600; color:var(--info);">${r.nonFd}</td>
         <td style="text-align:center; font-weight:600; color:var(--warning);">${r.vacationDays}</td>
-        <td style="text-align:center; cursor:pointer;" onclick="openMissingDaysDetailsModal('${r.repId}')" title="View breakdown">
+        <td style="text-align:center; cursor:pointer;" class="btn-missing-details" data-rep-id="${r.repId}" title="View breakdown">
           ${missingBadge}
         </td>
       `;
       tbody.appendChild(tr);
     });
+
+    if (!tbody.dataset) tbody.dataset = {};
+    if (!tbody.dataset.eventsBound) {
+      tbody.dataset.eventsBound = "true";
+      tbody.addEventListener("click", (e) => {
+        const item = e.target.closest(".btn-missing-details");
+        if (item && item.dataset.repId) {
+          openMissingDaysDetailsModal(item.dataset.repId);
+        }
+      });
+    }
   }
 
   /**
@@ -704,22 +917,32 @@ function getSafeSystemDate() {
       const companySettings = (window.store && window.store.companySettings ? window.store.companySettings.get() : {}) || {};
       const secDay = companySettings?.secondaryWeekendDay || (companySettings?.isThursdayWeekend ? "thursday" : "none");
       const secMode = companySettings?.secondaryWeekendMode || "full_day";
+      const holidaysList = getPublicHolidaysList(companySettings);
 
-      const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || formatDateForInput(new Date());
-      const todayDate = parseLocalDate(todayStr) || new Date();
+      const today = (typeof window.getSystemDate === "function" ? window.getSystemDate() : new Date());
+      const todayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) || formatDateForInput(today);
+      const todayDate = parseLocalDate(todayStr) || today;
       todayDate.setHours(23, 59, 59, 999);
 
       const cur = new Date(repData.effectiveStartDate.getTime());
-      while (cur <= repData.endDate) {
+      let safetyModal = 0;
+      const maxModalDays = 366;
+
+      while (cur <= repData.endDate && safetyModal < maxModalDays) {
+        safetyModal++;
         const dStr = formatDateForInput(cur);
         const dayOfWeek = cur.getDay();
         const isFriday = dayOfWeek === 5;
         const isSecondaryDay = (secDay === "saturday" && dayOfWeek === 6) || (secDay === "thursday" && dayOfWeek === 4);
+        const isHoliday = holidaysList.includes(dStr);
 
         const item = document.createElement("div");
         const dayName = cur.toLocaleDateString("en", { weekday: "short" });
 
-        if (isFriday || (isSecondaryDay && secMode === "full_day")) {
+        if (isHoliday) {
+          item.className = "missing-day-item missing-day-weekend";
+          item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-secondary">Public Holiday</span>`;
+        } else if (isFriday || (isSecondaryDay && secMode === "full_day")) {
           item.className = "missing-day-item missing-day-weekend";
           item.innerHTML = `<span><svg class="header-svg-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.85" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${dStr} (${dayName})</span> <span class="badge bg-secondary">Weekend</span>`;
         } else if (isSecondaryDay && secMode === "pm_only" && !repData.fieldDates.includes(dStr) && !repData.nonFdDates.includes(dStr) && !repData.vacationDates.includes(dStr)) {
@@ -757,7 +980,7 @@ function getSafeSystemDate() {
   };
 
   /**
-   * Exports Missing Days table to CSV.
+   * Exports Missing Days table to CSV / Excel.
    */
   window.exportMissingDaysReport = function () {
     const rows = window.missingDaysState.rows;
@@ -774,35 +997,51 @@ function getSafeSystemDate() {
       "Actual F.D", "Non F.D", "Vacation", "Missing Days"
     ];
 
-    const csvData = [headers.join(",")];
+    const dataRows = rows.map((r) => [
+      r.lineName,
+      r.amName,
+      r.dmName,
+      r.repName,
+      r.hireDate,
+      r.monthLabel,
+      `Q${r.quarter}`,
+      r.wd,
+      r.targetFd,
+      r.actualFd,
+      r.nonFd,
+      r.vacationDays,
+      r.missing
+    ]);
 
-    rows.forEach((r) => {
-      const row = [
-        `"${r.lineName}"`,
-        `"${r.amName}"`,
-        `"${r.dmName}"`,
-        `"${r.repName}"`,
-        `"${r.hireDate}"`,
-        `"${r.monthLabel}"`,
-        `"Q${r.quarter}"`,
-        r.wd,
-        r.targetFd,
-        r.actualFd,
-        r.nonFd,
-        r.vacationDays,
-        r.missing
-      ];
-      csvData.push(row.join(","));
-    });
+    const fromDate = window.missingDaysState.dateFrom || document.getElementById("missingDateFrom")?.value || "start";
+    const toDate = window.missingDaysState.dateTo || document.getElementById("missingDateTo")?.value || "end";
+    const fileName = `Missing_Days_Report_${fromDate}_to_${toDate}`;
+    const sheetTitle = "Missing Days";
 
-    const blob = new Blob(["\uFEFF" + csvData.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Missing_Days_Report_${window.missingDaysState.dateFrom}_to_${window.missingDaysState.dateTo}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (typeof window.downloadExcelOrCsv === "function") {
+      window.downloadExcelOrCsv(fileName, sheetTitle, dataRows, headers);
+    } else {
+      const escapeCsv = (val) => {
+        let s = val === null || val === undefined ? "" : String(val);
+        if (/^[=@\t\r]|(^[+-](?![\d\s().-]+$))/.test(s)) {
+          s = "'" + s;
+        }
+        if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      };
+      const csvContent = [headers.map(escapeCsv).join(","), ...dataRows.map((r) => r.map(escapeCsv).join(","))].join("\r\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${fileName}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
   };
 
 

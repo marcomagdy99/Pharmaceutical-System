@@ -50,12 +50,9 @@
   }
 
   /**
-   * Month names helper for bilingual charts.
+   * Month names helper for charts (English-only standard).
    */
-  const MONTH_LABELS = {
-    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    ar: ['\u064a\u0646\u0627\u064a\u0631', '\u0641\u0628\u0631\u0627\u064a\u0631', '\u0645\u0627\u0631\u0633', '\u0623\u0628\u0631\u064a\u0644', '\u0645\u0627\u064a\u0648', '\u064a\u0648\u0646\u064a\u0648', '\u064a\u0648\u0644\u064a\u0648', '\u0623\u063a\u0633\u0637\u0633', '\u0633\u0628\u062a\u0645\u0628\u0631', '\u0623\u0643\u062a\u0648\u0628\u0631', '\u0646\u0648\u0641\u0645\u0628\u0631', '\u062f\u064a\u0633\u0645\u0628\u0631']
-  };
+  const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   /**
    * Ensures Chart.js is loaded, with dynamic fallback if script was blocked or delayed.
@@ -68,11 +65,17 @@
     const existing = document.querySelector('script[src*="chart.umd"]');
     if (existing) {
       existing.addEventListener('load', () => callback());
+      existing.addEventListener('error', (err) => {
+        console.error('Failed to load chart.umd.min.js:', err);
+      });
       return;
     }
     const script = document.createElement('script');
     script.src = 'js/chart.umd.min.js';
     script.onload = () => callback();
+    script.onerror = (err) => {
+      console.error('Failed to dynamically load chart.umd.min.js:', err);
+    };
     document.head.appendChild(script);
   }
 
@@ -88,15 +91,13 @@
 
       destroyExistingChart(canvasId);
 
-      const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-            const dark = isDarkMode();
-
+      const dark = isDarkMode();
       const textColor = dark ? '#cbd5e1' : '#475569';
       const gridColor = dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.6)';
 
-      const labels = options.labels || MONTH_LABELS.en;
-      const targets = options.targets || [20000, 25000, 22000, 28000, 30000, 32000, 31000, 35000, 34000, 38000, 40000, 42000];
-      const actuals = options.actuals || [21000, 24000, 23500, 29000, 28500, 34000, 32500, 36000, 33500, 39000, 41000, 43000];
+      const labels = options.labels || MONTH_LABELS;
+      const targets = options.targets || (window.DEMO_MODE ? [20000, 25000, 22000, 28000, 30000, 32000, 31000, 35000, 34000, 38000, 40000, 42000] : new Array(labels.length).fill(0));
+      const actuals = options.actuals || (window.DEMO_MODE ? [21000, 24000, 23500, 29000, 28500, 34000, 32500, 36000, 33500, 39000, 41000, 43000] : new Array(labels.length).fill(0));
 
       const achievements = options.achievements || actuals.map((act, i) => {
         const tgt = targets[i] || 0;
@@ -246,31 +247,29 @@
 
       destroyExistingChart(canvasId);
 
-      const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-            const dark = isDarkMode();
+      const dark = isDarkMode();
       const textColor = dark ? '#cbd5e1' : '#475569';
 
       const labels = ['Class A', 'Class B', 'Hospitals'];
 
       const dataVals = [Number(classA) || 0, Number(classB) || 0, Number(hospitals) || 0];
       const total = dataVals.reduce((a, b) => a + b, 0);
+      const hasData = total > 0;
 
       const ctx = canvas.getContext('2d');
       const chart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: labels,
+          labels: hasData ? labels : ['No Data'],
           datasets: [
             {
-              data: total > 0 ? dataVals : [1, 1, 1],
-              backgroundColor: [
-                '#10b981',
-                '#3b82f6',
-                '#8b5cf6'
-              ],
+              data: hasData ? dataVals : [1],
+              backgroundColor: hasData
+                ? ['#10b981', '#3b82f6', '#8b5cf6']
+                : [dark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0'],
               borderColor: dark ? '#1e293b' : '#ffffff',
               borderWidth: 2,
-              hoverOffset: 6
+              hoverOffset: hasData ? 6 : 0
             }
           ]
         },
@@ -297,7 +296,7 @@
               rtl: false,
               callbacks: {
                 label: function (context) {
-                  const val = context.parsed;
+                  const val = total > 0 ? context.parsed : 0;
                   const pct = total > 0 ? Math.round((val / total) * 100) : 0;
                   return ' ' + context.label + ': ' + val + ' (' + pct + '%)';
                 }
@@ -343,8 +342,7 @@
 
       destroyExistingChart(canvasId);
 
-      const lang = (window.getCurrentLang && window.getCurrentLang()) || 'en';
-            const dark = isDarkMode();
+      const dark = isDarkMode();
 
       const labels = ['Covered', 'Remaining'];
 
@@ -417,7 +415,7 @@
   // Auto-refresh charts on Theme (Dark/Light) or Language changes
   function refreshActiveCharts() {
     const user = typeof window.checkAuth === "function" ? window.checkAuth() : null;
-    if (typeof window.initDashboardCharts === "function" && document.getElementById("dashSalesTrendChart")) {
+    if (user && typeof window.initDashboardCharts === "function" && document.getElementById("dashSalesTrendChart")) {
       window.initDashboardCharts(user);
     }
     const docRes = document.getElementById("doctorsResultsContainer");

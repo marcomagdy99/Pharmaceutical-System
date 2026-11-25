@@ -265,13 +265,51 @@ test("Default Marketing workflow should follow PM -> BU -> Approved", () => {
   assert.strictEqual(steps[1].role, "bu");
 });
 
-test("Marketing Authorization: PM for Line 1 cannot approve requests for Line 2", () => {
+test("Marketing Authorization: PM for Line 1 (and PM with lineId-only without lineIds) cannot approve Line 2", () => {
   const pm1 = mockUsers.find(u => u.id === "pm1"); // Line 1
+  const pm2LineIdOnly = { id: "pm2_only", role: "product_manager", lineId: "line2" }; // NO lineIds array
+  const pmNoLine = { id: "pm_none", role: "product_manager" };
   const reqLine1 = { department: "marketing", lineId: "line1", status: "pending_pm", requesterId: "rep1" };
   const reqLine2 = { department: "marketing", lineId: "line2", status: "pending_pm", requesterId: "rep2" };
 
   assert.strictEqual(WE.isServiceAuthorized(reqLine1, pm1, "approve_service"), true, "PM1 authorized for line 1");
   assert.strictEqual(WE.isServiceAuthorized(reqLine2, pm1, "approve_service"), false, "PM1 not authorized for line 2");
+  assert.strictEqual(WE.isServiceAuthorized(reqLine1, pm2LineIdOnly, "approve_service"), false, "PM with lineId=line2 (no lineIds array) must NOT approve line 1");
+  assert.strictEqual(WE.isServiceAuthorized(reqLine1, pmNoLine, "approve_service"), false, "PM with 0 lines must fail-closed");
+});
+
+test("Hierarchy Fail-Closed & LM Marketing Preservation", () => {
+  // Expense authorization fails closed for out-of-tree DM/LM/BU without window.canApproveFor
+  const outsiderDm = { id: "dm_other", role: "district_manager" };
+  const subDm = mockUsers.find(u => u.id === "dm1");
+  assert.strictEqual(WE.isExpenseAuthorized({ id: "e_sub", requesterId: "rep1", status: "pending_dm" }, subDm), true, "Direct hierarchy DM authorized");
+  assert.strictEqual(WE.isExpenseAuthorized({ id: "e_sub", requesterId: "rep1", status: "pending_dm" }, outsiderDm), false, "Out-of-hierarchy DM blocked (fail-closed)");
+
+  // LM submitting marketing service must keep PM step before BU
+  const lm = mockUsers.find(u => u.id === "lm1");
+  const mktInit = WE.resolveInitialServiceStatus({ department: "marketing", cost: 12000, lineId: "line1" }, lm);
+  assert.strictEqual(mktInit.status, "pending_pm", "LM marketing request must route to PM first, not skip PM");
+
+  // Missing hierarchy tier returns null instead of hardcoded demo IDs
+  const emptyHierarchy = WE.resolveHierarchy("line_nonexistent", null, "unknown_rep");
+  assert.strictEqual(emptyHierarchy.dmId, null, "Missing DM resolves to null, not hardcoded demo ID");
+
+  // Admin state machine enforcement: cannot approve/disburse terminal or non-approved items
+  const admin = mockUsers.find(u => u.id === "admin1");
+  assert.strictEqual(WE.isServiceAuthorized({ id: "s_app", status: "approved", requesterId: "rep1" }, admin, "approve_service"), false, "Admin cannot re-approve approved service");
+  assert.strictEqual(WE.isServiceAuthorized({ id: "s_rej", status: "rejected", requesterId: "rep1" }, admin, "approve_service"), false, "Admin cannot approve rejected service");
+  assert.strictEqual(WE.isServiceAuthorized({ id: "s_app", status: "approved", requesterId: "rep1" }, admin, "reject_service"), true, "Admin can cancel/reject approved service");
+  assert.strictEqual(WE.isExpenseAuthorized({ id: "e_pend", status: "pending_dm", requesterId: "rep1" }, admin, "disburse_expense"), false, "Admin cannot disburse pending expense");
+  assert.strictEqual(WE.isExpenseAuthorized({ id: "e_disb", status: "disbursed", requesterId: "rep1" }, admin, "reject_expense"), false, "Admin cannot reject disbursed expense");
+  assert.strictEqual(WE.isExpenseAuthorized({ id: "e_app", status: "approved", requesterId: "rep1" }, admin, "disburse_expense"), true, "Admin can disburse approved expense");
+
+  // Vacant area DM resolution via areaId
+  global.DEMO_DATA = {
+    users: mockUsers,
+    areas: [{ id: "area_vacant_1", lineId: "line2", repId: null, dmId: "dm1" }]
+  };
+  const vacantHier = WE.resolveHierarchy("line2", "area_vacant_1", null);
+  assert.strictEqual(vacantHier.dmId, "dm1", "Vacant areaId must resolve DM via area metadata");
 });
 
 // -----------------------------------------------------------------------------
@@ -383,13 +421,13 @@ test("Leaves workflow settings reflect dynamically in leaves approval rules", ()
 // -----------------------------------------------------------------------------
 console.log("\n\x1b[36m[Group 7: Dynamic Live Configuration Propagation]\x1b[0m");
 
-test("System instantly switches Commercial workflow from 3-tier to 4-tier (+GM) on settings update", () => {
+test("GM role has zero approval authority even if requireGm is set in legacy settings", () => {
   // Step A: Initial state has requireGm: false
-  let srv = { department: "commercial", cost: 10000, lineId: "line1" };
+  let srv = { department: "commercial", cost: 10000, lineId: "line1", requesterId: "rep1" };
   let stepsInitial = WE.getServiceSteps(srv);
   assert.strictEqual(stepsInitial.some(s => s.role === "gm"), false, "GM not in steps initially");
 
-  // Step B: Admin enables GM approval in profile settings
+  // Step B: Even if legacy settings set requireGm: true, GM is never added as an approval tier
   store.companySettings.update({
     approvalWorkflows: {
       ...currentSettings.approvalWorkflows,
@@ -400,16 +438,20 @@ test("System instantly switches Commercial workflow from 3-tier to 4-tier (+GM) 
     }
   });
 
-  // Step C: Next call instantly picks up GM in sequence without system restart
   let stepsUpdated = WE.getServiceSteps(srv);
-  assert.strictEqual(stepsUpdated.some(s => s.role === "gm"), true, "GM instantly present in steps");
-  assert.strictEqual(stepsUpdated[stepsUpdated.length - 1].role, "gm");
+  assert.strictEqual(stepsUpdated.some(s => s.role === "gm"), false, "GM must NEVER appear in service approval steps");
+  assert.strictEqual(stepsUpdated[stepsUpdated.length - 1].role, "bu");
 
-  // Step D: Verify BU advances to GM instead of final approved
+  // Step C: BU completes final commercial approval without routing to GM
   srv.status = "pending_bu";
   const adv = WE.advanceServiceApproval(srv, mockUsers.find(u => u.id === "bu1"));
-  assert.strictEqual(adv.nextStatus, "pending_gm");
-  assert.strictEqual(adv.isFinal, false);
+  assert.strictEqual(adv.nextStatus, "approved");
+  assert.strictEqual(adv.isFinal, true);
+
+  // Step D: GM cannot authorize services or expenses
+  const gmMock = { id: "gm1", role: "general_manager" };
+  assert.strictEqual(WE.isServiceAuthorized({ ...srv, status: "pending_bu" }, gmMock), false);
+  assert.strictEqual(WE.isExpenseAuthorized({ id: "e1", requesterId: "rep1", status: "pending_hr" }, gmMock), false);
 });
 
 test("System instantly respects modified BU Threshold Amount (e.g. 5,000 -> 25,000 EGP)", () => {

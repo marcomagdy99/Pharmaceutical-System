@@ -84,16 +84,19 @@ const REPORTS_DATA = {
 function syncReportsData() {
   if (typeof window.DEMO_DATA !== 'undefined' && window.DEMO_DATA) {
     // 1. Sync Doctors & Hospitals
-    if (Array.isArray(window.DEMO_DATA.doctors) && window.DEMO_DATA.doctors.length > 0) {
-      window.DEMO_DATA.doctors.forEach((doc) => {
+    const syncDoctors = (window.store && window.store.doctors ? window.store.doctors.getAll() : (window.DEMO_DATA && window.DEMO_DATA.doctors)) || [];
+    if (Array.isArray(syncDoctors) && syncDoctors.length > 0) {
+      syncDoctors.forEach((doc) => {
         if (!REPORTS_DATA.doctors.some((d) => d.id === doc.id || d.name === doc.name)) {
           REPORTS_DATA.doctors.push({
             id: doc.id,
             name: doc.name,
             class: doc.class || 'B',
             specialty: doc.specialty || 'General Practice',
-            area: doc.clinicAddress || 'Nasr City',
-            repId: doc.repId || 'u1790626000001',
+            area: doc.clinicAddress || doc.address || '',
+            areaId: doc.areaId || null,
+            lineId: doc.lineId || null,
+            repId: doc.repId || null,
             targetQuarterly: typeof window.getDoctorCallTarget === 'function'
               ? window.getDoctorCallTarget(doc)
               : (doc.class === 'A' ? 4 : 3)
@@ -101,16 +104,19 @@ function syncReportsData() {
         }
       });
     }
-    if (Array.isArray(window.DEMO_DATA.hospitals) && window.DEMO_DATA.hospitals.length > 0) {
-      window.DEMO_DATA.hospitals.forEach((hosp) => {
+    const syncHospitals = (window.store && window.store.hospitals ? window.store.hospitals.getAll() : (window.DEMO_DATA && window.DEMO_DATA.hospitals)) || [];
+    if (Array.isArray(syncHospitals) && syncHospitals.length > 0) {
+      syncHospitals.forEach((hosp) => {
         if (!REPORTS_DATA.doctors.some((d) => d.id === hosp.id || d.name === hosp.name)) {
           REPORTS_DATA.doctors.push({
             id: hosp.id,
             name: hosp.name,
             class: 'hospital',
             specialty: 'Hospital (AM)',
-            area: hosp.address || 'Nasr City',
-            repId: hosp.repId || 'u1790626000001',
+            area: hosp.address || '',
+            areaId: hosp.areaId || null,
+            lineId: hosp.lineId || null,
+            repId: hosp.repId || null,
             targetQuarterly: 6
           });
         }
@@ -121,8 +127,8 @@ function syncReportsData() {
                          (window.DEMO_DATA && window.DEMO_DATA.visits) || [];
     if (Array.isArray(sourceVisits) && sourceVisits.length > 0) {
       const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users)) || [];
-      const allDoctors = (window.store && window.store.doctors ? window.store.doctors.getAll() : (window.DEMO_DATA && window.DEMO_DATA.doctors)) || [];
-      const allHospitals = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
+      const allDoctors = syncDoctors;
+      const allHospitals = syncHospitals;
 
       sourceVisits.forEach((v) => {
         const isCompleted = v.status === 'completed' || Boolean(v.isActual) || v.source === 'actual';
@@ -159,7 +165,7 @@ function syncReportsData() {
           period: isPharm ? 'PHARM' : (v.period || 'PM').toUpperCase(),
           status: 'completed',
           isActual: v.source === 'actual' || Boolean(v.isActual),
-          repId: v.repId || 'u1790626000001',
+          repId: v.repId || null,
           repName: repName,
           comment: v.comment || '',
           productIds: v.productIds || [],
@@ -394,7 +400,7 @@ function initializeReportsPage() {
   }
   setupRolePermissions(user);
   initAllFilters(user);
-  const now = new Date();
+  const now = typeof window.getSystemDate === 'function' ? window.getSystemDate() : new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   const firstOfMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
@@ -601,14 +607,24 @@ function populateReportLineFilter(user) {
   const lineSelect = document.getElementById('reportLineFilter');
   if (!lineSelect) return;
 
-  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
+  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
+  lineSelect.replaceChildren();
+
+  if (!currentUser) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No Line Assigned';
+    lineSelect.appendChild(opt);
+    window.selectedReportLineId = '';
+    lineSelect.disabled = true;
+    return;
+  }
+
   const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
-  const isRep = role === 'medical_rep' || role === 'rep';
+  const isRep = window.isRepRole ? window.isRepRole(currentUser) : (role === 'medical_rep' || role === 'rep');
   const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const userLines = window.getUserLines ? window.getUserLines(currentUser.id) : [];
   const curVal = lineSelect.value;
-
-  lineSelect.replaceChildren();
 
   if (isRep) {
     if (userLines.length > 0) {
@@ -632,18 +648,23 @@ function populateReportLineFilter(user) {
     return;
   }
 
-  // Managers & Admin
-  lineSelect.disabled = false;
+  // Managers & Admin (Fail-Closed: only full open roles fall back to allLines)
   const isFullAdmin = role === 'admin' || role === 'hr';
+  const linesToDisplay = isFullAdmin ? allLines : (Array.isArray(userLines) ? userLines : []);
 
-  let linesToDisplay = userLines;
-  if (isFullAdmin || role === 'business_unit' || !linesToDisplay || linesToDisplay.length === 0) {
-    if (isFullAdmin || !linesToDisplay || linesToDisplay.length === 0) {
-      linesToDisplay = allLines;
-    }
+  if (linesToDisplay.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No Line Assigned';
+    lineSelect.appendChild(opt);
+    window.selectedReportLineId = '';
+    lineSelect.disabled = true;
+    return;
   }
 
-  if (isFullAdmin || linesToDisplay.length > 1 || linesToDisplay.length === 0) {
+  lineSelect.disabled = false;
+
+  if (isFullAdmin || linesToDisplay.length > 1) {
     const optAll = document.createElement('option');
     optAll.value = 'all';
     optAll.textContent = 'All Product Lines';
@@ -797,6 +818,13 @@ window.refreshActiveReportIfVisible = function () {
       }
       break;
     }
+    case 'sops': {
+      const res = document.getElementById('sopsResultsContainer');
+      if (res && res.style.display !== 'none') {
+        if (typeof window.renderSopsReport === 'function') window.renderSopsReport();
+      }
+      break;
+    }
   }
 };
 
@@ -822,6 +850,37 @@ function isUserInLine(userObj, targetLineId) {
   return uLines.includes(targetLineId);
 }
 
+function isUserInAnyLine(userObj, allowedLineIdsSet) {
+  if (!userObj || !allowedLineIdsSet || allowedLineIdsSet.size === 0) return false;
+  const uLines = window.getUserLines
+    ? window.getUserLines(userObj.id).map((l) => l.id)
+    : (userObj.lineIds || (userObj.lineId ? [userObj.lineId] : []));
+  return uLines.some((lid) => allowedLineIdsSet.has(lid));
+}
+
+function getEffectiveLineIdsForUser(userObj) {
+  if (!userObj) return new Set();
+  const lines = window.getUserLines ? window.getUserLines(userObj.id) : [];
+  if (lines && lines.length > 0) return new Set(lines.map((l) => l.id));
+  const fallback = userObj.lineIds || (userObj.lineId ? [userObj.lineId] : []);
+  return new Set(fallback);
+}
+
+function getLmTeamUserIds(allUsers, lmId) {
+  const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(lmId) : null;
+  if (Array.isArray(subs) && subs.length > 0) {
+    return new Set(subs.map((u) => u.id));
+  }
+  const dmIds = new Set(allUsers.filter((u) => u.managerId === lmId).map((u) => u.id));
+  const teamIds = new Set(dmIds);
+  allUsers.forEach((u) => {
+    if (u.managerId === lmId || dmIds.has(u.managerId)) {
+      teamIds.add(u.id);
+    }
+  });
+  return teamIds;
+}
+
 function populateTabLmOptions(tabKey, user, lineId) {
   const cfg = REPORT_TAB_CONFIGS[tabKey];
   if (!cfg) return;
@@ -831,12 +890,18 @@ function populateTabLmOptions(tabKey, user, lineId) {
   const prevVal = lmSelect.value;
   lmSelect.replaceChildren();
 
-  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
+  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!effectiveUser) {
+    lmSelect.disabled = true;
+    return;
+  }
   const role = window.normalizeRole ? window.normalizeRole(effectiveUser.role) : (effectiveUser.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(effectiveUser) : (role === 'medical_rep' || role === 'rep');
   const isDM = role === 'district_manager' || role === 'dm';
   const isLM = role === 'line_manager' || role === 'lm';
-  const isBU = role === 'business_unit' || role === 'bu';
+  const isBU = role === 'business_unit' || role === 'bu' || role === 'general_manager' || role === 'gm';
+  const isPM = window.isPMRole ? window.isPMRole(effectiveUser) : (role === 'product_manager' || role === 'pm');
+  const isOpenRole = role === 'admin' || role === 'hr';
 
   const allUsers = typeof getSharedReportUsers === 'function' ? getSharedReportUsers() : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
   const allLms = allUsers.filter(u => {
@@ -880,7 +945,12 @@ function populateTabLmOptions(tabKey, user, lineId) {
     return;
   }
 
-  // Admin / HR / BU:
+  if (!isOpenRole && !isBU && !isPM) {
+    lmSelect.disabled = true;
+    return;
+  }
+
+  // Admin / GM / HR / BU / PM:
   lmSelect.disabled = false;
   let availableLms = allLms.filter(lm => isUserInLine(lm, lineId));
 
@@ -888,10 +958,13 @@ function populateTabLmOptions(tabKey, user, lineId) {
     const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(effectiveUser.id) : [];
     const subIds = new Set(subs.map(s => s.id));
     availableLms = availableLms.filter(lm => subIds.has(lm.id) || lm.managerId === effectiveUser.id);
+  } else if (isPM) {
+    const pmLineIds = getEffectiveLineIdsForUser(effectiveUser);
+    availableLms = availableLms.filter(lm => isUserInAnyLine(lm, pmLineIds));
   }
 
   // If a specific line has only 1 LM: lock/select that LM
-  if (lineId !== 'all' && availableLms.length === 1) {
+  if (lineId && lineId !== 'all' && availableLms.length === 1) {
     const opt = document.createElement('option');
     opt.value = availableLms[0].id;
     opt.textContent = `${availableLms[0].name} (${availableLms[0].employeeCode || 'LM'})`;
@@ -932,12 +1005,18 @@ function populateTabDmOptions(tabKey, user, lineId) {
   const prevVal = dmSelect.value;
   dmSelect.replaceChildren();
 
-  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
+  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!effectiveUser) {
+    dmSelect.disabled = true;
+    return;
+  }
   const role = window.normalizeRole ? window.normalizeRole(effectiveUser.role) : (effectiveUser.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(effectiveUser) : (role === 'medical_rep' || role === 'rep');
   const isDM = role === 'district_manager' || role === 'dm';
   const isLM = role === 'line_manager' || role === 'lm';
-  const isBU = role === 'business_unit' || role === 'bu';
+  const isBU = role === 'business_unit' || role === 'bu' || role === 'general_manager' || role === 'gm';
+  const isPM = window.isPMRole ? window.isPMRole(effectiveUser) : (role === 'product_manager' || role === 'pm');
+  const isOpenRole = role === 'admin' || role === 'hr';
 
   const allUsers = typeof getSharedReportUsers === 'function' ? getSharedReportUsers() : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
   const allDms = allUsers.filter(u => {
@@ -968,17 +1047,31 @@ function populateTabDmOptions(tabKey, user, lineId) {
     return;
   }
 
+  if (!isOpenRole && !isBU && !isLM && !isPM) {
+    dmSelect.disabled = true;
+    return;
+  }
+
   dmSelect.disabled = false;
   let availableDms = allDms.filter(dm => isUserInLine(dm, lineId));
 
   if (isLM) {
     availableDms = availableDms.filter(dm => dm.managerId === effectiveUser.id);
-  } else if (selectedLmId && selectedLmId !== 'all') {
-    availableDms = availableDms.filter(dm => dm.managerId === selectedLmId);
   } else if (isBU) {
     const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(effectiveUser.id) : [];
     const subIds = new Set(subs.map(s => s.id));
     availableDms = availableDms.filter(dm => subIds.has(dm.id));
+    if (selectedLmId && selectedLmId !== 'all') {
+      availableDms = availableDms.filter(dm => dm.managerId === selectedLmId);
+    }
+  } else if (isPM) {
+    const pmLineIds = getEffectiveLineIdsForUser(effectiveUser);
+    availableDms = availableDms.filter(dm => isUserInAnyLine(dm, pmLineIds));
+    if (selectedLmId && selectedLmId !== 'all') {
+      availableDms = availableDms.filter(dm => dm.managerId === selectedLmId);
+    }
+  } else if (selectedLmId && selectedLmId !== 'all') {
+    availableDms = availableDms.filter(dm => dm.managerId === selectedLmId);
   }
 
   const optAll = document.createElement('option');
@@ -1013,12 +1106,18 @@ function populateTabRepOptions(tabKey, user, lineId) {
   const prevVal = repSelect.value;
   repSelect.replaceChildren();
 
-  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
+  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!effectiveUser) {
+    repSelect.disabled = true;
+    return;
+  }
   const role = window.normalizeRole ? window.normalizeRole(effectiveUser.role) : (effectiveUser.role || '').toLowerCase();
   const isRep = window.isRepRole ? window.isRepRole(effectiveUser) : (role === 'medical_rep' || role === 'rep');
   const isDM = role === 'district_manager' || role === 'dm';
   const isLM = role === 'line_manager' || role === 'lm';
-  const isBU = role === 'business_unit' || role === 'bu';
+  const isBU = role === 'business_unit' || role === 'bu' || role === 'general_manager' || role === 'gm';
+  const isPM = window.isPMRole ? window.isPMRole(effectiveUser) : (role === 'product_manager' || role === 'pm');
+  const isOpenRole = role === 'admin' || role === 'hr';
 
   const allUsers = typeof getSharedReportUsers === 'function' ? getSharedReportUsers() : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -1038,23 +1137,46 @@ function populateTabRepOptions(tabKey, user, lineId) {
     return;
   }
 
+  if (!isOpenRole && !isBU && !isLM && !isDM && !isPM) {
+    repSelect.disabled = true;
+    return;
+  }
+
   repSelect.disabled = false;
   let availableReps = allReps.filter(rep => isUserInLine(rep, lineId));
 
   if (isDM) {
     availableReps = availableReps.filter(rep => rep.managerId === effectiveUser.id);
-  } else if (selectedDmId && selectedDmId !== 'all') {
-    availableReps = availableReps.filter(rep => rep.managerId === selectedDmId);
   } else if (isLM) {
-    const myDmIds = allUsers.filter(u => u.managerId === effectiveUser.id).map(u => u.id);
-    availableReps = availableReps.filter(rep => myDmIds.includes(rep.managerId));
-  } else if (selectedLmId && selectedLmId !== 'all') {
-    const lmDmIds = allUsers.filter(u => u.managerId === selectedLmId).map(u => u.id);
-    availableReps = availableReps.filter(rep => lmDmIds.includes(rep.managerId));
+    const lmTeamIds = getLmTeamUserIds(allUsers, effectiveUser.id);
+    availableReps = availableReps.filter(rep => lmTeamIds.has(rep.id));
+    if (selectedDmId && selectedDmId !== 'all') {
+      availableReps = availableReps.filter(rep => rep.managerId === selectedDmId);
+    }
   } else if (isBU) {
     const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(effectiveUser.id) : [];
     const subIds = new Set(subs.map(s => s.id));
     availableReps = availableReps.filter(rep => subIds.has(rep.id));
+    if (selectedDmId && selectedDmId !== 'all') {
+      availableReps = availableReps.filter(rep => rep.managerId === selectedDmId);
+    } else if (selectedLmId && selectedLmId !== 'all') {
+      const lmTeamIds = getLmTeamUserIds(allUsers, selectedLmId);
+      availableReps = availableReps.filter(rep => lmTeamIds.has(rep.id));
+    }
+  } else if (isPM) {
+    const pmLineIds = getEffectiveLineIdsForUser(effectiveUser);
+    availableReps = availableReps.filter(rep => isUserInAnyLine(rep, pmLineIds));
+    if (selectedDmId && selectedDmId !== 'all') {
+      availableReps = availableReps.filter(rep => rep.managerId === selectedDmId);
+    } else if (selectedLmId && selectedLmId !== 'all') {
+      const lmTeamIds = getLmTeamUserIds(allUsers, selectedLmId);
+      availableReps = availableReps.filter(rep => lmTeamIds.has(rep.id));
+    }
+  } else if (selectedDmId && selectedDmId !== 'all') {
+    availableReps = availableReps.filter(rep => rep.managerId === selectedDmId);
+  } else if (selectedLmId && selectedLmId !== 'all') {
+    const lmTeamIds = getLmTeamUserIds(allUsers, selectedLmId);
+    availableReps = availableReps.filter(rep => lmTeamIds.has(rep.id));
   }
 
   const optAll = document.createElement('option');
@@ -1080,6 +1202,24 @@ function populateTabRepOptions(tabKey, user, lineId) {
       if (lineId && lineId !== 'all') {
         vacantAreas = vacantAreas.filter(a => a.lineId === lineId);
       }
+      if (isPM) {
+        const pmLineIds = getEffectiveLineIdsForUser(effectiveUser);
+        vacantAreas = vacantAreas.filter(a => a.lineId && pmLineIds.has(a.lineId));
+      } else if (isBU || isGM) {
+        const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(effectiveUser.id) : [];
+        const subIds = new Set([effectiveUser.id, ...subs.map(s => s.id)]);
+        vacantAreas = vacantAreas.filter(a => {
+          const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+          return (mgrId && subIds.has(mgrId)) || (a.dmId && subIds.has(a.dmId)) || (a.buId && subIds.has(a.buId));
+        });
+      } else if (isLM) {
+        const lmTeamIds = getLmTeamUserIds(allUsers, effectiveUser.id);
+        vacantAreas = vacantAreas.filter(a => {
+          const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+          return (mgrId && (mgrId === effectiveUser.id || lmTeamIds.has(mgrId))) || (a.dmId && lmTeamIds.has(a.dmId));
+        });
+      }
+
       if (selectedDmId && selectedDmId !== 'all') {
         vacantAreas = vacantAreas.filter(a => {
           const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
@@ -1125,7 +1265,7 @@ window.populateTabHierarchyFilters = populateTabHierarchyFilters;
 
 function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
   const lineId = selectedLineId || window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
-  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
+  const effectiveUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
 
   Object.keys(REPORT_TAB_CONFIGS).forEach(tabKey => {
     try {
@@ -1134,6 +1274,8 @@ function populateUnifiedReportEmployeeFilters(user, selectedLineId) {
       console.warn('[Report Hierarchy Warning] Tab ' + tabKey + ':', tabErr);
     }
   });
+
+  if (!effectiveUser) return;
 
   try {
     if (typeof window.populatePharmSalesAreas === 'function') {
@@ -1168,8 +1310,12 @@ window.onReportLmChange = function (tabKey) {
   if (tabKey === 'achievements' && typeof window.populateAchAreas === 'function') {
     window.populateAchAreas(user);
   }
-  if (tabKey === 'accounts-costing' && typeof window.onAccountsCostingLineChange === 'function') {
-    window.onAccountsCostingLineChange();
+  if (tabKey === 'accounts-costing') {
+    if (typeof window.onAccountsCostingLmChange === 'function') {
+      window.onAccountsCostingLmChange();
+    } else if (typeof window.onAccountsCostingLineChange === 'function') {
+      window.onAccountsCostingLineChange();
+    }
   }
 
   if (typeof window.refreshActiveReportIfVisible === 'function') {
@@ -1226,8 +1372,7 @@ window.onPharmacyDmChange = function () { window.onReportDmChange('pharmacies');
 
 window.getReportHierarchyFilterScope = function (tabKey) {
   const cfg = REPORT_TAB_CONFIGS[tabKey];
-  const user = (typeof checkAuth === 'function' ? checkAuth() : null) || { role: 'admin', id: 'u1790626000010' };
-  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+  const user = (typeof checkAuth === 'function' ? checkAuth() : null);
   const lineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
 
   const lmSelect = cfg ? document.getElementById(cfg.lmId) : null;
@@ -1238,11 +1383,30 @@ window.getReportHierarchyFilterScope = function (tabKey) {
   const dmId = dmSelect ? dmSelect.value : 'all';
   const repId = repSelect ? repSelect.value : 'all';
 
+  if (!user) {
+    return {
+      lineId,
+      lmId,
+      dmId,
+      repId,
+      isAllReps: false,
+      isSingleRep: false,
+      singleRepId: null,
+      vacantAreaId: null,
+      allowedReps: [],
+      allowedRepIds: new Set()
+    };
+  }
+
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
   const allUsers = typeof getSharedReportUsers === 'function' ? getSharedReportUsers() : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
 
   const isRep = window.isRepRole ? window.isRepRole(user) : (role === 'medical_rep' || role === 'rep');
   const isDM = role === 'district_manager' || role === 'dm';
   const isLM = role === 'line_manager' || role === 'lm';
+  const isBU = role === 'business_unit' || role === 'bu' || role === 'general_manager' || role === 'gm';
+  const isPM = window.isPMRole ? window.isPMRole(user) : (role === 'product_manager' || role === 'pm');
+  const isOpenRole = role === 'admin' || role === 'hr';
 
   let allowedReps = allUsers.filter(u => {
     if (u.status === 'Inactive') return false;
@@ -1254,19 +1418,24 @@ window.getReportHierarchyFilterScope = function (tabKey) {
   } else if (isDM) {
     allowedReps = allowedReps.filter(u => u.managerId === user.id);
   } else if (isLM) {
-    const myDmIds = allUsers.filter(u => u.managerId === user.id).map(u => u.id);
-    allowedReps = allowedReps.filter(u => myDmIds.includes(u.managerId));
-  } else if (role === 'business_unit' || role === 'bu') {
+    const lmTeamIds = getLmTeamUserIds(allUsers, user.id);
+    allowedReps = allowedReps.filter(u => lmTeamIds.has(u.id));
+  } else if (isBU) {
     const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
     const subIds = new Set(subs.map(s => s.id));
     allowedReps = allowedReps.filter(u => subIds.has(u.id));
+  } else if (isPM) {
+    const pmLineIds = getEffectiveLineIdsForUser(user);
+    allowedReps = allowedReps.filter(u => isUserInAnyLine(u, pmLineIds));
+  } else if (!isOpenRole) {
+    allowedReps = [];
   }
 
   allowedReps = allowedReps.filter(r => isUserInLine(r, lineId));
 
   if (lmId && lmId !== 'all') {
-    const lmDmIds = allUsers.filter(u => u.managerId === lmId).map(u => u.id);
-    allowedReps = allowedReps.filter(r => lmDmIds.includes(r.managerId));
+    const lmTeamIds = getLmTeamUserIds(allUsers, lmId);
+    allowedReps = allowedReps.filter(r => lmTeamIds.has(r.id));
   }
 
   if (dmId && dmId !== 'all') {
@@ -1274,7 +1443,32 @@ window.getReportHierarchyFilterScope = function (tabKey) {
   }
 
   const isVacant = Boolean(repId && repId.startsWith('vacant:'));
-  const vacantAreaId = isVacant ? repId.split(':')[1] : null;
+  let vacantAreaId = isVacant ? repId.split(':')[1] : null;
+  if (vacantAreaId && !isOpenRole) {
+    const allAreasScope = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+    const targetVacant = allAreasScope.find(a => a && a.id === vacantAreaId);
+    let canAccessVacant = false;
+    if (targetVacant && !isRep) {
+      const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(targetVacant, allUsers) : null;
+      if (isPM) {
+        const pmLineIds = getEffectiveLineIdsForUser(user);
+        canAccessVacant = Boolean(targetVacant.lineId && pmLineIds.has(targetVacant.lineId));
+      } else if (isBU || isGM) {
+        const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
+        const subIds = new Set([user.id, ...subs.map(s => s.id)]);
+        canAccessVacant = Boolean((mgrId && subIds.has(mgrId)) || (targetVacant.dmId && subIds.has(targetVacant.dmId)) || (targetVacant.buId && subIds.has(targetVacant.buId)));
+      } else if (isLM) {
+        const lmTeamIds = getLmTeamUserIds(allUsers, user.id);
+        canAccessVacant = Boolean((mgrId && (mgrId === user.id || lmTeamIds.has(mgrId))) || (targetVacant.dmId && lmTeamIds.has(targetVacant.dmId)));
+      } else if (isDM) {
+        canAccessVacant = Boolean(mgrId === user.id || targetVacant.dmId === user.id || targetVacant.managerId === user.id);
+      }
+    }
+    if (!canAccessVacant) {
+      vacantAreaId = null;
+      allowedReps = [];
+    }
+  }
 
   if (repId && repId !== 'all' && !isVacant) {
     allowedReps = allowedReps.filter(r => r.id === repId);
@@ -1298,23 +1492,19 @@ window.getReportHierarchyFilterScope = function (tabKey) {
 
 function populateLinesFilter(lineSelect, user = null) {
   if (!lineSelect) return;
-  const lang = getCurrentLang();
   const allLinesLabel = 'All Lines (Select All)';
   lineSelect.innerHTML = `<option value="all">${allLinesLabel}</option>`;
-  const allLines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [
-    { id: 'line_1790626000001', name: 'Cardio Line', lineManagerId: 'u1790626000012' }
-  ];
+  const currentUser = user || (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!currentUser) return;
+
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const allUsers = getSharedReportUsers();
-  let lines = allLines;
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  if (user && role !== 'admin') {
-    const userLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id) : [];
-    if (userLines.length > 0) {
-      lines = userLines;
-    } else if (role === 'business_unit' || role === 'line_manager' || role === 'district_manager' || role === 'medical_rep' || role === 'rep') {
-      lines = [];
-    }
-  }
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
+  const isOpenRole = role === 'admin' || role === 'hr';
+  const lines = isOpenRole
+    ? allLines
+    : (typeof window.getUserLines === 'function' ? window.getUserLines(currentUser.id) : []);
+
   appendSelectOptions(lineSelect, lines, (l) => l.id, (l) => {
     const lm = allUsers.find((u) => u.id === l.lineManagerId);
     return `${l.name} ${lm ? `(${lm.name})` : ''}`;
@@ -1323,56 +1513,81 @@ function populateLinesFilter(lineSelect, user = null) {
 
 function populateDMsFilter(dmSelect, lmId = null, lineId = null) {
   if (!dmSelect) return;
-  const lang = getCurrentLang();
   const allDMsLabel = 'All Districts & DMs';
   dmSelect.innerHTML = `<option value="all">${allDMsLabel}</option>`;
+  const currentUser = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!currentUser) return;
+
   const allUsers = getSharedReportUsers();
-  const currentUser = checkAuth();
-  const role = window.normalizeRole ? window.normalizeRole(currentUser?.role) : (currentUser?.role || '').toLowerCase();
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
+  const isOpenRole = role === 'admin' || role === 'hr';
 
   let dms = allUsers.filter((u) => (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
 
-  if (role === 'business_unit' && currentUser) {
+  if (role === 'business_unit' || role === 'general_manager') {
     const mySubordinates = typeof window.getAllSubordinates === 'function'
       ? window.getAllSubordinates(currentUser.id)
       : [];
     const mySubordinateIds = mySubordinates.map((u) => u.id);
     dms = dms.filter((u) => mySubordinateIds.includes(u.id));
+  } else if (role === 'line_manager') {
+    dms = dms.filter((u) => u.managerId === currentUser.id);
+  } else if (role === 'district_manager') {
+    dms = dms.filter((u) => u.id === currentUser.id);
+  } else if (role === 'product_manager') {
+    const pmLineIds = getEffectiveLineIdsForUser(currentUser);
+    dms = dms.filter((u) => isUserInAnyLine(u, pmLineIds));
+  } else if (!isOpenRole) {
+    dms = [];
   }
 
   if (lmId) {
     dms = dms.filter((u) => u.managerId === lmId);
   }
   if (lineId && lineId !== 'all') {
-    dms = dms.filter((u) => (u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+    dms = dms.filter((u) => isUserInLine(u, lineId));
   }
   appendSelectOptions(dmSelect, dms, (d) => d.id, (d) => `${d.name} (${d.employeeCode || d.code || 'DM'})`);
 }
 
 function populateRepsFilter(repSelect, dmId = null, lineId = null) {
   if (!repSelect) return;
-  const lang = getCurrentLang();
   const allRepsLabel = 'All Representatives';
   repSelect.innerHTML = `<option value="all">${allRepsLabel}</option>`;
+  const currentUser = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!currentUser) return;
+
   const allUsers = getSharedReportUsers();
-  const currentUser = checkAuth();
-  const role = window.normalizeRole ? window.normalizeRole(currentUser?.role) : (currentUser?.role || '').toLowerCase();
+  const role = window.normalizeRole ? window.normalizeRole(currentUser.role) : (currentUser.role || '').toLowerCase();
+  const isOpenRole = role === 'admin' || role === 'hr';
 
-  let reps = allUsers.filter((u) => (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')));
+  let reps = allUsers.filter((u) => u.status !== 'Inactive' && (window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')));
 
-  if (role === 'business_unit' && currentUser) {
+  if (role === 'business_unit' || role === 'general_manager') {
     const mySubordinates = typeof window.getAllSubordinates === 'function'
       ? window.getAllSubordinates(currentUser.id)
       : [];
     const mySubordinateIds = mySubordinates.map((u) => u.id);
     reps = reps.filter((u) => mySubordinateIds.includes(u.id));
+  } else if (role === 'line_manager') {
+    const lmTeamIds = getLmTeamUserIds(allUsers, currentUser.id);
+    reps = reps.filter((u) => lmTeamIds.has(u.id));
+  } else if (role === 'district_manager') {
+    reps = reps.filter((u) => u.managerId === currentUser.id);
+  } else if (role === 'medical_rep') {
+    reps = reps.filter((u) => u.id === currentUser.id);
+  } else if (role === 'product_manager') {
+    const pmLineIds = getEffectiveLineIdsForUser(currentUser);
+    reps = reps.filter((u) => isUserInAnyLine(u, pmLineIds));
+  } else if (!isOpenRole) {
+    reps = [];
   }
 
   if (dmId && dmId !== 'all') {
     reps = reps.filter((u) => u.managerId === dmId);
   }
   if (lineId && lineId !== 'all') {
-    reps = reps.filter((u) => (u.lineIds && u.lineIds.includes(lineId)) || u.lineId === lineId);
+    reps = reps.filter((u) => isUserInLine(u, lineId));
   }
   appendSelectOptions(repSelect, reps, (r) => r.id, (r) => `${r.name} (${r.employeeCode || r.code || 'Rep'})`);
 }
@@ -1387,7 +1602,7 @@ function printCurrentReport() {
 // ============================================================================
 function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId = null, areaSelectId = null, targetAreaId = null) {
   const allUsers = getSharedReportUsers();
-  const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
   const lmSelect = document.getElementById(lmSelectId);
   if (!lmSelect) return;
@@ -1432,7 +1647,7 @@ function populateModalHierarchy(lmSelectId, dmSelectId, repSelectId, targetRepId
 
 function updateModalDMs(lmSelectId, dmSelectId, repSelectId, selectedDmId = null, targetRepId = null, areaSelectId = null, targetAreaId = null) {
   const allUsers = getSharedReportUsers();
-  const lines = (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
+  const lines = (window.store && window.store.productLines ? window.store.productLines.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.productLines) || [];
   const lmSelect = document.getElementById(lmSelectId);
   const dmSelect = document.getElementById(dmSelectId);
   if (!dmSelect) return;
@@ -1489,7 +1704,7 @@ function updateModalAreas(repSelectId, areaSelectId, targetAreaId = null, curren
   if (matchingAreas.length === 0 && currentLineId) {
     matchingAreas = allAreas.filter((a) => a.lineId === currentLineId);
   }
-  if (matchingAreas.length === 0) {
+  if (matchingAreas.length === 0 && !repId && !currentLineId) {
     matchingAreas = allAreas;
   }
 
@@ -1647,7 +1862,7 @@ function parseCSV(text) {
     row.push(currentCell.trim());
     return row;
   };
-  const headers = parseRow(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  const headers = parseRow(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, ''));
   const data = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -1675,11 +1890,13 @@ function downloadBase64Excel(base64Data, filename) {
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const objUrl = URL.createObjectURL(blob);
+    link.href = objUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
   } catch (err) {
     console.error('Download base64 failed, falling back to direct link:', err);
     const link = document.createElement('a');
@@ -1838,7 +2055,7 @@ function handleDoctorsFileSelected(event) {
           class: docClass,
           address,
           phone,
-          repId: matchedRep ? matchedRep.id : (defaultRepId || 'u1790626000001')
+          repId: matchedRep ? matchedRep.id : (defaultRepId || null)
         });
       } else {
         invalidCount++;
@@ -1848,7 +2065,7 @@ function handleDoctorsFileSelected(event) {
         ? `<span class="badge badge-import-valid">Valid</span>`
         : `<span class="badge badge-import-invalid">Missing Data</span>`;
 
-      const repName = matchedRep ? matchedRep.name : 'Auto';
+      const repName = matchedRep ? matchedRep.name : 'Unassigned';
 
       tableRowsHtml.push(`
         <tr>
@@ -1903,6 +2120,56 @@ function handleDoctorsFileSelected(event) {
 }
 window.handleDoctorsFileSelected = handleDoctorsFileSelected;
 
+function resolveImportHierarchyBindings(repId, defaultArea, allUsers, allLines) {
+  let dmId = null;
+  let lmId = null;
+  const lineId = defaultArea ? (defaultArea.lineId || null) : null;
+
+  if (repId) {
+    const repObj = allUsers.find((u) => u.id === repId);
+    if (repObj && repObj.managerId) {
+      const directMgr = allUsers.find((u) => u.id === repObj.managerId);
+      if (directMgr) {
+        const mgrRole = window.normalizeRole ? window.normalizeRole(directMgr.role) : (directMgr.role || '').toLowerCase();
+        if (mgrRole === 'district_manager' || mgrRole === 'dm') {
+          dmId = directMgr.id;
+          if (directMgr.managerId) {
+            const lmObj = allUsers.find((u) => u.id === directMgr.managerId);
+            if (lmObj) lmId = lmObj.id;
+          }
+        } else if (mgrRole === 'line_manager' || mgrRole === 'lm') {
+          lmId = directMgr.id;
+        }
+      }
+    }
+  } else if (defaultArea) {
+    const areaDmId = typeof window.getAreaManagerId === 'function'
+      ? window.getAreaManagerId(defaultArea, allUsers)
+      : (defaultArea.dmId || defaultArea.districtManagerId || null);
+    if (areaDmId) {
+      dmId = areaDmId;
+      const dmObj = allUsers.find((u) => u.id === areaDmId);
+      if (dmObj && dmObj.managerId) {
+        const lmObj = allUsers.find((u) => u.id === dmObj.managerId);
+        if (lmObj) lmId = lmObj.id;
+      }
+    } else if (defaultArea.lmId || defaultArea.managerId) {
+      const lmCandidate = allUsers.find((u) => u.id === (defaultArea.lmId || defaultArea.managerId));
+      if (lmCandidate) {
+        const r = window.normalizeRole ? window.normalizeRole(lmCandidate.role) : (lmCandidate.role || '').toLowerCase();
+        if (r === 'line_manager' || r === 'lm') lmId = lmCandidate.id;
+      }
+    }
+  }
+
+  if (!lmId && lineId) {
+    const lineObj = allLines.find((l) => l.id === lineId);
+    if (lineObj && lineObj.lineManagerId) lmId = lineObj.lineManagerId;
+  }
+
+  return { dmId, lmId, lineId };
+}
+
 function confirmImportDoctors() {
   const user = checkAuth();
   const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
@@ -1918,6 +2185,8 @@ function confirmImportDoctors() {
 
   const allSpecs = (window.store && window.store.specialties ? window.store.specialties.getAll() : (window.DEMO_DATA && window.DEMO_DATA.specialties)) || [];
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+  const allUsers = getSharedReportUsers();
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
 
   pendingDoctorsImport.forEach((item, index) => {
     const rawSpec = String(item.specialty || "").trim().toLowerCase();
@@ -1933,9 +2202,10 @@ function confirmImportDoctors() {
 
     const repAreas = item.repId ? allAreas.filter((a) => a.repId === item.repId) : [];
     const defaultArea = repAreas.length > 0 ? repAreas[0] : null;
+    const { dmId, lmId, lineId } = resolveImportHierarchyBindings(item.repId, defaultArea, allUsers, allLines);
 
     const doctorObj = {
-      id: 'doc_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+      id: typeof window.genId === 'function' ? window.genId('doc_') : ('doc_' + Date.now() + '_' + index + '_' + Math.random().toString(36).slice(2, 6)),
       name: item.name,
       specialtyId,
       specialty,
@@ -1945,9 +2215,11 @@ function confirmImportDoctors() {
       clinicAddress: item.address,
       phone: item.phone || '',
       repId: item.repId,
+      dmId,
+      lmId,
       areaId: defaultArea ? defaultArea.id : null,
       area: defaultArea ? defaultArea.name : (item.address || ''),
-      lineId: defaultArea ? (defaultArea.lineId || null) : null,
+      lineId,
       visitsThisQuarter: 0
     };
 
@@ -2085,7 +2357,7 @@ function handlePharmaciesFileSelected(event) {
           address,
           contactPerson,
           phone,
-          repId: matchedRep ? matchedRep.id : (defaultRepId || 'u1790626000001')
+          repId: matchedRep ? matchedRep.id : (defaultRepId || null)
         });
       } else {
         invalidCount++;
@@ -2095,7 +2367,7 @@ function handlePharmaciesFileSelected(event) {
         ? `<span class="badge badge-import-valid">Valid</span>`
         : `<span class="badge badge-import-invalid">Missing Data</span>`;
 
-      const repName = matchedRep ? matchedRep.name : 'Auto';
+      const repName = matchedRep ? matchedRep.name : 'Unassigned';
 
       tableRowsHtml.push(`
         <tr>
@@ -2163,21 +2435,26 @@ function confirmImportPharmacies() {
   }
 
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas)) || [];
+  const allUsers = getSharedReportUsers();
+  const allLines = (window.store && window.store.productLines ? window.store.productLines.getAll() : (window.DEMO_DATA && window.DEMO_DATA.productLines)) || [];
 
   pendingPharmaciesImport.forEach((item, index) => {
     const repAreas = item.repId ? allAreas.filter((a) => a.repId === item.repId) : [];
     const defaultArea = repAreas.length > 0 ? repAreas[0] : null;
+    const { dmId, lmId, lineId } = resolveImportHierarchyBindings(item.repId, defaultArea, allUsers, allLines);
 
     const pharmacyObj = {
-      id: 'pharm_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+      id: typeof window.genId === 'function' ? window.genId('pharm_') : ('pharm_' + Date.now() + '_' + index + '_' + Math.random().toString(36).slice(2, 6)),
       name: item.name,
       address: item.address,
       contactPerson: item.contactPerson || '',
       phone: item.phone || '',
       repId: item.repId,
+      dmId,
+      lmId,
       areaId: defaultArea ? defaultArea.id : null,
       area: defaultArea ? defaultArea.name : (item.address || ''),
-      lineId: defaultArea ? (defaultArea.lineId || null) : null
+      lineId
     };
 
     if (window.store && window.store.pharmacies) {
@@ -2226,7 +2503,7 @@ function parseExcelFile(file, callback) {
       const normalizedRows = rawJson.map((row) => {
         const cleanObj = {};
         Object.keys(row).forEach((k) => {
-          const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const cleanKey = k.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, '');
           cleanObj[cleanKey] = String(row[k] || '').trim();
         });
         return cleanObj;

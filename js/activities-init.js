@@ -12,13 +12,13 @@
   function setupRoleTabVisibility() {
     Core._state.currentUser = Core.getAuthUser();
     const user = Core._state.currentUser;
-    const role = (user && user.role) ? user.role.toLowerCase() : "";
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : ((user && user.role) ? user.role.toLowerCase() : "");
     const tabBtnBudget = document.getElementById("tabBtnBudget");
     const tabBtnServices = document.getElementById("tabBtnServices");
     const lmDistSec = document.getElementById("lmDistributionSection");
     const dmDistSec = document.getElementById("dmDistributionSection");
 
-    if (role === Core.ROLES.BU || role === Core.ROLES.ADMIN) {
+    if (role === Core.ROLES.BU || role === Core.ROLES.GM || role === Core.ROLES.ADMIN) {
       if (tabBtnBudget) tabBtnBudget.style.display = "inline-flex";
       if (tabBtnServices) tabBtnServices.style.display = "inline-flex";
     } else {
@@ -47,7 +47,7 @@
   function switchTab(tabId) {
     const user = Core._state.currentUser || Core.getAuthUser();
     const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : ((user && user.role) ? user.role.toLowerCase() : "");
-    if (tabId === Core.TABS.BUDGET && role !== Core.ROLES.BU && role !== Core.ROLES.ADMIN) {
+    if (tabId === Core.TABS.BUDGET && role !== Core.ROLES.BU && role !== Core.ROLES.GM && role !== Core.ROLES.ADMIN) {
       Core.safeShowToast(Core.t("unauthorizedBudgetAction") || "Unauthorized", "danger");
       return;
     }
@@ -87,14 +87,14 @@
     const currentUser = Core.getAuthUser() || {};
     const role = Core.getNormalizedRole ? Core.getNormalizedRole(currentUser) : (currentUser.role || "").toLowerCase();
 
-    // Row filtering: Only show requests within user's scope (strict hierarchy scoping for BU, LM, DM)
+    // Row filtering: Only show requests within user's scope (strict hierarchy scoping for GM, BU, LM, DM)
     const visibleRequests = requests.filter((req) => {
       const targetRepId = req.repId || req.userId;
-      if (role === "admin" || role === "general_manager" || role === Core.ROLES.ADMIN) return true;
+      if (role === "admin" || role === Core.ROLES.ADMIN) return true;
       if (role === "medical_rep" || role === "rep" || role === Core.ROLES.REP || role === Core.ROLES.REP_ALT) return targetRepId === currentUser.id;
-      if (role === "district_manager" || role === "line_manager" || role === "business_unit" || role === Core.ROLES.DM || role === Core.ROLES.LM || role === Core.ROLES.BU) {
+      if (role === "district_manager" || role === "line_manager" || role === "business_unit" || role === "general_manager" || role === Core.ROLES.DM || role === Core.ROLES.LM || role === Core.ROLES.BU || role === Core.ROLES.GM) {
         return targetRepId === currentUser.id ||
-               (typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId)) ||
+               (role !== "general_manager" && role !== Core.ROLES.GM && typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId)) ||
                (typeof Core.getSubordinatesForUser === "function" && Core.getSubordinatesForUser(currentUser).some(s => s.id === targetRepId));
       }
       return false;
@@ -134,8 +134,8 @@
       let canApproveStage = false;
       const targetRepId = req.repId || req.userId;
       const belongsToMyHierarchy = Boolean(targetRepId && typeof window.canApproveFor === "function" && window.canApproveFor(targetRepId));
-      if (isPending && (role === "admin" || role === "general_manager" || belongsToMyHierarchy)) {
-        if (role === "admin" || role === "general_manager") {
+      if (isPending && targetRepId !== currentUser.id && role !== "general_manager" && role !== Core.ROLES.GM && (role === "admin" || belongsToMyHierarchy)) {
+        if (role === "admin") {
           canApproveStage = true;
         } else if (st === "pending" || st === "pending_dm") {
           canApproveStage = (role === "district_manager" || role === "line_manager" || role === "business_unit");
@@ -143,8 +143,6 @@
           canApproveStage = (role === "line_manager" || role === "business_unit");
         } else if (st === "pending_bu") {
           canApproveStage = (role === "business_unit");
-        } else if (st === "pending_gm") {
-          canApproveStage = (role === "general_manager");
         }
       }
 
@@ -526,5 +524,6 @@
   safeExport("onSharedLinePercentInput", (idx, val) => ActivitiesModule.onSharedLinePercentInput(idx, val));
   safeExport("handleServiceFileSelect", (e) => ActivitiesModule.handleServiceFileSelect(e));
   safeExport("recalculateSharedBalances", ActivitiesModule.recalculateSharedBalances);
+  safeExport("renderLocationRequestsTable", ActivitiesModule.renderLocationRequestsTable || renderLocationRequestsTable);
 
 })(window);

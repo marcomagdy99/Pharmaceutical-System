@@ -10,9 +10,24 @@
     if (sessionStorage.getItem('pharma_logged_out') === 'true') {
       return;
     }
-    const user = sessionStorage.getItem('pharmaUser') || localStorage.getItem('pharmaUser');
-    if (user) {
-      window.location.replace('index.html');
+    const rawUser = sessionStorage.getItem('pharmaUser') || localStorage.getItem('pharmaUser');
+    if (rawUser) {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(rawUser);
+      } catch (err) {
+        // Corrupted session string, purge to avoid infinite redirect loop
+        sessionStorage.removeItem('pharmaUser');
+        localStorage.removeItem('pharmaUser');
+        return;
+      }
+      if (parsed && typeof parsed === 'object' && parsed.id && parsed.role) {
+        window.location.replace('index.html');
+      } else {
+        // Malformed session object, purge to avoid loop
+        sessionStorage.removeItem('pharmaUser');
+        localStorage.removeItem('pharmaUser');
+      }
     }
   } catch (e) {}
 })();
@@ -40,8 +55,8 @@ try {
     dept_hr: "Human Resources",
     dept_hr_desc: "HR & Personnel",
     back: "Back to Selection",
-    email_label: "Email Address / Employee Code",
-    email_placeholder: "Enter your email or employee code",
+    email_label: "Email Address",
+    email_placeholder: "Enter your email address",
     password_label: "Password",
     password_placeholder: "Enter your password",
     remember_me: "Remember me",
@@ -53,6 +68,7 @@ try {
     error_invalid: "Invalid email or password.",
     error_empty: "Please fill in all fields.",
     error_wrong_dept: "This account does not belong to the selected department.",
+    error_inactive: "This account has been deactivated. Please contact HR or System Administrator.",
     lang_toggle_text: "English",
     demo_accounts_title: "Quick Demo Accounts:",
     selected_dept_admin: "Admin Portal",
@@ -179,8 +195,21 @@ function applyBrandSettings() {
     localStorage.setItem("pharma_company_settings", JSON.stringify(settings));
   } catch (e) {}
 
+  // Helper to validate logo URL protocol safely against XSS or invalid protocols
+  const isSafeImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim().toLowerCase();
+    return (
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('data:image/') ||
+      trimmed.startsWith('/') ||
+      trimmed.startsWith('./')
+    );
+  };
+
   // 1. Update all logo instances (Right panel & Left panel logos)
-  if (brand.logoUrl) {
+  if (brand.logoUrl && isSafeImageUrl(brand.logoUrl)) {
     document.querySelectorAll(".login-logo-img, .brand-panel-logo").forEach((img) => {
       img.src = brand.logoUrl;
     });
@@ -292,23 +321,12 @@ if (backToDept) backToDept.addEventListener('click', showDepartmentSelection);
  * @returns {Array} Complete list of registered users.
  */
 function getAllAuthenticatableUsers() {
+  // Bootstrap Admin account only — all other accounts come live from Firebase / Admin database
   const defaultAccounts = [
-    { email: 'admin@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'u1790626000010', mustChangePassword: false },
-    { email: 'bu@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'business_unit', name: 'George Marzok', dept: 'sales', employeeCode: 'BU-001', id: 'u1790626000011', mustChangePassword: false },
-    { email: 'lm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'John Mahfouz', dept: 'sales', employeeCode: 'LM-001', id: 'u1790626000012', mustChangePassword: false },
-    { email: 'lm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'line_manager', name: 'Mario Magdy', dept: 'sales', employeeCode: 'LM-002', id: 'u1790626000013', mustChangePassword: false },
-    { email: 'dm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Amir Ayoup', dept: 'sales', employeeCode: 'DM-001', id: 'u1790626000014', mustChangePassword: false },
-    { email: 'dm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Jonathan Erian', dept: 'sales', employeeCode: 'DM-002', id: 'u1790626000015', mustChangePassword: false },
-    { email: 'dm3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'district_manager', name: 'Marian Magdy', dept: 'sales', employeeCode: 'DM-003', id: 'u1790626000016', mustChangePassword: false },
-    { email: 'rep@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Marco Magdy', dept: 'sales', employeeCode: 'REP-001', id: 'u1790626000001', mustChangePassword: false },
-    { email: 'rep2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Kerolos Boules', dept: 'sales', employeeCode: 'REP-002', id: 'u1790626000002', mustChangePassword: false },
-    { email: 'rep3@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mina Mikhael', dept: 'sales', employeeCode: 'REP-003', id: 'u1790626000003', mustChangePassword: false },
-    { email: 'rep4@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'David Emad', dept: 'sales', employeeCode: 'REP-004', id: 'u1790626000004', mustChangePassword: false },
-    { email: 'rep5@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'medical_rep', name: 'Mohamed Ramadan', dept: 'sales', employeeCode: 'REP-005', id: 'u1790626000005', mustChangePassword: false },
-    { email: 'pm@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Mina Kadry', dept: 'sales', employeeCode: 'PM-001', id: 'u1790626000018', lineId: 'line_1790626000001', lineIds: ['line_1790626000001'], productIds: ['prod_1790626000001', 'prod_1790626000002', 'prod_1790626000003', 'prod_1790626000004'], mustChangePassword: false },
-    { email: 'pm2@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'product_manager', name: 'Fady Adel', dept: 'sales', employeeCode: 'PM-002', id: 'u1790626000019', lineId: 'line_1790626000002', lineIds: ['line_1790626000002'], productIds: ['prod_1790626000005', 'prod_1790626000006'], mustChangePassword: false },
-    { email: 'hr@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'hr', name: 'Fatma El-Sherif', dept: 'hr', employeeCode: 'HR-001', id: 'u1790626000017', mustChangePassword: false }
+    { email: 'admin@pharmacare.com', passwordHash: '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f', role: 'admin', name: 'System Admin', dept: 'admin', employeeCode: 'ADM-001', id: 'u1790626000010', mustChangePassword: false }
   ];
+
+  const isDemoMode = Boolean(window.DEMO_MODE || window.IS_DEMO_MODE);
 
   let storedUsers = [];
   try {
@@ -320,6 +338,9 @@ function getAllAuthenticatableUsers() {
       }
     }
   } catch (e) {}
+  if (storedUsers.length <= 1 && window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users) && window.DEMO_DATA.users.length > storedUsers.length) {
+    storedUsers = window.DEMO_DATA.users;
+  }
 
   // Map dynamic users with appropriate department mapping
   const mappedStored = storedUsers.map((u) => {
@@ -331,8 +352,8 @@ function getAllAuthenticatableUsers() {
     let uId = u.id;
     let uEmail = (u.email || '').toLowerCase().trim();
 
-    // Stale data repair: if pm2 was recorded as medical_rep or has EMP-005
-    if (uEmail === 'pm2@pharmacare.com' || uId === 'u1790626000019' || u.code === 'PM-002') {
+    // Stale demo data repair: strictly confined to DEMO_MODE so production users are never altered
+    if (isDemoMode && (uEmail === 'pm2@pharmacare.com' || uId === 'u1790626000019' || u.code === 'PM-002')) {
       if (u.employeeCode === 'REP-005' || u.employeeCode === 'EMP-005' || u.name === 'Mohamed Ramadan') {
         uId = 'u1790626000005';
         uEmail = 'rep5@pharmacare.com';
@@ -344,9 +365,13 @@ function getAllAuthenticatableUsers() {
     }
 
     const defaultAcc = defaultAccounts.find((da) => (da.email || '').toLowerCase() === uEmail || da.id === uId);
-    const resolvedHash = u.passwordHash || (defaultAcc ? defaultAcc.passwordHash : '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f');
+    let resolvedHash = u.passwordHash || (defaultAcc && isDemoMode ? defaultAcc.passwordHash : null);
+    if (!resolvedHash && isDemoMode) {
+      resolvedHash = '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f';
+    }
 
     return {
+      ...u,
       email: uEmail,
       passwordHash: resolvedHash,
       password: u.password || null,
@@ -355,9 +380,17 @@ function getAllAuthenticatableUsers() {
       dept: dept,
       employeeCode: u.employeeCode || u.code || 'REP-000',
       id: uId,
+      status: u.status || 'Active',
+      mustChangePassword: Boolean(u.mustChangePassword),
+      managerId: u.managerId || null,
+      areaId: u.areaId || null,
+      areaIds: Array.isArray(u.areaIds) ? u.areaIds : (u.areaId ? [u.areaId] : []),
+      phone: u.phone || null,
+      hireDate: u.hireDate || null,
+      leaveBalance: u.leaveBalance !== undefined ? u.leaveBalance : null,
       lineId: u.lineId || null,
-      lineIds: u.lineIds || [],
-      productIds: u.productIds || []
+      lineIds: Array.isArray(u.lineIds) ? u.lineIds : (u.lineId ? [u.lineId] : []),
+      productIds: Array.isArray(u.productIds) ? u.productIds : []
     };
   });
 
@@ -365,17 +398,19 @@ function getAllAuthenticatableUsers() {
   // Whatever the Admin creates or edits in the system MUST always take precedence!
   const combined = [...mappedStored];
 
-  // Only fall back to defaultAccounts for seed demo accounts that do not exist in the database
-  defaultAccounts.forEach((da) => {
-    const daEmail = (da.email || '').toLowerCase().trim();
-    const exists = combined.some((u) => {
-      const uEmail = (u.email || '').toLowerCase().trim();
-      return (uEmail && uEmail === daEmail) || (u.id && u.id === da.id);
+  // Only fall back to defaultAccounts in DEMO_MODE or when database is completely empty (first run bootstrap)
+  if (isDemoMode || storedUsers.length === 0) {
+    defaultAccounts.forEach((da) => {
+      const daEmail = (da.email || '').toLowerCase().trim();
+      const exists = combined.some((u) => {
+        const uEmail = (u.email || '').toLowerCase().trim();
+        return (uEmail && uEmail === daEmail) || (u.id && u.id === da.id);
+      });
+      if (!exists) {
+        combined.push(da);
+      }
     });
-    if (!exists) {
-      combined.push(da);
-    }
-  });
+  }
 
   return combined;
 }
@@ -409,67 +444,121 @@ async function handleLogin() {
       return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (emailInput) emailInput.classList.add('is-invalid');
+      showLoginError("Please enter a valid company email address.");
+      if (loginBox) {
+        void loginBox.offsetWidth;
+        loginBox.classList.add('shake');
+      }
+      return;
+    }
+
     if (loginBtn) loginBtn.classList.add('loading');
 
-    const enteredHash = await window.hashPassword(password);
-    const enteredHashRaw = await window.hashPassword(rawPassword);
+    const rememberCheckbox = document.getElementById('remember') || document.getElementById('rememberMe');
+    const rememberMe = rememberCheckbox ? rememberCheckbox.checked : true;
 
-    setTimeout(() => {
+    const hasFirebaseAuth = typeof firebase !== 'undefined' && typeof firebase.auth === 'function';
+    if (!hasFirebaseAuth) {
+      if (loginBtn) loginBtn.classList.remove('loading');
+      showLoginError("Authentication service is not ready. Please refresh the page.");
+      return;
+    }
+
+    try {
+      if ((!firebase.apps || !firebase.apps.length) && window.firebaseConfig) {
+        firebase.initializeApp(window.firebaseConfig);
+      }
+      const auth = firebase.auth();
+      const persistence = rememberMe
+        ? firebase.auth.Auth.Persistence.LOCAL
+        : firebase.auth.Auth.Persistence.SESSION;
+      await auth.setPersistence(persistence);
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (authErr) {
+      if (loginBtn) loginBtn.classList.remove('loading');
+      const code = authErr && authErr.code ? String(authErr.code) : '';
+      let msg = (translations[currentLang] && translations[currentLang].error_invalid) || "Invalid email or password.";
+      if (code === 'auth/user-disabled') {
+        msg = (translations[currentLang] && translations[currentLang].error_inactive) || "This account has been deactivated. Please contact HR or System Administrator.";
+      } else if (code === 'auth/too-many-requests') {
+        msg = "Too many failed login attempts. Please wait a few minutes and try again.";
+      } else if (code === 'auth/network-request-failed') {
+        msg = "Network error. Please check your internet connection and try again.";
+      } else {
+        if (emailInput) emailInput.classList.add('is-invalid');
+        if (passwordInput) passwordInput.classList.add('is-invalid');
+      }
+      showLoginError(msg);
+      if (loginBox) {
+        void loginBox.offsetWidth;
+        loginBox.classList.add('shake');
+      }
+      return;
+    }
+
+    // Fetch latest company users from Firestore now that Firebase Auth JWT is active
+    if (typeof window.ensureFirebaseAuthSync === 'function') {
+      try {
+        await window.ensureFirebaseAuthSync();
+      } catch (syncErr) {
+        console.warn("Post-auth cloud sync warning:", syncErr);
+      }
+    }
+
+    const enteredHash = typeof window.hashPassword === 'function' ? await window.hashPassword(password) : null;
+
+    setTimeout(async () => {
       try {
         const allUsers = getAllAuthenticatableUsers();
 
-        // Flexible user matching by email, id, employeeCode, name, or role shorthand
+        // Strict Email matching against authoritative directory
         let matchedUser = allUsers.find((u) => {
           if (!u) return false;
           const uEmail = (u.email || '').toLowerCase().trim();
-          const uId = (u.id || '').toLowerCase().trim();
-          const uRole = (u.role || '').toLowerCase().trim();
-          const uName = (u.name || '').toLowerCase().trim();
-          const uCode = (u.employeeCode || u.code || '').toLowerCase().trim();
-          const emailPrefix = uEmail.split('@')[0];
-
-          return (
-            uEmail === email ||
-            uId === email ||
-            uCode === email ||
-            emailPrefix === email ||
-            uName === email ||
-            (email === 'hr' && (uRole === 'hr' || uId === 'u1790626000017')) ||
-            (email === 'u1790626000017' && (uRole === 'hr' || uId === 'u1790626000017')) ||
-            (email === 'fatma' && (uRole === 'hr' || uId === 'u1790626000017')) ||
-            (email === 'admin' && (uRole === 'admin' || uId === 'u1790626000010')) ||
-            (email === 'u1790626000010' && (uRole === 'admin' || uId === 'u1790626000010')) ||
-            (email === 'rep' && (uRole === 'medical_rep' || uId === 'u1790626000001')) ||
-            (email === 'u1790626000001' && (uRole === 'medical_rep' || uId === 'u1790626000001')) ||
-            (email === 'u1790626000002' && (uRole === 'medical_rep' || uId === 'u1790626000002')) ||
-            (email === 'u1790626000003' && (uRole === 'medical_rep' || uId === 'u1790626000003')) ||
-            (email === 'u1790626000004' && (uRole === 'medical_rep' || uId === 'u1790626000004')) ||
-            (email === 'u1790626000005' && (uRole === 'medical_rep' || uId === 'u1790626000005')) ||
-            (email === 'dm' && (uRole === 'district_manager' || uId === 'u1790626000014')) ||
-            (email === 'u1790626000014' && (uRole === 'district_manager' || uId === 'u1790626000014')) ||
-            (email === 'lm' && (uRole === 'line_manager' || uId === 'u1790626000012')) ||
-            (email === 'u1790626000012' && (uRole === 'line_manager' || uId === 'u1790626000012')) ||
-            (email === 'bu' && (uRole === 'business_unit' || uId === 'u1790626000011')) ||
-            (email === 'u1790626000011' && (uRole === 'business_unit' || uId === 'u1790626000011')) ||
-            (email === 'pm' && (uRole === 'product_manager' || uId === 'u1790626000018')) ||
-            (email === 'u1790626000018' && (uRole === 'product_manager' || uId === 'u1790626000018')) ||
-            (email === 'u1790626000019' && (uRole === 'product_manager' || uId === 'u1790626000019'))
-          );
+          return uEmail === email;
         });
 
-        const isPasswordValid = Boolean(
-          matchedUser && (
-            (matchedUser.passwordHash && (matchedUser.passwordHash === enteredHash || matchedUser.passwordHash === enteredHashRaw)) ||
-            (matchedUser.password && (matchedUser.password === password || matchedUser.password === rawPassword || matchedUser.password === enteredHash))
-          )
-        );
-
-        if (!matchedUser || !isPasswordValid) {
+        if (!matchedUser) {
           if (loginBtn) loginBtn.classList.remove('loading');
+          try { await firebase.auth().signOut(); } catch (e) {}
           if (emailInput) emailInput.classList.add('is-invalid');
-          if (passwordInput) passwordInput.classList.add('is-invalid');
-          const invalidMsg = (translations[currentLang] && translations[currentLang].error_invalid) || "Invalid email or password.";
-          showLoginError(invalidMsg);
+          showLoginError("Your Firebase account is not linked to an employee profile. Please contact Admin.");
+          if (loginBox) {
+            void loginBox.offsetWidth;
+            loginBox.classList.add('shake');
+          }
+          return;
+        }
+
+        // Sync local metadata hash silently if available
+        let requiresPasswordUpgrade = false;
+        if (enteredHash && matchedUser.password) {
+          requiresPasswordUpgrade = true;
+        }
+
+        // Progressive Security Upgrade:
+        // Automatically clear any legacy plaintext password
+        if (requiresPasswordUpgrade && matchedUser && enteredHash) {
+          matchedUser.passwordHash = enteredHash;
+          delete matchedUser.password;
+          matchedUser.mustChangePassword = true;
+
+          try {
+            if (window.store && window.store.users && typeof window.store.users.save === "function") {
+              window.store.users.save(matchedUser);
+            }
+          } catch (upgradeErr) {}
+        }
+
+        // Account Status Check (Prevent suspended/inactive accounts from logging in)
+        const userStatus = String(matchedUser.status || "active").toLowerCase();
+        if (userStatus === "inactive" || userStatus === "suspended" || userStatus === "disabled") {
+          if (loginBtn) loginBtn.classList.remove('loading');
+          try { await firebase.auth().signOut(); } catch (e) {}
+          const inactiveMsg = (translations[currentLang] && translations[currentLang].error_inactive) || "This account has been deactivated. Please contact HR or System Administrator.";
+          showLoginError(inactiveMsg);
           if (loginBox) {
             void loginBox.offsetWidth;
             loginBox.classList.add('shake');
@@ -484,6 +573,7 @@ async function handleLogin() {
         const userDept = matchedUser.dept || (matchedUser.role === 'admin' ? 'admin' : (matchedUser.role === 'hr' ? 'hr' : 'sales'));
         if (selectedDepartment && userDept !== selectedDepartment && matchedUser.role !== 'admin') {
           if (loginBtn) loginBtn.classList.remove('loading');
+          try { await firebase.auth().signOut(); } catch (e) {}
           if (emailInput) emailInput.classList.add('is-invalid');
           const deptMsg = (translations[currentLang] && translations[currentLang].error_wrong_dept) || "This account does not belong to the selected department.";
           showLoginError(deptMsg);
@@ -495,6 +585,7 @@ async function handleLogin() {
         }
 
         const sessionData = {
+          ...matchedUser,
           id: matchedUser.id,
           email: matchedUser.email,
           role: matchedUser.role,
@@ -503,18 +594,20 @@ async function handleLogin() {
           nameAr: matchedUser.nameAr || matchedUser.name,
           managerId: matchedUser.managerId || null,
           areaId: matchedUser.areaId || null,
-          areaIds: matchedUser.areaIds || [],
+          areaIds: Array.isArray(matchedUser.areaIds) ? matchedUser.areaIds : (matchedUser.areaId ? [matchedUser.areaId] : []),
           phone: matchedUser.phone || null,
           hireDate: matchedUser.hireDate || null,
-          leaveBalance: matchedUser.leaveBalance || null,
+          leaveBalance: matchedUser.leaveBalance !== undefined ? matchedUser.leaveBalance : null,
           lineId: matchedUser.lineId || null,
-          lineIds: matchedUser.lineIds || [],
-          productIds: matchedUser.productIds || [],
+          lineIds: Array.isArray(matchedUser.lineIds) ? matchedUser.lineIds : (matchedUser.lineId ? [matchedUser.lineId] : []),
+          productIds: Array.isArray(matchedUser.productIds) ? matchedUser.productIds : [],
           mustChangePassword: false,
-          token: 'token_' + Date.now(),
+          token: 'fb_auth_' + (firebase.auth().currentUser ? firebase.auth().currentUser.uid : Date.now()),
           _sig: (typeof window.computeSessionSignature === 'function') ? window.computeSessionSignature(matchedUser) : undefined,
           _signedAt: Date.now()
         };
+        delete sessionData.password;
+        delete sessionData.passwordHash;
 
         // First-Time Login / Security Reset Check
         if (matchedUser.mustChangePassword) {
@@ -524,10 +617,20 @@ async function handleLogin() {
         }
 
         sessionStorage.removeItem('pharma_logged_out');
+        sessionStorage.setItem('pharma_remember_me', rememberMe ? 'true' : 'false');
         sessionStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-        localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
-        localStorage.setItem('userRole', matchedUser.role);
-        localStorage.setItem('userId', matchedUser.id);
+        sessionStorage.setItem('userRole', matchedUser.role);
+        sessionStorage.setItem('userId', matchedUser.id);
+
+        if (rememberMe) {
+          localStorage.setItem('pharmaUser', JSON.stringify(sessionData));
+          localStorage.setItem('userRole', matchedUser.role);
+          localStorage.setItem('userId', matchedUser.id);
+        } else {
+          localStorage.removeItem('pharmaUser');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userId');
+        }
         window.currentUser = sessionData;
 
         window.location.replace('index.html');
@@ -536,10 +639,11 @@ async function handleLogin() {
         if (loginBtn) loginBtn.classList.remove('loading');
         showLoginError("An error occurred during login. Please try again.");
       }
-    }, 300);
+    }, 150);
   } catch (outerErr) {
     console.error("handleLogin outer error:", outerErr);
     if (loginBtn) loginBtn.classList.remove('loading');
+    showLoginError("An unexpected error occurred during login. Please refresh the page.");
   }
 }
 
@@ -704,10 +808,38 @@ setLanguage(currentLang);
     if (submitBtn) submitBtn.classList.add("loading");
 
     try {
-      const hasher = window.hashPassword || (async (x) => x);
-      const newHash = await hasher(p1);
+      if (typeof window.hashPassword !== "function") {
+        showError("Security module unavailable. Please reload the page or contact administrator.");
+        return;
+      }
+      const newHash = await window.hashPassword(p1);
+
+      // Prevent reusing the same temporary / existing password
+      if (_pendingForceUser) {
+        if (_pendingForceUser.passwordHash && newHash === _pendingForceUser.passwordHash) {
+          showError("New password cannot be the same as your temporary or current password.");
+          return;
+        }
+        if (_pendingForceUser.password && (p1 === _pendingForceUser.password || newHash === _pendingForceUser.password)) {
+          showError("New password cannot be the same as your temporary or current password.");
+          return;
+        }
+        const isDefaultDemo = (
+          newHash === '9e3fb73091725b6689773b1bda8abe9e3db91c52a8c343fa074aaf8990e44f0f' ||
+          p1.toLowerCase() === 'password123' ||
+          p1.toLowerCase() === 'pharmacare123'
+        );
+        if (isDefaultDemo) {
+          showError("New password cannot be the default demo password.");
+          return;
+        }
+      }
 
       if (_pendingForceUser) {
+        if (typeof firebase !== "undefined" && typeof firebase.auth === "function" && firebase.auth().currentUser) {
+          await firebase.auth().currentUser.updatePassword(p1);
+        }
+
         _pendingForceUser.passwordHash = newHash;
         delete _pendingForceUser.password;
         _pendingForceUser.mustChangePassword = false;
@@ -756,15 +888,29 @@ setLanguage(currentLang);
 
       // Complete authentication session
       if (_pendingForceSession) {
+        _pendingForceSession.mustChangePassword = false;
         if (typeof window.computeSessionSignature === 'function') {
           _pendingForceSession._sig = window.computeSessionSignature(_pendingForceSession);
           _pendingForceSession._signedAt = Date.now();
         }
+        const rememberCheckbox = document.getElementById('remember') || document.getElementById('rememberMe');
+        const rememberMe = rememberCheckbox ? rememberCheckbox.checked : true;
+
         sessionStorage.removeItem("pharma_logged_out");
+        sessionStorage.setItem('pharma_remember_me', rememberMe ? 'true' : 'false');
         sessionStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));
-        localStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));
-        localStorage.setItem("userRole", _pendingForceSession.role);
-        localStorage.setItem("userId", _pendingForceSession.id);
+        sessionStorage.setItem("userRole", _pendingForceSession.role);
+        sessionStorage.setItem("userId", _pendingForceSession.id);
+
+        if (rememberMe) {
+          localStorage.setItem("pharmaUser", JSON.stringify(_pendingForceSession));
+          localStorage.setItem("userRole", _pendingForceSession.role);
+          localStorage.setItem("userId", _pendingForceSession.id);
+        } else {
+          localStorage.removeItem("pharmaUser");
+          localStorage.removeItem("userRole");
+          localStorage.removeItem("userId");
+        }
         window.currentUser = _pendingForceSession;
       }
 

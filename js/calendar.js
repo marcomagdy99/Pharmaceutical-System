@@ -101,7 +101,7 @@ function getNormalizedRole(role) {
 function hasFullOrgCalendarAccess(user) {
   if (!user) return false;
   const role = getNormalizedRole(user.role);
-  return role === "admin" || role === "hr" || role === "general_manager";
+  return role === "admin" || role === "hr";
 }
 
 function isCalendarRep(user) {
@@ -354,7 +354,7 @@ function getUserHierarchyBreadcrumb(userId, allUsers) {
     const mgr = allUsers.find((u) => u && u.id === curr.managerId);
     if (!mgr) break;
     const mgrRole = getNormalizedRole(mgr.role);
-    if (mgrRole === "admin" || mgrRole === "general_manager") {
+    if (mgrRole === "admin") {
       break;
     }
     curr = mgr;

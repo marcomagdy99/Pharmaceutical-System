@@ -125,7 +125,8 @@
     const allAreas = (window.store && window.store.areas && window.store.areas.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.areas) || [];
     const allDoctors = (window.store && window.store.doctors && window.store.doctors.getAll()) || (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
 
-    const isAdmin = role === "admin" || role === "general_manager" || role === "commercial_director";
+    const isAdmin = role === "admin" || role === "commercial_director";
+    const isGM = role === "general_manager" || role === "gm";
     const isLM = role === "line_manager" || role === "business_unit";
     const isDM = role === "district_manager";
     const isHR = role === "hr";
@@ -166,7 +167,7 @@
         allowedRepIds: new Set(allUsers.filter((u) => getNormalizedRole(u) === "medical_rep").map((u) => u.id)),
         allowedAreas: allAreas,
         allowedAreaIds: new Set(allAreas.map((a) => a.id)),
-        allowedDoctorIds: new Set(allDoctors.map((d) => d.id)),
+        allowedDoctorIds: new Set(allDoctors.map((d) => String(d.id))),
       };
     }
 
@@ -372,6 +373,47 @@
         allowedAreas: lmAreas,
         allowedAreaIds: lmAreaIds,
         allowedDoctorIds: lmDoctorIds,
+      };
+    }
+
+    // 4b. General Manager Scope: strictly own reporting subtree (view-only)
+    if (isGM) {
+      const subUsers = typeof window.getAllSubordinates === "function"
+        ? window.getAllSubordinates(user.id)
+        : [];
+      const subIds = new Set([user.id, ...subUsers.map((u) => u.id)]);
+      const gmDMs = subUsers.filter((u) => getNormalizedRole(u) === "district_manager");
+      const gmDmIds = new Set(gmDMs.map((d) => d.id));
+      const gmReps = subUsers.filter((u) => getNormalizedRole(u) === "medical_rep");
+      const gmRepIds = new Set(gmReps.map((r) => r.id));
+
+      const gmAreas = allAreas.filter((a) => {
+        const mgrId = typeof window.getAreaManagerId === "function" ? window.getAreaManagerId(a, allUsers) : (a.dmId || a.managerId);
+        return gmRepIds.has(a.repId) || subIds.has(a.buId) || (mgrId && (gmDmIds.has(mgrId) || subIds.has(mgrId)));
+      });
+      const gmAreaIds = new Set(gmAreas.map((a) => a.id));
+      const gmLineIds = new Set();
+      (typeof window.getUserLines === "function" ? window.getUserLines(user.id) : []).forEach((l) => gmLineIds.add(l.id));
+      gmAreas.forEach((a) => { if (a.lineId) gmLineIds.add(a.lineId); });
+      const gmLines = allLines.filter((l) => gmLineIds.has(l.id));
+      const gmDoctorIds = new Set(
+        allDoctors.filter((d) => gmAreaIds.has(d.areaId) || gmRepIds.has(d.repId)).map((d) => String(d.id))
+      );
+
+      return {
+        role,
+        isAdmin: false,
+        isLM: false,
+        isDM: false,
+        isRep: false,
+        allowedLines: gmLines,
+        allowedLineIds: gmLineIds,
+        allowedDMs: gmDMs,
+        allowedReps: gmReps,
+        allowedRepIds: gmRepIds,
+        allowedAreas: gmAreas,
+        allowedAreaIds: gmAreaIds,
+        allowedDoctorIds: gmDoctorIds,
       };
     }
 
@@ -785,12 +827,11 @@
             } else if (scope.isDM) {
               const isDistrictRep = shareRepId && scope.allowedRepIds.has(shareRepId);
               const isDistrictArea = shareAreaId && scope.allowedAreaIds.has(shareAreaId);
-              const isDistrictLine = shareLineId && scope.allowedLineIds.has(shareLineId);
-              if (!isDistrictRep && !isDistrictArea && !isDistrictLine) return;
+              if (!isDistrictRep && !isDistrictArea) return;
             } else if (scope.isLM) {
-              const isLmLine = shareLineId && scope.allowedLineIds.has(shareLineId);
+              const isLmArea = shareAreaId && scope.allowedAreaIds.has(shareAreaId);
               const isLmRep = shareRepId && scope.allowedRepIds.has(shareRepId);
-              if (!isLmLine && !isLmRep) return;
+              if (!isLmArea && !isLmRep) return;
             } else {
               const matchesDoc = s.targetId && scope.allowedDoctorIds.has(String(s.targetId));
               const matchesRep = shareRepId && scope.allowedRepIds.has(shareRepId);
@@ -1050,7 +1091,7 @@
     let scopedDoctors = [...allDoctors];
     if (!scope.isAdmin) {
       const txDocIds = new Set(filteredTransactions.map((tx) => String(tx.targetId)).filter(Boolean));
-      scopedDoctors = allDoctors.filter((doc) => scope.allowedDoctorIds.has(doc.id) || txDocIds.has(String(doc.id)));
+      scopedDoctors = allDoctors.filter((doc) => scope.allowedDoctorIds.has(String(doc.id)) || scope.allowedDoctorIds.has(doc.id) || txDocIds.has(String(doc.id)));
     }
 
     // Ensure any active transaction target not yet registered in master doctors is synthesized

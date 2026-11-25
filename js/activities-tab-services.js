@@ -98,7 +98,7 @@
       return [];
     }
 
-    const role = (user && user.role) ? user.role.toLowerCase() : "";
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : ((user && user.role) ? user.role.toLowerCase() : "");
 
     if (role === Core.ROLES.LM) {
       allocated = (lineBudget.lmAllocations && Number(lineBudget.lmAllocations[user.id])) || 0;
@@ -215,7 +215,7 @@
 
     const lineId = lineSelect.value;
     const metrics = getBudgetMetricsForUser(lineId, user);
-    const role = (user && user.role) ? user.role.toLowerCase() : "";
+    const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : ((user && user.role) ? user.role.toLowerCase() : "");
     const curr = Core.t("currency") || "EGP";
 
     const aTitle = document.getElementById("srvMetricTotalTitle");
@@ -315,6 +315,14 @@
     const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : (user.role || "").toLowerCase();
     if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR) return true;
     if (srv.requesterId === user.id) return true;
+
+    if (role === Core.ROLES.GM || role === "general_manager" || role === "gm") {
+      const subs = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      const subIds = new Set(subs.map((s) => s.id));
+      const directSub = subIds.has(srv.requesterId);
+      const sharedSub = srv.isShared && Array.isArray(srv.shares) && srv.shares.some((sh) => subIds.has(sh.repId));
+      return directSub || sharedSub;
+    }
 
     if (role === Core.ROLES.BU) {
       const uLines = typeof window.getUserLines === "function" ? window.getUserLines(user.id).map((l) => l.id) : (user.lineIds || (user.lineId ? [user.lineId] : []));
@@ -767,9 +775,8 @@
       if (filteredDoc.length === 0) {
         docSelect.innerHTML = `<option value="" disabled selected>No doctors available</option>`;
       } else {
-        const currentDocLang = (window.getCurrentLang && window.getCurrentLang()) || "en";
         docSelect.innerHTML = filteredDoc.map((d) => {
-          const docName = (currentDocLang === "ar" && d.nameAr) ? d.nameAr : (d.name || d.nameAr || "");
+          const docName = d.name || d.nameAr || "";
           return `<option value="${d.id}">${Core.escapeHTML(docName)} (${Core.escapeHTML(d.specialty || "-")})</option>`;
         }).join("");
       }
@@ -1157,6 +1164,10 @@
   function handleServiceSubmit(e) {
     e.preventDefault();
     Core._state.currentUser = Core.getAuthUser();
+    if (!Core._state.currentUser) {
+      Core.safeShowToast("Session expired. Please log in again.", "danger");
+      return;
+    }
 
     const submitBtn = document.getElementById("btnSubmitService") || e.target?.querySelector("button[type='submit']");
     if (submitBtn) {
@@ -1231,7 +1242,8 @@
     }
 
     const assignedLines = Core.getUserAssignedLines(Core._state.currentUser).map(l => l.id);
-    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && assignedLines.length > 0 && !assignedLines.includes(lineId)) {
+    const submitterRoleNorm = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser.role || "").toLowerCase();
+    if (submitterRoleNorm !== Core.ROLES.ADMIN && (assignedLines.length === 0 || !assignedLines.includes(lineId))) {
       Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
       if (submitBtn) submitBtn.disabled = false;
       return;
@@ -1313,8 +1325,8 @@
       }
     }
 
-    // Budget validation for requesting user (enforce across Rep, DM, LM unless Admin)
-    const userRole = (Core._state.currentUser?.role || "").toLowerCase();
+    // Budget validation for requesting user (enforce across Rep, DM, LM unless Admin or GM)
+    const userRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser?.role || "").toLowerCase();
     const myShareCost = isShared ? Math.round((cost * primaryPercent) / 100) : cost;
 
     if (userRole !== Core.ROLES.ADMIN) {
@@ -1348,8 +1360,21 @@
         // Direct rep to LM (no DM on this line)
         primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
       }
-      if (Core._state.currentUser.role === Core.ROLES.DM) primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
-      else if (Core._state.currentUser.role === Core.ROLES.LM || Core._state.currentUser.role === Core.ROLES.BU || Core._state.currentUser.role === Core.ROLES.ADMIN) primaryShareStatus = Core.REQUEST_STATUS.APPROVED;
+      if (userRole === Core.ROLES.DM) primaryShareStatus = Core.REQUEST_STATUS.PENDING_LM;
+      else if (userRole === Core.ROLES.LM) {
+        if (window.WorkflowEngine && typeof window.WorkflowEngine.resolveInitialServiceStatus === "function") {
+          const initRes = window.WorkflowEngine.resolveInitialServiceStatus({
+            department: department,
+            cost: Math.round((cost * primaryPercent) / 100),
+            lineId: lineId,
+            areaId: areaId
+          }, Core._state.currentUser);
+          primaryShareStatus = initRes.status;
+        } else {
+          primaryShareStatus = Core.REQUEST_STATUS.PENDING_BU;
+        }
+      } else if (userRole === Core.ROLES.BU && assignedLines.includes(lineId)) primaryShareStatus = Core.REQUEST_STATUS.APPROVED;
+      else if (userRole === Core.ROLES.ADMIN) primaryShareStatus = Core.REQUEST_STATUS.APPROVED;
 
       if (primaryShareStatus === Core.REQUEST_STATUS.PENDING_DM && !primaryDmId) {
         Core.safeShowToast(Core.t("noApproverConfigured") || "Cannot submit shared service: Primary line has no DM configured to approve. Please contact administrator.", "danger");
@@ -1393,11 +1418,23 @@
           // Direct rep to LM (no DM on this line)
           rowShareStatus = Core.REQUEST_STATUS.PENDING_LM;
         }
-        if (Core._state.currentUser.role === Core.ROLES.DM && rowDmId === Core._state.currentUser.id) {
+        if (userRole === Core.ROLES.DM && rowDmId === Core._state.currentUser.id) {
           rowShareStatus = Core.REQUEST_STATUS.PENDING_LM;
-        } else if (Core._state.currentUser.role === Core.ROLES.LM && rowLmId === Core._state.currentUser.id) {
+        } else if (userRole === Core.ROLES.LM && rowLmId === Core._state.currentUser.id) {
+          if (window.WorkflowEngine && typeof window.WorkflowEngine.resolveInitialServiceStatus === "function") {
+            const initRow = window.WorkflowEngine.resolveInitialServiceStatus({
+              department: department,
+              cost: Math.round((cost * row.sharePercent) / 100),
+              lineId: row.lineId,
+              areaId: row.areaId
+            }, Core._state.currentUser);
+            rowShareStatus = initRow.status;
+          } else {
+            rowShareStatus = Core.REQUEST_STATUS.PENDING_BU;
+          }
+        } else if (userRole === Core.ROLES.BU && assignedLines.includes(row.lineId)) {
           rowShareStatus = Core.REQUEST_STATUS.APPROVED;
-        } else if (Core._state.currentUser.role === Core.ROLES.BU || Core._state.currentUser.role === Core.ROLES.ADMIN) {
+        } else if (userRole === Core.ROLES.ADMIN) {
           rowShareStatus = Core.REQUEST_STATUS.APPROVED;
         }
 
@@ -1496,10 +1533,15 @@
           const buUser = Core.getAllUsers().find(u => u.role === Core.ROLES.BU && (u.lineIds && u.lineIds.includes(lineId) || u.lineId === lineId));
           nextApprover = buUser ? buUser.id : (Core._state.currentUser.managerId || null);
         } else {
-          // BU, PM, HR, Admin route to General Manager
-          globalStatus = Core.REQUEST_STATUS.PENDING_GM;
-          const gm = Core.getGmUser ? Core.getGmUser() : null;
-          nextApprover = gm ? gm.id : (Core._state.currentUser.managerId && Core._state.currentUser.managerId !== Core._state.currentUser.id ? Core._state.currentUser.managerId : null);
+          // BU, PM, HR, GM, Admin route to Admin (or approve immediately for Admin)
+          const adminUser = Core.getAllUsers().find((u) => (Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role) === Core.ROLES.ADMIN);
+          if (Core._state.currentUser.role === Core.ROLES.ADMIN || !adminUser || adminUser.id === Core._state.currentUser.id) {
+            globalStatus = Core.REQUEST_STATUS.APPROVED;
+            nextApprover = null;
+          } else {
+            globalStatus = "pending_admin";
+            nextApprover = adminUser.id;
+          }
         }
       }
 

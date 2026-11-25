@@ -16,7 +16,7 @@
     const lineSelect = document.getElementById("expenseFilterLine");
     if (lineSelect && lineSelect.dataset.lastUser !== currentUserId) {
       const assignedLines = Core.getUserAssignedLines(user);
-      const userRole = (user?.role || "").toLowerCase();
+      const userRole = Core.getNormalizedRole ? Core.getNormalizedRole(user) : (user?.role || "").toLowerCase();
       const canSeeAll = user && (userRole === Core.ROLES.ADMIN || userRole === Core.ROLES.HR);
       let html = "";
       if (canSeeAll || assignedLines.length > 1) {
@@ -111,11 +111,15 @@
     if (!user) return false;
     const role = Core.getNormalizedRole ? Core.getNormalizedRole(user) : (user.role || "").toLowerCase();
     if (role === Core.ROLES.ADMIN || role === Core.ROLES.HR || role === "admin" || role === "hr") return true;
-    if (role === "general_manager" || role === "gm" || role === "finance" || role === "finance_manager" || role === "commercial_director") return true;
+    if (role === "finance" || role === "finance_manager" || role === "commercial_director") return true;
     if (exp.requesterId === user.id) return true;
+    if (role === Core.ROLES.GM || role === "general_manager" || role === "gm") {
+      const subordinates = typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(user.id) : [];
+      return subordinates.some((s) => s.id === exp.requesterId);
+    }
     if (role === Core.ROLES.PM || role === "product_manager" || role === "pm") {
       const userLines = Core.getUserAssignedLines(user).map((l) => l.id);
-      return userLines.length === 0 || (exp.lineId && userLines.includes(exp.lineId));
+      return userLines.length > 0 && Boolean(exp.lineId && userLines.includes(exp.lineId));
     }
     if (role === Core.ROLES.BU) {
       if (typeof window.canApproveFor === "function" && window.canApproveFor(exp.requesterId)) return true;
@@ -563,13 +567,13 @@
       const hr = Core.getHrUser();
       nextApprover = hr ? hr.id : (Core._state.currentUser.managerId || null);
     } else if (role === Core.ROLES.HR) {
-      initialStatus = Core.REQUEST_STATUS.PENDING_GM;
-      const gm = Core.getGmUser ? Core.getGmUser() : null;
-      nextApprover = gm ? gm.id : (Core._state.currentUser.managerId || null);
+      initialStatus = "pending_admin";
+      const adminUser = Core.getAllUsers().find((u) => (Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role) === Core.ROLES.ADMIN);
+      nextApprover = adminUser ? adminUser.id : (Core._state.currentUser.managerId || null);
     } else if (role === Core.ROLES.ADMIN) {
-      initialStatus = Core.REQUEST_STATUS.PENDING_GM;
-      const gm = Core.getGmUser ? Core.getGmUser() : null;
-      nextApprover = gm ? gm.id : (Core._state.currentUser.managerId && Core._state.currentUser.managerId !== Core._state.currentUser.id ? Core._state.currentUser.managerId : null);
+      initialStatus = Core.REQUEST_STATUS.PENDING_HR;
+      const hr = Core.getHrUser ? Core.getHrUser() : null;
+      nextApprover = hr ? hr.id : (Core._state.currentUser.managerId && Core._state.currentUser.managerId !== Core._state.currentUser.id ? Core._state.currentUser.managerId : null);
     } else {
       // PM, Finance Manager, Commercial Director, etc.
       initialStatus = Core.REQUEST_STATUS.PENDING_HR;

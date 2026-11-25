@@ -1,4 +1,9 @@
 {
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
+  },
   "firestore": {
     "rules": "firestore.rules"
   },
@@ -11,6 +16,10 @@
       "**/node_modules/**",
       "scratch/**",
       "**/scratch/**",
+      "tests/**",
+      "**/tests/**",
+      "firestore.rules",
+      "*.md",
       "package-lock.json",
       "*.log",
       "GEMINI.md",

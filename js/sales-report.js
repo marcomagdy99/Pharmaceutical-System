@@ -49,7 +49,7 @@ function populateUploadControls() {
   }
 
   if (monthSelect && !monthSelect.dataset.populated) {
-    const now = new Date();
+    const now = typeof window.getSystemDate === 'function' ? window.getSystemDate() : new Date();
     MONTH_NAMES.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, '0');
       const opt = document.createElement('option');
@@ -62,7 +62,8 @@ function populateUploadControls() {
   }
 
   if (yearSelect && !yearSelect.dataset.populated) {
-    const currentYear = String(new Date().getFullYear());
+    const nowYear = (typeof window.getSystemDate === 'function' ? window.getSystemDate() : new Date()).getFullYear();
+    const currentYear = String(nowYear);
     const yearsList = typeof window.getDynamicYears === 'function' ? window.getDynamicYears() : ['2025', '2026', '2027'];
     yearsList.forEach((y) => {
       const opt = document.createElement('option');
@@ -78,13 +79,14 @@ function populateUploadControls() {
 /**
  * Returns the list of Line ids this user is restricted to (Rep/DM/LM --
  * a DM or LM covering more than one line gets all of them), or null for
- * an unrestricted role (BU/Admin/HR), meaning "every line".
+ * an unrestricted role (Admin/GM/HR), meaning "every line".
  */
 function getPharmSalesAllowedLineIds(user) {
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
+  if (!user) return [];
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
   const isOpenRole = role === 'admin' || role === 'hr';
   if (isOpenRole) return null;
-  const userLines = typeof window.getUserLines === 'function' && user ? window.getUserLines(user.id) : [];
+  const userLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id) : [];
   return userLines.map((l) => l.id);
 }
 
@@ -156,7 +158,7 @@ function initPharmSalesFilters(user) {
   const yearSelect = document.getElementById('pharmSalesYearSelect');
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
   const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
-  const now = new Date();
+  const now = typeof window.getSystemDate === 'function' ? window.getSystemDate() : new Date();
 
   const monthList = window.MONTH_NAMES || [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -226,17 +228,51 @@ window.populatePharmSalesAreas = function (filterUser) {
   areaSelect.appendChild(defaultOpt);
 
   const curUser = filterUser || (typeof checkAuth === 'function' ? checkAuth() : null);
+  if (!curUser) {
+    areaSelect.value = 'all';
+    return;
+  }
   const isRep = window.isRepRole ? window.isRepRole(curUser) : (curUser && (curUser.role === 'medical_rep' || curUser.role === 'rep'));
   const lmSelect = document.getElementById('pharmSalesLmSelect');
   const dmSelect = document.getElementById('pharmSalesDmSelect');
   const repSelect = document.getElementById('pharmSalesRepSelect');
   const selectedRepVal = (repSelect && repSelect.value !== 'all') ? repSelect.value : ((dmSelect && dmSelect.value !== 'all') ? dmSelect.value : ((lmSelect && lmSelect.value !== 'all') ? lmSelect.value : 'all'));
   const effLineId = window.selectedReportLineId || document.getElementById('reportLineFilter')?.value || 'all';
+  const allowedLineIds = getPharmSalesAllowedLineIds(curUser);
 
-  const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const allAreasRaw = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
+  const allUsersForScope = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+  const curRole = curUser ? (window.normalizeRole ? window.normalizeRole(curUser.role) : (curUser.role || '').toLowerCase()) : '';
+  const isOpenRoleScope = curRole === 'admin' || curRole === 'administrator' || curRole === 'hr';
+  let allAreas = allAreasRaw;
+  if (!isOpenRoleScope) {
+    if (curRole === 'district_manager' || curRole === 'dm') {
+      const dmReps = allUsersForScope.filter((u) => u.managerId === curUser.id).map((u) => u.id);
+      allAreas = allAreasRaw.filter((a) => {
+        if (a.repId && dmReps.includes(a.repId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsersForScope) : null;
+        return mgrId === curUser.id || (!mgrId && (a.dmId === curUser.id || a.managerId === curUser.id));
+      });
+    } else if (curRole === 'line_manager' || curRole === 'lm') {
+      const lmAreaIds = getLmScopedAreaIds(curUser, allUsersForScope, allAreasRaw);
+      allAreas = allAreasRaw.filter((a) => lmAreaIds.has(a.id));
+    } else if (curRole === 'business_unit' || curRole === 'bu' || curRole === 'general_manager' || curRole === 'gm') {
+      const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(curUser.id) : [];
+      const subIdSet = new Set([curUser.id, ...subs.map((s) => s.id)]);
+      allAreas = allAreasRaw.filter((a) => {
+        if (a.repId && subIdSet.has(a.repId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsersForScope) : null;
+        return (mgrId && subIdSet.has(mgrId)) || (a.dmId && subIdSet.has(a.dmId)) || (a.buId && subIdSet.has(a.buId));
+      });
+    } else if (curRole === 'product_manager' || curRole === 'pm') {
+      allAreas = allowedLineIds ? allAreasRaw.filter((a) => a.lineId && allowedLineIds.includes(a.lineId)) : [];
+    } else if (!isRep) {
+      allAreas = [];
+    }
+  }
   let areasToDisplay = [];
 
-  if (isRep && curUser) {
+  if (isRep) {
     areasToDisplay = (window.store && window.store.areas ? window.store.areas.getByRep(curUser.id) : allAreas.filter((a) => a.repId === curUser.id));
   } else if (selectedRepVal && selectedRepVal.startsWith('vacant:')) {
     const vacantAreaId = selectedRepVal.split(':')[1];
@@ -244,8 +280,9 @@ window.populatePharmSalesAreas = function (filterUser) {
   } else if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms') {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
     const selUser = allUsers.find((u) => u.id === selectedRepVal);
-    const isLM = selUser && (selUser.role === 'line_manager' || selUser.role === 'lm');
-    const isDM = selUser && (selUser.role === 'district_manager' || selUser.role === 'dm');
+    const selRole = selUser ? (window.normalizeRole ? window.normalizeRole(selUser.role) : (selUser.role || '').toLowerCase()) : '';
+    const isLM = selRole === 'line_manager' || selRole === 'lm';
+    const isDM = selRole === 'district_manager' || selRole === 'dm';
 
     if (isDM) {
       const repsUnderDM = allUsers.filter((u) => u.managerId === selectedRepVal).map((u) => u.id);
@@ -256,9 +293,9 @@ window.populatePharmSalesAreas = function (filterUser) {
       });
     } else if (isLM) {
       const dms = allUsers.filter((u) => u.managerId === selectedRepVal).map((d) => d.id);
-      const lmReps = allUsers.filter((u) => dms.includes(u.managerId)).map((u) => u.id);
+      const lmTeamSet = new Set(allUsers.filter((u) => u.managerId === selectedRepVal || dms.includes(u.managerId)).map((u) => u.id));
       areasToDisplay = allAreas.filter((a) => {
-        if (a.repId && lmReps.includes(a.repId)) return true;
+        if (a.repId && lmTeamSet.has(a.repId)) return true;
         if (selUser.lineId && a.lineId === selUser.lineId) return true;
         if (selUser.lineIds && selUser.lineIds.includes(a.lineId)) return true;
         return false;
@@ -266,9 +303,7 @@ window.populatePharmSalesAreas = function (filterUser) {
     } else {
       areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
     }
-    if (areasToDisplay.length === 0) areasToDisplay = allAreas;
   } else {
-    const allowedLineIds = getPharmSalesAllowedLineIds(curUser);
     if (effLineId !== 'all' && effLineId !== 'none') {
       areasToDisplay = allAreas.filter((a) => a.lineId === effLineId);
     } else if (allowedLineIds !== null) {
@@ -278,7 +313,10 @@ window.populatePharmSalesAreas = function (filterUser) {
     }
   }
 
-  // Strict line isolation: filter areas by selected line if a line is active
+  // Strict line isolation: enforce allowedLineIds and selected line
+  if (allowedLineIds !== null) {
+    areasToDisplay = areasToDisplay.filter((a) => a.lineId && allowedLineIds.includes(a.lineId));
+  }
   if (effLineId !== 'all' && effLineId !== 'none') {
     areasToDisplay = areasToDisplay.filter((a) => a.lineId === effLineId);
   }
@@ -369,7 +407,7 @@ function getLmScopedAreaIds(lmUser, allUsers, allAreas) {
   const lmId = lmUser.id;
   const dms = allUsers.filter((u) => u.managerId === lmId && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
   const dmIds = dms.map((d) => d.id);
-  const teamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+  const teamRepIds = allUsers.filter((u) => u.managerId === lmId || dmIds.includes(u.managerId)).map((u) => u.id);
 
   const userLineIds = (lmUser.lineIds && lmUser.lineIds.length > 0) ? lmUser.lineIds : (lmUser.lineId ? [lmUser.lineId] : []);
   const lmsInLine = allUsers.filter((u) =>
@@ -413,6 +451,7 @@ function getFilteredPharmSalesRows() {
   const distSelect = document.getElementById('pharmSalesDistributorSelect');
   const lineSelect = document.getElementById('reportLineFilter');
   const user = checkAuth();
+  if (!user) return [];
 
   const selectedProduct = productSelect ? productSelect.value : 'all';
   const selectedYear = yearSelect ? yearSelect.value : '';
@@ -488,6 +527,15 @@ function getFilteredPharmSalesRows() {
     return null;
   };
 
+  // Strict Allowed-Lines Filter FIRST: Employees with restricted lines can ONLY see medicines in their assigned lines
+  if (allowedLineIds !== null) {
+    if (allowedLineIds.length === 0) return [];
+    rows = rows.filter((r) => {
+      const rLine = getEffectiveRowLineId(r);
+      return rLine && allowedLineIds.includes(rLine);
+    });
+  }
+
   // Strict Product-Line Filter: If a specific line is selected, ONLY medicines and areas belonging to this line are allowed
   if (selectedLine !== 'all' && selectedLine !== 'none') {
     rows = rows.filter((r) => {
@@ -499,16 +547,12 @@ function getFilteredPharmSalesRows() {
       }
       return rLine === selectedLine;
     });
-  } else if (allowedLineIds !== null) {
-    // Strict Allowed-Lines Filter: Employees with restricted lines can ONLY see medicines in their assigned lines
-    rows = rows.filter((r) => {
-      const rLine = getEffectiveRowLineId(r);
-      return rLine && allowedLineIds.includes(rLine);
-    });
   }
 
-  const role = window.normalizeRole ? window.normalizeRole(user?.role) : (user?.role || '').toLowerCase();
-  const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+  const isRep = window.isRepRole ? window.isRepRole(user) : (role === 'medical_rep' || role === 'rep');
+  const isPM = window.isPMRole ? window.isPMRole(user) : (role === 'product_manager' || role === 'pm');
+  const isOpenRole = role === 'admin' || role === 'hr';
   const allUsers = typeof getSharedReportUsers === 'function'
     ? getSharedReportUsers()
     : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
@@ -535,7 +579,7 @@ function getFilteredPharmSalesRows() {
   } else if (role === 'line_manager') {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
-    const teamRepIds = allUsers.filter((u) => dmIds.includes(u.managerId)).map((u) => u.id);
+    const teamRepIds = allUsers.filter((u) => u.managerId === user.id || dmIds.includes(u.managerId)).map((u) => u.id);
     const lmAreaIds = getLmScopedAreaIds(user, allUsers, allAreas);
     rows = rows.filter((r) =>
       r.lmId === user.id ||
@@ -543,19 +587,27 @@ function getFilteredPharmSalesRows() {
       (r.repId && teamRepIds.includes(r.repId)) ||
       (r.areaId && lmAreaIds.has(r.areaId))
     );
-  } else if (role === 'business_unit') {
+  } else if (role === 'business_unit' || role === 'general_manager') {
     const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
     const subIds = subs.map((s) => s.id);
     const directLMs = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
     const allowedBuUserIds = [user.id, ...directLMs, ...subIds];
-    const buLines = typeof window.getUserLines === 'function' ? window.getUserLines(user.id).map(l => l.id) : [];
-    const buAreaIds = new Set(allAreas.filter(a => (a.lineId && buLines.includes(a.lineId)) || (a.repId && allowedBuUserIds.includes(a.repId))).map(a => a.id));
+    const allowedBuSet = new Set(allowedBuUserIds);
+    const buAreaIds = new Set(allAreas.filter((a) => {
+      if (a.repId && allowedBuSet.has(a.repId)) return true;
+      const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+      return (mgrId && allowedBuSet.has(mgrId)) || (a.dmId && allowedBuSet.has(a.dmId)) || (a.buId && allowedBuSet.has(a.buId));
+    }).map((a) => a.id));
     rows = rows.filter((r) =>
       (r.repId && allowedBuUserIds.includes(r.repId)) ||
       (r.dmId && allowedBuUserIds.includes(r.dmId)) ||
       (r.lmId && allowedBuUserIds.includes(r.lmId)) ||
       (r.areaId && buAreaIds.has(r.areaId))
     );
+  } else if (isPM) {
+    // Product Manager is scoped by allowedLineIds and productIds (already applied above)
+  } else if (!isOpenRole) {
+    return [];
   }
 
   const lmSelect = document.getElementById('pharmSalesLmSelect');
@@ -570,19 +622,23 @@ function getFilteredPharmSalesRows() {
       const areaNameLower = vacantArea && vacantArea.name ? vacantArea.name.toLowerCase().trim() : null;
       rows = rows.filter((r) => r.areaId === vacantAreaId || (areaNameLower && r.area && r.area.toLowerCase().trim() === areaNameLower));
     } else if (selectedRep === 'all_dms') {
-      const dms = allUsers.filter((u) => u.role === 'district_manager' || u.role === 'dm').map((u) => u.id);
+      const dms = allUsers.filter((u) => {
+        const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+        return r === 'district_manager' || r === 'dm';
+      }).map((u) => u.id);
       rows = rows.filter((r) => (r.dmId && dms.includes(r.dmId)) || (r.repId && dms.some((dId) => allUsers.some((u) => u.id === r.repId && u.managerId === dId))));
     } else if (selectedRep === 'all_reps') {
-      const reps = allUsers.filter((u) => u.role === 'medical_rep' || u.role === 'rep').map((u) => u.id);
+      const reps = allUsers.filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep')).map((u) => u.id);
       rows = rows.filter((r) => r.repId && reps.includes(r.repId));
     } else {
-      const isLM = allUsers.some((u) => u.id === selectedRep && (u.role === 'line_manager' || u.role === 'lm'));
-      const isDM = allUsers.some((u) => u.id === selectedRep && (u.role === 'district_manager' || u.role === 'dm'));
+      const targetUser = allUsers.find((u) => u.id === selectedRep);
+      const targetRole = targetUser ? (window.normalizeRole ? window.normalizeRole(targetUser.role) : (targetUser.role || '').toLowerCase()) : '';
+      const isLM = targetRole === 'line_manager' || targetRole === 'lm';
+      const isDM = targetRole === 'district_manager' || targetRole === 'dm';
       if (isLM) {
-        const targetLmUser = allUsers.find((u) => u.id === selectedRep);
         const dmsUnderLM = allUsers.filter((u) => u.managerId === selectedRep).map((u) => u.id);
-        const repsUnderLM = allUsers.filter((u) => dmsUnderLM.includes(u.managerId)).map((u) => u.id);
-        const lmAreaIds = getLmScopedAreaIds(targetLmUser, allUsers, allAreas);
+        const repsUnderLM = allUsers.filter((u) => u.managerId === selectedRep || dmsUnderLM.includes(u.managerId)).map((u) => u.id);
+        const lmAreaIds = getLmScopedAreaIds(targetUser, allUsers, allAreas);
         rows = rows.filter((r) =>
           r.lmId === selectedRep ||
           (r.dmId && dmsUnderLM.includes(r.dmId)) ||
@@ -756,7 +812,7 @@ function renderSalesReport() {
       // Build Type badge
       let typeBadge = '';
       if (row.salesType === "bulk") {
-        typeBadge = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Bulk (${row.bulkWeight || 0}%)</span>`;
+        typeBadge = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Bulk (${Number(row.bulkWeight) || 0}%)</span>`;
       } else {
         typeBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle">Private</span>`;
       }
@@ -791,9 +847,8 @@ function renderSalesReport() {
 }
 
 function triggerExcelUpload() {
-  const user = checkAuth();
-  const lang = getCurrentLang();
-  if (window.isAdmin && !window.isAdmin(user)) {
+  const user = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!isTargetsAdminUser(user)) {
     showToast('Permission Denied: Admin only.', 'error');
     return;
   }
@@ -817,7 +872,13 @@ function triggerExcelUpload() {
 }
 
 function handleExcelUpload(e) {
-  const file = e.target.files[0];
+  const user = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!isTargetsAdminUser(user)) {
+    if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
+    if (e && e.target) e.target.value = '';
+    return;
+  }
+  const file = e && e.target && e.target.files ? e.target.files[0] : null;
   if (!file) return;
   const lang = getCurrentLang();
 
@@ -1034,12 +1095,11 @@ function exportSalesReport() {
   const areas = (window.store && window.store.areas ? window.store.areas.getAll() : []);
   const distributors = (window.store && window.store.distributors ? window.store.distributors.getAll() : []);
 
-  const safeCsv = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
-  let csv = 'Date,Pharmacy,Pharmacy Code,Product,Distributor,Area,Rep,Quantity,Value,Type\n';
-  rows.forEach((r) => {
+  const headers = ['Date', 'Pharmacy', 'Pharmacy Code', 'Product', 'Distributor', 'Area', 'Rep', 'Quantity', 'Value', 'Type'];
+  const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
+  const dataRows = rows.map((r) => {
     const rep = r.repId ? allUsers.find((u) => u.id === r.repId) : null;
     const area = r.areaId ? areas.find((a) => a.id === r.areaId) : null;
-    const legacyDistMap = { dist1: "dist_1790626000001", dist2: "dist_1790626000002", dist3: "dist_1790626000003" };
     const resolvedDistId = (r.distributorId && legacyDistMap[r.distributorId]) ? legacyDistMap[r.distributorId] : r.distributorId;
     const dist = resolvedDistId ? (distributors.find((d) => d.id === resolvedDistId || d.id === r.distributorId) || (window.store && window.store.distributors ? window.store.distributors.getById(resolvedDistId) : null)) : null;
     const distName = dist ? dist.name : (r.distributorId || '');
@@ -1048,7 +1108,7 @@ function exportSalesReport() {
     const qty = parseFloat(r.quantity) || 0;
     const value = parseFloat(r.value) || 0;
     const typeLabel = (r.salesType === 'bulk' ? 'Bulk' : 'Private') + (r.splitPercent ? ` (Split ${r.splitPercent}%)` : '');
-    csv += `${safeCsv(r.date || r.month)},${safeCsv(r.pharmacyName)},${safeCsv(r.pharmacyCode || '')},${safeCsv(r.product)},${safeCsv(distName)},${safeCsv(areaLabel)},${safeCsv(repLabel)},${qty},${value},${safeCsv(typeLabel)}\n`;
+    return [r.date || r.month || '', r.pharmacyName || '', r.pharmacyCode || '', r.product || '', distName, areaLabel, repLabel, qty, value, typeLabel];
   });
 
   const yearSelect = document.getElementById('pharmSalesYearSelect');
@@ -1058,13 +1118,32 @@ function exportSalesReport() {
   if (selectedMonths.length > 0 && yearVal) {
     periodSuffix = `${yearVal}_${selectedMonths.join('_')}`;
   }
+  const fileName = `PharmaCare_PharmaciesSales_${periodSuffix}`;
+
+  if (window.ExportService && typeof window.ExportService.downloadExcelOrCsv === 'function' && typeof window.downloadExcelOrCsv === 'function') {
+    window.downloadExcelOrCsv(fileName, 'Pharmacies Sales', dataRows, headers);
+    return;
+  }
+
+  const safeCsv = (val) => {
+    let s = val === null || val === undefined ? '' : String(val);
+    if (/^[=@\t\r]|(^[+-](?![\d\s().-]+$))/.test(s)) {
+      s = "'" + s;
+    }
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  let csv = headers.map(safeCsv).join(',') + '\n';
+  dataRows.forEach((row) => {
+    csv += row.map((cell) => (typeof cell === 'number' ? cell : safeCsv(cell))).join(',') + '\n';
+  });
 
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `PharmaCare_PharmaciesSales_${periodSuffix}.csv`;
+  a.download = `${fileName}.csv`;
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ============================================================================
@@ -1178,7 +1257,6 @@ function populateTargetAreaSelect(filterLineId = 'all') {
   let areasToDisplay = allAreas;
   if (filterLineId && filterLineId !== 'all') {
     areasToDisplay = allAreas.filter((a) => !a.lineId || a.lineId === filterLineId);
-    if (areasToDisplay.length === 0) areasToDisplay = allAreas;
   }
 
   const prevAreaVal = areaSelect.value;
@@ -1218,21 +1296,22 @@ function populateTargetFormSelects() {
   const yearSelect = document.getElementById('targetYearSelect');
   const months = (typeof MONTH_NAMES !== 'undefined' ? MONTH_NAMES : (window.MONTH_NAMES || ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']));
 
+  const sysNow = typeof window.getSystemDate === 'function' ? window.getSystemDate() : new Date();
+
   if (monthSelect && !monthSelect.dataset.populated) {
-    const now = new Date();
     months.forEach((m, idx) => {
       const val = String(idx + 1).padStart(2, '0');
       const opt = document.createElement('option');
       opt.value = val;
       opt.textContent = m;
-      if (idx === now.getMonth()) opt.selected = true;
+      if (idx === sysNow.getMonth()) opt.selected = true;
       monthSelect.appendChild(opt);
     });
     monthSelect.dataset.populated = 'true';
   }
 
   if (yearSelect && !yearSelect.dataset.populated) {
-    const currentYear = String(new Date().getFullYear());
+    const currentYear = String(sysNow.getFullYear());
     const yearsList = typeof window.getDynamicYears === 'function' ? window.getDynamicYears() : ['2025', '2026', '2027'];
     yearsList.forEach((y) => {
       const opt = document.createElement('option');
@@ -1299,18 +1378,39 @@ function renderTargetsTable(filterLineId) {
       <td>${unitPrice.toLocaleString()}</td>
       <td style="font-weight:700;">${storedValue.toLocaleString()}</td>
       <td style="text-align:end; white-space:nowrap;">
-        <button class="btn btn-sm btn-light text-primary" onclick="editTarget('${window.escapeHtml(t.id)}')" title="Edit"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
-        <button class="btn btn-sm btn-light text-danger" onclick="deleteTarget('${window.escapeHtml(t.id)}')" title="Delete"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        <button type="button" class="btn btn-sm btn-light text-primary" data-action="edit-target" data-target-id="${window.escapeHtml(t.id)}" title="Edit"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
+        <button type="button" class="btn btn-sm btn-light text-danger" data-action="delete-target" data-target-id="${window.escapeHtml(t.id)}" title="Delete"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
       </td>
     `;
     tbody.appendChild(tr);
   });
+
+  if (!tbody.dataset.targetsDelegated) {
+    tbody.dataset.targetsDelegated = 'true';
+    tbody.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('button[data-action]') : null;
+      if (!btn) return;
+      const targetId = btn.dataset.targetId;
+      if (!targetId) return;
+      if (btn.dataset.action === 'edit-target') {
+        editTarget(targetId);
+      } else if (btn.dataset.action === 'delete-target') {
+        deleteTarget(targetId);
+      }
+    });
+  }
+}
+
+function isTargetsAdminUser(user) {
+  if (!user) return false;
+  if (typeof window.isAdmin === 'function') return window.isAdmin(user);
+  const role = window.normalizeRole ? window.normalizeRole(user.role) : (user.role || '').toLowerCase();
+  return role === 'admin';
 }
 
 function openTargetsModal() {
-  const user = typeof checkAuth === 'function' ? checkAuth() : (window.currentUser || null);
-  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && (user.role === 'admin' || user.role === 'business_unit')));
-  if (!isAdmin) {
+  const user = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!isTargetsAdminUser(user)) {
     if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
@@ -1382,6 +1482,16 @@ function editTarget(id) {
     if (a) areaId = a.id;
   }
 
+  const areaObj = areaId ? allAreas.find((ar) => ar.id === areaId) : null;
+  const prodObj = getAllProductsFlat().find((p) => p.id === t.productId);
+  const lineSelect = document.getElementById('targetLineFilterSelect');
+  const neededLineId = (prodObj && prodObj.lineId) || (areaObj && areaObj.lineId) || null;
+  if (lineSelect && lineSelect.value !== 'all' && neededLineId && lineSelect.value !== neededLineId) {
+    lineSelect.value = 'all';
+    populateTargetAreaSelect('all');
+    updateTargetProductSelect('all');
+  }
+
   document.getElementById('targetEditId').value = t.id;
   const areaSelect = document.getElementById('targetAreaSelect') || document.getElementById('targetRepSelect');
   if (areaSelect && areaId) {
@@ -1389,8 +1499,11 @@ function editTarget(id) {
   }
   updateTargetProductSelectForArea(areaId);
   document.getElementById('targetProductSelect').value = t.productId;
-  document.getElementById('targetMonthSelect').value = t.month.split('-')[1];
-  document.getElementById('targetYearSelect').value = t.month.split('-')[0];
+  const monthParts = String(t.month || '').split('-');
+  if (monthParts.length === 2) {
+    document.getElementById('targetYearSelect').value = monthParts[0];
+    document.getElementById('targetMonthSelect').value = monthParts[1];
+  }
   document.getElementById('targetUnitsInput').value = t.targetUnits;
   document.getElementById('targetUnitPriceInput').value = t.unitPrice;
   document.getElementById('targetComputedValueDisplay').value = t.target != null ? t.target : (parseFloat(t.targetUnits) || 0) * (parseFloat(t.unitPrice) || 0);
@@ -1401,9 +1514,8 @@ function editTarget(id) {
 }
 
 function saveTarget() {
-  const user = checkAuth();
-  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && user.role) === 'admin');
-  if (!isAdmin) {
+  const user = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!isTargetsAdminUser(user)) {
     if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }
@@ -1420,6 +1532,15 @@ function saveTarget() {
   if (!areaId || !productId || !month || !year || isNaN(units) || units < 0 || isNaN(unitPrice) || unitPrice < 0 || isNaN(targetValue) || targetValue < 0) {
     if (typeof showToast === 'function') showToast('Fill in Area, Product, Month, Year, Target Units, Unit Price, and a valid Target Value (all non-negative).', 'warning');
     return;
+  }
+
+  const monthKey = `${year}-${month}`;
+  if (window.store && window.store.targets && typeof window.store.targets.find === 'function') {
+    const duplicate = window.store.targets.find(areaId, productId, monthKey);
+    if (duplicate && duplicate.id !== editId) {
+      if (typeof showToast === 'function') showToast('A target already exists for this area, product, and month. Edit the existing target instead.', 'warning');
+      return;
+    }
   }
 
   const allAreas = (window.store && window.store.areas ? window.store.areas.getAll() : (window.DEMO_DATA && window.DEMO_DATA.areas) || []);
@@ -1442,7 +1563,7 @@ function saveTarget() {
       areaId,
       repId,
       productId,
-      month: `${year}-${month}`,
+      month: monthKey,
       targetUnits: units,
       unitPrice: unitPrice,
       target: targetValue,
@@ -1459,9 +1580,8 @@ function saveTarget() {
 }
 
 function deleteTarget(id) {
-  const user = typeof checkAuth === 'function' ? checkAuth() : (window.currentUser || null);
-  const isAdmin = window.isAdmin ? window.isAdmin(user) : ((user && (user.role === 'admin' || user.role === 'business_unit')));
-  if (!isAdmin) {
+  const user = typeof checkAuth === 'function' ? checkAuth() : null;
+  if (!isTargetsAdminUser(user)) {
     if (typeof showToast === 'function') showToast('Permission Denied: Admin only.', 'error');
     return;
   }

@@ -28,22 +28,24 @@
     <!-- Bootstrap CSS -->
     
     <!-- FontAwesome -->
-    <link rel="stylesheet" href="css/fontawesome.min.css?v=v321" />
+    <link rel="stylesheet" href="css/fontawesome.min.css?v=v346" />
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/bootstrap.min.css?v=v321" />
-    <link rel="stylesheet" href="css/style.css?v=v321" />
-    <link rel="stylesheet" href="css/users.css?v=v321" />
+    <link rel="stylesheet" href="css/bootstrap.min.css?v=v346" />
+    <link rel="stylesheet" href="css/style.css?v=v346" />
+    <link rel="stylesheet" href="css/users.css?v=v346" />
     <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v321" defer></script>
-  <script src="js/app.js?v=v321" defer></script>
-    <script src="js/store.js?v=v321" defer></script>
+    <script src="js/auth-service.js?v=v346" defer></script>
+  <script src="js/app.js?v=v346" defer></script>
+    <script src="js/store.js?v=v346" defer></script>
+    <script src="js/chat-service.js?v=v346" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
-    <script src="js/firebase-config.js?v=v321" defer></script>
-    <script src="js/firebase-sync.js?v=v321" defer></script>
+    <script src="js/vendor/firebase-app-compat.js?v=v346" defer></script>
+    <script src="js/vendor/firebase-auth-compat.js?v=v346" defer></script>
+    <script src="js/vendor/firebase-firestore-compat.js?v=v346" defer></script>
+    <script src="js/firebase-config.js?v=v346" defer></script>
+    <script src="js/firebase-sync.js?v=v346" defer></script>
       <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v321" defer></script>
+    <script src="js/cache-bust.js?v=v346" defer></script>
   </head>
   <body>
     <div class="app">
@@ -231,6 +233,9 @@
                       <option value="Admin" data-i18n="role_admin">
                         Admin
                       </option>
+                      <option value="GM" data-i18n="role_gm">
+                        General Manager
+                      </option>
                       <option value="BU" data-i18n="role_bu">
                         Business Unit
                       </option>
@@ -401,6 +406,7 @@
                     <option value="LM" data-i18n="role_lm">Line Manager</option>
                     <option value="PM" data-i18n="role_pm">Product Manager</option>
                     <option value="BU" data-i18n="role_bu">Business Unit Manager</option>
+                    <option value="GM" data-i18n="role_gm">General Manager</option>
                     <option value="HR" data-i18n="role_hr">HR Officer</option>
                     <option value="Admin" data-i18n="role_admin">Admin</option>
                   </select>
@@ -789,7 +795,7 @@
 
     <!-- Scripts -->
     
-    <script src="js/users.js?v=v321" defer></script>
-      <script src="js/bootstrap.bundle.min.js?v=v321" defer></script>
+    <script src="js/users.js?v=v346" defer></script>
+      <script src="js/bootstrap.bundle.min.js?v=v346" defer></script>
   </body>
 </html>

@@ -25,23 +25,26 @@
   <!-- Bootstrap CSS -->
   
   <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css?v=v346">
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="css/bootstrap.min.css?v=v321" />
-    <link rel="stylesheet" href="css/style.css?v=v321">
-  <link rel="stylesheet" href="css/leaves.css?v=v321">
+  <link rel="stylesheet" href="css/bootstrap.min.css?v=v346" />
+    <link rel="stylesheet" href="css/style.css?v=v346">
+    <link rel="stylesheet" href="css/chat.css?v=v346">
+  <link rel="stylesheet" href="css/leaves.css?v=v346">
   <!-- Core configuration and topbar logic loaded in head for instant synchronous paint -->
           <!-- Core Application & Store -->
-    <script src="js/auth-service.js?v=v321" defer></script>
-  <script src="js/app.js?v=v321" defer></script>
-    <script src="js/store.js?v=v321" defer></script>
+    <script src="js/auth-service.js?v=v346" defer></script>
+  <script src="js/app.js?v=v346" defer></script>
+    <script src="js/store.js?v=v346" defer></script>
+    <script src="js/chat-service.js?v=v346" defer></script>
     <!-- Firebase SDKs for Realtime Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
-    <script src="js/firebase-config.js?v=v321" defer></script>
-    <script src="js/firebase-sync.js?v=v321" defer></script>
+    <script src="js/vendor/firebase-app-compat.js?v=v346" defer></script>
+    <script src="js/vendor/firebase-auth-compat.js?v=v346" defer></script>
+    <script src="js/vendor/firebase-firestore-compat.js?v=v346" defer></script>
+    <script src="js/firebase-config.js?v=v346" defer></script>
+    <script src="js/firebase-sync.js?v=v346" defer></script>
     <!-- Centralized Cache Invalidation & Force Reload helper -->
-    <script src="js/cache-bust.js?v=v321" defer></script>
+    <script src="js/cache-bust.js?v=v346" defer></script>
   </head>
 <body>
 
@@ -90,7 +93,7 @@
                 <div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="m-0 fw-bold" data-i18n="annualLeave">Annual Leave</h6>
-                    <i class="bi bi-airplane text-primary fs-5"></i>
+                    <i class="fas fa-plane text-primary fs-5"></i>
                   </div>
                   <h3 class="mb-2"><span id="annualRemaining">21</span> <small class="leave-balance-unit fs-6" data-i18n="days">Days</small></h3>
                   <div class="progress leave-balance-progress">
@@ -110,7 +113,7 @@
                 <div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="m-0 fw-bold" data-i18n="sickLeave">Sick Leave</h6>
-                    <i class="bi bi-thermometer-half text-warning fs-5"></i>
+                    <i class="fas fa-temperature-half text-warning fs-5"></i>
                   </div>
                   <h3 class="mb-2"><span id="sickRemaining">7</span> <small class="leave-balance-unit fs-6" data-i18n="days">Days</small></h3>
                   <div class="progress leave-balance-progress">
@@ -130,7 +133,7 @@
                 <div>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="m-0 fw-bold" data-i18n="emergencyLeave">Emergency & Casual Leave</h6>
-                    <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
+                    <i class="fas fa-triangle-exclamation text-danger fs-5"></i>
                   </div>
                   <h3 class="mb-2"><span id="emergencyRemaining">6</span> <small class="leave-balance-unit fs-6" data-i18n="days">Days</small></h3>
                   <div class="progress leave-balance-progress">
@@ -486,7 +489,7 @@
   <div class="modal-backdrop reject-leave-modal" id="rejectLeaveModal">
     <div class="modal-box reject-leave-modal-box">
       <h5 class="fw-bold mb-2 text-danger">
-        <i class="bi bi-x-circle me-2"></i><span data-i18n="modalRejectLeaveTitle">Reject Leave Request</span>
+        <i class="fas fa-circle-xmark me-2"></i><span data-i18n="modalRejectLeaveTitle">Reject Leave Request</span>
       </h5>
       <p class="text-muted small mb-3" data-i18n="modalRejectLeaveSubtitle">
         You can provide an optional rejection reason or guidance for the employee.
@@ -503,8 +506,8 @@
   </div>
 
   
-  <script src="js/workflow-engine.js?v=v321" defer></script>
-  <script src="js/leaves.js?v=v321" defer></script>
-    <script src="js/bootstrap.bundle.min.js?v=v321" defer></script>
+  <script src="js/workflow-engine.js?v=v346" defer></script>
+  <script src="js/leaves.js?v=v346" defer></script>
+    <script src="js/bootstrap.bundle.min.js?v=v346" defer></script>
   </body>
 </html>

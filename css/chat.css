@@ -1,0 +1,917 @@
+/* ==========================================================================
+   PharmaCare - Real-time Team Chat Stylesheet (100% Self-Contained)
+   Enterprise styling for Floating Widget and Full Page (chat.html)
+   Zero external CSS/Bootstrap dependency. Full Light & Dark Mode support.
+   ========================================================================== */
+
+/* --- Utilities & Global Resets for Chat --- */
+.pharma-chat-hidden {
+  display: none !important;
+}
+
+.d-none {
+  display: none !important;
+}
+
+/* ==========================================================================
+   1. FLOATING CHAT WIDGET
+   ========================================================================== */
+.pharma-chat-floating-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  font-family: inherit;
+  direction: ltr;
+}
+
+
+
+/* Floating Trigger Button */
+.pharma-chat-floating-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 8px 24px rgba(13, 110, 253, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  outline: none;
+}
+
+.pharma-chat-floating-btn:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 30px rgba(13, 110, 253, 0.55);
+}
+
+.pharma-chat-floating-btn:active {
+  transform: scale(0.96);
+}
+
+.pharma-chat-btn-icon {
+  width: 28px;
+  height: 28px;
+  stroke: #ffffff;
+}
+
+.pharma-chat-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #dc3545;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 12px;
+  border: 2px solid #ffffff;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.5);
+  animation: pharmaBadgePulse 2s infinite;
+}
+
+@keyframes pharmaBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Floating Popup Window */
+.pharma-chat-popup {
+  position: absolute;
+  bottom: 74px;
+  right: 0;
+  width: 380px;
+  height: 540px;
+  max-height: calc(100vh - 120px);
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  animation: pharmaChatPopupIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+
+.pharma-chat-popup.is-open {
+  display: flex !important;
+}
+
+@keyframes pharmaChatPopupIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.pharma-chat-popup-header {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: #ffffff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.pharma-chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.pharma-chat-header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.pharma-chat-header-titles {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pharma-chat-header-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharma-chat-header-sub {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharma-chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pharma-chat-header-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  text-decoration: none;
+}
+
+.pharma-chat-header-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.pharma-chat-header-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Views Container */
+.pharma-chat-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+/* Category Filter Tabs */
+.pharma-chat-tabs-bar {
+  display: flex;
+  padding: 8px 12px;
+  gap: 6px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.pharma-chat-tab-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pharma-chat-tab-btn:hover {
+  background: #edf2f7;
+  color: #0d6efd;
+  border-color: #cbd5e1;
+}
+
+.pharma-chat-tab-btn.active {
+  background: #0d6efd;
+  color: #ffffff;
+  border-color: #0d6efd;
+  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
+}
+
+/* Search Bar */
+.pharma-chat-search-wrap {
+  position: relative;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.pharma-chat-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 22px;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+
+
+.pharma-chat-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  background: #f8fafc;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+}
+
+
+
+.pharma-chat-search-input:focus {
+  border-color: #0d6efd;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+/* Conversations Scroll List */
+.pharma-chat-convs-scroll-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Conversation Item Card */
+.pharma-chat-conv-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  gap: 10px;
+}
+
+.pharma-chat-conv-card:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.pharma-chat-conv-card.has-unread {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.pharma-chat-conv-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Avatars */
+.pharma-chat-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pharma-chat-avatar.avatar-announcement {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.pharma-chat-avatar.avatar-district {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.pharma-chat-avatar.avatar-line {
+  background: linear-gradient(135deg, #06b6d4, #0284c7);
+}
+
+.pharma-chat-avatar.avatar-direct {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.pharma-chat-avatar.avatar-hr {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.pharma-chat-conv-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 2px;
+  flex: 1;
+}
+
+.pharma-chat-conv-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.pharma-chat-conv-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharma-chat-badge-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-announcement {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-district {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-line {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge-direct {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-hr {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.pharma-chat-conv-snippet {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharma-chat-conv-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pharma-chat-conv-time {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.pharma-chat-unread-count {
+  background: #dc3545;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   2. MESSAGES VIEW (Active Conversation Screen)
+   ========================================================================== */
+.pharma-chat-messages-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+.pharma-chat-bubble-row {
+  display: flex;
+  width: 100%;
+}
+
+.pharma-chat-bubble-row.outgoing {
+  justify-content: flex-end;
+}
+
+.pharma-chat-bubble-row.incoming {
+  justify-content: flex-start;
+}
+
+.pharma-chat-bubble {
+  max-width: 82%;
+  padding: 9px 13px;
+  border-radius: 16px;
+  position: relative;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  word-break: break-word;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.pharma-chat-bubble.outgoing {
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+
+
+.pharma-chat-bubble.incoming {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 4px;
+}
+
+
+
+.pharma-chat-sender-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 2px;
+}
+
+.pharma-chat-bubble-text {
+  font-size: 0.86rem;
+}
+
+.pharma-chat-bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.65rem;
+}
+
+.pharma-chat-bubble.outgoing .pharma-chat-bubble-meta {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pharma-chat-bubble.incoming .pharma-chat-bubble-meta {
+  color: #94a3b8;
+}
+
+.pharma-chat-checkmarks {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.pharma-chat-checkmarks.read {
+  color: #67e8f9;
+}
+
+/* Shared Card Bubble (Doctor / Visit) */
+.pharma-chat-shared-card {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.pharma-chat-bubble.outgoing .pharma-chat-shared-card {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Bottom Input Bar */
+.pharma-chat-bottom-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.pharma-chat-bottom-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  background: #f8fafc;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+}
+
+.pharma-chat-bottom-input:focus {
+  border-color: #0d6efd;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+.pharma-chat-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.pharma-chat-send-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+}
+
+.pharma-chat-send-btn:active {
+  transform: scale(0.95);
+}
+
+.pharma-chat-send-btn svg {
+  width: 17px;
+  height: 17px;
+  stroke: #ffffff;
+}
+
+/* Status Indicator Dot */
+.pharma-chat-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+/* ==========================================================================
+   3. FULL PAGE (chat.html) CONTAINER & RESPONSIVENESS
+   ========================================================================== */
+.pharma-chat-app-container {
+  display: flex;
+  height: calc(100vh - 120px);
+  min-height: 540px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.pharma-chat-sidebar-pane {
+  width: 360px;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+
+
+.pharma-chat-main-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.pharma-chat-conversation-header {
+  padding: 12px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.pharma-chat-full-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+}
+
+.pharma-chat-full-input-bar {
+  padding: 14px 20px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pharma-chat-full-input-bar .form-control {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  background: #f8fafc;
+  color: #1e293b;
+  outline: none;
+}
+
+.pharma-chat-full-input-bar .form-control:focus {
+  border-color: #0d6efd;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+@media (max-width: 768px) {
+  .pharma-chat-popup {
+    width: calc(100vw - 32px);
+    right: 16px;
+    bottom: 80px;
+    height: 500px;
+  }
+  
+
+  .pharma-chat-sidebar-pane {
+    width: 100%;
+  }
+
+  .pharma-chat-sidebar-pane.mobile-hidden {
+    display: none !important;
+  }
+
+  .pharma-chat-main-pane.mobile-hidden {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   4. FULL DARK THEME ENGINE [data-theme="dark"]
+   Seamless integration with PharmaCare Dashboard Dark Palette
+   ========================================================================== */
+[data-theme="dark"] .pharma-chat-popup {
+  background: #181b20;
+  border-color: #2d3340;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .pharma-chat-popup-header {
+  background: linear-gradient(135deg, #1e2229 0%, #15181d 100%);
+  border-bottom-color: #2d3340;
+}
+
+[data-theme="dark"] .pharma-chat-view {
+  background: #131519;
+}
+
+[data-theme="dark"] .pharma-chat-tabs-bar {
+  background: #181b20;
+  border-bottom-color: #2d3340;
+}
+
+[data-theme="dark"] .pharma-chat-tab-btn {
+  background: #1e2229;
+  border-color: #2d3340;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .pharma-chat-tab-btn:hover {
+  background: #262c37;
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .pharma-chat-tab-btn.active {
+  background: #0d6efd;
+  color: #ffffff;
+  border-color: #0d6efd;
+}
+
+[data-theme="dark"] .pharma-chat-search-wrap {
+  background: #181b20;
+  border-bottom-color: #2d3340;
+}
+
+[data-theme="dark"] .pharma-chat-search-input {
+  background: #1e2229;
+  border-color: #2d3340;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pharma-chat-search-input:focus {
+  border-color: #0d6efd;
+  background: #262c37;
+}
+
+[data-theme="dark"] .pharma-chat-conv-card {
+  background: #181b20;
+  border-color: transparent;
+}
+
+[data-theme="dark"] .pharma-chat-conv-card:hover {
+  background: #222731;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .pharma-chat-conv-card.has-unread {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .pharma-chat-conv-name {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pharma-chat-conv-snippet {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .pharma-chat-messages-scroll-area,
+[data-theme="dark"] .pharma-chat-full-messages,
+[data-theme="dark"] .pharma-chat-main-pane {
+  background: #131519;
+}
+
+[data-theme="dark"] .pharma-chat-bubble.incoming {
+  background: #1e2229;
+  color: #f1f5f9;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .pharma-chat-sender-name {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .pharma-chat-bubble.incoming .pharma-chat-bubble-meta {
+  color: #64748b;
+}
+
+[data-theme="dark"] .pharma-chat-bottom-input-bar,
+[data-theme="dark"] .pharma-chat-full-input-bar,
+[data-theme="dark"] .pharma-chat-sidebar-pane,
+[data-theme="dark"] .pharma-chat-conversation-header,
+[data-theme="dark"] .pharma-chat-app-container {
+  background: #181b20;
+  border-color: #2d3340;
+}
+
+[data-theme="dark"] .pharma-chat-bottom-input,
+[data-theme="dark"] .pharma-chat-full-input-bar .form-control {
+  background: #1e2229;
+  border-color: #2d3340;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pharma-chat-bottom-input:focus,
+[data-theme="dark"] .pharma-chat-full-input-bar .form-control:focus {
+  border-color: #0d6efd;
+  background: #262c37;
+}
+
+[data-theme="dark"] .badge-announcement {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .badge-district {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+[data-theme="dark"] .badge-line {
+  background: rgba(6, 182, 212, 0.2);
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .badge-direct {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .badge-hr {
+  background: rgba(139, 92, 246, 0.2);
+  color: #c084fc;
+}
+
+/* Read-only Channel Notice */
+.pharma-chat-readonly-banner {
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+[data-theme="dark"] .pharma-chat-readonly-banner {
+  background: #181b20;
+  border-top-color: #2d3340;
+  color: #94a3b8;
+}

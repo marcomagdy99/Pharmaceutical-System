@@ -19,11 +19,6 @@ function getAchTranslation(key, fallback) {
   if (typeof window.t === "function") {
     return window.t(key, fallback);
   }
-  const lang = (window.getCurrentLang && window.getCurrentLang()) || localStorage.getItem("pharma_lang") || "en";
-  if (lang === "ar") {
-    if (key === "unassignedTerritory") return "منطقة غير مسندة";
-    if (key === "unassigned") return "غير مسند";
-  }
   return fallback || key;
 }
 
@@ -92,17 +87,14 @@ window.onAchMonthCheckboxChange = function() {
 function updateAchMonthDropdownLabel() {
   const labelEl = document.getElementById('achMonthDropdownLabel');
   if (!labelEl) return;
-  const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
-  const monthsList = lang === 'ar'
-    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
-    : ACH_MONTHS;
+  const monthsList = ACH_MONTHS;
   const allBoxes = document.querySelectorAll('.ach-month-checkbox');
   const checkedBoxes = Array.from(document.querySelectorAll('.ach-month-checkbox:checked'));
 
   if (checkedBoxes.length === 0) {
-    labelEl.textContent = lang === 'ar' ? 'لم يتم تحديد شهور' : 'No Months Selected';
+    labelEl.textContent = 'No Months Selected';
   } else if (checkedBoxes.length === allBoxes.length && allBoxes.length > 0) {
-    labelEl.textContent = lang === 'ar' ? 'كافة الشهور' : 'All Months';
+    labelEl.textContent = 'All Months';
   } else if (checkedBoxes.length <= 2) {
     const names = checkedBoxes.map((cb) => {
       const idx = parseInt(cb.value, 10) - 1;
@@ -110,7 +102,7 @@ function updateAchMonthDropdownLabel() {
     });
     labelEl.textContent = names.join(', ');
   } else {
-    labelEl.textContent = lang === 'ar' ? `تم تحديد ${checkedBoxes.length} شهور` : `${checkedBoxes.length} Months Selected`;
+    labelEl.textContent = `${checkedBoxes.length} Months Selected`;
   }
 }
 
@@ -125,9 +117,7 @@ function populateAchFilters() {
   const lang = typeof getCurrentLang === 'function' ? getCurrentLang() : 'en';
   const now = new Date();
 
-  const monthsList = lang === 'ar'
-    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
-    : ACH_MONTHS;
+  const monthsList = ACH_MONTHS;
 
   if (container && (!container.dataset.populated || container.dataset.lang !== lang)) {
     container.textContent = '';
@@ -238,10 +228,10 @@ function populateAchAreas(filterUser) {
     } else {
       areasToDisplay = allAreas.filter((a) => a.repId === selectedRepVal);
     }
-    if (areasToDisplay.length === 0) areasToDisplay = allAreas;
   } else {
     const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
     const curRole = curUser ? (window.normalizeRole ? window.normalizeRole(curUser.role) : (curUser.role || '').toLowerCase()) : '';
+    const isAdminViewer = curRole === 'admin' || curRole === 'administrator';
     if (curUser && (curRole === 'district_manager' || curRole === 'dm')) {
       const repsUnderDM = allUsers.filter((u) => u.managerId === curUser.id).map((u) => u.id);
       areasToDisplay = allAreas.filter((a) => {
@@ -272,10 +262,24 @@ function populateAchAreas(filterUser) {
         return false;
       });
       areasToDisplay = areasToDisplay.filter((a) => selectedLineId === 'all' || a.lineId === selectedLineId);
-    } else if (selectedLineId !== 'all') {
-      areasToDisplay = allAreas.filter((a) => a.lineId === selectedLineId);
+    } else if (curUser && (curRole === 'business_unit' || curRole === 'bu' || curRole === 'general_manager' || curRole === 'gm')) {
+      const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(curUser.id) : [];
+      const subIds = new Set([curUser.id, ...subs.map((u) => u.id)]);
+      areasToDisplay = allAreas.filter((a) => {
+        if (a.repId && subIds.has(a.repId)) return true;
+        const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+        if (mgrId && subIds.has(mgrId)) return true;
+        if (a.dmId && subIds.has(a.dmId)) return true;
+        if (a.buId && subIds.has(a.buId)) return true;
+        return false;
+      });
+    } else if (curUser && (curRole === 'product_manager' || curRole === 'pm')) {
+      const pmLineIds = curUser.lineIds || (curUser.lineId ? [curUser.lineId] : []);
+      areasToDisplay = allAreas.filter((a) => a.lineId && pmLineIds.includes(a.lineId));
+    } else if (isAdminViewer) {
+      areasToDisplay = selectedLineId !== 'all' ? allAreas.filter((a) => a.lineId === selectedLineId) : allAreas;
     } else {
-      areasToDisplay = allAreas;
+      areasToDisplay = [];
     }
   }
 
@@ -321,8 +325,10 @@ function getAchievementsScopeRepIds(user) {
     : ((window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []));
   const isRep = window.isRepRole ? window.isRepRole(user) : (user && (user.role === 'medical_rep' || user.role === 'rep'));
 
-  let allowedRepIds = null;
-  if (isRep) {
+  let allowedRepIds = [];
+  if (role === 'admin' || role === 'administrator') {
+    allowedRepIds = null;
+  } else if (isRep) {
     allowedRepIds = [user.id];
   } else if (role === 'district_manager') {
     allowedRepIds = allUsers.filter((u) => u.managerId === user.id).map((u) => u.id);
@@ -330,11 +336,23 @@ function getAchievementsScopeRepIds(user) {
     const dms = allUsers.filter((u) => u.managerId === user.id && (window.normalizeRole ? window.normalizeRole(u.role) === 'district_manager' : (u.role === 'district_manager' || u.role === 'dm')));
     const dmIds = dms.map((d) => d.id);
     allowedRepIds = allUsers.filter((u) => u.managerId === user.id || dmIds.includes(u.managerId)).map((u) => u.id);
-  } else if (role === 'business_unit') {
+  } else if (role === 'business_unit' || role === 'general_manager' || role === 'gm') {
     const mySubordinates = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(user.id) : [];
     allowedRepIds = mySubordinates
       .filter((u) => window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep'))
       .map((u) => u.id);
+  } else if (role === 'product_manager' || role === 'pm') {
+    const pmLineIds = user.lineIds || (user.lineId ? [user.lineId] : []);
+    allowedRepIds = pmLineIds.length === 0
+      ? []
+      : allUsers
+          .filter((u) => {
+            const isRepU = window.isRepRole ? window.isRepRole(u) : (u.role === 'medical_rep' || u.role === 'rep');
+            if (!isRepU) return false;
+            const uLines = window.getUserLines ? window.getUserLines(u.id).map((l) => l.id) : (u.lineIds || (u.lineId ? [u.lineId] : []));
+            return uLines.some((lid) => pmLineIds.includes(lid));
+          })
+          .map((u) => u.id);
   }
 
   const lmSelect = document.getElementById('achLmSelect');
@@ -344,7 +362,7 @@ function getAchievementsScopeRepIds(user) {
 
   if (selectedRep && selectedRep !== 'all') {
     if (selectedRep.startsWith('vacant:')) {
-      return null;
+      return allowedRepIds;
     }
     if (selectedRep === 'all_reps' || selectedRep === 'all_dms') {
       return allowedRepIds;
@@ -437,10 +455,26 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
 
   // 1. Determine allowed areas based on viewer's role (Strict Fail-Closed)
   let allowedAreaIds = null;
-  const isAdminOrBU = userRole === 'admin' || userRole === 'administrator' || userRole === 'business_unit' || userRole === 'bu' || userRole === 'general_manager';
+  const isAdminOrBU = userRole === 'admin' || userRole === 'administrator';
 
   if (isAdminOrBU) {
     allowedAreaIds = new Set(allAreas.map((a) => a.id));
+  } else if (userRole === 'general_manager' || userRole === 'gm' || userRole === 'business_unit' || userRole === 'bu') {
+    const subs = typeof window.getAllSubordinates === 'function' ? window.getAllSubordinates(curUser.id) : [];
+    const subIds = new Set([curUser.id, ...subs.map((u) => u.id)]);
+    const gmDmIds = subs.filter((u) => {
+      const r = window.normalizeRole ? window.normalizeRole(u.role) : (u.role || '').toLowerCase();
+      return r === 'district_manager' || r === 'dm';
+    }).map((d) => d.id);
+    const gmAreas = allAreas.filter((a) => {
+      if (a.repId && subIds.has(a.repId)) return true;
+      const mgrId = typeof window.getAreaManagerId === 'function' ? window.getAreaManagerId(a, allUsers) : null;
+      if (mgrId && (subIds.has(mgrId) || gmDmIds.includes(mgrId))) return true;
+      if (a.dmId && gmDmIds.includes(a.dmId)) return true;
+      if (a.buId && subIds.has(a.buId)) return true;
+      return false;
+    });
+    allowedAreaIds = new Set(gmAreas.map((a) => a.id));
   } else if (isRep) {
     const repAreas = allAreas.filter((a) => a.repId === curUser.id || (curUser.areaIds && curUser.areaIds.includes(a.id)));
     allowedAreaIds = new Set(repAreas.map((a) => a.id));
@@ -522,7 +556,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   if (selectedRepVal && selectedRepVal !== 'all') {
     if (selectedRepVal.startsWith('vacant:')) {
       const vAreaId = selectedRepVal.split(':')[1];
-      filteredAreaIds = new Set([vAreaId]);
+      filteredAreaIds = allowedAreaIds.has(vAreaId) ? new Set([vAreaId]) : new Set();
     } else if (selectedRepVal === 'all_reps') {
       filteredAreaIds = new Set(Array.from(filteredAreaIds).filter((id) => {
         const a = areasMap.get(id);
@@ -818,7 +852,7 @@ function buildAchievementsData(monthKeys, scopeRepIds) {
   let groups = Object.values(areaGroups);
 
   // If a specific individual representative is filtered, retain their assigned groups
-  if (selectedRepVal && selectedRepVal !== 'all' && (!selRole || (selRole !== 'district_manager' && selRole !== 'dm' && selRole !== 'line_manager' && selRole !== 'lm'))) {
+  if (selectedRepVal && selectedRepVal !== 'all' && selectedRepVal !== 'all_reps' && selectedRepVal !== 'all_dms' && !selectedRepVal.startsWith('vacant:') && (!selRole || (selRole !== 'district_manager' && selRole !== 'dm' && selRole !== 'line_manager' && selRole !== 'lm'))) {
     groups = groups.filter((g) => g.repId === selectedRepVal);
   }
 
@@ -1058,11 +1092,16 @@ function exportAchievementsReport() {
   ];
 
   if (typeof window.XLSX !== "undefined") {
+    const _safeXlsx = (v) => {
+      if (v === null || v === undefined) return '';
+      const s = String(v);
+      return /^[\s]*[=+\-@\t\r]/.test(s) ? "'" + s : s;
+    };
     const data = [headers];
     groups.forEach((g) => {
       data.push([
-        g.repName,
-        g.areaName || '',
+        _safeXlsx(g.repName),
+        _safeXlsx(g.areaName || ''),
         'TOTAL',
         g.totalTUnit,
         g.totalSUnit,

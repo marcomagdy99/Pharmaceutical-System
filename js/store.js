@@ -17,6 +17,100 @@
     window.DEMO_DATA.territoryHistory = [];
   }
 
+  const LEGACY_DIST_MAP = {
+    dist1: "dist_1790626000001",
+    dist2: "dist_1790626000002",
+    dist3: "dist_1790626000003",
+  };
+
+  function normalizeDistId(id) {
+    return (id && LEGACY_DIST_MAP[id]) ? LEGACY_DIST_MAP[id] : id;
+  }
+
+  let _idSeq = 0;
+  function nextStoreId(prefix) {
+    if (typeof window.genId === "function") {
+      return window.genId(prefix);
+    }
+    _idSeq = (_idSeq + 1) % 100000;
+    return prefix + Date.now() + "_" + _idSeq + "_" + Math.random().toString(36).slice(2, 6);
+  }
+
+  function normalizeRoleLocal(role) {
+    if (typeof window.normalizeRole === "function") {
+      return window.normalizeRole(role);
+    }
+    const r = String(role || "").toLowerCase().trim();
+    if (r === "dm" || r === "district manager") return "district_manager";
+    if (r === "lm" || r === "line manager") return "line_manager";
+    if (r === "bu" || r === "business unit") return "business_unit";
+    if (r === "rep" || r === "medical rep") return "medical_rep";
+    if (r === "pm" || r === "product manager") return "product_manager";
+    return r;
+  }
+
+  function isRepUserLocal(u) {
+    if (!u) return false;
+    if (typeof window.isRepRole === "function") return window.isRepRole(u);
+    return normalizeRoleLocal(u.role) === "medical_rep";
+  }
+
+  function resolveRepHierarchyChain(repId, areaObj = null, lineId = null) {
+    const users = window.DEMO_DATA.users || [];
+    let dmId = null;
+    let lmId = null;
+
+    if (repId) {
+      const rep = users.find((u) => u.id === repId);
+      if (rep && rep.managerId) {
+        const directMgr = users.find((u) => u.id === rep.managerId);
+        if (directMgr) {
+          const mgrRole = normalizeRoleLocal(directMgr.role);
+          if (mgrRole === "line_manager") {
+            lmId = directMgr.id;
+          } else {
+            dmId = directMgr.id;
+            if (directMgr.managerId) {
+              const upperMgr = users.find((u) => u.id === directMgr.managerId);
+              if (upperMgr) lmId = upperMgr.id;
+            }
+          }
+        } else {
+          dmId = rep.managerId;
+        }
+      }
+    } else if (areaObj) {
+      const areaDmId = typeof window.getAreaManagerId === "function"
+        ? window.getAreaManagerId(areaObj, users)
+        : (areaObj.dmId || areaObj.districtManagerId || null);
+      if (areaDmId) {
+        dmId = areaDmId;
+        const dm = users.find((u) => u.id === areaDmId);
+        if (dm && dm.managerId) {
+          const upperMgr = users.find((u) => u.id === dm.managerId);
+          if (upperMgr && normalizeRoleLocal(upperMgr.role) === "line_manager") {
+            lmId = upperMgr.id;
+          } else if (dm.managerId) {
+            lmId = dm.managerId;
+          }
+        }
+      } else if (areaObj.lmId || areaObj.managerId) {
+        const lmCand = users.find((u) => u.id === (areaObj.lmId || areaObj.managerId));
+        if (lmCand && normalizeRoleLocal(lmCand.role) === "line_manager") {
+          lmId = lmCand.id;
+        }
+      }
+    }
+
+    const effLineId = lineId || (areaObj ? areaObj.lineId : null);
+    if (!lmId && effLineId) {
+      const lineObj = (window.DEMO_DATA.productLines || []).find((l) => l.id === effLineId);
+      if (lineObj && lineObj.lineManagerId) lmId = lineObj.lineManagerId;
+    }
+
+    return { dmId, lmId };
+  }
+
   function autoSave(entity, action, payload) {
     if (entity === "distributorSales" || entity === "sales") {
       if (typeof window.saveSalesDataToStorage === "function") {
@@ -64,7 +158,7 @@
     // 2. Open new assignment log if a rep is assigned
     if (newRepId && oldRepId !== newRepId) {
       history.push({
-        id: "th_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        id: nextStoreId("th_"),
         areaId: areaId,
         repId: newRepId,
         startDate: now,
@@ -88,25 +182,36 @@
       },
       getReps() {
         return (window.DEMO_DATA.users || []).filter(
-          (u) =>
-            (u.role === "medical_rep" || u.role === "rep") &&
-            u.status !== "Inactive",
+          (u) => isRepUserLocal(u) && u.status !== "Inactive",
         );
       },
       save(userObj) {
         if (!window.DEMO_DATA.users) window.DEMO_DATA.users = [];
         if (!userObj.id || typeof userObj.id !== "string" || !userObj.id.trim()) {
-          userObj.id = "u" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+          userObj.id = nextStoreId("u_");
         }
         const users = window.DEMO_DATA.users;
         const idx = users.findIndex((u) => u.id === userObj.id);
+        let savedUser;
+        let shouldSyncAreas = false;
         if (idx >= 0) {
-          users[idx] = { ...users[idx], ...userObj };
+          const prev = users[idx];
+          users[idx] = { ...prev, ...userObj };
+          savedUser = users[idx];
+          shouldSyncAreas =
+            prev.status !== savedUser.status ||
+            prev.role !== savedUser.role ||
+            prev.lineId !== savedUser.lineId ||
+            JSON.stringify(prev.lineIds || []) !== JSON.stringify(savedUser.lineIds || []);
         } else {
           users.unshift(userObj);
+          savedUser = users[0];
         }
-        autoSave("users", idx >= 0 ? "update" : "create", userObj);
-        return userObj;
+        if (shouldSyncAreas) {
+          this.syncAreasFromStore();
+        }
+        autoSave("users", idx >= 0 ? "update" : "create", savedUser);
+        return savedUser;
       },
       /**
        * Singular-area setter. Synchronizes both area name and areaId,
@@ -142,7 +247,7 @@
         areas.forEach((a) => {
           if (!a.repId) return;
           const rep = users.find((u) => u.id === a.repId);
-          const isRepRole = rep && (rep.role === "medical_rep" || rep.role === "rep" || rep.role === "Rep");
+          const isRepRole = isRepUserLocal(rep);
           const repLines = rep ? (rep.lineIds || (rep.lineId ? [rep.lineId] : [])) : [];
           const lineMismatch = a.lineId && repLines.length > 0 && !repLines.includes(a.lineId);
 
@@ -170,66 +275,35 @@
           u.areaId = repAreas.length ? repAreas[0].id : null;
         });
 
-        // 3. Keep customer (doctor, pharmacy, hospital) rep and line in sync with their assigned area
-        doctors.forEach((d) => {
-          if (!d.areaId && d.area) {
-            const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === d.area.toLowerCase().trim());
-            if (matchArea) d.areaId = matchArea.id;
-          }
-          if (!d.areaId && d.repId) {
-            const repAreas = areas.filter((x) => x.repId === d.repId);
-            if (repAreas.length === 1) d.areaId = repAreas[0].id;
-          }
-          if (!d.areaId) return;
-          const a = areas.find((x) => x.id === d.areaId);
-          if (a) {
-            if (a.lineId) d.lineId = a.lineId;
-            if (d.repId !== (a.repId || null)) {
-              d.repId = a.repId || null;
+        // 3. Keep customer (doctor, pharmacy, hospital) rep, line, and manager chain in sync with their assigned area
+        const syncCustomerList = (list) => {
+          list.forEach((rec) => {
+            if (!rec.areaId && rec.area) {
+              const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === rec.area.toLowerCase().trim());
+              if (matchArea) rec.areaId = matchArea.id;
             }
-            if (a.name) d.area = a.name;
-          }
-        });
-
-        pharmacies.forEach((p) => {
-          if (!p.areaId && p.area) {
-            const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === p.area.toLowerCase().trim());
-            if (matchArea) p.areaId = matchArea.id;
-          }
-          if (!p.areaId && p.repId) {
-            const repAreas = areas.filter((x) => x.repId === p.repId);
-            if (repAreas.length === 1) p.areaId = repAreas[0].id;
-          }
-          if (!p.areaId) return;
-          const a = areas.find((x) => x.id === p.areaId);
-          if (a) {
-            if (a.lineId) p.lineId = a.lineId;
-            if (p.repId !== (a.repId || null)) {
-              p.repId = a.repId || null;
+            if (!rec.areaId && rec.repId) {
+              const repAreas = areas.filter((x) => x.repId === rec.repId);
+              if (repAreas.length === 1) rec.areaId = repAreas[0].id;
             }
-            if (a.name) p.area = a.name;
-          }
-        });
-
-        hospitals.forEach((h) => {
-          if (!h.areaId && h.area) {
-            const matchArea = areas.find((x) => x.name && x.name.toLowerCase().trim() === h.area.toLowerCase().trim());
-            if (matchArea) h.areaId = matchArea.id;
-          }
-          if (!h.areaId && h.repId) {
-            const repAreas = areas.filter((x) => x.repId === h.repId);
-            if (repAreas.length === 1) h.areaId = repAreas[0].id;
-          }
-          if (!h.areaId) return;
-          const a = areas.find((x) => x.id === h.areaId);
-          if (a) {
-            if (a.lineId) h.lineId = a.lineId;
-            if (h.repId !== (a.repId || null)) {
-              h.repId = a.repId || null;
+            if (!rec.areaId) return;
+            const a = areas.find((x) => x.id === rec.areaId);
+            if (a) {
+              if (a.lineId) rec.lineId = a.lineId;
+              const nextRepId = a.repId || null;
+              if (rec.repId !== nextRepId) {
+                rec.repId = nextRepId;
+              }
+              const { dmId, lmId } = resolveRepHierarchyChain(nextRepId, a, a.lineId || rec.lineId || null);
+              rec.dmId = dmId;
+              rec.lmId = lmId;
+              if (a.name) rec.area = a.name;
             }
-            if (a.name) h.area = a.name;
-          }
-        });
+          });
+        };
+        syncCustomerList(doctors);
+        syncCustomerList(pharmacies);
+        syncCustomerList(hospitals);
       },
     },
 
@@ -324,6 +398,7 @@
         const area = this.getById(areaId);
         if (!area || !rawText) return;
         const normalized = String(rawText).trim().toLowerCase();
+        const targetDist = normalizeDistId(distributorId);
         const targetNameNormalized = String(area.name).trim().toLowerCase();
 
         const allAreas = window.DEMO_DATA && Array.isArray(window.DEMO_DATA.areas) ? window.DEMO_DATA.areas : [];
@@ -333,7 +408,7 @@
           if (String(otherArea.name).trim().toLowerCase() !== targetNameNormalized && Array.isArray(otherArea.aliases)) {
             otherArea.aliases = otherArea.aliases.filter(
               (al) =>
-                !(al.distributorId === distributorId &&
+                !((normalizeDistId(al.distributorId) === targetDist || al.distributorId === distributorId) &&
                   String(al.rawText).trim().toLowerCase() === normalized)
             );
           }
@@ -345,16 +420,16 @@
             if (!Array.isArray(matchingArea.aliases)) matchingArea.aliases = [];
             const exists = matchingArea.aliases.some(
               (al) =>
-                al.distributorId === distributorId &&
+                (normalizeDistId(al.distributorId) === targetDist || al.distributorId === distributorId) &&
                 String(al.rawText).trim().toLowerCase() === normalized,
             );
             if (!exists) {
-              matchingArea.aliases.push({ distributorId, rawText: String(rawText).trim() });
+              matchingArea.aliases.push({ distributorId: targetDist, rawText: String(rawText).trim() });
             }
           }
         });
 
-        autoSave("areas", "addAlias", { areaId, areaName: area.name, distributorId, rawText });
+        autoSave("areas", "addAlias", { areaId, areaName: area.name, distributorId: targetDist, rawText });
       },
       /**
        * Removes an alias mapping from an area and clears sales row attribution for that raw text across all lines.
@@ -363,6 +438,7 @@
         const area = this.getById(areaId);
         if (!area || !rawText) return false;
         const normalized = String(rawText).trim().toLowerCase();
+        const targetDist = normalizeDistId(distributorId);
         const targetNameNormalized = String(area.name).trim().toLowerCase();
 
         const allAreas = window.DEMO_DATA && Array.isArray(window.DEMO_DATA.areas) ? window.DEMO_DATA.areas : [];
@@ -373,7 +449,7 @@
             const initialLen = matchingArea.aliases.length;
             matchingArea.aliases = matchingArea.aliases.filter(
               (al) =>
-                !(al.distributorId === distributorId && String(al.rawText).trim().toLowerCase() === normalized)
+                !((normalizeDistId(al.distributorId) === targetDist || al.distributorId === distributorId) && String(al.rawText).trim().toLowerCase() === normalized)
             );
             if (matchingArea.aliases.length < initialLen) anyRemoved = true;
           }
@@ -383,7 +459,7 @@
           if (store.distributorSales && typeof store.distributorSales.unmatchAliasRows === "function") {
             store.distributorSales.unmatchAliasRows(distributorId, rawText);
           }
-          autoSave("areas", "removeAlias", { areaId, areaName: area.name, distributorId, rawText });
+          autoSave("areas", "removeAlias", { areaId, areaName: area.name, distributorId: targetDist, rawText });
         }
         return anyRemoved;
       },
@@ -623,7 +699,8 @@
         const idx = areas.findIndex((a) => a.id === areaObj.id);
 
         let oldRepId = null;
-        let newRepId = areaObj.repId || null;
+        const newRepId = areaObj.repId || null;
+        let savedArea;
 
         if (idx >= 0) {
           const areaId = areaObj.id || areas[idx].id;
@@ -636,105 +713,82 @@
             repId: newRepId,
             repName: newRepId ? (areaObj.repName || null) : null
           };
+          savedArea = areas[idx];
         } else {
-          const newId = areaObj.id || "area_" + Date.now();
-          areas.push({ 
+          const newId = areaObj.id || nextStoreId("area_");
+          savedArea = { 
             ...areaObj, 
             id: newId,
             lineId: areaObj.lineId || this._defaultLineId(),
             repId: newRepId,
             repName: newRepId ? (areaObj.repName || null) : null
-          });
+          };
+          areas.push(savedArea);
         }
 
-        const currentAreaId = areaObj.id || (idx >= 0 ? areas[idx].id : areas[areas.length - 1].id);
+        const currentAreaId = savedArea.id;
         logTerritoryHistoryChange(currentAreaId, oldRepId, newRepId);
 
         // Reassign all doctors, pharmacies, and hospitals in this area if rep changed
         if (oldRepId !== newRepId) {
-          this.reassignAreaCustomers(currentAreaId, newRepId, areaObj.name || (areas[idx] ? areas[idx].name : null));
+          this.reassignAreaCustomers(currentAreaId, newRepId, savedArea.name || null);
           if (store.distributorSales && typeof store.distributorSales.rematchAreaSales === "function") {
             store.distributorSales.rematchAreaSales(currentAreaId, newRepId);
           }
         }
 
         store.users.syncAreasFromStore();
-        autoSave("areas", idx >= 0 ? "update" : "create", areaObj);
-        return areaObj;
+        autoSave("areas", idx >= 0 ? "update" : "create", savedArea);
+        return savedArea;
       },
-      reassignAreaCustomers(areaId, newRepId, areaName = null) {
+      reassignAreaCustomers(areaId, newRepId, areaName = null, clearAreaLink = false) {
         if (!areaId) return { updatedDoctors: 0, updatedPharmacies: 0, updatedHospitals: 0 };
         const area = this.getById(areaId);
         const effectiveName = areaName || (area ? area.name : null);
         const nameLower = effectiveName ? effectiveName.toLowerCase().trim() : null;
+        const { dmId, lmId } = clearAreaLink
+          ? { dmId: null, lmId: null }
+          : resolveRepHierarchyChain(newRepId || null, area, area ? area.lineId : null);
 
-        let updatedDoctors = 0;
-        let updatedPharmacies = 0;
-        let updatedHospitals = 0;
+        const reassignList = (list) => {
+          let count = 0;
+          list.forEach((rec) => {
+            const matchAreaId = rec.areaId === areaId;
+            const matchAreaName =
+              nameLower &&
+              rec.area &&
+              rec.area.toLowerCase().trim() === nameLower &&
+              (!rec.areaId || rec.areaId === areaId) &&
+              (!area || !area.lineId || !rec.lineId || rec.lineId === area.lineId);
 
-        // 1. Doctors inheritance
-        const allDocs = (window.DEMO_DATA && window.DEMO_DATA.doctors) || [];
-        allDocs.forEach((d) => {
-          const matchAreaId = d.areaId === areaId;
-          const matchAreaName =
-            nameLower &&
-            d.area &&
-            d.area.toLowerCase().trim() === nameLower &&
-            (!d.areaId || d.areaId === areaId) &&
-            (!area || !area.lineId || !d.lineId || d.lineId === area.lineId);
+            if (matchAreaId || matchAreaName) {
+              if (clearAreaLink) {
+                rec.repId = null;
+                rec.dmId = null;
+                rec.lmId = null;
+                rec.areaId = null;
+                rec.area = "";
+              } else {
+                rec.repId = newRepId || null;
+                rec.dmId = dmId;
+                rec.lmId = lmId;
+                rec.areaId = areaId;
+                if (effectiveName) rec.area = effectiveName;
+              }
+              count++;
+            }
+          });
+          return count;
+        };
 
-          if (matchAreaId || matchAreaName) {
-            d.repId = newRepId || null;
-            d.areaId = areaId;
-            if (effectiveName) d.area = effectiveName;
-            updatedDoctors++;
-          }
-        });
+        const updatedDoctors = reassignList((window.DEMO_DATA && window.DEMO_DATA.doctors) || []);
+        const updatedPharmacies = reassignList((window.DEMO_DATA && window.DEMO_DATA.pharmacies) || []);
+        const updatedHospitals = reassignList((window.DEMO_DATA && window.DEMO_DATA.hospitals) || []);
 
-        // 2. Pharmacies inheritance
-        const allPharms = (window.DEMO_DATA && window.DEMO_DATA.pharmacies) || [];
-        allPharms.forEach((p) => {
-          const matchAreaId = p.areaId === areaId;
-          const matchAreaName =
-            nameLower &&
-            p.area &&
-            p.area.toLowerCase().trim() === nameLower &&
-            (!p.areaId || p.areaId === areaId) &&
-            (!area || !area.lineId || !p.lineId || p.lineId === area.lineId);
-
-          if (matchAreaId || matchAreaName) {
-            p.repId = newRepId || null;
-            p.areaId = areaId;
-            if (effectiveName) p.area = effectiveName;
-            updatedPharmacies++;
-          }
-        });
-
-        // 3. Hospitals inheritance
-        const allHosps = (window.DEMO_DATA && window.DEMO_DATA.hospitals) || [];
-        allHosps.forEach((h) => {
-          const matchAreaId = h.areaId === areaId;
-          const matchAreaName =
-            nameLower &&
-            h.area &&
-            h.area.toLowerCase().trim() === nameLower &&
-            (!h.areaId || h.areaId === areaId) &&
-            (!area || !area.lineId || !h.lineId || h.lineId === area.lineId);
-
-          if (matchAreaId || matchAreaName) {
-            h.repId = newRepId || null;
-            h.areaId = areaId;
-            if (effectiveName) h.area = effectiveName;
-            updatedHospitals++;
-          }
-        });
-
-        if (typeof window.saveDataToStorage === "function") {
-          window.saveDataToStorage();
-        }
         autoSave("areas", "reassignAreaCustomers", {
           areaId,
           newRepId,
+          clearAreaLink,
           areaName: effectiveName,
           updatedDoctors,
           updatedPharmacies,
@@ -764,10 +818,13 @@
           logTerritoryHistoryChange(areaId, area.repId, null);
         }
         if (area) {
-          this.reassignAreaCustomers(areaId, null, area.name);
+          this.reassignAreaCustomers(areaId, null, area.name, true);
           if (store.distributorSales && typeof store.distributorSales.rematchAreaSales === "function") {
             store.distributorSales.rematchAreaSales(areaId, null);
           }
+        }
+        if (Array.isArray(window.DEMO_DATA.bulkWeights)) {
+          window.DEMO_DATA.bulkWeights = window.DEMO_DATA.bulkWeights.filter((w) => w.areaId !== areaId);
         }
         window.DEMO_DATA.areas = (window.DEMO_DATA.areas || []).filter(
           (a) => a.id !== areaId,
@@ -833,11 +890,9 @@
       getAll() {
         const raw = window.DEMO_DATA.doctors || [];
         const sorter = window.sortBilingualByName || ((a, b) => {
-          const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-          const nA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
-          const nB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
-          const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
-          return nA.localeCompare(nB, locales, { numeric: true, sensitivity: "base" });
+          const nA = (a.name || a.nameAr || "").trim();
+          const nB = (b.name || b.nameAr || "").trim();
+          return nA.localeCompare(nB, ["en", "ar"], { numeric: true, sensitivity: "base" });
         });
         return raw.slice().sort(sorter);
       },
@@ -846,31 +901,32 @@
       },
       save(docObj) {
         if (!window.DEMO_DATA.doctors) window.DEMO_DATA.doctors = [];
+        let matchedArea = null;
         if (docObj.areaId && store.areas) {
-          const a = store.areas.getById(docObj.areaId);
-          if (a) {
-            if (!docObj.repId && a.repId) docObj.repId = a.repId;
-            if (a.name) docObj.area = a.name;
-            if (a.lineId && !docObj.lineId) docObj.lineId = a.lineId;
+          matchedArea = store.areas.getById(docObj.areaId);
+          if (matchedArea) {
+            if (!docObj.repId && matchedArea.repId) docObj.repId = matchedArea.repId;
+            if (matchedArea.name) docObj.area = matchedArea.name;
+            if (matchedArea.lineId && !docObj.lineId) docObj.lineId = matchedArea.lineId;
           }
         }
-        if (docObj.repId && store.users) {
-          const rep = store.users.getById(docObj.repId);
-          if (rep && rep.managerId && !docObj.dmId) {
-            docObj.dmId = rep.managerId;
-            const dm = store.users.getById(rep.managerId);
-            if (dm && dm.managerId && !docObj.lmId) docObj.lmId = dm.managerId;
-          }
+        if ((docObj.repId || matchedArea) && (!docObj.dmId || !docObj.lmId)) {
+          const { dmId, lmId } = resolveRepHierarchyChain(docObj.repId || null, matchedArea, docObj.lineId || null);
+          if (!docObj.dmId && dmId) docObj.dmId = dmId;
+          if (!docObj.lmId && lmId) docObj.lmId = lmId;
         }
         const docs = window.DEMO_DATA.doctors;
         const idx = docs.findIndex((d) => d.id === docObj.id);
+        let savedDoc;
         if (idx >= 0) {
           docs[idx] = { ...docs[idx], ...docObj };
+          savedDoc = docs[idx];
         } else {
-          docs.unshift(docObj);
+          savedDoc = docObj.id ? docObj : { ...docObj, id: nextStoreId("doc_") };
+          docs.unshift(savedDoc);
         }
-        autoSave("doctors", idx >= 0 ? "update" : "create", docObj);
-        return docObj;
+        autoSave("doctors", idx >= 0 ? "update" : "create", savedDoc);
+        return savedDoc;
       },
       delete(docId) {
         window.DEMO_DATA.doctors = (window.DEMO_DATA.doctors || []).filter(
@@ -887,11 +943,9 @@
       getAll() {
         const raw = window.DEMO_DATA.pharmacies || [];
         const sorter = window.sortBilingualByName || ((a, b) => {
-          const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
-          const nA = (lang === "ar" ? (a.nameAr || a.name || "") : (a.name || a.nameAr || "")).trim();
-          const nB = (lang === "ar" ? (b.nameAr || b.name || "") : (b.name || b.nameAr || "")).trim();
-          const locales = lang === "ar" ? ["ar", "en"] : ["en", "ar"];
-          return nA.localeCompare(nB, locales, { numeric: true, sensitivity: "base" });
+          const nA = (a.name || a.nameAr || "").trim();
+          const nB = (b.name || b.nameAr || "").trim();
+          return nA.localeCompare(nB, ["en", "ar"], { numeric: true, sensitivity: "base" });
         });
         return raw.slice().sort(sorter);
       },
@@ -900,31 +954,32 @@
       },
       save(pharmObj) {
         if (!window.DEMO_DATA.pharmacies) window.DEMO_DATA.pharmacies = [];
+        let matchedArea = null;
         if (pharmObj.areaId && store.areas) {
-          const a = store.areas.getById(pharmObj.areaId);
-          if (a) {
-            if (!pharmObj.repId && a.repId) pharmObj.repId = a.repId;
-            if (a.name) pharmObj.area = a.name;
-            if (a.lineId && !pharmObj.lineId) pharmObj.lineId = a.lineId;
+          matchedArea = store.areas.getById(pharmObj.areaId);
+          if (matchedArea) {
+            if (!pharmObj.repId && matchedArea.repId) pharmObj.repId = matchedArea.repId;
+            if (matchedArea.name) pharmObj.area = matchedArea.name;
+            if (matchedArea.lineId && !pharmObj.lineId) pharmObj.lineId = matchedArea.lineId;
           }
         }
-        if (pharmObj.repId && store.users) {
-          const rep = store.users.getById(pharmObj.repId);
-          if (rep && rep.managerId && !pharmObj.dmId) {
-            pharmObj.dmId = rep.managerId;
-            const dm = store.users.getById(rep.managerId);
-            if (dm && dm.managerId && !pharmObj.lmId) pharmObj.lmId = dm.managerId;
-          }
+        if ((pharmObj.repId || matchedArea) && (!pharmObj.dmId || !pharmObj.lmId)) {
+          const { dmId, lmId } = resolveRepHierarchyChain(pharmObj.repId || null, matchedArea, pharmObj.lineId || null);
+          if (!pharmObj.dmId && dmId) pharmObj.dmId = dmId;
+          if (!pharmObj.lmId && lmId) pharmObj.lmId = lmId;
         }
         const pharms = window.DEMO_DATA.pharmacies;
         const idx = pharms.findIndex((p) => p.id === pharmObj.id);
+        let savedPharm;
         if (idx >= 0) {
           pharms[idx] = { ...pharms[idx], ...pharmObj };
+          savedPharm = pharms[idx];
         } else {
-          pharms.unshift(pharmObj);
+          savedPharm = pharmObj.id ? pharmObj : { ...pharmObj, id: nextStoreId("pharm_") };
+          pharms.unshift(savedPharm);
         }
-        autoSave("pharmacies", idx >= 0 ? "update" : "create", pharmObj);
-        return pharmObj;
+        autoSave("pharmacies", idx >= 0 ? "update" : "create", savedPharm);
+        return savedPharm;
       },
       delete(pharmId) {
         window.DEMO_DATA.pharmacies = (
@@ -1018,7 +1073,7 @@
         const idx = list.findIndex((o) => o.id === overrideObj.id);
         const item = {
           ...overrideObj,
-          id: overrideObj.id || `povr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          id: overrideObj.id || nextStoreId("povr_"),
           updatedAt: new Date().toISOString()
         };
         // Normalize mode-specific fields (missing mode = legacy single-area override)
@@ -1090,9 +1145,7 @@
           initialStatus = "pending_lm";
         } else if (!wf.requireDm && !wf.requireLm && wf.requireBu) {
           initialStatus = "pending_bu";
-        } else if (!wf.requireDm && !wf.requireLm && !wf.requireBu && wf.requireGm) {
-          initialStatus = "pending_gm";
-        } else if (!wf.requireDm && !wf.requireLm && !wf.requireBu && !wf.requireGm) {
+        } else if (!wf.requireDm && !wf.requireLm && !wf.requireBu) {
           initialStatus = "approved";
         }
 
@@ -1101,7 +1154,7 @@
         }
 
         const item = {
-          id: req.id || "locreq_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+          id: req.id || nextStoreId("locreq_"),
           targetId: req.targetId,
           targetType: req.targetType || "doctor",
           targetName: req.targetName,
@@ -1133,19 +1186,24 @@
         if (typeof window.addWorkflowNotification === "function" && initialStatus !== "approved") {
           const allUsers = (store.users ? store.users.getAll() : (window.DEMO_DATA.users || []));
           const repUser = allUsers.find((u) => u.id === item.repId);
-          const recipientId = (repUser && repUser.managerId) ? repUser.managerId : "all";
+          const fallbackAdmin = allUsers.find((u) => normalizeRoleLocal(u.role) === "admin");
+          const recipientId = (repUser && repUser.managerId)
+            ? repUser.managerId
+            : (fallbackAdmin ? fallbackAdmin.id : null);
 
-          window.addWorkflowNotification({
-            userId: recipientId,
-            type: "location_pin_request",
-            title: item.requestType === "relocation" ? "Clinic Relocation Request" : "Clinic Location Pin Request",
-            message: `Rep ${item.repName} requested GPS pin for ${item.targetName}`,
-            link: "activities.html#locations",
-            icon: "📍",
-            badgeClass: "bg-warning",
-            actorName: item.repName,
-            action: "submitted"
-          });
+          if (recipientId) {
+            window.addWorkflowNotification({
+              userId: recipientId,
+              type: "location_pin_request",
+              title: item.requestType === "relocation" ? "Clinic Relocation Request" : "Clinic Location Pin Request",
+              message: `Rep ${item.repName} requested GPS pin for ${item.targetName}`,
+              link: "activities.html#locations",
+              icon: "📍",
+              badgeClass: "bg-warning",
+              actorName: item.repName,
+              action: "submitted"
+            });
+          }
         }
         return item;
       },
@@ -1195,6 +1253,7 @@
           const maxDist = (store.companySettings && store.companySettings.get().gpsMaxDistanceMeters) || 200;
           const targetNameNorm = (item.targetName || "").trim().toLowerCase();
 
+          const updatedVisits = [];
           window.DEMO_DATA.visits.forEach((v) => {
             const vDocName = (v.doctorName || "").trim().toLowerCase();
             const isMatch = (item.targetType === "doctor" && (v.doctorId === item.targetId || (targetNameNorm && vDocName === targetNameNorm))) ||
@@ -1209,23 +1268,39 @@
                 v.distanceMeters = dist;
                 v.gpsStatus = dist <= maxDist ? "in_range" : "out_of_range";
               }
-              if (typeof autoSave === "function") {
-                autoSave("visits", "update", v);
+              updatedVisits.push(v);
+              if (typeof window.syncVisitToCloud === "function") {
+                window.syncVisitToCloud("update", v);
               }
             }
           });
 
-          if (typeof window.saveDataToStorage === "function") {
-            window.saveDataToStorage();
+          if (updatedVisits.length > 0) {
+            if (typeof window.saveDataToStorage === "function") {
+              window.saveDataToStorage();
+            }
+            document.dispatchEvent(
+              new CustomEvent("pharma:store:changed", {
+                detail: { entity: "visits", action: "batchUpdate", payload: updatedVisits },
+              }),
+            );
           }
         }
+      },
+      _canDecide(actorUser, item) {
+        if (!actorUser || !actorUser.role || !item) return false;
+        if (actorUser.id && item.repId && actorUser.id === item.repId) return false;
+        if (isRepUserLocal(actorUser)) return false;
+        const role = normalizeRoleLocal(actorUser.role);
+        return ["admin", "business_unit", "line_manager", "district_manager"].includes(role);
       },
       advanceApproval(id, actorUser, comment = "") {
         const item = this.getById(id);
         if (!item || item.status === "approved" || item.status === "rejected") return null;
+        if (!this._canDecide(actorUser, item)) return null;
 
         if (!item.approvalChain) item.approvalChain = [];
-        const role = (actorUser?.role || "").toLowerCase();
+        const role = normalizeRoleLocal(actorUser?.role);
         item.approvalChain.push({
           actorId: actorUser?.id || "unknown",
           actorName: actorUser?.name || "Manager",
@@ -1243,29 +1318,19 @@
           requireGm: false
         };
 
-        if (role === "admin" || role === "general_manager") {
+        if (role === "admin") {
           item.status = "approved";
         } else if (item.status === "pending" || item.status === "pending_dm") {
           if (wf.requireLm) {
             item.status = "pending_lm";
           } else if (wf.requireBu) {
             item.status = "pending_bu";
-          } else if (wf.requireGm) {
-            item.status = "pending_gm";
           } else {
             item.status = "approved";
           }
         } else if (item.status === "pending_lm") {
           if (wf.requireBu) {
             item.status = "pending_bu";
-          } else if (wf.requireGm) {
-            item.status = "pending_gm";
-          } else {
-            item.status = "approved";
-          }
-        } else if (item.status === "pending_bu") {
-          if (wf.requireGm) {
-            item.status = "pending_gm";
           } else {
             item.status = "approved";
           }
@@ -1303,6 +1368,7 @@
       reject(id, actorUser, comment = "") {
         const item = this.getById(id);
         if (!item || item.status === "approved" || item.status === "rejected") return null;
+        if (!this._canDecide(actorUser, item)) return null;
         item.status = "rejected";
         item.decisionAt = new Date().toISOString();
         item.decisionBy = actorUser ? actorUser.name : "Manager";
@@ -1340,31 +1406,32 @@
       },
       save(hospObj) {
         if (!window.DEMO_DATA.hospitals) window.DEMO_DATA.hospitals = [];
+        let matchedArea = null;
         if (hospObj.areaId && store.areas) {
-          const a = store.areas.getById(hospObj.areaId);
-          if (a) {
-            if (!hospObj.repId && a.repId) hospObj.repId = a.repId;
-            if (a.name) hospObj.area = a.name;
-            if (a.lineId && !hospObj.lineId) hospObj.lineId = a.lineId;
+          matchedArea = store.areas.getById(hospObj.areaId);
+          if (matchedArea) {
+            if (!hospObj.repId && matchedArea.repId) hospObj.repId = matchedArea.repId;
+            if (matchedArea.name) hospObj.area = matchedArea.name;
+            if (matchedArea.lineId && !hospObj.lineId) hospObj.lineId = matchedArea.lineId;
           }
         }
-        if (hospObj.repId && store.users) {
-          const rep = store.users.getById(hospObj.repId);
-          if (rep && rep.managerId && !hospObj.dmId) {
-            hospObj.dmId = rep.managerId;
-            const dm = store.users.getById(rep.managerId);
-            if (dm && dm.managerId && !hospObj.lmId) hospObj.lmId = dm.managerId;
-          }
+        if ((hospObj.repId || matchedArea) && (!hospObj.dmId || !hospObj.lmId)) {
+          const { dmId, lmId } = resolveRepHierarchyChain(hospObj.repId || null, matchedArea, hospObj.lineId || null);
+          if (!hospObj.dmId && dmId) hospObj.dmId = dmId;
+          if (!hospObj.lmId && lmId) hospObj.lmId = lmId;
         }
         const hosps = window.DEMO_DATA.hospitals;
         const idx = hosps.findIndex((h) => h.id === hospObj.id);
+        let savedHosp;
         if (idx >= 0) {
           hosps[idx] = { ...hosps[idx], ...hospObj };
+          savedHosp = hosps[idx];
         } else {
-          hosps.unshift(hospObj);
+          savedHosp = hospObj.id ? hospObj : { ...hospObj, id: nextStoreId("hosp_") };
+          hosps.unshift(savedHosp);
         }
-        autoSave("hospitals", idx >= 0 ? "update" : "create", hospObj);
-        return hospObj;
+        autoSave("hospitals", idx >= 0 ? "update" : "create", savedHosp);
+        return savedHosp;
       },
       delete(hospId) {
         window.DEMO_DATA.hospitals = (
@@ -1407,15 +1474,16 @@
         if (!prod) return;
         if (!Array.isArray(prod.aliases)) prod.aliases = [];
         const normalized = String(rawText).trim().toLowerCase();
+        const targetDist = normalizeDistId(distributorId);
         const exists = prod.aliases.some(
           (al) =>
-            al.distributorId === distributorId &&
+            (normalizeDistId(al.distributorId) === targetDist || al.distributorId === distributorId) &&
             String(al.rawText).trim().toLowerCase() === normalized,
         );
         if (!exists) {
-          prod.aliases.push({ distributorId, rawText: String(rawText).trim() });
+          prod.aliases.push({ distributorId: targetDist, rawText: String(rawText).trim() });
         }
-        autoSave("productLines", "addProductAlias", { lineId, productId, distributorId, rawText });
+        autoSave("productLines", "addProductAlias", { lineId, productId, distributorId: targetDist, rawText });
       },
       /**
        * Removes a product alias mapping and unassigns sales rows matched with it.
@@ -1426,17 +1494,18 @@
         const prod = line.products.find((p) => p.id === productId);
         if (!prod || !Array.isArray(prod.aliases)) return false;
         const normalized = String(rawText).trim().toLowerCase();
+        const targetDist = normalizeDistId(distributorId);
         const initialLen = prod.aliases.length;
         prod.aliases = prod.aliases.filter(
           (al) =>
-            !(al.distributorId === distributorId && String(al.rawText).trim().toLowerCase() === normalized)
+            !((normalizeDistId(al.distributorId) === targetDist || al.distributorId === distributorId) && String(al.rawText).trim().toLowerCase() === normalized)
         );
         const removed = prod.aliases.length < initialLen;
         if (removed) {
           if (store.distributorSales && typeof store.distributorSales.unmatchProductAliasRows === "function") {
             store.distributorSales.unmatchProductAliasRows(distributorId, rawText);
           }
-          autoSave("productLines", "removeProductAlias", { lineId, productId, distributorId, rawText });
+          autoSave("productLines", "removeProductAlias", { lineId, productId, distributorId: targetDist, rawText });
         }
         return removed;
       },
@@ -1543,14 +1612,16 @@
         if (!window.DEMO_DATA.bulkWeights) window.DEMO_DATA.bulkWeights = [];
         const weights = window.DEMO_DATA.bulkWeights;
         const idx = weights.findIndex((w) => w.id === weightObj.id);
+        let savedWeight;
         if (idx >= 0) {
           weights[idx] = { ...weights[idx], ...weightObj };
+          savedWeight = weights[idx];
         } else {
-          if (!weightObj.id) weightObj.id = "bw_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-          weights.push(weightObj);
+          savedWeight = weightObj.id ? weightObj : { ...weightObj, id: nextStoreId("bw_") };
+          weights.push(savedWeight);
         }
-        autoSave("bulkWeights", idx >= 0 ? "update" : "create", weightObj);
-        return weightObj;
+        autoSave("bulkWeights", idx >= 0 ? "update" : "create", savedWeight);
+        return savedWeight;
       },
       saveAll(productId, entries) {
         // entries = [{ areaId, weight, lineId }]
@@ -1563,7 +1634,7 @@
         entries.forEach((e) => {
           if (e.weight > 0) {
             window.DEMO_DATA.bulkWeights.push({
-              id: "bw_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+              id: nextStoreId("bw_"),
               productId: productId,
               areaId: e.areaId,
               weight: parseFloat(e.weight) || 0,
@@ -1735,19 +1806,34 @@
           }
         }
 
-        const idx = list.findIndex(
+        const byIdIdx = targetObj.id ? list.findIndex((t) => t.id === targetObj.id) : -1;
+        const compositeMatchIdx = list.findIndex(
           (t) =>
-            t.id === targetObj.id ||
             (targetObj.areaId && t.areaId === targetObj.areaId && t.productId === targetObj.productId && t.month === targetObj.month) ||
             (!targetObj.areaId && t.repId === targetObj.repId && t.productId === targetObj.productId && t.month === targetObj.month),
         );
+
+        let idx = -1;
+        if (byIdIdx >= 0) {
+          // If editing an existing record into a slot already owned by a different target id, refuse silent corruption
+          if (compositeMatchIdx >= 0 && compositeMatchIdx !== byIdIdx) {
+            return list[compositeMatchIdx];
+          }
+          idx = byIdIdx;
+        } else {
+          idx = compositeMatchIdx;
+        }
+
+        let savedTarget;
         if (idx >= 0) {
           list[idx] = { ...list[idx], ...targetObj, id: list[idx].id };
+          savedTarget = list[idx];
         } else {
-          list.push({ ...targetObj, id: targetObj.id || "target_" + Date.now() });
+          savedTarget = { ...targetObj, id: targetObj.id || nextStoreId("target_") };
+          list.push(savedTarget);
         }
-        autoSave("targets", idx >= 0 ? "update" : "create", targetObj);
-        return idx >= 0 ? list[idx] : list[list.length - 1];
+        autoSave("targets", idx >= 0 ? "update" : "create", savedTarget);
+        return savedTarget;
       },
       delete(id) {
         window.DEMO_DATA.targets = (window.DEMO_DATA.targets || []).filter((t) => t.id !== id);
@@ -1782,13 +1868,16 @@
         if (!window.DEMO_DATA.importBatches) window.DEMO_DATA.importBatches = [];
         const list = window.DEMO_DATA.importBatches;
         const idx = list.findIndex((b) => b.id === batchObj.id);
+        let savedBatch;
         if (idx >= 0) {
           list[idx] = { ...list[idx], ...batchObj };
+          savedBatch = list[idx];
         } else {
-          list.push({ ...batchObj, id: batchObj.id || "batch_" + Date.now() });
+          savedBatch = { ...batchObj, id: batchObj.id || nextStoreId("batch_") };
+          list.push(savedBatch);
         }
-        autoSave("importBatches", idx >= 0 ? "update" : "create", batchObj);
-        return idx >= 0 ? list[idx] : list[list.length - 1];
+        autoSave("importBatches", idx >= 0 ? "update" : "create", savedBatch);
+        return savedBatch;
       },
       delete(id) {
         window.DEMO_DATA.importBatches = (window.DEMO_DATA.importBatches || []).filter(
@@ -1858,8 +1947,8 @@
         window.DEMO_DATA.distributorSales.push(...rows);
         this.applyProductMatching(false);
         this.applyAreaMatching(false, false);
-        // Apply Bulk/Ceiling distribution after matching
-        this.applyCutPointAndBulk();
+        // Apply Bulk/Ceiling distribution after matching (saved cleanly via importBatch autoSave below)
+        this.applyCutPointAndBulk(false);
         autoSave("distributorSales", "importBatch", { count: rows.length });
       },
       /**
@@ -1868,7 +1957,7 @@
        * real Area for them once, via areas.addAlias().
        */
       getPendingAreaTexts() {
-        const rows = this.getAll().filter((s) => !s.repId && s.areaRaw);
+        const rows = this.getAll().filter((s) => !s.repId && !s.areaId && s.areaRaw);
         const seen = {};
         const pending = [];
         rows.forEach((row) => {
@@ -1915,15 +2004,17 @@
           }
           const rowLineId = row.lineId || null;
 
-          // 1. High-priority check for pharmacy override (line-aware)
+          // 1. High-priority check for pharmacy override (line-aware & future_only timestamp-aware)
           if (store.pharmacyOverrides) {
-            const override = store.pharmacyOverrides.findMatch(
-              row.distributorId,
-              row.pharmacyCode,
-              row.pharmacyName,
-              rowMonth,
-              rowLineId
-            );
+            const override = typeof store.pharmacyOverrides.findMatchForRow === "function"
+              ? store.pharmacyOverrides.findMatchForRow(row)
+              : store.pharmacyOverrides.findMatch(
+                  row.distributorId,
+                  row.pharmacyCode,
+                  row.pharmacyName,
+                  rowMonth,
+                  rowLineId
+                );
             if (override && override.areaId) {
               const candArea = store.areas.getById(override.areaId);
               if (candArea && (!rowLineId || candArea.lineId === rowLineId)) {
@@ -1987,15 +2078,13 @@
           if (!row.lineId && area.lineId) {
             row.lineId = area.lineId;
           }
-          const rep = area.repId ? store.users.getById(area.repId) : null;
-          const dmId = rep ? rep.managerId || null : null;
-          row.dmId = dmId;
-          const dm = dmId ? store.users.getById(dmId) : null;
-          row.lmId = dm ? dm.managerId || null : null;
+          const chainIds = resolveRepHierarchyChain(area.repId || null, area, row.lineId || area.lineId || null);
+          row.dmId = chainIds.dmId;
+          row.lmId = chainIds.lmId;
           matchedCount++;
         });
         if (matchedCount) {
-          this.applyCutPointAndBulk();
+          this.applyCutPointAndBulk(false);
           if (shouldAutoSave) {
             autoSave("distributorSales", "applyAreaMatching", { matchedCount });
           }
@@ -2026,17 +2115,17 @@
         this.removeBulkRows();
         this.removeSplitRows();
 
-        const rep = area && area.repId ? store.users.getById(area.repId) : null;
-        const dmId = rep ? rep.managerId || null : null;
-        const dm = dmId ? store.users.getById(dmId) : null;
-        const lmId = dm ? dm.managerId || null : null;
+        const chainIds = resolveRepHierarchyChain(area ? (area.repId || null) : null, area, targetLineId);
+        const dmId = chainIds.dmId;
+        const lmId = chainIds.lmId;
+        const targetDistId = normalizeDistId(override.distributorId);
 
         const cleanCode = String(override.pharmacyCode || "").trim().toLowerCase();
         const cleanName = String(override.pharmacyName || "").trim().toLowerCase();
 
         let updatedCount = 0;
         this.getAll().forEach((row) => {
-          if (row.distributorId !== override.distributorId) return;
+          if (normalizeDistId(row.distributorId) !== targetDistId) return;
 
           let matches = false;
           if (cleanCode && row.pharmacyCode) {
@@ -2077,8 +2166,8 @@
           this.applyAreaMatching(false, false);
         }
 
-        // Rebuild split children + bulk rows (also autosaves)
-        this.applyCutPointAndBulk();
+        // Rebuild split children + bulk rows
+        this.applyCutPointAndBulk(false);
         if (updatedCount > 0) {
           autoSave("distributorSales", "applyPharmacyOverride", {
             overrideId: override.id,
@@ -2103,8 +2192,9 @@
         this.removeSplitRows();
 
         let revertedCount = 0;
+        const targetDist = normalizeDistId(override.distributorId);
         this.getAll().forEach((row) => {
-          if (row.distributorId !== override.distributorId) return;
+          if (normalizeDistId(row.distributorId) !== targetDist && row.distributorId !== override.distributorId) return;
 
           let matches = false;
           if (cleanCode && row.pharmacyCode) {
@@ -2146,13 +2236,8 @@
        */
       rematchAreaSales(areaId, newRepId, effectiveFromMonth = null) {
         if (!areaId) return 0;
-        const rep = newRepId ? store.users.getById(newRepId) : null;
-        const dmId = rep ? rep.managerId || null : null;
-        const dm = dmId ? store.users.getById(dmId) : null;
-        const lmId = dm ? dm.managerId || null : null;
-
-        const currentMonth = (typeof window.getSystemTodayStr === "function" ? window.getSystemTodayStr() : new Date().toISOString().split("T")[0]).slice(0, 7);
-        const cutoffMonth = effectiveFromMonth || currentMonth;
+        const areaObj = store.areas ? store.areas.getById(areaId) : null;
+        const { dmId, lmId } = resolveRepHierarchyChain(newRepId || null, areaObj, areaObj ? areaObj.lineId : null);
 
         let updatedCount = 0;
         this.getAll().forEach((row) => {
@@ -2178,10 +2263,13 @@
       unmatchAliasRows(distributorId, rawText) {
         if (!distributorId || !rawText) return 0;
         const normalized = String(rawText).trim().toLowerCase();
+        const targetDist = normalizeDistId(distributorId);
         let unlinkedCount = 0;
         this.getAll().forEach((row) => {
           if (
-            row.distributorId === distributorId &&
+            row.salesType !== "bulk" &&
+            !row.splitParentId &&
+            (normalizeDistId(row.distributorId) === targetDist || row.distributorId === distributorId) &&
             String(row.areaRaw || "").trim().toLowerCase() === normalized
           ) {
             row.areaId = null;
@@ -2192,7 +2280,8 @@
           }
         });
         if (unlinkedCount) {
-          autoSave("distributorSales", "unmatchAliasRows", { distributorId, rawText, unlinkedCount });
+          this.applyCutPointAndBulk(false);
+          autoSave("distributorSales", "unmatchAliasRows", { distributorId: targetDist, rawText, unlinkedCount });
         }
         return unlinkedCount;
       },
@@ -2203,11 +2292,15 @@
       unmatchProductAliasRows(distributorId, rawText) {
         if (!distributorId || !rawText) return 0;
         const normalized = String(rawText).trim().toLowerCase();
+        const targetDist = normalizeDistId(distributorId);
         let unlinkedCount = 0;
         this.getAll().forEach((row) => {
+          const rawProductText = row.product !== undefined && row.product !== null && row.product !== "" ? row.product : row.productRaw;
           if (
-            row.distributorId === distributorId &&
-            String(row.productRaw || "").trim().toLowerCase() === normalized
+            row.salesType !== "bulk" &&
+            !row.splitParentId &&
+            (normalizeDistId(row.distributorId) === targetDist || row.distributorId === distributorId) &&
+            String(rawProductText || "").trim().toLowerCase() === normalized
           ) {
             row.lineId = null;
             row.productId = null;
@@ -2215,7 +2308,8 @@
           }
         });
         if (unlinkedCount) {
-          autoSave("distributorSales", "unmatchProductAliasRows", { distributorId, rawText, unlinkedCount });
+          this.applyCutPointAndBulk(false);
+          autoSave("distributorSales", "unmatchProductAliasRows", { distributorId: targetDist, rawText, unlinkedCount });
         }
         return unlinkedCount;
       },
@@ -2351,14 +2445,12 @@
 
         const round2 = (n) => Math.round(n * 100) / 100;
         const chain = (area) => {
-          const rep = area.repId ? store.users.getById(area.repId) : null;
-          const dmId = rep ? rep.managerId || null : null;
-          const dm = dmId ? store.users.getById(dmId) : null;
+          const { dmId, lmId } = resolveRepHierarchyChain(area.repId || null, area, area.lineId || null);
           return {
             areaId: area.id,
             repId: area.repId || null,
             dmId,
-            lmId: dm ? dm.managerId || null : null,
+            lmId,
           };
         };
 
@@ -2445,7 +2537,7 @@
        * Generated Bulk rows carry salesType:"bulk", bulkWeight, originalSaleId.
        * Original rows carry salesType:"private".
        */
-      applyCutPointAndBulk() {
+      applyCutPointAndBulk(shouldAutoSave = true) {
         const emptySummary = { processedProducts: 0, bulkRowsCreated: 0, splitRowsCreated: 0, skippedNoWeights: 0 };
         if (!this.getAll().length) {
           this.lastEngineSummary = emptySummary;
@@ -2623,26 +2715,23 @@
           if (!window.DEMO_DATA.distributorSales) window.DEMO_DATA.distributorSales = [];
           window.DEMO_DATA.distributorSales.push(...newBulkRows);
 
-          // Resolve DM/LM hierarchy for bulk rows
+          // Resolve DM/LM hierarchy for all bulk rows (including vacant bricks)
+          const areaById = new Map(allAreas.map((a) => [a.id, a]));
           newBulkRows.forEach((r) => {
-            if (r.repId) {
-              const rep = store.users.getById(r.repId);
-              if (rep) {
-                r.dmId = rep.managerId || null;
-                if (r.dmId) {
-                  const dm = store.users.getById(r.dmId);
-                  r.lmId = dm ? dm.managerId || null : null;
-                }
-              }
-            }
+            const areaObj = r.areaId ? (areaById.get(r.areaId) || null) : null;
+            const { dmId, lmId } = resolveRepHierarchyChain(r.repId || null, areaObj, r.lineId || null);
+            r.dmId = dmId;
+            r.lmId = lmId;
           });
         }
 
-        autoSave("distributorSales", "applyCutPointAndBulk", {
-          processedProducts,
-          bulkRowsCreated,
-          splitRowsCreated,
-        });
+        if (shouldAutoSave) {
+          autoSave("distributorSales", "applyCutPointAndBulk", {
+            processedProducts,
+            bulkRowsCreated,
+            splitRowsCreated,
+          });
+        }
 
         const summary = { processedProducts, bulkRowsCreated, splitRowsCreated, skippedNoWeights };
         this.lastEngineSummary = summary;
@@ -2672,6 +2761,22 @@
         Object.assign(l, updates);
         autoSave("leaves", "update", l);
         return l;
+      },
+      save(leaveObj) {
+        if (!leaveObj) return null;
+        if (!window.DEMO_DATA.leaves) window.DEMO_DATA.leaves = [];
+        const leaves = window.DEMO_DATA.leaves;
+        const idx = leaveObj.id ? leaves.findIndex((l) => l.id === leaveObj.id) : -1;
+        let savedLeave;
+        if (idx >= 0) {
+          leaves[idx] = { ...leaves[idx], ...leaveObj };
+          savedLeave = leaves[idx];
+        } else {
+          savedLeave = leaveObj.id ? { ...leaveObj } : { ...leaveObj, id: nextStoreId("lv_") };
+          leaves.unshift(savedLeave);
+        }
+        autoSave("leaves", idx >= 0 ? "update" : "create", savedLeave);
+        return savedLeave;
       },
       delete(id) {
         if (!window.DEMO_DATA.leaves) return false;
@@ -2871,13 +2976,16 @@
         );
       },
       getUnreadCount(userId) {
-        return this.getForUser(userId).filter((n) => !n.read).length;
+        if (!userId) return 0;
+        return this.getForUser(userId).filter(
+          (n) => !n.read && !(Array.isArray(n.readBy) && n.readBy.includes(userId))
+        ).length;
       },
       add(notif) {
         if (!window.DEMO_DATA.notifications) window.DEMO_DATA.notifications = [];
         const fullNotif = {
-          id: notif.id || ("notif_" + Date.now() + "_" + Math.floor(Math.random() * 1000)),
-          userId: notif.userId || "u1790626000001",
+          id: notif.id || nextStoreId("notif_"),
+          userId: notif.userId || null,
           type: notif.type || "system",
           title: notif.title || notif.titleEn || "New Notification",
           message: notif.message || notif.messageEn || "",
@@ -2897,10 +3005,18 @@
         }
         return fullNotif;
       },
-      markAsRead(notifId) {
+      markAsRead(notifId, userId = null) {
         const notif = (window.DEMO_DATA.notifications || []).find((n) => n.id === notifId);
         if (notif) {
-          notif.read = true;
+          if (notif.userId === "all") {
+            const effUid = userId || (typeof window.checkAuth === "function" ? window.checkAuth()?.id : null);
+            if (effUid) {
+              if (!Array.isArray(notif.readBy)) notif.readBy = [];
+              if (!notif.readBy.includes(effUid)) notif.readBy.push(effUid);
+            }
+          } else {
+            notif.read = true;
+          }
           autoSave("notifications", "update", notif);
           if (typeof window.updateWorkflowNotifUI === "function") {
             window.updateWorkflowNotifUI();
@@ -2909,11 +3025,18 @@
         return notif;
       },
       markAllAsRead(userId) {
+        if (!userId) return;
         let modified = false;
         (window.DEMO_DATA.notifications || []).forEach((n) => {
-          if ((n.userId === userId || n.userId === "all") && !n.read) {
+          if (n.userId === userId && !n.read) {
             n.read = true;
             modified = true;
+          } else if (n.userId === "all") {
+            if (!Array.isArray(n.readBy)) n.readBy = [];
+            if (!n.readBy.includes(userId)) {
+              n.readBy.push(userId);
+              modified = true;
+            }
           }
         });
         if (modified) {
@@ -2938,10 +3061,12 @@
         }
         return false;
       },
-      clearAll(userId) {
-        if (!window.DEMO_DATA.notifications) return;
+      clearAll(userId, allowBroadcasts = false) {
+        if (!userId || !window.DEMO_DATA.notifications) return;
+        const curUser = typeof window.checkAuth === "function" ? window.checkAuth() : null;
+        const isAdm = Boolean(allowBroadcasts === true || (curUser && normalizeRoleLocal(curUser.role) === "admin"));
         window.DEMO_DATA.notifications = window.DEMO_DATA.notifications.filter(
-          (n) => n.userId !== userId && n.userId !== "all"
+          (n) => n.userId !== userId && !(isAdm && n.userId === "all")
         );
         autoSave("notifications", "clearAll", { userId });
         if (typeof window.updateWorkflowNotifUI === "function") {
@@ -2955,52 +3080,56 @@
     // ==========================================
     activities: {
       getStorageKey(userId) {
-        return `pharma_activities_data_${userId || "u1790626000001"}`;
+        return userId ? `pharma_activities_data_${userId}` : null;
       },
       getAllForUser(userId) {
-        const uid = userId || "u1790626000001";
+        if (!userId) return {};
         if (!window.DEMO_DATA._activitiesByUser) {
           window.DEMO_DATA._activitiesByUser = {};
         }
-        if (!window.DEMO_DATA._activitiesByUser[uid]) {
+        if (!window.DEMO_DATA._activitiesByUser[userId]) {
           try {
-            const raw = localStorage.getItem(this.getStorageKey(uid));
-            window.DEMO_DATA._activitiesByUser[uid] = raw ? JSON.parse(raw) : {};
+            const key = this.getStorageKey(userId);
+            const raw = key ? localStorage.getItem(key) : null;
+            window.DEMO_DATA._activitiesByUser[userId] = raw ? JSON.parse(raw) : {};
           } catch (e) {
-            window.DEMO_DATA._activitiesByUser[uid] = {};
+            window.DEMO_DATA._activitiesByUser[userId] = {};
           }
         }
-        return window.DEMO_DATA._activitiesByUser[uid];
+        return window.DEMO_DATA._activitiesByUser[userId];
       },
       get(userId, dateStr) {
+        if (!userId) return {};
         const userActivities = this.getAllForUser(userId);
         return userActivities[dateStr] || {};
       },
       save(userId, dateStr, period, activityData) {
-        const uid = userId || "u1790626000001";
-        const userActivities = this.getAllForUser(uid);
+        if (!userId || !dateStr || !period) return null;
+        const userActivities = this.getAllForUser(userId);
         if (!userActivities[dateStr]) {
           userActivities[dateStr] = {};
         }
         userActivities[dateStr][period] = activityData;
         try {
-          localStorage.setItem(this.getStorageKey(uid), JSON.stringify(userActivities));
+          const key = this.getStorageKey(userId);
+          if (key) localStorage.setItem(key, JSON.stringify(userActivities));
         } catch (e) {}
-        autoSave("activities", "save", { userId: uid, date: dateStr, period, activityData });
+        autoSave("activities", "save", { userId, date: dateStr, period, activityData });
         return userActivities[dateStr][period];
       },
       delete(userId, dateStr, period) {
-        const uid = userId || "u1790626000001";
-        const userActivities = this.getAllForUser(uid);
+        if (!userId || !dateStr || !period) return false;
+        const userActivities = this.getAllForUser(userId);
         if (userActivities[dateStr] && userActivities[dateStr][period]) {
           delete userActivities[dateStr][period];
           if (Object.keys(userActivities[dateStr]).length === 0) {
             delete userActivities[dateStr];
           }
           try {
-            localStorage.setItem(this.getStorageKey(uid), JSON.stringify(userActivities));
+            const key = this.getStorageKey(userId);
+            if (key) localStorage.setItem(key, JSON.stringify(userActivities));
           } catch (e) {}
-          autoSave("activities", "delete", { userId: uid, date: dateStr, period });
+          autoSave("activities", "delete", { userId, date: dateStr, period });
           return true;
         }
         return false;

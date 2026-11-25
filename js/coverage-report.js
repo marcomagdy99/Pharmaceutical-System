@@ -67,7 +67,7 @@ function _covIsRep(user) {
 }
 
 function _covHasFullOrgAccess(role) {
-  return role === 'admin' || role === 'hr' || role === 'general_manager';
+  return role === 'admin' || role === 'hr';
 }
 
 function _covGetAuthUser() {
@@ -318,15 +318,30 @@ function buildCoverageDataset() {
     targetList = targetList.filter((d) => String(d.class || '').toLowerCase() === 'hospital');
   }
 
-  // 2. Helper for vacant area filtering WITH strict line/role authorization check
+  // 2. Helper for vacant area filtering WITH strict line/role/hierarchy authorization check
   const userLineIds = _covGetUserLineIds(user.id);
+  const _covSubIds = (isBU || isGM || isLM || isDM) && typeof window.getAllSubordinates === 'function'
+    ? new Set([user.id, ...window.getAllSubordinates(user.id).map((u) => u.id)])
+    : new Set([user.id]);
   const canAccessVacantArea = (vacantArea) => {
     if (!vacantArea) return false;
     if (fullOrgAccess) return true;
     if (isRep) return false;
     if (userLineIds.length === 0) return false;
     const areaLine = vacantArea.lineId || null;
-    return !areaLine || userLineIds.includes(areaLine);
+    if (areaLine && !userLineIds.includes(areaLine)) return false;
+    if (isPM) return Boolean(areaLine && userLineIds.includes(areaLine));
+    const mgrId = typeof window.getAreaManagerId === 'function'
+      ? window.getAreaManagerId(vacantArea, allUsers)
+      : (vacantArea.dmId || vacantArea.managerId || null);
+    if (isDM) return mgrId === user.id || vacantArea.dmId === user.id || vacantArea.managerId === user.id;
+    if (isLM || isBU || isGM) {
+      if (mgrId && _covSubIds.has(mgrId)) return true;
+      if (vacantArea.dmId && _covSubIds.has(vacantArea.dmId)) return true;
+      if (vacantArea.buId && _covSubIds.has(vacantArea.buId)) return true;
+      return false;
+    }
+    return false;
   };
   let authorizedVacantArea = null;
   const filterVacantAreaTargets = (vacantSelection, list) => {
@@ -445,7 +460,7 @@ function buildCoverageDataset() {
       targetList = [];
       scopedReps = [];
     }
-  } else if (role === 'business_unit') {
+  } else if (role === 'business_unit' || role === 'general_manager') {
     const buSubordinates = _covGetBuSubordinates(user.id, allUsers);
     const allowedTeamIds = new Set([user.id, ...buSubordinates.map((u) => u.id)]);
 

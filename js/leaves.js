@@ -6,11 +6,16 @@
 
 function resolveLeaveUserName(userId, fallback) {
   if (typeof window !== "undefined" && window.store && window.store.users && userId) {
-    const u = window.store.users.getById(userId);
-    if (u && u.name) return u.name;
+    if (typeof window.store.users.getById === "function") {
+      const u = window.store.users.getById(userId);
+      if (u && u.name) return u.name;
+    } else if (typeof window.store.users.getAll === "function") {
+      const u = window.store.users.getAll().find(x => x && x.id === userId);
+      if (u && u.name) return u.name;
+    }
   }
   if (typeof window !== "undefined" && window.DEMO_DATA && window.DEMO_DATA.users && userId) {
-    const u = window.DEMO_DATA.users.find(x => x.id === userId);
+    const u = window.DEMO_DATA.users.find(x => x && x.id === userId);
     if (u && u.name) return u.name;
   }
   return fallback;
@@ -25,82 +30,10 @@ function getLeaveApplicantName(leave) {
   return leave.userName || "Employee";
 }
 
-// Master Leave Requests with 3-tier Approval Tracking
+// Production & Cloud-synced leaves list (no hardcoded mock leave records)
 let demoLeaves = (window.store && window.store.leaves
   ? window.store.leaves.getAll()
-  : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [
-  {
-    id: "l1",
-    userId: "u1790626000001",
-    userName: resolveLeaveUserName("u1790626000001", "Medical Rep"),
-    userRole: "medical_rep",
-    type: "annual",
-    dayDuration: "full",
-    days: 5,
-    startDate: "2026-08-01",
-    endDate: "2026-08-05",
-    reason: "Family vacation",
-    attachmentName: "flight_tickets.pdf",
-    status: "approved",
-    approvals: {
-      dm: {
-        status: "approved",
-        approverId: "u1790626000014",
-        approverName: resolveLeaveUserName("u1790626000014", "District Manager"),
-        updatedAt: "2026-07-28 10:30 AM",
-      },
-      lm: {
-        status: "approved",
-        approverId: "u1790626000012",
-        approverName: resolveLeaveUserName("u1790626000012", "Line Manager"),
-        updatedAt: "2026-07-28 02:15 PM",
-      },
-      hr: {
-        status: "approved",
-        approverId: "u1790626000017",
-        approverName: "HR Department",
-        updatedAt: "2026-07-29 09:00 AM",
-      },
-    },
-  },
-  {
-    id: "l2",
-    userId: "u1790626000001",
-    userName: resolveLeaveUserName("u1790626000001", "Medical Rep"),
-    userRole: "medical_rep",
-    type: "sick",
-    dayDuration: "full",
-    days: 2,
-    startDate: "2026-09-10",
-    endDate: "2026-09-11",
-    reason: "Medical rest",
-    attachmentName: "doctor_prescription.pdf",
-    status: "pending",
-    approvals: {
-      dm: { status: "pending", approverName: null, updatedAt: null },
-      lm: { status: "pending", approverName: null, updatedAt: null },
-      hr: { status: "pending", approverName: null, updatedAt: null },
-    },
-  },
-  {
-    id: "l3",
-    userId: "u1790626000014",
-    userName: resolveLeaveUserName("u1790626000014", "District Manager"),
-    userRole: "district_manager",
-    type: "casual",
-    dayDuration: "full",
-    days: 1,
-    startDate: "2026-09-15",
-    endDate: "2026-09-15",
-    reason: "Urgent family matter",
-    attachmentName: null,
-    status: "pending",
-    approvals: {
-      lm: { status: "pending", approverName: null, updatedAt: null },
-      hr: { status: "pending", approverName: null, updatedAt: null },
-    },
-  },
-];
+  : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || [];
 
 const leaveTranslations = {
   en: {
@@ -189,7 +122,11 @@ if (window.translations) {
 let currentUser = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || {};
 
 const getSysLang = () => (window.getCurrentLang && window.getCurrentLang()) || "en";
-const getSysToday = () => (window.getSystemTodayStr && window.getSystemTodayStr()) || (new Date()).toISOString().slice(0, 10);
+const getSysToday = () => {
+  if (window.getSystemTodayStr) return window.getSystemTodayStr();
+  const d = (window.getSystemDate && window.getSystemDate()) || new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 function formatLeaveDurationText(l, lang) {
   if (l.dayDuration === "half") {
@@ -285,26 +222,14 @@ function initLeaves() {
   }
   currentUser = (window.checkAuth && window.checkAuth()) || currentUser;
 
-  // Sanitize stored leaves: District Managers cannot self-approve their own leave requests
-  if (Array.isArray(demoLeaves)) {
-    let changed = false;
-    demoLeaves.forEach((lv) => {
-      const isDM = lv.userRole === "district_manager" || lv.userRole === "dm" || lv.userId === "u1790626000014";
-      if (isDM && lv.approvals && lv.approvals.dm) {
-        delete lv.approvals.dm;
-        changed = true;
-      }
-    });
-    if (changed) {
-      if (window.DEMO_DATA) window.DEMO_DATA.leaves = demoLeaves;
-      if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
-    }
-  }
+  // Init leaves view state
 
   updateUIForUser();
   setupEventListeners();
   calculateBalances();
-  applyTranslations();
+  if (typeof window.applyTranslations === "function") {
+    window.applyTranslations();
+  }
 }
 
 if (document.readyState === "loading") {
@@ -333,7 +258,9 @@ function setupEventListeners() {
         if (typeof input.showPicker === "function") {
           input.showPicker();
         }
-      } catch (e) {}
+      } catch (e) {
+    console.warn("Failed to set default leave dates:", e);
+  }
     });
   });
 
@@ -368,9 +295,43 @@ function setupEventListeners() {
       );
     }
 
+    const sDate = new Date(startDate + "T00:00:00");
+    const eDate = new Date(endDate + "T00:00:00");
+    if (isNaN(sDate.getTime()) || isNaN(eDate.getTime())) {
+      return showToast("Invalid date format. Please select valid dates.", "error");
+    }
+
     if (endDate < startDate) {
       return showToast(
         "End date must be on or after start date.",
+        "warning",
+      );
+    }
+
+    const spanCalendarDays = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (spanCalendarDays > 365) {
+      return showToast(
+        "A single leave request cannot exceed 365 days. Please break your request into separate periods.",
+        "warning",
+      );
+    }
+
+    // Policy check: Backdated leaves
+    const sysNow = (window.getSystemDate && window.getSystemDate()) || new Date();
+    const sysTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
+      `${sysNow.getFullYear()}-${String(sysNow.getMonth() + 1).padStart(2, "0")}-${String(sysNow.getDate()).padStart(2, "0")}`;
+    const diffDaysFromToday = Math.round((sDate.getTime() - new Date(sysTodayStr + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24));
+
+    const isPrivilegedRole = currentUser.role === "admin" || currentUser.role === "hr";
+    if (!isPrivilegedRole && diffDaysFromToday < -7) {
+      return showToast(
+        "Cannot submit backdated leaves older than 7 days. Please contact HR for retroactive registrations.",
+        "warning",
+      );
+    }
+    if (!isPrivilegedRole && type === "annual" && diffDaysFromToday < -2) {
+      return showToast(
+        "Annual leave requests must be submitted in advance (maximum 2 days retroactive grace period).",
         "warning",
       );
     }
@@ -425,9 +386,9 @@ function setupEventListeners() {
       calculatedDays = resolveLeaveDays(startDate, endDate);
     }
 
-    if (calculatedDays === 0) {
+    if (calculatedDays <= 0) {
       return showToast(
-        "The selected dates are already official public holidays and do not require leave deduction.",
+        "The selected dates contain no deductible working days (all public holidays or weekly rest days).",
         "info",
       );
     }
@@ -455,8 +416,8 @@ function setupEventListeners() {
         balKey = "emergency";
       }
 
-      const rollover = balKey === "annual" ? getEmployeeLeaveRollover(currentUser.id) : { isValid: false, carriedOver: 0 };
-      const activeRollover = rollover.isValid ? rollover.carriedOver : 0;
+      const rollover = balKey === "annual" ? getEmployeeLeaveRollover(currentUser.id) : { isValid: false, initialCarriedOver: 0, consumedFromNewAnnual: 0 };
+      const activeRollover = rollover.isValid ? (rollover.initialCarriedOver || 0) : 0;
 
       const total =
         balKey === "annual"
@@ -471,9 +432,12 @@ function setupEventListeners() {
 
       let approvedUsed = 0;
       let pendingUsed = 0;
+      const currentYearStr = String(((window.getSystemDate && window.getSystemDate()) || new Date()).getFullYear());
 
       (demoLeaves || []).forEach((l) => {
         if (l.userId === currentUser.id && l.status !== "rejected") {
+          const leaveYear = l.startDate ? String(l.startDate).slice(0, 4) : "";
+          if (leaveYear && leaveYear !== currentYearStr) return;
           const d = parseFloat(l.days) || 1;
           const isMatch =
             (balKey === "annual" && l.type === "annual") ||
@@ -489,6 +453,10 @@ function setupEventListeners() {
           }
         }
       });
+
+      if (balKey === "annual" && !rollover.isValid && rollover.initialCarriedOver > 0) {
+        approvedUsed = rollover.consumedFromNewAnnual || 0;
+      }
 
       const remainingBalance = Math.max(0, total - approvedUsed);
       const availableBalance = Math.max(0, remainingBalance - pendingUsed);
@@ -525,9 +493,16 @@ function setupEventListeners() {
     const requireLm = lvsWf.requireLm !== false;
     const requireBu = !!lvsWf.requireBu;
 
+    const allUsers = (window.store && window.store.users ? window.store.users.getAll() : (window.DEMO_DATA && window.DEMO_DATA.users) || []);
+    const directMgr = allUsers.find((u) => u.id === currentUser.managerId);
+    const directMgrRole = directMgr ? (window.normalizeRole ? window.normalizeRole(directMgr.role) : (directMgr.role || "").toLowerCase()) : null;
+    const repReportsDirectlyToLm = directMgrRole === "line_manager" || directMgrRole === "lm";
+
     if (userRole === "medical_rep" || userRole === "rep") {
       initialApprovals = {};
-      if (requireDm) initialApprovals.dm = { status: "pending", approverName: null, updatedAt: null };
+      if (requireDm && !repReportsDirectlyToLm) {
+        initialApprovals.dm = { status: "pending", approverName: null, updatedAt: null };
+      }
       if (requireLm) initialApprovals.lm = { status: "pending", approverName: null, updatedAt: null };
       if (requireBu) initialApprovals.bu = { status: "pending", approverName: null, updatedAt: null };
       initialApprovals.hr = { status: "pending", approverName: null, updatedAt: null };
@@ -540,6 +515,27 @@ function setupEventListeners() {
       initialApprovals = {};
       if (requireBu) initialApprovals.bu = { status: "pending", approverName: null, updatedAt: null };
       initialApprovals.hr = { status: "pending", approverName: null, updatedAt: null };
+    } else if (userRole === "hr") {
+      // HR cannot self-approve: approval routes to Admin
+      initialApprovals = {
+        admin: { status: "pending", approverName: null, updatedAt: null },
+      };
+    } else if (userRole === "business_unit" || userRole === "bu" || userRole === "product_manager" || userRole === "pm") {
+      // Senior managers: Admin approves first, then HR records
+      initialApprovals = {
+        admin: { status: "pending", approverName: null, updatedAt: null },
+        hr: { status: "pending", approverName: null, updatedAt: null },
+      };
+    } else if (userRole === "general_manager" || userRole === "gm") {
+      // General Manager leave goes to Admin
+      initialApprovals = {
+        admin: { status: "pending", approverName: null, updatedAt: null },
+      };
+    } else if (userRole === "admin") {
+      // Admin leave goes to HR
+      initialApprovals = {
+        hr: { status: "pending", approverName: null, updatedAt: null },
+      };
     } else {
       initialApprovals = {
         hr: { status: "pending", approverName: null, updatedAt: null },
@@ -547,7 +543,7 @@ function setupEventListeners() {
     }
 
     const newLeave = {
-      id: "l_" + Date.now(),
+      id: (window.genId ? window.genId("l_") : "l_" + Date.now()),
       userId: currentUser.id,
       userName: currentUser.name,
       userRole: currentUser.role,
@@ -562,7 +558,12 @@ function setupEventListeners() {
       approvals: initialApprovals,
     };
 
-    demoLeaves.unshift(newLeave);
+    if (window.store && window.store.leaves && typeof window.store.leaves.add === "function") {
+      window.store.leaves.add(newLeave);
+      demoLeaves = window.store.leaves.getAll();
+    } else {
+      demoLeaves.unshift(newLeave);
+    }
     if (window.DEMO_DATA) {
       window.DEMO_DATA.leaves = demoLeaves;
       if (window.saveDataToStorage) window.saveDataToStorage();
@@ -636,6 +637,11 @@ function calcDays() {
 
   if (start && end) {
     const res = resolveLeaveDaysDetailed(start, end);
+    if (!res.isValid) {
+      if (daysCount) daysCount.value = res.error || "Invalid Dates";
+      if (holidayNotice) holidayNotice.classList.add("d-none");
+      return;
+    }
     const days = res.totalDays;
     const daysWord = days === 1 ? "Day" : "Days";
 
@@ -686,15 +692,28 @@ function calcDays() {
  * If a public holiday is half day, 0.5 is deducted instead of 1.0.
  */
 function resolveLeaveDaysDetailed(start, end) {
-  if (!start || !end) return { totalDays: 1, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0 };
+  if (!start || !end) {
+    return { totalDays: 0, isValid: false, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0, error: "Missing start or end date" };
+  }
 
   const s = new Date(start + "T00:00:00");
   const e = new Date(end + "T00:00:00");
-  if (isNaN(s.getTime()) || isNaN(e.getTime()))
-    return { totalDays: 1, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0 };
+  if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+    return { totalDays: 0, isValid: false, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0, error: "Invalid date format" };
+  }
 
-  const startD = s <= e ? s : e;
-  const endD = s <= e ? e : s;
+  if (s > e) {
+    return { totalDays: 0, isValid: false, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0, error: "End date must be on or after start date" };
+  }
+
+  const spanDays = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const MAX_LEAVE_SPAN_DAYS = 366;
+  if (spanDays > MAX_LEAVE_SPAN_DAYS) {
+    return { totalDays: 0, isValid: false, isExceedingMaxSpan: true, excludedHolidays: [], excludedFridays: 0, excludedThursdays: 0, error: "Leave span exceeds 365 days" };
+  }
+
+  const startD = s;
+  const endD = e;
 
   const publicHolidays =
     window.DEMO_DATA && Array.isArray(window.DEMO_DATA.publicHolidays)
@@ -713,7 +732,9 @@ function resolveLeaveDaysDetailed(start, end) {
   let excludedSecondaryDays = 0;
 
   const cur = new Date(startD);
-  while (cur <= endD) {
+  let loopCount = 0;
+  while (cur <= endD && loopCount < MAX_LEAVE_SPAN_DAYS) {
+    loopCount++;
     const y = cur.getFullYear();
     const m = String(cur.getMonth() + 1).padStart(2, "0");
     const d = String(cur.getDate()).padStart(2, "0");
@@ -747,6 +768,7 @@ function resolveLeaveDaysDetailed(start, end) {
 
   return {
     totalDays: count,
+    isValid: true,
     excludedHolidays,
     excludedFridays,
     excludedThursdays: excludedSecondaryDays,
@@ -755,7 +777,7 @@ function resolveLeaveDaysDetailed(start, end) {
 
 function resolveLeaveDays(start, end) {
   const res = resolveLeaveDaysDetailed(start, end);
-  return res.totalDays;
+  return res.isValid ? res.totalDays : 0;
 }
 
 function updateUIForUser() {
@@ -821,14 +843,16 @@ function updateUIForUser() {
 }
 
 /**
-/**
  * Dynamically computes employee rollover balance from previous year based on companySettings.
- * (Delegated to centralized utility in app.js)
+ * Real-world policy: Leaves taken in the new year consume carried-over balance FIRST before deducting from new year quota.
  */
 function getEmployeeLeaveRollover(userId, targetYear) {
-  return window.getEmployeeLeaveRollover
-    ? window.getEmployeeLeaveRollover(userId, targetYear)
-    : {
+  const companySettings = (window.store && window.store.companySettings)
+    ? window.store.companySettings.get()
+    : (window.DEMO_DATA && window.DEMO_DATA.companySettings) || {};
+
+  if (companySettings.allowLeaveRollover === false) {
+    return {
       initialCarriedOver: 0,
       consumedFromRollover: 0,
       remainingRollover: 0,
@@ -840,7 +864,78 @@ function getEmployeeLeaveRollover(userId, targetYear) {
       graceMonths: 0,
       consumedFromNewAnnual: 0,
     };
+  }
+
+  const allUsers = (window.DEMO_DATA && Array.isArray(window.DEMO_DATA.users))
+    ? window.DEMO_DATA.users
+    : [];
+  const userObj = allUsers.find((u) => u.id === userId) || {};
+  const userBalance = userObj.leaveBalance || {};
+  const annualTotal = userBalance.annual !== undefined ? Number(userBalance.annual) : 21;
+
+  const currentYear = targetYear || (window.getSystemDate ? window.getSystemDate() : new Date()).getFullYear();
+  const prevYearStr = String(currentYear - 1);
+  const currentYearStr = String(currentYear);
+  const todayStr = (typeof window.getSystemTodayStr === "function")
+    ? window.getSystemTodayStr()
+    : new Date().toISOString().slice(0, 10);
+
+  const allLeaves = (window.store && window.store.leaves
+    ? (typeof window.store.leaves.getAll === "function" ? window.store.leaves.getAll() : window.store.leaves)
+    : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || (typeof demoLeaves !== "undefined" ? demoLeaves : []) || [];
+
+  let prevYearUsed = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(prevYearStr)) {
+      prevYearUsed += (parseFloat(l.days) || 1);
+    }
+  });
+
+  const leftover = Math.max(0, annualTotal - prevYearUsed);
+  const maxCap = companySettings.leaveRolloverMaxDays !== undefined ? Number(companySettings.leaveRolloverMaxDays) : 5;
+  const initialCarriedOver = maxCap > 0 ? Math.min(leftover, maxCap) : leftover;
+
+  const graceMonths = Number(companySettings.leaveRolloverGraceMonths) || 3;
+  let expiryDate = `${currentYear}-03-31`;
+  if (graceMonths === 1) expiryDate = `${currentYear}-01-31`;
+  else if (graceMonths === 3) expiryDate = `${currentYear}-03-31`;
+  else if (graceMonths === 6) expiryDate = `${currentYear}-06-30`;
+  else if (graceMonths === 12) expiryDate = `${currentYear}-12-31`;
+
+  let gracePeriodApprovedTaken = 0;
+  let postGraceApprovedTaken = 0;
+  allLeaves.forEach((l) => {
+    if (l.userId === userId && l.status === "approved" && l.type === "annual" && l.startDate && l.startDate.startsWith(currentYearStr)) {
+      const days = parseFloat(l.days) || 1;
+      if (l.startDate <= expiryDate) {
+        gracePeriodApprovedTaken += days;
+      } else {
+        postGraceApprovedTaken += days;
+      }
+    }
+  });
+
+  const consumedFromRollover = Math.min(initialCarriedOver, gracePeriodApprovedTaken);
+  const remainingRollover = Math.max(0, initialCarriedOver - consumedFromRollover);
+  const consumedFromNewAnnual = Math.max(0, gracePeriodApprovedTaken - initialCarriedOver) + postGraceApprovedTaken;
+
+  const isValid = initialCarriedOver > 0 && todayStr <= expiryDate;
+  const isExpired = remainingRollover > 0 && todayStr > expiryDate;
+
+  return {
+    initialCarriedOver,
+    consumedFromRollover,
+    remainingRollover,
+    carriedOver: remainingRollover,
+    isValid,
+    isExpired,
+    expiryDate,
+    maxCap,
+    graceMonths,
+    consumedFromNewAnnual,
+  };
 }
+window.getEmployeeLeaveRollover = getEmployeeLeaveRollover;
 
 /**
  * Dynamically computes and updates leave balances based on approved leaves.
@@ -878,7 +973,7 @@ function calculateBalances() {
       ? window.store.leaves.getAll()
       : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves;
 
-  const currentYearStr = String(new Date().getFullYear());
+  const currentYearStr = String(((window.getSystemDate && window.getSystemDate()) || new Date()).getFullYear());
 
   allLeaves.forEach((l) => {
     if (l.userId === currentUser.id) {
@@ -923,12 +1018,12 @@ function calculateBalances() {
           <div class="p-2 rounded-3 rollover-banner-active">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="fw-bold text-success-emphasis d-flex align-items-center gap-1">
-                <i class="bi bi-arrow-repeat"></i> Carried Over (Deducted First):
+                <i class="fas fa-rotate"></i> Carried Over (Deducted First):
               </span>
               <span class="badge bg-success text-white fw-bold px-2 py-1">${remainingMsgEn}</span>
             </div>
             <div class="text-danger fw-semibold d-flex align-items-center gap-1 rollover-expiry-countdown">
-              <i class="bi bi-hourglass-split"></i> Expires on: ${rollover.expiryDate}
+              <i class="fas fa-hourglass-half"></i> Expires on: ${rollover.expiryDate}
             </div>
           </div>
         </div>`;
@@ -938,7 +1033,7 @@ function calculateBalances() {
         <div class="mt-2 pt-2 border-top rollover-border-expired">
           <div class="p-2 rounded-3 rollover-banner-expired">
             <div class="d-flex justify-content-between align-items-center">
-              <span class="rollover-expired-label"><i class="bi bi-clock-history me-1"></i>Rollover expired (${rollover.remainingRollover}d forfeited)</span>
+              <span class="rollover-expired-label"><i class="fas fa-clock-rotate-left me-1"></i>Rollover expired (${rollover.remainingRollover}d forfeited)</span>
               <span class="fw-semibold rollover-expiry-date">${rollover.expiryDate}</span>
             </div>
           </div>
@@ -1137,6 +1232,26 @@ function renderHistory() {
       `;
     }
 
+    if (app.gm && app.gm.status) {
+      stepsHtml += `
+        <div>
+          <span class="approval-step-tag ${app.gm.status}">
+            General Manager: ${(app.gm.status || "").toUpperCase()} ${app.gm.updatedAt ? `(${app.gm.updatedAt})` : ""}
+          </span>
+        </div>
+      `;
+    }
+
+    if (app.admin && app.admin.status) {
+      stepsHtml += `
+        <div>
+          <span class="approval-step-tag ${app.admin.status}">
+            Admin: ${(app.admin.status || "").toUpperCase()} ${app.admin.updatedAt ? `(${app.admin.updatedAt})` : ""}
+          </span>
+        </div>
+      `;
+    }
+
     const todayStr = getSysToday();
     const isFuture = l.startDate && l.startDate > todayStr;
     const canDelete = (l.status === "pending" || (l.status === "approved" && isFuture)) && (l.userId === currentUser.id || currentUser.role === "admin");
@@ -1168,15 +1283,15 @@ function renderHistory() {
           ${window.renderStatusBadge ? window.renderStatusBadge(l.status) : `<span class="badge status-badge ${l.status === "approved" ? "bg-success" : l.status === "rejected" ? "bg-danger" : "bg-warning text-dark"}">${(l.status || "").toUpperCase()}</span>`}
           ${
             canDelete
-              ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1 leave-delete-btn" onclick="deleteMyLeave('${l.id}')">
-                   <i class="bi bi-trash3 me-1"></i>Delete
+              ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 mt-1 leave-delete-btn" data-action="delete-leave" data-leave-id="${window.escapeHtml(l.id)}">
+                   <i class="fas fa-trash me-1"></i>Delete
                  </button>`
               : ""
           }
           ${
             l.status === "rejected" && l.rejectionReason
               ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
-                   <i class="bi bi-chat-left-text me-1"></i><strong>Reason:</strong> ${window.escapeHtml(l.rejectionReason)}
+                   <i class="fas fa-comment-dots me-1"></i><strong>Reason:</strong> ${window.escapeHtml(l.rejectionReason)}
                  </div>`
               : ""
           }
@@ -1185,6 +1300,18 @@ function renderHistory() {
     `;
     tbody.appendChild(tr);
   });
+
+  if (tbody && !tbody.dataset.deleteBound) {
+    tbody.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action='delete-leave']");
+      if (!btn) return;
+      const leaveId = btn.getAttribute("data-leave-id");
+      if (leaveId && typeof window.deleteMyLeave === "function") {
+        window.deleteMyLeave(leaveId);
+      }
+    });
+    tbody.dataset.deleteBound = "true";
+  }
 }
 
 window.deleteMyLeave = function(leaveId) {
@@ -1194,8 +1321,15 @@ window.deleteMyLeave = function(leaveId) {
   if (idx < 0) return;
   const l = demoLeaves[idx];
 
+  const isOwner = currentUser && l.userId === currentUser.id;
+  const isAdmin = currentUser && currentUser.role === "admin";
+  if (!isOwner && !isAdmin) {
+    showToast("Permission denied: You can only delete your own leave requests.", "error");
+    return;
+  }
+
   const isFuture = l.startDate && l.startDate > todayStr;
-  const canDelete = l.status === "pending" || (l.status === "approved" && isFuture) || currentUser.role === "admin";
+  const canDelete = l.status === "pending" || (l.status === "approved" && isFuture) || isAdmin;
 
   if (!canDelete) {
     showToast(
@@ -1215,11 +1349,15 @@ window.deleteMyLeave = function(leaveId) {
   if (window.store && window.store.leaves && typeof window.store.leaves.delete === "function") {
     window.store.leaves.delete(leaveId);
   }
-  window.DEMO_DATA.leaves = demoLeaves;
-  if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+  if (window.DEMO_DATA) {
+    window.DEMO_DATA.leaves = demoLeaves;
+    if (typeof window.saveDataToStorage === "function") window.saveDataToStorage();
+  }
 
   renderHistory();
   calculateBalances();
+  if (typeof renderPendingApprovals === "function") renderPendingApprovals();
+  if (typeof renderHrAllLeaves === "function") renderHrAllLeaves();
 
   showToast(
     "Leave deleted successfully and balance updated.",
@@ -1244,41 +1382,48 @@ function renderPendingApprovals() {
 
   const pending = allLeaves.filter((l) => {
     if (!l || l.status === "rejected" || l.status === "approved") return false;
+    // Strict self-approval prevention: never show own requests in pending approvals
+    if (l.userId === currentUser.id) return false;
+
     const app = l.approvals || {};
 
     const hrStatus = (app.hr && app.hr.status ? app.hr.status : "").toLowerCase();
+    const gmStatus = (app.gm && app.gm.status ? app.gm.status : "").toLowerCase();
+    const buStatus = (app.bu && app.bu.status ? app.bu.status : "").toLowerCase();
     const lmStatus = (app.lm && app.lm.status ? app.lm.status : "").toLowerCase();
     const dmStatus = (app.dm && app.dm.status ? app.dm.status : "").toLowerCase();
+    const adminStatus = (app.admin && app.admin.status ? app.admin.status : "").toLowerCase();
 
-    const buStatus = (app.bu && app.bu.status ? app.bu.status : "").toLowerCase();
-    const lvsWf = (window.WorkflowEngine && typeof window.WorkflowEngine.getWorkflows === "function")
-      ? window.WorkflowEngine.getWorkflows().leaves
-      : { requireLm: true, requireBu: false };
-    const requireBu = !!(lvsWf && lvsWf.requireBu);
-    const requireLm = lvsWf && lvsWf.requireLm !== false;
+    const dmDone = !app.dm || app.dm.status === "approved" || app.dm.status === "skipped";
+    const lmDone = !app.lm || app.lm.status === "approved" || app.lm.status === "skipped";
+    const buDone = !app.bu || app.bu.status === "approved" || app.bu.status === "skipped";
+    const gmDone = !app.gm || app.gm.status === "approved" || app.gm.status === "skipped";
+    const adminDone = !app.admin || app.admin.status === "approved" || app.admin.status === "skipped";
 
-    // HR and Admin have organization-wide authority to review pending approvals
-    if (role === "hr" || role === "admin") {
-      let upperApproved = true;
-      if (requireBu && app.bu) {
-        upperApproved = (app.bu.status === "approved" || app.bu.status === "skipped");
-      } else if (requireLm && app.lm) {
-        upperApproved = (app.lm.status === "approved" || app.lm.status === "skipped");
-      } else if (app.dm) {
-        upperApproved = (app.dm.status === "approved");
-      }
-
-      return hrStatus === "pending" && upperApproved;
+    // General Manager (GM) is strictly view-only and does not approve leaves
+    if (role === "general_manager" || role === "gm") {
+      return false;
     }
 
-    // BU Manager approval check
+    // System Administrator review check
+    if (role === "admin") {
+      if (adminStatus === "pending") return true;
+      if (gmStatus === "pending" && dmDone && lmDone && buDone) return true;
+      if (hrStatus === "pending" && dmDone && lmDone && buDone && gmDone && adminDone) return true;
+      return false;
+    }
+
+    // HR organization-wide review check (only when previous managerial steps are complete)
+    if (role === "hr") {
+      return hrStatus === "pending" && dmDone && lmDone && buDone && gmDone && adminDone;
+    }
+
+    // BU Manager approval check (fail-closed)
     if (role === "business_unit" || role === "bu") {
-      if (!requireBu) return false;
-      if (typeof window.canApproveFor === "function" && !window.canApproveFor(l.userId)) {
+      if (typeof window.canApproveFor !== "function" || !window.canApproveFor(l.userId)) {
         return false;
       }
-      const prevApproved = requireLm && app.lm ? (lmStatus === "approved" || lmStatus === "skipped") : (app.dm ? dmStatus === "approved" : true);
-      return buStatus === "pending" && prevApproved;
+      return buStatus === "pending" && dmDone && lmDone;
     }
 
     // Verify applicant is in current manager's hierarchy to prevent unauthorized approvals
@@ -1286,7 +1431,7 @@ function renderPendingApprovals() {
     if (typeof window.canApproveFor === "function" && window.canApproveFor(l.userId)) {
       isSubordinate = true;
     } else {
-      const allUsers = (window.DEMO_DATA && window.DEMO_DATA.users) || [];
+      const allUsers = (window.store && window.store.users ? window.store.users.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.users) || [];
       const applicant = allUsers.find((u) => u && u.id === l.userId);
       if (applicant && (applicant.managerId === currentUser.id || applicant.dmId === currentUser.id || applicant.districtManagerId === currentUser.id)) {
         isSubordinate = true;
@@ -1299,10 +1444,7 @@ function renderPendingApprovals() {
       return dmStatus === "pending";
     }
     if (role === "line_manager" || role === "lm") {
-      return (
-        lmStatus === "pending" &&
-        (app.dm ? dmStatus === "approved" : true)
-      );
+      return lmStatus === "pending" && dmDone;
     }
     return false;
   });
@@ -1344,7 +1486,7 @@ function renderPendingApprovals() {
         <div class="approval-header-row mb-3">
           <div class="approval-user-info">
             <div class="approval-user-avatar">
-              ${(getLeaveApplicantName(l) || "U").charAt(0).toUpperCase()}
+              ${window.escapeHtml((getLeaveApplicantName(l) || "U").charAt(0).toUpperCase())}
             </div>
             <div class="approval-user-details">
               <div class="approval-user-name">${window.escapeHtml(getLeaveApplicantName(l))}</div>
@@ -1352,7 +1494,7 @@ function renderPendingApprovals() {
             </div>
           </div>
           <div class="approval-badge-wrap">
-            <span class="badge approval-type-badge">${typeLabel}</span>
+            <span class="badge approval-type-badge">${window.escapeHtml(typeLabel)}</span>
           </div>
         </div>
 
@@ -1395,11 +1537,11 @@ function renderPendingApprovals() {
         }
 
         <div class="approval-actions-row">
-          <button type="button" class="btn btn-sm btn-success approval-btn approval-btn-approve" onclick="window.handleDecisionStep('${l.id}', 'approved')">
+          <button type="button" class="btn btn-sm btn-success approval-btn approval-btn-approve" data-action="approve-leave" data-leave-id="${window.escapeHtml(l.id)}">
             <svg class="btn-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             <span>Approve</span>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger approval-btn approval-btn-reject" onclick="window.openRejectLeaveModal('${l.id}')">
+          <button type="button" class="btn btn-sm btn-outline-danger approval-btn approval-btn-reject" data-action="reject-leave" data-leave-id="${window.escapeHtml(l.id)}">
             <svg class="btn-svg-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             <span>Reject</span>
           </button>
@@ -1414,6 +1556,21 @@ function renderPendingApprovals() {
 
     container.appendChild(card);
   });
+
+  if (container && !container.dataset.decisionBound) {
+    container.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      const act = btn.getAttribute("data-action");
+      const id = btn.getAttribute("data-leave-id");
+      if (act === "approve-leave" && id) {
+        window.handleDecisionStep(id, "approved");
+      } else if (act === "reject-leave" && id) {
+        window.openRejectLeaveModal(id);
+      }
+    });
+    container.dataset.decisionBound = "true";
+  }
 }
 
 function handleDecisionStep(leaveId, decision, rejectionReason = "") {
@@ -1439,13 +1596,25 @@ function renderDeclaredHolidaysList() {
 
       return `
       <span class="badge bg-light text-dark border p-2 d-inline-flex align-items-center gap-2 holiday-chip-badge">
-        <span><svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg> <strong>${h.date}</strong>: ${window.escapeHtml(h.title)}</span>
+        <span><svg class="badge-svg-icon text-success" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg> <strong>${window.escapeHtml(h.date)}</strong>: ${window.escapeHtml(h.title)}</span>
         ${durationBadge}
-        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none holiday-remove-btn" onclick="removeDeclaredHoliday(${idx})" title="Remove Holiday"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none holiday-remove-btn" data-action="remove-holiday" data-holiday-idx="${idx}" title="Remove Holiday"><svg class="badge-svg-icon text-danger" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </span>
     `;
     })
     .join("");
+
+  if (!container.dataset.removeBound) {
+    container.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action='remove-holiday']");
+      if (!btn) return;
+      const idx = btn.getAttribute("data-holiday-idx");
+      if (idx !== null && typeof window.removeDeclaredHoliday === "function") {
+        window.removeDeclaredHoliday(parseInt(idx, 10));
+      }
+    });
+    container.dataset.removeBound = "true";
+  }
 }
 
 function populateHrAllLeavesFilter() {
@@ -1462,7 +1631,7 @@ function populateHrAllLeavesFilter() {
     .map((u) => {
       const displayName = u.name || u.id;
       const roleBadge = u.role ? ` (${u.role})` : "";
-      return `<option value="${u.id}">${window.escapeHtml(displayName)}${roleBadge}</option>`;
+      return `<option value="${window.escapeHtml(u.id)}">${window.escapeHtml(displayName)}${window.escapeHtml(roleBadge)}</option>`;
     })
     .join("");
 
@@ -1621,6 +1790,26 @@ function renderHrAllLeaves() {
         `;
       }
 
+      if (app.gm && app.gm.status) {
+        stepsHtml += `
+          <div>
+            <span class="approval-step-tag ${app.gm.status}">
+              General Manager: ${(app.gm.status || "").toUpperCase()} ${app.gm.updatedAt ? `(${app.gm.updatedAt})` : ""}
+            </span>
+          </div>
+        `;
+      }
+
+      if (app.admin && app.admin.status) {
+        stepsHtml += `
+          <div>
+            <span class="approval-step-tag ${app.admin.status}">
+              Admin: ${(app.admin.status || "").toUpperCase()} ${app.admin.updatedAt ? `(${app.admin.updatedAt})` : ""}
+            </span>
+          </div>
+        `;
+      }
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>
@@ -1660,7 +1849,7 @@ function renderHrAllLeaves() {
           ${
             l.status === "rejected" && l.rejectionReason
               ? `<div class="mt-1 small text-danger rejection-reason-box" title="${window.escapeHtml(l.rejectionReason)}">
-                   <i class="bi bi-chat-left-text me-1"></i><strong>Reason:</strong> ${window.escapeHtml(l.rejectionReason)}
+                   <i class="fas fa-comment-dots me-1"></i><strong>Reason:</strong> ${window.escapeHtml(l.rejectionReason)}
                  </div>`
               : ""
           }
@@ -1753,8 +1942,16 @@ Object.assign(leavesApp, {
 
   handleDecisionStep(leaveId, decision, rejectionReason = "") {
     try {
-      const leave = demoLeaves.find((l) => l.id === leaveId);
+      const allCurrentLeaves = (window.store && window.store.leaves ? window.store.leaves.getAll() : null) || (window.DEMO_DATA && window.DEMO_DATA.leaves) || demoLeaves;
+      const leave = allCurrentLeaves.find((l) => l.id === leaveId) || demoLeaves.find((l) => l.id === leaveId);
       if (!leave) return;
+
+      if (leave.status === "approved" || leave.status === "rejected") {
+        if (typeof showToast === "function") {
+          showToast(`This leave request has already been ${leave.status}.`, "info");
+        }
+        return;
+      }
 
       currentUser = (window.checkAuth && window.checkAuth()) || currentUser;
       const rawRole = (currentUser.role || "medical_rep").toLowerCase();
@@ -1762,8 +1959,22 @@ Object.assign(leavesApp, {
       const isDM = wf ? wf.userMatchesTier(currentUser, "dm") : (rawRole === "district_manager" || rawRole === "dm");
       const isLM = wf ? wf.userMatchesTier(currentUser, "lm") : (rawRole === "line_manager" || rawRole === "lm");
       const isBU = wf ? wf.userMatchesTier(currentUser, "bu") : (rawRole === "business_unit" || rawRole === "bu");
+      const isGM = (rawRole === "general_manager" || rawRole === "gm");
       const isHR = wf ? wf.userMatchesTier(currentUser, "hr") : (rawRole === "hr");
       const isAdmin = (wf ? wf.getUserBaseRole(currentUser) : rawRole) === "admin";
+
+      // Strict self-approval prevention: no user may approve their own leave request
+      if (leave.userId === currentUser.id) {
+        if (typeof showToast === "function") {
+          showToast("Self-approval is strictly forbidden. Another authorized approver or HR must process your request.", "error");
+        }
+        return;
+      }
+
+      if (isGM) {
+        if (typeof showToast === "function") showToast("Access Denied: General Manager has view-only oversight and cannot approve or reject leaves.", "error");
+        return;
+      }
 
       if (!isDM && !isLM && !isBU && !isHR && !isAdmin) {
         if (typeof showToast === "function") showToast("Access Denied: Approvers only.", "error");
@@ -1771,39 +1982,52 @@ Object.assign(leavesApp, {
       }
 
       if (!isHR && !isAdmin) {
-        if (typeof window.canApproveFor === "function" && !window.canApproveFor(leave.userId)) {
+        if (typeof window.canApproveFor !== "function" || !window.canApproveFor(leave.userId)) {
           if (typeof showToast === "function") showToast("Access Denied: You can only approve requests within your reporting hierarchy.", "error");
           return;
         }
       }
 
-      const _leavesNow = new Date();
+      const _leavesNow = (window.getSystemDate && window.getSystemDate()) || new Date();
       const _leavesTodayStr = (window.getSystemTodayStr && window.getSystemTodayStr()) ||
         `${_leavesNow.getFullYear()}-${String(_leavesNow.getMonth() + 1).padStart(2, "0")}-${String(_leavesNow.getDate()).padStart(2, "0")}`;
       const timestampStr = `${_leavesTodayStr} ${_leavesNow.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
+      // Safe initialization: ensure approvals object exists
       if (!leave.approvals) {
         leave.approvals = {
-          dm: {
-            status: "approved",
-            approverName: currentUser.name,
-            updatedAt: timestampStr,
-          },
-          lm: { status: "pending", approverName: null, updatedAt: null },
           hr: { status: "pending", approverName: null, updatedAt: null },
         };
       }
-      const applicantIsDM = leave.userRole === "district_manager" || leave.userRole === "dm" || leave.userId === "u1790626000014";
-      const applicantIsLM = leave.userRole === "line_manager" || leave.userRole === "lm" || leave.userId === "u1790626000012";
-      const applicantIsBU = leave.userRole === "business_unit" || leave.userRole === "bu";
 
-      if (!applicantIsDM && !applicantIsLM && !applicantIsBU && !leave.approvals.dm) {
-        leave.approvals.dm = { status: "pending", approverName: null, updatedAt: null };
+      // Validate sequential approval step dependencies strictly
+      const dmDone = !leave.approvals.dm || leave.approvals.dm.status === "approved" || leave.approvals.dm.status === "skipped";
+      const lmDone = !leave.approvals.lm || leave.approvals.lm.status === "approved" || leave.approvals.lm.status === "skipped";
+      const buDone = !leave.approvals.bu || leave.approvals.bu.status === "approved" || leave.approvals.bu.status === "skipped";
+      const gmDone = !leave.approvals.gm || leave.approvals.gm.status === "approved" || leave.approvals.gm.status === "skipped";
+      const adminDone = !leave.approvals.admin || leave.approvals.admin.status === "approved" || leave.approvals.admin.status === "skipped";
+
+      if (!isAdmin) {
+        const hasPendingStage =
+          (isDM && leave.approvals.dm && leave.approvals.dm.status === "pending") ||
+          (isLM && leave.approvals.lm && leave.approvals.lm.status === "pending" && dmDone) ||
+          (isBU && leave.approvals.bu && leave.approvals.bu.status === "pending" && dmDone && lmDone) ||
+          (isHR && leave.approvals.hr && leave.approvals.hr.status === "pending" && dmDone && lmDone && buDone && gmDone && adminDone);
+        if (!hasPendingStage) {
+          if (typeof showToast === "function") showToast("Action not permitted at the current approval stage.", "warning");
+          return;
+        }
+      } else if (decision === "approved") {
+        // Admin approving HR stage must wait for earlier steps unless acting on admin/gm stage
+        if (!(leave.approvals.admin && leave.approvals.admin.status === "pending") &&
+            !(leave.approvals.gm && leave.approvals.gm.status === "pending") &&
+            leave.approvals.hr && leave.approvals.hr.status === "pending") {
+          if (!dmDone || !lmDone || !buDone || !gmDone || !adminDone) {
+            if (typeof showToast === "function") showToast("Cannot grant final approval: Previous managerial steps are still pending.", "warning");
+            return;
+          }
+        }
       }
-      if (!applicantIsLM && !applicantIsBU && !leave.approvals.lm) {
-        leave.approvals.lm = { status: "pending", approverName: null, updatedAt: null };
-      }
-      if (!leave.approvals.hr) leave.approvals.hr = { status: "pending", approverName: null, updatedAt: null };
 
       const lang = (window.getCurrentLang && window.getCurrentLang()) || "en";
 
@@ -1828,22 +2052,33 @@ Object.assign(leavesApp, {
           leave.approvals.lm.updatedAt = timestampStr;
           leave.approvals.lm.rejectionReason = rejectionReason || null;
         }
-        if (isBU) {
-          if (!leave.approvals.bu) leave.approvals.bu = {};
+        if (isBU && leave.approvals.bu) {
           leave.approvals.bu.status = "rejected";
           leave.approvals.bu.approverId = currentUser.id;
           leave.approvals.bu.approverName = currentUser.name;
           leave.approvals.bu.updatedAt = timestampStr;
           leave.approvals.bu.rejectionReason = rejectionReason || null;
         }
-        if (isHR || isAdmin) {
-          if (leave.approvals.hr) {
-            leave.approvals.hr.status = "rejected";
-            leave.approvals.hr.approverId = currentUser.id;
-            leave.approvals.hr.approverName = currentUser.name;
-            leave.approvals.hr.updatedAt = timestampStr;
-            leave.approvals.hr.rejectionReason = rejectionReason || null;
-          }
+        if (isAdmin && leave.approvals.gm) {
+          leave.approvals.gm.status = "rejected";
+          leave.approvals.gm.approverId = currentUser.id;
+          leave.approvals.gm.approverName = currentUser.name;
+          leave.approvals.gm.updatedAt = timestampStr;
+          leave.approvals.gm.rejectionReason = rejectionReason || null;
+        }
+        if (isAdmin && leave.approvals.admin) {
+          leave.approvals.admin.status = "rejected";
+          leave.approvals.admin.approverId = currentUser.id;
+          leave.approvals.admin.approverName = currentUser.name;
+          leave.approvals.admin.updatedAt = timestampStr;
+          leave.approvals.admin.rejectionReason = rejectionReason || null;
+        }
+        if ((isHR || isAdmin) && leave.approvals.hr) {
+          leave.approvals.hr.status = "rejected";
+          leave.approvals.hr.approverId = currentUser.id;
+          leave.approvals.hr.approverName = currentUser.name;
+          leave.approvals.hr.updatedAt = timestampStr;
+          leave.approvals.hr.rejectionReason = rejectionReason || null;
         }
 
         if (typeof window.addWorkflowNotification === "function") {
@@ -1870,7 +2105,7 @@ Object.assign(leavesApp, {
         else if (typeof window.showToast === "function")
           window.showToast(rejMsg, "warning");
       } else {
-        if (isDM) {
+        if (isDM && leave.approvals.dm && leave.approvals.dm.status === "pending") {
           leave.approvals.dm.status = "approved";
           leave.approvals.dm.approverId = currentUser.id;
           leave.approvals.dm.approverName = currentUser.name;
@@ -1909,7 +2144,7 @@ Object.assign(leavesApp, {
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
-        } else if (isLM) {
+        } else if (isLM && leave.approvals.lm && leave.approvals.lm.status === "pending") {
           leave.approvals.lm.status = "approved";
           leave.approvals.lm.approverId = currentUser.id;
           leave.approvals.lm.approverName = currentUser.name;
@@ -1920,10 +2155,8 @@ Object.assign(leavesApp, {
             : { requireBu: false };
           const requireBu = lvsWf && !!lvsWf.requireBu;
 
-          if (requireBu) {
-            if (!leave.approvals.bu) {
-              leave.approvals.bu = { status: "pending", approverName: null, updatedAt: null };
-            }
+          if (requireBu && !leave.approvals.bu) {
+            leave.approvals.bu = { status: "pending", approverName: null, updatedAt: null };
           }
 
           if (typeof window.addWorkflowNotification === "function") {
@@ -1948,8 +2181,7 @@ Object.assign(leavesApp, {
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
-        } else if (isBU) {
-          if (!leave.approvals.bu) leave.approvals.bu = {};
+        } else if (isBU && leave.approvals.bu && leave.approvals.bu.status === "pending") {
           leave.approvals.bu.status = "approved";
           leave.approvals.bu.approverId = currentUser.id;
           leave.approvals.bu.approverName = currentUser.name;
@@ -1973,7 +2205,68 @@ Object.assign(leavesApp, {
           if (typeof showToast === "function") showToast(msg, "success");
           else if (typeof window.showToast === "function")
             window.showToast(msg, "success");
-        } else if (isHR || isAdmin) {
+        } else if (isAdmin && leave.approvals.gm && leave.approvals.gm.status === "pending") {
+          leave.approvals.gm.status = "approved";
+          leave.approvals.gm.approverId = currentUser.id;
+          leave.approvals.gm.approverName = currentUser.name;
+          leave.approvals.gm.updatedAt = timestampStr;
+
+          if (!leave.approvals.hr) {
+            leave.status = "approved";
+          }
+
+          if (typeof window.addWorkflowNotification === "function") {
+            window.addWorkflowNotification({
+              userId: leave.userId,
+              type: "leave_approval",
+              title: "Leave Approved by Admin",
+              message: leave.approvals.hr
+                ? `System Administrator (${currentUser.name}) approved your leave request and forwarded to HR.`
+                : `System Administrator (${currentUser.name}) granted final approval for your leave request.`,
+              link: "leaves.html",
+              icon: "🏖️",
+              badgeClass: "bg-success",
+              actorName: currentUser.name,
+              action: "approved",
+            });
+          }
+
+          const msg = leave.approvals.hr
+            ? "Approved by Admin. Forwarded to HR."
+            : "Final approval granted by Admin.";
+          if (typeof showToast === "function") showToast(msg, "success");
+          else if (typeof window.showToast === "function")
+            window.showToast(msg, "success");
+        } else if (isAdmin && leave.approvals.admin && leave.approvals.admin.status === "pending") {
+          leave.approvals.admin.status = "approved";
+          leave.approvals.admin.approverId = currentUser.id;
+          leave.approvals.admin.approverName = currentUser.name;
+          leave.approvals.admin.updatedAt = timestampStr;
+          const hrPending = leave.approvals.hr && leave.approvals.hr.status === "pending";
+          if (!hrPending) {
+            leave.status = "approved";
+          }
+
+          if (typeof window.addWorkflowNotification === "function") {
+            window.addWorkflowNotification({
+              userId: leave.userId,
+              type: "leave_approval",
+              title: "Leave Approved by Admin",
+              message: hrPending
+                ? `System Administrator (${currentUser.name}) approved your leave request and forwarded to HR.`
+                : `System Administrator (${currentUser.name}) granted final approval for your leave request.`,
+              link: "leaves.html",
+              icon: "🏖️",
+              badgeClass: "bg-success",
+              actorName: currentUser.name,
+              action: "approved",
+            });
+          }
+
+          if (typeof showToast === "function") {
+            showToast(hrPending ? "Approved by Admin. Forwarded to HR." : "Final approval granted by Admin.", "success");
+          }
+        } else if ((isHR && leave.approvals.hr && leave.approvals.hr.status === "pending") || (isAdmin && leave.approvals.hr && leave.approvals.hr.status === "pending")) {
           if (leave.approvals.hr) {
             leave.approvals.hr.status = "approved";
             leave.approvals.hr.approverId = currentUser.id;
@@ -1987,7 +2280,7 @@ Object.assign(leavesApp, {
               userId: leave.userId,
               type: "leave_approval",
               title: "Leave Request Approved",
-              message: "HR Department approved your annual leave request.",
+              message: `HR Department approved your ${leave.type || "leave"} request.`,
               link: "leaves.html",
               icon: "🏖️",
               badgeClass: "bg-success",
@@ -2003,6 +2296,9 @@ Object.assign(leavesApp, {
         }
       }
 
+      if (window.store && window.store.leaves && typeof window.store.leaves.save === "function") {
+        window.store.leaves.save(leave);
+      }
       if (window.DEMO_DATA) {
         window.DEMO_DATA.leaves = demoLeaves;
         if (typeof window.saveDataToStorage === "function")
@@ -2127,24 +2423,29 @@ Object.assign(leavesApp, {
 
     const todayStr = getSysToday();
     const rollover = getEmployeeLeaveRollover(user.id);
-    const effectiveAnnual = annualTotal + (rollover.isValid ? rollover.carriedOver : 0);
+    const isWithinGrace = rollover.isValid;
+    const effectiveAnnual = isWithinGrace ? (annualTotal + rollover.initialCarriedOver) : annualTotal;
 
     const leavesList =
-      window.DEMO_DATA && Array.isArray(window.DEMO_DATA.leaves)
-        ? window.DEMO_DATA.leaves
-        : demoLeaves;
-    const currentYearStr = String(new Date().getFullYear());
+      (window.store && window.store.leaves
+        ? window.store.leaves.getAll()
+        : (window.DEMO_DATA && window.DEMO_DATA.leaves)) || demoLeaves;
+    const currentYearStr = String(((window.getSystemDate && window.getSystemDate()) || new Date()).getFullYear());
     let used = { annual: 0, casual: 0, sick: 0 };
     leavesList.forEach((l) => {
-      // Only deduct approved leaves whose start date has arrived or passed in current year
-      if (l.userId === user.id && l.status === "approved" && l.startDate && l.startDate <= todayStr && l.startDate.startsWith(currentYearStr)) {
+      if (l.userId === user.id && l.status === "approved") {
+        const leaveYear = l.startDate ? String(l.startDate).slice(0, 4) : "";
+        if (leaveYear && leaveYear !== currentYearStr) return;
         const d = parseFloat(l.days) || 1;
         if (l.type === "annual") used.annual += d;
-        else if (l.type === "casual" || l.type === "emergency")
-          used.casual += d;
+        else if (l.type === "casual" || l.type === "emergency") used.casual += d;
         else if (l.type === "sick") used.sick += d;
       }
     });
+
+    if (!isWithinGrace && rollover.initialCarriedOver > 0) {
+      used.annual = rollover.consumedFromNewAnnual;
+    }
 
     if (summaryEl) {
       const remAnnual = Math.max(0, effectiveAnnual - used.annual);
@@ -2229,7 +2530,9 @@ Object.assign(leavesApp, {
           sessionStorage.setItem("pharmaUser", JSON.stringify(activeUser));
         }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn("Failed to update active user leaveBalance in sessionStorage:", err);
+    }
 
     if (window.saveDataToStorage) window.saveDataToStorage();
 

@@ -3,7 +3,7 @@
  * @description Service Worker for PharmaCare PWA offline caching and reliable field performance.
  */
 
-const CACHE_VERSION = 'v321';
+const CACHE_VERSION = 'v346';
 const CACHE_NAME = `pharmacare-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   './',
@@ -22,6 +22,7 @@ const ASSETS_TO_CACHE = [
   './profile.html',
   './areas.html',
   './distributors.html',
+  './chat.html',
   './css/bootstrap.min.css',
   './css/fontawesome.min.css',
   './webfonts/fa-solid-900.woff2',
@@ -43,11 +44,14 @@ const ASSETS_TO_CACHE = [
   './css/quizzes.css',
   './css/login.css',
   './css/products.css',
+  './css/chat.css',
   './js/firebase-config.js',
   './js/firebase-sync.js',
   './js/workflow-engine.js',
   './js/cache-bust.js',
   './js/auth-service.js',
+  './js/chat-service.js',
+  './js/chat-page.js',
   './js/gps-service.js',
   './js/visits-bulk-planner.js',
   './js/export-service.js',
@@ -92,12 +96,9 @@ const ASSETS_TO_CACHE = [
   './js/profile.js',
   './manifest.json',
   // Essential External CDN Libraries for complete offline UI/functionality
-  'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js',
-  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  './js/vendor/firebase-app-compat.js',
+  './js/vendor/firebase-auth-compat.js',
+  './js/vendor/firebase-firestore-compat.js',
   './js/xlsx.full.min.js'
 ];
 

@@ -9,25 +9,64 @@
   const Core = window.ActivitiesCore;
   if (!Core) return;
 
+  function _getCurRole() {
+    return Core.getNormalizedRole
+      ? Core.getNormalizedRole(Core._state.currentUser)
+      : String(Core._state.currentUser?.role || "").toLowerCase();
+  }
+
+  function _isGlobalBudgetRole(role) {
+    return role === Core.ROLES.ADMIN || role === "admin";
+  }
+
+  function _isAuthorizedForLine(lineId) {
+    if (_isGlobalBudgetRole(_getCurRole())) return true;
+    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
+    return userLines.includes(lineId);
+  }
+
   function renderBudgetTab() {
     Core._state.currentUser = Core.getAuthUser();
-    const allLines = Core.getAllProductLines();
+    const curRole = _getCurRole();
+    const isReadOnlyGm = curRole === Core.ROLES.GM || curRole === "general_manager" || curRole === "gm";
+    const allLines = _isGlobalBudgetRole(curRole)
+      ? Core.getAllProductLines()
+      : Core.getUserAssignedLines(Core._state.currentUser);
     const buSelect = document.getElementById("buBudgetLineSelect") || document.getElementById("buProductLineSelect");
-    if (buSelect && buSelect.children.length === 0) {
+    if (buSelect) {
+      const prevVal = buSelect.value;
       buSelect.innerHTML = allLines.map((l) => `<option value="${Core.escapeHTML(l.id)}">${Core.escapeHTML(l.name)}</option>`).join("");
-      if (allLines.length > 0) buSelect.value = allLines[0].id;
+      if (prevVal && allLines.some((l) => l.id === prevVal)) {
+        buSelect.value = prevVal;
+      } else if (allLines.length > 0) {
+        buSelect.value = allLines[0].id;
+      }
     }
 
     const lineId = buSelect?.value || (allLines[0] ? allLines[0].id : "");
-    if (!lineId) return;
+    if (!lineId) {
+      const tbodyEmpty = document.getElementById("buLmAllocationTableBody") || document.getElementById("buLmAllocTableBody");
+      if (tbodyEmpty) {
+        tbodyEmpty.innerHTML = `<tr><td colspan="5" class="budget-empty-cell">${Core.t("noLinesAssigned") || "No product lines in your hierarchy."}</td></tr>`;
+      }
+      return;
+    }
     const budgets = Core.StoreAdapter.getBudgets();
     const lineBudget = budgets[lineId] || { totalBudget: 0, lmAllocations: {}, dmAllocations: {} };
 
     const totalInput = document.getElementById("buTotalBudgetInput") || document.getElementById("buTotalLineBudgetInput");
-    if (totalInput) totalInput.value = lineBudget.totalBudget || 0;
+    if (totalInput) {
+      totalInput.value = lineBudget.totalBudget || 0;
+      totalInput.disabled = isReadOnlyGm;
+    }
 
-    const allUsers = Core.getAllUsers();
-    const lmsForLine = allUsers.filter(
+    const saveBuBtn = document.getElementById("saveBuBudgetBtn") || document.querySelector("[onclick*='saveBuBudgetAllocations']");
+    if (saveBuBtn) saveBuBtn.style.display = isReadOnlyGm ? "none" : "";
+
+    const subs = isReadOnlyGm
+      ? (typeof window.getAllSubordinates === "function" ? window.getAllSubordinates(Core._state.currentUser.id) : [])
+      : Core.getAllUsers();
+    const lmsForLine = subs.filter(
       (u) => u.role === Core.ROLES.LM && (u.lineIds && Array.isArray(u.lineIds) ? u.lineIds.includes(lineId) : u.lineId === lineId)
     );
 
@@ -66,7 +105,7 @@
                 </td>
                 <td><span class="badge budget-code-badge">${Core.escapeHTML(lm.employeeCode || lm.id)}</span></td>
                 <td>
-                  <input type="number" class="form-control bu-lm-input budget-alloc-input-bu" data-lmid="${Core.escapeHTML(lm.id)}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" />
+                  <input type="number" class="form-control bu-lm-input budget-alloc-input-bu" data-lmid="${Core.escapeHTML(lm.id)}" value="${alloc}" min="0" step="1000" oninput="ActivitiesModule.calculateBuBudgetSummary()" ${isReadOnlyGm ? "disabled readonly" : ""} />
                 </td>
                 <td class="budget-sum-cell">${dmSum.toLocaleString("en-US")} ${Core.t("currency") || "EGP"}</td>
                 <td>
@@ -124,8 +163,7 @@
       Core.safeShowToast(Core.t("selectValidLineWarning") || "Please select a specific valid product line.", "warning");
       return;
     }
-    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
-    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && (!userLines.includes(rawLineId) && userLines.length > 0)) {
+    if (!_isAuthorizedForLine(rawLineId)) {
       Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
       return;
     }
@@ -629,8 +667,7 @@
       Core.safeShowToast(Core.t("selectValidLineWarning") || "Please select a specific valid product line.", "warning");
       return;
     }
-    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
-    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && (!userLines.includes(rawLineId) && userLines.length > 0)) {
+    if (!_isAuthorizedForLine(rawLineId)) {
       Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
       return;
     }
@@ -643,7 +680,7 @@
 
     const allUsers = Core.getAllUsers();
     let myRepIds = [];
-    const curRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : Core._state.currentUser.role;
+    const curRole = _getCurRole();
     if (curRole === Core.ROLES.DM) {
       myRepIds = allUsers.filter((u) => u.managerId === Core._state.currentUser.id).map((u) => u.id);
     } else if (curRole === Core.ROLES.LM) {
@@ -652,7 +689,7 @@
         const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role;
         return (r === Core.ROLES.REP || r === Core.ROLES.REP_ALT) && (u.managerId === Core._state.currentUser.id || myDms.includes(u.managerId));
       }).map(r => r.id);
-    } else if (curRole === Core.ROLES.BU || curRole === Core.ROLES.ADMIN) {
+    } else if (curRole === Core.ROLES.BU || _isGlobalBudgetRole(curRole)) {
       myRepIds = allUsers.filter((u) => {
         const r = Core.getNormalizedRole ? Core.getNormalizedRole(u) : u.role;
         return r === Core.ROLES.REP || r === Core.ROLES.REP_ALT;
@@ -664,7 +701,7 @@
     let hasInvalidRepNumber = false;
     document.querySelectorAll(".dm-rep-alloc-input").forEach((inp) => {
       const repId = inp.dataset.repid;
-      if (repId && (myRepIds.includes(repId) || Core._state.currentUser.role === Core.ROLES.ADMIN)) {
+      if (repId && (myRepIds.includes(repId) || _isGlobalBudgetRole(curRole))) {
         const val = Number(inp.value);
         if (!Number.isFinite(val) || val < 0) {
           hasInvalidRepNumber = true;
@@ -697,7 +734,7 @@
       const mgrRole = Core.getNormalizedRole ? Core.getNormalizedRole(mgrObj) : (mgrObj?.role || "").toLowerCase();
       const isMgrLm = mgrRole === Core.ROLES.LM || mgrRole === "lm" || mgrRole === "line_manager";
       const isMgrBu = mgrRole === Core.ROLES.BU || mgrRole === "bu" || mgrRole === "business_unit";
-      const isMgrAdmin = mgrRole === Core.ROLES.ADMIN || mgrRole === "admin" || mgrRole === "administrator";
+      const isMgrAdmin = _isGlobalBudgetRole(mgrRole) || mgrRole === "administrator";
 
       let dmAlloc = 0;
       let existingSubDmsAlloc = 0;
@@ -836,8 +873,7 @@
       Core.safeShowToast(Core.t("selectValidLineWarning") || "Please select a specific valid product line.", "warning");
       return;
     }
-    const userLines = Core.getUserAssignedLines(Core._state.currentUser).map((l) => l.id);
-    if (Core._state.currentUser.role !== Core.ROLES.ADMIN && (!userLines.includes(rawLineId) && userLines.length > 0)) {
+    if (!_isAuthorizedForLine(rawLineId)) {
       Core.safeShowToast(Core.t("unauthorizedLineAction") || "You are not authorized for this product line.", "danger");
       return;
     }
@@ -852,12 +888,13 @@
     const allServices = Core.StoreAdapter.getServices();
     const allowedDms = Core.getDmsUnderLmForLine(Core._state.currentUser.id, lineId).map((d) => d.id);
 
+    const curUserRole = _getCurRole();
     let totalAlloc = 0;
     const tempAlloc = {};
     let hasInvalidDmNumber = false;
     document.querySelectorAll(".lm-dm-alloc-input").forEach((inp) => {
       const dmId = inp.dataset.dmid;
-      if (dmId && (allowedDms.includes(dmId) || Core._state.currentUser.role === Core.ROLES.ADMIN || Core._state.currentUser.role === Core.ROLES.BU)) {
+      if (dmId && (allowedDms.includes(dmId) || _isGlobalBudgetRole(curUserRole) || curUserRole === Core.ROLES.BU)) {
         const val = Number(inp.value);
         if (!Number.isFinite(val) || val < 0) {
           hasInvalidDmNumber = true;
@@ -874,7 +911,6 @@
     }
 
     const myLmAlloc = (budgets[lineId].lmAllocations && Number(budgets[lineId].lmAllocations[Core._state.currentUser.id])) || 0;
-    const curUserRole = Core.getNormalizedRole ? Core.getNormalizedRole(Core._state.currentUser) : (Core._state.currentUser?.role || "").toLowerCase();
     if (curUserRole === Core.ROLES.LM) {
       let directLmCommitted = 0;
       allServices.forEach((s) => {

@@ -3,17 +3,52 @@
  * @description Product Lines & Products directory management (CRUD + transfer between lines) using Central Store.
  */
 
+function isLineManagerUser(u) {
+  if (!u) return false;
+  const r = window.normalizeRole ? window.normalizeRole(u.role) : String(u.role || "").toLowerCase();
+  return r === "line_manager" || r === "lm";
+}
+
+function canManageProductsAdmin() {
+  const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
+  if (!user || !user.id) return false;
+  return window.isAdmin ? window.isAdmin(user) : (window.hasAnyRole ? window.hasAnyRole(["admin"], user) : String(user.role || "").toLowerCase() === "admin");
+}
+
+function canManageLineOrProduct(lineId) {
+  const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
+  if (!user || !user.id) return false;
+  const isAdmin = window.isAdmin ? window.isAdmin(user) : (window.hasAnyRole ? window.hasAnyRole(["admin"], user) : String(user.role || "").toLowerCase() === "admin");
+  if (isAdmin) return true;
+  const isPM = window.isPMRole ? window.isPMRole(user) : (String(user.role || "").toLowerCase() === "product_manager" || String(user.role || "").toLowerCase() === "pm");
+  if (!isPM || !lineId) return false;
+  const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+  return userLines.includes(lineId);
+}
+
+function generateUniqueProductId(prefix = "prod_") {
+  if (typeof window.genId === "function") return window.genId(prefix);
+  return prefix + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+}
+
 // Initialize default lines if empty via Store
 function initProductLinesData() {
   if (!window.store || !window.store.productLines) return;
   
+  const allUsers = (window.store && window.store.users)
+    ? window.store.users.getAll()
+    : ((window.DEMO_DATA && window.DEMO_DATA.users) || []);
   const lines = window.store.productLines.getAll();
   lines.forEach(line => {
     let updated = false;
     if (!line.lineManagerId) {
-      if (line.id === "line_1790626000001" || line.id === "line1") { line.lineManagerId = "u1790626000012"; updated = true; }
-      else if (line.id === "line_1790626000002" || line.id === "line2") { line.lineManagerId = "u1790626000013"; updated = true; }
-      else {
+      if (window.DEMO_MODE && (line.id === "line_1790626000001" || line.id === "line1") && allUsers.some((u) => u.id === "u1790626000012")) {
+        line.lineManagerId = "u1790626000012";
+        updated = true;
+      } else if (window.DEMO_MODE && (line.id === "line_1790626000002" || line.id === "line2") && allUsers.some((u) => u.id === "u1790626000013")) {
+        line.lineManagerId = "u1790626000013";
+        updated = true;
+      } else {
         const mgr = getLineManager(line);
         if (mgr) { line.lineManagerId = mgr.id; updated = true; }
       }
@@ -38,7 +73,7 @@ function initProductLinesData() {
 function getActiveLineManagers() {
   if (window.store && window.store.users) {
     return window.store.users.getAll().filter(
-      (u) => (u.role === "line_manager" || u.role === "LM") && u.status !== "Inactive"
+      (u) => isLineManagerUser(u) && String(u.status || "").toLowerCase() !== "inactive"
     );
   }
   return [];
@@ -52,14 +87,14 @@ function getLineManager(line) {
 
   if (line.lineManagerId) {
     const found = allUsers.find(
-      (u) => u.id === line.lineManagerId && (u.role === "line_manager" || u.role === "LM")
+      (u) => u.id === line.lineManagerId && isLineManagerUser(u)
     );
     if (found) return found;
   }
 
   const foundReverse = allUsers.find(
     (u) =>
-      (u.role === "line_manager" || u.role === "LM") &&
+      isLineManagerUser(u) &&
       (u.lineId === line.id || (Array.isArray(u.lineIds) && u.lineIds.includes(line.id)))
   );
   if (foundReverse) return foundReverse;
@@ -150,17 +185,23 @@ let currentLang = "en";
 let lineModal, productModal, deleteModal, transferProductModal, campaignFocusModal;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const user = (window.checkAuth && window.checkAuth()) || {};
-  const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : (user.role === "admin");
-  if (!isAdmin) {
+  const user = (window.requireAuth ? window.requireAuth() : (window.checkAuth && window.checkAuth())) || null;
+  const isAdmin = user && (window.isAdmin ? window.isAdmin(user) : (window.hasAnyRole ? window.hasAnyRole(["admin"], user) : String(user.role || "").toLowerCase() === "admin"));
+  const isPM = user && (window.isPMRole ? window.isPMRole(user) : (String(user.role || "").toLowerCase() === "product_manager" || String(user.role || "").toLowerCase() === "pm"));
+  if (!isAdmin && !isPM) {
     if (typeof showToast === "function") {
       showToast(
-        "Access Denied: Product Lines & Products management is for Admins only.",
+        "Access Denied: Product Lines & Products management is restricted to Admins and Product Managers.",
         "error"
       );
     }
     window.location.replace("index.html");
     return;
+  }
+
+  const addLineBtn = document.getElementById("add-line-btn");
+  if (addLineBtn && !isAdmin) {
+    addLineBtn.style.display = "none";
   }
 
   if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
@@ -183,9 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const lt = document.getElementById("langToggle");
   if (lt) lt.addEventListener("click", toggleLanguage);
-  document.getElementById("saveLineBtn").addEventListener("click", saveLine);
-  document.getElementById("saveProductBtn").addEventListener("click", saveProduct);
-  document.getElementById("confirmDeleteBtn").addEventListener("click", confirmDelete);
+  document.getElementById("saveLineBtn")?.addEventListener("click", saveLine);
+  document.getElementById("saveProductBtn")?.addEventListener("click", saveProduct);
+  document.getElementById("confirmDeleteBtn")?.addEventListener("click", confirmDelete);
 });
 
 function populateLineManagersDropdown() {
@@ -201,11 +242,17 @@ function populateLineManagersDropdown() {
 }
 
 function openAddLineModal() {
+  if (!canManageProductsAdmin()) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const form = document.getElementById("lineForm");
   if (form) form.reset();
-  document.getElementById("lineId").value = "";
+  const lineIdEl = document.getElementById("lineId");
+  if (lineIdEl) lineIdEl.value = "";
   populateLineManagersDropdown();
-  document.getElementById("lineManager").value = "";
+  const lineMgrEl = document.getElementById("lineManager");
+  if (lineMgrEl) lineMgrEl.value = "";
 
   if (document.getElementById("lineFreqA")) document.getElementById("lineFreqA").value = 4;
   if (document.getElementById("lineFreqB")) document.getElementById("lineFreqB").value = 3;
@@ -221,6 +268,10 @@ function openAddLineModal() {
 }
 
 function openEditLine(id) {
+  if (!canManageProductsAdmin()) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const line = window.store.productLines.getById(id);
   if (!line) return;
 
@@ -229,9 +280,12 @@ function openEditLine(id) {
   const manager = getLineManager(line);
   const resolvedManagerId = (manager ? manager.id : line.lineManagerId) || "";
 
-  document.getElementById("lineId").value = line.id;
-  document.getElementById("lineName").value = line.name || "";
-  document.getElementById("lineManager").value = resolvedManagerId;
+  const lineIdEl = document.getElementById("lineId");
+  const lineNameEl = document.getElementById("lineName");
+  const lineMgrEl = document.getElementById("lineManager");
+  if (lineIdEl) lineIdEl.value = line.id;
+  if (lineNameEl) lineNameEl.value = line.name || "";
+  if (lineMgrEl) lineMgrEl.value = resolvedManagerId;
 
   const freq = line.callFrequency || { classA: 4, classB: 3, classC: 1 };
   if (document.getElementById("lineFreqA")) document.getElementById("lineFreqA").value = freq.classA ?? 4;
@@ -259,12 +313,17 @@ function renderProductLines(activeLineId) {
     : (currentUser?.role || "").toLowerCase();
 
   let productLines = allLines;
-  if (currentUser && role !== "admin") {
-    const userLines = typeof window.getUserLines === "function" ? window.getUserLines(currentUser.id) : [];
-    if (userLines.length > 0) {
+  if (!currentUser || !currentUser.id) {
+    productLines = [];
+  } else if (role !== "admin") {
+    const isPM = window.isPMRole ? window.isPMRole(currentUser) : (role === "product_manager" || role === "pm");
+    if (isPM) {
+      const userLines = typeof window.getUserLines === "function"
+        ? window.getUserLines(currentUser.id)
+        : allLines.filter((l) => l.id === currentUser.lineId || (Array.isArray(currentUser.lineIds) && currentUser.lineIds.includes(l.id)));
       const allowedIds = userLines.map((l) => l.id);
       productLines = allLines.filter((l) => allowedIds.includes(l.id));
-    } else if (["business_unit", "line_manager", "district_manager", "medical_rep", "rep"].includes(role)) {
+    } else {
       productLines = [];
     }
   }
@@ -274,6 +333,8 @@ function renderProductLines(activeLineId) {
     return;
   }
 
+  const canManageLine = role === "admin";
+  const chunks = [];
   productLines.forEach((line, index) => {
     const isExpanded = (activeLineId && line.id === activeLineId) ? "true" : "false";
     const collapseClass = isExpanded === "true" ? "show" : "";
@@ -298,17 +359,17 @@ function renderProductLines(activeLineId) {
                         <tr>
                             <td class="fw-bold product-name-cell">${window.escapeHtml(prod.name)}</td>
                             <td><span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span></td>
-                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}${prod.cutPoint ? ` <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7em;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> CP: ${prod.cutPoint}</span>` : ""}</td>
+                            <td>${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="fw-semibold text-success">${Number(prod.price).toLocaleString()} EGP</span>` : '<span class="text-muted">—</span>'}${prod.cutPoint ? ` <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:0.7em;"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> CP: ${Number(prod.cutPoint)}</span>` : ""}</td>
                             <td class="text-end product-actions-cell">
-                                <button class="btn btn-sm btn-outline-warning me-1" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7l6-3 6 3"/><path d="m3 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="m15 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="M4 21h16"/></svg></button>
-                                <button class="btn btn-sm btn-outline-info me-1" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product">
-                                    <i class="bi bi-arrow-left-right"></i>
+                                ${canManageLine ? `<button type="button" class="btn btn-sm btn-outline-warning me-1" data-prod-action="brick-weights" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Brick Weights"><svg class="btn-svg-icon" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7l6-3 6 3"/><path d="m3 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="m15 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="M4 21h16"/></svg></button>
+                                <button type="button" class="btn btn-sm btn-outline-info me-1" data-prod-action="transfer-product" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Transfer Product">
+                                    <i class="fas fa-right-left"></i>
+                                </button>` : ""}
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1" data-prod-action="edit-product" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Edit Product">
+                                    <i class="fas fa-pen"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditProduct('${line.id}', '${prod.id}')" title="Edit Product">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal('product', '${prod.id}', '${line.id}')" title="Delete Product">
-                                    <i class="bi bi-trash"></i>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-prod-action="delete-product" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Delete Product">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -326,19 +387,19 @@ function renderProductLines(activeLineId) {
                         <div class="d-flex align-items-center gap-1 flex-wrap">
                             <span class="badge product-form-badge">${window.escapeHtml(prod.form)}</span>
                             ${prod.price !== undefined && prod.price !== null && prod.price !== "" ? `<span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">${Number(prod.price).toLocaleString()} EGP</span>` : ""}
-                            ${prod.cutPoint ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> CP: ${prod.cutPoint}</span>` : ""}
+                            ${prod.cutPoint ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><svg class="badge-svg-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> CP: ${Number(prod.cutPoint)}</span>` : ""}
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                        <button class="btn btn-sm btn-outline-warning rounded-circle" onclick="openBrickWeightsModal('${line.id}', '${prod.id}')" title="Brick Weights" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;"><svg class="btn-svg-icon" style="margin:0;" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7l6-3 6 3"/><path d="m3 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="m15 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="M4 21h16"/></svg></button>
-                        <button class="btn btn-sm btn-outline-info rounded-circle" onclick="openTransferModal('${line.id}', '${prod.id}')" title="Transfer Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                            <i class="bi bi-arrow-left-right" style="font-size: 0.82rem;"></i>
+                        ${canManageLine ? `<button type="button" class="btn btn-sm btn-outline-warning rounded-circle" data-prod-action="brick-weights" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Brick Weights" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;"><svg class="btn-svg-icon" style="margin:0;" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7l6-3 6 3"/><path d="m3 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="m15 13 3-6 3 6a3 3 0 0 1-6 0"/><path d="M4 21h16"/></svg></button>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle" data-prod-action="transfer-product" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Transfer Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="fas fa-right-left" style="font-size: 0.82rem;"></i>
+                        </button>` : ""}
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" data-prod-action="edit-product" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Edit Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="fas fa-pen" style="font-size: 0.82rem;"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-primary rounded-circle" onclick="openEditProduct('${line.id}', '${prod.id}')" title="Edit Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                            <i class="bi bi-pencil" style="font-size: 0.82rem;"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger rounded-circle" onclick="openDeleteModal('product', '${prod.id}', '${line.id}')" title="Delete Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                            <i class="bi bi-trash" style="font-size: 0.82rem;"></i>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" data-prod-action="delete-product" data-line-id="${window.escapeHtml(line.id)}" data-prod-id="${window.escapeHtml(prod.id)}" title="Delete Product" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+                            <i class="fas fa-trash" style="font-size: 0.82rem;"></i>
                         </button>
                     </div>
                 </div>
@@ -346,16 +407,15 @@ function renderProductLines(activeLineId) {
         </div>
       `;
     } else {
-      productsHtml = `<div class="text-center text-muted py-4"><i class="bi bi-box-seam fs-3 d-block mb-1 opacity-50"></i>No products in this line yet.</div>`;
+      productsHtml = `<div class="text-center text-muted py-4"><i class="fas fa-box-open fs-3 d-block mb-1 opacity-50"></i>No products in this line yet.</div>`;
     }
 
     const freq = line.callFrequency || { classA: 4, classB: 3, classC: 1 };
     const manager = getLineManager(line);
     const managerDisplayName = manager
-      ? (currentLang === "ar" ? (manager.nameAr || manager.name) : manager.name)
+      ? (manager.name || manager.nameAr || "")
       : (line.lineManagerName || "Unassigned");
 
-    const canManageLine = role === "admin";
     let focusBannerHtml = "";
     if (line.cycleCampaignFocus && line.cycleCampaignFocus.active && line.cycleCampaignFocus.focusMessage) {
       let targetProdName = "";
@@ -370,8 +430,8 @@ function renderProductLines(activeLineId) {
             ${targetProdName ? `<span class="badge bg-primary ms-1"><svg class="badge-svg-icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> ${window.escapeHtml(targetProdName)}</span>` : ""}
             <span class="ms-2" style="font-weight: 500;">${window.escapeHtml(line.cycleCampaignFocus.focusMessage)}</span>
           </div>
-          <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')">
-            <i class="bi bi-pencil"></i> Edit Focus
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-prod-action="campaign-focus" data-line-id="${window.escapeHtml(line.id)}">
+            <i class="fas fa-pen"></i> Edit Focus
           </button>
         </div>
       `;
@@ -379,9 +439,9 @@ function renderProductLines(activeLineId) {
 
     const html = `
             <div class="accordion-item border-0 border-bottom">
-                <h2 class="accordion-header" id="heading${line.id}">
+                <h2 class="accordion-header" id="heading${window.escapeHtml(line.id)}">
                     <div class="d-flex w-100">
-                        <button class="accordion-button ${buttonClass} shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${line.id}" aria-expanded="${isExpanded}" aria-controls="collapse${line.id}">
+                        <button class="accordion-button ${buttonClass} shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${window.escapeHtml(line.id)}" aria-expanded="${isExpanded}" aria-controls="collapse${window.escapeHtml(line.id)}">
                             <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
                                 <div class="d-flex flex-column align-items-start gap-1">
                                     <div class="d-flex align-items-center flex-wrap gap-2">
@@ -393,31 +453,31 @@ function renderProductLines(activeLineId) {
                                     </span>
                                 </div>
                                 <div class="line-manager-info small d-none d-sm-block">
-                                    <i class="bi bi-person-badge"></i> <span data-i18n="manager">Manager</span>: <span class="line-manager-name">${window.escapeHtml(managerDisplayName)}</span>
+                                    <i class="fas fa-id-badge"></i> <span data-i18n="manager">Manager</span>: <span class="line-manager-name">${window.escapeHtml(managerDisplayName)}</span>
                                 </div>
                             </div>
                         </button>
                     </div>
                 </h2>
-                <div id="collapse${line.id}" class="accordion-collapse collapse ${collapseClass}" aria-labelledby="heading${line.id}" data-bs-parent="#productLinesAccordion">
+                <div id="collapse${window.escapeHtml(line.id)}" class="accordion-collapse collapse ${collapseClass}" aria-labelledby="heading${window.escapeHtml(line.id)}" data-bs-parent="#productLinesAccordion">
                     <div class="accordion-body">
                         <!-- Modern Streamlined Toolbar -->
                         <div class="line-actions-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 p-2 rounded-3">
                             <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-pill px-3 shadow-sm fw-semibold" onclick="openAddProductModal('${line.id}')">
-                                    <i class="bi bi-plus-circle-fill"></i> <span data-i18n="addProduct">${productTranslations.en.addProduct || "Add Product"}</span>
+                                <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 rounded-pill px-3 shadow-sm fw-semibold" data-prod-action="add-product" data-line-id="${window.escapeHtml(line.id)}">
+                                    <i class="fas fa-circle-plus"></i> <span data-i18n="addProduct">${productTranslations.en.addProduct || "Add Product"}</span>
                                 </button>
-                                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 rounded-pill px-3" onclick="openCampaignFocusModal('${line.id}')" title="Configure Cycle Campaign Focus">
-                                    <i class="bi bi-bullseye"></i> <span data-i18n="cycleCampaignFocusBtn">${productTranslations.en.cycleCampaignFocusBtn}</span>
+                                <button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 rounded-pill px-3" data-prod-action="campaign-focus" data-line-id="${window.escapeHtml(line.id)}" title="Configure Cycle Campaign Focus">
+                                    <i class="fas fa-bullseye"></i> <span data-i18n="cycleCampaignFocusBtn">${productTranslations.en.cycleCampaignFocusBtn}</span>
                                 </button>
                             </div>
                             ${canManageLine ? `
                             <div class="d-flex align-items-center gap-2 ms-auto">
-                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-2 d-inline-flex align-items-center gap-1" onclick="openEditLine('${line.id}')" title="Edit Line">
-                                    <i class="bi bi-pencil"></i> <span class="d-none d-sm-inline" data-i18n="editProductLine">${productTranslations.en.editProductLine || "Edit"}</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 d-inline-flex align-items-center gap-1" data-prod-action="edit-line" data-line-id="${window.escapeHtml(line.id)}" title="Edit Line">
+                                    <i class="fas fa-pen"></i> <span class="d-none d-sm-inline" data-i18n="editProductLine">${productTranslations.en.editProductLine || "Edit"}</span>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger rounded-pill px-2 d-inline-flex align-items-center gap-1" onclick="openDeleteModal('line', '${line.id}')" title="Delete Line">
-                                    <i class="bi bi-trash"></i> <span class="d-none d-sm-inline" data-i18n="deleteLine">${productTranslations.en.deleteLine || "Delete"}</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2 d-inline-flex align-items-center gap-1" data-prod-action="delete-line" data-line-id="${window.escapeHtml(line.id)}" title="Delete Line">
+                                    <i class="fas fa-trash"></i> <span class="d-none d-sm-inline" data-i18n="deleteLine">${productTranslations.en.deleteLine || "Delete"}</span>
                                 </button>
                             </div>
                             ` : ""}
@@ -428,15 +488,36 @@ function renderProductLines(activeLineId) {
                 </div>
             </div>
         `;
-    container.innerHTML += html;
+    chunks.push(html);
   });
+
+  container.innerHTML = chunks.join("");
+
+  if (!container.dataset) container.dataset = {};
+  if (!container.dataset.prodEventsBound && typeof container.addEventListener === "function") {
+    container.dataset.prodEventsBound = "true";
+    container.addEventListener("click", (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest("[data-prod-action]") : null;
+      if (!btn) return;
+      const action = btn.getAttribute("data-prod-action");
+      const lineId = btn.getAttribute("data-line-id");
+      const prodId = btn.getAttribute("data-prod-id");
+      if (action === "brick-weights") openBrickWeightsModal(lineId, prodId);
+      else if (action === "transfer-product") openTransferModal(lineId, prodId);
+      else if (action === "edit-product") openEditProduct(lineId, prodId);
+      else if (action === "delete-product") openDeleteModal("product", prodId, lineId);
+      else if (action === "campaign-focus") openCampaignFocusModal(lineId);
+      else if (action === "add-product") openAddProductModal(lineId);
+      else if (action === "edit-line") openEditLine(lineId);
+      else if (action === "delete-line") openDeleteModal("line", lineId);
+    });
+  }
 
   applyProductTranslations(currentLang);
 }
 
 function saveLine() {
-  const user = (window.checkAuth && window.checkAuth()) || {};
-  if (window.hasAnyRole && !window.hasAnyRole(["admin"], user)) {
+  if (!canManageProductsAdmin()) {
     if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
     return;
   }
@@ -460,8 +541,10 @@ function saveLine() {
   const manager = managerId ? getActiveLineManagers().find((m) => m.id === managerId) : null;
   const managerName = manager ? manager.name : (managerId ? "Unknown" : "Unassigned");
 
-  const lineIdToUse = id || ("line_" + Date.now());
+  const existing = id ? window.store.productLines.getById(id) : null;
+  const lineIdToUse = id || generateUniqueProductId("line_");
   const lineObj = {
+    ...(existing || {}),
     id: lineIdToUse,
     name,
     lineManagerId: managerId || null,
@@ -471,25 +554,16 @@ function saveLine() {
       classB: freqB,
       classC: freqC,
     },
-    status: "Active"
+    status: existing ? (existing.status || "Active") : "Active",
+    products: existing ? (existing.products || []) : [],
   };
-
-  if (id) {
-    const existing = window.store.productLines.getById(id);
-    if (existing) {
-      lineObj.products = existing.products || [];
-      lineObj.status = existing.status || "Active";
-    }
-  } else {
-    lineObj.products = [];
-  }
 
   window.store.productLines.save(lineObj);
 
   if (window.store && window.store.users) {
     const allUsers = window.store.users.getAll();
     allUsers.forEach((u) => {
-      if (u.role === "line_manager" || u.role === "LM") {
+      if (isLineManagerUser(u)) {
         let userChanged = false;
         if (managerId && u.id === managerId) {
           if (!Array.isArray(u.lineIds)) u.lineIds = u.lineId ? [u.lineId] : [];
@@ -524,6 +598,10 @@ function saveLine() {
 }
 
 function openAddProductModal(lineId) {
+  if (!canManageLineOrProduct(lineId)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
   const line = window.store.productLines.getById(lineId);
   if (!line) {
     const msg = "Target line not found.";
@@ -549,6 +627,10 @@ function openAddProductModal(lineId) {
 }
 
 function openEditProduct(lineId, prodId) {
+  if (!canManageLineOrProduct(lineId)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
   const line = window.store.productLines.getById(lineId);
   if (line && Array.isArray(line.products)) {
     const prod = line.products.find((p) => p.id === prodId);
@@ -585,7 +667,7 @@ function saveProduct() {
   const targetLineId = document.getElementById("targetLineId").value;
   if (isPM && !isAdmin) {
     const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
-    if (!userLines.includes(targetLineId)) {
+    if (!targetLineId || !userLines.includes(targetLineId)) {
       if (typeof showToast === "function") showToast("Permission Denied: You can only manage your line.", "error");
       return;
     }
@@ -596,10 +678,19 @@ function saveProduct() {
   const dosage = dosageEl ? dosageEl.value.trim() : "";
   const form = document.getElementById("productFormSelect").value;
   const description = (document.getElementById("productDescription").value || "").trim();
-  const priceInput = document.getElementById("productPrice").value;
-  const price = priceInput === "" ? null : parseFloat(priceInput);
+  const priceInput = (document.getElementById("productPrice").value || "").trim();
+  let price = null;
+  if (priceInput !== "") {
+    const parsedPrice = parseFloat(priceInput);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      if (typeof showToast === "function") showToast("Please enter a valid non-negative product price.", "warning");
+      return;
+    }
+    price = parsedPrice;
+  }
   const cutPointInput = document.getElementById("productCutPoint").value;
-  const cutPoint = cutPointInput === "" ? 0 : parseInt(cutPointInput, 10) || 0;
+  const parsedCp = cutPointInput === "" ? 0 : parseInt(cutPointInput, 10);
+  const cutPoint = isNaN(parsedCp) ? 0 : Math.max(0, parsedCp);
 
   if (!targetLineId) {
     const msg = "Error: Target Line not identified.";
@@ -636,7 +727,11 @@ function saveProduct() {
     const prod = line.products.find((p) => p.id === prodId);
     if (prod) {
       prod.name = name;
-      if (dosage) prod.dosage = dosage;
+      if (dosage) {
+        prod.dosage = dosage;
+      } else {
+        delete prod.dosage;
+      }
       prod.form = form;
       prod.description = description;
       prod.price = price;
@@ -644,7 +739,7 @@ function saveProduct() {
     }
   } else {
     const newProd = {
-      id: "prod_" + Date.now(),
+      id: generateUniqueProductId("prod_"),
       name,
       form,
       description,
@@ -709,7 +804,17 @@ function saveCampaignFocus() {
   const user = (window.checkAuth && window.checkAuth()) || {};
   const isPM = window.isPMRole ? window.isPMRole(user) : (user.role === "product_manager" || user.role === "pm");
   const isAdmin = window.hasAnyRole ? window.hasAnyRole(["admin"], user) : user.role === "admin";
-  if (!isAdmin && !isPM) return;
+  if (!isAdmin && !isPM) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  if (isPM && !isAdmin) {
+    const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
+    if (!lineId || !userLines.includes(lineId)) {
+      if (typeof showToast === "function") showToast("Permission Denied: You can only configure your assigned line.", "error");
+      return;
+    }
+  }
 
   const active = document.getElementById("focusActiveToggle").checked;
   const targetProductId = document.getElementById("focusTargetProductSelect").value;
@@ -740,10 +845,22 @@ window.openCampaignFocusModal = openCampaignFocusModal;
 window.saveCampaignFocus = saveCampaignFocus;
 
 function openDeleteModal(type, targetId, lineId = null) {
-  document.getElementById("deleteTargetType").value = type;
-  document.getElementById("deleteTargetId").value = targetId;
-  document.getElementById("deleteTargetLineId").value = lineId || "";
-  deleteModal.show();
+  if (type === "line") {
+    if (!canManageProductsAdmin()) {
+      if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+      return;
+    }
+  } else if (!canManageLineOrProduct(lineId)) {
+    if (typeof showToast === "function") showToast("Permission Denied.", "error");
+    return;
+  }
+  const tEl = document.getElementById("deleteTargetType");
+  const idEl = document.getElementById("deleteTargetId");
+  const lEl = document.getElementById("deleteTargetLineId");
+  if (tEl) tEl.value = type;
+  if (idEl) idEl.value = targetId;
+  if (lEl) lEl.value = lineId || "";
+  if (deleteModal) deleteModal.show();
 }
 
 function confirmDelete() {
@@ -760,7 +877,7 @@ function confirmDelete() {
   }
   if (isPM && !isAdmin && type === "product") {
     const userLines = user.lineIds || (user.lineId ? [user.lineId] : []);
-    if (lineId && !userLines.includes(lineId)) {
+    if (!lineId || !userLines.includes(lineId)) {
       if (typeof showToast === "function") showToast("Permission Denied: You can only delete products in your line.", "error");
       return;
     }
@@ -775,17 +892,17 @@ function confirmDelete() {
       document.dispatchEvent(new CustomEvent("pharma:store:changed", { detail: { entity: "productLines", action: "delete", payload: { id: targetId } } }));
     }
 
-    // Clean up deleted line assignment from users
+    // Clean up deleted line assignment from users (filter lineIds first so lineId falls back cleanly)
     if (window.store && window.store.users) {
       const allUsers = window.store.users.getAll();
       allUsers.forEach((u) => {
         let changed = false;
-        if (u.lineId === targetId) {
-          u.lineId = null;
-          changed = true;
-        }
         if (Array.isArray(u.lineIds) && u.lineIds.includes(targetId)) {
           u.lineIds = u.lineIds.filter((id) => id !== targetId);
+          changed = true;
+        }
+        if (u.lineId === targetId) {
+          u.lineId = Array.isArray(u.lineIds) ? (u.lineIds[0] || null) : null;
           changed = true;
         }
         if (changed) {
@@ -806,18 +923,30 @@ function confirmDelete() {
       });
     }
   } else if (type === "product") {
-    const line = window.store.productLines.getById(lineId);
-    if (line && line.products) {
-      line.products = line.products.filter((p) => p.id !== targetId);
-      window.store.productLines.save(line);
+    if (window.store && window.store.productLines && lineId) {
+      const line = window.store.productLines.getById(lineId);
+      if (line && Array.isArray(line.products)) {
+        line.products = line.products.filter((p) => p.id !== targetId);
+        if (line.cycleCampaignFocus && line.cycleCampaignFocus.targetProductId === targetId) {
+          line.cycleCampaignFocus.targetProductId = "";
+        }
+        window.store.productLines.save(line);
+      }
+    }
+    if (window.store && window.store.bulkWeights && typeof window.store.bulkWeights.saveAll === "function") {
+      window.store.bulkWeights.saveAll(targetId, []);
     }
   }
 
-  deleteModal.hide();
+  if (deleteModal) deleteModal.hide();
   renderProductLines();
 }
 
 function openTransferModal(lineId, productId) {
+  if (!canManageProductsAdmin()) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const sourceLine = window.store.productLines.getById(lineId);
   if (!sourceLine || !sourceLine.products) return;
 
@@ -851,6 +980,10 @@ function openTransferModal(lineId, productId) {
 }
 
 function confirmTransferProduct() {
+  if (!canManageProductsAdmin()) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const sourceLineId = document.getElementById("transferSourceLineId").value;
   const productId = document.getElementById("transferProductId").value;
   const targetLineId = document.getElementById("transferTargetLineSelect").value;
@@ -949,6 +1082,10 @@ function applyProductTranslations(lang) {
 let brickWeightsModal = null;
 
 function openBrickWeightsModal(lineId, prodId) {
+  if (!canManageProductsAdmin()) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const line = window.store.productLines.getById(lineId);
   if (!line || !Array.isArray(line.products)) return;
   const prod = line.products.find((p) => p.id === prodId);
@@ -992,13 +1129,22 @@ function populateBrickWeightsTable(lineId, productId) {
       <td>${window.escapeHtml(repName)}</td>
       <td>
         <input type="number" class="form-control form-control-sm bw-weight-input"
-               data-area-id="${area.id}" data-line-id="${area.lineId || lineId}"
-               value="${weight}" min="0" max="100" step="0.01"
-               oninput="updateBrickWeightsTotal()">
+               data-area-id="${window.escapeHtml(area.id)}" data-line-id="${window.escapeHtml(area.lineId || lineId)}"
+               value="${Number(weight) || 0}" min="0" max="100" step="0.01">
       </td>
     `;
     tbody.appendChild(tr);
   });
+
+  if (!tbody.dataset) tbody.dataset = {};
+  if (!tbody.dataset.bwBound && typeof tbody.addEventListener === "function") {
+    tbody.dataset.bwBound = "true";
+    tbody.addEventListener("input", (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains("bw-weight-input")) {
+        updateBrickWeightsTotal();
+      }
+    });
+  }
 
   updateBrickWeightsTotal();
 }
@@ -1012,17 +1158,31 @@ function updateBrickWeightsTotal() {
 }
 
 function saveBrickWeights() {
+  if (!canManageProductsAdmin()) {
+    if (typeof showToast === "function") showToast("Permission Denied: Admin only.", "error");
+    return;
+  }
   const productId = document.getElementById("brickWeightsProductId").value;
   if (!productId) return;
 
   const inputs = document.querySelectorAll(".bw-weight-input");
   const entries = [];
+  let totalWeight = 0;
   inputs.forEach((inp) => {
     const areaId = inp.getAttribute("data-area-id");
     const lineId = inp.getAttribute("data-line-id");
-    const weight = parseFloat(inp.value) || 0;
+    const weight = Math.max(0, parseFloat(inp.value) || 0);
+    totalWeight += weight;
     entries.push({ areaId, weight, lineId });
   });
+
+  // Total must equal 100% (within floating-point tolerance) or 0% to reset weights
+  if (entries.length > 0 && Math.abs(totalWeight) > 0.01 && Math.abs(totalWeight - 100) > 0.01) {
+    if (typeof showToast === "function") {
+      showToast(`Total brick weights must equal 100% (or 0% to reset). Current total: ${totalWeight.toFixed(2)}%`, "warning");
+    }
+    return;
+  }
 
   if (window.store && window.store.bulkWeights) {
     window.store.bulkWeights.saveAll(productId, entries);
@@ -1047,5 +1207,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (saveBtn) saveBtn.addEventListener("click", saveBrickWeights);
 });
 
-// Make openBrickWeightsModal globally accessible
+// Make modals and actions globally accessible
 window.openBrickWeightsModal = openBrickWeightsModal;
+window.openTransferModal = openTransferModal;
+window.confirmTransferProduct = confirmTransferProduct;
+window.openDeleteModal = openDeleteModal;
+window.confirmDelete = confirmDelete;
+window.saveLine = saveLine;
+window.saveProduct = saveProduct;
+window.saveBrickWeights = saveBrickWeights;
